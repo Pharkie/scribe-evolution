@@ -173,6 +173,17 @@
                             Europe/London, America/New_York)</p>
                     </div>
                 </div>
+                <!-- Additional device settings -->
+                <div class="mt-6">
+                    <div class="space-y-2">
+                        <label for="max-characters"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Message Characters
+                            (100-5000):</label>
+                        <input type="number" id="max-characters" name="validation.maxCharacters" min="100" max="5000"
+                            required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                </div>
             </div>
 
             <!-- MQTT Configuration -->
@@ -214,42 +225,6 @@
                 </div>
             </div>
 
-            <!-- ChatGPT API Configuration -->
-            <div
-                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
-                    <span class="text-3xl">🤖</span>
-                    <span>ChatGPT API Configuration</span>
-                </h2>
-                <div class="space-y-2">
-                    <label for="chatgpt-api-token"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">ChatGPT API Token:</label>
-                    <input type="password" id="chatgpt-api-token" name="apis.chatgptApiToken" required
-                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Required for Unbidden Ink and AI-powered
-                        features</p>
-                </div>
-            </div>
-
-            <!-- Message Limits -->
-            <div
-                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
-                    <span class="text-3xl">📏</span>
-                    <span>Message Limits</span>
-                </h2>
-                <div class="space-y-6">
-                    <div class="space-y-2">
-                        <label for="max-characters"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Message Characters
-                            (100-5000):</label>
-                        <input type="number" id="max-characters" name="validation.maxCharacters" min="100" max="5000"
-                            required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                    </div>
-                </div>
-            </div>
-
             <!-- Unbidden Ink Configuration -->
             <div
                 class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
@@ -276,7 +251,18 @@
                             </div>
                         </label>
                     </div>
+                    
                     <div id="unbidden-ink-settings" class="space-y-6">
+                        <!-- ChatGPT API Token -->
+                        <div class="space-y-2">
+                            <label for="chatgpt-api-token"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">ChatGPT API Token:</label>
+                            <input type="password" id="chatgpt-api-token" name="apis.chatgptApiToken" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Required for Unbidden Ink and AI-powered
+                                features</p>
+                        </div>
+                        
                         <!-- Time Range Slider -->
                         <div class="space-y-4">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Active Time
@@ -298,14 +284,14 @@
                                         onclick="handleSliderClick(event, 'end')"></div>
 
                                     <!-- Start time handle - full width -->
-                                    <input type="range" id="time-start" name="unbiddenInk.startHour" min="0" max="23"
+                                    <input type="range" id="time-start" name="unbiddenInk.startHour" min="0" max="24"
                                         step="1" value="8"
                                         class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer range-slider-start"
                                         style="top: 0; z-index: 24;" oninput="updateTimeRange(this, 'start')"
                                         onchange="updateClickAreas()">
 
                                     <!-- End time handle - full width -->
-                                    <input type="range" id="time-end" name="unbiddenInk.endHour" min="0" max="23"
+                                    <input type="range" id="time-end" name="unbiddenInk.endHour" min="0" max="24"
                                         step="1" value="22"
                                         class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer range-slider-end"
                                         style="top: 0; z-index: 23;" oninput="updateTimeRange(this, 'end')"
@@ -351,41 +337,41 @@
                             </div>
                         </div>
 
-                        <!-- Frequency Slider with Presets -->
+                        <!-- Frequency Slider -->
                         <div class="space-y-4">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Generation
                                 Frequency:</label>
                             <div class="space-y-4">
-                                <!-- Frequency preset buttons -->
-                                <div class="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="15" onclick="setFrequency(15)">15min</button>
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="30" onclick="setFrequency(30)">30min</button>
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="45" onclick="setFrequency(45)">45min</button>
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="60" onclick="setFrequency(60)">1hr</button>
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="120" onclick="setFrequency(120)">2hr</button>
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="240" onclick="setFrequency(240)">4hr</button>
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="360" onclick="setFrequency(360)">6hr</button>
-                                    <button type="button"
-                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                        data-value="480" onclick="setFrequency(480)">8hr</button>
+                                <!-- Frequency slider with non-linear scale -->
+                                <div class="space-y-2">
+                                    <div class="relative h-8">
+                                        <!-- Background track -->
+                                        <div class="absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg"
+                                            style="top: 12px;"></div>
+                                        
+                                        <!-- Frequency slider -->
+                                        <input type="range" id="frequency-slider" min="0" max="7" step="1" value="3"
+                                            class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer"
+                                            style="top: 0; z-index: 10;" oninput="updateFrequencyFromSlider(this.value)">
+                                    </div>
+                                    
+                                    <!-- Frequency markers -->
+                                    <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                        <span>15min</span>
+                                        <span>30min</span>
+                                        <span>45min</span>
+                                        <span>1hr</span>
+                                        <span>2hr</span>
+                                        <span>4hr</span>
+                                        <span>6hr</span>
+                                        <span>8hr</span>
+                                    </div>
                                 </div>
+                                
                                 <!-- Hidden input for the actual value -->
                                 <input type="hidden" id="frequency-minutes" name="unbiddenInk.frequencyMinutes"
                                     value="60">
+                                    
                                 <!-- Current selection display -->
                                 <div class="text-center">
                                     <span

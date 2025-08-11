@@ -87,10 +87,17 @@ function populateForm(config) {
         }, 100);
     }
     
-    // Frequency - set the hidden input and update presets
+    // Frequency - set the hidden input and update slider
     const frequencyInput = document.getElementById('frequency-minutes');
     if (frequencyInput) {
-        frequencyInput.value = config.unbiddenInk?.frequencyMinutes || 60;
+        const frequencyValue = config.unbiddenInk?.frequencyMinutes || 60;
+        frequencyInput.value = frequencyValue;
+        
+        // Update the slider position
+        if (typeof updateSliderFromFrequency === 'function') {
+            updateSliderFromFrequency(frequencyValue);
+        }
+        
         // Update the visual frequency display
         if (typeof updateFrequencyDisplay === 'function') {
             updateFrequencyDisplay();
@@ -348,15 +355,15 @@ function handleSliderClick(event, type) {
     const clickPercent = (clickX / rect.width) * 100;
     
     // Convert click position to hour value
-    const clickHour = Math.round((clickPercent / 100) * 23);
+    const clickHour = Math.round((clickPercent / 100) * 24);
     
     if (type === 'start') {
-        const newStartVal = Math.max(0, Math.min(23, clickHour));
+        const newStartVal = Math.max(0, Math.min(24, clickHour));
         const endVal = parseInt(endSlider.value);
         
         // Collision avoidance: move other handle if necessary
         if (newStartVal >= endVal && !(newStartVal === 0 && endVal === 0)) {
-            if (endVal < 23) {
+            if (endVal < 24) {
                 endSlider.value = newStartVal + 1;
             } else {
                 startSlider.value = endVal - 1;
@@ -369,7 +376,7 @@ function handleSliderClick(event, type) {
         startSlider.value = newStartVal;
         updateTimeRange(startSlider, 'start');
     } else if (type === 'end') {
-        const newEndVal = Math.max(0, Math.min(23, clickHour));
+        const newEndVal = Math.max(0, Math.min(24, clickHour));
         const startVal = parseInt(startSlider.value);
         
         // Collision avoidance: move other handle if necessary
@@ -410,13 +417,13 @@ function updateTimeRange(slider, type) {
         // Smart collision handling - move the other handle when possible
         if (type === 'start') {
             if (startVal >= endVal) {
-                if (endVal < 23) {
+                if (endVal < 24) {
                     // Move end handle forward
                     endVal = startVal + 1;
                     endSlider.value = endVal;
                 } else {
                     // End can't move, constrain start
-                    startVal = 22;
+                    startVal = 23;
                     startSlider.value = startVal;
                 }
             }
@@ -447,9 +454,10 @@ function updateTimeRange(slider, type) {
             track.style.left = '0%';
             track.style.width = '100%';
         } else {
-            // Calculate percentages based on the 24-hour scale (0-24, not 0-23)
+            // Calculate percentages based on where the slider thumbs actually appear
+            // Slider thumbs appear at positions based on their value/max ratio
             const startPercent = (startVal / 24) * 100;
-            const endPercent = ((endVal + 1) / 24) * 100; // +1 because endVal represents start of final hour
+            const endPercent = (endVal / 24) * 100;
             
             track.style.left = startPercent + '%';
             track.style.width = (endPercent - startPercent) + '%';
@@ -459,8 +467,15 @@ function updateTimeRange(slider, type) {
     // Update time displays
     const startDisplay = document.getElementById('time-display-start');
     const endDisplay = document.getElementById('time-display-end');
-    if (startDisplay) startDisplay.textContent = String(startVal).padStart(2, '0') + ':00';
-    if (endDisplay) endDisplay.textContent = String(endVal).padStart(2, '0') + ':00';
+    
+    // Format hour 24 as 00:00 (midnight of next day)
+    const formatHour = (hour) => {
+        if (hour === 24) return '00:00';
+        return String(hour).padStart(2, '0') + ':00';
+    };
+    
+    if (startDisplay) startDisplay.textContent = formatHour(startVal);
+    if (endDisplay) endDisplay.textContent = formatHour(endVal);
     
     // Update click areas after any changes
     updateClickAreas();
@@ -472,25 +487,42 @@ function updateTimeRange(slider, type) {
 }
 
 /**
- * Set frequency from preset buttons
+ * Update frequency from slider position (0-7 maps to frequency values)
+ */
+function updateFrequencyFromSlider(sliderValue) {
+    // Map slider positions to frequency values
+    const frequencyValues = [15, 30, 45, 60, 120, 240, 360, 480];
+    const minutes = frequencyValues[parseInt(sliderValue)];
+    
+    const input = document.getElementById('frequency-minutes');
+    if (input) {
+        input.value = minutes;
+        updateFrequencyDisplay();
+    }
+}
+
+/**
+ * Update slider position from frequency value
+ */
+function updateSliderFromFrequency(minutes) {
+    const frequencyValues = [15, 30, 45, 60, 120, 240, 360, 480];
+    const sliderPosition = frequencyValues.indexOf(parseInt(minutes));
+    
+    const slider = document.getElementById('frequency-slider');
+    if (slider && sliderPosition !== -1) {
+        slider.value = sliderPosition;
+    }
+}
+
+/**
+ * Set frequency from preset buttons (legacy - now updates slider too)
  */
 function setFrequency(minutes) {
     const input = document.getElementById('frequency-minutes');
     if (input) {
         input.value = minutes;
         updateFrequencyDisplay();
-        
-        // Update button styling
-        document.querySelectorAll('.freq-preset').forEach(btn => {
-            btn.classList.remove('bg-purple-100', 'border-purple-400', 'text-purple-800', 'dark:bg-purple-900/30', 'dark:text-purple-300', 'dark:border-purple-600');
-            btn.classList.add('border-gray-300', 'dark:border-gray-600');
-        });
-        
-        const activeBtn = document.querySelector(`[data-value="${minutes}"]`);
-        if (activeBtn) {
-            activeBtn.classList.remove('border-gray-300', 'dark:border-gray-600');
-            activeBtn.classList.add('bg-purple-100', 'border-purple-400', 'text-purple-800', 'dark:bg-purple-900/30', 'dark:text-purple-300', 'dark:border-purple-600');
-        }
+        updateSliderFromFrequency(minutes);
     }
 }
 
