@@ -607,6 +607,27 @@ async function testUnbiddenInk() {
     const originalText = button.textContent;
     
     try {
+        // Check if ChatGPT API token is configured
+        const chatgptToken = document.getElementById('chatgpt-api-token').value.trim();
+        if (!chatgptToken) {
+            showMessage('Please configure your ChatGPT API Token first. You can get one from https://platform.openai.com/api-keys', 'error');
+            return;
+        }
+        
+        // Check if Unbidden Ink is enabled
+        const unbiddenInkEnabled = document.getElementById('unbidden-ink-enabled').checked;
+        if (!unbiddenInkEnabled) {
+            showMessage('Please enable Unbidden Ink first before testing.', 'error');
+            return;
+        }
+        
+        // Get the current prompt from the textarea
+        const currentPrompt = document.getElementById('unbidden-ink-prompt').value.trim();
+        if (!currentPrompt) {
+            showMessage('Please enter a prompt in the Custom Prompt field before testing.', 'error');
+            return;
+        }
+        
         // Show loading state
         button.disabled = true;
         button.textContent = 'Generating...';
@@ -615,18 +636,28 @@ async function testUnbiddenInk() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                prompt: currentPrompt
+            })
         });
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+            let errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+            
+            // Provide more helpful error messages
+            if (response.status === 500 && errorMessage.includes('Failed to generate')) {
+                errorMessage = 'Failed to generate content. Please check that your ChatGPT API Token is valid and you have sufficient API credits. You can check your account at https://platform.openai.com/account';
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const data = await response.json();
         
         if (data.success) {
-            showMessage('Unbidden Ink test generated and sent to printer!', 'success');
+            showMessage('Unbidden Ink content generated and sent to printer!', 'success');
         } else {
             throw new Error(data.error || 'Unknown error occurred');
         }

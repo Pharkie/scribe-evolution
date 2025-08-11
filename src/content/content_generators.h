@@ -63,7 +63,7 @@ String generateQuizContent(int timeoutMs = 5000);
  * @brief Generate AI content from Unbidden Ink API
  * @return String containing raw Unbidden Ink content (no header)
  */
-String generateUnbiddenInkContent();
+String generateUnbiddenInkContent(const String &customPrompt = "");
 
 /**
  * @brief Generate poke content (empty content, just for notification)

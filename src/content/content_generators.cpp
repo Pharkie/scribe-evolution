@@ -219,61 +219,82 @@ String generateQuizContent(int timeoutMs)
     return ""; // Return empty string to indicate failure
 }
 
-String generateUnbiddenInkContent()
+String generateUnbiddenInkContent(const String &customPrompt)
 {
     // Get token, endpoint, and prompt from config and dynamic settings
     const RuntimeConfig &config = getRuntimeConfig();
     String apiToken = config.chatgptApiToken;
     String apiEndpoint = chatgptApiEndpoint;
-    String prompt = getUnbiddenInkPrompt();
+
+    // Use custom prompt if provided, otherwise use the saved prompt
+    String prompt = customPrompt.length() > 0 ? customPrompt : getUnbiddenInkPrompt();
 
     // Build Bearer token with automatic prefix
     String bearerToken = "Bearer " + apiToken;
 
-    LOG_VERBOSE("UNBIDDENINK", "Calling Unbidden Ink API: %s", apiEndpoint.c_str());
+    LOG_VERBOSE("UNBIDDENINK", "Calling ChatGPT API: %s", apiEndpoint.c_str());
     LOG_VERBOSE("UNBIDDENINK", "Using prompt: %s", prompt.c_str());
 
-    // Build JSON payload with the prompt
-    DynamicJsonDocument payloadDoc(1024);
-    payloadDoc["prompt"] = prompt;
+    // Build JSON payload for OpenAI ChatGPT API
+    DynamicJsonDocument payloadDoc(2048);
+    payloadDoc["model"] = "gpt-4o-mini";
+    payloadDoc["max_tokens"] = 150;
+    payloadDoc["temperature"] = 0.7;
+
+    JsonArray messages = payloadDoc.createNestedArray("messages");
+    JsonObject userMessage = messages.createNestedObject();
+    userMessage["role"] = "user";
+    userMessage["content"] = prompt;
+
     String jsonPayload;
     serializeJson(payloadDoc, jsonPayload);
 
-    // Try to POST to Pipedream API with Bearer token and prompt
+    // POST to OpenAI ChatGPT API with Bearer token
     String response = postToAPIWithBearer(apiEndpoint, bearerToken, jsonPayload, apiUserAgent);
 
     if (response.length() > 0)
     {
         LOG_VERBOSE("UNBIDDENINK", "API response received: %s", response.c_str());
 
-        // Parse JSON response expecting a "message" field
+        // Parse OpenAI ChatGPT JSON response
         DynamicJsonDocument doc(largeJsonDocumentSize);
         DeserializationError error = deserializeJson(doc, response);
 
-        if (!error && doc.containsKey("message"))
+        if (!error && doc.containsKey("choices") && doc["choices"].size() > 0)
         {
-            String apiMessage = doc["message"].as<String>();
-            apiMessage.trim();
-            if (apiMessage.length() > 0)
+            JsonObject firstChoice = doc["choices"][0];
+            if (firstChoice.containsKey("message") && firstChoice["message"].containsKey("content"))
             {
-                LOG_VERBOSE("UNBIDDENINK", "Using API message: %s", apiMessage.c_str());
-                return apiMessage; // Return raw content, header will be added by formatContentWithHeader()
+                String apiMessage = firstChoice["message"]["content"].as<String>();
+                apiMessage.trim();
+                if (apiMessage.length() > 0)
+                {
+                    LOG_VERBOSE("UNBIDDENINK", "Using ChatGPT content: %s", apiMessage.c_str());
+                    return apiMessage; // Return raw content, header will be added by formatContentWithHeader()
+                }
+                else
+                {
+                    LOG_ERROR("UNBIDDENINK", "ChatGPT returned empty content");
+                    return ""; // Return empty string to indicate failure
+                }
             }
             else
             {
-                LOG_ERROR("UNBIDDENINK", "API returned empty message");
+                LOG_ERROR("UNBIDDENINK", "ChatGPT response missing message.content field");
                 return ""; // Return empty string to indicate failure
             }
         }
         else
         {
-            LOG_ERROR("UNBIDDENINK", "API response parsing failed or no 'message' field found");
+            LOG_ERROR("UNBIDDENINK", "ChatGPT response parsing failed or no choices found");
+            // Log the actual response for debugging
+            LOG_ERROR("UNBIDDENINK", "Response was: %s", response.c_str());
             return ""; // Return empty string to indicate failure
         }
     }
     else
     {
-        LOG_ERROR("UNBIDDENINK", "No response from Unbidden Ink API");
+        LOG_ERROR("UNBIDDENINK", "No response from ChatGPT API");
         return ""; // Return empty string to indicate failure
     }
 }

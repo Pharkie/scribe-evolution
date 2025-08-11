@@ -98,7 +98,7 @@
     <main class="w-full max-w-4xl mx-auto flex-1 space-y-6">
         <!-- Loading State -->
         <div id="loading-state"
-            class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700 text-center">
+            class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8 text-center">
             <div class="flex items-center justify-center space-x-3">
                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 <span class="text-gray-600 dark:text-gray-400">Loading configuration...</span>
@@ -107,12 +107,12 @@
 
         <!-- Settings Form -->
         <form id="settings-form" class="hidden space-y-6" onsubmit="saveSettings(event)">
-            <!-- WiFi Configuration -->
+            <!-- WiFi -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8">
+                <h2 class="text-2xl font-bold text-blue-800 dark:text-blue-100 mb-6 flex items-center space-x-2">
                     <span class="text-3xl">📶</span>
-                    <span>WiFi Configuration</span>
+                    <span>WiFi</span>
                 </h2>
 
                 <!-- WiFi Warning -->
@@ -147,12 +147,12 @@
                 </div>
             </div>
 
-            <!-- Device Configuration -->
+            <!-- Device -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8">
+                <h2 class="text-2xl font-bold text-blue-800 dark:text-blue-100 mb-6 flex items-center space-x-2">
                     <span class="text-3xl">⚙️</span>
-                    <span>Device Configuration</span>
+                    <span>Device</span>
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
@@ -186,12 +186,12 @@
                 </div>
             </div>
 
-            <!-- MQTT Configuration -->
+            <!-- MQTT -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8">
+                <h2 class="text-2xl font-bold text-blue-800 dark:text-blue-100 mb-6 flex items-center space-x-2">
                     <span class="text-3xl">📡</span>
-                    <span>MQTT Configuration</span>
+                    <span>MQTT</span>
                 </h2>
                 <div class="space-y-6">
                     <!-- Server gets full width -->
@@ -225,12 +225,12 @@
                 </div>
             </div>
 
-            <!-- Unbidden Ink Configuration -->
+            <!-- Unbidden Ink -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8">
+                <h2 class="text-2xl font-bold text-blue-800 dark:text-blue-100 mb-6 flex items-center space-x-2">
                     <span class="text-3xl">🪄</span>
-                    <span>Unbidden Ink Configuration</span>
+                    <span>Unbidden Ink</span>
                 </h2>
                 <div class="space-y-6">
                     <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
@@ -412,7 +412,7 @@
 
                                 <button type="button"
                                     class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                    onclick="setPrompt('Generate a brief, interesting fact about Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history. Keep it under 250 characters.')">
+                                    onclick="setPrompt('Generate a fun fact under 200 characters about BBC Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history that is esoteric and only 5% of fans might know.')">
                                     <div class="flex items-start space-x-3">
                                         <span class="text-2xl">🕰️</span>
                                         <div>
@@ -463,23 +463,32 @@
                             </div>
 
                             <!-- Test Unbidden Ink -->
-                            <div class="pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <div class="pt-4 text-right">
                                 <button type="button" onclick="testUnbiddenInk()"
-                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                    class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded">
                                     Bid Unbidden Ink To Print Now
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Test Unbidden Ink -->
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <button type="button" onclick="testUnbiddenInk()"
+                                class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                Bid Unbidden Ink To Print Now
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+            </div>
 
-            <!-- Button Configuration -->
+            <!-- Buttons -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8">
+                <h2 class="text-2xl font-bold text-blue-800 dark:text-blue-100 mb-6 flex items-center space-x-2">
                     <span class="text-3xl">🔘</span>
-                    <span>Button Configuration</span>
+                    <span>Buttons</span>
                 </h2>
                 <div class="space-y-6">
 

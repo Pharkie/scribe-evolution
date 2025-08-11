@@ -217,8 +217,24 @@ void handleUnbiddenInk()
 {
     LOG_VERBOSE("WEB", "handleUnbiddenInk() called");
 
-    // Generate unbidden ink content (now returns raw content)
-    String content = generateUnbiddenInkContent();
+    // Check if there's a custom prompt in the request body
+    String customPrompt = "";
+    if (server.hasArg("plain"))
+    {
+        String body = server.arg("plain");
+        DynamicJsonDocument doc(1024);
+        DeserializationError error = deserializeJson(doc, body);
+
+        if (!error && doc.containsKey("prompt"))
+        {
+            customPrompt = doc["prompt"].as<String>();
+            customPrompt.trim();
+            LOG_VERBOSE("WEB", "Using custom prompt from request: %s", customPrompt.c_str());
+        }
+    }
+
+    // Generate unbidden ink content (with optional custom prompt)
+    String content = generateUnbiddenInkContent(customPrompt);
 
     if (content.length() > 0)
     {
