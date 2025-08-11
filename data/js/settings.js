@@ -79,6 +79,12 @@ function populateForm(config) {
         if (typeof updateTimeRange === 'function') {
             updateTimeRange();
         }
+        // Initialize click areas after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            if (typeof updateClickAreas === 'function') {
+                updateClickAreas();
+            }
+        }, 100);
     }
     
     // Frequency - set the hidden input and update presets
@@ -288,6 +294,106 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Update time range display and handle dual-slider constraints
  */
+/**
+ * Update click areas around each handle to prevent collisions
+ */
+function updateClickAreas() {
+    const startSlider = document.getElementById('time-start');
+    const endSlider = document.getElementById('time-end');
+    const startArea = document.getElementById('click-area-start');
+    const endArea = document.getElementById('click-area-end');
+    
+    if (!startSlider || !endSlider || !startArea || !endArea) return;
+    
+    const startVal = parseInt(startSlider.value);
+    const endVal = parseInt(endSlider.value);
+    const containerWidth = startSlider.offsetWidth;
+    
+    // Calculate positions as percentages for 24-hour scale (0-24)
+    const startPercent = (startVal / 24) * 100;
+    const endPercent = ((endVal + 1) / 24) * 100; // +1 because hour 23 represents 23:00-24:00
+    
+    // Define click area size (in percentage of total width)
+    const clickAreaSize = 15; // 15% of total width for each click area
+    
+    // Calculate boundaries to prevent overlap
+    const midPoint = (startPercent + endPercent) / 2;
+    
+    // Position start click area
+    const startAreaLeft = Math.max(0, startPercent - clickAreaSize/2);
+    const startAreaRight = Math.min(midPoint - 1, startPercent + clickAreaSize/2);
+    
+    startArea.style.left = startAreaLeft + '%';
+    startArea.style.width = (startAreaRight - startAreaLeft) + '%';
+    
+    // Position end click area  
+    const endAreaLeft = Math.max(midPoint + 1, endPercent - clickAreaSize/2);
+    const endAreaRight = Math.min(100, endPercent + clickAreaSize/2);
+    
+    endArea.style.left = endAreaLeft + '%';
+    endArea.style.width = (endAreaRight - endAreaLeft) + '%';
+}
+
+/**
+ * Handle clicks on the dynamic click areas
+ */
+function handleSliderClick(event, type) {
+    const startSlider = document.getElementById('time-start');
+    const endSlider = document.getElementById('time-end');
+    
+    if (!startSlider || !endSlider) return;
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickPercent = (clickX / rect.width) * 100;
+    
+    // Convert click position to hour value
+    const clickHour = Math.round((clickPercent / 100) * 23);
+    
+    if (type === 'start') {
+        const newStartVal = Math.max(0, Math.min(23, clickHour));
+        const endVal = parseInt(endSlider.value);
+        
+        // Collision avoidance: move other handle if necessary
+        if (newStartVal >= endVal && !(newStartVal === 0 && endVal === 0)) {
+            if (endVal < 23) {
+                endSlider.value = newStartVal + 1;
+            } else {
+                startSlider.value = endVal - 1;
+                updateTimeRange(startSlider, 'start');
+                updateClickAreas();
+                return;
+            }
+        }
+        
+        startSlider.value = newStartVal;
+        updateTimeRange(startSlider, 'start');
+    } else if (type === 'end') {
+        const newEndVal = Math.max(0, Math.min(23, clickHour));
+        const startVal = parseInt(startSlider.value);
+        
+        // Collision avoidance: move other handle if necessary
+        if (newEndVal <= startVal && !(startVal === 0 && newEndVal === 0)) {
+            if (startVal > 0) {
+                startSlider.value = newEndVal - 1;
+            } else {
+                endSlider.value = startVal + 1;
+                updateTimeRange(endSlider, 'end');
+                updateClickAreas();
+                return;
+            }
+        }
+        
+        endSlider.value = newEndVal;
+        updateTimeRange(endSlider, 'end');
+    }
+    
+    updateClickAreas();
+}
+
+/**
+ * Update the time range display and handle collisions
+ */
 function updateTimeRange(slider, type) {
     const startSlider = document.getElementById('time-start');
     const endSlider = document.getElementById('time-end');
@@ -297,31 +403,34 @@ function updateTimeRange(slider, type) {
     let startVal = parseInt(startSlider.value);
     let endVal = parseInt(endSlider.value);
     
-    // Handle collision prevention with proper logic
-    if (type === 'start') {
-        // If user is moving start slider and it would collide with end
-        if (startVal >= endVal) {
-            // Only adjust if we're at the boundary - try to move end first
-            if (endVal < 23) {
-                endVal = startVal + 1;
-                endSlider.value = endVal;
-            } else {
-                // If end can't move further, constrain start
-                startVal = endVal - 1;
-                startSlider.value = startVal;
+    // Special case: Allow 0-0 for full day operation (24 hours)
+    if (startVal === 0 && endVal === 0) {
+        // This is valid - full day operation
+    } else {
+        // Smart collision handling - move the other handle when possible
+        if (type === 'start') {
+            if (startVal >= endVal) {
+                if (endVal < 23) {
+                    // Move end handle forward
+                    endVal = startVal + 1;
+                    endSlider.value = endVal;
+                } else {
+                    // End can't move, constrain start
+                    startVal = 22;
+                    startSlider.value = startVal;
+                }
             }
-        }
-    } else if (type === 'end') {
-        // If user is moving end slider and it would collide with start
-        if (endVal <= startVal) {
-            // Only adjust if we're at the boundary - try to move start first
-            if (startVal > 0) {
-                startVal = endVal - 1;
-                startSlider.value = startVal;
-            } else {
-                // If start can't move further, constrain end
-                endVal = startVal + 1;
-                endSlider.value = endVal;
+        } else if (type === 'end') {
+            if (endVal <= startVal) {
+                if (startVal > 0) {
+                    // Move start handle backward
+                    startVal = endVal - 1;
+                    startSlider.value = startVal;
+                } else {
+                    // Start can't move, constrain end
+                    endVal = 1;
+                    endSlider.value = endVal;
+                }
             }
         }
     }
@@ -330,13 +439,21 @@ function updateTimeRange(slider, type) {
     startVal = parseInt(startSlider.value);
     endVal = parseInt(endSlider.value);
     
-    // Update visual track
+    // Update visual track with accurate positioning
     const track = document.getElementById('time-track');
     if (track) {
-        const startPercent = (startVal / 23) * 100;
-        const endPercent = (endVal / 23) * 100;
-        track.style.left = startPercent + '%';
-        track.style.width = (endPercent - startPercent) + '%';
+        if (startVal === 0 && endVal === 0) {
+            // Full day operation - show full width
+            track.style.left = '0%';
+            track.style.width = '100%';
+        } else {
+            // Calculate percentages based on the 24-hour scale (0-24, not 0-23)
+            const startPercent = (startVal / 24) * 100;
+            const endPercent = ((endVal + 1) / 24) * 100; // +1 because endVal represents start of final hour
+            
+            track.style.left = startPercent + '%';
+            track.style.width = (endPercent - startPercent) + '%';
+        }
     }
     
     // Update time displays
@@ -344,6 +461,9 @@ function updateTimeRange(slider, type) {
     const endDisplay = document.getElementById('time-display-end');
     if (startDisplay) startDisplay.textContent = String(startVal).padStart(2, '0') + ':00';
     if (endDisplay) endDisplay.textContent = String(endVal).padStart(2, '0') + ':00';
+    
+    // Update click areas after any changes
+    updateClickAreas();
     
     // Update frequency display to include new time range
     if (typeof updateFrequencyDisplay === 'function') {

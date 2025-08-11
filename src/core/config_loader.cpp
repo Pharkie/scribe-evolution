@@ -51,6 +51,16 @@ bool loadRuntimeConfig()
         return false;
     }
 
+    // Load device configuration
+    JsonObject device = doc["device"];
+    g_runtimeConfig.deviceOwner = device["owner"] | defaultDeviceOwner;
+    g_runtimeConfig.timezone = device["timezone"] | defaultTimezone;
+
+    // Load WiFi configuration
+    JsonObject wifi = doc["wifi"];
+    g_runtimeConfig.wifiSSID = wifi["ssid"] | "";
+    g_runtimeConfig.wifiPassword = wifi["password"] | "";
+
     // Load MQTT configuration
     JsonObject mqtt = doc["mqtt"];
     g_runtimeConfig.mqttServer = mqtt["server"] | defaultMqttServer;
@@ -113,6 +123,14 @@ bool loadRuntimeConfig()
 
 void loadDefaultConfig()
 {
+    // Load device defaults
+    g_runtimeConfig.deviceOwner = defaultDeviceOwner;
+    g_runtimeConfig.timezone = defaultTimezone;
+
+    // Load WiFi defaults (empty by default, must be configured)
+    g_runtimeConfig.wifiSSID = "";
+    g_runtimeConfig.wifiPassword = "";
+
     // Load defaults from config.h constants
     g_runtimeConfig.mqttServer = defaultMqttServer;
     g_runtimeConfig.mqttPort = defaultMqttPort;
@@ -153,7 +171,8 @@ const RuntimeConfig &getRuntimeConfig()
 {
     if (!g_configLoaded)
     {
-        LOG_NOTICE("CONFIG", "First-time startup: Loading default configuration from config.h (config.json will be created)");
+        // Don't use LOG_NOTICE here to avoid recursive calls during logging initialization
+        Serial.println("[CONFIG] First-time startup: Loading default configuration from config.h");
         loadDefaultConfig();
     }
     return g_runtimeConfig;

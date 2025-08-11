@@ -12,6 +12,22 @@ size_t MultiOutputPrint::write(uint8_t c)
     return write((const uint8_t *)message.c_str(), message.length());
 }
 
+#include "config_utils.h"
+
+// Safe device owner accessor for logging - avoids recursive calls during initialization
+static const char *getSafeDeviceOwner()
+{
+    static bool firstCall = true;
+    if (firstCall)
+    {
+        // On first call during initialization, just use the default to avoid recursion
+        firstCall = false;
+        return defaultDeviceOwner;
+    }
+    // After first call, safe to use the dynamic version
+    return getDeviceOwnerKey();
+}
+
 size_t MultiOutputPrint::write(const uint8_t *buffer, size_t size)
 {
     String message;
@@ -103,7 +119,7 @@ void logToMQTT(const String &message, const String &level, const String &compone
         DynamicJsonDocument doc(1024);
         doc["device_timestamp"] = getFormattedDateTime();
         doc["device"] = String(getMdnsHostname());
-        doc["device_owner"] = getDeviceOwnerKey();
+        doc["device_owner"] = getSafeDeviceOwner();
         doc["level"] = level;
         doc["message"] = message;
 
@@ -148,7 +164,7 @@ void logToBetterStack(const String &message, const String &level, const String &
 
     // Create BetterStack log entry with structured tags
     DynamicJsonDocument doc(1024);
-    doc["device_owner"] = getDeviceOwnerKey();
+    doc["device_owner"] = getSafeDeviceOwner();
     doc["level"] = level;
     doc["message"] = cleanMessage;
     doc["device_timestamp"] = getFormattedDateTime();
@@ -228,7 +244,7 @@ void structuredLog(const char *component, int level, const char *format, ...)
     // Log to Serial/File with component tag (if enabled)
     if (enableSerialLogging || enableFileLogging)
     {
-        String formattedMessage = "[" + String(getDeviceOwnerKey()) + "] [" + String(component) + "] " + message;
+        String formattedMessage = "[" + String(getSafeDeviceOwner()) + "] [" + String(component) + "] " + message;
 
         // Use ArduinoLog for Serial/File outputs
         switch (level)

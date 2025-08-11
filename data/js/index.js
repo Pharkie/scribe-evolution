@@ -37,8 +37,11 @@ function initializePrinterSelection() {
   // Clear existing content
   container.innerHTML = '';
   
-  // Add local-direct printer option
-  const localDirectOption = createPrinterOption('local-direct', '🖨️', 'Local direct (Pharkie)', true);
+  // Get local printer name from config
+  const localPrinterName = window.GLOBAL_CONFIG?.printers?.local?.name || 'Unknown';
+  
+  // Add local-direct printer option with dynamic name
+  const localDirectOption = createPrinterOption('local-direct', '🖨️', `Local direct (${localPrinterName})`, true);
   container.appendChild(localDirectOption);
   
   // Add remote printers from PRINTERS config (this will now include local MQTT as first entry)

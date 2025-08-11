@@ -13,6 +13,9 @@ PubSubClient mqttClient(wifiSecureClient);
 unsigned long lastMQTTReconnectAttempt = 0;
 const unsigned long mqttReconnectInterval = 5000; // 5 seconds
 
+// Track current subscription
+String currentSubscribedTopic = "";
+
 // === MQTT Functions ===
 void setupMQTT()
 {
@@ -73,9 +76,15 @@ void connectToMQTT()
     if (connected)
     {
         // Subscribe to the inbox topic
-        if (!mqttClient.subscribe(getLocalPrinterTopic()))
+        String newTopic = String(getLocalPrinterTopic());
+        if (!mqttClient.subscribe(newTopic.c_str()))
         {
-            LOG_ERROR("MQTT", "MQTT connected. Failed to subscribe to topic: %s", getLocalPrinterTopic());
+            LOG_ERROR("MQTT", "MQTT connected. Failed to subscribe to topic: %s", newTopic.c_str());
+        }
+        else
+        {
+            currentSubscribedTopic = newTopic;
+            LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
         }
     }
     else
@@ -148,5 +157,48 @@ void handleMQTTConnection()
     else
     {
         mqttClient.loop(); // Handle incoming MQTT messages
+    }
+}
+
+void updateMQTTSubscription()
+{
+    if (!mqttClient.connected())
+    {
+        LOG_VERBOSE("MQTT", "MQTT not connected, subscription will be updated on next connection");
+        return;
+    }
+
+    String newTopic = String(getLocalPrinterTopic());
+
+    // Check if we need to update subscription
+    if (currentSubscribedTopic == newTopic)
+    {
+        LOG_VERBOSE("MQTT", "MQTT subscription already up to date: %s", newTopic.c_str());
+        return;
+    }
+
+    // Unsubscribe from old topic if we were subscribed to something
+    if (currentSubscribedTopic.length() > 0)
+    {
+        if (mqttClient.unsubscribe(currentSubscribedTopic.c_str()))
+        {
+            LOG_NOTICE("MQTT", "Unsubscribed from old topic: %s", currentSubscribedTopic.c_str());
+        }
+        else
+        {
+            LOG_WARNING("MQTT", "Failed to unsubscribe from old topic: %s", currentSubscribedTopic.c_str());
+        }
+    }
+
+    // Subscribe to new topic
+    if (mqttClient.subscribe(newTopic.c_str()))
+    {
+        currentSubscribedTopic = newTopic;
+        LOG_NOTICE("MQTT", "Successfully subscribed to new topic: %s", newTopic.c_str());
+    }
+    else
+    {
+        LOG_ERROR("MQTT", "Failed to subscribe to new topic: %s", newTopic.c_str());
+        currentSubscribedTopic = ""; // Clear since subscription failed
     }
 }

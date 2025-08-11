@@ -346,7 +346,7 @@ def upload_filesystem_and_firmware(source, target, env):
     if fs_result != 0:
         print("❌ Filesystem upload failed!")
         env.Exit(1)
-    
+
     print("✅ Filesystem uploaded successfully!")
 
     # Step 4: Wait for ESP32 to boot and stabilize after filesystem upload

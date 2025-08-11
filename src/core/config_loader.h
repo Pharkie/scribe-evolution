@@ -14,13 +14,22 @@
 #include <ArduinoJson.h>
 
 // Runtime configuration structure
-struct RuntimeConfig {
+struct RuntimeConfig
+{
+    // Device Configuration
+    String deviceOwner;
+    String timezone;
+
+    // WiFi Configuration
+    String wifiSSID;
+    String wifiPassword;
+
     // MQTT Configuration
     String mqttServer;
     int mqttPort;
     String mqttUsername;
     String mqttPassword;
-    
+
     // API Configuration
     String jokeAPI;
     String quoteAPI;
@@ -29,17 +38,17 @@ struct RuntimeConfig {
     String betterStackEndpoint;
     String chatgptApiToken;
     String chatgptApiEndpoint;
-    
+
     // Validation Configuration (only user-configurable parts)
     int maxCharacters;
-    
+
     // Unbidden Ink Configuration
     bool unbiddenInkEnabled;
     int unbiddenInkStartHour;
     int unbiddenInkEndHour;
     int unbiddenInkFrequencyMinutes;
     String unbiddenInkPrompt;
-    
+
     // Button Configuration (exactly 4 buttons)
     String buttonShortActions[4]; // Short press actions for buttons 1-4
     String buttonLongActions[4];  // Long press actions for buttons 1-4 (empty string = no action)
@@ -61,7 +70,7 @@ void loadDefaultConfig();
  * @brief Get the current runtime configuration
  * @return Reference to the runtime configuration
  */
-const RuntimeConfig& getRuntimeConfig();
+const RuntimeConfig &getRuntimeConfig();
 
 /**
  * @brief Initialize configuration system - must be called after LittleFS.begin()

@@ -26,5 +26,6 @@ void connectToMQTT();
 void mqttCallback(char *topic, byte *payload, unsigned int length);
 void handleMQTTMessage(String message);
 void handleMQTTConnection();
+void updateMQTTSubscription();
 
 #endif // MQTT_HANDLER_H
