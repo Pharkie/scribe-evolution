@@ -24,7 +24,7 @@ async function loadDiagnostics() {
     }
     const data = await response.json();
     
-    displayDiagnostics(data);
+    await displayDiagnostics(data);
   } catch (error) {
     console.error('Failed to load diagnostics:', error);
     displayDiagnosticsError(error.message);
@@ -106,9 +106,9 @@ function populateDataFields(element, data) {
 }
 
 /**
- * Display diagnostics data
+ * Display diagnostics data in the page elements
  */
-function displayDiagnostics(data) {
+async function displayDiagnostics(data) {
   // Store data globally for timestamp formatting
   window.lastDiagnosticsData = data;
   
@@ -140,27 +140,40 @@ function displayDiagnostics(data) {
     deviceConfigSection.classList.remove('hidden');
   }
 
-  // Show and populate config file section
+  // Show and populate config file section - fetch from /config endpoint
   const configFileSection = document.getElementById('config-file-section');
   if (configFileSection) {
     const configFileContents = document.getElementById('config-file-contents');
     const configFileSize = document.querySelector('[data-field="config-file-size"]');
     
-    if (configFileContents && data.configuration) {
-      // Pretty print the configuration JSON with syntax highlighting
-      const configJson = JSON.stringify(data.configuration, null, 2);
-      configFileContents.innerHTML = `<code class="language-json">${escapeHtml(configJson)}</code>`;
-      
-      // Calculate and display file size
-      const sizeInBytes = new Blob([configJson]).size;
-      const sizeDisplay = sizeInBytes < 1024 ? `${sizeInBytes} B` : `${(sizeInBytes / 1024).toFixed(1)} KB`;
-      if (configFileSize) {
-        configFileSize.textContent = sizeDisplay;
-      }
-    } else if (configFileContents) {
-      configFileContents.innerHTML = '<code class="language-json">Configuration not available</code>';
-      if (configFileSize) {
-        configFileSize.textContent = '0 B';
+    if (configFileContents) {
+      try {
+        // Fetch the full config from /config endpoint
+        const configResponse = await fetch('/config');
+        if (configResponse.ok) {
+          const configData = await configResponse.json();
+          
+          // Pretty print the configuration JSON with syntax highlighting
+          const configJson = JSON.stringify(configData, null, 2);
+          configFileContents.innerHTML = `<code class="language-json">${escapeHtml(configJson)}</code>`;
+          
+          // Calculate and display file size
+          const sizeInBytes = new Blob([configJson]).size;
+          const sizeDisplay = sizeInBytes < 1024 ? `${sizeInBytes} B` : `${(sizeInBytes / 1024).toFixed(1)} KB`;
+          if (configFileSize) {
+            configFileSize.textContent = sizeDisplay;
+          }
+        } else {
+          configFileContents.innerHTML = `<code class="text-red-500">Error fetching config: HTTP ${configResponse.status}</code>`;
+          if (configFileSize) {
+            configFileSize.textContent = '0 B';
+          }
+        }
+      } catch (error) {
+        configFileContents.innerHTML = `<code class="text-red-500">Error: ${escapeHtml(error.message)}</code>`;
+        if (configFileSize) {
+          configFileSize.textContent = '0 B';
+        }
       }
     }
     configFileSection.classList.remove('hidden');

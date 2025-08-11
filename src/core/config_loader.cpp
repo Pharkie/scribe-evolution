@@ -24,7 +24,6 @@ bool loadRuntimeConfig()
         LOG_WARNING("CONFIG", "config.json not found, creating from defaults");
         if (createDefaultConfigFile())
         {
-            LOG_NOTICE("CONFIG", "Default config.json created, attempting to load");
             configFile = LittleFS.open("/config.json", "r");
             if (!configFile)
             {
@@ -109,7 +108,6 @@ bool loadRuntimeConfig()
     }
 
     g_configLoaded = true;
-    LOG_NOTICE("CONFIG", "Configuration loaded from config.json successfully");
     return true;
 }
 
@@ -163,12 +161,8 @@ const RuntimeConfig &getRuntimeConfig()
 
 bool initializeConfigSystem()
 {
-    if (!LittleFS.begin())
-    {
-        LOG_ERROR("CONFIG", "Failed to initialize LittleFS");
-        return false;
-    }
-
+    // LittleFS should already be mounted by main.cpp before calling this function
+    // Just load the runtime configuration
     return loadRuntimeConfig();
 }
 
@@ -197,6 +191,16 @@ bool createDefaultConfigFile()
     }
 
     DynamicJsonDocument doc(largeJsonDocumentSize);
+
+    // Device Configuration
+    JsonObject device = doc.createNestedObject("device");
+    device["owner"] = defaultDeviceOwner;
+    device["timezone"] = defaultTimezone;
+
+    // WiFi Configuration (populated from config.h on first boot)
+    JsonObject wifi = doc.createNestedObject("wifi");
+    wifi["ssid"] = defaultWifiSSID;
+    wifi["password"] = defaultWifiPassword;
 
     // MQTT Configuration
     JsonObject mqtt = doc.createNestedObject("mqtt");
@@ -245,6 +249,5 @@ bool createDefaultConfigFile()
     serializeJson(doc, configFile);
     configFile.close();
 
-    LOG_NOTICE("CONFIG", "Created default config.json file from config.h constants");
     return true;
 }

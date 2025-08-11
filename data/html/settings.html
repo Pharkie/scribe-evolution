@@ -123,30 +123,34 @@
                     <span class="text-3xl">📡</span>
                     <span>MQTT Configuration</span>
                 </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-6">
+                    <!-- Server gets full width -->
                     <div class="space-y-2">
                         <label for="mqtt-server"
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">Server:</label>
                         <input type="text" id="mqtt-server" name="mqtt.server" required
                             class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                     </div>
-                    <div class="space-y-2">
-                        <label for="mqtt-port"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Port:</label>
-                        <input type="number" id="mqtt-port" name="mqtt.port" min="1" max="65535" required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="mqtt-username"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username:</label>
-                        <input type="text" id="mqtt-username" name="mqtt.username" required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="mqtt-password"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password:</label>
-                        <input type="password" id="mqtt-password" name="mqtt.password" required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    <!-- Username, Password, Port share the row (1/3 each) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="space-y-2">
+                            <label for="mqtt-username"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username:</label>
+                            <input type="text" id="mqtt-username" name="mqtt.username" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-password"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password:</label>
+                            <input type="password" id="mqtt-password" name="mqtt.password" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-port"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Port:</label>
+                            <input type="number" id="mqtt-port" name="mqtt.port" min="1" max="65535" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -249,7 +253,7 @@
 
                                 <!-- Hour markers -->
                                 <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                    <span>0</span><span>6</span><span>12</span><span>18</span><span>24</span>
+                                    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span>
                                 </div>
                             </div>
                         </div>
@@ -294,7 +298,8 @@
                                     <span
                                         class="inline-flex items-center px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-lg text-sm font-medium">
                                         <span class="text-lg mr-2">⏱️</span>
-                                        <span id="frequency-display">Every 1 hour</span>
+                                        <span id="frequency-display">Around once per hour from 8 am to 10 pm each
+                                            day</span>
                                     </span>
                                 </div>
                             </div>
@@ -385,10 +390,6 @@
                     <span>Button Configuration</span>
                 </h2>
                 <div class="space-y-6">
-                    <div class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                        Configure exactly 4 hardware buttons. Choose different actions for short press and long press.
-                        Leave long press empty for no action.
-                    </div>
 
                     <!-- Button 1 -->
                     <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
@@ -398,8 +399,9 @@
                                 <label for="button1-short"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
                                     Action:</label>
-                                <select id="button1-short" name="buttons.button1.shortAction" required
+                                <select id="button1-short" name="buttons.button1.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
                                     <option value="/joke">Joke</option>
                                     <option value="/riddle">Riddle</option>
                                     <option value="/quote">Quote</option>
@@ -434,8 +436,9 @@
                                 <label for="button2-short"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
                                     Action:</label>
-                                <select id="button2-short" name="buttons.button2.shortAction" required
+                                <select id="button2-short" name="buttons.button2.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
                                     <option value="/joke">Joke</option>
                                     <option value="/riddle">Riddle</option>
                                     <option value="/quote">Quote</option>
@@ -470,8 +473,9 @@
                                 <label for="button3-short"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
                                     Action:</label>
-                                <select id="button3-short" name="buttons.button3.shortAction" required
+                                <select id="button3-short" name="buttons.button3.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
                                     <option value="/joke">Joke</option>
                                     <option value="/riddle">Riddle</option>
                                     <option value="/quote">Quote</option>
@@ -506,8 +510,9 @@
                                 <label for="button4-short"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
                                     Action:</label>
-                                <select id="button4-short" name="buttons.button4.shortAction" required
+                                <select id="button4-short" name="buttons.button4.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
                                     <option value="/joke">Joke</option>
                                     <option value="/riddle">Riddle</option>
                                     <option value="/quote">Quote</option>

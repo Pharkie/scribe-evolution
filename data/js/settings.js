@@ -6,31 +6,26 @@
 let currentConfig = {};
 
 /**
- * Load configuration - either from global config or fetch if not available
+ * Load configuration - wait for global config to be available
  */
 async function loadConfiguration() {
     try {
         let config;
         
-        // Check if global config is already loaded
-        if (window.GLOBAL_CONFIG && Object.keys(window.GLOBAL_CONFIG).length > 0) {
-            config = window.GLOBAL_CONFIG;
-        } else {
-            // Wait for config to be loaded, or load it ourselves
-            if (typeof loadConfig === 'function') {
-                await loadConfig();
-                config = window.GLOBAL_CONFIG;
-            } else {
-                // Fallback: load config directly
-                const response = await fetch('/config');
-                if (!response.ok) {
-                    throw new Error(`Failed to load configuration: ${response.status}`);
-                }
-                config = await response.json();
-                window.GLOBAL_CONFIG = config;
-            }
+        // Wait for global config to be loaded (with timeout)
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds total
+        
+        while ((!window.GLOBAL_CONFIG || Object.keys(window.GLOBAL_CONFIG).length === 0) && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
         }
         
+        if (!window.GLOBAL_CONFIG || Object.keys(window.GLOBAL_CONFIG).length === 0) {
+            throw new Error('Global config not loaded within timeout');
+        }
+        
+        config = window.GLOBAL_CONFIG;
         currentConfig = config;
         populateForm(config);
         
@@ -138,9 +133,10 @@ function collectFormData() {
             username: document.getElementById('mqtt-username').value,
             password: document.getElementById('mqtt-password').value
         },
-        // API configuration
+        // API configuration - include all API fields from loaded config, updating only user-editable ones
         apis: {
-            chatgptApiToken: document.getElementById('chatgpt-api-token').value
+            ...g_runtimeConfig.apis, // Include all existing API config
+            chatgptApiToken: document.getElementById('chatgpt-api-token').value // Only update user-editable field
         },
         // Validation settings
         validation: {
@@ -251,26 +247,22 @@ function showMessage(message, type) {
 function toggleUnbiddenInkSettings() {
     const enabled = document.getElementById('unbidden-ink-enabled').checked;
     const settingsSection = document.getElementById('unbidden-ink-settings');
-    const promptSection = document.getElementById('unbidden-ink-prompt-section');
+    
+    if (!settingsSection) {
+        console.warn('unbidden-ink-settings element not found');
+        return;
+    }
     
     if (enabled) {
         settingsSection.classList.remove('hidden');
-        promptSection.classList.remove('hidden');
         // Remove disabled attribute from inputs when enabled
         settingsSection.querySelectorAll('input, textarea').forEach(input => {
             input.removeAttribute('disabled');
         });
-        promptSection.querySelectorAll('input, textarea').forEach(input => {
-            input.removeAttribute('disabled');
-        });
     } else {
         settingsSection.classList.add('hidden');
-        promptSection.classList.add('hidden');
         // Disable inputs when hidden to prevent validation issues
         settingsSection.querySelectorAll('input, textarea').forEach(input => {
-            input.setAttribute('disabled', 'disabled');
-        });
-        promptSection.querySelectorAll('input, textarea').forEach(input => {
             input.setAttribute('disabled', 'disabled');
         });
     }
@@ -295,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========================================
 
 /**
- * Update time range display and visual track
+ * Update time range display and handle dual-slider constraints
  */
 function updateTimeRange(slider, type) {
     const startSlider = document.getElementById('time-start');
@@ -306,14 +298,38 @@ function updateTimeRange(slider, type) {
     let startVal = parseInt(startSlider.value);
     let endVal = parseInt(endSlider.value);
     
-    // Prevent invalid ranges
-    if (type === 'start' && startVal >= endVal) {
-        endVal = Math.min(startVal + 1, 23);
-        endSlider.value = endVal;
-    } else if (type === 'end' && endVal <= startVal) {
-        startVal = Math.max(endVal - 1, 0);
-        startSlider.value = startVal;
+    // Handle collision prevention with proper logic
+    if (type === 'start') {
+        // If user is moving start slider and it would collide with end
+        if (startVal >= endVal) {
+            // Only adjust if we're at the boundary - try to move end first
+            if (endVal < 23) {
+                endVal = startVal + 1;
+                endSlider.value = endVal;
+            } else {
+                // If end can't move further, constrain start
+                startVal = endVal - 1;
+                startSlider.value = startVal;
+            }
+        }
+    } else if (type === 'end') {
+        // If user is moving end slider and it would collide with start
+        if (endVal <= startVal) {
+            // Only adjust if we're at the boundary - try to move start first
+            if (startVal > 0) {
+                startVal = endVal - 1;
+                startSlider.value = startVal;
+            } else {
+                // If start can't move further, constrain end
+                endVal = startVal + 1;
+                endSlider.value = endVal;
+            }
+        }
     }
+    
+    // Get final values after any adjustments
+    startVal = parseInt(startSlider.value);
+    endVal = parseInt(endSlider.value);
     
     // Update visual track
     const track = document.getElementById('time-track');
@@ -329,6 +345,11 @@ function updateTimeRange(slider, type) {
     const endDisplay = document.getElementById('time-display-end');
     if (startDisplay) startDisplay.textContent = String(startVal).padStart(2, '0') + ':00';
     if (endDisplay) endDisplay.textContent = String(endVal).padStart(2, '0') + ':00';
+    
+    // Update frequency display to include new time range
+    if (typeof updateFrequencyDisplay === 'function') {
+        updateFrequencyDisplay();
+    }
 }
 
 /**
@@ -360,22 +381,38 @@ function setFrequency(minutes) {
 function updateFrequencyDisplay() {
     const input = document.getElementById('frequency-minutes');
     const display = document.getElementById('frequency-display');
+    const startSlider = document.getElementById('time-start');
+    const endSlider = document.getElementById('time-end');
     
-    if (!input || !display) return;
+    if (!input || !display || !startSlider || !endSlider) return;
     
     const minutes = parseInt(input.value);
+    const startHour = parseInt(startSlider.value);
+    const endHour = parseInt(endSlider.value);
+    
+    // Format hours for display
+    const formatHour = (hour) => {
+        if (hour === 0) return '12 am';
+        if (hour < 12) return `${hour} am`;
+        if (hour === 12) return '12 pm';
+        return `${hour - 12} pm`;
+    };
+    
+    const startTime = formatHour(startHour);
+    const endTime = formatHour(endHour);
+    
     let text;
     
     if (minutes < 60) {
-        text = `Every ${minutes} minutes`;
+        text = `Around every ${minutes} minutes from ${startTime} to ${endTime} each day`;
     } else {
         const hours = minutes / 60;
         if (hours === 1) {
-            text = 'Every 1 hour';
+            text = `Around once per hour from ${startTime} to ${endTime} each day`;
         } else if (hours % 1 === 0) {
-            text = `Every ${hours} hours`;
+            text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
         } else {
-            text = `Every ${hours} hours`;
+            text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
         }
     }
     

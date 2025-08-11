@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+# pylint: disable=undefined-variable
+# Note: Import and env are provided by PlatformIO framework
 
-Import("env")  # pylint: disable=undefined-variable
+Import("env")  # PlatformIO framework function
 import os
 import subprocess
 import time
@@ -300,7 +302,7 @@ def upload_filesystem_and_firmware(source, target, env):
         # Run npm build-css command
         result = subprocess.run(
             ["npm", "run", "build-css"],
-            cwd=os.getcwd(),  # Current working directory
+            cwd=os.getcwd(),
             check=True,
             capture_output=True,
             text=True,
@@ -338,21 +340,71 @@ def upload_filesystem_and_firmware(source, target, env):
         print("❌ npm not found! Please ensure Node.js and npm are installed.")
         env.Exit(1)
 
-    # Step 3: Upload filesystem
-    print("📁 Uploading filesystem...")
-    fs_result = env.Execute("pio run --environment main --target uploadfs")
-    if fs_result != 0:
-        print("❌ Filesystem upload failed!")
+    # Step 3: Upload filesystem (without reset)
+    print("📁 Uploading filesystem (without reset)...")
+
+    # First, build the filesystem
+    fs_build_result = env.Execute("pio run --environment main --target buildfs")
+    if fs_build_result != 0:
+        print("❌ Filesystem build failed!")
         env.Exit(1)
 
-    # Step 3.5: Reset connection before firmware upload
-    print("🔄 Resetting connection for firmware upload...")
-    time.sleep(1)  # Brief pause between uploads
-    kill_vscode_tasks()  # Additional VS Code task cleanup
-    kill_serial_processes()  # Additional cleanup
-    reset_esp32_connection()
+    # Now upload filesystem with --noreset flag
+    # We need to get the built filesystem image and upload it directly
+    try:
+        # Get upload port from environment
+        upload_port = env.subst("$UPLOAD_PORT")
 
-    # Step 4: Upload firmware and start monitoring
+        # Get the built filesystem image path
+        fs_image_path = os.path.join(".pio", "build", "main", "littlefs.bin")
+
+        if not os.path.exists(fs_image_path):
+            print(f"❌ Filesystem image not found at {fs_image_path}")
+            env.Exit(1)
+
+        # Use esptool directly with --noreset flag
+        esptool_cmd = [
+            CURRENT_PYTHON,
+            "-m",
+            "esptool",
+            "--port",
+            upload_port,
+            "--baud",
+            "921600",
+            "--before",
+            "default_reset",
+            "--after",
+            "no_reset",  # This prevents reset after upload
+            "--chip",
+            "esp32c3",
+            "write_flash",
+            "0x210000",  # LittleFS partition offset for ESP32-C3
+            fs_image_path,
+        ]
+
+        print(f"   Running: {' '.join(esptool_cmd)}")
+        result = subprocess.run(esptool_cmd, check=True, capture_output=True, text=True)
+        print("✅ Filesystem uploaded successfully (no reset)!")
+        if result.stdout:
+            print(f"   Output: {result.stdout.strip()}")
+
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
+        print("❌ Filesystem upload failed!")
+        if hasattr(e, "stderr") and e.stderr:
+            print(f"   Error: {e.stderr}")
+        else:
+            print(f"   Error: {e}")
+        print("   Falling back to standard upload...")
+        fs_result = env.Execute("pio run --environment main --target uploadfs")
+        if fs_result != 0:
+            print("❌ Filesystem upload failed!")
+            env.Exit(1)
+
+    # Step 4: Brief pause before firmware upload (no connection reset needed since we didn't reset)
+    print("⏳ Brief pause before firmware upload...")
+    time.sleep(0.5)  # Just a brief pause, no need for full reset cycle
+
+    # Step 5: Upload firmware and start monitoring
     print("💾 Uploading firmware and starting monitor...")
     fw_result = env.Execute(
         "pio run --environment main --target upload --target monitor"
@@ -362,6 +414,7 @@ def upload_filesystem_and_firmware(source, target, env):
         env.Exit(1)
 
     print("✅ Complete upload finished and monitoring started!")
+    print("🎯 Device should now boot without missing initial serial messages!")
 
 
 # Add custom target
@@ -370,5 +423,5 @@ env.AddCustomTarget(  # pylint: disable=undefined-variable
     dependencies=None,
     actions=[upload_filesystem_and_firmware],
     title="Python, CSS, Upload FS, Build & Upload Firmware, Monitor",
-    description="Setup Python environment, build Tailwind CSS, then upload filesystem and firmware with ESP32 reset, then monitor",
+    description="Setup Python environment, build Tailwind CSS, then upload filesystem and firmware with enhanced workflow",
 )
