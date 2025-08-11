@@ -20,6 +20,7 @@
 #include "../core/config_loader.h"
 #include "../core/config_utils.h"
 #include "../core/logging.h"
+#include "../core/mqtt_handler.h"
 #include "../hardware/hardware_buttons.h"
 #include "../content/unbidden_ink.h"
 #include <WebServer.h>
@@ -48,7 +49,7 @@ void handleStatus()
     DynamicJsonDocument doc(2048); // Large size for comprehensive data
 
     // Device configuration
-    doc["device_owner"] = String(defaultDeviceOwner);
+    doc["device_owner"] = String(getDeviceOwnerKey());
     doc["mdns_hostname"] = String(getMdnsHostname());
 
     // Local device timezone
@@ -697,6 +698,19 @@ void handleConfigPost()
     configFile.close();
 
     LOG_NOTICE("WEB", "Configuration saved successfully");
+
+    // Reload runtime configuration to reflect changes immediately
+    if (!loadRuntimeConfig())
+    {
+        LOG_WARNING("WEB", "Failed to reload runtime config after save");
+    }
+    else
+    {
+        LOG_VERBOSE("WEB", "Runtime configuration reloaded successfully");
+
+        // Update MQTT subscription to new device owner topic
+        updateMQTTSubscription();
+    }
 
     // Return success response
     DynamicJsonDocument response(256);
