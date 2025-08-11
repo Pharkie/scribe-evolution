@@ -43,7 +43,7 @@ static char otherTopics[maxOtherPrinters][topicBufferSize];
 // String building functions
 inline const char *buildMqttTopic(const char *key)
 {
-    snprintf(derivedMqttTopic, sizeof(derivedMqttTopic), "scribe/%s/inbox", key);
+    snprintf(derivedMqttTopic, sizeof(derivedMqttTopic), "scribe/%s/print", key);
     return derivedMqttTopic;
 }
 
