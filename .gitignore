@@ -5,6 +5,8 @@
 # Configuration with sensitive data
 src/core/config.h
 data/config.json
+config.json
+config.h
 
 # Build artifacts
 *.bin
