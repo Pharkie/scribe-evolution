@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+
+<head>
+    <title>404 - Page Not Found | Scribe Printer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/tailwind.css">
+</head>
+
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div class="max-w-2xl mx-auto px-4 py-16">
+        <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+            <h1 class="text-3xl font-bold text-red-600 dark:text-red-400 mb-6">🔍 Page Not Found</h1>
+            <div class="text-8xl font-bold text-gray-300 dark:text-gray-600 text-center my-8">404</div>
+            <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">Sorry, the page you're looking for doesn't exist on
+                this Scribe thermal printer.</p>
+
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
+                <strong class="text-gray-900 dark:text-gray-100">Request Details:</strong><br>
+                <div class="text-gray-700 dark:text-gray-300 mt-2 space-y-1">
+                    <div>Method: <span class="font-mono">{{METHOD}}</span></div>
+                    <div>Path: <span class="font-mono">{{URI}}</span></div>
+                    <div>Device: <span class="font-mono">{{HOSTNAME}}.local</span></div>
+                </div>
+            </div>
+
+            <div
+                class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 p-4 rounded-lg mb-6">
+                <strong class="text-green-800 dark:text-green-300">📍 Available Endpoints:</strong><br>
+                <ul class="mt-3 space-y-2">
+                    <li><a href="/"
+                            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">🏠
+                            Home</a> <span class="text-gray-600 dark:text-gray-400">- Main interface</span></li>
+                    <li><a href="/status"
+                            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">📊
+                            Status</a> <span class="text-gray-600 dark:text-gray-400">- System information</span></li>
+                    <li><a href="/config"
+                            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">⚙️
+                            Config</a> <span class="text-gray-600 dark:text-gray-400">- Configuration data (JSON)</span>
+                    </li>
+                </ul>
+                <strong class="text-green-800 dark:text-green-300 block mt-4">🎯 API Endpoints (POST):</strong><br>
+                <ul class="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                    <li><span class="font-mono">/joke</span> <span class="text-gray-600 dark:text-gray-400">- Get a
+                            random joke</span></li>
+                    <li><span class="font-mono">/quote</span> <span class="text-gray-600 dark:text-gray-400">- Get an
+                            inspirational quote</span></li>
+                    <li><span class="font-mono">/quiz</span> <span class="text-gray-600 dark:text-gray-400">- Get a
+                            trivia question</span></li>
+                    <li><span class="font-mono">/riddle</span> <span class="text-gray-600 dark:text-gray-400">- Get a
+                            brain teaser</span></li>
+                    <li><span class="font-mono">/test-print</span> <span class="text-gray-600 dark:text-gray-400">-
+                            Character test content</span></li>
+                    <li><span class="font-mono">/print-local</span> <span class="text-gray-600 dark:text-gray-400">-
+                            Submit receipt for printing</span></li>
+                    <li><span class="font-mono">/mqtt-send</span> <span class="text-gray-600 dark:text-gray-400">- Send
+                            to remote printer</span></li>
+                </ul>
+            </div>
+
+            <a href="/"
+                class="inline-block bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg">
+                ← Back to Home
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

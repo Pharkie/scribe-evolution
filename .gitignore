@@ -1,0 +1,35 @@
+# PlatformIO files
+.pio/
+.vscode/
+
+# Configuration with sensitive data
+src/core/config.h
+data/config.json
+
+# Build artifacts
+*.bin
+*.elf
+*.map
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+.idea/
+.vscode/
+*.code-workspace
+
+# Backup files
+*~
+*.bak
+*.tmp
+
+# Add build artifacts to gitignore
+node_modules/
+package-lock.json
+
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc

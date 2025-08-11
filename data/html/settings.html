@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings - Scribe</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/tailwind.css">
+</head>
+
+<body
+    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <!-- Header with title and back button -->
+    <header class="w-full max-w-4xl mx-auto flex items-center mb-8">
+        <!-- Back button -->
+        <div class="flex-1">
+            <button onclick="goBack()"
+                class="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                <span class="text-sm font-medium">Back</span>
+            </button>
+        </div>
+
+        <!-- Centered title with settings icon -->
+        <div class="flex-1 flex justify-center">
+            <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center space-x-2">
+                <span class="text-5xl">⚙️</span>
+                <span>Settings</span>
+            </h1>
+        </div>
+
+        <!-- Right spacer -->
+        <div class="flex-1"></div>
+    </header>
+
+    <main class="w-full max-w-4xl mx-auto flex-1 space-y-6">
+        <!-- Loading State -->
+        <div id="loading-state"
+            class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700 text-center">
+            <div class="flex items-center justify-center space-x-3">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span class="text-gray-600 dark:text-gray-400">Loading configuration...</span>
+            </div>
+        </div>
+
+        <!-- Settings Form -->
+        <form id="settings-form" class="hidden space-y-6" onsubmit="saveSettings(event)">
+            <!-- WiFi Configuration -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                    <span class="text-3xl">📶</span>
+                    <span>WiFi Configuration</span>
+                </h2>
+
+                <!-- WiFi Warning -->
+                <div
+                    class="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                    <div class="flex items-start space-x-3">
+                        <span class="text-2xl">⚠️</span>
+                        <div>
+                            <h3 class="text-lg font-semibold text-orange-800 dark:text-orange-300">WiFi Change Warning
+                            </h3>
+                            <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                                Changing WiFi settings will cause the device to restart and connect to the new network.
+                                Make sure the SSID and password are correct, or you may lose connection to the device!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label for="wifi-ssid" class="block text-sm font-medium text-gray-700 dark:text-gray-300">WiFi
+                            SSID:</label>
+                        <input type="text" id="wifi-ssid" name="wifi.ssid" required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="wifi-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">WiFi Password:</label>
+                        <input type="password" id="wifi-password" name="wifi.password"
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Configuration -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                    <span class="text-3xl">⚙️</span>
+                    <span>Device Configuration</span>
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label for="device-owner"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Owner:</label>
+                        <input type="text" id="device-owner" name="device.owner" required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="timezone"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Timezone (IANA
+                            format):</label>
+                        <input type="text" id="timezone" name="device.timezone" required
+                            placeholder="e.g. Europe/London, America/New_York, UTC"
+                            pattern="^[A-Za-z_]+/[A-Za-z_]+$|^UTC$"
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Use IANA timezone format (e.g.
+                            Europe/London, America/New_York)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MQTT Configuration -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                    <span class="text-3xl">📡</span>
+                    <span>MQTT Configuration</span>
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label for="mqtt-server"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Server:</label>
+                        <input type="text" id="mqtt-server" name="mqtt.server" required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="mqtt-port"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Port:</label>
+                        <input type="number" id="mqtt-port" name="mqtt.port" min="1" max="65535" required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="mqtt-username"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username:</label>
+                        <input type="text" id="mqtt-username" name="mqtt.username" required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="mqtt-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password:</label>
+                        <input type="password" id="mqtt-password" name="mqtt.password" required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ChatGPT API Configuration -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                    <span class="text-3xl">🤖</span>
+                    <span>ChatGPT API Configuration</span>
+                </h2>
+                <div class="space-y-2">
+                    <label for="chatgpt-api-token"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">ChatGPT API Token:</label>
+                    <input type="password" id="chatgpt-api-token" name="apis.chatgptApiToken" required
+                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Required for Unbidden Ink and AI-powered
+                        features</p>
+                </div>
+            </div>
+
+            <!-- Message Limits -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                    <span class="text-3xl">📏</span>
+                    <span>Message Limits</span>
+                </h2>
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label for="max-characters"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Message Characters
+                            (100-5000):</label>
+                        <input type="number" id="max-characters" name="validation.maxCharacters" min="100" max="5000"
+                            required
+                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unbidden Ink Configuration -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                    <span class="text-3xl">🪄</span>
+                    <span>Unbidden Ink Configuration</span>
+                </h2>
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">🪄</span>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Enable Unbidden Ink
+                                </h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Automatically generate and print
+                                    creative content</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="unbidden-ink-enabled" name="unbiddenInk.enabled"
+                                class="sr-only peer" onchange="toggleUnbiddenInkSettings()">
+                            <div
+                                class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white dark:after:bg-gray-200 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500">
+                            </div>
+                        </label>
+                    </div>
+                    <div id="unbidden-ink-settings" class="space-y-6">
+                        <!-- Time Range Slider -->
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Active Time
+                                Range:</label>
+                            <div class="space-y-2">
+                                <div class="relative">
+                                    <!-- Dual-handle range slider container -->
+                                    <div class="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                                        <!-- Active time track (colored section) -->
+                                        <div id="time-track" class="absolute h-2 bg-purple-500 rounded-lg"
+                                            style="left: 33.33%; width: 58.33%;"></div>
+                                    </div>
+
+                                    <!-- Start time handle -->
+                                    <input type="range" id="time-start" name="unbiddenInk.startHour" min="0" max="23"
+                                        step="1" value="8"
+                                        class="absolute w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer z-20"
+                                        style="top: 0;" oninput="updateTimeRange(this, 'start')">
+
+                                    <!-- End time handle -->
+                                    <input type="range" id="time-end" name="unbiddenInk.endHour" min="0" max="23"
+                                        step="1" value="22"
+                                        class="absolute w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer z-20"
+                                        style="top: 0;" oninput="updateTimeRange(this, 'end')">
+                                </div>
+
+                                <!-- Time display -->
+                                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
+                                    <span id="time-display-start">08:00</span>
+                                    <span class="text-purple-600 dark:text-purple-400 font-medium">Active Period</span>
+                                    <span id="time-display-end">22:00</span>
+                                </div>
+
+                                <!-- Hour markers -->
+                                <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                    <span>0</span><span>6</span><span>12</span><span>18</span><span>24</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Frequency Slider with Presets -->
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Generation
+                                Frequency:</label>
+                            <div class="space-y-4">
+                                <!-- Frequency preset buttons -->
+                                <div class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="15" onclick="setFrequency(15)">15min</button>
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="30" onclick="setFrequency(30)">30min</button>
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="45" onclick="setFrequency(45)">45min</button>
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="60" onclick="setFrequency(60)">1hr</button>
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="120" onclick="setFrequency(120)">2hr</button>
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="240" onclick="setFrequency(240)">4hr</button>
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="360" onclick="setFrequency(360)">6hr</button>
+                                    <button type="button"
+                                        class="freq-preset px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                        data-value="480" onclick="setFrequency(480)">8hr</button>
+                                </div>
+                                <!-- Hidden input for the actual value -->
+                                <input type="hidden" id="frequency-minutes" name="unbiddenInk.frequencyMinutes"
+                                    value="60">
+                                <!-- Current selection display -->
+                                <div class="text-center">
+                                    <span
+                                        class="inline-flex items-center px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-lg text-sm font-medium">
+                                        <span class="text-lg mr-2">⏱️</span>
+                                        <span id="frequency-display">Every 1 hour</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prompt Presets and Custom Input -->
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Content Generation
+                                Prompt:</label>
+
+                            <!-- Prompt preset buttons -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <button type="button"
+                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                    onclick="setPrompt('Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.')">
+                                    <div class="flex items-start space-x-3">
+                                        <span class="text-2xl">💭</span>
+                                        <div>
+                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Inspirational
+                                                Quotes</h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Daily wisdom and
+                                                motivation</p>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <button type="button"
+                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                    onclick="setPrompt('Generate a brief, interesting fact about Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history. Keep it under 250 characters.')">
+                                    <div class="flex items-start space-x-3">
+                                        <span class="text-2xl">🕰️</span>
+                                        <div>
+                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Doctor Who Facts
+                                            </h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Timey-wimey trivia and
+                                                lore</p>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <button type="button"
+                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                    onclick="setPrompt('Write a short, humorous observation about everyday life or a witty one-liner. Keep it light and under 200 characters.')">
+                                    <div class="flex items-start space-x-3">
+                                        <span class="text-2xl">😄</span>
+                                        <div>
+                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Humor & Wit</h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Light-hearted
+                                                observations</p>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <button type="button"
+                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                    onclick="setPrompt('Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.')">
+                                    <div class="flex items-start space-x-3">
+                                        <span class="text-2xl">✨</span>
+                                        <div>
+                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Creative Sparks
+                                            </h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Imaginative and artistic
+                                                content</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Custom prompt textarea -->
+                            <div class="space-y-2">
+                                <label for="unbidden-ink-prompt"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Custom
+                                    Prompt:</label>
+                                <textarea id="unbidden-ink-prompt" name="unbiddenInk.prompt" rows="4"
+                                    placeholder="Enter your custom prompt here, or click one of the preset buttons above..."
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Button Configuration -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center space-x-2">
+                    <span class="text-3xl">🔘</span>
+                    <span>Button Configuration</span>
+                </h2>
+                <div class="space-y-6">
+                    <div class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        Configure exactly 4 hardware buttons. Choose different actions for short press and long press.
+                        Leave long press empty for no action.
+                    </div>
+
+                    <!-- Button 1 -->
+                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 1 (GPIO 5)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label for="button1-short"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                    Action:</label>
+                                <select id="button1-short" name="buttons.button1.shortAction" required
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="button1-long"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                    Action:</label>
+                                <select id="button1-long" name="buttons.button1.longAction"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button 2 -->
+                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 2 (GPIO 6)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label for="button2-short"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                    Action:</label>
+                                <select id="button2-short" name="buttons.button2.shortAction" required
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="button2-long"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                    Action:</label>
+                                <select id="button2-long" name="buttons.button2.longAction"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button 3 -->
+                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 3 (GPIO 7)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label for="button3-short"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                    Action:</label>
+                                <select id="button3-short" name="buttons.button3.shortAction" required
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="button3-long"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                    Action:</label>
+                                <select id="button3-long" name="buttons.button3.longAction"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button 4 -->
+                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 4 (GPIO 8)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label for="button4-short"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                    Action:</label>
+                                <select id="button4-short" name="buttons.button4.shortAction" required
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="button4-long"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                    Action:</label>
+                                <select id="button4-long" name="buttons.button4.longAction"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <option value="">None</option>
+                                    <option value="/joke">Joke</option>
+                                    <option value="/riddle">Riddle</option>
+                                    <option value="/quote">Quote</option>
+                                    <option value="/quiz">Quiz</option>
+                                    <option value="/print-test">Print Test</option>
+                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex space-x-4">
+                <button type="button" onclick="goBack()"
+                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                    Cancel
+                </button>
+                <button type="submit" id="save-button"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                    Save Settings
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Success/Error Messages -->
+    <div id="message-container" class="fixed top-4 right-4 z-50"></div>
+
+    <!-- Loading spinner for save operation -->
+    <div id="save-loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span class="text-gray-800 dark:text-gray-100">Saving settings...</span>
+        </div>
+    </div>
+
+    <script src="/js/app.min.js"></script>
+    <script src="/js/settings.js"></script>
+</body>
+
+</html>
