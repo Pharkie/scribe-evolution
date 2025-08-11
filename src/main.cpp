@@ -85,8 +85,11 @@ void setup()
   // Initialize printer configuration lookup functions
   initializePrinterConfig();
 
-  // Connect to WiFi (required for NTP sync)
-  connectToWiFi();
+  // Initialize status LED
+  initializeStatusLED();
+
+  // Connect to WiFi (required for NTP sync) - may fallback to AP mode
+  currentWiFiMode = connectToWiFi();
 
   // Initialize logging system (before other components that use logging)
   setupLogging();
@@ -173,15 +176,20 @@ void loop()
   // Check WiFi connection and reconnect if needed
   handleWiFiReconnection();
 
+  // Handle DNS server for captive portal in AP mode
+  handleDNSServer();
+
   // Check hardware buttons (works even without WiFi)
   checkHardwareButtons();
 
-  // Handle web server requests (only if WiFi is connected)
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    server.handleClient();
+  // Handle web server requests
+  // In AP mode: only serve settings for configuration
+  // In STA mode: serve all content and handle MQTT
+  server.handleClient();
 
-    // Handle MQTT connection and messages
+  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
+  {
+    // Handle MQTT connection and messages (only in STA mode)
     handleMQTTConnection();
   }
 

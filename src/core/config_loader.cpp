@@ -60,6 +60,7 @@ bool loadRuntimeConfig()
     JsonObject wifi = doc["wifi"];
     g_runtimeConfig.wifiSSID = wifi["ssid"] | "";
     g_runtimeConfig.wifiPassword = wifi["password"] | "";
+    g_runtimeConfig.wifiConnectTimeoutMs = wifi["connect_timeout"] | wifiConnectTimeoutMs;
 
     // Load MQTT configuration
     JsonObject mqtt = doc["mqtt"];
@@ -130,6 +131,7 @@ void loadDefaultConfig()
     // Load WiFi defaults (empty by default, must be configured)
     g_runtimeConfig.wifiSSID = "";
     g_runtimeConfig.wifiPassword = "";
+    g_runtimeConfig.wifiConnectTimeoutMs = wifiConnectTimeoutMs;
 
     // Load defaults from config.h constants
     g_runtimeConfig.mqttServer = defaultMqttServer;
@@ -220,6 +222,7 @@ bool createDefaultConfigFile()
     JsonObject wifi = doc.createNestedObject("wifi");
     wifi["ssid"] = defaultWifiSSID;
     wifi["password"] = defaultWifiPassword;
+    wifi["connect_timeout"] = wifiConnectTimeoutMs;
 
     // MQTT Configuration
     JsonObject mqtt = doc.createNestedObject("mqtt");

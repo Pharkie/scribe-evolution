@@ -143,6 +143,14 @@ static const unsigned long memCheckInterval = 60000; // 60 seconds (memory check
 // Network reconnection settings
 static const unsigned long reconnectInterval = 5000; // 5 seconds (WiFi reconnection interval)
 
+// WiFi fallback AP mode configuration
+static const unsigned long wifiConnectTimeoutMs = 15000; // 15 seconds timeout for WiFi connection
+static const char *fallbackAPSSID = "Scribe-setup";
+static const char *fallbackAPPassword = "scribe123";
+
+// Status LED configuration (ESP32-C3 built-in LED)
+static const int statusLEDPin = 8; // GPIO8 for status LED (ESP32-C3 has built-in LED on GPIO8)
+
 // Web server configuration
 static const int webServerPort = 80; // HTTP port for web server
 

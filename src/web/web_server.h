@@ -32,6 +32,17 @@
 void setupWebServerRoutes(int maxChars);
 
 /**
+ * @brief Handle captive portal redirects in AP mode
+ */
+void handleCaptivePortal();
+
+/**
+ * @brief Check if current request should be redirected to settings in AP mode
+ * @return true if redirect is needed
+ */
+bool shouldRedirectToSettings();
+
+/**
  * @brief Helper function to recursively list directory contents for debugging
  * @param dir Directory file handle
  * @param output String to append directory listing to
