@@ -235,7 +235,6 @@
                 <div class="space-y-6">
                     <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                         <div class="flex items-center space-x-3">
-                            <span class="text-2xl">🪄</span>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Enable Unbidden Ink
                                 </h3>
@@ -251,18 +250,21 @@
                             </div>
                         </label>
                     </div>
-                    
+
                     <div id="unbidden-ink-settings" class="space-y-6">
                         <!-- ChatGPT API Token -->
                         <div class="space-y-2">
                             <label for="chatgpt-api-token"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">ChatGPT API Token:</label>
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">ChatGPT API
+                                Token:</label>
                             <input type="password" id="chatgpt-api-token" name="apis.chatgptApiToken" required
                                 class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Required for Unbidden Ink and AI-powered
-                                features</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Your OpenAI API key for GPT access. <a
+                                    href="https://platform.openai.com/api-keys" target="_blank"
+                                    class="text-purple-600 dark:text-purple-400 hover:underline">Get your API key
+                                    here</a>.</p>
                         </div>
-                        
+
                         <!-- Time Range Slider -->
                         <div class="space-y-4">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Active Time
@@ -306,33 +308,35 @@
                                 </div>
 
                                 <!-- Hour markers -->
-                                <div
-                                    class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1 relative">
-                                    <span style="position: absolute; left: 0%;">0</span>
-                                    <span style="position: absolute; left: 4.17%;">1</span>
-                                    <span style="position: absolute; left: 8.33%;">2</span>
-                                    <span style="position: absolute; left: 12.5%;">3</span>
-                                    <span style="position: absolute; left: 16.67%;">4</span>
-                                    <span style="position: absolute; left: 20.83%;">5</span>
-                                    <span style="position: absolute; left: 25%;">6</span>
-                                    <span style="position: absolute; left: 29.17%;">7</span>
-                                    <span style="position: absolute; left: 33.33%;">8</span>
-                                    <span style="position: absolute; left: 37.5%;">9</span>
-                                    <span style="position: absolute; left: 41.67%;">10</span>
-                                    <span style="position: absolute; left: 45.83%;">11</span>
-                                    <span style="position: absolute; left: 50%;">12</span>
-                                    <span style="position: absolute; left: 54.17%;">13</span>
-                                    <span style="position: absolute; left: 58.33%;">14</span>
-                                    <span style="position: absolute; left: 62.5%;">15</span>
-                                    <span style="position: absolute; left: 66.67%;">16</span>
-                                    <span style="position: absolute; left: 70.83%;">17</span>
-                                    <span style="position: absolute; left: 75%;">18</span>
-                                    <span style="position: absolute; left: 79.17%;">19</span>
-                                    <span style="position: absolute; left: 83.33%;">20</span>
-                                    <span style="position: absolute; left: 87.5%;">21</span>
-                                    <span style="position: absolute; left: 91.67%;">22</span>
-                                    <span style="position: absolute; left: 95.83%;">23</span>
-                                    <span style="position: absolute; left: 100%;">24</span>
+                                <div class="mx-2">
+                                    <div
+                                        class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1 relative">
+                                        <span style="position: absolute; left: 0%;">0</span>
+                                        <span style="position: absolute; left: 4.17%;">1</span>
+                                        <span style="position: absolute; left: 8.33%;">2</span>
+                                        <span style="position: absolute; left: 12.5%;">3</span>
+                                        <span style="position: absolute; left: 16.67%;">4</span>
+                                        <span style="position: absolute; left: 20.83%;">5</span>
+                                        <span style="position: absolute; left: 25%;">6</span>
+                                        <span style="position: absolute; left: 29.17%;">7</span>
+                                        <span style="position: absolute; left: 33.33%;">8</span>
+                                        <span style="position: absolute; left: 37.5%;">9</span>
+                                        <span style="position: absolute; left: 41.67%;">10</span>
+                                        <span style="position: absolute; left: 45.83%;">11</span>
+                                        <span style="position: absolute; left: 50%;">12</span>
+                                        <span style="position: absolute; left: 54.17%;">13</span>
+                                        <span style="position: absolute; left: 58.33%;">14</span>
+                                        <span style="position: absolute; left: 62.5%;">15</span>
+                                        <span style="position: absolute; left: 66.67%;">16</span>
+                                        <span style="position: absolute; left: 70.83%;">17</span>
+                                        <span style="position: absolute; left: 75%;">18</span>
+                                        <span style="position: absolute; left: 79.17%;">19</span>
+                                        <span style="position: absolute; left: 83.33%;">20</span>
+                                        <span style="position: absolute; left: 87.5%;">21</span>
+                                        <span style="position: absolute; left: 91.67%;">22</span>
+                                        <span style="position: absolute; left: 95.83%;">23</span>
+                                        <span style="position: absolute; left: 100%;">24</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -348,13 +352,14 @@
                                         <!-- Background track -->
                                         <div class="absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg"
                                             style="top: 12px;"></div>
-                                        
+
                                         <!-- Frequency slider -->
                                         <input type="range" id="frequency-slider" min="0" max="7" step="1" value="3"
                                             class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer"
-                                            style="top: 0; z-index: 10;" oninput="updateFrequencyFromSlider(this.value)">
+                                            style="top: 0; z-index: 10;"
+                                            oninput="updateFrequencyFromSlider(this.value)">
                                     </div>
-                                    
+
                                     <!-- Frequency markers -->
                                     <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
                                         <span>15min</span>
@@ -367,11 +372,11 @@
                                         <span>8hr</span>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Hidden input for the actual value -->
                                 <input type="hidden" id="frequency-minutes" name="unbiddenInk.frequencyMinutes"
                                     value="60">
-                                    
+
                                 <!-- Current selection display -->
                                 <div class="text-center">
                                     <span
@@ -455,6 +460,14 @@
                                 <textarea id="unbidden-ink-prompt" name="unbiddenInk.prompt" rows="4"
                                     placeholder="Enter your custom prompt here, or click one of the preset buttons above..."
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"></textarea>
+                            </div>
+
+                            <!-- Test Unbidden Ink -->
+                            <div class="pt-4 border-t border-gray-200 dark:border-gray-600">
+                                <button type="button" onclick="testUnbiddenInk()"
+                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                    Bid Unbidden Ink To Print Now
+                                </button>
                             </div>
                         </div>
                     </div>

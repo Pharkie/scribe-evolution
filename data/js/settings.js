@@ -543,9 +543,9 @@ function updateFrequencyDisplay() {
     
     // Format hours for display
     const formatHour = (hour) => {
-        if (hour === 0) return '12 am';
+        if (hour === 0 || hour === 24) return '12 am';  // Midnight
         if (hour < 12) return `${hour} am`;
-        if (hour === 12) return '12 pm';
+        if (hour === 12) return '12 pm';  // Noon
         return `${hour - 12} pm`;
     };
     
@@ -597,4 +597,46 @@ function bringSliderToFront(slider) {
     
     // Bring the active slider to front
     slider.style.zIndex = '30';
+}
+
+/**
+ * Test Unbidden Ink output
+ */
+async function testUnbiddenInk() {
+    const button = event.target;
+    const originalText = button.textContent;
+    
+    try {
+        // Show loading state
+        button.disabled = true;
+        button.textContent = 'Generating...';
+        
+        const response = await fetch('/unbidden-ink', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage('Unbidden Ink test generated and sent to printer!', 'success');
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
+        
+    } catch (error) {
+        console.error('Failed to test Unbidden Ink:', error);
+        showMessage(`Failed to test Unbidden Ink: ${error.message}`, 'error');
+    } finally {
+        // Restore button
+        button.disabled = false;
+        button.textContent = originalText;
+    }
 }
