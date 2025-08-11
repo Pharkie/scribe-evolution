@@ -340,69 +340,18 @@ def upload_filesystem_and_firmware(source, target, env):
         print("❌ npm not found! Please ensure Node.js and npm are installed.")
         env.Exit(1)
 
-    # Step 3: Upload filesystem (without reset)
-    print("📁 Uploading filesystem (without reset)...")
-
-    # First, build the filesystem
-    fs_build_result = env.Execute("pio run --environment main --target buildfs")
-    if fs_build_result != 0:
-        print("❌ Filesystem build failed!")
-        env.Exit(1)
-
-    # Now upload filesystem with --noreset flag
-    # We need to get the built filesystem image and upload it directly
-    try:
-        # Get upload port from environment
-        upload_port = env.subst("$UPLOAD_PORT")
-
-        # Get the built filesystem image path
-        fs_image_path = os.path.join(".pio", "build", "main", "littlefs.bin")
-
-        if not os.path.exists(fs_image_path):
-            print(f"❌ Filesystem image not found at {fs_image_path}")
-            env.Exit(1)
-
-        # Use esptool directly with --noreset flag
-        esptool_cmd = [
-            CURRENT_PYTHON,
-            "-m",
-            "esptool",
-            "--port",
-            upload_port,
-            "--baud",
-            "921600",
-            "--before",
-            "default_reset",
-            "--after",
-            "no_reset",  # This prevents reset after upload
-            "--chip",
-            "esp32c3",
-            "write_flash",
-            "0x210000",  # LittleFS partition offset for ESP32-C3
-            fs_image_path,
-        ]
-
-        print(f"   Running: {' '.join(esptool_cmd)}")
-        result = subprocess.run(esptool_cmd, check=True, capture_output=True, text=True)
-        print("✅ Filesystem uploaded successfully (no reset)!")
-        if result.stdout:
-            print(f"   Output: {result.stdout.strip()}")
-
-    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
+    # Step 3: Upload filesystem using PlatformIO
+    print("📁 Uploading filesystem using PlatformIO...")
+    fs_result = env.Execute("pio run --environment main --target uploadfs")
+    if fs_result != 0:
         print("❌ Filesystem upload failed!")
-        if hasattr(e, "stderr") and e.stderr:
-            print(f"   Error: {e.stderr}")
-        else:
-            print(f"   Error: {e}")
-        print("   Falling back to standard upload...")
-        fs_result = env.Execute("pio run --environment main --target uploadfs")
-        if fs_result != 0:
-            print("❌ Filesystem upload failed!")
-            env.Exit(1)
+        env.Exit(1)
+    
+    print("✅ Filesystem uploaded successfully!")
 
-    # Step 4: Brief pause before firmware upload (no connection reset needed since we didn't reset)
-    print("⏳ Brief pause before firmware upload...")
-    time.sleep(0.5)  # Just a brief pause, no need for full reset cycle
+    # Step 4: Wait for ESP32 to boot and stabilize after filesystem upload
+    print("⏳ Waiting for ESP32 to boot and stabilize after filesystem upload...")
+    time.sleep(2.0)  # Allow ESP32 to fully boot and initialize filesystem
 
     # Step 5: Upload firmware and start monitoring
     print("💾 Uploading firmware and starting monitor...")

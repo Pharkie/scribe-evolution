@@ -1,6 +1,19 @@
 /**
  * @file messaging.js
- * @brief Message sending functionality and quick actions
+ * @brief Message sending funct    // Step 2: Determine delivery endpoint and payload based on printer target
+    let deliveryEndpoint;
+    let deliveryPayload;
+    
+    if (printerTarget === 'local-direct') {
+      deliveryEndpoint = '/print-local';
+      deliveryPayload = { message: contentResult.content };
+    } else {
+      deliveryEndpoint = '/mqtt-send';
+      deliveryPayload = { 
+        topic: printerTarget,
+        message: contentResult.content
+      };
+    }uick actions
  */
 
 /**
@@ -201,6 +214,12 @@ function sendQuickAction(action) {
     if (printerTarget === 'local-direct') {
       deliveryEndpoint = '/print-local';
       deliveryPayload = { message: contentResult.content };
+    } else if (printerTarget === 'local-mqtt') {
+      deliveryEndpoint = '/mqtt-send';
+      deliveryPayload = { 
+        topic: 'scribe/Pharkie/inbox', // Local device via MQTT
+        message: contentResult.content
+      };
     } else {
       deliveryEndpoint = '/mqtt-send';
       deliveryPayload = { 

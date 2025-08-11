@@ -38,13 +38,13 @@ function initializePrinterSelection() {
   container.innerHTML = '';
   
   // Add local-direct printer option
-  const localOption = createPrinterOption('local-direct', '🖨️', 'Local (direct)', true);
-  container.appendChild(localOption);
+  const localDirectOption = createPrinterOption('local-direct', '🖨️', 'Local direct (Pharkie)', true);
+  container.appendChild(localDirectOption);
   
-  // Add other printers from PRINTERS config
+  // Add remote printers from PRINTERS config (this will now include local MQTT as first entry)
   if (typeof PRINTERS !== 'undefined') {
     PRINTERS.forEach(printer => {
-      const option = createPrinterOption(printer.topic, '📡', printer.name, false);
+      const option = createPrinterOption(printer.topic, '📡', `${printer.name} via MQTT`, false);
       container.appendChild(option);
     });
   }
@@ -60,12 +60,22 @@ function createPrinterOption(value, icon, name, isSelected = false) {
   }`;
   option.setAttribute('data-value', value);
   
+  // Determine connection type for display
+  let connectionType = 'Unknown';
+  if (value === 'local-direct') {
+    connectionType = 'Direct connection';
+  } else if (value === 'local-mqtt') {
+    connectionType = 'MQTT connection';
+  } else {
+    connectionType = 'MQTT connection';
+  }
+  
   option.innerHTML = `
     <div class="flex items-center space-x-3">
       <span class="text-2xl">${icon}</span>
       <div>
         <div class="font-medium text-sm">${name}</div>
-        ${value === 'local-direct' ? '<div class="text-xs text-gray-500 dark:text-gray-400">Direct connection</div>' : '<div class="text-xs text-gray-500 dark:text-gray-400">MQTT connection</div>'}
+        <div class="text-xs text-gray-500 dark:text-gray-400">${connectionType}</div>
       </div>
     </div>
   `;

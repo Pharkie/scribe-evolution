@@ -133,10 +133,9 @@ function collectFormData() {
             username: document.getElementById('mqtt-username').value,
             password: document.getElementById('mqtt-password').value
         },
-        // API configuration - include all API fields from loaded config, updating only user-editable ones
+        // API configuration - only user-configurable fields
         apis: {
-            ...g_runtimeConfig.apis, // Include all existing API config
-            chatgptApiToken: document.getElementById('chatgpt-api-token').value // Only update user-editable field
+            chatgptApiToken: document.getElementById('chatgpt-api-token').value
         },
         // Validation settings
         validation: {
@@ -429,4 +428,21 @@ function setPrompt(promptText) {
         // Trigger any change events
         textarea.dispatchEvent(new Event('input'));
     }
+}
+
+/**
+ * Bring a slider to the front so it can be interacted with
+ */
+function bringSliderToFront(slider) {
+    const startSlider = document.getElementById('time-start');
+    const endSlider = document.getElementById('time-end');
+    
+    if (!startSlider || !endSlider) return;
+    
+    // Reset both sliders to lower z-index
+    startSlider.style.zIndex = '20';
+    endSlider.style.zIndex = '20';
+    
+    // Bring the active slider to front
+    slider.style.zIndex = '30';
 }

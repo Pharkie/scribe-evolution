@@ -441,8 +441,16 @@ void handleConfigGet()
     localPrinter["topic"] = getLocalPrinterTopic();
     localPrinter["type"] = "local";
 
-    // Remote printers array (from config.h)
+    // Remote printers array (from config.h) - include local printer as first entry
     JsonArray remotePrinters = printers.createNestedArray("remote");
+
+    // Add local printer as first remote entry for MQTT testing
+    JsonObject localAsMqtt = remotePrinters.createNestedObject();
+    localAsMqtt["name"] = getLocalPrinterName();
+    localAsMqtt["topic"] = getLocalPrinterTopic();
+    localAsMqtt["type"] = "remote";
+
+    // Add other remote printers from config.h
     for (int i = 0; i < numPrinterConfigs; i++)
     {
         JsonObject remotePrinter = remotePrinters.createNestedObject();
@@ -552,11 +560,11 @@ void handleConfigPost()
         return;
     }
 
-    // Validate APIs configuration
+    // Validate APIs configuration (only user-configurable fields)
     JsonObject apis = doc["apis"];
-    if (!apis.containsKey("chatgptApiToken") || !apis.containsKey("chatgptApiEndpoint"))
+    if (!apis.containsKey("chatgptApiToken"))
     {
-        sendValidationError(ValidationResult(false, "Missing required ChatGPT API configuration fields"));
+        sendValidationError(ValidationResult(false, "Missing required ChatGPT API token"));
         return;
     }
 

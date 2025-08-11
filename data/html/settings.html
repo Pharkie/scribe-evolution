@@ -234,14 +234,16 @@
                                     <!-- Start time handle -->
                                     <input type="range" id="time-start" name="unbiddenInk.startHour" min="0" max="23"
                                         step="1" value="8"
-                                        class="absolute w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer z-20"
-                                        style="top: 0;" oninput="updateTimeRange(this, 'start')">
+                                        class="absolute w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer z-30"
+                                        style="top: 0;" oninput="updateTimeRange(this, 'start')"
+                                        onmousedown="bringSliderToFront(this)" ontouchstart="bringSliderToFront(this)">
 
                                     <!-- End time handle -->
                                     <input type="range" id="time-end" name="unbiddenInk.endHour" min="0" max="23"
                                         step="1" value="22"
                                         class="absolute w-full h-2 bg-transparent rounded-lg appearance-none cursor-pointer z-20"
-                                        style="top: 0;" oninput="updateTimeRange(this, 'end')">
+                                        style="top: 0;" oninput="updateTimeRange(this, 'end')"
+                                        onmousedown="bringSliderToFront(this)" ontouchstart="bringSliderToFront(this)">
                                 </div>
 
                                 <!-- Time display -->
@@ -545,7 +547,7 @@
             <div class="flex space-x-4">
                 <button type="button" onclick="goBack()"
                     class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
-                    Cancel
+                    Close
                 </button>
                 <button type="submit" id="save-button"
                     class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
@@ -559,11 +561,10 @@
     <div id="message-container" class="fixed top-4 right-4 z-50"></div>
 
     <!-- Loading spinner for save operation -->
-    <div id="save-loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span class="text-gray-800 dark:text-gray-100">Saving settings...</span>
-        </div>
+    <div id="save-loading"
+        class="hidden fixed top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border p-4 flex items-center space-x-3 z-50">
+        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+        <span class="text-gray-800 dark:text-gray-100">Saving settings...</span>
     </div>
 
     <script src="/js/app.min.js"></script>
