@@ -325,14 +325,32 @@ void handleConfigGet()
         return;
     }
 
-    // Read config.json - REQUIRED, no fallback to defaults
+    // Ensure config.json exists (create from defaults if needed)
+    if (!isConfigFileValid())
+    {
+        LOG_NOTICE("WEB", "config.json not found or invalid, creating from defaults");
+        if (!createDefaultConfigFile())
+        {
+            LOG_ERROR("WEB", "Failed to create default config.json");
+            DynamicJsonDocument errorResponse(256);
+            errorResponse["success"] = false;
+            errorResponse["error"] = "Failed to create configuration file.";
+
+            String errorString;
+            serializeJson(errorResponse, errorString);
+            server.send(500, "application/json", errorString);
+            return;
+        }
+    }
+
+    // Read config.json (now guaranteed to exist)
     File configFile = LittleFS.open("/config.json", "r");
     if (!configFile)
     {
-        LOG_ERROR("WEB", "config.json not found - device not configured");
+        LOG_ERROR("WEB", "config.json still not accessible after creation");
         DynamicJsonDocument errorResponse(256);
         errorResponse["success"] = false;
-        errorResponse["error"] = "Device not configured. config.json missing. Please upload configuration file.";
+        errorResponse["error"] = "Configuration file access error.";
 
         String errorString;
         serializeJson(errorResponse, errorString);
@@ -358,18 +376,36 @@ void handleConfigGet()
         return;
     }
 
-    // Create response with config.json data (no hardcoded defaults)
+    // Create response with config.json data (with defaults for missing keys)
     DynamicJsonDocument configDoc(2048);
 
-    // Copy user configuration from config.json
+    // Device configuration (with defaults)
+    JsonObject device = configDoc.createNestedObject("device");
     if (userConfig.containsKey("device"))
     {
-        configDoc["device"] = userConfig["device"];
+        device["owner"] = userConfig["device"]["owner"] | defaultDeviceOwner;
+        device["timezone"] = userConfig["device"]["timezone"] | defaultTimezone;
     }
+    else
+    {
+        device["owner"] = defaultDeviceOwner;
+        device["timezone"] = defaultTimezone;
+    }
+
+    // WiFi configuration (empty if not configured in config.json)
+    JsonObject wifi = configDoc.createNestedObject("wifi");
     if (userConfig.containsKey("wifi"))
     {
-        configDoc["wifi"] = userConfig["wifi"];
+        wifi["ssid"] = userConfig["wifi"]["ssid"] | "";
+        wifi["password"] = userConfig["wifi"]["password"] | "";
     }
+    else
+    {
+        wifi["ssid"] = "";
+        wifi["password"] = "";
+    }
+
+    // MQTT configuration
     if (userConfig.containsKey("mqtt"))
     {
         configDoc["mqtt"] = userConfig["mqtt"];
@@ -455,8 +491,8 @@ void handleConfigPost()
     }
 
     // Validate required top-level sections exist
-    const char *requiredSections[] = {"mqtt", "apis", "validation", "unbiddenInk", "buttons"};
-    for (int i = 0; i < 5; i++)
+    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "validation", "unbiddenInk", "buttons"};
+    for (int i = 0; i < 7; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -465,7 +501,42 @@ void handleConfigPost()
         }
     }
 
-    // Validate MQTT configuration
+    // Validate device configuration
+    JsonObject device = doc["device"];
+    if (!device.containsKey("owner") || !device.containsKey("timezone"))
+    {
+        sendValidationError(ValidationResult(false, "Missing required device configuration fields"));
+        return;
+    }
+
+    String owner = device["owner"];
+    String timezone = device["timezone"];
+    if (owner.length() == 0 || timezone.length() == 0)
+    {
+        sendValidationError(ValidationResult(false, "Device owner and timezone cannot be empty"));
+        return;
+    }
+
+    // Validate WiFi configuration
+    JsonObject wifi = doc["wifi"];
+    if (!wifi.containsKey("ssid") || !wifi.containsKey("password"))
+    {
+        sendValidationError(ValidationResult(false, "Missing required WiFi configuration fields"));
+        return;
+    }
+
+    String ssid = wifi["ssid"];
+    String password = wifi["password"];
+    if (ssid.length() == 0)
+    {
+        sendValidationError(ValidationResult(false, "WiFi SSID cannot be empty"));
+        return;
+    }
+    if (password.length() == 0)
+    {
+        sendValidationError(ValidationResult(false, "WiFi password cannot be empty"));
+        return;
+    } // Validate MQTT configuration
     JsonObject mqtt = doc["mqtt"];
     if (!mqtt.containsKey("server") || !mqtt.containsKey("port") ||
         !mqtt.containsKey("username") || !mqtt.containsKey("password"))
@@ -565,9 +636,9 @@ void handleConfigPost()
         String shortAction = button["shortAction"];
         String longAction = button["longAction"];
 
-        // Validate shortAction (required, must be valid action)
+        // Validate shortAction (can now be empty or valid action)
         bool validShortAction = false;
-        for (int j = 0; j < 6; j++) // Exclude empty string for short actions
+        for (int j = 0; j < 7; j++) // Include empty string for short actions
         {
             if (shortAction == validActions[j])
             {

@@ -37,6 +37,7 @@
 #include <LittleFS.h>
 #include <PubSubClient.h>
 #include "core/config.h"
+#include "core/config_loader.h"
 #include "core/config_utils.h"
 #include "core/shared_types.h"
 
@@ -120,6 +121,16 @@ void setup()
   else
   {
     LOG_VERBOSE("BOOT", "LittleFS mounted successfully");
+  }
+
+  // Initialize configuration system
+  if (!initializeConfigSystem())
+  {
+    LOG_ERROR("BOOT", "Configuration system initialization failed");
+  }
+  else
+  {
+    LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
   }
 
   // Initialize printer
