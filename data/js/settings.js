@@ -46,6 +46,7 @@ function populateForm(config) {
     // WiFi Configuration (new)
     document.getElementById('wifi-ssid').value = config.wifi?.ssid || '';
     document.getElementById('wifi-password').value = config.wifi?.password || '';
+    document.getElementById('wifi-timeout').value = config.wifi?.connect_timeout ? (config.wifi.connect_timeout / 1000) : 15;
     
     // Device Configuration (new)
     document.getElementById('device-owner').value = config.device?.owner || '';
@@ -137,7 +138,8 @@ function collectFormData() {
         // WiFi configuration (overrides config.h)
         wifi: {
             ssid: document.getElementById('wifi-ssid').value,
-            password: document.getElementById('wifi-password').value
+            password: document.getElementById('wifi-password').value,
+            connect_timeout: parseInt(document.getElementById('wifi-timeout').value) * 1000 // Convert to milliseconds
         },
         // MQTT configuration (overrides config.h)
         mqtt: {

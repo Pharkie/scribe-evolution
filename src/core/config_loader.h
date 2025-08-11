@@ -23,6 +23,7 @@ struct RuntimeConfig
     // WiFi Configuration
     String wifiSSID;
     String wifiPassword;
+    unsigned long wifiConnectTimeoutMs;
 
     // MQTT Configuration
     String mqttServer;
