@@ -1,0 +1,1 @@
+Please change the endpoint URLs from /api/config to just /config to match the existing project's URL structure which uses endpoints like /status, /buttons, /mqtt-send without the /api/ prefix.

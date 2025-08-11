@@ -1,0 +1,4 @@
+# Python dependencies for Scribe project
+# Install with: pip install -r requirements.txt
+
+pyserial==3.5
