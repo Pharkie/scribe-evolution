@@ -19,14 +19,9 @@
  * Based on the original Project Scribe by UrbanCircles.
  *
  *  TODO:
- * - Move many items from config.h to web interface and file so people can enter API
- *   keys and use a pre-compiled firmware. Also allows them to configure
- *   0+ printer names and their own MQTT server.
- * - Unbidden Ink >> link to ChatGPT API
+ * Printer remote discovery
  * - FastLED support for LED strip
  * - Hardware button testing
- * - OTA flash capability?
- * - AP fallback
  */
 
 #include <WiFi.h>
