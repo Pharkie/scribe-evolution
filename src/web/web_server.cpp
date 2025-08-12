@@ -138,6 +138,24 @@ std::function<void()> createStaticHandler(const String &filePath, const String &
     };
 }
 
+// Helper function to register static file routes with captive portal handling
+void registerStaticRoute(const String &route, const String &filePath, const String &contentType)
+{
+    server.on(route.c_str(), HTTP_GET, [filePath, contentType]()
+              {
+        if (shouldRedirectToSettings()) {
+            handleCaptivePortal();
+            return;
+        }
+        createStaticHandler(filePath, contentType)(); });
+}
+
+// Helper function to register static file routes for STA mode (no captive portal check)
+void registerStaticRouteSTA(const String &route, const String &filePath, const String &contentType)
+{
+    server.on(route.c_str(), HTTP_GET, createStaticHandler(filePath, contentType));
+}
+
 void setupWebServerRoutes(int maxChars)
 {
     // Store the maxChars value for validation
@@ -170,41 +188,11 @@ void setupWebServerRoutes(int maxChars)
         } });
 
     // CSS and JS files (always needed)
-    server.on("/css/tailwind.css", HTTP_GET, []()
-              {
-        if (shouldRedirectToSettings()) {
-            handleCaptivePortal();
-            return;
-        }
-        createStaticHandler("/css/tailwind.css", "text/css")(); });
-    server.on("/js/app.min.js", HTTP_GET, []()
-              {
-        if (shouldRedirectToSettings()) {
-            handleCaptivePortal();
-            return;
-        }
-        createStaticHandler("/js/app.min.js", "application/javascript")(); });
-    server.on("/js/settings.js", HTTP_GET, []()
-              {
-        if (shouldRedirectToSettings()) {
-            handleCaptivePortal();
-            return;
-        }
-        createStaticHandler("/js/settings.min.js", "application/javascript")(); });
-    server.on("/js/settings.min.js", HTTP_GET, []()
-              {
-        if (shouldRedirectToSettings()) {
-            handleCaptivePortal();
-            return;
-        }
-        createStaticHandler("/js/settings.min.js", "application/javascript")(); });
-    server.on("/favicon.ico", HTTP_GET, []()
-              {
-        if (shouldRedirectToSettings()) {
-            handleCaptivePortal();
-            return;
-        }
-        createStaticHandler("/favicon.ico", "image/x-icon")(); });
+    registerStaticRoute("/css/tailwind.css", "/css/tailwind.css", "text/css");
+    registerStaticRoute("/js/app.min.js", "/js/app.min.js", "application/javascript");
+    registerStaticRoute("/js/settings.js", "/js/settings.min.js", "application/javascript");
+    registerStaticRoute("/js/settings.min.js", "/js/settings.min.js", "application/javascript");
+    registerStaticRoute("/favicon.ico", "/favicon.ico", "image/x-icon");
 
     // In AP mode, set up captive portal for all other requests
     if (isAPMode())
@@ -225,11 +213,13 @@ void setupWebServerRoutes(int maxChars)
         LOG_VERBOSE("WEB", "Setting up full routes for STA mode");
 
         // Full functionality routes for STA mode
-        server.on("/", HTTP_GET, createStaticHandler("/html/index.html", "text/html"));
-        server.on("/diagnostics.html", HTTP_GET, createStaticHandler("/html/diagnostics.html", "text/html"));
+        registerStaticRouteSTA("/", "/html/index.html", "text/html");
+        registerStaticRouteSTA("/diagnostics.html", "/html/diagnostics.html", "text/html");
 
         // Additional JS files for full functionality
-        server.on("/js/app.min.js", HTTP_GET, createStaticHandler("/js/app.min.js", "application/javascript"));
+        registerStaticRouteSTA("/js/app.min.js", "/js/app.min.js", "application/javascript");
+        registerStaticRouteSTA("/js/index.min.js", "/js/index.min.js", "application/javascript");
+        registerStaticRouteSTA("/js/diagnostics.min.js", "/js/diagnostics.min.js", "application/javascript");
 
         // Form submission handlers
         server.on("/print-local", HTTP_POST, handlePrintContent);
