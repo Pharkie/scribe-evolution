@@ -77,7 +77,7 @@ void setup()
   }
 
   // Note: We can't use Log.notice() yet as logging isn't initialized
-  Serial.println("\n=== Scribe Starting === (Pre-NTP sync)");
+  Serial.println("\n=== Scribe Starting ===");
 
   // Validate configuration
   validateConfig();
@@ -88,17 +88,17 @@ void setup()
   // Initialize status LED
   initializeStatusLED();
 
-  // Connect to WiFi (required for NTP sync) - may fallback to AP mode
+  // Connect to WiFi (may fallback to AP mode)
   currentWiFiMode = connectToWiFi();
 
   // Initialize logging system (before other components that use logging)
   setupLogging();
 
   // Log main startup message immediately after logging is ready
-  LOG_NOTICE("BOOT", "=== Scribe Starting === (Pre-NTP sync)");
+  LOG_NOTICE("BOOT", "=== Scribe Starting ===");
 
   // Log logging system configuration
-  LOG_VERBOSE("BOOT", "Logging system initialized (Pre-NTP sync) - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
+  LOG_VERBOSE("BOOT", "Logging system initialized - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
               getLogLevelString(logLevel).c_str(),
               enableSerialLogging ? "ON" : "OFF",
               enableFileLogging ? "ON" : "OFF",
@@ -108,9 +108,9 @@ void setup()
   // Enable watchdog timer
   esp_task_wdt_init(watchdogTimeoutSeconds, true);
   esp_task_wdt_add(NULL);
-  LOG_VERBOSE("BOOT", "Watchdog timer enabled (%ds timeout) (Pre-NTP sync)", watchdogTimeoutSeconds);
+  LOG_VERBOSE("BOOT", "Watchdog timer enabled (%ds timeout)", watchdogTimeoutSeconds);
 
-  // Initialize timezone with automatic DST handling (must be after WiFi for NTP sync)
+  // Initialize timezone with conditional NTP sync (only in STA mode)
   setupTimezone();
 
   // Log initial memory status
