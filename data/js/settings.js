@@ -12,20 +12,36 @@ async function loadConfiguration() {
     try {
         let config;
         
-        // Wait for global config to be loaded (with timeout)
-        let attempts = 0;
-        const maxAttempts = 50; // 5 seconds total
-        
-        while ((!window.GLOBAL_CONFIG || Object.keys(window.GLOBAL_CONFIG).length === 0) && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-        
+        // Wait for global config to be loaded using event listener (more reliable)
         if (!window.GLOBAL_CONFIG || Object.keys(window.GLOBAL_CONFIG).length === 0) {
-            throw new Error('Global config not loaded within timeout');
+            console.log('Waiting for global config to load...');
+            
+            // Use event-based waiting with fallback timeout
+            config = await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Global config not loaded within timeout - please refresh the page'));
+                }, 10000); // 10 second timeout
+                
+                const handleConfigLoaded = (event) => {
+                    clearTimeout(timeout);
+                    window.removeEventListener('configLoaded', handleConfigLoaded);
+                    resolve(event.detail);
+                };
+                
+                // If config is already loaded, resolve immediately
+                if (window.GLOBAL_CONFIG && Object.keys(window.GLOBAL_CONFIG).length > 0) {
+                    clearTimeout(timeout);
+                    resolve(window.GLOBAL_CONFIG);
+                    return;
+                }
+                
+                // Otherwise wait for the event
+                window.addEventListener('configLoaded', handleConfigLoaded);
+            });
+        } else {
+            config = window.GLOBAL_CONFIG;
         }
         
-        config = window.GLOBAL_CONFIG;
         currentConfig = config;
         populateForm(config);
         

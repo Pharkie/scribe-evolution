@@ -17,14 +17,45 @@ function escapeHtml(text) {
  */
 async function loadDiagnostics() {
   try {
-    // Fetch diagnostics data
-    const response = await fetch('/status');
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    // Wait for global config to be loaded using event listener (more reliable)
+    if (!window.GLOBAL_CONFIG || Object.keys(window.GLOBAL_CONFIG).length === 0) {
+      console.log('Waiting for global config to load...');
+      
+      // Use event-based waiting with fallback timeout
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Global config not loaded within timeout - please refresh the page'));
+        }, 10000); // 10 second timeout
+        
+        const handleConfigLoaded = (event) => {
+          clearTimeout(timeout);
+          window.removeEventListener('configLoaded', handleConfigLoaded);
+          resolve(event.detail);
+        };
+        
+        // If config is already loaded, resolve immediately
+        if (window.GLOBAL_CONFIG && Object.keys(window.GLOBAL_CONFIG).length > 0) {
+          clearTimeout(timeout);
+          resolve(window.GLOBAL_CONFIG);
+          return;
+        }
+        
+        // Otherwise wait for the event
+        window.addEventListener('configLoaded', handleConfigLoaded);
+      });
     }
-    const data = await response.json();
     
-    await displayDiagnostics(data);
+    // Fetch status data
+    const statusResponse = await fetch('/status');
+    
+    if (!statusResponse.ok) {
+      throw new Error(`Status endpoint error: HTTP ${statusResponse.status}: ${statusResponse.statusText}`);
+    }
+    
+    const statusData = await statusResponse.json();
+    
+    // Use the already-loaded global config
+    await displayDiagnostics(statusData, window.GLOBAL_CONFIG);
   } catch (error) {
     console.error('Failed to load diagnostics:', error);
     displayDiagnosticsError(error.message);
@@ -108,7 +139,7 @@ function populateDataFields(element, data) {
 /**
  * Display diagnostics data in the page elements
  */
-async function displayDiagnostics(data) {
+async function displayDiagnostics(data, configData) {
   // Store data globally for timestamp formatting
   window.lastDiagnosticsData = data;
   
@@ -130,17 +161,16 @@ async function displayDiagnostics(data) {
   // Show and populate device configuration section
   const deviceConfigSection = document.getElementById('device-config-section');
   if (deviceConfigSection) {
-    const configData = data.configuration || {};
     populateDataFields(deviceConfigSection, {
-      'device-owner': data.device_owner || 'Unknown',
-      'timezone': data.timezone || 'Not configured',
+      'device-owner': data.device_owner || configData.device?.owner || 'Unknown',
+      'timezone': data.timezone || configData.device?.timezone || 'Not configured',
       'mdns-hostname': data.mdns_hostname || 'Unknown',
-      'max-message-chars': configData.max_message_chars || 'Unknown'
+      'max-message-chars': data.configuration?.max_message_chars || configData.validation?.maxCharacters || 'Unknown'
     });
     deviceConfigSection.classList.remove('hidden');
   }
 
-  // Show and populate config file section - fetch from /config endpoint
+  // Show and populate config file section - use the configData passed in
   const configFileSection = document.getElementById('config-file-section');
   if (configFileSection) {
     const configFileContents = document.getElementById('config-file-contents');
@@ -148,29 +178,18 @@ async function displayDiagnostics(data) {
     
     if (configFileContents) {
       try {
-        // Fetch the full config from /config endpoint
-        const configResponse = await fetch('/config');
-        if (configResponse.ok) {
-          const configData = await configResponse.json();
-          
-          // Pretty print the configuration JSON with syntax highlighting
-          const configJson = JSON.stringify(configData, null, 2);
-          configFileContents.innerHTML = `<code class="language-json">${escapeHtml(configJson)}</code>`;
-          
-          // Calculate and display file size
-          const sizeInBytes = new Blob([configJson]).size;
-          const sizeDisplay = sizeInBytes < 1024 ? `${sizeInBytes} B` : `${(sizeInBytes / 1024).toFixed(1)} KB`;
-          if (configFileSize) {
-            configFileSize.textContent = sizeDisplay;
-          }
-        } else {
-          configFileContents.innerHTML = `<code class="text-red-500">Error fetching config: HTTP ${configResponse.status}</code>`;
-          if (configFileSize) {
-            configFileSize.textContent = '0 B';
-          }
+        // Pretty print the configuration JSON with syntax highlighting
+        const configJson = JSON.stringify(configData, null, 2);
+        configFileContents.innerHTML = `<code class="language-json">${escapeHtml(configJson)}</code>`;
+        
+        // Calculate and display file size
+        const sizeInBytes = new Blob([configJson]).size;
+        const sizeDisplay = sizeInBytes < 1024 ? `${sizeInBytes} B` : `${(sizeInBytes / 1024).toFixed(1)} KB`;
+        if (configFileSize) {
+          configFileSize.textContent = sizeDisplay;
         }
       } catch (error) {
-        configFileContents.innerHTML = `<code class="text-red-500">Error: ${escapeHtml(error.message)}</code>`;
+        configFileContents.innerHTML = `<code class="text-red-500">Error processing config: ${escapeHtml(error.message)}</code>`;
         if (configFileSize) {
           configFileSize.textContent = '0 B';
         }

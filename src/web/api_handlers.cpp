@@ -314,12 +314,18 @@ void handleMQTTSend()
 
 void handleConfigGet()
 {
-    Serial.println("DEBUG: handleConfigGet() called");
+    if (isAPMode())
+    {
+        Serial.println("DEBUG: handleConfigGet() called");
+    }
 
     // Check rate limiting
     if (isRateLimited())
     {
-        Serial.println("DEBUG: handleConfigGet - rate limited");
+        if (isAPMode())
+        {
+            Serial.println("DEBUG: handleConfigGet - rate limited");
+        }
         DynamicJsonDocument errorResponse(256);
         errorResponse["success"] = false;
         errorResponse["error"] = getRateLimitReason();
@@ -330,11 +336,17 @@ void handleConfigGet()
         return;
     }
 
-    Serial.println("DEBUG: handleConfigGet - checking config file validity");
+    if (isAPMode())
+    {
+        Serial.println("DEBUG: handleConfigGet - checking config file validity");
+    }
     // Ensure config.json exists (create from defaults if needed)
     if (!isConfigFileValid())
     {
-        Serial.println("DEBUG: handleConfigGet - config file invalid, creating defaults");
+        if (isAPMode())
+        {
+            Serial.println("DEBUG: handleConfigGet - config file invalid, creating defaults");
+        }
         LOG_NOTICE("WEB", "config.json not found or invalid, creating from defaults");
         if (!createDefaultConfigFile())
         {
