@@ -294,7 +294,38 @@ function goBack() {
  */
 document.addEventListener('DOMContentLoaded', function() {
     loadConfiguration();
+    setupAPModeUI();
 });
+
+/**
+ * Detect AP mode and adjust UI accordingly
+ */
+function setupAPModeUI() {
+    // Detect if we're in AP mode by checking the hostname
+    const isAPMode = window.location.hostname === '192.168.4.1' || window.location.hostname === 'scribe-setup';
+    
+    if (isAPMode) {
+        console.log('AP mode detected - adjusting UI');
+        
+        // Change save button text to indicate reboot
+        const saveButton = document.getElementById('save-button');
+        if (saveButton) {
+            saveButton.textContent = 'Save and Reboot';
+        }
+        
+        // Hide close button in AP mode
+        const closeButton = document.getElementById('close-button');
+        if (closeButton) {
+            closeButton.style.display = 'none';
+        }
+        
+        // Make save button full width when close button is hidden
+        if (saveButton) {
+            saveButton.classList.remove('flex-1');
+            saveButton.classList.add('w-full');
+        }
+    }
+}
 
 // ========================================
 // UNBIDDEN INK INTERFACE FUNCTIONS

@@ -48,6 +48,9 @@ void handleCaptivePortal()
 {
     // Check if this is already a settings-related request
     String uri = server.uri();
+    Serial.print("DEBUG: Captive portal called for URI: ");
+    Serial.println(uri);
+
     if (uri.startsWith("/settings") ||
         uri.startsWith("/config") ||
         uri.startsWith("/css/") ||
@@ -55,10 +58,32 @@ void handleCaptivePortal()
         uri == "/favicon.ico")
     {
         // Let these requests proceed normally
+        Serial.println("DEBUG: Allowing request to proceed normally");
+        return;
+    }
+
+    // Handle captive portal detection requests
+    if (uri == "/hotspot-detect.html" ||
+        uri == "/generate_204" ||
+        uri == "/connecttest.txt" ||
+        uri == "/redirect" ||
+        uri.startsWith("/fwlink"))
+    {
+        Serial.println("DEBUG: Captive portal detection - responding with redirect to settings");
+        // Respond with captive portal page
+        server.sendHeader("Location", "http://192.168.4.1/settings.html", true);
+        server.send(302, "text/html",
+                    "<!DOCTYPE html><html><head><title>WiFi Setup</title></head>"
+                    "<body><h1>Scribe WiFi Setup</h1>"
+                    "<p>Redirecting to configuration page...</p>"
+                    "<script>window.location.href='http://192.168.4.1/settings.html';</script>"
+                    "</body></html>");
         return;
     }
 
     LOG_VERBOSE("CAPTIVE", "Redirecting captive portal request: %s", uri.c_str());
+    Serial.print("DEBUG: Redirecting to settings: ");
+    Serial.println(uri);
 
     // Redirect to settings page
     server.sendHeader("Location", "/settings.html", true);
@@ -104,21 +129,32 @@ void setupWebServerRoutes(int maxChars)
     // Store the maxChars value for validation
     setMaxCharacters(maxChars);
 
-    LOG_VERBOSE("WEB", "Setting up web server routes for WiFi mode: %d", currentWiFiMode);
+    LOG_NOTICE("WEB", "Setting up web server routes for WiFi mode: %d (AP=%s)", currentWiFiMode, isAPMode() ? "true" : "false");
+    Serial.print("DEBUG: Setting up web routes - WiFi mode: ");
+    Serial.print(currentWiFiMode);
+    Serial.print(", isAPMode: ");
+    Serial.println(isAPMode() ? "true" : "false");
 
     // Always serve settings page and its dependencies (needed for both STA and AP modes)
     server.on("/settings.html", HTTP_GET, []()
               {
+        Serial.println("DEBUG: /settings.html requested");
         if (shouldRedirectToSettings()) {
+            Serial.println("DEBUG: Should redirect - calling captive portal");
             handleCaptivePortal();
             return;
         }
+        Serial.println("DEBUG: Serving settings.html file");
         createStaticHandler("/html/settings.html", "text/html")(); });
 
     // Configuration endpoints (needed for settings page)
-    server.on("/config", HTTP_GET, handleConfigGet);
+    server.on("/config", HTTP_GET, []()
+              {
+        Serial.println("DEBUG: /config GET requested");
+        handleConfigGet(); });
     server.on("/config", HTTP_POST, []()
               { 
+        Serial.println("DEBUG: /config POST requested");
         handleConfigPost();
         // After successful config save in AP mode, trigger reboot to try new WiFi settings
         if (isAPMode() && server.hasArg("wifi_ssid")) {
@@ -131,13 +167,23 @@ void setupWebServerRoutes(int maxChars)
     // CSS and JS files (always needed)
     server.on("/css/tailwind.css", HTTP_GET, []()
               {
+        Serial.println("DEBUG: /css/tailwind.css requested");
         if (shouldRedirectToSettings()) {
             handleCaptivePortal();
             return;
         }
         createStaticHandler("/css/tailwind.css", "text/css")(); });
+    server.on("/js/app.min.js", HTTP_GET, []()
+              {
+        Serial.println("DEBUG: /js/app.min.js requested");
+        if (shouldRedirectToSettings()) {
+            handleCaptivePortal();
+            return;
+        }
+        createStaticHandler("/js/app.min.js", "application/javascript")(); });
     server.on("/js/settings.js", HTTP_GET, []()
               {
+        Serial.println("DEBUG: /js/settings.js requested");
         if (shouldRedirectToSettings()) {
             handleCaptivePortal();
             return;
