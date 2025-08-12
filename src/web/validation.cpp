@@ -275,6 +275,20 @@ void sendValidationError(const ValidationResult &result, int statusCode)
     server.send(statusCode, "application/json", errorString);
 }
 
+void sendValidationError(AsyncWebServerRequest* request, const ValidationResult &result, int statusCode)
+{
+    LOG_WARNING("WEB", "Validation error: %s", result.errorMessage.c_str());
+
+    // Return JSON error response
+    DynamicJsonDocument errorResponse(512);
+    errorResponse["success"] = false;
+    errorResponse["error"] = result.errorMessage;
+
+    String errorString;
+    serializeJson(errorResponse, errorString);
+    request->send(statusCode, "application/json", errorString);
+}
+
 void setMaxCharacters(int maxChars)
 {
     localMaxMessageChars = maxChars;

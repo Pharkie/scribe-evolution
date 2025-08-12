@@ -11,10 +11,10 @@
 #define VALIDATION_H
 
 #include <Arduino.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 
 // Forward declaration
-extern WebServer server;
+extern AsyncWebServer server;
 
 /**
  * @brief Result structure for validation operations
@@ -104,6 +104,14 @@ String urlDecode(String str);
  * @param statusCode HTTP status code to send (default 400)
  */
 void sendValidationError(const ValidationResult &result, int statusCode = 400);
+
+/**
+ * @brief Send validation error response for async requests
+ * @param request The async web server request
+ * @param result The validation result containing the error
+ * @param statusCode HTTP status code to send (default 400)
+ */
+void sendValidationError(AsyncWebServerRequest* request, const ValidationResult &result, int statusCode = 400);
 
 /**
  * @brief Set maximum message characters for validation
