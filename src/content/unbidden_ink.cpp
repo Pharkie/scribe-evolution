@@ -88,12 +88,21 @@ void scheduleNextUnbiddenInk()
         return;
     }
 
-    // Calculate random time within the next frequency window
-    unsigned long frequencyMs = currentSettings.frequencyMinutes * 60 * 1000; // Convert to milliseconds
-    unsigned long randomOffset = random(0, frequencyMs);                      // Random time within the window
+    // Calculate frequency in milliseconds
+    unsigned long frequencyMs = currentSettings.frequencyMinutes * 60 * 1000;
+
+    // Calculate ±20% range around the target frequency
+    // For 15 mins: 12-18 mins (80%-120% of target)
+    // For 60 mins: 48-72 mins (80%-120% of target)
+    unsigned long minTime = (frequencyMs * 80) / 100;  // 80% of frequency
+    unsigned long maxTime = (frequencyMs * 120) / 100; // 120% of frequency
+
+    // Random time within the ±20% range
+    unsigned long randomOffset = random(minTime, maxTime);
     nextUnbiddenInkTime = millis() + randomOffset;
 
-    LOG_VERBOSE("UNBIDDENINK", "Next Unbidden Ink message scheduled in %lu minutes", randomOffset / (60 * 1000));
+    LOG_VERBOSE("UNBIDDENINK", "Next Unbidden Ink message scheduled in %lu minutes (target: %d mins ±20%%)",
+                randomOffset / (60 * 1000), currentSettings.frequencyMinutes);
 }
 
 void checkUnbiddenInk()

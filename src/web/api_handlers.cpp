@@ -466,6 +466,41 @@ void handleConfigGet()
         remotePrinter["type"] = "remote";
     }
 
+    // Add runtime status information for Unbidden Ink
+    JsonObject status = configDoc.createNestedObject("status");
+    JsonObject unbiddenInkStatus = status.createNestedObject("unbiddenInk");
+
+    // Get current unbidden ink settings and next scheduled time
+    // Reload settings from file to ensure we have the latest values
+    loadUnbiddenInkSettings();
+    UnbiddenInkSettings currentSettings = getCurrentUnbiddenInkSettings();
+    if (currentSettings.enabled)
+    {
+        unsigned long nextTime = getNextUnbiddenInkTime();
+        unsigned long currentTime = millis();
+
+        if (nextTime > currentTime)
+        {
+            unsigned long minutesUntil = (nextTime - currentTime) / (60 * 1000);
+            if (minutesUntil == 0)
+            {
+                unbiddenInkStatus["nextScheduled"] = "< 1 min";
+            }
+            else
+            {
+                unbiddenInkStatus["nextScheduled"] = String(minutesUntil) + (minutesUntil == 1 ? " min" : " mins");
+            }
+        }
+        else
+        {
+            unbiddenInkStatus["nextScheduled"] = "-";
+        }
+    }
+    else
+    {
+        unbiddenInkStatus["nextScheduled"] = "-";
+    }
+
     String configString;
     serializeJson(configDoc, configString);
 

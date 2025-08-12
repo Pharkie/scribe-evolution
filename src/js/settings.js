@@ -139,6 +139,9 @@ function populateForm(config) {
     document.getElementById('button3-long').value = config.buttons?.button3?.longAction || '';
     document.getElementById('button4-short').value = config.buttons?.button4?.shortAction || '/quiz';
     document.getElementById('button4-long').value = config.buttons?.button4?.longAction || '';
+    
+    // Update next scheduled time from config data
+    updateNextScheduledDisplay(config.status?.unbiddenInk?.nextScheduled);
 }
 
 /**
@@ -289,12 +292,21 @@ function toggleUnbiddenInkSettings() {
         settingsSection.querySelectorAll('input, textarea').forEach(input => {
             input.removeAttribute('disabled');
         });
+        // Show next scheduled time from current config if available
+        if (window.GLOBAL_CONFIG?.status?.unbiddenInk?.nextScheduled) {
+            updateNextScheduledDisplay(window.GLOBAL_CONFIG.status.unbiddenInk.nextScheduled);
+        }
     } else {
         settingsSection.classList.add('hidden');
         // Disable inputs when hidden to prevent validation issues
         settingsSection.querySelectorAll('input, textarea').forEach(input => {
             input.setAttribute('disabled', 'disabled');
         });
+        // Hide next scheduled time when disabling
+        const nextScheduledElement = document.getElementById('next-scheduled');
+        if (nextScheduledElement) {
+            nextScheduledElement.style.display = 'none';
+        }
     }
 }
 
@@ -718,5 +730,21 @@ async function testUnbiddenInk() {
         // Restore button
         button.disabled = false;
         button.textContent = originalText;
+    }
+}
+
+/**
+ * Update the next scheduled time display
+ */
+function updateNextScheduledDisplay(nextScheduled) {
+    const nextScheduledElement = document.getElementById('next-scheduled');
+    
+    if (nextScheduledElement) {
+        if (nextScheduled && nextScheduled !== '-') {
+            nextScheduledElement.textContent = `Next: ${nextScheduled}`;
+            nextScheduledElement.style.display = 'block';
+        } else {
+            nextScheduledElement.style.display = 'none';
+        }
     }
 }
