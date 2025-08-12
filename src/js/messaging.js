@@ -1,19 +1,6 @@
 /**
  * @file messaging.js
- * @brief Message sending funct    // Step 2: Determine delivery endpoint and payload based on printer target
-    let deliveryEndpoint;
-    let deliveryPayload;
-    
-    if (printerTarget === 'local-direct') {
-      deliveryEndpoint = '/print-local';
-      deliveryPayload = { message: contentResult.content };
-    } else {
-      deliveryEndpoint = '/mqtt-send';
-      deliveryPayload = { 
-        topic: printerTarget,
-        message: contentResult.content
-      };
-    }uick actions
+ * @brief Message sending functions and quick actions
  */
 
 /**
@@ -73,10 +60,10 @@ function sendUserMessage(printerTarget, message) {
     let deliveryPayload;
     
     if (printerTarget === 'local-direct') {
-      deliveryEndpoint = '/print-local';
+      deliveryEndpoint = '/api/print-local';
       deliveryPayload = { message: contentResult.content };
     } else {
-      deliveryEndpoint = '/mqtt-send';
+      deliveryEndpoint = '/api/mqtt-send';
       deliveryPayload = { 
         topic: printerTarget,
         message: contentResult.content
@@ -161,22 +148,22 @@ function sendQuickAction(action) {
   let contentEndpoint;
   switch (action) {
     case 'riddle':
-      contentEndpoint = '/riddle';
+      contentEndpoint = '/api/riddle';
       break;
     case 'joke':
-      contentEndpoint = '/joke';
+      contentEndpoint = '/api/joke';
       break;
     case 'quote':
-      contentEndpoint = '/quote';
+      contentEndpoint = '/api/quote';
       break;
     case 'quiz':
-      contentEndpoint = '/quiz';
+      contentEndpoint = '/api/quiz';
       break;
     case 'poke':
-      contentEndpoint = '/poke';
+      contentEndpoint = '/api/poke';
       break;
     case 'print-test':
-      contentEndpoint = '/print-test';
+      contentEndpoint = '/api/print-test';
       break;
     default:
       console.error('Unknown action:', action);
@@ -212,16 +199,16 @@ function sendQuickAction(action) {
     let deliveryPayload;
     
     if (printerTarget === 'local-direct') {
-      deliveryEndpoint = '/print-local';
+      deliveryEndpoint = '/api/print-local';
       deliveryPayload = { message: contentResult.content };
     } else if (printerTarget === 'local-mqtt') {
-      deliveryEndpoint = '/mqtt-send';
+      deliveryEndpoint = '/api/mqtt-send';
       deliveryPayload = { 
         topic: 'scribe/Pharkie/inbox', // Local device via MQTT
         message: contentResult.content
       };
     } else {
-      deliveryEndpoint = '/mqtt-send';
+      deliveryEndpoint = '/api/mqtt-send';
       deliveryPayload = { 
         topic: printerTarget,
         message: contentResult.content

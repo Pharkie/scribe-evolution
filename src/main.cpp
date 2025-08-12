@@ -3,7 +3,11 @@
  * @brief Main application entry point for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
- * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @cop  // Setup web server routes
+  setupWebServerRoutes(maxCharacters);
+
+  // Start the async web server
+  server.begin();ht Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
  * This file is part of the Scribe ESP32-C3 Thermal Printer project.
@@ -39,6 +43,7 @@
 #include "core/network.h"
 #include "hardware/printer.h"
 #include "core/mqtt_handler.h"
+#include "core/printer_discovery.h"
 #include "utils/time_utils.h"
 #include "core/logging.h"
 #include "hardware/hardware_buttons.h"
@@ -133,8 +138,8 @@ void setup()
   // Setup mDNS
   setupmDNS();
 
-  // Setup MQTT
-  setupMQTT();
+  // Setup MQTT with printer discovery
+  setupMQTTWithDiscovery();
 
   // Setup web server routes
   setupWebServerRoutes(maxCharacters);
@@ -171,14 +176,15 @@ void loop()
   checkHardwareButtons();
 
   // Handle web server requests
-  // In AP mode: only serve settings for configuration
-  // In STA mode: serve all content and handle MQTT
   server.handleClient();
 
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
   {
     // Handle MQTT connection and messages (only in STA mode)
     handleMQTTConnection();
+
+    // Handle printer discovery (only in STA mode)
+    handlePrinterDiscovery();
   }
 
   // Check if we have a new message to print

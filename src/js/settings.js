@@ -80,6 +80,10 @@ function populateForm(config) {
     // Validation Configuration (only maxCharacters)
     document.getElementById('max-characters').value = config.validation?.maxCharacters || 1000;
     
+    // Web Interface Configuration - convert milliseconds to seconds for user display
+    const pollingIntervalMs = config.webInterface?.printerDiscoveryPollingInterval || 30000; // Default 30 seconds
+    document.getElementById('polling-interval').value = pollingIntervalMs / 1000;
+    
     // Unbidden Ink Configuration - check for the new slider/preset interface
     const unbiddenInkEnabled = document.getElementById('unbidden-ink-enabled');
     if (unbiddenInkEnabled) {
@@ -131,13 +135,13 @@ function populateForm(config) {
     toggleUnbiddenInkSettings();
     
     // Button Configuration
-    document.getElementById('button1-short').value = config.buttons?.button1?.shortAction || '/joke';
+    document.getElementById('button1-short').value = config.buttons?.button1?.shortAction || '/api/joke';
     document.getElementById('button1-long').value = config.buttons?.button1?.longAction || '';
-    document.getElementById('button2-short').value = config.buttons?.button2?.shortAction || '/riddle';
+    document.getElementById('button2-short').value = config.buttons?.button2?.shortAction || '/api/riddle';
     document.getElementById('button2-long').value = config.buttons?.button2?.longAction || '';
-    document.getElementById('button3-short').value = config.buttons?.button3?.shortAction || '/quote';
+    document.getElementById('button3-short').value = config.buttons?.button3?.shortAction || '/api/quote';
     document.getElementById('button3-long').value = config.buttons?.button3?.longAction || '';
-    document.getElementById('button4-short').value = config.buttons?.button4?.shortAction || '/quiz';
+    document.getElementById('button4-short').value = config.buttons?.button4?.shortAction || '/api/quiz';
     document.getElementById('button4-long').value = config.buttons?.button4?.longAction || '';
     
     // Update next scheduled time from config data
@@ -174,6 +178,10 @@ function collectFormData() {
         // Validation settings
         validation: {
             maxCharacters: parseInt(document.getElementById('max-characters').value)
+        },
+        // Web Interface settings - convert seconds to milliseconds for server storage
+        webInterface: {
+            printerDiscoveryPollingInterval: parseInt(document.getElementById('polling-interval').value) * 1000
         },
         // Unbidden Ink configuration
         unbiddenInk: {
@@ -217,7 +225,7 @@ async function saveSettings(event) {
     try {
         const configData = collectFormData();
         
-        const response = await fetch('/config', {
+        const response = await fetch('/api/config', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

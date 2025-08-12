@@ -46,7 +46,7 @@ async function loadDiagnostics() {
     }
     
     // Fetch status data
-    const statusResponse = await fetch('/status');
+    const statusResponse = await fetch('/api/status');
     
     if (!statusResponse.ok) {
       throw new Error(`Status endpoint error: HTTP ${statusResponse.status}: ${statusResponse.statusText}`);

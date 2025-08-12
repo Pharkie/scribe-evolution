@@ -42,13 +42,13 @@ function sendTwoStepAction(contentEndpoint, target, actionConfig) {
 
         let deliveryEndpoint, payload;
         if (target === 'local-direct') {
-            deliveryEndpoint = '/print-local';
+            deliveryEndpoint = '/api/print-local';
             payload = { message: result.content };
         } else if (target === 'local-mqtt') {
-            deliveryEndpoint = '/mqtt-send';
+            deliveryEndpoint = '/api/mqtt-send';
             payload = { topic: 'scribe/Pharkie/inbox', message: result.content };
         } else {
-            deliveryEndpoint = '/mqtt-send';
+            deliveryEndpoint = '/api/mqtt-send';
             payload = { topic: target, message: result.content };
         }
 

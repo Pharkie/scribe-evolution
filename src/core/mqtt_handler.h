@@ -27,5 +27,6 @@ void mqttCallback(char *topic, byte *payload, unsigned int length);
 void handleMQTTMessage(String message);
 void handleMQTTConnection();
 void updateMQTTSubscription();
+void setupMQTTWithDiscovery();
 
 #endif // MQTT_HANDLER_H
