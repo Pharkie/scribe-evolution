@@ -1,6 +1,7 @@
 #include "time_utils.h"
 #include "../core/logging.h"
 #include "../core/config_utils.h"
+#include "../core/network.h"
 #include <esp_task_wdt.h>
 
 // Timezone object
@@ -77,8 +78,15 @@ void setupTimezone()
     // Set location (this doesn't require NTP sync)
     myTZ.setLocation(getTimezone());
 
-    // Log combined timezone and NTP sync start
-    LOG_VERBOSE("TIME", "Timezone set: %s | Waiting for NTP sync (Pre-NTP sync)", getTimezone());
+    // Check if we're in AP mode - skip NTP sync if so
+    if (isAPMode())
+    {
+        LOG_NOTICE("TIME", "In AP mode - skipping NTP sync | Timezone: %s | Using system time", getTimezone());
+        return;
+    }
+
+    // Log combined timezone and NTP sync start (only in STA mode)
+    LOG_VERBOSE("TIME", "Timezone set: %s | Waiting for NTP sync", getTimezone());
 
     // Feed watchdog while waiting for NTP sync
     int attempts = 0;
@@ -93,7 +101,7 @@ void setupTimezone()
 
         if (attempts % 10 == 0) // Log every 10 seconds
         {
-            LOG_VERBOSE("TIME", "Still waiting for NTP sync... (%d/%d seconds) (Pre-NTP sync)", attempts, maxAttempts);
+            LOG_VERBOSE("TIME", "Still waiting for NTP sync... (%d/%d seconds)", attempts, maxAttempts);
         }
     }
 

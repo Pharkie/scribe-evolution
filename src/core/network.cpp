@@ -18,7 +18,8 @@ void initializeStatusLED()
 {
     pinMode(statusLEDPin, OUTPUT);
     digitalWrite(statusLEDPin, LOW);
-    LOG_VERBOSE("NETWORK", "Status LED initialized on pin %d", statusLEDPin);
+    Serial.print("Status LED initialized on pin ");
+    Serial.println(statusLEDPin);
 }
 
 void updateStatusLED()
@@ -102,22 +103,26 @@ WiFiConnectionMode connectToWiFi()
     const RuntimeConfig &config = getRuntimeConfig();
 
     // Get WiFi credentials
-    String ssid = config.wifiSSID;
-    String password = config.wifiPassword;
+    String ssid = getWifiSSID();
+    String password = getWifiPassword();
     unsigned long timeout = config.wifiConnectTimeoutMs;
 
-    LOG_NOTICE("NETWORK", "=== WiFi Connection Attempt ===");
+    Serial.println("=== WiFi Connection Attempt ===");
 
     // If no SSID configured, go straight to AP mode
     if (ssid.length() == 0)
     {
-        LOG_WARNING("NETWORK", "No WiFi SSID configured, starting fallback AP mode");
+        Serial.println("No WiFi SSID configured, starting fallback AP mode");
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
 
     currentWiFiMode = WIFI_MODE_CONNECTING;
-    LOG_NOTICE("NETWORK", "Trying STA mode - SSID: %s (timeout: %lums)", ssid.c_str(), timeout);
+    Serial.print("Trying STA mode - SSID: ");
+    Serial.print(ssid);
+    Serial.print(" (timeout: ");
+    Serial.print(timeout);
+    Serial.println("ms)");
 
     // Set WiFi to station mode and begin connection
     WiFi.mode(WIFI_STA);
@@ -140,15 +145,18 @@ WiFiConnectionMode connectToWiFi()
     {
         currentWiFiMode = WIFI_MODE_STA_CONNECTED;
         Serial.println();
-        LOG_NOTICE("NETWORK", "STA connected successfully!");
-        LOG_NOTICE("NETWORK", "IP address: %s", WiFi.localIP().toString().c_str());
-        LOG_NOTICE("NETWORK", "RSSI: %d dBm", WiFi.RSSI());
+        Serial.println("STA connected successfully!");
+        Serial.print("IP address: ");
+        Serial.println(WiFi.localIP());
+        Serial.print("RSSI: ");
+        Serial.print(WiFi.RSSI());
+        Serial.println(" dBm");
         return WIFI_MODE_STA_CONNECTED;
     }
     else
     {
         Serial.println();
-        LOG_WARNING("NETWORK", "STA connection failed within timeout, falling back to AP mode");
+        Serial.println("STA connection failed within timeout, falling back to AP mode");
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
@@ -157,7 +165,7 @@ WiFiConnectionMode connectToWiFi()
 // === Fallback AP Mode Setup ===
 void startFallbackAP()
 {
-    LOG_NOTICE("NETWORK", "=== Starting Fallback AP Mode ===");
+    Serial.println("=== Starting Fallback AP Mode ===");
 
     // Set WiFi to AP mode
     WiFi.mode(WIFI_AP);
@@ -170,19 +178,27 @@ void startFallbackAP()
         currentWiFiMode = WIFI_MODE_AP_FALLBACK;
         IPAddress apIP = WiFi.softAPIP();
 
-        LOG_NOTICE("NETWORK", "AP active - SSID: %s", fallbackAPSSID);
-        LOG_NOTICE("NETWORK", "AP IP address: %s", apIP.toString().c_str());
-        LOG_NOTICE("NETWORK", "Connect to '%s' with password '%s'", fallbackAPSSID, fallbackAPPassword);
-        LOG_NOTICE("NETWORK", "Then navigate to http://%s/settings.html to configure WiFi", apIP.toString().c_str());
+        Serial.print("AP active - SSID: ");
+        Serial.println(fallbackAPSSID);
+        Serial.print("AP IP address: ");
+        Serial.println(apIP);
+        Serial.print("Connect to '");
+        Serial.print(fallbackAPSSID);
+        Serial.print("' with password '");
+        Serial.print(fallbackAPPassword);
+        Serial.println("'");
+        Serial.print("Then navigate to http://");
+        Serial.print(apIP);
+        Serial.println("/settings.html to configure WiFi");
 
         // Start DNS server for captive portal (redirect all requests to settings)
         dnsServer.start(53, "*", apIP);
-        LOG_VERBOSE("NETWORK", "DNS server started for captive portal");
+        Serial.println("DNS server started for captive portal");
     }
     else
     {
         currentWiFiMode = WIFI_MODE_DISCONNECTED;
-        LOG_ERROR("NETWORK", "Failed to start AP mode!");
+        Serial.println("Failed to start AP mode!");
     }
 }
 
