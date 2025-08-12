@@ -174,7 +174,7 @@ const RuntimeConfig &getRuntimeConfig()
     if (!g_configLoaded)
     {
         // Don't use LOG_NOTICE here to avoid recursive calls during logging initialization
-        Serial.println("[CONFIG] First-time startup: Loading default configuration from config.h");
+        // First-time startup: Loading default configuration from config.h
         loadDefaultConfig();
     }
     return g_runtimeConfig;

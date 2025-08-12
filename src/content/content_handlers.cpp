@@ -13,6 +13,7 @@
 #include "../core/config_utils.h"
 #include "../core/logging.h"
 #include "../utils/time_utils.h"
+#include "../utils/json_helpers.h"
 #include "content_generators.h"
 #include <WebServer.h>
 #include <LittleFS.h>
@@ -274,16 +275,9 @@ void handleUnbiddenInk()
 
 void handlePrintContent()
 {
-    // Check rate limiting first
     if (isRateLimited())
     {
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = getRateLimitReason();
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(429, "application/json", errorString);
+        sendRateLimitResponse(server);
         return;
     }
 
@@ -350,13 +344,7 @@ void handlePrintContent()
         // Check MQTT connection
         if (!mqttClient.connected())
         {
-            DynamicJsonDocument errorResponse(256);
-            errorResponse["success"] = false;
-            errorResponse["error"] = "MQTT client not connected";
-
-            String errorString;
-            serializeJson(errorResponse, errorString);
-            server.send(503, "application/json", errorString);
+            sendErrorResponse(server, 503, "MQTT client not connected");
             return;
         }
 
@@ -371,7 +359,7 @@ void handlePrintContent()
         if (mqttClient.publish(source.c_str(), payload.c_str()))
         {
             LOG_VERBOSE("WEB", "Custom message successfully sent via MQTT");
-            server.send(200, "application/json", "{\"success\":true,\"message\":\"Message processed successfully\"}");
+            sendSuccessResponse(server, "Message processed successfully");
         }
         else
         {

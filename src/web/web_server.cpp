@@ -6,14 +6,16 @@
  * @copyr    // Configuration endpoints (needed for settings page)
     server.on("/config", HTTP_GET, []()
               {
-        if (isAPMode()) {
-            Serial.println("DEBUG: /config GET requested");
+        if (isAPMode())
+        {
+            // DEBUG: /config GET requested - AP mode only
         }
         handleConfigGet(); });
     server.on("/config", HTTP_POST, []()
               {
-        if (isAPMode()) {
-            Serial.println("DEBUG: /config POST requested");
+        if (isAPMode())
+        {
+            // DEBUG: /config POST requested - AP mode only
         }
         handleConfigPost(); });right (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
@@ -60,8 +62,8 @@ void handleCaptivePortal()
 {
     // Check if this is already a settings-related request
     String uri = server.uri();
-    Serial.print("DEBUG: Captive portal called for URI: ");
-    Serial.println(uri);
+    // DEBUG: Captive portal called for URI
+    // DEBUG: URI check for captive portal handling
 
     if (uri.startsWith("/settings") ||
         uri.startsWith("/config") ||
@@ -70,7 +72,7 @@ void handleCaptivePortal()
         uri == "/favicon.ico")
     {
         // Let these requests proceed normally
-        Serial.println("DEBUG: Allowing request to proceed normally");
+        // DEBUG: Allowing request to proceed normally
         return;
     }
 
@@ -81,7 +83,7 @@ void handleCaptivePortal()
         uri == "/redirect" ||
         uri.startsWith("/fwlink"))
     {
-        Serial.println("DEBUG: Captive portal detection - responding with redirect to settings");
+        // DEBUG: Captive portal detection - responding with redirect to settings
         // Respond with captive portal page
         server.sendHeader("Location", "http://192.168.4.1/settings.html", true);
         server.send(302, "text/html",
@@ -94,8 +96,8 @@ void handleCaptivePortal()
     }
 
     LOG_VERBOSE("CAPTIVE", "Redirecting captive portal request: %s", uri.c_str());
-    Serial.print("DEBUG: Redirecting to settings: ");
-    Serial.println(uri);
+    // DEBUG: Redirecting to settings
+    // URI redirection handling
 
     // Redirect to settings page
     server.sendHeader("Location", "/settings.html", true);
@@ -142,10 +144,7 @@ void setupWebServerRoutes(int maxChars)
     setMaxCharacters(maxChars);
 
     LOG_NOTICE("WEB", "Setting up web server routes for WiFi mode: %d (AP=%s)", currentWiFiMode, isAPMode() ? "true" : "false");
-    Serial.print("DEBUG: Setting up web routes - WiFi mode: ");
-    Serial.print(currentWiFiMode);
-    Serial.print(", isAPMode: ");
-    Serial.println(isAPMode() ? "true" : "false");
+    // DEBUG: Setting up web routes - WiFi mode and AP mode status
 
     // Always serve settings page and its dependencies (needed for both STA and AP modes)
     server.on("/settings.html", HTTP_GET, []()

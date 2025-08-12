@@ -2,10 +2,6 @@
 
 String cleanString(String input)
 {
-    // Character transliteration for thermal printer compatibility
-    // This covers hundreds of international characters, symbols, and emojis
-
-    // === Latin Extended A & B ===
     // A variants
     input.replace("À", "A");
     input.replace("Á", "A");

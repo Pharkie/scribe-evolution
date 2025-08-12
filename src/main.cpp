@@ -40,9 +40,6 @@
 #include "core/config_loader.h"
 #include "core/config_utils.h"
 #include "core/shared_types.h"
-
-// Local module includes
-#include "utils/character_mapping.h"
 #include "web/web_server.h"
 #include "core/network.h"
 #include "hardware/printer.h"

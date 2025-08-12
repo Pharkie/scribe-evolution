@@ -45,14 +45,13 @@ void connectToMQTT()
 {
     if (WiFi.status() != WL_CONNECTED)
     {
-        Serial.println("WiFi not connected, skipping MQTT connection");
+        // WiFi not connected, skipping MQTT connection
         return;
     }
 
     String clientId = "ScribePrinter-" + String(random(0xffff), HEX);
 
-    Serial.print("Attempting MQTT connection as client: ");
-    Serial.println(clientId);
+    // Attempting MQTT connection as client
 
     // Feed watchdog before potentially blocking MQTT connection
     esp_task_wdt_reset();
@@ -104,7 +103,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
         message += (char)payload[i];
     }
 
-    Serial.println("MQTT payload: " + message);
+    LOG_VERBOSE("MQTT", "MQTT payload: %s", message.c_str());
 
     // Handle the MQTT message
     handleMQTTMessage(message);
@@ -118,7 +117,7 @@ void handleMQTTMessage(String message)
 
     if (error)
     {
-        Serial.println("Failed to parse MQTT JSON: " + String(error.c_str()));
+        LOG_ERROR("MQTT", "Failed to parse MQTT JSON: %s", error.c_str());
         return;
     }
 
@@ -133,7 +132,7 @@ void handleMQTTMessage(String message)
     }
     else
     {
-        Serial.println("MQTT JSON missing 'message' field");
+        LOG_WARNING("MQTT", "MQTT JSON missing 'message' field");
     }
 }
 
@@ -145,7 +144,7 @@ void handleMQTTConnection()
     {
         if (millis() - lastMQTTReconnectAttempt > mqttReconnectInterval)
         {
-            Serial.println("MQTT disconnected, attempting reconnection...");
+            LOG_VERBOSE("MQTT", "MQTT disconnected, attempting reconnection...");
 
             // Feed watchdog before potentially blocking MQTT operation
             esp_task_wdt_reset();

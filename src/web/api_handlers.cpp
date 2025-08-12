@@ -24,6 +24,7 @@
 #include "../core/network.h"
 #include "../hardware/hardware_buttons.h"
 #include "../content/unbidden_ink.h"
+#include "../utils/json_helpers.h"
 #include <WebServer.h>
 #include <WiFi.h>
 #include <LittleFS.h>
@@ -205,50 +206,28 @@ void handleStatus()
 
 void handleButtons()
 {
-    // Check rate limiting
     if (isRateLimited())
     {
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = "Too many requests. Please slow down.";
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(429, "application/json", errorString);
+        sendRateLimitResponse(server);
         return;
     }
 
-    // Get button configuration from hardware_buttons module
     String buttonConfig = getButtonConfigJson();
-
     LOG_VERBOSE("WEB", "Button configuration requested");
     server.send(200, "application/json", buttonConfig);
 }
 
 void handleMQTTSend()
 {
-    // Check rate limiting first
     if (isRateLimited())
     {
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = getRateLimitReason();
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(429, "application/json", errorString);
+        sendRateLimitResponse(server);
         return;
     }
 
     if (!mqttClient.connected())
     {
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = "MQTT client not connected";
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(503, "application/json", errorString);
+        sendErrorResponse(server, 503, "MQTT client not connected");
         return;
     }
 
@@ -316,7 +295,7 @@ void handleConfigGet()
 {
     if (isAPMode())
     {
-        Serial.println("DEBUG: handleConfigGet() called");
+        // DEBUG: handleConfigGet() called
     }
 
     // Check rate limiting
@@ -324,7 +303,7 @@ void handleConfigGet()
     {
         if (isAPMode())
         {
-            Serial.println("DEBUG: handleConfigGet - rate limited");
+            // DEBUG: handleConfigGet - rate limited
         }
         DynamicJsonDocument errorResponse(256);
         errorResponse["success"] = false;
@@ -338,42 +317,29 @@ void handleConfigGet()
 
     if (isAPMode())
     {
-        Serial.println("DEBUG: handleConfigGet - checking config file validity");
+        // DEBUG: handleConfigGet - checking config file validity
     }
     // Ensure config.json exists (create from defaults if needed)
     if (!isConfigFileValid())
     {
         if (isAPMode())
         {
-            Serial.println("DEBUG: handleConfigGet - config file invalid, creating defaults");
+            // DEBUG: handleConfigGet - config file invalid, creating defaults
         }
         LOG_NOTICE("WEB", "config.json not found or invalid, creating from defaults");
         if (!createDefaultConfigFile())
         {
             LOG_ERROR("WEB", "Failed to create default config.json");
-            DynamicJsonDocument errorResponse(256);
-            errorResponse["success"] = false;
-            errorResponse["error"] = "Failed to create configuration file.";
-
-            String errorString;
-            serializeJson(errorResponse, errorString);
-            server.send(500, "application/json", errorString);
+            sendErrorResponse(server, 500, "Failed to create configuration file.");
             return;
         }
     }
 
-    // Read config.json (now guaranteed to exist)
     File configFile = LittleFS.open("/config.json", "r");
     if (!configFile)
     {
         LOG_ERROR("WEB", "config.json still not accessible after creation");
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = "Configuration file access error.";
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(500, "application/json", errorString);
+        sendErrorResponse(server, 500, "Configuration file access error.");
         return;
     }
 
@@ -385,13 +351,7 @@ void handleConfigGet()
     if (error)
     {
         LOG_ERROR("WEB", "Failed to parse config.json: %s", error.c_str());
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = "Invalid config.json format";
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(500, "application/json", errorString);
+        sendErrorResponse(server, 500, "Invalid config.json format");
         return;
     }
 
@@ -487,16 +447,9 @@ void handleConfigGet()
 
 void handleConfigPost()
 {
-    // Check rate limiting
     if (isRateLimited())
     {
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = getRateLimitReason();
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(429, "application/json", errorString);
+        sendRateLimitResponse(server);
         return;
     }
 
@@ -696,19 +649,11 @@ void handleConfigPost()
         }
     }
 
-    // Save configuration to LittleFS
     File configFile = LittleFS.open("/config.json", "w");
     if (!configFile)
     {
         LOG_ERROR("WEB", "Failed to open config.json for writing");
-
-        DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
-        errorResponse["error"] = "Failed to save configuration";
-
-        String errorString;
-        serializeJson(errorResponse, errorString);
-        server.send(500, "application/json", errorString);
+        sendErrorResponse(server, 500, "Failed to save configuration");
         return;
     }
 
@@ -730,20 +675,12 @@ void handleConfigPost()
         updateMQTTSubscription();
     }
 
-    // Return success response
-    DynamicJsonDocument response(256);
-    response["success"] = true;
-    response["message"] = "Configuration saved successfully";
+    sendSuccessResponse(server, "Configuration saved successfully");
 
-    String responseString;
-    serializeJson(response, responseString);
-    server.send(200, "application/json", responseString);
-
-    // If we're in AP mode, reboot the device to attempt connecting to the new WiFi network
     if (isAPMode())
     {
         LOG_NOTICE("WEB", "Device in AP mode - rebooting to connect to new WiFi configuration");
-        delay(1000); // Give time for the response to be sent
+        delay(1000);
         ESP.restart();
     }
 }

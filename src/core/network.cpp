@@ -18,8 +18,7 @@ void initializeStatusLED()
 {
     pinMode(statusLEDPin, OUTPUT);
     digitalWrite(statusLEDPin, LOW);
-    Serial.print("Status LED initialized on pin ");
-    Serial.println(statusLEDPin);
+    // Status LED initialized
 }
 
 void updateStatusLED()
@@ -64,47 +63,19 @@ void updateStatusLED()
 // === Configuration Validation ===
 void validateConfig()
 {
-    Serial.println("=== VALIDATING CONFIGURATION ===");
-
-    // Load runtime configuration from config.json
     if (!loadRuntimeConfig())
     {
-        Serial.println("[CONFIG] First-time startup: Loading default configuration from config.h");
+        // First-time startup: Loading default configuration from config.h
     }
 
-    // Use the simplified validation
     ValidationResult result = validateDeviceConfig();
 
-    if (result.isValid)
-    {
-        Serial.println("✓ All configuration validation passed");
-
-        // Get runtime config for display
-        const RuntimeConfig &config = getRuntimeConfig();
-
-        // Display current configuration
-        Serial.print("Device owner: ");
-        Serial.println(config.deviceOwner.c_str());
-        Serial.print("WiFi SSID: ");
-        Serial.println(config.wifiSSID.c_str());
-        Serial.print("Printer name: ");
-        Serial.println(getLocalPrinterName());
-        Serial.print("MQTT topic: ");
-        Serial.println(getLocalPrinterTopic());
-        Serial.print("mDNS hostname: ");
-        Serial.println(getMdnsHostname());
-        Serial.print("Timezone: ");
-        Serial.println(config.timezone.c_str());
-
-        Serial.println("=== CONFIGURATION VALIDATION COMPLETE - ALL OK ===");
-    }
-    else
+    if (!result.isValid)
     {
         Serial.println("❌ Configuration validation FAILED:");
         Serial.print("  ERROR: ");
         Serial.println(result.errorMessage);
-        Serial.println("=== CONFIGURATION VALIDATION FAILED ===");
-        // Note: System will continue but may not function correctly
+        // Critical configuration error - must be visible
     }
 } // === WiFi Connection with Fallback AP Mode ===
 WiFiConnectionMode connectToWiFi()
@@ -116,24 +87,14 @@ WiFiConnectionMode connectToWiFi()
     String password = config.wifiPassword;
     unsigned long timeout = config.wifiConnectTimeoutMs;
 
-    Serial.println("=== WiFi Connection Attempt ===");
-
-    // If no SSID configured, go straight to AP mode
     if (ssid.length() == 0)
     {
-        Serial.println("No WiFi SSID configured, starting fallback AP mode");
+        // No WiFi SSID configured, starting fallback AP mode
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
 
     currentWiFiMode = WIFI_MODE_CONNECTING;
-    Serial.print("Trying STA mode - SSID: ");
-    Serial.print(ssid);
-    Serial.print(" (timeout: ");
-    Serial.print(timeout);
-    Serial.println("ms)");
-
-    // Set WiFi to station mode and begin connection
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), password.c_str());
 
@@ -144,7 +105,7 @@ WiFiConnectionMode connectToWiFi()
     {
         updateStatusLED(); // Fast blink during connection
         delay(500);
-        Serial.print(".");
+        // Connection attempt in progress
 
         // Feed watchdog during connection attempt
         esp_task_wdt_reset();
@@ -153,19 +114,13 @@ WiFiConnectionMode connectToWiFi()
     if (WiFi.status() == WL_CONNECTED)
     {
         currentWiFiMode = WIFI_MODE_STA_CONNECTED;
-        Serial.println();
-        Serial.println("STA connected successfully!");
-        Serial.print("IP address: ");
+        Serial.print("WiFi connected: ");
         Serial.println(WiFi.localIP());
-        Serial.print("RSSI: ");
-        Serial.print(WiFi.RSSI());
-        Serial.println(" dBm");
         return WIFI_MODE_STA_CONNECTED;
     }
     else
     {
-        Serial.println();
-        Serial.println("STA connection failed within timeout, falling back to AP mode");
+        // WiFi connection failed, starting AP mode
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
@@ -174,35 +129,22 @@ WiFiConnectionMode connectToWiFi()
 // === Fallback AP Mode Setup ===
 void startFallbackAP()
 {
-    Serial.println("=== Starting Fallback AP Mode ===");
-
-    // Set WiFi to AP mode
     WiFi.mode(WIFI_AP);
-
-    // Start access point
     bool apStarted = WiFi.softAP(fallbackAPSSID, fallbackAPPassword);
 
     if (apStarted)
     {
         currentWiFiMode = WIFI_MODE_AP_FALLBACK;
         IPAddress apIP = WiFi.softAPIP();
-
-        Serial.print("AP active - SSID: ");
-        Serial.println(fallbackAPSSID);
-        Serial.print("AP IP address: ");
-        Serial.println(apIP);
-        Serial.print("Connect to '");
+        Serial.print("AP Mode: ");
         Serial.print(fallbackAPSSID);
-        Serial.print("' with password '");
-        Serial.print(fallbackAPPassword);
-        Serial.println("'");
-        Serial.print("Then navigate to http://");
+        Serial.print(" -> http://");
         Serial.print(apIP);
-        Serial.println("/settings.html to configure WiFi");
+        Serial.println("/settings.html");
 
         // Start DNS server for captive portal (redirect all requests to settings)
         dnsServer.start(53, "*", apIP);
-        Serial.println("DNS server started for captive portal");
+        // DNS server started for captive portal
     }
     else
     {
