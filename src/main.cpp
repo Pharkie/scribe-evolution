@@ -79,6 +79,12 @@ void setup()
   // Note: We can't use Log.notice() yet as logging isn't initialized
   Serial.println("\n=== Scribe Starting ===");
 
+  // Initialize LittleFS early so config loading works
+  if (!LittleFS.begin(true)) // true = format if mount fails
+  {
+    Serial.println("LittleFS Mount Failed");
+  }
+
   // Validate configuration
   validateConfig();
 
@@ -115,16 +121,6 @@ void setup()
 
   // Log initial memory status
   LOG_VERBOSE("BOOT", "Free heap: %d bytes", ESP.getFreeHeap());
-
-  // Initialize LittleFS for file system access
-  if (!LittleFS.begin(true)) // true = format if mount fails
-  {
-    LOG_ERROR("BOOT", "LittleFS Mount Failed");
-  }
-  else
-  {
-    LOG_VERBOSE("BOOT", "LittleFS mounted successfully");
-  }
 
   // Initialize configuration system
   if (!initializeConfigSystem())

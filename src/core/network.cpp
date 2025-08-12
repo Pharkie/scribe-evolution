@@ -66,6 +66,12 @@ void validateConfig()
 {
     Serial.println("=== VALIDATING CONFIGURATION ===");
 
+    // Load runtime configuration from config.json
+    if (!loadRuntimeConfig())
+    {
+        Serial.println("[CONFIG] First-time startup: Loading default configuration from config.h");
+    }
+
     // Use the simplified validation
     ValidationResult result = validateDeviceConfig();
 
@@ -73,11 +79,14 @@ void validateConfig()
     {
         Serial.println("✓ All configuration validation passed");
 
+        // Get runtime config for display
+        const RuntimeConfig &config = getRuntimeConfig();
+
         // Display current configuration
         Serial.print("Device owner: ");
-        Serial.println(defaultDeviceOwner);
+        Serial.println(config.deviceOwner.c_str());
         Serial.print("WiFi SSID: ");
-        Serial.println(getWifiSSID());
+        Serial.println(config.wifiSSID.c_str());
         Serial.print("Printer name: ");
         Serial.println(getLocalPrinterName());
         Serial.print("MQTT topic: ");
@@ -85,7 +94,7 @@ void validateConfig()
         Serial.print("mDNS hostname: ");
         Serial.println(getMdnsHostname());
         Serial.print("Timezone: ");
-        Serial.println(getTimezone());
+        Serial.println(config.timezone.c_str());
 
         Serial.println("=== CONFIGURATION VALIDATION COMPLETE - ALL OK ===");
     }
@@ -102,9 +111,9 @@ WiFiConnectionMode connectToWiFi()
 {
     const RuntimeConfig &config = getRuntimeConfig();
 
-    // Get WiFi credentials
-    String ssid = getWifiSSID();
-    String password = getWifiPassword();
+    // Get WiFi credentials from runtime config, not hardcoded defaults
+    String ssid = config.wifiSSID;
+    String password = config.wifiPassword;
     unsigned long timeout = config.wifiConnectTimeoutMs;
 
     Serial.println("=== WiFi Connection Attempt ===");

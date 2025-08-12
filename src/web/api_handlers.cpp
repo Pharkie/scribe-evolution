@@ -21,6 +21,7 @@
 #include "../core/config_utils.h"
 #include "../core/logging.h"
 #include "../core/mqtt_handler.h"
+#include "../core/network.h"
 #include "../hardware/hardware_buttons.h"
 #include "../content/unbidden_ink.h"
 #include <WebServer.h>
@@ -313,9 +314,12 @@ void handleMQTTSend()
 
 void handleConfigGet()
 {
+    Serial.println("DEBUG: handleConfigGet() called");
+
     // Check rate limiting
     if (isRateLimited())
     {
+        Serial.println("DEBUG: handleConfigGet - rate limited");
         DynamicJsonDocument errorResponse(256);
         errorResponse["success"] = false;
         errorResponse["error"] = getRateLimitReason();
@@ -326,9 +330,11 @@ void handleConfigGet()
         return;
     }
 
+    Serial.println("DEBUG: handleConfigGet - checking config file validity");
     // Ensure config.json exists (create from defaults if needed)
     if (!isConfigFileValid())
     {
+        Serial.println("DEBUG: handleConfigGet - config file invalid, creating defaults");
         LOG_NOTICE("WEB", "config.json not found or invalid, creating from defaults");
         if (!createDefaultConfigFile())
         {
@@ -720,4 +726,12 @@ void handleConfigPost()
     String responseString;
     serializeJson(response, responseString);
     server.send(200, "application/json", responseString);
+
+    // If we're in AP mode, reboot the device to attempt connecting to the new WiFi network
+    if (isAPMode())
+    {
+        LOG_NOTICE("WEB", "Device in AP mode - rebooting to connect to new WiFi configuration");
+        delay(1000); // Give time for the response to be sent
+        ESP.restart();
+    }
 }
