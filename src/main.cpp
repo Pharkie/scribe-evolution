@@ -31,6 +31,7 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <esp_task_wdt.h>
+#include <esp_log.h>
 #include <ezTime.h>
 #include <LittleFS.h>
 #include <PubSubClient.h>
@@ -55,6 +56,9 @@ WebServer server(webServerPort);
 
 // === Memory Monitoring Variables ===
 unsigned long lastMemCheck = 0;
+
+// === Boot Time Tracking ===
+String deviceBootTime = "";
 
 void setup()
 {
@@ -96,6 +100,9 @@ void setup()
   // Initialize logging system (before other components that use logging)
   setupLogging();
 
+  // Configure ESP32 system component log levels
+  esp_log_level_set("WebServer", espLogLevel);
+
   // Log main startup message immediately after logging is ready
   LOG_NOTICE("BOOT", "=== Scribe Starting ===");
 
@@ -114,6 +121,10 @@ void setup()
 
   // Initialize timezone with conditional NTP sync (only in STA mode)
   setupTimezone();
+
+  // Record boot time for consistent reporting (after timezone is set)
+  deviceBootTime = getISOTimestamp();
+  LOG_VERBOSE("BOOT", "Device boot time recorded: %s", deviceBootTime.c_str());
 
   // Log initial memory status
   LOG_VERBOSE("BOOT", "Free heap: %d bytes", ESP.getFreeHeap());

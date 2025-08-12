@@ -425,6 +425,16 @@ void handleConfigGet()
     {
         configDoc["validation"] = userConfig["validation"];
     }
+    if (userConfig.containsKey("webInterface"))
+    {
+        configDoc["webInterface"] = userConfig["webInterface"];
+    }
+    else
+    {
+        // Add default webInterface settings if not in config
+        JsonObject webInterface = configDoc.createNestedObject("webInterface");
+        webInterface["printerDiscoveryPollingInterval"] = defaultPrinterDiscoveryPollingInterval * 1000;
+    }
     if (userConfig.containsKey("unbiddenInk"))
     {
         configDoc["unbiddenInk"] = userConfig["unbiddenInk"];
@@ -434,34 +444,13 @@ void handleConfigGet()
         configDoc["buttons"] = userConfig["buttons"];
     }
 
-    // Add printer configurations (these come from config.h and are not user-configurable)
-    JsonObject printers = configDoc.createNestedObject("printers");
+    // Add local printer configuration
+    JsonObject printer = configDoc.createNestedObject("printer");
+    printer["name"] = getLocalPrinterName();
+    printer["topic"] = getLocalPrinterTopic();
+    printer["type"] = "local";
 
-    // Local printer info (uses current device name from config.json)
-    JsonObject localPrinter = printers.createNestedObject("local");
-    localPrinter["name"] = getLocalPrinterName();
-    localPrinter["topic"] = getLocalPrinterTopic();
-    localPrinter["type"] = "local";
-
-    // Remote printers array (discovered via MQTT only)
-    JsonArray remotePrinters = printers.createNestedArray("remote");
-
-    // Add discovered remote printers only
-    std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
-    for (const auto &printer : discovered)
-    {
-        if (printer.status == "online")
-        {
-            JsonObject remotePrinter = remotePrinters.createNestedObject();
-            remotePrinter["name"] = printer.name;
-            remotePrinter["topic"] = String("scribe/") + printer.name + "/print";
-            remotePrinter["type"] = "remote";
-            remotePrinter["ip_address"] = printer.ipAddress;
-            remotePrinter["mdns"] = printer.mdns;
-            remotePrinter["firmware_version"] = printer.firmwareVersion;
-            remotePrinter["last_seen"] = (millis() - printer.lastSeen) / 1000; // seconds ago
-        }
-    }
+    // Note: Remote printers are now served via /api/printer-discovery endpoint
 
     // Add runtime status information for Unbidden Ink
     JsonObject status = configDoc.createNestedObject("status");
@@ -531,8 +520,8 @@ void handleConfigPost()
     }
 
     // Validate required top-level sections exist
-    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "validation", "unbiddenInk", "buttons"};
-    for (int i = 0; i < 7; i++)
+    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "validation", "webInterface", "unbiddenInk", "buttons"};
+    for (int i = 0; i < 8; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -612,6 +601,21 @@ void handleConfigPost()
     if (maxChars < 100 || maxChars > 5000)
     {
         sendValidationError(ValidationResult(false, "Max characters must be between 100 and 5000"));
+        return;
+    }
+
+    // Validate webInterface configuration
+    JsonObject webInterface = doc["webInterface"];
+    if (!webInterface.containsKey("printerDiscoveryPollingInterval"))
+    {
+        sendValidationError(ValidationResult(false, "Missing required printerDiscoveryPollingInterval field"));
+        return;
+    }
+
+    int pollingInterval = webInterface["printerDiscoveryPollingInterval"];
+    if (pollingInterval < 5000 || pollingInterval > 300000)
+    {
+        sendValidationError(ValidationResult(false, "Printer discovery polling interval must be between 5000ms and 300000ms"));
         return;
     }
 

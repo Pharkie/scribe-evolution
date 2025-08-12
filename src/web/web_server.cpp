@@ -247,6 +247,10 @@ void setupWebServerRoutes(int maxChars)
         // Smart polling endpoint for instant printer updates
         server.on("/api/printer-discovery", HTTP_GET, handlePrinterUpdates);
 
+        // Collect headers needed for ETag functionality
+        const char *headerKeys[] = {"If-None-Match"};
+        server.collectHeaders(headerKeys, 1);
+
         // Debug endpoint to list LittleFS contents (only in STA mode)
         server.on("/debug/filesystem", HTTP_GET, []()
                   {
@@ -337,11 +341,8 @@ String getDiscoveredPrintersJson()
 
 void handlePrinterUpdates()
 {
-    // Get current printer list
-    String printerListJson = getDiscoveredPrintersJson();
-
-    // Create clean response with just the printers data
-    String response = "{\"printers\":" + printerListJson + "}";
+    // Get current printer list directly (already complete JSON)
+    String response = getDiscoveredPrintersJson();
 
     // Calculate ETag on the complete response
     uint32_t responseHash = 0;
@@ -353,15 +354,20 @@ void handlePrinterUpdates()
 
     // Check for If-None-Match header (ETag conditional request)
     String clientETag = server.header("If-None-Match");
+    LOG_VERBOSE("WEB", "ETag check - Client: %s, Current: %s", clientETag.c_str(), currentETag.c_str());
+
     if (clientETag.length() > 0 && clientETag.equals("\"" + currentETag + "\""))
     {
+        LOG_VERBOSE("WEB", "ETag match - sending 304 Not Modified");
         // Response hasn't changed, send 304 Not Modified
         server.sendHeader("ETag", "\"" + currentETag + "\"");
         server.sendHeader("Cache-Control", "no-cache");
+        server.sendHeader("Content-Length", "0");
         server.send(304, "application/json", "");
         return;
     }
 
+    LOG_VERBOSE("WEB", "ETag different - sending 200 with new data (length: %d)", response.length());
     // Send response with ETag
     server.sendHeader("ETag", "\"" + currentETag + "\"");
     server.sendHeader("Cache-Control", "no-cache");

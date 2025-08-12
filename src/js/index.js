@@ -44,7 +44,7 @@ function initializePrinterSelection() {
   container.innerHTML = '';
   
   // Get local printer name from config
-  const localPrinterName = window.GLOBAL_CONFIG?.printers?.local?.name || 'Unknown';
+  const localPrinterName = window.GLOBAL_CONFIG?.printer?.name || 'Unknown';
   
   // Add local-direct printer option with dynamic name
   const localDirectOption = createPrinterOption('local-direct', '🖨️', `Local direct (${localPrinterName})`, true, null);
@@ -53,7 +53,9 @@ function initializePrinterSelection() {
   // Add remote printers from PRINTERS config (this will now include discovered printers)
   if (typeof PRINTERS !== 'undefined') {
     PRINTERS.forEach(printer => {
-      const option = createPrinterOption(printer.topic, '📡', `${printer.name} via MQTT`, false, printer);
+      // Construct the MQTT topic from printer name
+      const topic = `scribe/${printer.name}/print`;
+      const option = createPrinterOption(topic, '📡', `${printer.name} via MQTT`, false, printer);
       container.appendChild(option);
     });
   }

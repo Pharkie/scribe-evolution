@@ -4,6 +4,9 @@
 #include "../core/network.h"
 #include <esp_task_wdt.h>
 
+// External reference to boot time from main.cpp
+extern String deviceBootTime;
+
 // Timezone object
 Timezone myTZ;
 
@@ -119,4 +122,9 @@ void setupTimezone()
     {
         LOG_WARNING("TIME", "NTP sync timeout after %d seconds - continuing with system time | Time-dependent features may not work correctly", maxAttempts);
     }
+}
+
+String getDeviceBootTime()
+{
+    return deviceBootTime;
 }

@@ -35,3 +35,8 @@ package-lock.json
 .venv/
 __pycache__/
 *.pyc
+
+# Local library overrides - keep patches directory but ignore copied library files
+lib/WebServer/WebServer.cpp
+lib/WebServer/WebServer.h
+lib/WebServer/library.properties

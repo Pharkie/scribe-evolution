@@ -12,6 +12,7 @@ extern Timezone myTZ;
 String getFormattedDateTime();
 String formatCustomDate(String customDate);
 String getISOTimestamp();
+String getDeviceBootTime();
 void setupTimezone();
 
 #endif // TIME_UTILS_H
