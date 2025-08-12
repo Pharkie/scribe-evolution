@@ -264,6 +264,10 @@ async function displayDiagnostics(data, configData) {
     const appUsedPercent = Math.round((data.system.flash.app_partition.used / data.system.flash.app_partition.total) * 100);
     const fsUsedPercent = Math.round((data.system.flash.filesystem.used / data.system.flash.filesystem.total) * 100);
     
+    // Flash allocation percentages (what portion of total flash each partition takes)
+    const appPartitionPercent = data.system.flash.app_partition.percent_of_total_flash || 0;
+    const fsPartitionPercent = data.system.flash.filesystem.percent_of_total_flash || 0;
+    
     // Format storage displays
     const formatBytes = (bytes) => {
       if (bytes < 1024) return `${bytes} B`;
@@ -273,7 +277,7 @@ async function displayDiagnostics(data, configData) {
     // Memory display
     const memoryUsageText = `${formatBytes(data.system.memory.used_heap)} / ${formatBytes(data.system.memory.total_heap)} (${memoryUsedPercent}%)`;
     
-    // App partition display
+    // App partition display with both usage and allocation info
     const appUsageText = `${formatBytes(data.system.flash.app_partition.used)} / ${formatBytes(data.system.flash.app_partition.total)} (${appUsedPercent}%)`;
     
     // File system display
@@ -292,6 +296,7 @@ async function displayDiagnostics(data, configData) {
       'app-partition-bar': `${appUsedPercent}%`,
       'filesystem-bar': `${fsUsedPercent}%`
     });
+    
     microcontrollerSection.classList.remove('hidden');
   }
   

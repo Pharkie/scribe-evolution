@@ -50,37 +50,18 @@ void handleStatus()
 
     DynamicJsonDocument doc(2048); // Large size for comprehensive data
 
-    // Device configuration
-    doc["device_owner"] = String(getDeviceOwnerKey());
-    doc["mdns_hostname"] = String(getMdnsHostname());
+    // === DEVICE INFORMATION ===
+    JsonObject device = doc.createNestedObject("device");
+    device["owner"] = String(getDeviceOwnerKey());
+    device["hostname"] = String(getMdnsHostname());
+    device["timezone"] = String(getTimezone());
 
-    // Local device timezone
-    doc["timezone"] = String(getTimezone());
-
-    // Network information
-    doc["wifi_connected"] = (WiFi.status() == WL_CONNECTED);
-    doc["ip_address"] = WiFi.localIP().toString();
-    doc["wifi_ssid"] = WiFi.SSID();
-    doc["rssi"] = WiFi.RSSI(); // Signal strength
-    doc["mac_address"] = WiFi.macAddress();
-    doc["gateway"] = WiFi.gatewayIP().toString();
-    doc["dns"] = WiFi.dnsIP().toString();
-
-    // MQTT information
-    const RuntimeConfig &runtimeConfig = getRuntimeConfig();
-    doc["mqtt_connected"] = mqttClient.connected();
-    doc["mqtt_server"] = runtimeConfig.mqttServer;
-    doc["mqtt_port"] = runtimeConfig.mqttPort;
-    doc["local_topic"] = String(getLocalPrinterTopic());
-
-    // System information
-    doc["uptime"] = millis();
-    doc["free_heap"] = ESP.getFreeHeap();
-    doc["total_heap"] = ESP.getHeapSize();
-    doc["chip_model"] = ESP.getChipModel();
-    doc["cpu_freq"] = ESP.getCpuFreqMHz();
-    doc["chip_revision"] = ESP.getChipRevision();
-    doc["sdk_version"] = ESP.getSdkVersion();
+    // === HARDWARE INFORMATION ===
+    JsonObject hardware = doc.createNestedObject("hardware");
+    hardware["chip_model"] = ESP.getChipModel();
+    hardware["chip_revision"] = ESP.getChipRevision();
+    hardware["cpu_frequency_mhz"] = ESP.getCpuFreqMHz();
+    hardware["sdk_version"] = ESP.getSdkVersion();
 
     // Reset reason
     esp_reset_reason_t resetReason = esp_reset_reason();
@@ -121,21 +102,71 @@ void handleStatus()
         resetReasonStr = "Unknown";
         break;
     }
-    doc["reset_reason"] = resetReasonStr;
+    hardware["reset_reason"] = resetReasonStr;
 
-    // Flash storage information
-    doc["flash_total"] = totalBytes;
-    doc["flash_used"] = usedBytes;
-    doc["sketch_size"] = ESP.getSketchSize();
-    doc["free_sketch_space"] = ESP.getFreeSketchSpace();
+    // === SYSTEM STATUS ===
+    JsonObject system = doc.createNestedObject("system");
+    system["uptime_ms"] = millis();
+
+    // Memory information
+    JsonObject memory = system.createNestedObject("memory");
+    memory["free_heap"] = ESP.getFreeHeap();
+    memory["total_heap"] = ESP.getHeapSize();
+    memory["used_heap"] = ESP.getHeapSize() - ESP.getFreeHeap();
+
+    // Flash storage breakdown
+    JsonObject flash = system.createNestedObject("flash");
+
+    // Total flash chip size (4MB on ESP32-C3)
+    uint32_t totalFlashSize = ESP.getFlashChipSize();
+    flash["total_chip_size"] = totalFlashSize;
+
+    // App partition (firmware)
+    JsonObject app_partition = flash.createNestedObject("app_partition");
+    uint32_t appUsed = ESP.getSketchSize();
+    uint32_t appFree = ESP.getFreeSketchSpace();
+    uint32_t appTotal = appUsed + appFree;
+    app_partition["used"] = appUsed;
+    app_partition["free"] = appFree;
+    app_partition["total"] = appTotal;
+    app_partition["percent_of_total_flash"] = (appTotal * 100) / totalFlashSize;
+
+    // File system (LittleFS)
+    JsonObject filesystem = flash.createNestedObject("filesystem");
+    filesystem["used"] = usedBytes;
+    filesystem["free"] = totalBytes - usedBytes;
+    filesystem["total"] = totalBytes;
+    filesystem["percent_of_total_flash"] = (totalBytes * 100) / totalFlashSize;
+
+    // === NETWORK STATUS ===
+    JsonObject network = doc.createNestedObject("network");
+
+    // WiFi information
+    JsonObject wifi = network.createNestedObject("wifi");
+    wifi["connected"] = (WiFi.status() == WL_CONNECTED);
+    wifi["ssid"] = WiFi.SSID();
+    wifi["ip_address"] = WiFi.localIP().toString();
+    wifi["mac_address"] = WiFi.macAddress();
+    wifi["signal_strength_dbm"] = WiFi.RSSI();
+    wifi["gateway"] = WiFi.gatewayIP().toString();
+    wifi["dns"] = WiFi.dnsIP().toString();
+
+    // MQTT information
+    const RuntimeConfig &runtimeConfig = getRuntimeConfig();
+    JsonObject mqtt = network.createNestedObject("mqtt");
+    mqtt["connected"] = mqttClient.connected();
+    mqtt["server"] = runtimeConfig.mqttServer;
+    mqtt["port"] = runtimeConfig.mqttPort;
+    mqtt["topic"] = String(getLocalPrinterTopic());
+
+    // === FEATURES STATUS ===
+    JsonObject features = doc.createNestedObject("features");
 
     // Unbidden Ink status
-    JsonObject unbiddenInk = doc.createNestedObject("unbidden_ink");
-
+    JsonObject unbiddenInk = features.createNestedObject("unbidden_ink");
     // Reload settings from file to ensure we have the latest values
     loadUnbiddenInkSettings();
     UnbiddenInkSettings settings = getCurrentUnbiddenInkSettings();
-
     unbiddenInk["enabled"] = settings.enabled;
     if (settings.enabled)
     {
@@ -145,22 +176,14 @@ void handleStatus()
         unbiddenInk["next_message_time"] = getNextUnbiddenInkTime();
     }
 
-    // Configuration health
-    JsonObject config = doc.createNestedObject("configuration");
-
-    // Add message configuration limits
-    config["max_message_chars"] = maxCharacters;
-    config["max_prompt_chars"] = maxPromptCharacters;
-
     // Hardware buttons configuration
-    JsonObject buttons = doc.createNestedObject("hardware_buttons");
+    JsonObject buttons = features.createNestedObject("hardware_buttons");
     buttons["num_buttons"] = numHardwareButtons;
     buttons["debounce_ms"] = buttonDebounceMs;
     buttons["long_press_ms"] = buttonLongPressMs;
     buttons["active_low"] = buttonActiveLow;
     buttons["min_interval_ms"] = buttonMinInterval;
     buttons["max_per_minute"] = buttonMaxPerMinute;
-
     JsonArray buttonArray = buttons.createNestedArray("buttons");
     // Use existing runtime configuration for button actions
     for (int i = 0; i < numHardwareButtons; i++)
@@ -172,7 +195,7 @@ void handleStatus()
     }
 
     // Logging configuration
-    JsonObject logging = doc.createNestedObject("logging");
+    JsonObject logging = features.createNestedObject("logging");
     logging["level"] = logLevel;
     logging["level_name"] = getLogLevelString(logLevel);
     logging["serial_enabled"] = enableSerialLogging;
@@ -189,12 +212,17 @@ void handleStatus()
         logging["max_file_size"] = maxLogFileSize;
     }
 
-// Temperature (if available)
+    // === CONFIGURATION LIMITS ===
+    JsonObject config = doc.createNestedObject("configuration");
+    config["max_message_chars"] = maxCharacters;
+    config["max_prompt_chars"] = maxPromptCharacters;
+
+    // Temperature (if available)
 #ifdef SOC_TEMP_SENSOR_SUPPORTED
     float temp = temperatureRead();
     if (!isnan(temp))
     {
-        doc["temperature"] = temp;
+        hardware["temperature"] = temp;
     }
 #endif
 
