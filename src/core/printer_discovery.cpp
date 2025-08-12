@@ -61,7 +61,7 @@ void publishPrinterStatus()
     doc["mdns"] = String(getMdnsHostname()) + ".local";
     doc["ip_address"] = WiFi.localIP().toString();
     doc["status"] = "online";
-    doc["last_power_on"] = getISOTimestamp();
+    doc["last_power_on"] = getDeviceBootTime();
     doc["timezone"] = getTimezone();
 
     String payload;

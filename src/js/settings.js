@@ -701,7 +701,7 @@ async function testUnbiddenInk() {
         button.disabled = true;
         button.textContent = 'Generating...';
         
-        const response = await fetch('/unbidden-ink', {
+        const response = await fetch('/api/unbidden-ink', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
