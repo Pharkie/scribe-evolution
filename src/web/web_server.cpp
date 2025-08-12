@@ -41,8 +41,10 @@
 #include "../core/shared_types.h"
 #include "../core/logging.h"
 #include "../core/network.h"
+#include "../core/printer_discovery.h"
 #include <LittleFS.h>
 #include <functional>
+#include <ArduinoJson.h>
 
 // External variable declarations
 extern WebServer server;
@@ -217,30 +219,33 @@ void setupWebServerRoutes(int maxChars)
         registerStaticRouteSTA("/diagnostics.html", "/html/diagnostics.html", "text/html");
 
         // Additional JS files for full functionality
-        registerStaticRouteSTA("/js/app.min.js", "/js/app.min.js", "application/javascript");
         registerStaticRouteSTA("/js/index.min.js", "/js/index.min.js", "application/javascript");
         registerStaticRouteSTA("/js/diagnostics.min.js", "/js/diagnostics.min.js", "application/javascript");
 
         // Form submission handlers
-        server.on("/print-local", HTTP_POST, handlePrintContent);
-        server.on("/print-local", HTTP_GET, handlePrintContent);
+        server.on("/api/print-local", HTTP_POST, handlePrintContent);
+        server.on("/api/print-local", HTTP_GET, handlePrintContent);
 
-        // Content generation endpoints
-        server.on("/print-test", HTTP_POST, handlePrintTest);
-        server.on("/riddle", HTTP_POST, handleRiddle);
-        server.on("/joke", HTTP_POST, handleJoke);
-        server.on("/quote", HTTP_POST, handleQuote);
-        server.on("/quiz", HTTP_POST, handleQuiz);
-        server.on("/poke", HTTP_POST, handlePoke);
-        server.on("/unbidden-ink", HTTP_POST, handleUnbiddenInk);
-        server.on("/user-message", HTTP_POST, handleUserMessage);
+        // Content generation endpoints (API)
+        server.on("/api/print-test", HTTP_POST, handlePrintTest);
+        server.on("/api/riddle", HTTP_POST, handleRiddle);
+        server.on("/api/joke", HTTP_POST, handleJoke);
+        server.on("/api/quote", HTTP_POST, handleQuote);
+        server.on("/api/quiz", HTTP_POST, handleQuiz);
+        server.on("/api/poke", HTTP_POST, handlePoke);
+        server.on("/api/unbidden-ink", HTTP_POST, handleUnbiddenInk);
+        server.on("/api/user-message", HTTP_POST, handleUserMessage);
 
         // API endpoints
-        server.on("/status", HTTP_GET, handleStatus);
-        server.on("/buttons", HTTP_GET, handleButtons);
-        server.on("/mqtt-send", HTTP_POST, handleMQTTSend);
+        server.on("/api/status", HTTP_GET, handleStatus);
+        server.on("/api/buttons", HTTP_GET, handleButtons);
+        server.on("/api/mqtt-send", HTTP_POST, handleMQTTSend);
         server.on("/api/config", HTTP_GET, handleConfigGet);
         server.on("/api/config", HTTP_POST, handleConfigPost);
+        server.on("/api/discovered-printers", HTTP_GET, handleDiscoveredPrinters);
+
+        // Smart polling endpoint for instant printer updates
+        server.on("/api/printer-discovery", HTTP_GET, handlePrinterUpdates);
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
         server.on("/debug/filesystem", HTTP_GET, []()
@@ -258,6 +263,9 @@ void setupWebServerRoutes(int maxChars)
             }
             
             server.send(200, "text/plain", output); });
+
+        // 404 handler for STA mode
+        server.onNotFound(handleNotFound);
     }
 
     LOG_VERBOSE("WEB", "Web server routes configured");
@@ -291,4 +299,73 @@ void listDirectory(File dir, String &output, int level)
         }
         entry.close();
     }
+}
+
+// Simple, robust real-time updates via smart polling
+static String lastPrinterListHash = "";
+
+// Helper function to get printer JSON data
+String getDiscoveredPrintersJson()
+{
+    DynamicJsonDocument doc(2048);
+    JsonArray printersArray = doc.createNestedArray("discovered_printers");
+
+    std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
+    for (const auto &printer : discovered)
+    {
+        if (printer.status == "online")
+        {
+            JsonObject printerObj = printersArray.createNestedObject();
+            printerObj["printer_id"] = printer.printerId;
+            printerObj["name"] = printer.name;
+            printerObj["firmware_version"] = printer.firmwareVersion;
+            printerObj["mdns"] = printer.mdns;
+            printerObj["ip_address"] = printer.ipAddress;
+            printerObj["status"] = printer.status;
+            printerObj["last_power_on"] = printer.lastPowerOn;
+            printerObj["timezone"] = printer.timezone;
+        }
+    }
+
+    doc["count"] = printersArray.size();
+    doc["our_printer_id"] = getPrinterId();
+
+    String response;
+    serializeJson(doc, response);
+    return response;
+}
+
+void handlePrinterUpdates()
+{
+    // Get current printer list
+    String printerListJson = getDiscoveredPrintersJson();
+
+    // Create clean response with just the printers data
+    String response = "{\"printers\":" + printerListJson + "}";
+
+    // Calculate ETag on the complete response
+    uint32_t responseHash = 0;
+    for (int i = 0; i < response.length(); i++)
+    {
+        responseHash = responseHash * 31 + response.charAt(i);
+    }
+    String currentETag = String(responseHash);
+
+    // Check for If-None-Match header (ETag conditional request)
+    String clientETag = server.header("If-None-Match");
+    if (clientETag.length() > 0 && clientETag.equals("\"" + currentETag + "\""))
+    {
+        // Response hasn't changed, send 304 Not Modified
+        server.sendHeader("ETag", "\"" + currentETag + "\"");
+        server.sendHeader("Cache-Control", "no-cache");
+        server.send(304, "application/json", "");
+        return;
+    }
+
+    // Send response with ETag
+    server.sendHeader("ETag", "\"" + currentETag + "\"");
+    server.sendHeader("Cache-Control", "no-cache");
+    server.sendHeader("Pragma", "no-cache");
+    server.sendHeader("Expires", "0");
+    server.send(200, "application/json", response);
 }

@@ -23,15 +23,32 @@
 #define SHARED_TYPES_H
 
 #include <Arduino.h>
+#include <vector>
 
 /**
  * @brief Structure to hold message data for printing
  */
 struct Message
 {
-    String message;           ///< The content to print
-    String timestamp;         ///< When the message was created
-    bool shouldPrintLocally;  ///< Whether this message should be printed locally
+    String message;          ///< The content to print
+    String timestamp;        ///< When the message was created
+    bool shouldPrintLocally; ///< Whether this message should be printed locally
+};
+
+/**
+ * @brief Structure to hold discovered printer information
+ */
+struct DiscoveredPrinter
+{
+    String printerId;
+    String name;
+    String firmwareVersion;
+    String mdns;
+    String ipAddress;
+    String status;
+    String lastPowerOn;
+    String timezone;
+    unsigned long lastSeen;
 };
 
 /// Global variable to store current message for printing

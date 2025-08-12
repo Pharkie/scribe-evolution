@@ -11,6 +11,9 @@ let MAX_CHARS; // Will be set by config endpoint - no default to ensure server p
 let MAX_PROMPT_CHARS; // Will be set by config endpoint - no default to ensure server provides it
 let PRINTERS = []; // Will store all available printers
 
+// ETag tracking for efficient polling
+let lastETag = null;
+
 // Default prompts - keep in sync with C++ constants
 const DEFAULT_MOTIVATION_PROMPT = "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
 
@@ -19,7 +22,7 @@ const DEFAULT_MOTIVATION_PROMPT = "Generate a short, encouraging motivational me
  */
 async function loadConfig() {
   try {
-    const response = await fetch('/config');
+    const response = await fetch('/api/config');
     const config = await response.json();
     
     // Store configuration globally for other scripts to use
@@ -56,7 +59,106 @@ async function loadConfig() {
     // Trigger event for other scripts that might be waiting for config
     window.dispatchEvent(new CustomEvent('configLoaded', { detail: config }));
     
+    // Initialize Server-Sent Events for real-time printer discovery
+    initializePrinterUpdates();
+    
   } catch (error) {
     console.error('Failed to load config:', error);
   }
+}
+
+/**
+ * Initialize smart polling for real-time printer discovery updates
+ * Uses efficient polling with change detection for instant updates
+ */
+function initializePrinterUpdates() {
+  // Get polling interval from configuration (default to 30 seconds if not available)
+  function getPollingInterval() {
+    return fetch('/api/config')
+      .then(response => response.json())
+      .then(config => {
+        const interval = config.webInterface?.printerDiscoveryPollingInterval || 10000;
+        console.log(`📡 Printer polling interval: ${interval/1000}s`);
+        return interval;
+      })
+      .catch(error => {
+        console.warn('Failed to get polling config, using 10 second default:', error);
+        return 10000; // Default fallback
+      });
+  }
+  
+  function pollForUpdates() {
+    // Build request headers with ETag if we have one
+    const headers = {};
+    if (lastETag) {
+      headers['If-None-Match'] = lastETag;
+    }
+    
+    fetch('/api/printer-discovery', { headers })
+      .then(response => {
+        // Check for 304 Not Modified
+        if (response.status === 304) {
+          console.log('📡 Printer data unchanged (304)');
+          return null; // No need to process response body
+        }
+        
+        // Update ETag from response
+        const etag = response.headers.get('ETag');
+        if (etag) {
+          lastETag = etag;
+        }
+        
+        return response.json();
+      })
+      .then(data => {
+        // Handle 304 responses (data will be null)
+        if (!data) return;
+        
+        // Data has changed, update everything
+        console.log('🖨️ Printer list updated');
+        
+        // Update the global PRINTERS array
+        updatePrintersFromData(data.printers);
+        
+        // Refresh any UI elements that depend on the printer list
+        refreshPrinterUI();
+      })
+      .catch(error => {
+        console.warn('Failed to check for printer updates:', error);
+      });
+  }
+  
+  // Start immediate check, then set up polling with configured interval
+  pollForUpdates();
+  
+  getPollingInterval().then(interval => {
+    setInterval(pollForUpdates, interval);
+    console.log(`✅ Smart printer polling initialized (${interval/1000}s updates)`);
+  });
+}
+
+/**
+ * Update the global PRINTERS array from API data
+ */
+function updatePrintersFromData(printerData) {
+  if (printerData && printerData.discovered_printers) {
+    PRINTERS.length = 0; // Clear existing
+    PRINTERS.push(...printerData.discovered_printers);
+  }
+}
+
+/**
+ * Refresh UI elements that show printer information
+ */
+function refreshPrinterUI() {
+  // Refresh printer dropdown if it exists
+  if (typeof populatePrinterDropdown === 'function') {
+    populatePrinterDropdown();
+  }
+  
+  // Trigger custom event for other components
+  const event = new CustomEvent('printersUpdated', { 
+    detail: { printers: PRINTERS } 
+  });
+  document.dispatchEvent(event);
 }

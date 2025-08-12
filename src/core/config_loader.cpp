@@ -1,8 +1,20 @@
 /**
  * @file config_loader.cpp
  * @brief Implementation of dynamic configuration loader
- * @author Adam Knowles
- * @date 2025
+ * @author Adam Knowles        {
+            String buttonKey = "button" + String(i + 1);
+            JsonObject button = buttons[buttonKey];
+            g_runtimeConfig.butto    // Button Configuration (exactly 4 buttons)
+    JsonObject buttons = doc.createNestedObject("buttons");
+    for (int i = 0; i < 4; i++)
+    {
+        String buttonKey = "button" + String(i + 1);
+        JsonObject button = buttons.createNestedObject(buttonKey);
+        button["shortAction"] = defaultButtonShortActions[i];
+        button["longAction"] = defaultButtonLongActions[i];
+    }i] = button["shortAction"] | defaultButtonShortActions[i];
+            g_runtimeConfig.buttonLongActions[i] = button["longAction"] | defaultButtonLongActions[i];
+        }e 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
@@ -83,6 +95,10 @@ bool loadRuntimeConfig()
     JsonObject validation = doc["validation"];
     g_runtimeConfig.maxCharacters = validation["maxCharacters"] | maxCharacters;
 
+    // Load web interface configuration
+    JsonObject webInterface = doc["webInterface"];
+    g_runtimeConfig.printerDiscoveryPollingInterval = webInterface["printerDiscoveryPollingInterval"] | (defaultPrinterDiscoveryPollingInterval * 1000);
+
     // Load Unbidden Ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];
     g_runtimeConfig.unbiddenInkEnabled = unbiddenInk["enabled"] | enableUnbiddenInk;
@@ -96,14 +112,11 @@ bool loadRuntimeConfig()
     if (buttons.isNull())
     {
         // Use defaults if buttons section is missing
-        g_runtimeConfig.buttonShortActions[0] = "/joke";
-        g_runtimeConfig.buttonShortActions[1] = "/riddle";
-        g_runtimeConfig.buttonShortActions[2] = "/quote";
-        g_runtimeConfig.buttonShortActions[3] = "/quiz";
-        g_runtimeConfig.buttonLongActions[0] = "/print-test";
-        g_runtimeConfig.buttonLongActions[1] = "";
-        g_runtimeConfig.buttonLongActions[2] = "";
-        g_runtimeConfig.buttonLongActions[3] = "";
+        for (int i = 0; i < 4; i++)
+        {
+            g_runtimeConfig.buttonShortActions[i] = defaultButtonShortActions[i];
+            g_runtimeConfig.buttonLongActions[i] = defaultButtonLongActions[i];
+        }
     }
     else
     {
@@ -111,10 +124,10 @@ bool loadRuntimeConfig()
         {
             String buttonKey = "button" + String(i + 1);
             JsonObject button = buttons[buttonKey];
-            g_runtimeConfig.buttonShortActions[i] = button["shortAction"] | (i == 0 ? "/joke" : i == 1 ? "/riddle"
-                                                                                            : i == 2   ? "/quote"
-                                                                                                       : "/quiz");
-            g_runtimeConfig.buttonLongActions[i] = button["longAction"] | (i == 0 ? "/print-test" : "");
+            g_runtimeConfig.buttonShortActions[i] = button["shortAction"] | (i == 0 ? "/api/joke" : i == 1 ? "/api/riddle"
+                                                                                                : i == 2   ? "/api/quote"
+                                                                                                           : "/api/quiz");
+            g_runtimeConfig.buttonLongActions[i] = button["longAction"] | (i == 0 ? "/api/print-test" : "");
         }
     }
 
@@ -149,6 +162,8 @@ void loadDefaultConfig()
 
     g_runtimeConfig.maxCharacters = maxCharacters;
 
+    g_runtimeConfig.printerDiscoveryPollingInterval = defaultPrinterDiscoveryPollingInterval * 1000;
+
     g_runtimeConfig.unbiddenInkEnabled = enableUnbiddenInk;
     g_runtimeConfig.unbiddenInkStartHour = unbiddenInkStartHour;
     g_runtimeConfig.unbiddenInkEndHour = unbiddenInkEndHour;
@@ -156,14 +171,11 @@ void loadDefaultConfig()
     g_runtimeConfig.unbiddenInkPrompt = "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
 
     // Load default button configuration
-    g_runtimeConfig.buttonShortActions[0] = "/joke";
-    g_runtimeConfig.buttonShortActions[1] = "/riddle";
-    g_runtimeConfig.buttonShortActions[2] = "/quote";
-    g_runtimeConfig.buttonShortActions[3] = "/quiz";
-    g_runtimeConfig.buttonLongActions[0] = "/print-test";
-    g_runtimeConfig.buttonLongActions[1] = "";
-    g_runtimeConfig.buttonLongActions[2] = "";
-    g_runtimeConfig.buttonLongActions[3] = "";
+    for (int i = 0; i < 4; i++)
+    {
+        g_runtimeConfig.buttonShortActions[i] = defaultButtonShortActions[i];
+        g_runtimeConfig.buttonLongActions[i] = defaultButtonLongActions[i];
+    }
 
     g_configLoaded = true;
     LOG_NOTICE("CONFIG", "Using default configuration from config.h");
@@ -245,6 +257,10 @@ bool createDefaultConfigFile()
     JsonObject validation = doc.createNestedObject("validation");
     validation["maxCharacters"] = maxCharacters;
 
+    // Web Interface Configuration
+    JsonObject webInterface = doc.createNestedObject("webInterface");
+    webInterface["printerDiscoveryPollingInterval"] = defaultPrinterDiscoveryPollingInterval * 1000;
+
     // Unbidden Ink Configuration
     JsonObject unbiddenInk = doc.createNestedObject("unbiddenInk");
     unbiddenInk["enabled"] = enableUnbiddenInk;
@@ -256,16 +272,16 @@ bool createDefaultConfigFile()
     // Button Configuration (exactly 4 buttons)
     JsonObject buttons = doc.createNestedObject("buttons");
     JsonObject button1 = buttons.createNestedObject("button1");
-    button1["shortAction"] = "/joke";
-    button1["longAction"] = "/print-test";
+    button1["shortAction"] = "/api/joke";
+    button1["longAction"] = "/api/print-test";
     JsonObject button2 = buttons.createNestedObject("button2");
-    button2["shortAction"] = "/riddle";
+    button2["shortAction"] = "/api/riddle";
     button2["longAction"] = "";
     JsonObject button3 = buttons.createNestedObject("button3");
-    button3["shortAction"] = "/quote";
+    button3["shortAction"] = "/api/quote";
     button3["longAction"] = "";
     JsonObject button4 = buttons.createNestedObject("button4");
-    button4["shortAction"] = "/quiz";
+    button4["shortAction"] = "/api/quiz";
     button4["longAction"] = "";
 
     serializeJson(doc, configFile);

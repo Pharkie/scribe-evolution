@@ -4,6 +4,7 @@
 #include "logging.h"
 #include "config_utils.h"
 #include "config_loader.h"
+#include "printer_discovery.h"
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 
@@ -51,22 +52,40 @@ void connectToMQTT()
 
     String clientId = "ScribePrinter-" + String(random(0xffff), HEX);
 
-    // Attempting MQTT connection as client
-
     // Feed watchdog before potentially blocking MQTT connection
     esp_task_wdt_reset();
 
     bool connected = false;
 
-    // Try connection with or without credentials
+    // Set up LWT for printer discovery
+    String printerId = getPrinterId();
+    String statusTopic = "scribe/printer-status/" + printerId;
+
+    DynamicJsonDocument lwtDoc(128);
+    lwtDoc["status"] = "offline";
+
+    String lwtPayload;
+    serializeJson(lwtDoc, lwtPayload);
+
+    // Try connection with or without credentials, including LWT
     const RuntimeConfig &config = getRuntimeConfig();
     if (config.mqttUsername.length() > 0 && config.mqttPassword.length() > 0)
     {
-        connected = mqttClient.connect(clientId.c_str(), config.mqttUsername.c_str(), config.mqttPassword.c_str());
+        connected = mqttClient.connect(clientId.c_str(),
+                                       config.mqttUsername.c_str(),
+                                       config.mqttPassword.c_str(),
+                                       statusTopic.c_str(),
+                                       0,
+                                       true,
+                                       lwtPayload.c_str());
     }
     else
     {
-        connected = mqttClient.connect(clientId.c_str());
+        connected = mqttClient.connect(clientId.c_str(),
+                                       statusTopic.c_str(),
+                                       0,
+                                       true,
+                                       lwtPayload.c_str());
     }
 
     // Feed watchdog again after connection attempt
@@ -85,6 +104,23 @@ void connectToMQTT()
             currentSubscribedTopic = newTopic;
             LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
         }
+
+        // Subscribe to printer discovery topics
+        if (!mqttClient.subscribe("scribe/printer-status/+"))
+        {
+            LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
+        }
+        else
+        {
+            LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics");
+        }
+
+        // Small delay to ensure MQTT connection is fully established
+        delay(100);
+
+        // Publish initial online status immediately after connection
+        LOG_INFO("MQTT", "Publishing initial online status after connection");
+        publishPrinterStatus();
     }
     else
     {
@@ -105,8 +141,18 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
 
     LOG_VERBOSE("MQTT", "MQTT payload: %s", message.c_str());
 
-    // Handle the MQTT message
-    handleMQTTMessage(message);
+    String topicStr = String(topic);
+
+    // Check if this is a printer status message
+    if (topicStr.startsWith("scribe/printer-status/"))
+    {
+        onPrinterStatusMessage(topicStr, message);
+    }
+    else
+    {
+        // Handle regular print messages
+        handleMQTTMessage(message);
+    }
 }
 
 void handleMQTTMessage(String message)
@@ -200,4 +246,10 @@ void updateMQTTSubscription()
         LOG_ERROR("MQTT", "Failed to subscribe to new topic: %s", newTopic.c_str());
         currentSubscribedTopic = ""; // Clear since subscription failed
     }
+}
+
+void setupMQTTWithDiscovery()
+{
+    setupMQTT();
+    setupPrinterDiscovery();
 }

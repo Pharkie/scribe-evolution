@@ -11,6 +11,7 @@ extern Timezone myTZ;
 // Function declarations
 String getFormattedDateTime();
 String formatCustomDate(String customDate);
+String getISOTimestamp();
 void setupTimezone();
 
 #endif // TIME_UTILS_H

@@ -184,13 +184,27 @@
                 </div>
                 <!-- Additional device settings -->
                 <div class="mt-6">
-                    <div class="space-y-2">
-                        <label for="max-characters"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Message Characters
-                            (100-5000):</label>
-                        <input type="number" id="max-characters" name="validation.maxCharacters" min="100" max="5000"
-                            required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="max-characters"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Message
+                                Characters
+                                (100-5000):</label>
+                            <input type="number" id="max-characters" name="validation.maxCharacters" min="100"
+                                max="5000" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="polling-interval"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Printer Discovery
+                                Polling
+                                (5-300 seconds):</label>
+                            <input type="number" id="polling-interval"
+                                name="webInterface.printerDiscoveryPollingInterval" min="5" max="300" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">How often to check for new/changed
+                                printers (5-300 seconds)</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -508,12 +522,12 @@
                                 <select id="button1-short" name="buttons.button1.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                             <div class="space-y-2">
@@ -523,12 +537,12 @@
                                 <select id="button1-long" name="buttons.button1.longAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                         </div>
@@ -545,12 +559,12 @@
                                 <select id="button2-short" name="buttons.button2.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                             <div class="space-y-2">
@@ -560,12 +574,12 @@
                                 <select id="button2-long" name="buttons.button2.longAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                         </div>
@@ -582,12 +596,12 @@
                                 <select id="button3-short" name="buttons.button3.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                             <div class="space-y-2">
@@ -597,12 +611,12 @@
                                 <select id="button3-long" name="buttons.button3.longAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                         </div>
@@ -619,12 +633,12 @@
                                 <select id="button4-short" name="buttons.button4.shortAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                             <div class="space-y-2">
@@ -634,12 +648,12 @@
                                 <select id="button4-long" name="buttons.button4.longAction"
                                     class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                     <option value="">None</option>
-                                    <option value="/joke">Joke</option>
-                                    <option value="/riddle">Riddle</option>
-                                    <option value="/quote">Quote</option>
-                                    <option value="/quiz">Quiz</option>
-                                    <option value="/print-test">Print Test</option>
-                                    <option value="/unbidden-ink">Unbidden Ink</option>
+                                    <option value="/api/joke">Joke</option>
+                                    <option value="/api/riddle">Riddle</option>
+                                    <option value="/api/quote">Quote</option>
+                                    <option value="/api/quiz">Quiz</option>
+                                    <option value="/api/print-test">Print Test</option>
+                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
                                 </select>
                             </div>
                         </div>

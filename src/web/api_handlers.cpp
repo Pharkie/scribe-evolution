@@ -3,14 +3,7 @@
  * @brief Implementation of API endpoint handlers
  * @author Adam Knowles
  * @date 2025
- * @copyright Copyright (c) 2025 Ad    JsonArray buttonArray = buttons.createNestedArray("buttons");
-    // Use existing runtime configuration for button actions
-    for (int i = 0; i < numHardwareButtons; i++)
-    {
-        JsonObject button = buttonArray.createNestedObject();
-        button["gpio"] = buttonGPIOs[i];
-        button["short_action"] = runtimeConfig.buttonShortActions[i];
-        button["long_action"] = runtimeConfig.buttonLongActions[i];s. All rights reserved.
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
 
@@ -22,8 +15,10 @@
 #include "../core/logging.h"
 #include "../core/mqtt_handler.h"
 #include "../core/network.h"
+#include "../core/printer_discovery.h"
 #include "../hardware/hardware_buttons.h"
 #include "../content/unbidden_ink.h"
+#include <vector>
 #include "../utils/json_helpers.h"
 #include <WebServer.h>
 #include <WiFi.h>
@@ -448,7 +443,7 @@ void handleConfigGet()
     localPrinter["topic"] = getLocalPrinterTopic();
     localPrinter["type"] = "local";
 
-    // Remote printers array (from config.h) - include local printer as first entry
+    // Remote printers array (discovered via MQTT + static from config.h)
     JsonArray remotePrinters = printers.createNestedArray("remote");
 
     // Add local printer as first remote entry for MQTT testing
@@ -457,13 +452,44 @@ void handleConfigGet()
     localAsMqtt["topic"] = getLocalPrinterTopic();
     localAsMqtt["type"] = "remote";
 
-    // Add other remote printers from config.h
+    // Add discovered remote printers
+    std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
+    for (const auto &printer : discovered)
+    {
+        if (printer.status == "online")
+        {
+            JsonObject remotePrinter = remotePrinters.createNestedObject();
+            remotePrinter["name"] = printer.name;
+            remotePrinter["topic"] = String("scribe/") + printer.name + "/print";
+            remotePrinter["type"] = "remote";
+            remotePrinter["ip_address"] = printer.ipAddress;
+            remotePrinter["mdns"] = printer.mdns;
+            remotePrinter["firmware_version"] = printer.firmwareVersion;
+            remotePrinter["last_seen"] = (millis() - printer.lastSeen) / 1000; // seconds ago
+        }
+    }
+
+    // Add static remote printers from config.h for backward compatibility
     for (int i = 0; i < numPrinterConfigs; i++)
     {
-        JsonObject remotePrinter = remotePrinters.createNestedObject();
-        remotePrinter["name"] = printerConfigs[i].key;
-        remotePrinter["topic"] = String("scribe/") + printerConfigs[i].key + "/print";
-        remotePrinter["type"] = "remote";
+        // Check if this printer is already in discovered list
+        bool alreadyDiscovered = false;
+        for (const auto &printer : discovered)
+        {
+            if (printer.name == printerConfigs[i].key && printer.status == "online")
+            {
+                alreadyDiscovered = true;
+                break;
+            }
+        }
+
+        if (!alreadyDiscovered)
+        {
+            JsonObject remotePrinter = remotePrinters.createNestedObject();
+            remotePrinter["name"] = printerConfigs[i].key;
+            remotePrinter["topic"] = String("scribe/") + printerConfigs[i].key + "/print";
+            remotePrinter["type"] = "remote";
+        }
     }
 
     // Add runtime status information for Unbidden Ink
@@ -659,7 +685,7 @@ void handleConfigPost()
     // Validate button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];
     const char *buttonKeys[] = {"button1", "button2", "button3", "button4"};
-    const char *validActions[] = {"/joke", "/riddle", "/quote", "/quiz", "/print-test", "/unbidden-ink", ""};
+    const char *validActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz", "/api/print-test", "/api/unbidden-ink", ""};
 
     for (int i = 0; i < 4; i++)
     {
@@ -746,4 +772,42 @@ void handleConfigPost()
         delay(1000);
         ESP.restart();
     }
+}
+
+void handleDiscoveredPrinters()
+{
+    if (isRateLimited())
+    {
+        sendRateLimitResponse(server);
+        return;
+    }
+
+    DynamicJsonDocument doc(2048);
+    JsonArray printersArray = doc.createNestedArray("discovered_printers");
+
+    std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
+    for (const auto &printer : discovered)
+    {
+        if (printer.status == "online")
+        {
+            JsonObject printerObj = printersArray.createNestedObject();
+            printerObj["printer_id"] = printer.printerId;
+            printerObj["name"] = printer.name;
+            printerObj["firmware_version"] = printer.firmwareVersion;
+            printerObj["mdns"] = printer.mdns;
+            printerObj["ip_address"] = printer.ipAddress;
+            printerObj["status"] = printer.status;
+            printerObj["last_power_on"] = printer.lastPowerOn;
+            printerObj["timezone"] = printer.timezone;
+        }
+    }
+
+    doc["count"] = printersArray.size();
+    doc["our_printer_id"] = getPrinterId();
+
+    String response;
+    serializeJson(doc, response);
+
+    LOG_VERBOSE("WEB", "Discovered printers requested, returning %d printers", printersArray.size());
+    server.send(200, "application/json", response);
 }
