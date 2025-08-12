@@ -303,7 +303,7 @@ void handleMQTTSend()
     if (mqttClient.publish(topic.c_str(), payload.c_str()))
     {
         LOG_VERBOSE("WEB", "MQTT message sent to topic: %s (%d characters)", topic.c_str(), message.length());
-        server.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Message sent successfully!\"}");
+        server.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Message scribed via MQTT\"}");
     }
     else
     {

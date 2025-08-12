@@ -225,7 +225,7 @@ async function saveSettings(event) {
         const result = await response.json();
         
         if (response.ok && result.success) {
-            showMessage('Settings saved successfully!', 'success');
+            showMessage('Your Scribe settings have been tucked away safely', 'success');
             currentConfig = configData; // Update current config
         } else {
             throw new Error(result.error || 'Failed to save settings');
@@ -706,7 +706,7 @@ async function testUnbiddenInk() {
         const data = await response.json();
         
         if (data.success) {
-            showMessage('Unbidden Ink content generated and sent to printer!', 'success');
+            showMessage('Unbidden Ink Scribed', 'success');
         } else {
             throw new Error(data.error || 'Unknown error occurred');
         }

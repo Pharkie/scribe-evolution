@@ -27,13 +27,13 @@ function handleSubmit(event) {
   const message = formData.get('message');
   
   if (!message.trim()) {
-    alert('Please enter a message');
+    alert('Your Scribe is waiting for something to write about');
     return;
   }
   
   // Check character limit
   if (message.length > MAX_CHARS) {
-    alert(`Message is too long. Maximum ${MAX_CHARS} characters allowed, but your message is ${message.length} characters.`);
+    alert(`Your message is a bit too chatty for your Scribe. Keep it under ${MAX_CHARS} characters (currently ${message.length} characters)`);
     return;
   }
   
@@ -121,7 +121,7 @@ function sendUserMessage(printerTarget, message) {
   })
   .catch(error => {
     console.error(`Failed to send ${config.name.toLowerCase()}:`, error);
-    alert(`Failed to send ${config.name.toLowerCase()}. Please try again.\n\nError: ${error.message}`);
+    alert(`Your Scribe had trouble with that ${config.name.toLowerCase()}. Mind giving it another try?\n\nWhat went wrong: ${error.message}`);
   });
 }
 
@@ -180,7 +180,7 @@ function sendQuickAction(action) {
       break;
     default:
       console.error('Unknown action:', action);
-      alert('Unknown action: ' + action);
+      alert('Your Scribe is confused by this action: ' + action);
       return;
   }
 
@@ -258,7 +258,7 @@ function sendQuickAction(action) {
   })
   .catch(error => {
     console.error(`Failed to send ${config.name.toLowerCase()}:`, error);
-    alert(`Failed to send ${config.name.toLowerCase()}. Please try again.\n\nError: ${error.message}`);
+    alert(`Your Scribe stumbled on that ${config.name.toLowerCase()}. Want to try again?\n\nWhat happened: ${error.message}`);
   });
 }
 
