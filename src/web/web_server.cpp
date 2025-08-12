@@ -3,7 +3,19 @@
  * @brief Core web server setup and routing for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
- * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @copyr    // Configuration endpoints (needed for settings page)
+    server.on("/config", HTTP_GET, []()
+              {
+        if (isAPMode()) {
+            Serial.println("DEBUG: /config GET requested");
+        }
+        handleConfigGet(); });
+    server.on("/config", HTTP_POST, []()
+              {
+        if (isAPMode()) {
+            Serial.println("DEBUG: /config POST requested");
+        }
+        handleConfigPost(); });right (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
  * This file is part of the Scribe ESP32-C3 Thermal Printer project.
@@ -138,23 +150,17 @@ void setupWebServerRoutes(int maxChars)
     // Always serve settings page and its dependencies (needed for both STA and AP modes)
     server.on("/settings.html", HTTP_GET, []()
               {
-        Serial.println("DEBUG: /settings.html requested");
         if (shouldRedirectToSettings()) {
-            Serial.println("DEBUG: Should redirect - calling captive portal");
             handleCaptivePortal();
             return;
         }
-        Serial.println("DEBUG: Serving settings.html file");
         createStaticHandler("/html/settings.html", "text/html")(); });
 
     // Configuration endpoints (needed for settings page)
     server.on("/config", HTTP_GET, []()
-              {
-        Serial.println("DEBUG: /config GET requested");
-        handleConfigGet(); });
+              { handleConfigGet(); });
     server.on("/config", HTTP_POST, []()
               { 
-        Serial.println("DEBUG: /config POST requested");
         handleConfigPost();
         // After successful config save in AP mode, trigger reboot to try new WiFi settings
         if (isAPMode() && server.hasArg("wifi_ssid")) {
@@ -167,7 +173,6 @@ void setupWebServerRoutes(int maxChars)
     // CSS and JS files (always needed)
     server.on("/css/tailwind.css", HTTP_GET, []()
               {
-        Serial.println("DEBUG: /css/tailwind.css requested");
         if (shouldRedirectToSettings()) {
             handleCaptivePortal();
             return;
@@ -175,7 +180,6 @@ void setupWebServerRoutes(int maxChars)
         createStaticHandler("/css/tailwind.css", "text/css")(); });
     server.on("/js/app.min.js", HTTP_GET, []()
               {
-        Serial.println("DEBUG: /js/app.min.js requested");
         if (shouldRedirectToSettings()) {
             handleCaptivePortal();
             return;
@@ -183,12 +187,18 @@ void setupWebServerRoutes(int maxChars)
         createStaticHandler("/js/app.min.js", "application/javascript")(); });
     server.on("/js/settings.js", HTTP_GET, []()
               {
-        Serial.println("DEBUG: /js/settings.js requested");
         if (shouldRedirectToSettings()) {
             handleCaptivePortal();
             return;
         }
-        createStaticHandler("/js/settings.js", "application/javascript")(); });
+        createStaticHandler("/js/settings.min.js", "application/javascript")(); });
+    server.on("/js/settings.min.js", HTTP_GET, []()
+              {
+        if (shouldRedirectToSettings()) {
+            handleCaptivePortal();
+            return;
+        }
+        createStaticHandler("/js/settings.min.js", "application/javascript")(); });
     server.on("/favicon.ico", HTTP_GET, []()
               {
         if (shouldRedirectToSettings()) {
