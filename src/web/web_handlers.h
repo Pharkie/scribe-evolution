@@ -17,11 +17,6 @@
 // ========================================
 
 /**
- * @brief Handle configuration endpoint for JavaScript
- */
-void handleConfig();
-
-/**
  * @brief Handle 404 not found requests
  */
 void handleNotFound();

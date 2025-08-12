@@ -76,7 +76,7 @@ void test_configuration_constants()
 
     TEST_ASSERT_EQUAL(80, webServerPort); // HTTP port for web server
 
-    TEST_ASSERT_EQUAL(8883, mqttPort); // TLS port for MQTT
+    TEST_ASSERT_EQUAL(8883, defaultMqttPort); // TLS port for MQTT
 
     // Test other important constants
     TEST_ASSERT_GREATER_THAN(0, buttonDebounceMs);

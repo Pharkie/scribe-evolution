@@ -23,9 +23,8 @@
  * Based on the original Project Scribe by UrbanCircles.
  *
  *  TODO:
- * Printer remote discovery
+ * - Printer remote discovery
  * - FastLED support for LED strip
- * - Hardware button testing
  */
 
 #include <WiFi.h>

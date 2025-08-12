@@ -50,7 +50,8 @@ void connectToMQTT()
         return;
     }
 
-    String clientId = "ScribePrinter-" + String(random(0xffff), HEX);
+    String printerId = getPrinterId();
+    String clientId = "ScribePrinter-" + printerId; // Use consistent ID based on printer ID
 
     // Feed watchdog before potentially blocking MQTT connection
     esp_task_wdt_reset();
@@ -58,14 +59,10 @@ void connectToMQTT()
     bool connected = false;
 
     // Set up LWT for printer discovery
-    String printerId = getPrinterId();
     String statusTopic = "scribe/printer-status/" + printerId;
 
-    DynamicJsonDocument lwtDoc(128);
-    lwtDoc["status"] = "offline";
-
-    String lwtPayload;
-    serializeJson(lwtDoc, lwtPayload);
+    // Use the same offline payload format as graceful shutdown
+    String lwtPayload = createOfflinePayload();
 
     // Try connection with or without credentials, including LWT
     const RuntimeConfig &config = getRuntimeConfig();
@@ -116,7 +113,7 @@ void connectToMQTT()
         }
 
         // Small delay to ensure MQTT connection is fully established
-        delay(100);
+        delay(500); // Increased delay to prevent LWT race condition
 
         // Publish initial online status immediately after connection
         LOG_INFO("MQTT", "Publishing initial online status after connection");

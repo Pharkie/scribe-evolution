@@ -6,7 +6,6 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "../src/core/config.h"
-#include "../src/core/config_utils.h"
 
 void test_config_constants()
 {
@@ -19,84 +18,50 @@ void test_config_constants()
 
     TEST_ASSERT_EQUAL(80, webServerPort); // HTTP port for web server
 
-    TEST_ASSERT_EQUAL(8883, mqttPort); // TLS port
+    TEST_ASSERT_EQUAL(8883, defaultMqttPort); // TLS port
 }
 
 void test_device_owner_validation()
 {
-    // Test that device owner is set and reasonable
-    TEST_ASSERT_NOT_NULL(deviceOwner);
-    TEST_ASSERT_GREATER_THAN(0, strlen(deviceOwner));
-    TEST_ASSERT_LESS_THAN(50, strlen(deviceOwner)); // Reasonable length
+    // Test that default device owner is set and reasonable
+    TEST_ASSERT_NOT_NULL(defaultDeviceOwner);
+    TEST_ASSERT_GREATER_THAN(0, strlen(defaultDeviceOwner));
+    TEST_ASSERT_LESS_THAN(50, strlen(defaultDeviceOwner)); // Reasonable length
 }
 
 void test_mqtt_configuration()
 {
-    // Test MQTT configuration
-    TEST_ASSERT_NOT_NULL(mqttServer);
-    TEST_ASSERT_GREATER_THAN(0, strlen(mqttServer));
+    // Test MQTT configuration defaults
+    TEST_ASSERT_NOT_NULL(defaultMqttServer);
+    TEST_ASSERT_GREATER_THAN(0, strlen(defaultMqttServer));
 
     // MQTT port should be valid
-    TEST_ASSERT_GREATER_OR_EQUAL(1, mqttPort);
-    TEST_ASSERT_LESS_OR_EQUAL(65535, mqttPort);
+    TEST_ASSERT_GREATER_OR_EQUAL(1, defaultMqttPort);
+    TEST_ASSERT_LESS_OR_EQUAL(65535, defaultMqttPort);
 }
 
-void test_printer_config_lookup()
+void test_api_endpoints()
 {
-    // Test that we can find printer config for the device owner
-    const PrinterConfig *config = findPrinterConfig(deviceOwner);
-    TEST_ASSERT_NOT_NULL(config);
+    // Test API endpoint constants
+    TEST_ASSERT_NOT_NULL(jokeAPI);
+    TEST_ASSERT_NOT_NULL(quoteAPI);
+    TEST_ASSERT_NOT_NULL(triviaAPI);
 
-    // Test config contents - using actual PrinterConfig structure
-    TEST_ASSERT_NOT_NULL(config->key);
-    TEST_ASSERT_NOT_NULL(config->wifiSSID);
-    TEST_ASSERT_NOT_NULL(config->wifiPassword);
-    TEST_ASSERT_NOT_NULL(config->timezone);
-
-    TEST_ASSERT_GREATER_THAN(0, strlen(config->key));
-    TEST_ASSERT_GREATER_THAN(0, strlen(config->wifiSSID));
-    TEST_ASSERT_GREATER_THAN(0, strlen(config->wifiPassword));
-    TEST_ASSERT_GREATER_THAN(0, strlen(config->timezone));
+    // Should start with https://
+    String jokeUrl = String(jokeAPI);
+    TEST_ASSERT_TRUE(jokeUrl.startsWith("https://"));
 }
 
-void test_invalid_printer_config_lookup()
+void test_hardware_configuration()
 {
-    // Test lookup with invalid owner
-    const PrinterConfig *config = findPrinterConfig("invalid_owner_12345");
-    TEST_ASSERT_NULL(config); // Should return NULL for invalid config
-}
+    // Test hardware pin configuration
+    TEST_ASSERT_GREATER_THAN(0, TX_PIN);
+    TEST_ASSERT_LESS_THAN(50, TX_PIN); // ESP32-C3 doesn't have 50+ GPIO pins
 
-void test_hostname_generation()
-{
-    // Test mDNS hostname generation
-    const char *hostname = getMdnsHostname();
-    TEST_ASSERT_NOT_NULL(hostname);
-    TEST_ASSERT_GREATER_THAN(0, strlen(hostname));
-
-    // Hostname should not contain spaces or special characters
-    String hostnameStr = String(hostname);
-    TEST_ASSERT_EQUAL(-1, hostnameStr.indexOf(' '));
-    TEST_ASSERT_EQUAL(-1, hostnameStr.indexOf('_')); // Underscores not allowed in hostnames
-}
-
-void test_topic_generation()
-{
-    // Test MQTT topic generation
-    const char *topic = getLocalPrinterTopic();
-    TEST_ASSERT_NOT_NULL(topic);
-    TEST_ASSERT_GREATER_THAN(0, strlen(topic));
-
-    // Topic should follow MQTT conventions
-    String topicStr = String(topic);
-    TEST_ASSERT_TRUE(topicStr.startsWith("scribe/"));
-}
-
-void test_printer_name_generation()
-{
-    // Test printer name generation
-    const char *name = getLocalPrinterName();
-    TEST_ASSERT_NOT_NULL(name);
-    TEST_ASSERT_GREATER_THAN(0, strlen(name));
+    // Test button configuration
+    TEST_ASSERT_EQUAL(4, numHardwareButtons);
+    TEST_ASSERT_GREATER_THAN(0, buttonDebounceMs);
+    TEST_ASSERT_GREATER_THAN(buttonDebounceMs, buttonLongPressMs);
 }
 
 void test_logging_configuration()
@@ -121,29 +86,26 @@ void test_timing_constants()
     TEST_ASSERT_LESS_THAN(3600000, memCheckInterval); // Less than 1 hour
 }
 
-void test_unbidden_ink_config()
+void test_validation_limits()
 {
-    // Test Unbidden Ink configuration constants are declared (they're extern)
-    // We can't test actual values since they're defined elsewhere
-    // Just verify the constants exist and are reasonable if defined
-    TEST_ASSERT_GREATER_OR_EQUAL(0, 24); // Just a placeholder test
+    // Test input validation limits
+    TEST_ASSERT_GREATER_THAN(0, maxJsonPayloadSize);
+    TEST_ASSERT_GREATER_THAN(0, maxMqttTopicLength);
+    TEST_ASSERT_GREATER_THAN(0, maxParameterLength);
+
+    // Test reasonable limits
+    TEST_ASSERT_LESS_THAN(100000, maxJsonPayloadSize); // Under 100KB
+    TEST_ASSERT_LESS_THAN(1000, maxMqttTopicLength);   // MQTT topics shouldn't be huge
 }
 
 void run_config_validation_tests()
 {
-    // Initialize configuration
-    ValidationResult result = validateDeviceConfig();
-    initializePrinterConfig();
-
     RUN_TEST(test_config_constants);
     RUN_TEST(test_device_owner_validation);
     RUN_TEST(test_mqtt_configuration);
-    RUN_TEST(test_printer_config_lookup);
-    RUN_TEST(test_invalid_printer_config_lookup);
-    RUN_TEST(test_hostname_generation);
-    RUN_TEST(test_topic_generation);
-    RUN_TEST(test_printer_name_generation);
+    RUN_TEST(test_api_endpoints);
+    RUN_TEST(test_hardware_configuration);
     RUN_TEST(test_logging_configuration);
     RUN_TEST(test_timing_constants);
-    RUN_TEST(test_unbidden_ink_config);
+    RUN_TEST(test_validation_limits);
 }

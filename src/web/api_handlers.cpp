@@ -443,16 +443,10 @@ void handleConfigGet()
     localPrinter["topic"] = getLocalPrinterTopic();
     localPrinter["type"] = "local";
 
-    // Remote printers array (discovered via MQTT + static from config.h)
+    // Remote printers array (discovered via MQTT only)
     JsonArray remotePrinters = printers.createNestedArray("remote");
 
-    // Add local printer as first remote entry for MQTT testing
-    JsonObject localAsMqtt = remotePrinters.createNestedObject();
-    localAsMqtt["name"] = getLocalPrinterName();
-    localAsMqtt["topic"] = getLocalPrinterTopic();
-    localAsMqtt["type"] = "remote";
-
-    // Add discovered remote printers
+    // Add discovered remote printers only
     std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
     for (const auto &printer : discovered)
     {
@@ -466,29 +460,6 @@ void handleConfigGet()
             remotePrinter["mdns"] = printer.mdns;
             remotePrinter["firmware_version"] = printer.firmwareVersion;
             remotePrinter["last_seen"] = (millis() - printer.lastSeen) / 1000; // seconds ago
-        }
-    }
-
-    // Add static remote printers from config.h for backward compatibility
-    for (int i = 0; i < numPrinterConfigs; i++)
-    {
-        // Check if this printer is already in discovered list
-        bool alreadyDiscovered = false;
-        for (const auto &printer : discovered)
-        {
-            if (printer.name == printerConfigs[i].key && printer.status == "online")
-            {
-                alreadyDiscovered = true;
-                break;
-            }
-        }
-
-        if (!alreadyDiscovered)
-        {
-            JsonObject remotePrinter = remotePrinters.createNestedObject();
-            remotePrinter["name"] = printerConfigs[i].key;
-            remotePrinter["topic"] = String("scribe/") + printerConfigs[i].key + "/print";
-            remotePrinter["type"] = "remote";
         }
     }
 
