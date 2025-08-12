@@ -23,18 +23,6 @@
 #include "config.h"
 
 // Function implementations
-const PrinterConfig *getCurrentPrinterConfig()
-{
-    for (int i = 0; i < sizeof(printerConfigs) / sizeof(printerConfigs[0]); i++)
-    {
-        if (strcmp(printerConfigs[i].key, defaultDeviceOwner) == 0)
-        {
-            return &printerConfigs[i];
-        }
-    }
-    return nullptr;
-}
-
 const char *getWiFiSSID()
 {
     return defaultWifiSSID;

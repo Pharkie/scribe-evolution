@@ -9,10 +9,6 @@
 
 std::vector<DiscoveredPrinter> discoveredPrinters;
 
-const unsigned long PRINTER_OFFLINE_TIMEOUT = 300000; // 5 minutes
-const unsigned long STATUS_PUBLISH_INTERVAL = 60000;  // 1 minute
-unsigned long lastStatusPublish = 0;
-
 String getPrinterId()
 {
     uint64_t chipid = ESP.getEfuseMac();
@@ -21,7 +17,23 @@ String getPrinterId()
 
 String getFirmwareVersion()
 {
-    return "1.0.0";
+#ifdef FIRMWARE_VERSION
+    return FIRMWARE_VERSION;
+#else
+#error "FIRMWARE_VERSION must be defined at build time in platformio.ini"
+#endif
+}
+
+String createOfflinePayload()
+{
+    // Create simple offline status payload (just name and status)
+    DynamicJsonDocument doc(128);
+    doc["name"] = getLocalPrinterName();
+    doc["status"] = "offline";
+
+    String payload;
+    serializeJson(doc, payload);
+    return payload;
 }
 
 void setupPrinterDiscovery()
@@ -29,49 +41,19 @@ void setupPrinterDiscovery()
     LOG_VERBOSE("DISCOVERY", "Printer discovery system initialized");
 }
 
-void publishPrinterOfflineStatus()
-{
-    if (!mqttClient.connected())
-    {
-        return;
-    }
-
-    String printerId = getPrinterId();
-    String statusTopic = "scribe/printer-status/" + printerId;
-
-    // Create complete offline status payload
-    DynamicJsonDocument doc(512);
-    doc["name"] = getLocalPrinterName();
-    doc["firmware_version"] = getFirmwareVersion();
-    doc["mdns"] = String(getMdnsHostname()) + ".local";
-    doc["ip_address"] = WiFi.localIP().toString();
-    doc["status"] = "offline";
-    doc["last_power_on"] = getISOTimestamp();
-    doc["timezone"] = getTimezone();
-
-    String payload;
-    serializeJson(doc, payload);
-
-    bool published = mqttClient.publish(statusTopic.c_str(), payload.c_str(), true);
-    if (published)
-    {
-        LOG_VERBOSE("DISCOVERY", "Published offline status to %s", statusTopic.c_str());
-    }
-    else
-    {
-        LOG_WARNING("DISCOVERY", "Failed to publish offline status to %s", statusTopic.c_str());
-    }
-}
-
 void publishPrinterStatus()
 {
+    LOG_VERBOSE("DISCOVERY", "publishPrinterStatus() called");
+
     if (!mqttClient.connected())
     {
+        LOG_WARNING("DISCOVERY", "MQTT not connected, cannot publish status");
         return;
     }
 
     String printerId = getPrinterId();
     String statusTopic = "scribe/printer-status/" + printerId;
+    LOG_VERBOSE("DISCOVERY", "Publishing status to topic: %s", statusTopic.c_str());
 
     DynamicJsonDocument doc(512);
     doc["name"] = getLocalPrinterName();
@@ -84,42 +66,18 @@ void publishPrinterStatus()
 
     String payload;
     serializeJson(doc, payload);
+    LOG_VERBOSE("DISCOVERY", "Status payload: %s", payload.c_str());
 
     bool published = mqttClient.publish(statusTopic.c_str(), payload.c_str(), true);
     if (published)
     {
-        LOG_VERBOSE("DISCOVERY", "Published status to %s", statusTopic.c_str());
+        LOG_NOTICE("DISCOVERY", "Published status to %s", statusTopic.c_str());
+        delay(3000); // 3 second debug delay to observe timing
     }
     else
     {
-        LOG_WARNING("DISCOVERY", "Failed to publish status to %s", statusTopic.c_str());
+        LOG_ERROR("DISCOVERY", "Failed to publish status to %s", statusTopic.c_str());
     }
-}
-
-void setupPrinterLWT()
-{
-    if (!mqttClient.connected())
-    {
-        return;
-    }
-
-    String printerId = getPrinterId();
-    String statusTopic = "scribe/printer-status/" + printerId;
-
-    // Create complete LWT payload matching the full status format
-    DynamicJsonDocument lwtDoc(512);
-    lwtDoc["name"] = getLocalPrinterName();
-    lwtDoc["firmware_version"] = getFirmwareVersion();
-    lwtDoc["mdns"] = String(getMdnsHostname()) + ".local";
-    lwtDoc["ip_address"] = WiFi.localIP().toString();
-    lwtDoc["status"] = "offline";
-    lwtDoc["last_power_on"] = getISOTimestamp();
-    lwtDoc["timezone"] = getTimezone();
-
-    String lwtPayload;
-    serializeJson(lwtDoc, lwtPayload);
-
-    LOG_VERBOSE("DISCOVERY", "LWT configured for %s with payload: %s", statusTopic.c_str(), lwtPayload.c_str());
 }
 
 void onPrinterStatusMessage(const String &topic, const String &payload)
@@ -157,8 +115,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
             if (status == "offline")
             {
                 printer.status = "offline";
-                LOG_NOTICE("DISCOVERY", "Printer %s went offline", printer.name.c_str());
-                broadcastPrinterEvent(printer, "offline");
+                LOG_NOTICE("DISCOVERY", "Printer %s went offline (payload: %s)", printer.name.c_str(), payload.c_str());
             }
             else
             {
@@ -172,7 +129,6 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
                 printer.lastSeen = currentTime;
 
                 LOG_NOTICE("DISCOVERY", "Updated printer %s (%s)", printer.name.c_str(), printer.ipAddress.c_str());
-                broadcastPrinterEvent(printer, "discovered");
             }
             found = true;
             break;
@@ -195,75 +151,24 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
 
         discoveredPrinters.push_back(newPrinter);
         LOG_NOTICE("DISCOVERY", "Discovered new printer %s (%s)", newPrinter.name.c_str(), newPrinter.ipAddress.c_str());
-        broadcastPrinterEvent(newPrinter, "discovered");
-    }
-}
-
-void clearOfflinePrinters()
-{
-    unsigned long currentTime = millis();
-
-    auto it = discoveredPrinters.begin();
-    while (it != discoveredPrinters.end())
-    {
-        if (it->status == "offline" || (currentTime - it->lastSeen > PRINTER_OFFLINE_TIMEOUT))
-        {
-            LOG_NOTICE("DISCOVERY", "Removing offline printer %s", it->name.c_str());
-            it = discoveredPrinters.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
     }
 }
 
 void handlePrinterDiscovery()
 {
+    // Periodic heartbeat publishing - keeps printer visible to others
     unsigned long currentTime = millis();
+    static unsigned long lastStatusPublish = 0;
+    const unsigned long STATUS_PUBLISH_INTERVAL = 60000; // 1 minute
 
-    // Publish our status periodically
     if (currentTime - lastStatusPublish > STATUS_PUBLISH_INTERVAL)
     {
         publishPrinterStatus();
         lastStatusPublish = currentTime;
-    }
-
-    // Clean up offline printers periodically
-    static unsigned long lastCleanup = 0;
-    if (currentTime - lastCleanup > PRINTER_OFFLINE_TIMEOUT)
-    {
-        clearOfflinePrinters();
-        lastCleanup = currentTime;
     }
 }
 
 std::vector<DiscoveredPrinter> getDiscoveredPrinters()
 {
     return discoveredPrinters;
-}
-
-void broadcastPrinterEvent(const DiscoveredPrinter &printer, const String &eventType)
-{
-    // Create JSON payload for the event
-    DynamicJsonDocument doc(512);
-    doc["printerId"] = printer.printerId;
-    doc["name"] = printer.name;
-    doc["firmwareVersion"] = printer.firmwareVersion;
-    doc["mdns"] = printer.mdns;
-    doc["ipAddress"] = printer.ipAddress;
-    doc["status"] = printer.status;
-    doc["lastPowerOn"] = printer.lastPowerOn;
-    doc["timezone"] = printer.timezone;
-    doc["lastSeen"] = (millis() - printer.lastSeen) / 1000; // seconds ago
-    doc["eventType"] = eventType;
-    doc["timestamp"] = millis();
-
-    String payload;
-    serializeJson(doc, payload);
-
-    // Note: Real-time updates now handled by smart polling in frontend
-    // No need for server-side event broadcasting
-
-    LOG_VERBOSE("DISCOVERY", "Printer %s event: %s", eventType.c_str(), printer.name.c_str());
 }

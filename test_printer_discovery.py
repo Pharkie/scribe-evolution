@@ -44,6 +44,12 @@ Usage Examples:
 5. Test chaos mode (rapid connect/disconnect):
    python test_printer_discovery.py --scenario chaos
 
+6. Test both shutdown types:
+   python test_printer_discovery.py --scenario home
+   # Then while running:
+   # - Press 'x' + Enter = ABRUPT shutdown (triggers LWT)
+   # - Press Ctrl+C = GRACEFUL shutdown (publishes offline status)
+
 What to test after running:
 - Check your Scribe's index.html page - fake printers should appear in the remote printer choices
 - Visit /diagnostics.html to see discovery system status
@@ -52,12 +58,16 @@ What to test after running:
 
 Interactive Commands:
 - start <name> [firmware]  - Start a printer (e.g., 'start Alice 1.2.0')
-- stop <name>             - Stop a printer (triggers LWT)
+- stop <name>             - Stop a printer (graceful shutdown: publishes offline status)
+- stop <name> abrupt      - Stop a printer (abrupt: triggers LWT)
 - status <name> <status>  - Update printer status (online/offline)
 - list                    - List active printers
 - scenario <name>         - Run predefined scenarios (office/home/mixed/chaos)
 - help                    - Show available scenarios
-- quit                    - Exit and trigger LWT for all printers
+- quit                    - Exit (graceful shutdown of all printers)
+
+NOTE: Ctrl+C performs GRACEFUL shutdown - publishes offline status before disconnecting.
+      This simulates a proper power-down sequence, not a network failure.
 
 Author: Generated for Scribe ESP32-C3 Thermal Printer project
 Date: August 2025
@@ -67,6 +77,9 @@ import json
 import time
 import random
 import argparse
+import threading
+import sys
+import select
 from datetime import datetime, timezone
 
 # Try to import paho.mqtt.client with helpful error message
@@ -84,6 +97,68 @@ except ImportError as e:
     )
     print(f"\nOriginal error: {e}")
     exit(1)
+
+
+class KeyboardListener:
+    def __init__(self, simulator):
+        self.simulator = simulator
+        self.running = True
+        self.thread = None
+
+    def start(self):
+        """Start the keyboard listener in a background thread"""
+        self.thread = threading.Thread(target=self._listen, daemon=True)
+        self.thread.start()
+        print("⌨️  Keyboard controls active:")
+        print("   Press 'x' + Enter = ABRUPT shutdown (triggers LWT)")
+        print("   Press Ctrl+C = GRACEFUL shutdown (publishes offline status)")
+        print()
+
+    def stop(self):
+        """Stop the keyboard listener"""
+        self.running = False
+
+    def _listen(self):
+        """Listen for keyboard input in background thread"""
+        while self.running:
+            try:
+                if sys.stdin in select.select([sys.stdin], [], [], 0.1)[0]:
+                    key = sys.stdin.readline().strip().lower()
+                    if key == "x":
+                        print(
+                            "💥 ABRUPT shutdown triggered! (simulates power loss/network failure)"
+                        )
+                        self._abrupt_shutdown()
+                        break
+                    elif key == "help" or key == "h":
+                        print("⌨️  Keyboard controls:")
+                        print("   'x' + Enter = ABRUPT shutdown (triggers LWT)")
+                        print(
+                            "   Ctrl+C = GRACEFUL shutdown (publishes offline status)"
+                        )
+            except:
+                # Handle any errors silently (like Windows compatibility issues)
+                time.sleep(0.1)
+
+    def _abrupt_shutdown(self):
+        """Perform abrupt shutdown of all printers"""
+        print("🔥 Forcing abrupt disconnection for all printers...")
+        for name in list(self.simulator.clients.keys()):
+            print(f"⚡ {name}: Triggering LWT via socket closure")
+            try:
+                self.simulator.clients[name]._sock.close()
+            except:
+                pass
+            self.simulator.clients[name].loop_stop()
+            del self.simulator.clients[name]
+
+        print(
+            "💀 All printers abruptly disconnected - LWT messages should be triggered"
+        )
+        print("🛑 Exiting script...")
+        import os
+
+        os._exit(0)
 
 
 class ScribePrinterSimulator:
@@ -114,6 +189,10 @@ class ScribePrinterSimulator:
             "timezone": "Europe/London",
         }
 
+    def create_offline_payload(self, name):
+        """Create a simple offline payload (just name and status)"""
+        return {"name": name, "status": "offline"}
+
     def setup_client(self, printer_name, ip_suffix, firmware="1.0.0"):
         """Setup MQTT client for a simulated printer"""
         client_id = f"ScribePrinter-{random.randint(1000, 9999)}"
@@ -128,9 +207,9 @@ class ScribePrinterSimulator:
         if self.use_tls:
             client.tls_set()
 
-        # Setup LWT (Last Will & Testament) with complete payload
+        # Setup LWT (Last Will & Testament) with simple offline payload
         topic = f"scribe/printer-status/{printer_name.lower()}"
-        lwt_payload = self.create_printer_payload(printer_name, ip_suffix, firmware, "offline")
+        lwt_payload = self.create_offline_payload(printer_name)
         client.will_set(topic, json.dumps(lwt_payload), qos=1, retain=True)
 
         def on_connect(client, userdata, flags, rc):
@@ -185,26 +264,27 @@ class ScribePrinterSimulator:
         """Stop simulating a printer with graceful or abrupt disconnection"""
         if name in self.clients:
             print(f"🛑 Stopping printer: {name}")
-            
+
             if graceful:
                 # Graceful shutdown: publish offline status first, then clean disconnect
                 print(f"👋 {name}: Publishing graceful offline status")
                 topic = f"scribe/printer-status/{name.lower()}"
-                
-                # Get printer info for complete offline payload
-                ip_suffix = 100 + list(self.clients.keys()).index(name) + 1
-                offline_payload = self.create_printer_payload(name, ip_suffix, "1.0.0", "offline")
-                
+
+                # Create simple offline payload using helper method
+                offline_payload = self.create_offline_payload(name)
+
                 # Publish offline status
-                result = self.clients[name].publish(topic, json.dumps(offline_payload), qos=1, retain=True)
+                result = self.clients[name].publish(
+                    topic, json.dumps(offline_payload), qos=1, retain=True
+                )
                 if result.rc == 0:
                     print(f"📡 {name}: Published graceful offline status")
                 else:
                     print(f"❌ {name}: Failed to publish offline status")
-                
+
                 # Wait a moment for message to be sent
                 time.sleep(0.5)
-                
+
                 # Clean disconnect (won't trigger LWT)
                 self.clients[name].disconnect()
                 self.clients[name].loop_stop()
@@ -218,7 +298,7 @@ class ScribePrinterSimulator:
                     pass
                 self.clients[name].loop_stop()
                 print(f"⚡ {name}: LWT should be triggered")
-            
+
             del self.clients[name]
         else:
             print(f"❌ Printer {name} not found")
@@ -264,14 +344,18 @@ def run_interactive_mode(simulator):
     print("\n=== Scribe Printer Discovery Test ===")
     print("Commands:")
     print("  start <name> [firmware] - Start a printer (e.g., 'start Alice 1.2.0')")
-    print("  stop <name>            - Stop a printer (triggers LWT)")
+    print(
+        "  stop <name>            - Stop a printer (graceful: publishes offline status)"
+    )
+    print("  stop <name> false      - Stop a printer (abrupt: triggers LWT)")
     print("  status <name> <status> - Update printer status (online/offline)")
     print("  list                   - List active printers")
     print("  scenario <name>        - Run a test scenario")
     print("  help                   - Show this help")
-    print("  quit                   - Exit")
+    print("  quit                   - Exit (graceful shutdown)")
     print("\nAvailable scenarios: office, home, mixed, chaos")
-    print("Now check your Scribe's web interface to see discovered printers!\n")
+    print("💡 TIP: Ctrl+C = GRACEFUL shutdown (publishes offline status)")
+    print("📱 Now check your Scribe's web interface to see discovered printers!\n")
 
     while True:
         try:
@@ -287,7 +371,11 @@ def run_interactive_mode(simulator):
                 ip_suffix = 100 + len(simulator.clients) + 1
                 simulator.start_printer(cmd[1], ip_suffix, firmware)
             elif cmd[0] == "stop" and len(cmd) >= 2:
-                simulator.stop_printer(cmd[1])
+                # Check if user wants abrupt disconnection (stop <name> abrupt)
+                graceful = True
+                if len(cmd) >= 3 and cmd[2].lower() in ["abrupt", "lwt", "force"]:
+                    graceful = False
+                simulator.stop_printer(cmd[1], graceful)
             elif cmd[0] == "status" and len(cmd) >= 3:
                 simulator.update_printer_status(cmd[1], cmd[2])
             elif cmd[0] == "list":
@@ -413,7 +501,11 @@ def main():
             print(
                 "🔍 Check: index.html (printer dropdown), diagnostics.html, /api/discovered-printers"
             )
-            print("⏹️  Press Ctrl+C to stop all simulated printers and exit.")
+            print()
+
+            # Start keyboard listener for abrupt shutdown testing
+            listener = KeyboardListener(simulator)
+            listener.start()
 
             # Keep running until interrupted
             while True:
@@ -423,9 +515,10 @@ def main():
             run_interactive_mode(simulator)
 
     except KeyboardInterrupt:
-        print("\n🛑 Shutting down...")
+        print("\n🛑 Ctrl+C detected - performing GRACEFUL shutdown...")
+        print("📡 Publishing offline status for all printers before disconnecting...")
         simulator.stop_all()
-        print("👋 All simulated printers stopped. Goodbye!")
+        print("👋 All simulated printers gracefully stopped. Goodbye!")
     except Exception as e:
         print(f"💥 Error: {e}")
         simulator.stop_all()

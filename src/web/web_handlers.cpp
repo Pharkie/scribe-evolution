@@ -24,38 +24,6 @@ extern WebServer server;
 // STATIC FILE HANDLERS
 // ========================================
 
-void handleConfig()
-{
-    DynamicJsonDocument doc(jsonDocumentSize);
-
-    // Set max message chars and prompt chars
-    doc["maxMessageChars"] = maxCharacters;
-    doc["maxPromptChars"] = maxPromptCharacters;
-
-    // Create remote printers array
-    JsonArray printers = doc.createNestedArray("remotePrinters");
-
-    // Add local printer first (for self-sending)
-    JsonObject localPrinter = printers.createNestedObject();
-    localPrinter["name"] = String(getLocalPrinterName());
-    localPrinter["topic"] = String(getLocalPrinterTopic());
-
-    // Add other printers from config
-    const char *others[maxOtherPrinters][2];
-    int numOthers = getOtherPrinters(others, maxOtherPrinters);
-    for (int i = 0; i < numOthers; i++)
-    {
-        JsonObject printer = printers.createNestedObject();
-        printer["name"] = String(others[i][0]);
-        printer["topic"] = String(others[i][1]);
-    }
-
-    // Serialize and send
-    String response;
-    serializeJson(doc, response);
-    server.send(200, "application/json", response);
-}
-
 void handleNotFound()
 {
     // Rate limit 404 requests to prevent abuse
