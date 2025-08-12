@@ -11,6 +11,7 @@
 #define API_HANDLERS_H
 
 #include <Arduino.h>
+#include "../core/shared_types.h"
 
 // ========================================
 // API ENDPOINT HANDLERS
@@ -40,5 +41,10 @@ void handleConfigGet();
  * @brief Handle configuration POST request (write config.json)
  */
 void handleConfigPost();
+
+/**
+ * @brief Handle discovered printers request
+ */
+void handleDiscoveredPrinters();
 
 #endif // API_HANDLERS_H

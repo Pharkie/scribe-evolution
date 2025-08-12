@@ -32,6 +32,12 @@
 void setupWebServerRoutes(int maxChars);
 
 /**
+ * @brief Get printer discovery updates with change detection
+ * Returns only changed data to minimize bandwidth
+ */
+void handlePrinterUpdates();
+
+/**
  * @brief Handle captive portal redirects in AP mode
  */
 void handleCaptivePortal();

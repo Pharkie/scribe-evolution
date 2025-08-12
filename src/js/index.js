@@ -12,6 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize printer selection
   initializeConfigDependentUI();
+  
+  // Listen for printer updates from the polling system
+  document.addEventListener('printersUpdated', function(event) {
+    console.log('🔄 Printers updated, refreshing index page printer selection');
+    initializePrinterSelection();
+  });
 });
 
 /**
@@ -41,13 +47,13 @@ function initializePrinterSelection() {
   const localPrinterName = window.GLOBAL_CONFIG?.printers?.local?.name || 'Unknown';
   
   // Add local-direct printer option with dynamic name
-  const localDirectOption = createPrinterOption('local-direct', '🖨️', `Local direct (${localPrinterName})`, true);
+  const localDirectOption = createPrinterOption('local-direct', '🖨️', `Local direct (${localPrinterName})`, true, null);
   container.appendChild(localDirectOption);
   
-  // Add remote printers from PRINTERS config (this will now include local MQTT as first entry)
+  // Add remote printers from PRINTERS config (this will now include discovered printers)
   if (typeof PRINTERS !== 'undefined') {
     PRINTERS.forEach(printer => {
-      const option = createPrinterOption(printer.topic, '📡', `${printer.name} via MQTT`, false);
+      const option = createPrinterOption(printer.topic, '📡', `${printer.name} via MQTT`, false, printer);
       container.appendChild(option);
     });
   }
@@ -56,29 +62,49 @@ function initializePrinterSelection() {
 /**
  * Create a printer option element
  */
-function createPrinterOption(value, icon, name, isSelected = false) {
+function createPrinterOption(value, icon, name, isSelected = false, printerData = null) {
   const option = document.createElement('div');
   option.className = `printer-option cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 hover:shadow-md ${
     isSelected ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 dark:border-orange-600' : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
   }`;
   option.setAttribute('data-value', value);
   
-  // Determine connection type for display
+  // Determine connection type and additional info for display
   let connectionType = 'Unknown';
+  let additionalInfo = '';
+  
   if (value === 'local-direct') {
     connectionType = 'Direct connection';
   } else if (value === 'local-mqtt') {
     connectionType = 'MQTT connection';
   } else {
     connectionType = 'MQTT connection';
+    
+    // Add additional info for discovered printers
+    if (printerData) {
+      const infoParts = [];
+      if (printerData.ip_address) {
+        infoParts.push(`IP: ${printerData.ip_address}`);
+      }
+      if (printerData.firmware_version) {
+        infoParts.push(`v${printerData.firmware_version}`);
+      }
+      if (printerData.last_seen !== undefined) {
+        const seenText = printerData.last_seen === 0 ? 'Just now' : `${printerData.last_seen}s ago`;
+        infoParts.push(`Seen: ${seenText}`);
+      }
+      if (infoParts.length > 0) {
+        additionalInfo = ` • ${infoParts.join(' • ')}`;
+      }
+    }
   }
   
   option.innerHTML = `
     <div class="flex items-center space-x-3">
       <span class="text-2xl">${icon}</span>
-      <div>
-        <div class="font-medium text-sm">${name}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400">${connectionType}</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-medium text-sm truncate">${name}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 truncate">${connectionType}${additionalInfo}</div>
       </div>
     </div>
   `;

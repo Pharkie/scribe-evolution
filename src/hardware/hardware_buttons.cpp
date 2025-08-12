@@ -31,7 +31,7 @@ void initializeHardwareButtons()
         buttonStates[i].windowStartTime = 0;
 
         // Get runtime configuration for logging
-        const RuntimeConfig& config = getRuntimeConfig();
+        const RuntimeConfig &config = getRuntimeConfig();
         LOG_VERBOSE("BUTTONS", "Button %d: GPIO %d -> %s (short), %s (long)",
                     i, buttonGPIOs[i], config.buttonShortActions[i].c_str(), config.buttonLongActions[i].c_str());
     }
@@ -76,7 +76,7 @@ void checkHardwareButtons()
                     buttonStates[i].pressStartTime = currentTime;
 
                     // Get runtime configuration for logging
-                    const RuntimeConfig& config = getRuntimeConfig();
+                    const RuntimeConfig &config = getRuntimeConfig();
                     LOG_VERBOSE("BUTTONS", "Button %d pressed: %s", i, config.buttonShortActions[i].c_str());
                 }
                 else if (!isPressed && buttonStates[i].pressed)
@@ -91,7 +91,7 @@ void checkHardwareButtons()
                         if (pressDuration < buttonLongPressMs)
                         {
                             // Get runtime configuration for logging
-                            const RuntimeConfig& config = getRuntimeConfig();
+                            const RuntimeConfig &config = getRuntimeConfig();
                             LOG_NOTICE("BUTTONS", "Button %d short press: %s", i, config.buttonShortActions[i].c_str());
                             handleButtonPress(i);
                         }
@@ -110,7 +110,7 @@ void checkHardwareButtons()
             {
                 buttonStates[i].longPressTriggered = true;
                 // Get runtime configuration for logging
-                const RuntimeConfig& config = getRuntimeConfig();
+                const RuntimeConfig &config = getRuntimeConfig();
                 LOG_NOTICE("BUTTONS", "Button %d long press: %s", i, config.buttonLongActions[i].c_str());
                 handleButtonLongPress(i);
             }
@@ -173,8 +173,8 @@ void handleButtonPress(int buttonIndex)
     }
 
     // Get runtime configuration
-    const RuntimeConfig& config = getRuntimeConfig();
-    const String& shortAction = config.buttonShortActions[buttonIndex];
+    const RuntimeConfig &config = getRuntimeConfig();
+    const String &shortAction = config.buttonShortActions[buttonIndex];
 
     LOG_VERBOSE("BUTTONS", "Triggering short press endpoint: %s", shortAction.c_str());
     triggerEndpointFromButton(shortAction.c_str());
@@ -196,8 +196,8 @@ void handleButtonLongPress(int buttonIndex)
     }
 
     // Get runtime configuration
-    const RuntimeConfig& config = getRuntimeConfig();
-    const String& longAction = config.buttonLongActions[buttonIndex];
+    const RuntimeConfig &config = getRuntimeConfig();
+    const String &longAction = config.buttonLongActions[buttonIndex];
 
     LOG_VERBOSE("BUTTONS", "Triggering long press endpoint: %s", longAction.c_str());
     triggerEndpointFromButton(longAction.c_str());
@@ -208,35 +208,35 @@ void triggerEndpointFromButton(const char *endpoint)
     // Map endpoint strings to handler functions
     LOG_VERBOSE("BUTTONS", "Hardware button triggered: %s", endpoint);
 
-    if (strcmp(endpoint, "/riddle") == 0)
+    if (strcmp(endpoint, "/api/riddle") == 0)
     {
         handleRiddle();
     }
-    else if (strcmp(endpoint, "/joke") == 0)
+    else if (strcmp(endpoint, "/api/joke") == 0)
     {
         handleJoke();
     }
-    else if (strcmp(endpoint, "/quote") == 0)
+    else if (strcmp(endpoint, "/api/quote") == 0)
     {
         handleQuote();
     }
-    else if (strcmp(endpoint, "/quiz") == 0)
+    else if (strcmp(endpoint, "/api/quiz") == 0)
     {
         handleQuiz();
     }
-    else if (strcmp(endpoint, "/print-test") == 0)
+    else if (strcmp(endpoint, "/api/print-test") == 0)
     {
         handlePrintTest();
     }
-    else if (strcmp(endpoint, "/test-print") == 0)
+    else if (strcmp(endpoint, "/api/test-print") == 0)
     {
         handlePrintTest(); // Same handler for both endpoint variations
     }
-    else if (strcmp(endpoint, "/unbidden-ink") == 0)
+    else if (strcmp(endpoint, "/api/unbidden-ink") == 0)
     {
         handleUnbiddenInk();
     }
-    else if (strcmp(endpoint, "/keep-going") == 0)
+    else if (strcmp(endpoint, "/api/keep-going") == 0)
     {
         // Keep-going endpoint - generate random content
         // For now, let's default to joke
@@ -257,9 +257,9 @@ String getButtonConfigJson()
 {
     DynamicJsonDocument doc(jsonDocumentSize);
     JsonArray buttons = doc.createNestedArray("buttons");
-    
+
     // Get runtime configuration
-    const RuntimeConfig& config = getRuntimeConfig();
+    const RuntimeConfig &config = getRuntimeConfig();
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
