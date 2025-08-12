@@ -39,7 +39,7 @@ function sendUserMessage(printerTarget, message) {
   triggerConfetti();
 
   // Step 1: Fetch content from user-message endpoint (adds MESSAGE prefix)
-  fetch('/user-message', {
+  fetch('/api/user-message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: message, target: printerTarget })

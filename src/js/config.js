@@ -32,11 +32,8 @@ async function loadConfig() {
     MAX_CHARS = config.validation?.maxCharacters || 1000;
     MAX_PROMPT_CHARS = 500; // Default from C++ config
     
-    // Store printer data for later use
+    // Initialize empty PRINTERS array (populated via discovery polling)
     PRINTERS = [];
-    if (config.printers?.remote) {
-      PRINTERS = config.printers.remote;
-    }
     
     // Initialize printer selection UI (if function exists)
     if (typeof initializeConfigDependentUI === 'function') {
@@ -72,19 +69,12 @@ async function loadConfig() {
  * Uses efficient polling with change detection for instant updates
  */
 function initializePrinterUpdates() {
-  // Get polling interval from configuration (default to 30 seconds if not available)
+  // Get polling interval from already loaded configuration
   function getPollingInterval() {
-    return fetch('/api/config')
-      .then(response => response.json())
-      .then(config => {
-        const interval = config.webInterface?.printerDiscoveryPollingInterval || 10000;
-        console.log(`📡 Printer polling interval: ${interval/1000}s`);
-        return interval;
-      })
-      .catch(error => {
-        console.warn('Failed to get polling config, using 10 second default:', error);
-        return 10000; // Default fallback
-      });
+    const config = window.GLOBAL_CONFIG;
+    const interval = config?.webInterface?.printerDiscoveryPollingInterval || 10000;
+    console.log(`📡 Printer polling interval: ${interval/1000}s`);
+    return Promise.resolve(interval);
   }
   
   function pollForUpdates() {
@@ -117,8 +107,8 @@ function initializePrinterUpdates() {
         // Data has changed, update everything
         console.log('🖨️ Printer list updated');
         
-        // Update the global PRINTERS array
-        updatePrintersFromData(data.printers);
+        // Update the global PRINTERS array (data is now the direct response)
+        updatePrintersFromData(data);
         
         // Refresh any UI elements that depend on the printer list
         refreshPrinterUI();
