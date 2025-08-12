@@ -24,49 +24,49 @@ extern Message currentMessage;
 /**
  * @brief Handle riddle content generation request
  */
-void handleRiddle();
+void handleRiddle(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle joke content generation request
  */
-void handleJoke();
+void handleJoke(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle quote content generation request
  */
-void handleQuote();
+void handleQuote(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle quiz content generation request
  */
-void handleQuiz();
+void handleQuiz(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle poke content generation request
  */
-void handlePoke();
+void handlePoke(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle Unbidden Ink content generation request
  */
-void handleUnbiddenInk();
+void handleUnbiddenInk(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle print test request
  */
-void handlePrintTest();
+void handlePrintTest(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle user message content generation (adds MESSAGE prefix)
  */
-void handleUserMessage();
+void handleUserMessage(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle content printing (generic handler for any pre-formatted content)
  * @details Unified endpoint for printing content locally or routing via MQTT.
  *          Content should already have action headers (MESSAGE, JOKE, etc.)
  */
-void handlePrintContent();
+void handlePrintContent(AsyncWebServerRequest* request);
 
 // ========================================
 // ========================================

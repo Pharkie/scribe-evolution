@@ -20,31 +20,31 @@
 /**
  * @brief Handle system status request
  */
-void handleStatus();
+void handleStatus(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle hardware button configuration request
  */
-void handleButtons();
+void handleButtons(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle MQTT message sending request
  */
-void handleMQTTSend();
+void handleMQTTSend(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle configuration GET request (read config.json)
  */
-void handleConfigGet();
+void handleConfigGet(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle configuration POST request (write config.json)
  */
-void handleConfigPost();
+void handleConfigPost(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle discovered printers request
  */
-void handleDiscoveredPrinters();
+void handleDiscoveredPrinters(AsyncWebServerRequest* request);
 
 #endif // API_HANDLERS_H

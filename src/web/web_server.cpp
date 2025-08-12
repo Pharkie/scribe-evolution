@@ -47,7 +47,7 @@
 #include <ArduinoJson.h>
 
 // External variable declarations
-extern WebServer server;
+extern AsyncWebServer server;
 
 // Global message storage for printing
 Message currentMessage = {"", "", false};
@@ -60,10 +60,10 @@ Message currentMessage = {"", "", false};
  * @brief Captive portal handler that redirects all non-settings requests to settings.html
  * Used when in AP fallback mode to force configuration
  */
-void handleCaptivePortal()
+void handleCaptivePortal(AsyncWebServerRequest* request)
 {
     // Check if this is already a settings-related request
-    String uri = server.uri();
+    String uri = request->url();
     // DEBUG: Captive portal called for URI
     // DEBUG: URI check for captive portal handling
 
@@ -87,13 +87,14 @@ void handleCaptivePortal()
     {
         // DEBUG: Captive portal detection - responding with redirect to settings
         // Respond with captive portal page
-        server.sendHeader("Location", "http://192.168.4.1/settings.html", true);
-        server.send(302, "text/html",
+        AsyncWebServerResponse *response = request->beginResponse(302, "text/html",
                     "<!DOCTYPE html><html><head><title>WiFi Setup</title></head>"
                     "<body><h1>Scribe WiFi Setup</h1>"
                     "<p>Redirecting to configuration page...</p>"
                     "<script>window.location.href='http://192.168.4.1/settings.html';</script>"
                     "</body></html>");
+        response->addHeader("Location", "http://192.168.4.1/settings.html");
+        request->send(response);
         return;
     }
 
@@ -102,20 +103,21 @@ void handleCaptivePortal()
     // URI redirection handling
 
     // Redirect to settings page
-    server.sendHeader("Location", "/settings.html", true);
-    server.send(302, "text/plain", "Redirecting to configuration page...");
+    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to configuration page...");
+    response->addHeader("Location", "/settings.html");
+    request->send(response);
 }
 
 /**
  * @brief Check if request should be redirected in AP mode
  * @return true if request needs captive portal redirect
  */
-bool shouldRedirectToSettings()
+bool shouldRedirectToSettings(AsyncWebServerRequest* request)
 {
     if (!isAPMode())
         return false;
 
-    String uri = server.uri();
+    String uri = request->url();
     // Allow settings page and its dependencies
     return !(uri.startsWith("/settings") ||
              uri.startsWith("/config") ||
@@ -124,12 +126,12 @@ bool shouldRedirectToSettings()
              uri == "/favicon.ico");
 }
 
-// Helper function to create static file handlers with logging
-std::function<void()> createStaticHandler(const String &filePath, const String &contentType)
+// Helper function to create static file handlers with logging for async server
+std::function<void(AsyncWebServerRequest*)> createAsyncStaticHandler(const String &filePath, const String &contentType)
 {
-    return [filePath, contentType]()
+    return [filePath, contentType](AsyncWebServerRequest* request)
     {
-        if (!serveFileFromLittleFS(filePath, contentType))
+        if (!serveFileFromLittleFS(request, filePath, contentType))
         {
             LOG_ERROR("WEB", "Failed to serve %s", filePath.c_str());
         }
@@ -143,19 +145,19 @@ std::function<void()> createStaticHandler(const String &filePath, const String &
 // Helper function to register static file routes with captive portal handling
 void registerStaticRoute(const String &route, const String &filePath, const String &contentType)
 {
-    server.on(route.c_str(), HTTP_GET, [filePath, contentType]()
+    server.on(route.c_str(), HTTP_GET, [filePath, contentType](AsyncWebServerRequest* request)
               {
-        if (shouldRedirectToSettings()) {
-            handleCaptivePortal();
+        if (shouldRedirectToSettings(request)) {
+            handleCaptivePortal(request);
             return;
         }
-        createStaticHandler(filePath, contentType)(); });
+        createAsyncStaticHandler(filePath, contentType)(request); });
 }
 
 // Helper function to register static file routes for STA mode (no captive portal check)
 void registerStaticRouteSTA(const String &route, const String &filePath, const String &contentType)
 {
-    server.on(route.c_str(), HTTP_GET, createStaticHandler(filePath, contentType));
+    server.on(route.c_str(), HTTP_GET, createAsyncStaticHandler(filePath, contentType));
 }
 
 void setupWebServerRoutes(int maxChars)
@@ -167,24 +169,24 @@ void setupWebServerRoutes(int maxChars)
     // DEBUG: Setting up web routes - WiFi mode and AP mode status
 
     // Always serve settings page and its dependencies (needed for both STA and AP modes)
-    server.on("/settings.html", HTTP_GET, []()
+    server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest* request)
               {
-        if (shouldRedirectToSettings()) {
-            handleCaptivePortal();
+        if (shouldRedirectToSettings(request)) {
+            handleCaptivePortal(request);
             return;
         }
-        createStaticHandler("/html/settings.html", "text/html")(); });
+        createAsyncStaticHandler("/html/settings.html", "text/html")(request); });
 
     // Configuration endpoints (needed for settings page)
-    server.on("/config", HTTP_GET, []()
-              { handleConfigGet(); });
-    server.on("/config", HTTP_POST, []()
+    server.on("/config", HTTP_GET, [](AsyncWebServerRequest* request)
+              { handleConfigGet(request); });
+    server.on("/config", HTTP_POST, [](AsyncWebServerRequest* request)
               { 
-        handleConfigPost();
+        handleConfigPost(request);
         // After successful config save in AP mode, trigger reboot to try new WiFi settings
-        if (isAPMode() && server.hasArg("wifi_ssid")) {
+        if (isAPMode() && request->hasArg("wifi_ssid")) {
             LOG_NOTICE("WEB", "WiFi configuration saved in AP mode, rebooting to try new settings...");
-            server.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Configuration saved. Device will reboot and try to connect with new WiFi settings.\"}");
+            request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Configuration saved. Device will reboot and try to connect with new WiFi settings.\"}");
             delay(1000);
             ESP.restart();
         } });
@@ -205,10 +207,11 @@ void setupWebServerRoutes(int maxChars)
         server.onNotFound(handleCaptivePortal);
 
         // Redirect root to settings
-        server.on("/", HTTP_GET, []()
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest* request)
                   {
-            server.sendHeader("Location", "/settings.html", true);
-            server.send(302, "text/plain", "Redirecting to configuration page..."); });
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to configuration page...");
+            response->addHeader("Location", "/settings.html");
+            request->send(response); });
     }
     else
     {
@@ -247,12 +250,8 @@ void setupWebServerRoutes(int maxChars)
         // Smart polling endpoint for instant printer updates
         server.on("/api/printer-discovery", HTTP_GET, handlePrinterUpdates);
 
-        // Collect headers needed for ETag functionality
-        const char *headerKeys[] = {"If-None-Match"};
-        server.collectHeaders(headerKeys, 1);
-
         // Debug endpoint to list LittleFS contents (only in STA mode)
-        server.on("/debug/filesystem", HTTP_GET, []()
+        server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest* request)
                   {
             String output = "LittleFS Debug:\n\nTotal space: " + String(LittleFS.totalBytes()) + " bytes\n";
             output += "Used space: " + String(LittleFS.usedBytes()) + " bytes\n";
@@ -266,7 +265,7 @@ void setupWebServerRoutes(int maxChars)
                 listDirectory(root, output, 0);
             }
             
-            server.send(200, "text/plain", output); });
+            request->send(200, "text/plain", output); });
 
         // 404 handler for STA mode
         server.onNotFound(handleNotFound);
@@ -339,7 +338,7 @@ String getDiscoveredPrintersJson()
     return response;
 }
 
-void handlePrinterUpdates()
+void handlePrinterUpdates(AsyncWebServerRequest* request)
 {
     // Get current printer list directly (already complete JSON)
     String response = getDiscoveredPrintersJson();
@@ -353,25 +352,30 @@ void handlePrinterUpdates()
     String currentETag = String(responseHash);
 
     // Check for If-None-Match header (ETag conditional request)
-    String clientETag = server.header("If-None-Match");
+    String clientETag = "";
+    if (request->hasHeader("If-None-Match")) {
+        clientETag = request->header("If-None-Match");
+    }
     LOG_VERBOSE("WEB", "ETag check - Client: %s, Current: %s", clientETag.c_str(), currentETag.c_str());
 
     if (clientETag.length() > 0 && clientETag.equals("\"" + currentETag + "\""))
     {
         LOG_VERBOSE("WEB", "ETag match - sending 304 Not Modified");
         // Response hasn't changed, send 304 Not Modified
-        server.sendHeader("ETag", "\"" + currentETag + "\"");
-        server.sendHeader("Cache-Control", "no-cache");
-        server.sendHeader("Content-Length", "0");
-        server.send(304, "application/json", "");
+        AsyncWebServerResponse *response = request->beginResponse(304, "application/json", "");
+        response->addHeader("ETag", "\"" + currentETag + "\"");
+        response->addHeader("Cache-Control", "no-cache");
+        response->addHeader("Content-Length", "0");
+        request->send(response);
         return;
     }
 
     LOG_VERBOSE("WEB", "ETag different - sending 200 with new data (length: %d)", response.length());
     // Send response with ETag
-    server.sendHeader("ETag", "\"" + currentETag + "\"");
-    server.sendHeader("Cache-Control", "no-cache");
-    server.sendHeader("Pragma", "no-cache");
-    server.sendHeader("Expires", "0");
-    server.send(200, "application/json", response);
+    AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
+    resp->addHeader("ETag", "\"" + currentETag + "\"");
+    resp->addHeader("Cache-Control", "no-cache");
+    resp->addHeader("Pragma", "no-cache");
+    resp->addHeader("Expires", "0");
+    request->send(resp);
 }

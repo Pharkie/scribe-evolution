@@ -19,7 +19,7 @@
 /**
  * @brief Handle 404 not found requests
  */
-void handleNotFound();
+void handleNotFound(AsyncWebServerRequest* request);
 
 // ========================================
 // UTILITY FUNCTIONS
@@ -27,10 +27,11 @@ void handleNotFound();
 
 /**
  * @brief Helper function to serve files from LittleFS filesystem
+ * @param request The async web server request
  * @param path The file path to serve (e.g., "/html/index.html")
  * @param contentType The MIME content type (e.g., "text/html")
  * @return true if file was served successfully, false otherwise
  */
-bool serveFileFromLittleFS(const String &path, const String &contentType);
+bool serveFileFromLittleFS(AsyncWebServerRequest* request, const String &path, const String &contentType);
 
 #endif // WEB_HANDLERS_H

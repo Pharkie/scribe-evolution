@@ -13,28 +13,28 @@
 #include "../core/config_utils.h"
 #include "../core/logging.h"
 #include "../utils/api_client.h"
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
 // External declarations
-extern WebServer server;
+extern AsyncWebServer server;
 
 // ========================================
 // STATIC FILE HANDLERS
 // ========================================
 
-void handleNotFound()
+void handleNotFound(AsyncWebServerRequest* request)
 {
     // Rate limit 404 requests to prevent abuse
     if (isRateLimited())
     {
-        server.send(429, "text/plain", getRateLimitReason());
+        request->send(429, "text/plain", getRateLimitReason());
         return;
     }
 
-    String uri = server.uri();
-    String method = (server.method() == HTTP_GET) ? "GET" : "POST";
+    String uri = request->url();
+    String method = (request->method() == HTTP_GET) ? "GET" : "POST";
 
     // Validate URI to prevent log injection
     if (uri.length() > maxUriDisplayLength)
@@ -47,14 +47,14 @@ void handleNotFound()
     uri.replace('\r', ' ');
 
     // Build comprehensive 404 error message for logging
-    String errorDetails = "=== 404 Error === | Method: " + method + " | URI: " + uri + " | Args: " + String(server.args());
+    String errorDetails = "=== 404 Error === | Method: " + method + " | URI: " + uri + " | Args: " + String(request->args());
 
     // Limit argument logging to prevent log flooding
-    int maxArgs = min(server.args(), 5);
+    int maxArgs = min(request->args(), 5);
     for (int i = 0; i < maxArgs; i++)
     {
-        String argName = server.argName(i);
-        String argValue = server.arg(i);
+        String argName = request->argName(i);
+        String argValue = request->arg(i);
 
         // Sanitize and truncate arguments
         if (argName.length() > 50)
@@ -77,7 +77,7 @@ void handleNotFound()
     if (!templateFile)
     {
         // Fallback if template file doesn't exist
-        server.send(404, "text/plain", "404 - Page not found: " + method + " " + uri);
+        request->send(404, "text/plain", "404 - Page not found: " + method + " " + uri);
         return;
     }
 
@@ -89,25 +89,25 @@ void handleNotFound()
     template404 = replaceTemplate(template404, "URI", uri);
     template404 = replaceTemplate(template404, "HOSTNAME", String(getMdnsHostname()));
 
-    server.send(404, "text/html; charset=UTF-8", template404);
+    request->send(404, "text/html; charset=UTF-8", template404);
 }
 
 // ========================================
 // UTILITY FUNCTIONS
 // ========================================
 
-bool serveFileFromLittleFS(const String &path, const String &contentType)
+bool serveFileFromLittleFS(AsyncWebServerRequest* request, const String &path, const String &contentType)
 {
     File file = LittleFS.open(path, "r");
     if (!file)
     {
-        server.send(404, "text/plain", path + " not found");
+        request->send(404, "text/plain", path + " not found");
         return false;
     }
 
     String content = file.readString();
     file.close();
 
-    server.send(200, contentType, content);
+    request->send(200, contentType, content);
     return true;
 }
