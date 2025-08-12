@@ -192,29 +192,7 @@ inline void initializePrinterConfig()
 {
     Serial.begin(115200);
     delay(100);
-    Serial.println("=== PRINTER CONFIG INITIALIZED ===");
-    Serial.print("Device owner: ");
-    Serial.println(getDeviceOwnerKey());
-    Serial.print("WiFi SSID: ");
-    Serial.println(getWifiSSID());
-    Serial.print("Local printer: ");
-    Serial.println(getLocalPrinterName());
-    Serial.print(" -> Topic: ");
-    Serial.println(getLocalPrinterTopic());
-
-    // Show other printers
-    const char *others[10][2]; // Max 10 other printers
-    int numOthers = getOtherPrinters(others, 10);
-    Serial.print("Other printers: ");
-    Serial.println(numOthers);
-    for (int i = 0; i < numOthers; i++)
-    {
-        Serial.print("  - ");
-        Serial.print(others[i][0]);
-        Serial.print(" -> ");
-        Serial.println(others[i][1]);
-    }
-    Serial.println("=== CONFIG COMPLETE ===");
+    // Configuration initialized silently - details available via diagnostics page
 }
 
 #endif

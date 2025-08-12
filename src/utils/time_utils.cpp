@@ -49,7 +49,7 @@ String formatCustomDate(String customDate)
         if (parsedTime != 0) // makeTime returns 0 for invalid dates
         {
             String formatted = myTZ.dateTime(parsedTime, "D d M Y H:i");
-            Serial.println("Parsed date: " + formatted + " (from input: " + customDate + ")");
+            // Parsed date successfully (from input)
             return formatted;
         }
 
@@ -60,15 +60,15 @@ String formatCustomDate(String customDate)
             if (parsedTime != 0)
             {
                 String formatted = myTZ.dateTime(parsedTime, "D d M Y H:i");
-                Serial.println("Parsed date: " + formatted + " (from input: " + customDate + " - US format)");
+                // Parsed date successfully (US format)
                 return formatted;
             }
         }
     }
 
     // If all parsing failed, fall back to current time
-    Serial.println("Invalid date format: '" + customDate + "', using current date");
-    Serial.println("Supported formats: YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY");
+    // Invalid date format, using current date
+    // Supported formats: YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY
     return getFormattedDateTime();
 }
 
