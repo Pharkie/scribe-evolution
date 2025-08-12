@@ -90,18 +90,6 @@ inline const char *getDeviceOwnerKey()
     return config.deviceOwner.isEmpty() ? defaultDeviceOwner : config.deviceOwner.c_str();
 }
 
-inline const PrinterConfig *findPrinterConfig(const char *key)
-{
-    for (int i = 0; i < numPrinterConfigs; i++)
-    {
-        if (strcmp(printerConfigs[i].key, key) == 0)
-        {
-            return &printerConfigs[i];
-        }
-    }
-    return nullptr;
-}
-
 // ========================================
 // SIMPLIFIED CONFIGURATION VALIDATION
 // ========================================
@@ -166,25 +154,6 @@ inline const char *getMdnsHostname()
 inline const char *getTimezone()
 {
     return defaultTimezone;
-}
-
-// Function to get other printers (all except current deviceOwner)
-inline int getOtherPrinters(const char *otherPrinters[][2], int maxPrinters)
-{
-    int count = 0;
-    const char *currentDevice = getDeviceOwnerKey();
-    for (int i = 0; i < numPrinterConfigs && count < maxPrinters; i++)
-    {
-        if (strcmp(printerConfigs[i].key, currentDevice) != 0)
-        {
-            // Use key directly as the name
-            otherPrinters[count][0] = printerConfigs[i].key;
-            // Use persistent buffer for MQTT topic
-            otherPrinters[count][1] = buildPersistentMqttTopic(count, printerConfigs[i].key);
-            count++;
-        }
-    }
-    return count;
 }
 
 // Simple initialization function
