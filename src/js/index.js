@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize printer selection
   initializeConfigDependentUI();
   
+  // Check for settings saved success message
+  checkForSettingsSuccess();
+  
   // Listen for printer updates from the polling system
   document.addEventListener('printersUpdated', function(event) {
     console.log('🔄 Printers updated, refreshing index page printer selection');
@@ -183,4 +186,59 @@ function updateCharacterCount(textareaId, counterId, defaultMaxLength = 1000) {
  */
 function goToSettings() {
   window.location.href = '/settings.html';
+}
+
+/**
+ * Check for settings success parameter and show toast
+ */
+function checkForSettingsSuccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('settings_saved') === 'true') {
+    // Show success toast
+    showSuccessToast('Your Scribe settings have been tucked away safely');
+    
+    // Clean up the URL by removing the parameter
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+}
+
+/**
+ * Show success toast message
+ */
+function showSuccessToast(message) {
+  // Create toast container if it doesn't exist
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'fixed top-4 right-4 z-50 space-y-2';
+    document.body.appendChild(container);
+  }
+  
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = 'bg-green-100 text-green-800 border border-green-200 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-0 opacity-100 max-w-sm';
+  
+  toast.innerHTML = `
+    <div class="flex items-center space-x-2">
+      <span class="text-xl">✅</span>
+      <span class="flex-1">${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-lg font-bold opacity-50 hover:opacity-100">×</button>
+    </div>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Auto-remove after 4 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('translate-x-full', 'opacity-0');
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 300);
+    }
+  }, 4000);
 }
