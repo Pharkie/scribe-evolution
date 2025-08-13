@@ -116,6 +116,8 @@ bool loadRuntimeConfig()
         {
             g_runtimeConfig.buttonShortActions[i] = defaultButtonShortActions[i];
             g_runtimeConfig.buttonLongActions[i] = defaultButtonLongActions[i];
+            g_runtimeConfig.buttonShortMqttTopics[i] = ""; // Default to empty (local print)
+            g_runtimeConfig.buttonLongMqttTopics[i] = "";  // Default to empty (local print)
         }
     }
     else
@@ -128,6 +130,8 @@ bool loadRuntimeConfig()
                                                                                                 : i == 2   ? "/api/quote"
                                                                                                            : "/api/quiz");
             g_runtimeConfig.buttonLongActions[i] = button["longAction"] | (i == 0 ? "/api/print-test" : "");
+            g_runtimeConfig.buttonShortMqttTopics[i] = button["shortMqttTopic"] | "";
+            g_runtimeConfig.buttonLongMqttTopics[i] = button["longMqttTopic"] | "";
         }
     }
 
@@ -175,6 +179,8 @@ void loadDefaultConfig()
     {
         g_runtimeConfig.buttonShortActions[i] = defaultButtonShortActions[i];
         g_runtimeConfig.buttonLongActions[i] = defaultButtonLongActions[i];
+        g_runtimeConfig.buttonShortMqttTopics[i] = ""; // Default to empty (local print)
+        g_runtimeConfig.buttonLongMqttTopics[i] = "";  // Default to empty (local print)
     }
 
     g_configLoaded = true;
@@ -274,15 +280,23 @@ bool createDefaultConfigFile()
     JsonObject button1 = buttons.createNestedObject("button1");
     button1["shortAction"] = "/api/joke";
     button1["longAction"] = "/api/print-test";
+    button1["shortMqttTopic"] = "";
+    button1["longMqttTopic"] = "";
     JsonObject button2 = buttons.createNestedObject("button2");
     button2["shortAction"] = "/api/riddle";
     button2["longAction"] = "";
+    button2["shortMqttTopic"] = "";
+    button2["longMqttTopic"] = "";
     JsonObject button3 = buttons.createNestedObject("button3");
     button3["shortAction"] = "/api/quote";
     button3["longAction"] = "";
+    button3["shortMqttTopic"] = "";
+    button3["longMqttTopic"] = "";
     JsonObject button4 = buttons.createNestedObject("button4");
     button4["shortAction"] = "/api/quiz";
     button4["longAction"] = "";
+    button4["shortMqttTopic"] = "";
+    button4["longMqttTopic"] = "";
 
     serializeJson(doc, configFile);
     configFile.close();
