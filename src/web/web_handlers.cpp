@@ -24,7 +24,7 @@ extern AsyncWebServer server;
 // STATIC FILE HANDLERS
 // ========================================
 
-void handleNotFound(AsyncWebServerRequest* request)
+void handleNotFound(AsyncWebServerRequest *request)
 {
     // Rate limit 404 requests to prevent abuse
     if (isRateLimited())
@@ -95,19 +95,3 @@ void handleNotFound(AsyncWebServerRequest* request)
 // ========================================
 // UTILITY FUNCTIONS
 // ========================================
-
-bool serveFileFromLittleFS(AsyncWebServerRequest* request, const String &path, const String &contentType)
-{
-    File file = LittleFS.open(path, "r");
-    if (!file)
-    {
-        request->send(404, "text/plain", path + " not found");
-        return false;
-    }
-
-    String content = file.readString();
-    file.close();
-
-    request->send(200, contentType, content);
-    return true;
-}

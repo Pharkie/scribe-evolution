@@ -46,7 +46,7 @@ Message currentMessage = {"", "", false};
  * @brief Captive portal handler that redirects all non-settings requests to settings.html
  * Used when in AP fallback mode to force configuration
  */
-void handleCaptivePortal(AsyncWebServerRequest* request)
+void handleCaptivePortal(AsyncWebServerRequest *request)
 {
     // Check if this is already a settings-related request
     String uri = request->url();
@@ -74,11 +74,11 @@ void handleCaptivePortal(AsyncWebServerRequest* request)
         // DEBUG: Captive portal detection - responding with redirect to settings
         // Respond with captive portal page
         AsyncWebServerResponse *response = request->beginResponse(302, "text/html",
-                    "<!DOCTYPE html><html><head><title>WiFi Setup</title></head>"
-                    "<body><h1>Scribe WiFi Setup</h1>"
-                    "<p>Redirecting to configuration page...</p>"
-                    "<script>window.location.href='http://192.168.4.1/settings.html';</script>"
-                    "</body></html>");
+                                                                  "<!DOCTYPE html><html><head><title>WiFi Setup</title></head>"
+                                                                  "<body><h1>Scribe WiFi Setup</h1>"
+                                                                  "<p>Redirecting to configuration page...</p>"
+                                                                  "<script>window.location.href='http://192.168.4.1/settings.html';</script>"
+                                                                  "</body></html>");
         response->addHeader("Location", "http://192.168.4.1/settings.html");
         request->send(response);
         return;
@@ -98,7 +98,7 @@ void handleCaptivePortal(AsyncWebServerRequest* request)
  * @brief Check if request should be redirected in AP mode
  * @return true if request needs captive portal redirect
  */
-bool shouldRedirectToSettings(AsyncWebServerRequest* request)
+bool shouldRedirectToSettings(AsyncWebServerRequest *request)
 {
     if (!isAPMode())
         return false;
@@ -112,40 +112,6 @@ bool shouldRedirectToSettings(AsyncWebServerRequest* request)
              uri == "/favicon.ico");
 }
 
-// Helper function to create static file handlers with logging for async server
-std::function<void(AsyncWebServerRequest*)> createAsyncStaticHandler(const String &filePath, const String &contentType)
-{
-    return [filePath, contentType](AsyncWebServerRequest* request)
-    {
-        if (!serveFileFromLittleFS(request, filePath, contentType))
-        {
-            LOG_ERROR("WEB", "Failed to serve %s", filePath.c_str());
-        }
-        else
-        {
-            LOG_VERBOSE("WEB", "Served %s successfully", filePath.c_str());
-        }
-    };
-}
-
-// Helper function to register static file routes with captive portal handling
-void registerStaticRoute(const String &route, const String &filePath, const String &contentType)
-{
-    server.on(route.c_str(), HTTP_GET, [filePath, contentType](AsyncWebServerRequest* request)
-              {
-        if (shouldRedirectToSettings(request)) {
-            handleCaptivePortal(request);
-            return;
-        }
-        createAsyncStaticHandler(filePath, contentType)(request); });
-}
-
-// Helper function to register static file routes for STA mode (no captive portal check)
-void registerStaticRouteSTA(const String &route, const String &filePath, const String &contentType)
-{
-    server.on(route.c_str(), HTTP_GET, createAsyncStaticHandler(filePath, contentType));
-}
-
 void setupWebServerRoutes(int maxChars)
 {
     // Store the maxChars value for validation
@@ -155,18 +121,18 @@ void setupWebServerRoutes(int maxChars)
     // DEBUG: Setting up web routes - WiFi mode and AP mode status
 
     // Always serve settings page and its dependencies (needed for both STA and AP modes)
-    server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest* request)
+    server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request)
               {
         if (shouldRedirectToSettings(request)) {
             handleCaptivePortal(request);
             return;
         }
-        createAsyncStaticHandler("/html/settings.html", "text/html")(request); });
+        request->send(LittleFS, "/html/settings.html", "text/html"); });
 
     // Configuration endpoints (needed for settings page)
-    server.on("/config", HTTP_GET, [](AsyncWebServerRequest* request)
+    server.on("/config", HTTP_GET, [](AsyncWebServerRequest *request)
               { handleConfigGet(request); });
-    server.on("/config", HTTP_POST, [](AsyncWebServerRequest* request)
+    server.on("/config", HTTP_POST, [](AsyncWebServerRequest *request)
               { 
         handleConfigPost(request);
         // After successful config save in AP mode, trigger reboot to try new WiFi settings
@@ -177,12 +143,12 @@ void setupWebServerRoutes(int maxChars)
             ESP.restart();
         } });
 
-    // CSS and JS files (always needed)
-    registerStaticRoute("/css/tailwind.css", "/css/tailwind.css", "text/css");
-    registerStaticRoute("/js/app.min.js", "/js/app.min.js", "application/javascript");
-    registerStaticRoute("/js/settings.js", "/js/settings.min.js", "application/javascript");
-    registerStaticRoute("/js/settings.min.js", "/js/settings.min.js", "application/javascript");
-    registerStaticRoute("/favicon.ico", "/favicon.ico", "image/x-icon");
+    // CSS and JS files (always needed) - serve directly from LittleFS
+    server.serveStatic("/css/tailwind.css", LittleFS, "/css/tailwind.css").setCacheControl("max-age=86400");
+    server.serveStatic("/js/app.min.js", LittleFS, "/js/app.min.js").setCacheControl("max-age=86400");
+    server.serveStatic("/js/settings.js", LittleFS, "/js/settings.min.js").setCacheControl("max-age=86400");
+    server.serveStatic("/js/settings.min.js", LittleFS, "/js/settings.min.js").setCacheControl("max-age=86400");
+    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico").setCacheControl("max-age=86400");
 
     // In AP mode, set up captive portal for all other requests
     if (isAPMode())
@@ -193,7 +159,7 @@ void setupWebServerRoutes(int maxChars)
         server.onNotFound(handleCaptivePortal);
 
         // Redirect root to settings
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest* request)
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
             AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to configuration page...");
             response->addHeader("Location", "/settings.html");
@@ -203,13 +169,13 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up full routes for STA mode");
 
-        // Full functionality routes for STA mode
-        registerStaticRouteSTA("/", "/html/index.html", "text/html");
-        registerStaticRouteSTA("/diagnostics.html", "/html/diagnostics.html", "text/html");
+        // Full functionality routes for STA mode - serve directly from LittleFS
+        server.serveStatic("/", LittleFS, "/html/index.html");
+        server.serveStatic("/diagnostics.html", LittleFS, "/html/diagnostics.html");
 
         // Additional JS files for full functionality
-        registerStaticRouteSTA("/js/index.min.js", "/js/index.min.js", "application/javascript");
-        registerStaticRouteSTA("/js/diagnostics.min.js", "/js/diagnostics.min.js", "application/javascript");
+        server.serveStatic("/js/index.min.js", LittleFS, "/js/index.min.js").setCacheControl("max-age=86400");
+        server.serveStatic("/js/diagnostics.min.js", LittleFS, "/js/diagnostics.min.js").setCacheControl("max-age=86400");
 
         // Form submission handlers
         server.on("/api/print-local", HTTP_POST, handlePrintContent);
@@ -237,7 +203,7 @@ void setupWebServerRoutes(int maxChars)
         server.on("/api/printer-discovery", HTTP_GET, handlePrinterUpdates);
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
-        server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest* request)
+        server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
             String output = "LittleFS Debug:\n\nTotal space: " + String(LittleFS.totalBytes()) + " bytes\n";
             output += "Used space: " + String(LittleFS.usedBytes()) + " bytes\n";
@@ -324,7 +290,7 @@ String getDiscoveredPrintersJson()
     return response;
 }
 
-void handlePrinterUpdates(AsyncWebServerRequest* request)
+void handlePrinterUpdates(AsyncWebServerRequest *request)
 {
     // Get current printer list directly (already complete JSON)
     String response = getDiscoveredPrintersJson();
@@ -339,7 +305,8 @@ void handlePrinterUpdates(AsyncWebServerRequest* request)
 
     // Check for If-None-Match header (ETag conditional request)
     String clientETag = "";
-    if (request->hasHeader("If-None-Match")) {
+    if (request->hasHeader("If-None-Match"))
+    {
         clientETag = request->header("If-None-Match");
     }
     LOG_VERBOSE("WEB", "ETag check - Client: %s, Current: %s", clientETag.c_str(), currentETag.c_str());
