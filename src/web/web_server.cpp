@@ -22,34 +22,16 @@
 #include "web_server.h"
 #include "web_handlers.h"
 #include "api_handlers.h"
+#include "validation.h"
 #include "../content/content_handlers.h"
 #include "../core/config.h"
 #include "../core/logging.h"
 #include "../core/network.h"
+#include "../core/printer_discovery.h"
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
-#include <map>
 
 // Global variables
-extern AsyncWebServer server;
-
-// Global body storage for POST requests
-std::map<AsyncWebServerRequest *, String> requestBodies;
-
-#include "web_server.h"
-#include "validation.h"
-#include "web_handlers.h"
-#include "../content/content_handlers.h"
-#include "api_handlers.h"
-#include "../core/shared_types.h"
-#include "../core/logging.h"
-#include "../core/network.h"
-#include "../core/printer_discovery.h"
-#include <LittleFS.h>
-#include <functional>
-#include <ArduinoJson.h>
-
-// External variable declarations
 extern AsyncWebServer server;
 
 // Global message storage for printing
@@ -129,22 +111,36 @@ bool shouldRedirectToSettings(AsyncWebServerRequest *request)
              uri == "/favicon.ico");
 }
 
-// Helper functions for POST body handling
+// Helper functions for POST body handling using request's built-in storage
 void storeRequestBody(AsyncWebServerRequest *request, const String &body)
 {
-    requestBodies[request] = body;
+    // Use the request's built-in _tempObject to store the body
+    // This automatically cleans up when the request is destroyed
+    request->_tempObject = new String(body);
 }
 
 String getRequestBody(AsyncWebServerRequest *request)
 {
-    auto it = requestBodies.find(request);
-    if (it != requestBodies.end())
+    if (request->_tempObject)
     {
-        String body = it->second;
-        requestBodies.erase(it); // Clean up after use
+        String *bodyPtr = static_cast<String *>(request->_tempObject);
+        String body = *bodyPtr;
+        delete bodyPtr; // Clean up the allocated memory
+        request->_tempObject = nullptr;
         return body;
     }
     return "";
+}
+
+// Helper function to register POST routes with body handling
+void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
+{
+    server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
+              { handler(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+              {
+            String body;
+            for (size_t i = 0; i < len; i++) body += (char)data[i];
+            storeRequestBody(request, body); });
 }
 
 void setupWebServerRoutes(int maxChars)
@@ -212,81 +208,26 @@ void setupWebServerRoutes(int maxChars)
         server.serveStatic("/js/index.min.js", LittleFS, "/js/index.min.js", "application/javascript").setTryGzipFirst(false);
         server.serveStatic("/js/diagnostics.min.js", LittleFS, "/js/diagnostics.min.js", "application/javascript").setTryGzipFirst(false);
 
-        // Form submission handlers with body handling
-        server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handlePrintContent(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
+        // Form submission handlers
+        registerPOSTRoute("/api/print-local", handlePrintContent);
         server.on("/api/print-local", HTTP_GET, handlePrintContent);
 
-        // Content generation endpoints (API) with body handling
-        server.on("/api/print-test", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handlePrintTest(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
-        server.on("/api/riddle", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleRiddle(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
-        server.on("/api/joke", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleJoke(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
-        server.on("/api/quote", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleQuote(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
-        server.on("/api/quiz", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleQuiz(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
-        server.on("/api/poke", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handlePoke(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
-        server.on("/api/unbidden-ink", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleUnbiddenInk(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
-        server.on("/api/user-message", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleUserMessage(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
+        // Content generation endpoints (API)
+        registerPOSTRoute("/api/print-test", handlePrintTest);
+        registerPOSTRoute("/api/riddle", handleRiddle);
+        registerPOSTRoute("/api/joke", handleJoke);
+        registerPOSTRoute("/api/quote", handleQuote);
+        registerPOSTRoute("/api/quiz", handleQuiz);
+        registerPOSTRoute("/api/poke", handlePoke);
+        registerPOSTRoute("/api/unbidden-ink", handleUnbiddenInk);
+        registerPOSTRoute("/api/user-message", handleUserMessage);
 
         // API endpoints
         server.on("/api/status", HTTP_GET, handleStatus);
         server.on("/api/buttons", HTTP_GET, handleButtons);
-        server.on("/api/mqtt-send", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleMQTTSend(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
+        registerPOSTRoute("/api/mqtt-send", handleMQTTSend);
         server.on("/api/config", HTTP_GET, handleConfigGet);
-        server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleConfigPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-                String body;
-                for (size_t i = 0; i < len; i++) body += (char)data[i];
-                storeRequestBody(request, body); });
+        registerPOSTRoute("/api/config", handleConfigPost);
         server.on("/api/discovered-printers", HTTP_GET, handleDiscoveredPrinters);
 
         // Smart polling endpoint for instant printer updates

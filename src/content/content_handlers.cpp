@@ -9,6 +9,7 @@
 
 #include "content_handlers.h"
 #include "../web/validation.h"
+#include "../web/web_server.h"
 #include "../core/config.h"
 #include "../core/config_utils.h"
 #include "../core/logging.h"
@@ -86,10 +87,7 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     // Rate limiting is applied to the actual delivery endpoints (/print-local, /mqtt-send)
 
     // Get target parameter to determine if sender info should be included
-    // Use external function to get the stored request body
-    extern String getRequestBody(AsyncWebServerRequest * request);
     String body = getRequestBody(request);
-    LOG_VERBOSE("WEB", "handleContentGeneration: Received body with length %d", body.length());
     String target = "local-direct"; // Default
 
     if (body.length() > 0)
@@ -140,11 +138,9 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
         break;
     case USER_MESSAGE:
     {
-        LOG_VERBOSE("WEB", "handleContentGeneration: Processing USER_MESSAGE, body length: %d", body.length());
         // Get and validate JSON body for user message input
         if (body.length() == 0)
         {
-            LOG_WARNING("WEB", "handleContentGeneration: No JSON body provided for USER_MESSAGE");
             sendValidationError(request, ValidationResult(false, "No JSON body provided"));
             return;
         }

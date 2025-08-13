@@ -8,6 +8,7 @@
  */
 
 #include "api_handlers.h"
+#include "web_server.h"
 #include "validation.h"
 #include "../core/config.h"
 #include "../core/config_loader.h"
