@@ -25,6 +25,9 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 
+// External declarations
+extern AsyncEventSource sseEvents;
+
 /**
  * @brief Initialize web server routes and handlers
  * @param maxChars Maximum characters allowed in a message
@@ -37,6 +40,12 @@ void setupWebServerRoutes(int maxChars);
  * @return The stored request body, or empty string if none
  */
 String getRequestBody(AsyncWebServerRequest *request);
+
+/**
+ * @brief Get printer discovery JSON data for SSE and initial loads
+ * @return JSON string containing discovered printers
+ */
+String getDiscoveredPrintersJson();
 
 /**
  * @brief Get printer discovery updates with change detection
@@ -63,5 +72,22 @@ bool shouldRedirectToSettings(AsyncWebServerRequest *request);
  * @param level Indentation level for nested directories
  */
 void listDirectory(File dir, String &output, int level);
+
+// ========================================
+// SSE (Server-Sent Events) Functions
+// ========================================
+
+/**
+ * @brief Send real-time printer discovery updates via SSE
+ * Notifies all connected clients when printer status changes
+ */
+void sendPrinterUpdate();
+
+/**
+ * @brief Send system status notifications via SSE
+ * @param status Status type (e.g., "connected", "error", "info")
+ * @param message Human-readable status message
+ */
+void sendSystemStatus(const String &status, const String &message = "");
 
 #endif // WEB_SERVER_H

@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize printer selection
   initializeConfigDependentUI();
   
+  // Initialize real-time printer discovery
+  initializePrinterDiscovery();
+  
   // Check for settings saved success message
   checkForSettingsSuccess();
   

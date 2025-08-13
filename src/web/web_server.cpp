@@ -34,6 +34,9 @@
 // Global variables
 extern AsyncWebServer server;
 
+// SSE event source for real-time updates
+AsyncEventSource sseEvents("/events");
+
 // Global message storage for printing
 Message currentMessage = {"", "", false};
 
@@ -200,6 +203,9 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up full routes for STA mode");
 
+        // Add SSE endpoint for real-time updates
+        server.addHandler(&sseEvents);
+
         // HTML and JS
         // Can't use serveStatic to serve index.html from root / without causing problems. Do it this way.
         server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -230,8 +236,12 @@ void setupWebServerRoutes(int maxChars)
         registerPOSTRoute("/api/config", handleConfigPost);
         server.on("/api/discovered-printers", HTTP_GET, handleDiscoveredPrinters);
 
-        // Smart polling endpoint for instant printer updates
-        server.on("/api/printer-discovery", HTTP_GET, handlePrinterUpdates);
+        // Initial printer data endpoint for SSE setup
+        server.on("/api/printer-discovery", HTTP_GET, [](AsyncWebServerRequest *request)
+                  {
+            // Return current printer data for initial load - SSE will handle real-time updates
+            String response = getDiscoveredPrintersJson();
+            request->send(200, "application/json", response); });
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
         server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -362,4 +372,34 @@ void handlePrinterUpdates(AsyncWebServerRequest *request)
     resp->addHeader("Pragma", "no-cache");
     resp->addHeader("Expires", "0");
     request->send(resp);
+}
+
+// ========================================
+// SSE (Server-Sent Events) Functions
+// ========================================
+
+void sendPrinterUpdate()
+{
+    if (sseEvents.count() > 0) // Only send if there are connected clients
+    {
+        String printerData = getDiscoveredPrintersJson();
+        sseEvents.send(printerData.c_str(), "printer-update", millis());
+        LOG_VERBOSE("WEB", "Sent SSE printer update to %d clients", sseEvents.count());
+    }
+}
+
+void sendSystemStatus(const String &status, const String &message)
+{
+    if (sseEvents.count() > 0)
+    {
+        DynamicJsonDocument doc(512);
+        doc["status"] = status;
+        doc["message"] = message;
+        doc["timestamp"] = millis();
+
+        String statusData;
+        serializeJson(doc, statusData);
+        sseEvents.send(statusData.c_str(), "system-status", millis());
+        LOG_VERBOSE("WEB", "Sent SSE system status: %s", status.c_str());
+    }
 }
