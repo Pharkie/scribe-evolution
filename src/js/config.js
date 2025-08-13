@@ -119,7 +119,6 @@ function initializePrinterDiscovery() {
     
     eventSource.onopen = function(event) {
       console.log('✅ Real-time updates connected');
-      showSystemNotification('connected', 'Real-time updates active');
     };
   }
 
