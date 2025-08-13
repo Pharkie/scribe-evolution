@@ -179,9 +179,8 @@ class KeyboardListener:
             try:
                 # Force socket closure to trigger LWT
                 if hasattr(self.simulator.clients[name], "_sock"):
-                    self.simulator.clients[
-                        name
-                    ]._sock.close()  # pylint: disable=protected-access
+                    # pylint: disable-next=protected-access
+                    self.simulator.clients[name]._sock.close()
             except (AttributeError, OSError):
                 pass
             self.simulator.clients[name].loop_stop()
@@ -406,9 +405,8 @@ class ScribePrinterSimulator:
                 try:
                     # Force socket closure to trigger LWT
                     if hasattr(self.clients[name], "_sock"):
-                        self.clients[
-                            name
-                        ]._sock.close()  # pylint: disable=protected-access
+                        # pylint: disable-next=protected-access
+                        self.clients[name]._sock.close()
                 except (AttributeError, OSError):
                     pass
                 self.clients[name].loop_stop()

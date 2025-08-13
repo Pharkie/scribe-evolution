@@ -8,7 +8,7 @@
  */
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize index-specific UI
-  initializeIndexUI();
+  initializeIndexUI(); 
   
   // Initialize printer selection
   initializeConfigDependentUI();

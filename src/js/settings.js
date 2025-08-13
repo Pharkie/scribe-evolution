@@ -238,8 +238,6 @@ function collectFormData() {
 async function saveSettings(event) {
     event.preventDefault();
     
-    // Don't show loading spinner - redirect immediately on success
-    
     try {
         const configData = collectFormData();
         
