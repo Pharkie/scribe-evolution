@@ -77,47 +77,65 @@ function createPrinterOption(value, icon, name, isSelected = false, printerData 
   }`;
   option.setAttribute('data-value', value);
   
-  // Determine connection type and additional info for display
-  let connectionType = 'Unknown';
-  let additionalInfo = '';
+  // Determine clean display text for main view
+  let displayText = '';
+  let showInfoIcon = false;
   
   if (value === 'local-direct') {
-    connectionType = 'Direct connection';
-  } else if (value === 'local-mqtt') {
-    connectionType = 'MQTT connection';
+    displayText = 'Direct connection';
   } else {
-    connectionType = 'MQTT connection';
-    
-    // Add additional info for discovered printers
-    if (printerData) {
-      const infoParts = [];
-      if (printerData.ip_address) {
-        infoParts.push(`IP: ${printerData.ip_address}`);
-      }
-      if (printerData.firmware_version) {
-        infoParts.push(`v${printerData.firmware_version}`);
-      }
-      if (printerData.last_seen !== undefined) {
-        const seenText = printerData.last_seen === 0 ? 'Just now' : `${printerData.last_seen}s ago`;
-        infoParts.push(`Seen: ${seenText}`);
-      }
-      if (infoParts.length > 0) {
-        additionalInfo = ` • ${infoParts.join(' • ')}`;
-      }
-    }
+    // For MQTT printers, name already includes "via MQTT", so just show that
+    displayText = 'Direct connection'; // This will be overridden below for MQTT
+    showInfoIcon = true;
   }
   
-  option.innerHTML = `
-    <div class="flex items-center space-x-3">
-      <span class="text-2xl">${icon}</span>
-      <div class="flex-1 min-w-0">
-        <div class="font-medium text-sm truncate">${name}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 truncate">${connectionType}${additionalInfo}</div>
-      </div>
+  // Create the main content structure
+  const mainContent = document.createElement('div');
+  mainContent.className = 'flex items-center justify-between w-full';
+  
+  // Create left side with icon and name
+  const leftSide = document.createElement('div');
+  leftSide.className = 'flex items-center space-x-3 flex-1 min-w-0';
+  
+  leftSide.innerHTML = `
+    <span class="text-2xl">${icon}</span>
+    <div class="flex-1 min-w-0">
+      <div class="font-medium text-sm truncate">${name}</div>
+      ${value === 'local-direct' ? `<div class="text-xs text-gray-500 dark:text-gray-400 truncate">Direct connection</div>` : ''}
     </div>
   `;
   
-  option.addEventListener('click', () => selectPrinter(value, option));
+  mainContent.appendChild(leftSide);
+  
+  // Add info icon for MQTT printers (remote printers)
+  if (showInfoIcon && printerData) {
+    const infoIcon = document.createElement('div');
+    infoIcon.className = 'info-icon ml-3 flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors duration-200 cursor-pointer';
+    infoIcon.innerHTML = '<span class="text-lg text-gray-600 dark:text-gray-300">ⓘ</span>';
+    infoIcon.title = 'View printer details';
+    
+    // Add touch-friendly styling for mobile
+    infoIcon.style.minWidth = '44px';
+    infoIcon.style.minHeight = '44px';
+    
+    // Store printer data for the overlay
+    infoIcon.setAttribute('data-printer-info', JSON.stringify(printerData));
+    infoIcon.setAttribute('data-printer-name', printerData.name || 'Unknown');
+    infoIcon.setAttribute('data-printer-topic', `scribe/${printerData.name}/print`);
+    
+    // Add click handler for info icon
+    infoIcon.addEventListener('click', (event) => {
+      event.stopPropagation(); // Prevent printer selection
+      showPrinterInfoOverlay(printerData, printerData.name || 'Unknown');
+    });
+    
+    mainContent.appendChild(infoIcon);
+  }
+  
+  option.appendChild(mainContent);
+  
+  // Add click handler for printer selection (only on main area, not info icon)
+  leftSide.addEventListener('click', () => selectPrinter(value, option));
   
   return option;
 }
@@ -181,6 +199,154 @@ function updateCharacterCount(textareaId, counterId, defaultMaxLength = 1000) {
         parentDiv.classList.add('text-gray-500', 'dark:text-gray-400');
       }
     }
+  }
+}
+
+/**
+ * Show printer information overlay with mobile-responsive design
+ */
+function showPrinterInfoOverlay(printerData, printerName) {
+  // Remove any existing overlay
+  const existingOverlay = document.getElementById('printer-info-overlay');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+  
+  // Create overlay container
+  const overlay = document.createElement('div');
+  overlay.id = 'printer-info-overlay';
+  overlay.className = 'fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center p-4';
+  
+  // Create backdrop
+  const backdrop = document.createElement('div');
+  backdrop.className = 'absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm';
+  backdrop.addEventListener('click', () => closePrinterInfoOverlay());
+  
+  // Create modal content
+  const modal = document.createElement('div');
+  modal.className = 'relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl transform transition-all duration-300 ease-out';
+  
+  // Format the data for display
+  const topic = `scribe/${printerName}/print`;
+  const ipAddress = printerData.ip_address || 'Not available';
+  const mdns = printerData.mdns || `${printerName.toLowerCase()}.local`;
+  const firmwareVersion = printerData.firmware_version || 'Not available';
+  
+  // Format last power on time
+  let lastPowerOn = 'Not available';
+  if (printerData.last_power_on) {
+    const powerOnTime = new Date(printerData.last_power_on);
+    const now = new Date();
+    const diffMs = now.getTime() - powerOnTime.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffDays > 0) {
+      lastPowerOn = `Started ${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    } else if (diffHours > 0) {
+      lastPowerOn = `Started ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    } else {
+      lastPowerOn = 'Started recently';
+    }
+  }
+  
+  const timezone = printerData.timezone || 'Same as local';
+  
+  modal.innerHTML = `
+    <div class="p-6">
+      <!-- Header with close button -->
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+          <span class="text-2xl mr-2">📡</span>
+          ${printerName} Details
+        </h3>
+        <button onclick="closePrinterInfoOverlay()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+          <span class="text-gray-600 dark:text-gray-400 text-xl">×</span>
+        </button>
+      </div>
+      
+      <!-- Information sections -->
+      <div class="space-y-4">
+        <div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">MQTT Topic</div>
+          <div class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg font-mono text-gray-800 dark:text-gray-200 break-all">
+            ${topic}
+          </div>
+        </div>
+        
+        <div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">IP Address</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">${ipAddress}</div>
+        </div>
+        
+        <div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">mDNS</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">${mdns}</div>
+        </div>
+        
+        <div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Firmware Version</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">${firmwareVersion}</div>
+        </div>
+        
+        <div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Power On</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">${lastPowerOn}</div>
+        </div>
+        
+        <div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">${timezone}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  overlay.appendChild(backdrop);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  // Animate in
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+    modal.style.transform = 'translateY(0)';
+  });
+  
+  // Set initial styles for animation
+  overlay.style.opacity = '0';
+  modal.style.transform = 'translateY(100%)';
+  
+  // Handle escape key
+  document.addEventListener('keydown', handleOverlayEscape);
+}
+
+/**
+ * Close printer information overlay
+ */
+function closePrinterInfoOverlay() {
+  const overlay = document.getElementById('printer-info-overlay');
+  if (overlay) {
+    const modal = overlay.querySelector('.relative');
+    
+    // Animate out
+    overlay.style.opacity = '0';
+    if (modal) {
+      modal.style.transform = 'translateY(100%)';
+    }
+    
+    setTimeout(() => {
+      overlay.remove();
+      document.removeEventListener('keydown', handleOverlayEscape);
+    }, 300);
+  }
+}
+
+/**
+ * Handle escape key for closing overlay
+ */
+function handleOverlayEscape(event) {
+  if (event.key === 'Escape') {
+    closePrinterInfoOverlay();
   }
 }
 
