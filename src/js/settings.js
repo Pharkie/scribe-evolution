@@ -742,10 +742,31 @@ async function testUnbiddenInk() {
         
         const data = await response.json();
         
-        if (data.success) {
-            showMessage('Unbidden Ink Scribed', 'success');
+        if (data.success && data.content) {
+            // Successfully generated content, now print it locally
+            try {
+                const printResponse = await fetch('/print-local', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: data.content
+                    })
+                });
+                
+                if (printResponse.ok) {
+                    showMessage('Unbidden Ink generated and printed successfully', 'success');
+                } else {
+                    const printError = await printResponse.json().catch(() => ({}));
+                    throw new Error(printError.error || `Print failed: HTTP ${printResponse.status}`);
+                }
+            } catch (printError) {
+                console.error('Failed to print generated content:', printError);
+                showMessage(`Unbidden Ink generated but failed to print: ${printError.message}`, 'error');
+            }
         } else {
-            throw new Error(data.error || 'Unknown error occurred');
+            throw new Error(data.error || 'No content generated');
         }
         
     } catch (error) {

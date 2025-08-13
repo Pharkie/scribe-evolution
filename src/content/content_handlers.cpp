@@ -241,25 +241,17 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
 
     if (content.length() > 0)
     {
-        // Format with header (always local, so no sender info)
-        String formattedContent = formatContentWithHeader("UNBIDDEN INK", content, "");
-
-        // Set up message for local printing (Unbidden Ink is always local-direct)
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-
-        LOG_VERBOSE("WEB", "Unbidden Ink content queued for local direct printing");
-
-        // Return JSON response
+        // Return JSON response with the generated content
         DynamicJsonDocument responseDoc(1024);
         responseDoc["success"] = true;
-        responseDoc["message"] = currentMessage.message;
-        responseDoc["timestamp"] = currentMessage.timestamp;
+        responseDoc["content"] = content;
+        responseDoc["timestamp"] = getFormattedDateTime();
 
         String response;
         serializeJson(responseDoc, response);
         request->send(200, "application/json", response);
+
+        LOG_VERBOSE("WEB", "Unbidden Ink content generated and returned");
     }
     else
     {
