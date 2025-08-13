@@ -7,7 +7,7 @@
 #include "../core/config.h"
 #include "../web/validation.h"
 
-void sendErrorResponse(WebServer &server, int httpCode, const String &errorMessage)
+void sendErrorResponse(AsyncWebServerRequest* request, int httpCode, const String &errorMessage)
 {
     DynamicJsonDocument response(256);
     response["success"] = false;
@@ -15,10 +15,10 @@ void sendErrorResponse(WebServer &server, int httpCode, const String &errorMessa
 
     String responseString;
     serializeJson(response, responseString);
-    server.send(httpCode, "application/json", responseString);
+    request->send(httpCode, "application/json", responseString);
 }
 
-void sendSuccessResponse(WebServer &server, const String &message)
+void sendSuccessResponse(AsyncWebServerRequest* request, const String &message)
 {
     DynamicJsonDocument response(256);
     response["success"] = true;
@@ -29,12 +29,12 @@ void sendSuccessResponse(WebServer &server, const String &message)
 
     String responseString;
     serializeJson(response, responseString);
-    server.send(200, "application/json", responseString);
+    request->send(200, "application/json", responseString);
 }
 
-void sendRateLimitResponse(WebServer &server)
+void sendRateLimitResponse(AsyncWebServerRequest* request)
 {
-    sendErrorResponse(server, 429, getRateLimitReason());
+    sendErrorResponse(request, 429, getRateLimitReason());
 }
 
 DynamicJsonDocument createErrorResponse(const String &errorMessage)

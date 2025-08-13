@@ -84,8 +84,17 @@ inline bool isValidString(const char *str, int maxLen, const char *fieldName, St
 // Function declarations - defined first so they can be used by validation
 inline const char *getDeviceOwnerKey()
 {
+    // Check if config system is initialized first to avoid accessing uninitialized strings
+    // Use the config loader's initialization status
+    extern bool g_configLoaded; // Reference to the global from config_loader.cpp
+
+    if (!g_configLoaded)
+    {
+        // If config not loaded yet, return default to avoid string access issues
+        return defaultDeviceOwner;
+    }
+
     // Use runtime config if available, otherwise fallback to default
-    // This is safe because getRuntimeConfig() will load defaults if needed
     const RuntimeConfig &config = getRuntimeConfig();
     return config.deviceOwner.isEmpty() ? defaultDeviceOwner : config.deviceOwner.c_str();
 }

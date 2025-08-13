@@ -223,45 +223,37 @@ void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
 
     if (strcmp(endpoint, "/api/riddle") == 0)
     {
-        content = generateRiddleButtonContent();
-        contentGenerated = true;
+        generateAndQueueRiddle();
     }
     else if (strcmp(endpoint, "/api/joke") == 0)
     {
-        content = generateJokeButtonContent();
-        contentGenerated = true;
+        generateAndQueueJoke();
     }
     else if (strcmp(endpoint, "/api/quote") == 0)
     {
-        content = generateQuoteButtonContent();
-        contentGenerated = true;
+        generateAndQueueQuote();
     }
     else if (strcmp(endpoint, "/api/quiz") == 0)
     {
-        content = generateQuizButtonContent();
-        contentGenerated = true;
+        generateAndQueueQuiz();
     }
     else if (strcmp(endpoint, "/api/print-test") == 0)
     {
-        content = generatePrintTestButtonContent();
-        contentGenerated = true;
+        generateAndQueuePrintTest();
     }
     else if (strcmp(endpoint, "/api/test-print") == 0)
     {
-        content = generatePrintTestButtonContent(); // Same handler for both endpoint variations
-        contentGenerated = true;
+        generateAndQueuePrintTest(); // Same handler for both endpoint variations
     }
     else if (strcmp(endpoint, "/api/unbidden-ink") == 0)
     {
-        content = generateUnbiddenInkButtonContent();
-        contentGenerated = true;
+        generateAndQueueUnbiddenInk();
     }
     else if (strcmp(endpoint, "/api/keep-going") == 0)
     {
         // Keep-going endpoint - generate random content
         // For now, let's default to joke
-        content = generateJokeButtonContent();
-        contentGenerated = true;
+        generateAndQueueJoke();
     }
     else if (strlen(endpoint) == 0)
     {

@@ -8,6 +8,7 @@
  */
 
 #include "api_handlers.h"
+#include "web_server.h"
 #include "validation.h"
 #include "../core/config.h"
 #include "../core/config_loader.h"
@@ -20,7 +21,7 @@
 #include "../content/unbidden_ink.h"
 #include <vector>
 #include "../utils/json_helpers.h"
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -28,14 +29,14 @@
 #include <esp_system.h>
 
 // External declarations
-extern WebServer server;
+extern AsyncWebServer server;
 extern PubSubClient mqttClient;
 
 // ========================================
 // API ENDPOINT HANDLERS
 // ========================================
 
-void handleStatus()
+void handleStatus(AsyncWebServerRequest *request)
 {
     // Get flash storage information
     size_t totalBytes = 0;
@@ -224,41 +225,42 @@ void handleStatus()
     // Serialize and send
     String response;
     serializeJson(doc, response);
-    server.send(200, "application/json", response);
+    request->send(200, "application/json", response);
 }
 
-void handleButtons()
+void handleButtons(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
-        sendRateLimitResponse(server);
+        sendRateLimitResponse(request);
         return;
     }
 
     String buttonConfig = getButtonConfigJson();
     LOG_VERBOSE("WEB", "Button configuration requested");
-    server.send(200, "application/json", buttonConfig);
+    request->send(200, "application/json", buttonConfig);
 }
 
-void handleMQTTSend()
+void handleMQTTSend(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
-        sendRateLimitResponse(server);
+        sendRateLimitResponse(request);
         return;
     }
 
     if (!mqttClient.connected())
     {
-        sendErrorResponse(server, 503, "MQTT client not connected");
+        sendErrorResponse(request, 503, "MQTT client not connected");
         return;
     }
 
     // Get and validate JSON body
-    String body = server.arg("plain");
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
     if (body.length() == 0)
     {
-        sendValidationError(ValidationResult(false, "No JSON body provided"));
+        sendValidationError(request, ValidationResult(false, "No JSON body provided"));
         return;
     }
 
@@ -267,7 +269,7 @@ void handleMQTTSend()
     ValidationResult jsonValidation = validateJSON(body, requiredFields, 2);
     if (!jsonValidation.isValid)
     {
-        sendValidationError(jsonValidation);
+        sendValidationError(request, jsonValidation);
         return;
     }
 
@@ -282,7 +284,7 @@ void handleMQTTSend()
     ValidationResult topicValidation = validateMQTTTopic(topic);
     if (!topicValidation.isValid)
     {
-        sendValidationError(topicValidation);
+        sendValidationError(request, topicValidation);
         return;
     }
 
@@ -290,7 +292,7 @@ void handleMQTTSend()
     ValidationResult messageValidation = validateMessage(message);
     if (!messageValidation.isValid)
     {
-        sendValidationError(messageValidation);
+        sendValidationError(request, messageValidation);
         return;
     }
 
@@ -305,16 +307,16 @@ void handleMQTTSend()
     if (mqttClient.publish(topic.c_str(), payload.c_str()))
     {
         LOG_VERBOSE("WEB", "MQTT message sent to topic: %s (%d characters)", topic.c_str(), message.length());
-        server.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Message scribed via MQTT\"}");
+        request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Message scribed via MQTT\"}");
     }
     else
     {
         LOG_ERROR("WEB", "Failed to send MQTT message to topic: %s", topic.c_str());
-        server.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to send MQTT message - broker error\"}");
+        request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to send MQTT message - broker error\"}");
     }
 }
 
-void handleConfigGet()
+void handleConfigGet(AsyncWebServerRequest *request)
 {
     if (isAPMode())
     {
@@ -334,7 +336,7 @@ void handleConfigGet()
 
         String errorString;
         serializeJson(errorResponse, errorString);
-        server.send(429, "application/json", errorString);
+        request->send(429, "application/json", errorString);
         return;
     }
 
@@ -353,7 +355,7 @@ void handleConfigGet()
         if (!createDefaultConfigFile())
         {
             LOG_ERROR("WEB", "Failed to create default config.json");
-            sendErrorResponse(server, 500, "Failed to create configuration file.");
+            sendErrorResponse(request, 500, "Failed to create configuration file.");
             return;
         }
     }
@@ -362,7 +364,7 @@ void handleConfigGet()
     if (!configFile)
     {
         LOG_ERROR("WEB", "config.json still not accessible after creation");
-        sendErrorResponse(server, 500, "Configuration file access error.");
+        sendErrorResponse(request, 500, "Configuration file access error.");
         return;
     }
 
@@ -374,7 +376,7 @@ void handleConfigGet()
     if (error)
     {
         LOG_ERROR("WEB", "Failed to parse config.json: %s", error.c_str());
-        sendErrorResponse(server, 500, "Invalid config.json format");
+        sendErrorResponse(request, 500, "Invalid config.json format");
         return;
     }
 
@@ -491,22 +493,23 @@ void handleConfigGet()
     serializeJson(configDoc, configString);
 
     LOG_VERBOSE("WEB", "Configuration from config.json, returning %d bytes", configString.length());
-    server.send(200, "application/json", configString);
+    request->send(200, "application/json", configString);
 }
 
-void handleConfigPost()
+void handleConfigPost(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
-        sendRateLimitResponse(server);
+        sendRateLimitResponse(request);
         return;
     }
 
     // Get and validate JSON body
-    String body = server.arg("plain");
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
     if (body.length() == 0)
     {
-        sendValidationError(ValidationResult(false, "No JSON body provided"));
+        sendValidationError(request, ValidationResult(false, "No JSON body provided"));
         return;
     }
 
@@ -515,7 +518,7 @@ void handleConfigPost()
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
-        sendValidationError(ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
+        sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
         return;
     }
 
@@ -525,7 +528,7 @@ void handleConfigPost()
     {
         if (!doc.containsKey(requiredSections[i]))
         {
-            sendValidationError(ValidationResult(false, "Missing required section: " + String(requiredSections[i])));
+            sendValidationError(request, ValidationResult(false, "Missing required section: " + String(requiredSections[i])));
             return;
         }
     }
@@ -534,7 +537,7 @@ void handleConfigPost()
     JsonObject device = doc["device"];
     if (!device.containsKey("owner") || !device.containsKey("timezone"))
     {
-        sendValidationError(ValidationResult(false, "Missing required device configuration fields"));
+        sendValidationError(request, ValidationResult(false, "Missing required device configuration fields"));
         return;
     }
 
@@ -542,7 +545,7 @@ void handleConfigPost()
     String timezone = device["timezone"];
     if (owner.length() == 0 || timezone.length() == 0)
     {
-        sendValidationError(ValidationResult(false, "Device owner and timezone cannot be empty"));
+        sendValidationError(request, ValidationResult(false, "Device owner and timezone cannot be empty"));
         return;
     }
 
@@ -550,7 +553,7 @@ void handleConfigPost()
     JsonObject wifi = doc["wifi"];
     if (!wifi.containsKey("ssid") || !wifi.containsKey("password"))
     {
-        sendValidationError(ValidationResult(false, "Missing required WiFi configuration fields"));
+        sendValidationError(request, ValidationResult(false, "Missing required WiFi configuration fields"));
         return;
     }
 
@@ -558,26 +561,26 @@ void handleConfigPost()
     String password = wifi["password"];
     if (ssid.length() == 0)
     {
-        sendValidationError(ValidationResult(false, "WiFi SSID cannot be empty"));
+        sendValidationError(request, ValidationResult(false, "WiFi SSID cannot be empty"));
         return;
     }
     if (password.length() == 0)
     {
-        sendValidationError(ValidationResult(false, "WiFi password cannot be empty"));
+        sendValidationError(request, ValidationResult(false, "WiFi password cannot be empty"));
         return;
     } // Validate MQTT configuration
     JsonObject mqtt = doc["mqtt"];
     if (!mqtt.containsKey("server") || !mqtt.containsKey("port") ||
         !mqtt.containsKey("username") || !mqtt.containsKey("password"))
     {
-        sendValidationError(ValidationResult(false, "Missing required MQTT configuration fields"));
+        sendValidationError(request, ValidationResult(false, "Missing required MQTT configuration fields"));
         return;
     }
 
     int port = mqtt["port"];
     if (port < 1 || port > 65535)
     {
-        sendValidationError(ValidationResult(false, "MQTT port must be between 1 and 65535"));
+        sendValidationError(request, ValidationResult(false, "MQTT port must be between 1 and 65535"));
         return;
     }
 
@@ -585,7 +588,7 @@ void handleConfigPost()
     JsonObject apis = doc["apis"];
     if (!apis.containsKey("chatgptApiToken"))
     {
-        sendValidationError(ValidationResult(false, "Missing required ChatGPT API token"));
+        sendValidationError(request, ValidationResult(false, "Missing required ChatGPT API token"));
         return;
     }
 
@@ -593,14 +596,14 @@ void handleConfigPost()
     JsonObject validation = doc["validation"];
     if (!validation.containsKey("maxCharacters"))
     {
-        sendValidationError(ValidationResult(false, "Missing required maxCharacters field"));
+        sendValidationError(request, ValidationResult(false, "Missing required maxCharacters field"));
         return;
     }
 
     int maxChars = validation["maxCharacters"];
     if (maxChars < 100 || maxChars > 5000)
     {
-        sendValidationError(ValidationResult(false, "Max characters must be between 100 and 5000"));
+        sendValidationError(request, ValidationResult(false, "Max characters must be between 100 and 5000"));
         return;
     }
 
@@ -608,14 +611,14 @@ void handleConfigPost()
     JsonObject webInterface = doc["webInterface"];
     if (!webInterface.containsKey("printerDiscoveryPollingInterval"))
     {
-        sendValidationError(ValidationResult(false, "Missing required printerDiscoveryPollingInterval field"));
+        sendValidationError(request, ValidationResult(false, "Missing required printerDiscoveryPollingInterval field"));
         return;
     }
 
     int pollingInterval = webInterface["printerDiscoveryPollingInterval"];
     if (pollingInterval < 5000 || pollingInterval > 300000)
     {
-        sendValidationError(ValidationResult(false, "Printer discovery polling interval must be between 5000ms and 300000ms"));
+        sendValidationError(request, ValidationResult(false, "Printer discovery polling interval must be between 5000ms and 300000ms"));
         return;
     }
 
@@ -624,7 +627,7 @@ void handleConfigPost()
     if (!unbiddenInk.containsKey("enabled") || !unbiddenInk.containsKey("startHour") ||
         !unbiddenInk.containsKey("endHour") || !unbiddenInk.containsKey("frequencyMinutes"))
     {
-        sendValidationError(ValidationResult(false, "Missing required Unbidden Ink configuration fields"));
+        sendValidationError(request, ValidationResult(false, "Missing required Unbidden Ink configuration fields"));
         return;
     }
 
@@ -635,25 +638,25 @@ void handleConfigPost()
 
     if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23)
     {
-        sendValidationError(ValidationResult(false, "Hours must be between 0 and 23"));
+        sendValidationError(request, ValidationResult(false, "Hours must be between 0 and 23"));
         return;
     }
 
     if (startHour >= endHour)
     {
-        sendValidationError(ValidationResult(false, "Start hour must be before end hour"));
+        sendValidationError(request, ValidationResult(false, "Start hour must be before end hour"));
         return;
     }
 
     if (frequency < 15 || frequency > 480)
     {
-        sendValidationError(ValidationResult(false, "Frequency must be between 15 minutes and 8 hours"));
+        sendValidationError(request, ValidationResult(false, "Frequency must be between 15 minutes and 8 hours"));
         return;
     }
 
     if (enabled && (!unbiddenInk.containsKey("prompt") || String((const char *)unbiddenInk["prompt"]).length() == 0))
     {
-        sendValidationError(ValidationResult(false, "Prompt required when Unbidden Ink is enabled"));
+        sendValidationError(request, ValidationResult(false, "Prompt required when Unbidden Ink is enabled"));
         return;
     }
 
@@ -666,14 +669,14 @@ void handleConfigPost()
     {
         if (!buttons.containsKey(buttonKeys[i]))
         {
-            sendValidationError(ValidationResult(false, "Missing button configuration: " + String(buttonKeys[i])));
+            sendValidationError(request, ValidationResult(false, "Missing button configuration: " + String(buttonKeys[i])));
             return;
         }
 
         JsonObject button = buttons[buttonKeys[i]];
         if (!button.containsKey("shortAction") || !button.containsKey("longAction"))
         {
-            sendValidationError(ValidationResult(false, "Missing shortAction or longAction for " + String(buttonKeys[i])));
+            sendValidationError(request, ValidationResult(false, "Missing shortAction or longAction for " + String(buttonKeys[i])));
             return;
         }
 
@@ -683,13 +686,13 @@ void handleConfigPost()
         // MQTT topics are optional - if present, they should be strings
         if (button.containsKey("shortMqttTopic") && !button["shortMqttTopic"].is<String>())
         {
-            sendValidationError(ValidationResult(false, "shortMqttTopic must be a string for " + String(buttonKeys[i])));
+            sendValidationError(request, ValidationResult(false, "shortMqttTopic must be a string for " + String(buttonKeys[i])));
             return;
         }
 
         if (button.containsKey("longMqttTopic") && !button["longMqttTopic"].is<String>())
         {
-            sendValidationError(ValidationResult(false, "longMqttTopic must be a string for " + String(buttonKeys[i])));
+            sendValidationError(request, ValidationResult(false, "longMqttTopic must be a string for " + String(buttonKeys[i])));
             return;
         }
 
@@ -705,7 +708,7 @@ void handleConfigPost()
         }
         if (!validShortAction)
         {
-            sendValidationError(ValidationResult(false, "Invalid short action for " + String(buttonKeys[i]) + ": " + shortAction));
+            sendValidationError(request, ValidationResult(false, "Invalid short action for " + String(buttonKeys[i]) + ": " + shortAction));
             return;
         }
 
@@ -721,7 +724,7 @@ void handleConfigPost()
         }
         if (!validLongAction)
         {
-            sendValidationError(ValidationResult(false, "Invalid long action for " + String(buttonKeys[i]) + ": " + longAction));
+            sendValidationError(request, ValidationResult(false, "Invalid long action for " + String(buttonKeys[i]) + ": " + longAction));
             return;
         }
     }
@@ -730,7 +733,7 @@ void handleConfigPost()
     if (!configFile)
     {
         LOG_ERROR("WEB", "Failed to open config.json for writing");
-        sendErrorResponse(server, 500, "Failed to save configuration");
+        sendErrorResponse(request, 500, "Failed to save configuration");
         return;
     }
 
@@ -752,7 +755,7 @@ void handleConfigPost()
         updateMQTTSubscription();
     }
 
-    sendSuccessResponse(server, "Configuration saved successfully");
+    sendSuccessResponse(request, "Configuration saved successfully");
 
     if (isAPMode())
     {
@@ -762,11 +765,11 @@ void handleConfigPost()
     }
 }
 
-void handleDiscoveredPrinters()
+void handleDiscoveredPrinters(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
-        sendRateLimitResponse(server);
+        sendRateLimitResponse(request);
         return;
     }
 
@@ -797,5 +800,5 @@ void handleDiscoveredPrinters()
     serializeJson(doc, response);
 
     LOG_VERBOSE("WEB", "Discovered printers requested, returning %d printers", printersArray.size());
-    server.send(200, "application/json", response);
+    request->send(200, "application/json", response);
 }
