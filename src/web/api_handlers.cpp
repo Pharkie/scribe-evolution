@@ -356,7 +356,7 @@ void handleConfigGet(AsyncWebServerRequest* request)
         if (!createDefaultConfigFile())
         {
             LOG_ERROR("WEB", "Failed to create default config.json");
-            sendErrorResponse(server, 500, "Failed to create configuration file.");
+            sendErrorResponse(request, 500, "Failed to create configuration file.");
             return;
         }
     }
@@ -365,7 +365,7 @@ void handleConfigGet(AsyncWebServerRequest* request)
     if (!configFile)
     {
         LOG_ERROR("WEB", "config.json still not accessible after creation");
-        sendErrorResponse(server, 500, "Configuration file access error.");
+        sendErrorResponse(request, 500, "Configuration file access error.");
         return;
     }
 
@@ -377,7 +377,7 @@ void handleConfigGet(AsyncWebServerRequest* request)
     if (error)
     {
         LOG_ERROR("WEB", "Failed to parse config.json: %s", error.c_str());
-        sendErrorResponse(server, 500, "Invalid config.json format");
+        sendErrorResponse(request, 500, "Invalid config.json format");
         return;
     }
 
@@ -723,7 +723,7 @@ void handleConfigPost(AsyncWebServerRequest* request)
     if (!configFile)
     {
         LOG_ERROR("WEB", "Failed to open config.json for writing");
-        sendErrorResponse(server, 500, "Failed to save configuration");
+        sendErrorResponse(request, 500, "Failed to save configuration");
         return;
     }
 

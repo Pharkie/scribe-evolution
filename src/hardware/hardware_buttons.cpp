@@ -210,37 +210,37 @@ void triggerEndpointFromButton(const char *endpoint)
 
     if (strcmp(endpoint, "/api/riddle") == 0)
     {
-        handleRiddle();
+        generateAndQueueRiddle();
     }
     else if (strcmp(endpoint, "/api/joke") == 0)
     {
-        handleJoke();
+        generateAndQueueJoke();
     }
     else if (strcmp(endpoint, "/api/quote") == 0)
     {
-        handleQuote();
+        generateAndQueueQuote();
     }
     else if (strcmp(endpoint, "/api/quiz") == 0)
     {
-        handleQuiz();
+        generateAndQueueQuiz();
     }
     else if (strcmp(endpoint, "/api/print-test") == 0)
     {
-        handlePrintTest();
+        generateAndQueuePrintTest();
     }
     else if (strcmp(endpoint, "/api/test-print") == 0)
     {
-        handlePrintTest(); // Same handler for both endpoint variations
+        generateAndQueuePrintTest(); // Same handler for both endpoint variations
     }
     else if (strcmp(endpoint, "/api/unbidden-ink") == 0)
     {
-        handleUnbiddenInk();
+        generateAndQueueUnbiddenInk();
     }
     else if (strcmp(endpoint, "/api/keep-going") == 0)
     {
         // Keep-going endpoint - generate random content
         // For now, let's default to joke
-        handleJoke();
+        generateAndQueueJoke();
     }
     else if (strlen(endpoint) == 0)
     {

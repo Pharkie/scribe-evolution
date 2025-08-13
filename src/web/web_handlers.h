@@ -11,6 +11,7 @@
 #define WEB_HANDLERS_H
 
 #include <Arduino.h>
+#include <ESPAsyncWebServer.h>
 
 // ========================================
 // STATIC FILE HANDLERS

@@ -50,7 +50,7 @@ void handleNotFound(AsyncWebServerRequest* request)
     String errorDetails = "=== 404 Error === | Method: " + method + " | URI: " + uri + " | Args: " + String(request->args());
 
     // Limit argument logging to prevent log flooding
-    int maxArgs = min(request->args(), 5);
+    int maxArgs = min((int)request->args(), 5);
     for (int i = 0; i < maxArgs; i++)
     {
         String argName = request->argName(i);

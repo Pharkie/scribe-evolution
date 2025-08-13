@@ -11,6 +11,7 @@
 #define API_HANDLERS_H
 
 #include <Arduino.h>
+#include <ESPAsyncWebServer.h>
 #include "../core/shared_types.h"
 
 // ========================================
