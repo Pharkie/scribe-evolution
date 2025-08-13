@@ -44,12 +44,30 @@ void handleButtonLongPress(int buttonIndex);
 
 /**
  * @brief Trigger an endpoint from hardware button press
+ * @param endpoint The API endpoint to trigger
+ * @param mqttTopic The MQTT topic to send to (empty string for local print)
  */
-void triggerEndpointFromButton(const char *endpoint);
+void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic = "");
 
 /**
  * @brief Get button configuration info as JSON string
  */
 String getButtonConfigJson();
+
+/**
+ * @brief Content generation functions for button actions
+ */
+String generateRiddleButtonContent();
+String generateJokeButtonContent();
+String generateQuoteButtonContent();
+String generateQuizButtonContent();
+String generatePrintTestButtonContent();
+String generateUnbiddenInkButtonContent();
+
+/**
+ * @brief Content delivery functions
+ */
+void handlePrintContentFromButton(const String &content);
+void handleMQTTSendFromButton(const String &content, const char *mqttTopic);
 
 #endif

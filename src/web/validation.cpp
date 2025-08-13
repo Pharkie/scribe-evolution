@@ -12,6 +12,7 @@
 #include "../core/logging.h"
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include <WebServer.h>
 
 // Static variables for rate limiting
 static unsigned long lastRequestTime = 0;

@@ -137,12 +137,23 @@ function populateForm(config) {
     // Button Configuration
     document.getElementById('button1-short').value = config.buttons?.button1?.shortAction || '/api/joke';
     document.getElementById('button1-long').value = config.buttons?.button1?.longAction || '';
+    document.getElementById('button1-short-mqtt').value = config.buttons?.button1?.shortMqttTopic || '';
+    document.getElementById('button1-long-mqtt').value = config.buttons?.button1?.longMqttTopic || '';
+    
     document.getElementById('button2-short').value = config.buttons?.button2?.shortAction || '/api/riddle';
     document.getElementById('button2-long').value = config.buttons?.button2?.longAction || '';
+    document.getElementById('button2-short-mqtt').value = config.buttons?.button2?.shortMqttTopic || '';
+    document.getElementById('button2-long-mqtt').value = config.buttons?.button2?.longMqttTopic || '';
+    
     document.getElementById('button3-short').value = config.buttons?.button3?.shortAction || '/api/quote';
     document.getElementById('button3-long').value = config.buttons?.button3?.longAction || '';
+    document.getElementById('button3-short-mqtt').value = config.buttons?.button3?.shortMqttTopic || '';
+    document.getElementById('button3-long-mqtt').value = config.buttons?.button3?.longMqttTopic || '';
+    
     document.getElementById('button4-short').value = config.buttons?.button4?.shortAction || '/api/quiz';
     document.getElementById('button4-long').value = config.buttons?.button4?.longAction || '';
+    document.getElementById('button4-short-mqtt').value = config.buttons?.button4?.shortMqttTopic || '';
+    document.getElementById('button4-long-mqtt').value = config.buttons?.button4?.longMqttTopic || '';
     
     // Update next scheduled time from config data
     updateNextScheduledDisplay(config.status?.unbiddenInk?.nextScheduled);
@@ -195,19 +206,27 @@ function collectFormData() {
         buttons: {
             button1: {
                 shortAction: document.getElementById('button1-short').value,
-                longAction: document.getElementById('button1-long').value
+                longAction: document.getElementById('button1-long').value,
+                shortMqttTopic: document.getElementById('button1-short-mqtt').value,
+                longMqttTopic: document.getElementById('button1-long-mqtt').value
             },
             button2: {
                 shortAction: document.getElementById('button2-short').value,
-                longAction: document.getElementById('button2-long').value
+                longAction: document.getElementById('button2-long').value,
+                shortMqttTopic: document.getElementById('button2-short-mqtt').value,
+                longMqttTopic: document.getElementById('button2-long-mqtt').value
             },
             button3: {
                 shortAction: document.getElementById('button3-short').value,
-                longAction: document.getElementById('button3-long').value
+                longAction: document.getElementById('button3-long').value,
+                shortMqttTopic: document.getElementById('button3-short-mqtt').value,
+                longMqttTopic: document.getElementById('button3-long-mqtt').value
             },
             button4: {
                 shortAction: document.getElementById('button4-short').value,
-                longAction: document.getElementById('button4-long').value
+                longAction: document.getElementById('button4-long').value,
+                shortMqttTopic: document.getElementById('button4-short-mqtt').value,
+                longMqttTopic: document.getElementById('button4-long-mqtt').value
             }
         }
     };
@@ -219,8 +238,7 @@ function collectFormData() {
 async function saveSettings(event) {
     event.preventDefault();
     
-    // Show loading spinner
-    document.getElementById('save-loading').classList.remove('hidden');
+    // Don't show loading spinner - redirect immediately on success
     
     try {
         const configData = collectFormData();
@@ -236,8 +254,10 @@ async function saveSettings(event) {
         const result = await response.json();
         
         if (response.ok && result.success) {
-            showMessage('Your Scribe settings have been tucked away safely', 'success');
             currentConfig = configData; // Update current config
+            
+            // Redirect to index page immediately with success parameter
+            window.location.href = '/?settings_saved=true';
         } else {
             throw new Error(result.error || 'Failed to save settings');
         }
@@ -245,9 +265,6 @@ async function saveSettings(event) {
     } catch (error) {
         console.error('Error saving settings:', error);
         showMessage(`Failed to save settings: ${error.message}`, 'error');
-    } finally {
-        // Hide loading spinner
-        document.getElementById('save-loading').classList.add('hidden');
     }
 }
 

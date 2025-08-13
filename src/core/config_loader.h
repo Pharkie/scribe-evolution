@@ -54,8 +54,10 @@ struct RuntimeConfig
     String unbiddenInkPrompt;
 
     // Button Configuration (exactly 4 buttons)
-    String buttonShortActions[4]; // Short press actions for buttons 1-4
-    String buttonLongActions[4];  // Long press actions for buttons 1-4 (empty string = no action)
+    String buttonShortActions[4];    // Short press actions for buttons 1-4
+    String buttonLongActions[4];     // Long press actions for buttons 1-4 (empty string = no action)
+    String buttonShortMqttTopics[4]; // MQTT topics for short press actions (empty string = use local print)
+    String buttonLongMqttTopics[4];  // MQTT topics for long press actions (empty string = use local print)
 };
 
 /**

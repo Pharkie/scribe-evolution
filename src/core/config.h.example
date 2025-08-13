@@ -27,13 +27,18 @@
 
 #include <ArduinoLog.h>
 #include <esp_log.h>
+#include <esp_log.h>
 
 // ========================================
-// LOCAL DEVICE CONFIGURATION
+// LOCAL DEVICE CONFIGURATION (INITIAL DEFAULTS)
 // ========================================
-// This device's WiFi settings
-static const char *wifiSSID = "YOUR_WIFI_SSID";
-static const char *wifiPassword = "YOUR_WIFI_PASSWORD";
+// WARNING: These are INITIAL DEFAULTS ONLY used to populate config.json on first setup
+// In production, ALL these values will be OVERRIDDEN by config.json
+// Users can modify these via the settings web interface
+
+// Default WiFi settings (OVERRIDDEN by config.json device.wifi in production)
+static const char *defaultWifiSSID = "YOUR_WIFI_SSID";
+static const char *defaultWifiPassword = "YOUR_WIFI_PASSWORD";
 
 static const char *deviceOwner = "YOUR_DEVICE_NAME"; // e.g. "Pharkie", "Riccy"
 
@@ -83,13 +88,17 @@ static const char *logFileName = "/logs/scribe.log";
 static const size_t maxLogFileSize = 100000; // 100KB
 
 // ========================================
-// MQTT CONFIGURATION
+// MQTT CONFIGURATION (INITIAL DEFAULTS)
 // ========================================
-// MQTT broker settings
-static const char *mqttServer = "YOUR_MQTT_SERVER";
-static const int mqttPort = 8883; // TLS port
-static const char *mqttUsername = "YOUR_MQTT_USERNAME";
-static const char *mqttPassword = "YOUR_MQTT_PASSWORD";
+// WARNING: These are INITIAL DEFAULTS ONLY used to populate config.json on first setup
+// In production, ALL these values will be OVERRIDDEN by config.json mqtt.* settings
+// Users can modify these via the settings web interface
+
+// Default MQTT broker settings (OVERRIDDEN by config.json mqtt.* in production)
+static const char *defaultMqttServer = "YOUR_MQTT_SERVER.hivemq.cloud";
+static const int defaultMqttPort = 8883; // TLS port
+static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";
+static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
 
 // Default aliases for config_loader compatibility
 static const char *defaultMqttServer = mqttServer;
@@ -105,17 +114,18 @@ static const char *jokeAPI = "https://icanhazdadjoke.com/";
 static const char *quoteAPI = "https://zenquotes.io/api/random";
 static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categories=general_knowledge&difficulty=medium&limit=1";
 
-// BetterStack configuration (optional)
+// BetterStack configuration
 static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
 static const char *betterStackEndpoint = "YOUR_BETTERSTACK_ENDPOINT";
 
 // Unbidden Ink (Pipedream) API configuration
-static const bool enableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
-static const char *chatgptApiToken = "YOUR_OPENAI_API_KEY"; // ChatGPT API token (Bearer prefix added automatically)
-static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL
-static const int unbiddenInkStartHour = 10; // Working hours start (24-hour format)
-static const int unbiddenInkEndHour = 16; // Working hours end (24-hour format)
-static const int unbiddenInkFrequencyMinutes = 60; // Send 1 message in every X minute window
+// NOTE: chatgptApiToken will be OVERRIDDEN by config.json apis.chatgptApiToken in production
+static const bool enableUnbiddenInk = false;                                                                                                                                                                        // Enable/disable Unbidden Ink feature
+static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token (OVERRIDDEN by config.json)
+static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions";                                                                                                                               // ChatGPT API URL (NEVER exposed to frontend)
+static const int unbiddenInkStartHour = 10;                                                                                                                                                                         // Working hours start (24-hour format)
+static const int unbiddenInkEndHour = 16;                                                                                                                                                                           // Working hours end (24-hour format)
+static const int unbiddenInkFrequencyMinutes = 60;                                                                                                                                                                  // Send 1 message in every X minute window
 
 // Default aliases for config_loader compatibility
 static const char *defaultChatgptApiToken = chatgptApiToken;
@@ -142,6 +152,10 @@ static const int heatingInterval = 250; // Heating interval (200-250ms)
 // Hardware button GPIO configuration (exactly 4 buttons supported)
 static const int buttonGPIOs[] = {5, 6, 7, 8}; // GPIO pins for buttons 1-4
 static const int numHardwareButtons = 4;       // Exactly 4 buttons supported
+
+// Default button actions (OVERRIDDEN by config.json buttons.* in production)
+static const char *defaultButtonShortActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz"};
+static const char *defaultButtonLongActions[] = {"/api/print-test", "", "", ""};
 
 // Button hardware settings
 static const unsigned long buttonDebounceMs = 50;    // Debounce time in milliseconds
@@ -171,7 +185,8 @@ static const char *fallbackAPPassword = "scribe123";
 static const int statusLEDPin = 8; // GPIO8 for status LED (ESP32-C3 has built-in LED on GPIO8)
 
 // Web server configuration
-static const int webServerPort = 80; // HTTP port for web server
+static const int webServerPort = 80;                                    // HTTP port for web server
+static const unsigned long defaultPrinterDiscoveryPollingInterval = 10; // 10 seconds default polling interval
 
 // Watchdog configuration
 const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
