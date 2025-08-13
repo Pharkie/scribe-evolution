@@ -53,7 +53,7 @@ function initializePrinterSelection() {
   const localPrinterName = window.GLOBAL_CONFIG?.printer?.name || 'Unknown';
   
   // Add local-direct printer option with dynamic name
-  const localDirectOption = createPrinterOption('local-direct', '🖨️', `Local direct (${localPrinterName})`, true, null);
+  const localDirectOption = createPrinterOption('local-direct', '🏠', `Local direct (${localPrinterName})`, true, null);
   container.appendChild(localDirectOption);
   
   // Add remote printers from PRINTERS config (this will now include discovered printers)
@@ -99,9 +99,8 @@ function createPrinterOption(value, icon, name, isSelected = false, printerData 
   
   leftSide.innerHTML = `
     <span class="text-2xl">${icon}</span>
-    <div class="flex-1 min-w-0">
+    <div class="flex-1 min-w-0 flex items-center">
       <div class="font-medium text-sm truncate">${name}</div>
-      ${value === 'local-direct' ? `<div class="text-xs text-gray-500 dark:text-gray-400 truncate">Direct connection</div>` : ''}
     </div>
   `;
   
@@ -110,13 +109,13 @@ function createPrinterOption(value, icon, name, isSelected = false, printerData 
   // Add info icon for MQTT printers (remote printers)
   if (showInfoIcon && printerData) {
     const infoIcon = document.createElement('div');
-    infoIcon.className = 'info-icon ml-3 flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors duration-200 cursor-pointer';
-    infoIcon.innerHTML = '<span class="text-lg text-gray-600 dark:text-gray-300">ⓘ</span>';
+    infoIcon.className = 'info-icon ml-3 flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full transition-colors duration-200 cursor-pointer';
+    infoIcon.innerHTML = '<span class="text-2xl text-gray-600 dark:text-gray-300">ⓘ</span>';
     infoIcon.title = 'View printer details';
     
     // Add touch-friendly styling for mobile
-    infoIcon.style.minWidth = '44px';
-    infoIcon.style.minHeight = '44px';
+    infoIcon.style.minWidth = '56px';
+    infoIcon.style.minHeight = '56px';
     
     // Store printer data for the overlay
     infoIcon.setAttribute('data-printer-info', JSON.stringify(printerData));
@@ -203,6 +202,92 @@ function updateCharacterCount(textareaId, counterId, defaultMaxLength = 1000) {
 }
 
 /**
+ * Format time difference to a readable string
+ */
+function formatTimeDifference(diffMs) {
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffDays > 0) {
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  } else if (diffHours > 0) {
+    return `about ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  } else if (diffMinutes >= 2) {
+    return `${diffMinutes} mins ago`;
+  } else if (diffMinutes === 1) {
+    return 'A minute ago';
+  } else if (diffSeconds > 30) {
+    return '30 seconds ago';
+  } else {
+    return 'Just now';
+  }
+}
+
+/**
+ * Copy text to clipboard with visual feedback
+ */
+function copyToClipboard(text, buttonElement) {
+  // Modern browsers with clipboard API support
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      showCopyFeedback(buttonElement);
+    }).catch(() => {
+      // Fallback if clipboard API fails
+      fallbackCopyToClipboard(text, buttonElement);
+    });
+  } else {
+    // Fallback for older browsers or non-HTTPS contexts
+    fallbackCopyToClipboard(text, buttonElement);
+  }
+}
+
+/**
+ * Fallback clipboard copy using textarea selection
+ */
+function fallbackCopyToClipboard(text, buttonElement) {
+  // Create a temporary textarea
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  textArea.style.top = '-999999px';
+  document.body.appendChild(textArea);
+  
+  try {
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    if (successful) {
+      showCopyFeedback(buttonElement);
+    } else {
+      console.error('Failed to copy text');
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err);
+  } finally {
+    document.body.removeChild(textArea);
+  }
+}
+
+/**
+ * Show visual feedback for successful copy
+ */
+function showCopyFeedback(buttonElement) {
+  if (!buttonElement) return;
+  
+  const originalContent = buttonElement.innerHTML;
+  buttonElement.innerHTML = '✅';
+  buttonElement.disabled = true;
+  
+  setTimeout(() => {
+    buttonElement.innerHTML = originalContent;
+    buttonElement.disabled = false;
+  }, 1500);
+}
+
+/**
  * Show printer information overlay with mobile-responsive design
  */
 function showPrinterInfoOverlay(printerData, printerName) {
@@ -217,9 +302,9 @@ function showPrinterInfoOverlay(printerData, printerName) {
   overlay.id = 'printer-info-overlay';
   overlay.className = 'fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center p-4';
   
-  // Create backdrop
+  // Create backdrop with semi-transparent smoke effect
   const backdrop = document.createElement('div');
-  backdrop.className = 'absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm';
+  backdrop.className = 'absolute inset-0 bg-black/60 backdrop-blur-sm';
   backdrop.addEventListener('click', () => closePrinterInfoOverlay());
   
   // Create modal content
@@ -232,22 +317,39 @@ function showPrinterInfoOverlay(printerData, printerName) {
   const mdns = printerData.mdns || `${printerName.toLowerCase()}.local`;
   const firmwareVersion = printerData.firmware_version || 'Not available';
   
-  // Format last power on time
-  let lastPowerOn = 'Not available';
+  // Format last power on time with both relative and absolute
+  let lastPowerOnRelative = 'Not available';
+  let lastPowerOnAbsolute = '';
   if (printerData.last_power_on) {
-    const powerOnTime = new Date(printerData.last_power_on);
+    // Handle different timestamp formats - could be ISO string, Unix timestamp, or epoch milliseconds
+    let powerOnTime;
+    if (typeof printerData.last_power_on === 'string') {
+      // ISO string - should be proper UTC time with Z suffix
+      powerOnTime = new Date(printerData.last_power_on);
+    } else if (typeof printerData.last_power_on === 'number') {
+      // Unix timestamp - convert to milliseconds if needed
+      const timestamp = printerData.last_power_on < 10000000000 ? 
+        printerData.last_power_on * 1000 : printerData.last_power_on;
+      powerOnTime = new Date(timestamp);
+    } else {
+      powerOnTime = new Date(printerData.last_power_on);
+    }
+    
     const now = new Date();
     const diffMs = now.getTime() - powerOnTime.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
     
-    if (diffDays > 0) {
-      lastPowerOn = `Started ${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    } else if (diffHours > 0) {
-      lastPowerOn = `Started ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    } else {
-      lastPowerOn = 'Started recently';
-    }
+    lastPowerOnRelative = formatTimeDifference(diffMs);
+    // Format in local timezone with locale-specific formatting
+    lastPowerOnAbsolute = powerOnTime.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+      // Browser will automatically use local timezone
+    });
   }
   
   const timezone = printerData.timezone || 'Same as local';
@@ -268,35 +370,47 @@ function showPrinterInfoOverlay(printerData, printerName) {
       <!-- Information sections -->
       <div class="space-y-4">
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">MQTT Topic</div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+            <span>MQTT Topic</span>
+            <button onclick="copyToClipboard('${topic}', this)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" title="Copy to clipboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-gray-500 dark:text-gray-400">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+              </svg>
+            </button>
+          </div>
           <div class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg font-mono text-gray-800 dark:text-gray-200 break-all">
             ${topic}
           </div>
         </div>
         
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">IP Address</div>
-          <div class="text-sm text-gray-800 dark:text-gray-200">${ipAddress}</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">
+            <span class="font-medium text-gray-700 dark:text-gray-300">Local IP Address:</span> ${ipAddress}
+          </div>
         </div>
         
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">mDNS</div>
-          <div class="text-sm text-gray-800 dark:text-gray-200">${mdns}</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">
+            <span class="font-medium text-gray-700 dark:text-gray-300">Local mDNS:</span> ${mdns}
+          </div>
         </div>
         
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Firmware Version</div>
-          <div class="text-sm text-gray-800 dark:text-gray-200">${firmwareVersion}</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">
+            <span class="font-medium text-gray-700 dark:text-gray-300">Firmware Version:</span> ${firmwareVersion}
+          </div>
         </div>
         
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Power On</div>
-          <div class="text-sm text-gray-800 dark:text-gray-200">${lastPowerOn}</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">
+            <span class="font-medium text-gray-700 dark:text-gray-300">Last Power On:</span> ${lastPowerOnRelative}${lastPowerOnAbsolute ? ` (${lastPowerOnAbsolute})` : ''}
+          </div>
         </div>
         
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</div>
-          <div class="text-sm text-gray-800 dark:text-gray-200">${timezone}</div>
+          <div class="text-sm text-gray-800 dark:text-gray-200">
+            <span class="font-medium text-gray-700 dark:text-gray-300">Timezone:</span> ${timezone}
+          </div>
         </div>
       </div>
     </div>

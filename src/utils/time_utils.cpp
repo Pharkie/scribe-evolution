@@ -77,8 +77,8 @@ String formatCustomDate(String customDate)
 
 String getISOTimestamp()
 {
-    // Return ISO 8601 timestamp: 2025-01-01T12:00:00Z
-    return myTZ.dateTime("Y-m-d\\TH:i:s\\Z");
+    // Return ISO 8601 timestamp in UTC: 2025-01-01T12:00:00Z
+    return UTC.dateTime("Y-m-d\\TH:i:s\\Z");
 }
 
 // === Timezone Setup ===
