@@ -19,7 +19,7 @@
 // ========================================
 
 /**
- * @brief Handle system status request
+ * @brief Handle system diagnostics request
  */
 void handleStatus(AsyncWebServerRequest *request);
 
