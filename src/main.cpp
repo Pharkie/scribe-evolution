@@ -97,7 +97,7 @@ void setup()
   setupLogging();
 
   // Configure ESP32 system component log levels
-  esp_log_level_set("WebServer", ESP_LOG_INFO);
+  esp_log_level_set("WebServer", espLogLevel);
 
   // Log main startup message immediately after logging is ready
   LOG_NOTICE("BOOT", "=== Scribe Starting ===");
