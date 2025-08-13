@@ -22,7 +22,7 @@
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
 
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 
 /**
@@ -32,21 +32,29 @@
 void setupWebServerRoutes(int maxChars);
 
 /**
+ * @brief Get stored request body for POST requests
+ * @param request The request to get the body for
+ * @return The stored request body, or empty string if none
+ */
+String getRequestBody(AsyncWebServerRequest *request);
+
+/**
  * @brief Get printer discovery updates with change detection
  * Returns only changed data to minimize bandwidth
  */
-void handlePrinterUpdates();
+void handlePrinterUpdates(AsyncWebServerRequest *request);
 
 /**
  * @brief Handle captive portal redirects in AP mode
  */
-void handleCaptivePortal();
+void handleCaptivePortal(AsyncWebServerRequest *request);
 
 /**
  * @brief Check if current request should be redirected to settings in AP mode
+ * @param request The request to check
  * @return true if redirect is needed
  */
-bool shouldRedirectToSettings();
+bool shouldRedirectToSettings(AsyncWebServerRequest *request);
 
 /**
  * @brief Helper function to recursively list directory contents for debugging

@@ -97,4 +97,9 @@ bool isConfigFileValid();
  */
 bool createDefaultConfigFile();
 
+/**
+ * @brief Global flag indicating if config has been loaded
+ */
+extern bool g_configLoaded;
+
 #endif // CONFIG_LOADER_H

@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 #include <PubSubClient.h>
+#include <ESPAsyncWebServer.h>
 #include "../core/shared_types.h"
 
 // External variable reference
@@ -24,49 +25,67 @@ extern Message currentMessage;
 /**
  * @brief Handle riddle content generation request
  */
-void handleRiddle();
+void handleRiddle(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle joke content generation request
  */
-void handleJoke();
+void handleJoke(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle quote content generation request
  */
-void handleQuote();
+void handleQuote(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle quiz content generation request
  */
-void handleQuiz();
+void handleQuiz(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle poke content generation request
  */
-void handlePoke();
+void handlePoke(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle Unbidden Ink content generation request
  */
-void handleUnbiddenInk();
+void handleUnbiddenInk(AsyncWebServerRequest* request);
+
+/**
+ * @brief Generate and queue Unbidden Ink content for internal calls (no request)
+ * @return true if content was generated and queued successfully
+ */
+bool generateAndQueueUnbiddenInk();
+
+// ========================================
+// INTERNAL CONTENT GENERATION FUNCTIONS
+// ========================================
+// These functions are for internal calls (hardware buttons, timers, etc.)
+// They don't require request parameters and directly queue content for printing
+
+bool generateAndQueueRiddle();
+bool generateAndQueueJoke();
+bool generateAndQueueQuote();
+bool generateAndQueueQuiz();
+bool generateAndQueuePrintTest();
 
 /**
  * @brief Handle print test request
  */
-void handlePrintTest();
+void handlePrintTest(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle user message content generation (adds MESSAGE prefix)
  */
-void handleUserMessage();
+void handleUserMessage(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle content printing (generic handler for any pre-formatted content)
  * @details Unified endpoint for printing content locally or routing via MQTT.
  *          Content should already have action headers (MESSAGE, JOKE, etc.)
  */
-void handlePrintContent();
+void handlePrintContent(AsyncWebServerRequest* request);
 
 // ========================================
 // ========================================

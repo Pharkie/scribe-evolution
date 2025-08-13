@@ -11,10 +11,7 @@
 #define VALIDATION_H
 
 #include <Arduino.h>
-#include <WebServer.h>
-
-// Forward declaration
-extern WebServer server;
+#include <ESPAsyncWebServer.h>
 
 /**
  * @brief Result structure for validation operations
@@ -83,9 +80,10 @@ ValidationResult validateParameter(const String &param, const String &paramName,
 
 /**
  * @brief Validate optional remote parameter (for MQTT sending)
+ * @param request The async web server request
  * @return ValidationResult with validation status and error message
  */
-ValidationResult validateRemoteParameter();
+ValidationResult validateRemoteParameter(AsyncWebServerRequest* request);
 
 // ========================================
 // UTILITY FUNCTIONS
@@ -99,11 +97,12 @@ ValidationResult validateRemoteParameter();
 String urlDecode(String str);
 
 /**
- * @brief Send validation error response
+ * @brief Send validation error response for async requests
+ * @param request The async web server request
  * @param result The validation result containing the error
  * @param statusCode HTTP status code to send (default 400)
  */
-void sendValidationError(const ValidationResult &result, int statusCode = 400);
+void sendValidationError(AsyncWebServerRequest* request, const ValidationResult &result, int statusCode = 400);
 
 /**
  * @brief Set maximum message characters for validation

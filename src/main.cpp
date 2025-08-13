@@ -3,11 +3,7 @@
  * @brief Main application entry point for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
- * @cop  // Setup web server routes
-  setupWebServerRoutes(maxCharacters);
-
-  // Start the async web server
-  server.begin();ht Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
  * This file is part of the Scribe ESP32-C3 Thermal Printer project.
@@ -28,7 +24,7 @@
  */
 
 #include <WiFi.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
 #include <esp_task_wdt.h>
 #include <esp_log.h>
@@ -52,7 +48,7 @@
 #include "content/unbidden_ink.h"
 
 // === Web Server ===
-WebServer server(webServerPort);
+AsyncWebServer server(webServerPort);
 
 // === Memory Monitoring Variables ===
 unsigned long lastMemCheck = 0;
@@ -185,8 +181,8 @@ void loop()
   // Check hardware buttons (works even without WiFi)
   checkHardwareButtons();
 
-  // Handle web server requests
-  server.handleClient();
+  // Handle web server requests - AsyncWebServer handles this automatically
+  // No need to call server.handleClient() with async server
 
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
   {
