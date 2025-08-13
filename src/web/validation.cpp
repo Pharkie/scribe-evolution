@@ -225,6 +225,20 @@ ValidationResult validateRemoteParameter()
     return ValidationResult(true);
 }
 
+ValidationResult validateRemoteParameter(AsyncWebServerRequest* request)
+{
+    if (request->hasParam("remote"))
+    {
+        String remote = request->getParam("remote")->value();
+        ValidationResult paramValidation = validateParameter(remote, "remote", maxRemoteParameterLength, false);
+        if (!paramValidation.isValid)
+        {
+            return paramValidation;
+        }
+    }
+    return ValidationResult(true);
+}
+
 // ========================================
 // UTILITY FUNCTIONS
 // ========================================

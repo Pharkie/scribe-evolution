@@ -15,14 +15,14 @@
 #include "../utils/time_utils.h"
 #include "../utils/json_helpers.h"
 #include "content_generators.h"
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <esp_task_wdt.h>
 
 // External declarations
-extern WebServer server;
+extern AsyncWebServer server;
 extern PubSubClient mqttClient;
 extern String getFormattedDateTime();
 extern String formatCustomDate(String customDate);
@@ -47,7 +47,7 @@ enum ContentType
  * @brief Unified content generation handler
  * @param contentType The type of content to generate
  */
-void handleContentGeneration(ContentType contentType)
+void handleContentGeneration(AsyncWebServerRequest* request, ContentType contentType)
 {
     // Determine content type name for logging
     const char *typeName;
@@ -86,7 +86,10 @@ void handleContentGeneration(ContentType contentType)
     // Rate limiting is applied to the actual delivery endpoints (/print-local, /mqtt-send)
 
     // Get target parameter to determine if sender info should be included
-    String body = server.arg("plain");
+    String body = "";
+    if (request->hasParam("plain", true)) {
+        body = request->getParam("plain", true)->value();
+    }
     String target = "local-direct"; // Default
 
     if (body.length() > 0)
@@ -190,7 +193,7 @@ void handleContentGeneration(ContentType contentType)
         String response;
         serializeJson(doc, response);
 
-        server.send(200, "application/json", response);
+        request->send(200, "application/json", response);
         LOG_VERBOSE("WEB", "%s content generated successfully for target: %s", typeName, target.c_str());
     }
     else
@@ -200,29 +203,29 @@ void handleContentGeneration(ContentType contentType)
 
         String errorString;
         serializeJson(errorResponse, errorString);
-        server.send(500, "application/json", errorString);
+        request->send(500, "application/json", errorString);
         LOG_ERROR("WEB", "Failed to generate %s content", typeName);
     }
 }
 
 // Individual handler functions (simple wrappers)
-void handleRiddle() { handleContentGeneration(RIDDLE); }
-void handleJoke() { handleContentGeneration(JOKE); }
-void handleQuote() { handleContentGeneration(QUOTE); }
-void handleQuiz() { handleContentGeneration(QUIZ); }
-void handlePrintTest() { handleContentGeneration(PRINT_TEST); }
-void handlePoke() { handleContentGeneration(POKE); }
-void handleUserMessage() { handleContentGeneration(USER_MESSAGE); }
+void handleRiddle(AsyncWebServerRequest* request) { handleContentGeneration(request, RIDDLE); }
+void handleJoke(AsyncWebServerRequest* request) { handleContentGeneration(request, JOKE); }
+void handleQuote(AsyncWebServerRequest* request) { handleContentGeneration(request, QUOTE); }
+void handleQuiz(AsyncWebServerRequest* request) { handleContentGeneration(request, QUIZ); }
+void handlePrintTest(AsyncWebServerRequest* request) { handleContentGeneration(request, PRINT_TEST); }
+void handlePoke(AsyncWebServerRequest* request) { handleContentGeneration(request, POKE); }
+void handleUserMessage(AsyncWebServerRequest* request) { handleContentGeneration(request, USER_MESSAGE); }
 
-void handleUnbiddenInk()
+void handleUnbiddenInk(AsyncWebServerRequest* request)
 {
     LOG_VERBOSE("WEB", "handleUnbiddenInk() called");
 
     // Check if there's a custom prompt in the request body
     String customPrompt = "";
-    if (server.hasArg("plain"))
+    if (request->hasParam("plain", true))
     {
-        String body = server.arg("plain");
+        String body = request->getParam("plain", true)->value();
         DynamicJsonDocument doc(1024);
         DeserializationError error = deserializeJson(doc, body);
 
@@ -257,7 +260,7 @@ void handleUnbiddenInk()
 
         String response;
         serializeJson(responseDoc, response);
-        server.send(200, "application/json", response);
+        request->send(200, "application/json", response);
     }
     else
     {
@@ -268,24 +271,27 @@ void handleUnbiddenInk()
 
         String errorResponse;
         serializeJson(errorDoc, errorResponse);
-        server.send(500, "application/json", errorResponse);
+        request->send(500, "application/json", errorResponse);
         LOG_ERROR("WEB", "Failed to generate Unbidden Ink content");
     }
 }
 
-void handlePrintContent()
+void handlePrintContent(AsyncWebServerRequest* request)
 {
     if (isRateLimited())
     {
-        sendRateLimitResponse(server);
+        sendRateLimitResponse(request);
         return;
     }
 
     // Get and validate JSON body
-    String body = server.arg("plain");
+    String body = "";
+    if (request->hasParam("plain", true)) {
+        body = request->getParam("plain", true)->value();
+    }
     if (body.length() == 0)
     {
-        sendValidationError(ValidationResult(false, "No JSON body provided"));
+        sendValidationError(request, ValidationResult(false, "No JSON body provided"));
         return;
     }
 
@@ -333,7 +339,7 @@ void handlePrintContent()
         currentMessage.shouldPrintLocally = true;
         LOG_VERBOSE("WEB", "Custom message queued for local direct printing");
 
-        server.send(200, "application/json", "{\"success\":true,\"message\":\"Message processed successfully\"}");
+        request->send(200, "application/json", "{\"success\":true,\"message\":\"Message processed successfully\"}");
     }
     else
     {
@@ -344,7 +350,7 @@ void handlePrintContent()
         // Check MQTT connection
         if (!mqttClient.connected())
         {
-            sendErrorResponse(server, 503, "MQTT client not connected");
+            sendErrorResponse(request, 503, "MQTT client not connected");
             return;
         }
 
@@ -359,12 +365,12 @@ void handlePrintContent()
         if (mqttClient.publish(source.c_str(), payload.c_str()))
         {
             LOG_VERBOSE("WEB", "Custom message successfully sent via MQTT");
-            sendSuccessResponse(server, "Message processed successfully");
+            sendSuccessResponse(request, "Message processed successfully");
         }
         else
         {
             LOG_ERROR("WEB", "Failed to send custom message via MQTT");
-            server.send(500, "application/json", "{\"success\":false,\"message\":\"Failed to process message\"}");
+            request->send(500, "application/json", "{\"success\":false,\"message\":\"Failed to process message\"}");
         }
     }
 }

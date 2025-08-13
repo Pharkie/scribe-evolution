@@ -86,6 +86,7 @@ ValidationResult validateParameter(const String &param, const String &paramName,
  * @return ValidationResult with validation status and error message
  */
 ValidationResult validateRemoteParameter();
+ValidationResult validateRemoteParameter(AsyncWebServerRequest* request);
 
 // ========================================
 // UTILITY FUNCTIONS
