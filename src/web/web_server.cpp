@@ -229,7 +229,7 @@ void setupWebServerRoutes(int maxChars)
         registerPOSTRoute("/api/user-message", handleUserMessage);
 
         // API endpoints
-        server.on("/api/status", HTTP_GET, handleStatus);
+        server.on("/api/diagnostics", HTTP_GET, handleStatus);
         server.on("/api/buttons", HTTP_GET, handleButtons);
         registerPOSTRoute("/api/mqtt-send", handleMQTTSend);
         server.on("/api/config", HTTP_GET, handleConfigGet);
