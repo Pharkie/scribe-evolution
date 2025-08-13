@@ -441,13 +441,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         configDoc["webInterface"] = userConfig["webInterface"];
     }
-    else
-    {
-        // Add default webInterface settings if not in config
-        JsonObject webInterface = configDoc.createNestedObject("webInterface");
-        webInterface["printerDiscoveryPollingInterval"] = defaultPrinterDiscoveryPollingInterval * 1000;
-    }
-    if (userConfig.containsKey("unbiddenInk"))
+    else if (userConfig.containsKey("unbiddenInk"))
     {
         configDoc["unbiddenInk"] = userConfig["unbiddenInk"];
     }
@@ -611,21 +605,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Validate webInterface configuration
-    JsonObject webInterface = doc["webInterface"];
-    if (!webInterface.containsKey("printerDiscoveryPollingInterval"))
-    {
-        sendValidationError(request, ValidationResult(false, "Missing required printerDiscoveryPollingInterval field"));
-        return;
-    }
-
-    int pollingInterval = webInterface["printerDiscoveryPollingInterval"];
-    if (pollingInterval < 5000 || pollingInterval > 300000)
-    {
-        sendValidationError(request, ValidationResult(false, "Printer discovery polling interval must be between 5000ms and 300000ms"));
-        return;
-    }
-
     // Validate unbidden ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];
     if (!unbiddenInk.containsKey("enabled") || !unbiddenInk.containsKey("startHour") ||
@@ -767,42 +746,4 @@ void handleConfigPost(AsyncWebServerRequest *request)
         delay(1000);
         ESP.restart();
     }
-}
-
-void handleDiscoveredPrinters(AsyncWebServerRequest *request)
-{
-    if (isRateLimited())
-    {
-        sendRateLimitResponse(request);
-        return;
-    }
-
-    DynamicJsonDocument doc(2048);
-    JsonArray printersArray = doc.createNestedArray("discovered_printers");
-
-    std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
-    for (const auto &printer : discovered)
-    {
-        if (printer.status == "online")
-        {
-            JsonObject printerObj = printersArray.createNestedObject();
-            printerObj["printer_id"] = printer.printerId;
-            printerObj["name"] = printer.name;
-            printerObj["firmware_version"] = printer.firmwareVersion;
-            printerObj["mdns"] = printer.mdns;
-            printerObj["ip_address"] = printer.ipAddress;
-            printerObj["status"] = printer.status;
-            printerObj["last_power_on"] = printer.lastPowerOn;
-            printerObj["timezone"] = printer.timezone;
-        }
-    }
-
-    doc["count"] = printersArray.size();
-    doc["our_printer_id"] = getPrinterId();
-
-    String response;
-    serializeJson(doc, response);
-
-    LOG_VERBOSE("WEB", "Discovered printers requested, returning %d printers", printersArray.size());
-    request->send(200, "application/json", response);
 }

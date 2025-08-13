@@ -36,4 +36,5 @@ package-lock.json
 __pycache__/
 *.pyc
 
+# Environment variables with secrets
 .mqtt_secrets

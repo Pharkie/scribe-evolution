@@ -42,7 +42,7 @@ void setupWebServerRoutes(int maxChars);
 String getRequestBody(AsyncWebServerRequest *request);
 
 /**
- * @brief Get printer discovery JSON data for SSE and initial loads
+ * @brief Get JSON data for discovered printers (includes self via MQTT)
  * @return JSON string containing discovered printers
  */
 String getDiscoveredPrintersJson();

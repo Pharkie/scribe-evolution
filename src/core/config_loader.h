@@ -43,9 +43,6 @@ struct RuntimeConfig
     // Validation Configuration (only user-configurable parts)
     int maxCharacters;
 
-    // Web Interface Configuration
-    unsigned long printerDiscoveryPollingInterval;
-
     // Unbidden Ink Configuration
     bool unbiddenInkEnabled;
     int unbiddenInkStartHour;

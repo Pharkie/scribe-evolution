@@ -72,7 +72,7 @@ void publishPrinterStatus()
     bool published = mqttClient.publish(statusTopic.c_str(), payload.c_str(), true);
     if (published)
     {
-        LOG_NOTICE("DISCOVERY", "Published status to %s", statusTopic.c_str());
+        LOG_VERBOSE("DISCOVERY", "Published status to %s", statusTopic.c_str());
         delay(3000); // 3 second debug delay to observe timing
     }
     else
@@ -116,7 +116,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
             if (status == "offline")
             {
                 printer.status = "offline";
-                LOG_NOTICE("DISCOVERY", "Printer %s went offline (payload: %s)", printer.name.c_str(), payload.c_str());
+                LOG_VERBOSE("DISCOVERY", "Printer %s went offline (payload: %s)", printer.name.c_str(), payload.c_str());
 
                 // Notify web clients via SSE
                 sendPrinterUpdate();
@@ -132,7 +132,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
                 printer.timezone = doc["timezone"] | printer.timezone;
                 printer.lastSeen = currentTime;
 
-                LOG_NOTICE("DISCOVERY", "Updated printer %s (%s)", printer.name.c_str(), printer.ipAddress.c_str());
+                LOG_VERBOSE("DISCOVERY", "Updated printer %s (%s)", printer.name.c_str(), printer.ipAddress.c_str());
 
                 // Notify web clients via SSE
                 sendPrinterUpdate();
@@ -157,7 +157,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
         newPrinter.lastSeen = currentTime;
 
         discoveredPrinters.push_back(newPrinter);
-        LOG_NOTICE("DISCOVERY", "Discovered new printer %s (%s)", newPrinter.name.c_str(), newPrinter.ipAddress.c_str());
+        LOG_VERBOSE("DISCOVERY", "Discovered new printer %s (%s)", newPrinter.name.c_str(), newPrinter.ipAddress.c_str());
 
         // Notify web clients via SSE
         sendPrinterUpdate();

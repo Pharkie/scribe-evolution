@@ -32,7 +32,7 @@ async function loadConfig() {
     MAX_CHARS = config.validation?.maxCharacters || 1000;
     MAX_PROMPT_CHARS = 500; // Default from C++ config
     
-    // Initialize empty PRINTERS array (populated via discovery polling)
+    // Initialize empty PRINTERS array (populated via SSE discovery)
     PRINTERS = [];
     
     // Initialize printer selection UI (if function exists)
@@ -55,9 +55,6 @@ async function loadConfig() {
     
     // Trigger event for other scripts that might be waiting for config
     window.dispatchEvent(new CustomEvent('configLoaded', { detail: config }));
-    
-    // Initialize Server-Sent Events for real-time printer discovery
-    initializePrinterUpdates();
     
   } catch (error) {
     console.error('Failed to load config:', error);
@@ -122,26 +119,30 @@ function initializePrinterDiscovery() {
     };
   }
 
-  // Load initial printer data
-  async function loadInitialPrinterData() {
-    try {
-      console.log('📊 Loading initial printer data...');
-      const response = await fetch('/api/printer-discovery');
-      if (response.ok) {
-        const data = await response.json();
-        updatePrintersFromData(data);
-        refreshPrinterUI();
-        console.log('✅ Initial printer data loaded');
-      }
-    } catch (error) {
-      console.error('Error loading initial printer data:', error);
+  // Load initial printer data from already loaded config
+  function loadInitialPrinterData() {
+    console.log('📊 Setting up initial printer data from loaded config...');
+    // Use already loaded config data instead of making another API call
+    if (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.printer) {
+      const localPrinter = {
+        printer_id: 'local', // Use 'local' as identifier for local printer
+        name: window.GLOBAL_CONFIG.printer.name,
+        type: window.GLOBAL_CONFIG.printer.type,
+        topic: window.GLOBAL_CONFIG.printer.topic,
+        status: 'online' // Local printer is always online
+      };
+      PRINTERS.length = 0; // Clear existing
+      PRINTERS.push(localPrinter); // Add local printer first
+      refreshPrinterUI();
+      console.log('✅ Initial printer data set up from config');
+    } else {
+      console.log('⚠️ No local printer config found');
     }
   }
 
-  // Initialize: load data first, then set up real-time updates
-  loadInitialPrinterData().then(() => {
-    setupSSE();
-  });
+  // Initialize: set up data first, then start real-time updates
+  loadInitialPrinterData();
+  setupSSE();
 
   // Clean up SSE connection when page unloads
   window.addEventListener('beforeunload', function() {
@@ -152,12 +153,13 @@ function initializePrinterDiscovery() {
 }
 
 /**
- * Update the global PRINTERS array from API data
+ * Update the global PRINTERS array from SSE printer update data
  */
 function updatePrintersFromData(printerData) {
   if (printerData && printerData.discovered_printers) {
+    // SSE sends all discovered printers (including local via MQTT discovery)
     PRINTERS.length = 0; // Clear existing
-    PRINTERS.push(...printerData.discovered_printers);
+    PRINTERS.push(...printerData.discovered_printers); // Add all discovered printers
   }
 }
 

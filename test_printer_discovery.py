@@ -7,7 +7,6 @@ when you only have one physical device. It creates fake MQTT printer status mess
 that your real Scribe will receive and display in its web interface.
 
 Purpose:
-- Test the printer discovery feature without needing multiple physical Scribe printers
 - Simulate various network scenarios (printers going online/offline)
 - Validate that the web interface correctly displays discovered printers
 - Test MQTT Last Will & Testament (LWT) functionality
@@ -27,6 +26,11 @@ Or if you need to create a new virtual environment:
     python3 -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
+
+Configuration:
+Copy .mqtt_secrets.example to .mqtt_secrets and edit with your MQTT broker credentials:
+    cp .mqtt_secrets.example .mqtt_secrets
+    # Edit .mqtt_secrets with your actual MQTT settings
 
 Usage Examples:
 
@@ -58,7 +62,7 @@ Usage Examples:
 What to test after running:
 - Check your Scribe's index.html page - fake printers should appear in the remote printer choices
 - Visit /diagnostics.html to see discovery system status
-- Try /api/discovered-printers endpoint to see raw discovery data
+- Monitor /events (SSE) endpoint for real-time printer updates
 - Stop/start printers to see them disappear/appear in real-time
 
 Interactive Commands:
@@ -86,9 +90,10 @@ import argparse
 import threading
 import sys
 import select
+import os
 from datetime import datetime, timezone
 
-# Try to import paho.mqtt.client with helpful error message
+# Try to import required libraries with helpful error messages
 try:
     import paho.mqtt.client as mqtt
 except ImportError as e:
@@ -102,7 +107,27 @@ except ImportError as e:
         "   python3 -m venv venv && source venv/bin/activate && pip install paho-mqtt"
     )
     print(f"\nOriginal error: {e}")
-    exit(1)
+    sys.exit(1)
+
+try:
+    from dotenv import load_dotenv  # type: ignore
+
+    load_dotenv(".mqtt_secrets")  # Load .mqtt_secrets file if present
+except ImportError:
+    print(
+        "⚠️  Warning: python-dotenv not found. Install with: pip install python-dotenv"
+    )
+    print("   Using command line arguments only.")
+except (OSError, ValueError) as env_error:
+    print(f"⚠️  Warning: Could not load .mqtt_secrets file: {env_error}")
+
+
+def get_env_value(key: str, default: str = None) -> str:
+    """Get environment variable with fallback to default"""
+    value = os.getenv(key, default)
+    if value is None:
+        raise ValueError(f"Environment variable {key} not set and no default provided")
+    return value
 
 
 class KeyboardListener:
@@ -142,7 +167,7 @@ class KeyboardListener:
                         print(
                             "   Ctrl+C = GRACEFUL shutdown (publishes offline status)"
                         )
-            except:
+            except (OSError, IOError, KeyboardInterrupt):
                 # Handle any errors silently (like Windows compatibility issues)
                 time.sleep(0.1)
 
@@ -152,8 +177,11 @@ class KeyboardListener:
         for name in list(self.simulator.clients.keys()):
             print(f"⚡ {name}: Triggering LWT via socket closure")
             try:
-                self.simulator.clients[name]._sock.close()
-            except:
+                # Force socket closure to trigger LWT
+                if hasattr(self.simulator.clients[name], "_sock"):
+                    # pylint: disable-next=protected-access
+                    self.simulator.clients[name]._sock.close()
+            except (AttributeError, OSError):
                 pass
             self.simulator.clients[name].loop_stop()
             del self.simulator.clients[name]
@@ -162,9 +190,7 @@ class KeyboardListener:
             "💀 All printers abruptly disconnected - LWT messages should be triggered"
         )
         print("🛑 Exiting script...")
-        import os
-
-        os._exit(0)
+        os._exit(0)  # pylint: disable=protected-access
 
 
 class ScribePrinterSimulator:
@@ -199,33 +225,54 @@ class ScribePrinterSimulator:
         """Create a simple offline payload (just name and status)"""
         return {"name": name, "status": "offline"}
 
-    def setup_client(self, printer_name, ip_suffix, firmware="1.0.0"):
+    def setup_client(self, printer_name, _ip_suffix, _firmware="1.0.0"):
         """Setup MQTT client for a simulated printer"""
         client_id = f"ScribePrinter-{random.randint(1000, 9999)}"
-        # Use the new paho-mqtt 2.x API
+        # Use the new paho-mqtt 2.x API with VERSION2 (modern approach)
         client = mqtt.Client(
-            callback_api_version=mqtt.CallbackAPIVersion.VERSION1, client_id=client_id
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=client_id
         )
 
         if self.username:
             client.username_pw_set(self.username, self.password)
 
         if self.use_tls:
-            client.tls_set()
+            import ssl
+
+            try:
+                # Try multiple SSL configuration approaches
+                context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                client.tls_set_context(context)
+            except (AttributeError, TypeError, OSError):
+                # Fallback for older paho-mqtt versions or SSL issues
+                try:
+                    client.tls_set(
+                        ca_certs=None,
+                        certfile=None,
+                        keyfile=None,
+                        cert_reqs=ssl.CERT_NONE,
+                        tls_version=ssl.PROTOCOL_TLS,
+                        ciphers=None,
+                    )
+                except (AttributeError, TypeError, OSError):
+                    # Last resort - basic TLS
+                    client.tls_set()
 
         # Setup LWT (Last Will & Testament) with simple offline payload
         topic = f"scribe/printer-status/{printer_name.lower()}"
         lwt_payload = self.create_offline_payload(printer_name)
         client.will_set(topic, json.dumps(lwt_payload), qos=1, retain=True)
 
-        def on_connect(client, userdata, flags, rc):
-            if rc == 0:
+        def on_connect(_client, _userdata, _flags, reason_code, _properties):
+            if reason_code == 0:
                 print(f"✅ {printer_name}: Connected to MQTT broker")
             else:
-                print(f"❌ {printer_name}: Failed to connect (code {rc})")
+                print(f"❌ {printer_name}: Failed to connect (code {reason_code})")
 
-        def on_disconnect(client, userdata, rc):
-            if rc != 0:
+        def on_disconnect(_client, _userdata, _flags, reason_code, _properties):
+            if reason_code != 0:
                 print(f"🔌 {printer_name}: Unexpectedly disconnected (LWT triggered)")
             else:
                 print(f"🔌 {printer_name}: Clean disconnect")
@@ -242,6 +289,9 @@ class ScribePrinterSimulator:
         client = self.setup_client(name, ip_suffix, firmware)
 
         try:
+            print(
+                f"🔗 {name}: Attempting connection to {self.broker_host}:{self.broker_port}"
+            )
             client.connect(self.broker_host, self.broker_port, 60)
             client.loop_start()
 
@@ -262,8 +312,62 @@ class ScribePrinterSimulator:
             self.clients[name] = client
             return True
 
-        except Exception as e:
-            print(f"❌ {name}: Error starting printer - {e}")
+        except (OSError, ValueError, ConnectionRefusedError) as e:
+            error_msg = str(e)
+            print(f"❌ {name}: Connection failed - {e}")
+
+            if (
+                "SSL" in error_msg or "TLS" in error_msg or "EOF occurred" in error_msg
+            ) and self.use_tls:
+                print("💡 SSL/TLS connection issue detected")
+                print("💡 Try: --tls false for non-SSL connection")
+                print("💡 Or check if broker requires different SSL settings")
+                print(f"🔄 {name}: Attempting fallback to non-TLS connection...")
+                return self._try_fallback_connection(name, ip_suffix, firmware)
+            elif "Connection refused" in error_msg:
+                print(f"💡 Current: {self.broker_host}:{self.broker_port}")
+                print("💡 Check host/port settings")
+            else:
+                print("💡 Check network connectivity and broker settings")
+            return False
+
+    def _try_fallback_connection(self, name, ip_suffix, firmware="1.0.0"):
+        """Try connecting without TLS as fallback"""
+        print(f"🔄 {name}: Trying fallback connection without TLS...")
+
+        # Create a new client without TLS
+        fallback_sim = ScribePrinterSimulator(
+            self.broker_host,
+            1883,  # Standard MQTT port without TLS
+            self.username,
+            self.password,
+            False,  # Disable TLS
+        )
+
+        try:
+            client = fallback_sim.setup_client(name, ip_suffix, firmware)
+            client.connect(fallback_sim.broker_host, fallback_sim.broker_port, 60)
+            client.loop_start()
+
+            time.sleep(1)
+
+            # Publish initial status
+            topic = f"scribe/printer-status/{name.lower()}"
+            payload = self.create_printer_payload(name, ip_suffix, firmware, "online")
+
+            result = client.publish(topic, json.dumps(payload), qos=1, retain=True)
+            if result.rc == 0:
+                print(f"✅ {name}: Fallback connection successful (non-TLS)")
+                print(f"📡 {name}: Published status to {topic}")
+                print(f"   IP: 192.168.1.{ip_suffix}, Firmware: {firmware}")
+                self.clients[name] = client
+                return True
+            else:
+                print(f"❌ {name}: Fallback connection failed to publish")
+                return False
+
+        except (OSError, ValueError, ConnectionRefusedError) as fallback_error:
+            print(f"❌ {name}: Fallback connection also failed - {fallback_error}")
             return False
 
     def stop_printer(self, name, graceful=True):
@@ -299,8 +403,11 @@ class ScribePrinterSimulator:
                 # Abrupt disconnection to trigger LWT
                 print(f"💀 {name}: Forcing abrupt disconnection to trigger LWT")
                 try:
-                    self.clients[name]._sock.close()
-                except:
+                    # Force socket closure to trigger LWT
+                    if hasattr(self.clients[name], "_sock"):
+                        # pylint: disable-next=protected-access
+                        self.clients[name]._sock.close()
+                except (AttributeError, OSError):
                     pass
                 self.clients[name].loop_stop()
                 print(f"⚡ {name}: LWT should be triggered")
@@ -402,7 +509,7 @@ def run_interactive_mode(simulator):
 
         except KeyboardInterrupt:
             break
-        except Exception as e:
+        except (ValueError, OSError) as e:
             print(f"Error: {e}")
 
     simulator.stop_all()
@@ -483,38 +590,67 @@ def run_scenario(simulator, scenario_name):
 
 def main():
     parser = argparse.ArgumentParser(description="Scribe Printer Discovery Test Script")
+
+    # Get defaults from environment variables
+    default_host = get_env_value("MQTT_HOST", "localhost")
+    default_port = int(get_env_value("MQTT_PORT", "1883"))
+    default_username = get_env_value("MQTT_USERNAME", "")
+    default_password = get_env_value("MQTT_PASSWORD", "")
+    default_tls = get_env_value("MQTT_USE_TLS", "false").lower() == "true"
+
     parser.add_argument(
         "--host",
-        default="a0829e28cf7842e9ba6f1e9830cdab3c.s1.eu.hivemq.cloud",
-        help="MQTT broker host (default: HiveMQ Cloud)",
+        default=default_host,
+        help=f"MQTT broker host (default: {default_host})",
     )
     parser.add_argument(
         "--port",
         type=int,
-        default=8883,
-        help="MQTT broker port (default: 8883 for TLS)",
+        default=default_port,
+        help=f"MQTT broker port (default: {default_port})",
     )
-    parser.add_argument("--username", default="REDACTED_USERNAME", help="MQTT username")
-    parser.add_argument(
-        "--password", default="REDACTED_PASSWORD", help="MQTT password"
+    parser.add_argument("--username", default=default_username, help="MQTT username")
+    parser.add_argument("--password", default=default_password, help="MQTT password")
+
+    # TLS arguments - allow both enabling and disabling
+    tls_group = parser.add_mutually_exclusive_group()
+    tls_group.add_argument("--tls", action="store_true", help="Enable TLS/SSL")
+    tls_group.add_argument(
+        "--no-tls", action="store_true", help="Disable TLS/SSL (use plain MQTT)"
     )
-    parser.add_argument(
-        "--tls", action="store_true", default=True, help="Use TLS/SSL (default: True)"
-    )
+
     parser.add_argument(
         "--scenario", help="Run a specific scenario (office, home, mixed, chaos)"
     )
 
     args = parser.parse_args()
 
+    # Determine TLS setting with priority: command line > environment > default
+    if args.no_tls:
+        use_tls = False
+        # Auto-adjust port if using default TLS port but disabling TLS
+        if args.port == default_port and default_port == 8883:
+            broker_port = 1883  # Standard non-TLS MQTT port
+            print("💡 Auto-adjusting port to 1883 for non-TLS connection")
+        else:
+            broker_port = args.port
+    elif args.tls:
+        use_tls = True
+        broker_port = args.port
+    else:
+        use_tls = default_tls
+        broker_port = args.port
+
     print("🚀 Scribe Printer Discovery Test Script")
-    print(f"📡 Connecting to: {args.host}:{args.port}")
-    print(f"🔐 TLS: {'Enabled' if args.tls else 'Disabled'}")
+    print(f"📡 Connecting to: {args.host}:{broker_port}")
+    print(f"🔐 TLS: {'Enabled' if use_tls else 'Disabled'}")
+    if use_tls:
+        print("💡 If you experience SSL/TLS connection issues, try: --no-tls")
     print()
 
     # Create simulator
     simulator = ScribePrinterSimulator(
-        args.host, args.port, args.username, args.password, args.tls
+        args.host, broker_port, args.username, args.password, use_tls
     )
 
     try:
@@ -527,7 +663,7 @@ def main():
             )
             print("📱 Visit: http://scribe.local or your Scribe's IP address")
             print(
-                "🔍 Check: index.html (printer dropdown), diagnostics.html, /api/discovered-printers"
+                "🔍 Check: index.html (printer dropdown), diagnostics.html, /events (SSE)"
             )
             print()
 
@@ -547,7 +683,7 @@ def main():
         print("📡 Publishing offline status for all printers before disconnecting...")
         simulator.stop_all()
         print("👋 All simulated printers gracefully stopped. Goodbye!")
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         print(f"💥 Error: {e}")
         simulator.stop_all()
 
