@@ -126,8 +126,8 @@ void checkUnbiddenInk()
         // Feed watchdog before potentially long API call
         esp_task_wdt_reset();
 
-        // Call handleUnbiddenInk directly to generate and print content
-        handleUnbiddenInk();
+        // Call generateAndQueueUnbiddenInk to generate and print content
+        generateAndQueueUnbiddenInk();
         LOG_NOTICE("UNBIDDENINK", "Unbidden Ink content requested");
 
         // Feed watchdog after API call

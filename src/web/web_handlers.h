@@ -11,6 +11,7 @@
 #define WEB_HANDLERS_H
 
 #include <Arduino.h>
+#include <ESPAsyncWebServer.h>
 
 // ========================================
 // STATIC FILE HANDLERS
@@ -19,18 +20,10 @@
 /**
  * @brief Handle 404 not found requests
  */
-void handleNotFound();
+void handleNotFound(AsyncWebServerRequest *request);
 
 // ========================================
 // UTILITY FUNCTIONS
 // ========================================
-
-/**
- * @brief Helper function to serve files from LittleFS filesystem
- * @param path The file path to serve (e.g., "/html/index.html")
- * @param contentType The MIME content type (e.g., "text/html")
- * @return true if file was served successfully, false otherwise
- */
-bool serveFileFromLittleFS(const String &path, const String &contentType);
 
 #endif // WEB_HANDLERS_H

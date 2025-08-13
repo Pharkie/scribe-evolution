@@ -26,7 +26,7 @@
 
 // Global runtime configuration instance
 static RuntimeConfig g_runtimeConfig;
-static bool g_configLoaded = false;
+bool g_configLoaded = false;
 
 bool loadRuntimeConfig()
 {

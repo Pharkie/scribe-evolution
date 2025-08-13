@@ -22,13 +22,5 @@
 #include "config_utils.h"
 #include "config.h"
 
-// Function implementations
-const char *getWiFiSSID()
-{
-    return defaultWifiSSID;
-}
-
-const char *getWiFiPassword()
-{
-    return defaultWifiPassword;
-}
+// This file contains implementations that cannot be inlined
+// Most functions are inline in the header file
