@@ -8,18 +8,18 @@
  */
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize index-specific UI
-  initializeIndexUI();
-  
-  // Initialize printer selection
-  initializeConfigDependentUI();
-  
-  // Initialize real-time printer discovery
-  initializePrinterDiscovery();
+  initializeIndexUI(); 
   
   // Check for settings saved success message
   checkForSettingsSuccess();
   
-  // Listen for printer updates from the polling system
+  // Listen for config loaded event to initialize printer discovery
+  window.addEventListener('configLoaded', function(event) {
+    console.log('📋 Config loaded, initializing printer discovery for index page');
+    initializePrinterDiscovery();
+  });
+  
+  // Listen for printer updates from the SSE system
   document.addEventListener('printersUpdated', function(event) {
     console.log('🔄 Printers updated, refreshing index page printer selection');
     initializePrinterSelection();
