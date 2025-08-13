@@ -37,7 +37,7 @@ __pycache__/
 *.pyc
 
 # Environment variables with secrets
-.env
+.mqtt_secrets
 
 # Local library overrides - keep patches directory but ignore copied library files
 lib/WebServer/WebServer.cpp
