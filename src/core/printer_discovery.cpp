@@ -4,6 +4,7 @@
 #include "logging.h"
 #include "config.h"
 #include "../utils/time_utils.h"
+#include "../web/web_server.h"
 #include <WiFi.h>
 #include <esp_chip_info.h>
 
@@ -131,6 +132,11 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
                 LOG_NOTICE("DISCOVERY", "Updated printer %s (%s)", printer.name.c_str(), printer.ipAddress.c_str());
             }
             found = true;
+            
+            // Trigger SSE update for printer status change
+            String printerData = getDiscoveredPrintersJson();
+            sendPrinterUpdate(printerData);
+            
             break;
         }
     }
@@ -151,6 +157,10 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
 
         discoveredPrinters.push_back(newPrinter);
         LOG_NOTICE("DISCOVERY", "Discovered new printer %s (%s)", newPrinter.name.c_str(), newPrinter.ipAddress.c_str());
+        
+        // Trigger SSE update for new printer discovery
+        String printerData = getDiscoveredPrintersJson();
+        sendPrinterUpdate(printerData);
     }
 }
 

@@ -34,6 +34,9 @@
 // Global variables
 extern AsyncWebServer server;
 
+// Server-Sent Events support
+AsyncEventSource events("/events");
+
 // Global message storage for printing
 Message currentMessage = {"", "", false};
 
@@ -143,6 +146,48 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
             storeRequestBody(request, body); });
 }
 
+// ========================================
+// SERVER-SENT EVENTS (SSE) SUPPORT
+// ========================================
+
+/**
+ * @brief Send printer update via Server-Sent Events
+ * @param printerData JSON string containing printer data
+ */
+void sendPrinterUpdate(const String &printerData)
+{
+    LOG_VERBOSE("SSE", "Sending printer update: %s", printerData.c_str());
+    events.send(printerData.c_str(), "printer-update", millis());
+}
+
+/**
+ * @brief Send system status update via Server-Sent Events
+ * @param status System status message
+ * @param level Status level (info, warning, error)
+ */
+void sendSystemStatus(const String &status, const String &level)
+{
+    DynamicJsonDocument doc(256);
+    doc["message"] = status;
+    doc["level"] = level;
+    doc["timestamp"] = millis();
+    
+    String payload;
+    serializeJson(doc, payload);
+    
+    LOG_VERBOSE("SSE", "Sending system status (%s): %s", level.c_str(), status.c_str());
+    events.send(payload.c_str(), "system-status", millis());
+}
+
+/**
+ * @brief Get the SSE event source instance for external use
+ * @return Reference to the AsyncEventSource
+ */
+AsyncEventSource& getEventSource()
+{
+    return events;
+}
+
 void setupWebServerRoutes(int maxChars)
 {
     // Store the maxChars value for validation
@@ -232,6 +277,21 @@ void setupWebServerRoutes(int maxChars)
 
         // Smart polling endpoint for instant printer updates
         server.on("/api/printer-discovery", HTTP_GET, handlePrinterUpdates);
+
+        // Server-Sent Events endpoint for real-time updates
+        server.addHandler(&events);
+        events.onConnect([](AsyncEventSourceClient *client){
+            if(client->lastId()){
+                LOG_VERBOSE("SSE", "Client reconnected with last ID: %u", client->lastId());
+            } else {
+                LOG_VERBOSE("SSE", "New SSE client connected");
+            }
+            // Send initial printer data to new clients
+            String printerData = getDiscoveredPrintersJson();
+            client->send(printerData.c_str(), "printer-update", millis());
+            // Send connection status
+            sendSystemStatus("Connected to Scribe printer", "info");
+        });
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
         server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request)

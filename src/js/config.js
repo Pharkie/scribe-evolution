@@ -65,15 +65,89 @@ async function loadConfig() {
 }
 
 /**
- * Initialize smart polling for real-time printer discovery updates
- * Uses efficient polling with change detection for instant updates
+ * Initialize Server-Sent Events for real-time printer discovery updates
+ * Replaces polling with efficient real-time communication
  */
 function initializePrinterUpdates() {
+  // Check if EventSource is supported
+  if (typeof(EventSource) === "undefined") {
+    console.warn('⚠️ EventSource not supported, falling back to polling');
+    initializePrinterPolling();
+    return;
+  }
+  
+  let reconnectDelay = 1000; // Start with 1 second
+  const maxReconnectDelay = 30000; // Max 30 seconds
+  let eventSource = null;
+  
+  function connectSSE() {
+    console.log('📡 Connecting to Server-Sent Events...');
+    
+    eventSource = new EventSource('/events');
+    
+    eventSource.onopen = function(event) {
+      console.log('✅ SSE connected successfully');
+      reconnectDelay = 1000; // Reset delay on successful connection
+    };
+    
+    eventSource.addEventListener('printer-update', function(event) {
+      console.log('🖨️ Received printer update via SSE');
+      
+      try {
+        const data = JSON.parse(event.data);
+        
+        // Update the global PRINTERS array
+        updatePrintersFromData(data);
+        
+        // Refresh any UI elements that depend on the printer list
+        refreshPrinterUI();
+      } catch (error) {
+        console.error('Failed to parse printer update:', error);
+      }
+    });
+    
+    eventSource.addEventListener('system-status', function(event) {
+      console.log('📋 Received system status via SSE');
+      
+      try {
+        const data = JSON.parse(event.data);
+        console.log(`${data.level}: ${data.message}`);
+        
+        // You could show toast notifications here for system status
+        if (data.level === 'error') {
+          console.error('System error:', data.message);
+        }
+      } catch (error) {
+        console.error('Failed to parse system status:', error);
+      }
+    });
+    
+    eventSource.onerror = function(event) {
+      console.warn('❌ SSE connection error, will attempt to reconnect');
+      eventSource.close();
+      
+      // Exponential backoff for reconnection
+      setTimeout(connectSSE, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, maxReconnectDelay);
+    };
+  }
+  
+  // Start the SSE connection
+  connectSSE();
+  
+  console.log('✅ Server-Sent Events initialized for real-time printer updates');
+}
+
+/**
+ * Fallback polling implementation for browsers that don't support SSE
+ * Uses the original polling logic with ETag optimization
+ */
+function initializePrinterPolling() {
   // Get polling interval from already loaded configuration
   function getPollingInterval() {
     const config = window.GLOBAL_CONFIG;
     const interval = config?.webInterface?.printerDiscoveryPollingInterval || 10000;
-    console.log(`📡 Printer polling interval: ${interval/1000}s`);
+    console.log(`📡 Printer polling interval: ${interval/1000}s (fallback mode)`);
     return Promise.resolve(interval);
   }
   
@@ -123,7 +197,7 @@ function initializePrinterUpdates() {
   
   getPollingInterval().then(interval => {
     setInterval(pollForUpdates, interval);
-    console.log(`✅ Smart printer polling initialized (${interval/1000}s updates)`);
+    console.log(`✅ Smart printer polling initialized (${interval/1000}s updates) - fallback mode`);
   });
 }
 

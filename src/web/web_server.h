@@ -45,6 +45,12 @@ String getRequestBody(AsyncWebServerRequest *request);
 void handlePrinterUpdates(AsyncWebServerRequest *request);
 
 /**
+ * @brief Get discovered printers as JSON string
+ * @return JSON string containing all discovered printers
+ */
+String getDiscoveredPrintersJson();
+
+/**
  * @brief Handle captive portal redirects in AP mode
  */
 void handleCaptivePortal(AsyncWebServerRequest *request);
@@ -63,5 +69,24 @@ bool shouldRedirectToSettings(AsyncWebServerRequest *request);
  * @param level Indentation level for nested directories
  */
 void listDirectory(File dir, String &output, int level);
+
+/**
+ * @brief Send printer update via Server-Sent Events
+ * @param printerData JSON string containing printer data
+ */
+void sendPrinterUpdate(const String &printerData);
+
+/**
+ * @brief Send system status update via Server-Sent Events
+ * @param status System status message
+ * @param level Status level (info, warning, error)
+ */
+void sendSystemStatus(const String &status, const String &level = "info");
+
+/**
+ * @brief Get the SSE event source instance for external use
+ * @return Reference to the AsyncEventSource
+ */
+AsyncEventSource& getEventSource();
 
 #endif // WEB_SERVER_H
