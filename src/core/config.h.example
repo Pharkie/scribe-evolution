@@ -26,31 +26,22 @@
 #define CONFIG_H
 
 #include <ArduinoLog.h>
+#include <esp_log.h>
 
 // ========================================
-// LOCAL DEVICE CONFIGURATION
+// LOCAL DEVICE CONFIGURATION (INITIAL DEFAULTS)
 // ========================================
-// This device's WiFi settings
-static const char *wifiSSID = "YOUR_WIFI_SSID";
-static const char *wifiPassword = "YOUR_WIFI_PASSWORD";
+// WARNING: These are INITIAL DEFAULTS ONLY used to populate config.json on first setup
+// In production, ALL these values will be OVERRIDDEN by config.json
+// Users can modify these via the settings web interface
 
-static const char *deviceOwner = "YOUR_DEVICE_NAME"; // e.g. "Pharkie", "Riccy"
+// Default WiFi settings (OVERRIDDEN by config.json device.wifi in production)
+static const char *defaultWifiSSID = "YOUR_WIFI_SSID";
+static const char *defaultWifiPassword = "YOUR_WIFI_PASSWORD";
 
-static const char *timezone = "YOUR_TIMEZONE"; // e.g. "Europe/London", "America/New_York"
-
-// ========================================
-// REMOTE PRINTERS CONFIGURATION (for MQTT)
-// ========================================
-struct PrinterConfig
-{
-    const char *key; // Remote printer identifier/name
-};
-
-// List of remote printers we can send to via MQTT
-static const PrinterConfig printerConfigs[] = {
-    {"RemotePrinter1"} // Add your remote printers here
-};
-static const int numPrinterConfigs = 1;
+// Default device identity (OVERRIDDEN by config.json device.owner/timezone in production)
+static const char *defaultDeviceOwner = "YOUR_DEVICE_NAME";
+static const char *defaultTimezone = "YOUR_TIMEZONE"; // e.g. "Europe/London", "America/New_York"
 
 // ========================================
 // LOGGING CONFIGURATION
@@ -58,6 +49,10 @@ static const int numPrinterConfigs = 1;
 // Log level: LOG_LEVEL_SILENT(0), LOG_LEVEL_FATAL(1), LOG_LEVEL_ERROR(2),
 //           LOG_LEVEL_WARNING(3), LOG_LEVEL_NOTICE(4), LOG_LEVEL_TRACE(5), LOG_LEVEL_VERBOSE(6)
 static const int logLevel = LOG_LEVEL_NOTICE;
+
+// ESP32 system component log levels
+// ESP_LOG_NONE (0), ESP_LOG_ERROR (1), ESP_LOG_WARN (2), ESP_LOG_INFO (3), ESP_LOG_DEBUG (4), ESP_LOG_VERBOSE (5)
+static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
 
 // Log destinations (enable/disable as needed)
 static const bool enableSerialLogging = true; // Serial console
@@ -73,13 +68,17 @@ static const char *logFileName = "/logs/scribe.log";
 static const size_t maxLogFileSize = 100000; // 100KB
 
 // ========================================
-// MQTT CONFIGURATION
+// MQTT CONFIGURATION (INITIAL DEFAULTS)
 // ========================================
-// MQTT broker settings
-static const char *mqttServer = "YOUR_MQTT_SERVER";
-static const int mqttPort = 8883; // TLS port
-static const char *mqttUsername = "YOUR_MQTT_USERNAME";
-static const char *mqttPassword = "YOUR_MQTT_PASSWORD";
+// WARNING: These are INITIAL DEFAULTS ONLY used to populate config.json on first setup
+// In production, ALL these values will be OVERRIDDEN by config.json mqtt.* settings
+// Users can modify these via the settings web interface
+
+// Default MQTT broker settings (OVERRIDDEN by config.json mqtt.* in production)
+static const char *defaultMqttServer = "YOUR_MQTT_SERVER.hivemq.cloud";
+static const int defaultMqttPort = 8883; // TLS port
+static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";
+static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
 
 // ========================================
 // API CONFIGURATION
@@ -89,17 +88,18 @@ static const char *jokeAPI = "https://icanhazdadjoke.com/";
 static const char *quoteAPI = "https://zenquotes.io/api/random";
 static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categories=general_knowledge&difficulty=medium&limit=1";
 
-// BetterStack configuration (optional)
+// BetterStack configuration
 static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
 static const char *betterStackEndpoint = "YOUR_BETTERSTACK_ENDPOINT";
 
 // Unbidden Ink (Pipedream) API configuration
-static const bool enableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
-static const char *chatgptApiToken = "YOUR_OPENAI_API_KEY"; // ChatGPT API token (Bearer prefix added automatically)
-static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL
-static const int unbiddenInkStartHour = 10; // Working hours start (24-hour format)
-static const int unbiddenInkEndHour = 16; // Working hours end (24-hour format)
-static const int unbiddenInkFrequencyMinutes = 60; // Send 1 message in every X minute window
+// NOTE: chatgptApiToken will be OVERRIDDEN by config.json apis.chatgptApiToken in production
+static const bool enableUnbiddenInk = false;                                                                                                                                                                        // Enable/disable Unbidden Ink feature
+static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token (OVERRIDDEN by config.json)
+static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions";                                                                                                                               // ChatGPT API URL (NEVER exposed to frontend)
+static const int unbiddenInkStartHour = 10;                                                                                                                                                                         // Working hours start (24-hour format)
+static const int unbiddenInkEndHour = 16;                                                                                                                                                                           // Working hours end (24-hour format)
+static const int unbiddenInkFrequencyMinutes = 60;                                                                                                                                                                  // Send 1 message in every X minute window
 
 // ========================================
 // APPLICATION SETTINGS
@@ -123,6 +123,10 @@ static const int heatingInterval = 250; // Heating interval (200-250ms)
 // Hardware button GPIO configuration (exactly 4 buttons supported)
 static const int buttonGPIOs[] = {5, 6, 7, 8}; // GPIO pins for buttons 1-4
 static const int numHardwareButtons = 4;       // Exactly 4 buttons supported
+
+// Default button actions (OVERRIDDEN by config.json buttons.* in production)
+static const char *defaultButtonShortActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz"};
+static const char *defaultButtonLongActions[] = {"/api/print-test", "", "", ""};
 
 // Button hardware settings
 static const unsigned long buttonDebounceMs = 50;    // Debounce time in milliseconds
@@ -152,7 +156,8 @@ static const char *fallbackAPPassword = "scribe123";
 static const int statusLEDPin = 8; // GPIO8 for status LED (ESP32-C3 has built-in LED on GPIO8)
 
 // Web server configuration
-static const int webServerPort = 80; // HTTP port for web server
+static const int webServerPort = 80;                                    // HTTP port for web server
+static const unsigned long defaultPrinterDiscoveryPollingInterval = 10; // 10 seconds default polling interval
 
 // Watchdog configuration
 const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
@@ -191,112 +196,5 @@ static const int maxTimezoneLength = 64;     // Max timezone string length
 
 // Content validation thresholds
 static const int minJokeLength = 10; // Minimum joke length to be considered valid
-
-#endif
-
-#ifndef CONFIG_H
-#define CONFIG_H
-
-#include <ArduinoLog.h>
-
-// ========================================
-// LOCAL DEVICE CONFIGURATION
-// ========================================
-// This device's WiFi settings
-static const char *wifiSSID = "YOUR_WIFI_SSID";
-static const char *wifiPassword = "YOUR_WIFI_PASSWORD";
-
-static const char *deviceOwner = "YOUR_DEVICE_NAME"; // e.g. "Pharkie", "Riccy"
-
-static const char *timezone = "YOUR_TIMEZONE"; // e.g. "Europe/London", "America/New_York"
-
-// ========================================
-// PRINTER IDENTITY CONFIGURATION
-// ========================================
-// Set this to determine which printer this device is
-// Available options: "printer1", "printer2", "printer3", etc.
-static const char *deviceOwner = "printer1"; // <-- CHANGE THIS TO YOUR PRINTER
-
-// Printer configuration structure (defined here as it's needed for the data below)
-struct PrinterConfig
-{
-    const char *key;          // Unique identifier (used to derive MQTT topic and mDNS hostname)
-    const char *wifiSSID;     // WiFi network name
-    const char *wifiPassword; // WiFi password
-    const char *timezone;     // Timezone (e.g., "Europe/London", "America/New_York")
-};
-
-static const PrinterConfig printerConfigs[] = {
-    // Key, WiFi SSID, WiFi Password, Timezone
-    {"Kitchen", "Your_WiFi_Name", "Your_WiFi_Password", "Europe/London"},
-    {"Office", "Your_WiFi_Name", "Your_WiFi_Password", "America/New_York"},
-    {"Workshop", "Your_WiFi_Name", "Your_WiFi_Password", "Asia/Tokyo"}
-    // Add more: {"key", "WiFi_Name", "WiFi_Pass", "Timezone"}
-    // MQTT topic will be: scribe/{key}/inbox
-    // mDNS hostname will be: scribe-{key} (lowercase)
-};
-
-static const int numPrinterConfigs = sizeof(printerConfigs) / sizeof(printerConfigs[0]);
-
-// ========================================
-// HARDWARE CONFIGURATION
-// ========================================
-// ESP32-C3 pin assignments
-static const int TX_PIN = 21; // TX pin to printer RX (green wire)
-
-// Thermal printer power settings (adjust for your printer model)
-static const int heatingDots = 10;      // Heating dots (7-15, lower = less power)
-static const int heatingTime = 150;     // Heating time (80-200ms)
-static const int heatingInterval = 250; // Heating interval (200-250ms)
-
-// ========================================
-// NETWORK CONFIGURATION
-// ========================================
-// MQTT broker (HiveMQ Cloud - create your own free account)
-static const char *mqttServer = "your-hivemq-cluster.s1.eu.hivemq.cloud";
-static const int mqttPort = 8883; // TLS port
-static const char *mqttUsername = "your_username";
-static const char *mqttPassword = "your_password";
-
-// Network services
-// Timezone is now configured per-printer in the PrinterConfig struct above
-// Examples: "America/New_York", "Europe/Paris", "Asia/Tokyo", "Australia/Sydney"
-
-// ========================================
-// LOGGING CONFIGURATION
-// ========================================
-// Log level: LOG_LEVEL_SILENT(0), LOG_LEVEL_FATAL(1), LOG_LEVEL_ERROR(2),
-//           LOG_LEVEL_WARNING(3), LOG_LEVEL_NOTICE(4), LOG_LEVEL_TRACE(5), LOG_LEVEL_VERBOSE(6)
-static const int logLevel = LOG_LEVEL_NOTICE;
-
-// Log destinations (enable/disable as needed)
-static const bool enableSerialLogging = true;      // Serial console
-static const bool enableFileLogging = false;       // LittleFS file
-static const bool enableMQTTLogging = true;        // MQTT topic
-static const bool enableBetterStackLogging = false; // BetterStack (requires account)
-
-// Log configuration details
-static const char *mqttLogTopic = "scribe/log";
-static const char *logFileName = "/logs/scribe.log";
-static const size_t maxLogFileSize = 100000; // 100KB
-
-// ========================================
-// API CONFIGURATION
-// ========================================
-// External API endpoints (modify if needed)
-static const char *jokeAPI = "https://icanhazdadjoke.com/";
-static const char *quoteAPI = "https://zenquotes.io/api/random";
-static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categories=general_knowledge&difficulty=medium&limit=1";
-
-// BetterStack configuration (optional - leave empty if not using)
-static const char *betterStackToken = "";
-static const char *betterStackEndpoint = "";
-
-// ========================================
-// APPLICATION SETTINGS
-// ========================================
-static const int maxReceiptChars = 1000; // Max characters per receipt
-static const int totalRiddles = 545;     // Total riddles in riddles.ndjson
-static const char *apiUserAgent = "Scribe Thermal Printer (https://github.com/Pharkie/scribe)";
 
 #endif
