@@ -80,10 +80,6 @@ function populateForm(config) {
     // Validation Configuration (only maxCharacters)
     document.getElementById('max-characters').value = config.validation?.maxCharacters || 1000;
     
-    // Web Interface Configuration - convert milliseconds to seconds for user display
-    const pollingIntervalMs = config.webInterface?.printerDiscoveryPollingInterval || 30000; // Default 30 seconds
-    document.getElementById('polling-interval').value = pollingIntervalMs / 1000;
-    
     // Unbidden Ink Configuration - check for the new slider/preset interface
     const unbiddenInkEnabled = document.getElementById('unbidden-ink-enabled');
     if (unbiddenInkEnabled) {
@@ -189,10 +185,6 @@ function collectFormData() {
         // Validation settings
         validation: {
             maxCharacters: parseInt(document.getElementById('max-characters').value)
-        },
-        // Web Interface settings - convert seconds to milliseconds for server storage
-        webInterface: {
-            printerDiscoveryPollingInterval: parseInt(document.getElementById('polling-interval').value) * 1000
         },
         // Unbidden Ink configuration
         unbiddenInk: {
