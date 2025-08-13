@@ -20,6 +20,23 @@
  */
 
 #include "web_server.h"
+#include "web_handlers.h"
+#include "api_handlers.h"
+#include "../content/content_handlers.h"
+#include "../core/config.h"
+#include "../core/logging.h"
+#include "../core/network.h"
+#include <ESPAsyncWebServer.h>
+#include <LittleFS.h>
+#include <map>
+
+// Global variables
+extern AsyncWebServer server;
+
+// Global body storage for POST requests
+std::map<AsyncWebServerRequest *, String> requestBodies;
+
+#include "web_server.h"
 #include "validation.h"
 #include "web_handlers.h"
 #include "../content/content_handlers.h"
@@ -112,6 +129,24 @@ bool shouldRedirectToSettings(AsyncWebServerRequest *request)
              uri == "/favicon.ico");
 }
 
+// Helper functions for POST body handling
+void storeRequestBody(AsyncWebServerRequest *request, const String &body)
+{
+    requestBodies[request] = body;
+}
+
+String getRequestBody(AsyncWebServerRequest *request)
+{
+    auto it = requestBodies.find(request);
+    if (it != requestBodies.end())
+    {
+        String body = it->second;
+        requestBodies.erase(it); // Clean up after use
+        return body;
+    }
+    return "";
+}
+
 void setupWebServerRoutes(int maxChars)
 {
     // Store the maxChars value for validation
@@ -144,11 +179,11 @@ void setupWebServerRoutes(int maxChars)
         } });
 
     // CSS and JS files (always needed) - serve directly from LittleFS
-    server.serveStatic("/css/tailwind.css", LittleFS, "/css/tailwind.css").setCacheControl("max-age=86400");
-    server.serveStatic("/js/app.min.js", LittleFS, "/js/app.min.js").setCacheControl("max-age=86400");
-    server.serveStatic("/js/settings.js", LittleFS, "/js/settings.min.js").setCacheControl("max-age=86400");
-    server.serveStatic("/js/settings.min.js", LittleFS, "/js/settings.min.js").setCacheControl("max-age=86400");
-    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico").setCacheControl("max-age=86400");
+    server.serveStatic("/css/tailwind.css", LittleFS, "/css/tailwind.css", "text/css").setTryGzipFirst(false);
+    server.serveStatic("/js/app.min.js", LittleFS, "/js/app.min.js", "application/javascript").setTryGzipFirst(false);
+    server.serveStatic("/js/settings.js", LittleFS, "/js/settings.min.js", "application/javascript").setTryGzipFirst(false);
+    server.serveStatic("/js/settings.min.js", LittleFS, "/js/settings.min.js", "application/javascript").setTryGzipFirst(false);
+    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
 
     // In AP mode, set up captive portal for all other requests
     if (isAPMode())
@@ -169,34 +204,89 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up full routes for STA mode");
 
-        // Full functionality routes for STA mode - serve directly from LittleFS
-        server.serveStatic("/", LittleFS, "/html/index.html");
-        server.serveStatic("/diagnostics.html", LittleFS, "/html/diagnostics.html");
+        // HTML and JS
+        // Can't use serveStatic to serve index.html from root / without causing problems. Do it this way.
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+                  { request->send(LittleFS, "/html/index.html", "text/html"); });
+        server.serveStatic("/diagnostics.html", LittleFS, "/html/diagnostics.html", "text/html").setTryGzipFirst(false);
+        server.serveStatic("/js/index.min.js", LittleFS, "/js/index.min.js", "application/javascript").setTryGzipFirst(false);
+        server.serveStatic("/js/diagnostics.min.js", LittleFS, "/js/diagnostics.min.js", "application/javascript").setTryGzipFirst(false);
 
-        // Additional JS files for full functionality
-        server.serveStatic("/js/index.min.js", LittleFS, "/js/index.min.js").setCacheControl("max-age=86400");
-        server.serveStatic("/js/diagnostics.min.js", LittleFS, "/js/diagnostics.min.js").setCacheControl("max-age=86400");
-
-        // Form submission handlers
-        server.on("/api/print-local", HTTP_POST, handlePrintContent);
+        // Form submission handlers with body handling
+        server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handlePrintContent(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
         server.on("/api/print-local", HTTP_GET, handlePrintContent);
 
-        // Content generation endpoints (API)
-        server.on("/api/print-test", HTTP_POST, handlePrintTest);
-        server.on("/api/riddle", HTTP_POST, handleRiddle);
-        server.on("/api/joke", HTTP_POST, handleJoke);
-        server.on("/api/quote", HTTP_POST, handleQuote);
-        server.on("/api/quiz", HTTP_POST, handleQuiz);
-        server.on("/api/poke", HTTP_POST, handlePoke);
-        server.on("/api/unbidden-ink", HTTP_POST, handleUnbiddenInk);
-        server.on("/api/user-message", HTTP_POST, handleUserMessage);
+        // Content generation endpoints (API) with body handling
+        server.on("/api/print-test", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handlePrintTest(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
+        server.on("/api/riddle", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleRiddle(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
+        server.on("/api/joke", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleJoke(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
+        server.on("/api/quote", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleQuote(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
+        server.on("/api/quiz", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleQuiz(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
+        server.on("/api/poke", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handlePoke(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
+        server.on("/api/unbidden-ink", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleUnbiddenInk(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
+        server.on("/api/user-message", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleUserMessage(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
 
         // API endpoints
         server.on("/api/status", HTTP_GET, handleStatus);
         server.on("/api/buttons", HTTP_GET, handleButtons);
-        server.on("/api/mqtt-send", HTTP_POST, handleMQTTSend);
+        server.on("/api/mqtt-send", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleMQTTSend(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
         server.on("/api/config", HTTP_GET, handleConfigGet);
-        server.on("/api/config", HTTP_POST, handleConfigPost);
+        server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleConfigPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+                String body;
+                for (size_t i = 0; i < len; i++) body += (char)data[i];
+                storeRequestBody(request, body); });
         server.on("/api/discovered-printers", HTTP_GET, handleDiscoveredPrinters);
 
         // Smart polling endpoint for instant printer updates

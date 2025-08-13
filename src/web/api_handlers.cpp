@@ -255,11 +255,8 @@ void handleMQTTSend(AsyncWebServerRequest *request)
     }
 
     // Get and validate JSON body
-    String body = "";
-    if (request->hasParam("plain", true))
-    {
-        body = request->getParam("plain", true)->value();
-    }
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
     if (body.length() == 0)
     {
         sendValidationError(request, ValidationResult(false, "No JSON body provided"));
@@ -507,11 +504,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
     // Get and validate JSON body
-    String body = "";
-    if (request->hasParam("plain", true))
-    {
-        body = request->getParam("plain", true)->value();
-    }
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
     if (body.length() == 0)
     {
         sendValidationError(request, ValidationResult(false, "No JSON body provided"));

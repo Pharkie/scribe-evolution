@@ -47,7 +47,7 @@ enum ContentType
  * @brief Unified content generation handler
  * @param contentType The type of content to generate
  */
-void handleContentGeneration(AsyncWebServerRequest* request, ContentType contentType)
+void handleContentGeneration(AsyncWebServerRequest *request, ContentType contentType)
 {
     // Determine content type name for logging
     const char *typeName;
@@ -86,10 +86,10 @@ void handleContentGeneration(AsyncWebServerRequest* request, ContentType content
     // Rate limiting is applied to the actual delivery endpoints (/print-local, /mqtt-send)
 
     // Get target parameter to determine if sender info should be included
-    String body = "";
-    if (request->hasParam("plain", true)) {
-        body = request->getParam("plain", true)->value();
-    }
+    // Use external function to get the stored request body
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
+    LOG_VERBOSE("WEB", "handleContentGeneration: Received body with length %d", body.length());
     String target = "local-direct"; // Default
 
     if (body.length() > 0)
@@ -140,9 +140,11 @@ void handleContentGeneration(AsyncWebServerRequest* request, ContentType content
         break;
     case USER_MESSAGE:
     {
+        LOG_VERBOSE("WEB", "handleContentGeneration: Processing USER_MESSAGE, body length: %d", body.length());
         // Get and validate JSON body for user message input
         if (body.length() == 0)
         {
+            LOG_WARNING("WEB", "handleContentGeneration: No JSON body provided for USER_MESSAGE");
             sendValidationError(request, ValidationResult(false, "No JSON body provided"));
             return;
         }
@@ -209,23 +211,24 @@ void handleContentGeneration(AsyncWebServerRequest* request, ContentType content
 }
 
 // Individual handler functions (simple wrappers)
-void handleRiddle(AsyncWebServerRequest* request) { handleContentGeneration(request, RIDDLE); }
-void handleJoke(AsyncWebServerRequest* request) { handleContentGeneration(request, JOKE); }
-void handleQuote(AsyncWebServerRequest* request) { handleContentGeneration(request, QUOTE); }
-void handleQuiz(AsyncWebServerRequest* request) { handleContentGeneration(request, QUIZ); }
-void handlePrintTest(AsyncWebServerRequest* request) { handleContentGeneration(request, PRINT_TEST); }
-void handlePoke(AsyncWebServerRequest* request) { handleContentGeneration(request, POKE); }
-void handleUserMessage(AsyncWebServerRequest* request) { handleContentGeneration(request, USER_MESSAGE); }
+void handleRiddle(AsyncWebServerRequest *request) { handleContentGeneration(request, RIDDLE); }
+void handleJoke(AsyncWebServerRequest *request) { handleContentGeneration(request, JOKE); }
+void handleQuote(AsyncWebServerRequest *request) { handleContentGeneration(request, QUOTE); }
+void handleQuiz(AsyncWebServerRequest *request) { handleContentGeneration(request, QUIZ); }
+void handlePrintTest(AsyncWebServerRequest *request) { handleContentGeneration(request, PRINT_TEST); }
+void handlePoke(AsyncWebServerRequest *request) { handleContentGeneration(request, POKE); }
+void handleUserMessage(AsyncWebServerRequest *request) { handleContentGeneration(request, USER_MESSAGE); }
 
-void handleUnbiddenInk(AsyncWebServerRequest* request)
+void handleUnbiddenInk(AsyncWebServerRequest *request)
 {
     LOG_VERBOSE("WEB", "handleUnbiddenInk() called");
 
     // Check if there's a custom prompt in the request body
     String customPrompt = "";
-    if (request->hasParam("plain", true))
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
+    if (body.length() > 0)
     {
-        String body = request->getParam("plain", true)->value();
         DynamicJsonDocument doc(1024);
         DeserializationError error = deserializeJson(doc, body);
 
@@ -382,7 +385,7 @@ bool generateAndQueuePrintTest()
     return false;
 }
 
-void handlePrintContent(AsyncWebServerRequest* request)
+void handlePrintContent(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
@@ -391,10 +394,8 @@ void handlePrintContent(AsyncWebServerRequest* request)
     }
 
     // Get and validate JSON body
-    String body = "";
-    if (request->hasParam("plain", true)) {
-        body = request->getParam("plain", true)->value();
-    }
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
     if (body.length() == 0)
     {
         sendValidationError(request, ValidationResult(false, "No JSON body provided"));
