@@ -680,6 +680,19 @@ void handleConfigPost()
         String shortAction = button["shortAction"];
         String longAction = button["longAction"];
 
+        // MQTT topics are optional - if present, they should be strings
+        if (button.containsKey("shortMqttTopic") && !button["shortMqttTopic"].is<String>())
+        {
+            sendValidationError(ValidationResult(false, "shortMqttTopic must be a string for " + String(buttonKeys[i])));
+            return;
+        }
+
+        if (button.containsKey("longMqttTopic") && !button["longMqttTopic"].is<String>())
+        {
+            sendValidationError(ValidationResult(false, "longMqttTopic must be a string for " + String(buttonKeys[i])));
+            return;
+        }
+
         // Validate shortAction (can now be empty or valid action)
         bool validShortAction = false;
         for (int j = 0; j < 7; j++) // Include empty string for short actions
