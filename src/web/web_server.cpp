@@ -234,14 +234,6 @@ void setupWebServerRoutes(int maxChars)
         registerPOSTRoute("/api/mqtt-send", handleMQTTSend);
         server.on("/api/config", HTTP_GET, handleConfigGet);
         registerPOSTRoute("/api/config", handleConfigPost);
-        server.on("/api/discovered-printers", HTTP_GET, handleDiscoveredPrinters);
-
-        // Initial printer data endpoint for SSE setup
-        server.on("/api/printer-discovery", HTTP_GET, [](AsyncWebServerRequest *request)
-                  {
-            // Return current printer data for initial load - SSE will handle real-time updates
-            String response = getDiscoveredPrintersJson();
-            request->send(200, "application/json", response); });
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
         server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -300,7 +292,7 @@ void listDirectory(File dir, String &output, int level)
 // Simple, robust real-time updates via smart polling
 static String lastPrinterListHash = "";
 
-// Helper function to get printer JSON data
+// Helper function to get printer JSON data for SSE
 String getDiscoveredPrintersJson()
 {
     DynamicJsonDocument doc(2048);

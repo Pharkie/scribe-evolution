@@ -95,10 +95,6 @@ bool loadRuntimeConfig()
     JsonObject validation = doc["validation"];
     g_runtimeConfig.maxCharacters = validation["maxCharacters"] | maxCharacters;
 
-    // Load web interface configuration
-    JsonObject webInterface = doc["webInterface"];
-    g_runtimeConfig.printerDiscoveryPollingInterval = webInterface["printerDiscoveryPollingInterval"] | (defaultPrinterDiscoveryPollingInterval * 1000);
-
     // Load Unbidden Ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];
     g_runtimeConfig.unbiddenInkEnabled = unbiddenInk["enabled"] | enableUnbiddenInk;
@@ -165,8 +161,6 @@ void loadDefaultConfig()
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     g_runtimeConfig.maxCharacters = maxCharacters;
-
-    g_runtimeConfig.printerDiscoveryPollingInterval = defaultPrinterDiscoveryPollingInterval * 1000;
 
     g_runtimeConfig.unbiddenInkEnabled = enableUnbiddenInk;
     g_runtimeConfig.unbiddenInkStartHour = unbiddenInkStartHour;
@@ -262,10 +256,6 @@ bool createDefaultConfigFile()
     // Validation Configuration (only maxCharacters)
     JsonObject validation = doc.createNestedObject("validation");
     validation["maxCharacters"] = maxCharacters;
-
-    // Web Interface Configuration
-    JsonObject webInterface = doc.createNestedObject("webInterface");
-    webInterface["printerDiscoveryPollingInterval"] = defaultPrinterDiscoveryPollingInterval * 1000;
 
     // Unbidden Ink Configuration
     JsonObject unbiddenInk = doc.createNestedObject("unbiddenInk");

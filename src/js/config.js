@@ -32,7 +32,7 @@ async function loadConfig() {
     MAX_CHARS = config.validation?.maxCharacters || 1000;
     MAX_PROMPT_CHARS = 500; // Default from C++ config
     
-    // Initialize empty PRINTERS array (populated via discovery polling)
+    // Initialize empty PRINTERS array (populated via SSE discovery)
     PRINTERS = [];
     
     // Initialize printer selection UI (if function exists)
@@ -122,16 +122,27 @@ function initializePrinterDiscovery() {
     };
   }
 
-  // Load initial printer data
+  // Load initial printer data from config (local printer + existing remote printers if any)
   async function loadInitialPrinterData() {
     try {
-      console.log('📊 Loading initial printer data...');
-      const response = await fetch('/api/printer-discovery');
+      console.log('📊 Loading initial printer data from config...');
+      const response = await fetch('/api/config');
       if (response.ok) {
-        const data = await response.json();
-        updatePrintersFromData(data);
+        const configData = await response.json();
+        // Extract local printer info and add to PRINTERS array
+        if (configData.printer) {
+          const localPrinter = {
+            printer_id: 'local', // Use 'local' as identifier for local printer
+            name: configData.printer.name,
+            type: configData.printer.type,
+            topic: configData.printer.topic,
+            status: 'online' // Local printer is always online
+          };
+          PRINTERS.length = 0; // Clear existing
+          PRINTERS.push(localPrinter); // Add local printer first
+        }
         refreshPrinterUI();
-        console.log('✅ Initial printer data loaded');
+        console.log('✅ Initial printer data loaded from config');
       }
     } catch (error) {
       console.error('Error loading initial printer data:', error);
@@ -152,12 +163,13 @@ function initializePrinterDiscovery() {
 }
 
 /**
- * Update the global PRINTERS array from API data
+ * Update the global PRINTERS array from SSE printer update data
  */
 function updatePrintersFromData(printerData) {
   if (printerData && printerData.discovered_printers) {
+    // SSE sends all discovered printers (including local via MQTT discovery)
     PRINTERS.length = 0; // Clear existing
-    PRINTERS.push(...printerData.discovered_printers);
+    PRINTERS.push(...printerData.discovered_printers); // Add all discovered printers
   }
 }
 

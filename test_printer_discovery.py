@@ -62,7 +62,7 @@ Usage Examples:
 What to test after running:
 - Check your Scribe's index.html page - fake printers should appear in the remote printer choices
 - Visit /diagnostics.html to see discovery system status
-- Try /api/discovered-printers endpoint to see raw discovery data
+- Monitor /events (SSE) endpoint for real-time printer updates
 - Stop/start printers to see them disappear/appear in real-time
 
 Interactive Commands:
@@ -663,7 +663,7 @@ def main():
             )
             print("📱 Visit: http://scribe.local or your Scribe's IP address")
             print(
-                "🔍 Check: index.html (printer dropdown), diagnostics.html, /api/discovered-printers"
+                "🔍 Check: index.html (printer dropdown), diagnostics.html, /events (SSE)"
             )
             print()
 
