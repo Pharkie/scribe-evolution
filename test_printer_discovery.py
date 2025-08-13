@@ -13,6 +13,11 @@ Purpose:
 - Test MQTT Last Will & Testament (LWT) functionality
 
 Installation & Setup:
+
+Quick start:
+source .venv/bin/activate
+python3 test_printer_discovery.py --scenario home
+
 This project already includes a virtual environment (.venv/). To use it:
 
     source .venv/bin/activate  # On Windows: .venv\\Scripts\\activate
@@ -26,26 +31,26 @@ Or if you need to create a new virtual environment:
 Usage Examples:
 
 1. Quick office scenario (4 printers):
-   python test_printer_discovery.py --scenario office
+   python3 test_printer_discovery.py --scenario office
 
 2. Home scenario (2 printers):
-   python test_printer_discovery.py --scenario home
+   python3 test_printer_discovery.py --scenario home
 
 3. Interactive mode for manual testing:
-   python test_printer_discovery.py
+   python3 test_printer_discovery.py
    > start Alice 1.2.0
    > start Bob 1.0.0
    > stop Alice
    > quit
 
 4. Custom MQTT broker:
-   python test_printer_discovery.py --host mqtt.example.com --username user --password pass
+   python3 test_printer_discovery.py --host mqtt.example.com --username user --password pass
 
 5. Test chaos mode (rapid connect/disconnect):
-   python test_printer_discovery.py --scenario chaos
+   python3 test_printer_discovery.py --scenario chaos
 
 6. Test both shutdown types:
-   python test_printer_discovery.py --scenario home
+   python3 test_printer_discovery.py --scenario home
    # Then while running:
    # - Press 'x' + Enter = ABRUPT shutdown (triggers LWT)
    # - Press Ctrl+C = GRACEFUL shutdown (publishes offline status)
@@ -63,6 +68,7 @@ Interactive Commands:
 - status <name> <status>  - Update printer status (online/offline)
 - list                    - List active printers
 - scenario <name>         - Run predefined scenarios (office/home/mixed/chaos)
+- scenario list           - List available scenarios with descriptions
 - help                    - Show available scenarios
 - quit                    - Exit (graceful shutdown of all printers)
 
@@ -347,10 +353,11 @@ def run_interactive_mode(simulator):
     print(
         "  stop <name>            - Stop a printer (graceful: publishes offline status)"
     )
-    print("  stop <name> false      - Stop a printer (abrupt: triggers LWT)")
+    print("  stop <name> abrupt     - Stop a printer (abrupt: triggers LWT)")
     print("  status <name> <status> - Update printer status (online/offline)")
     print("  list                   - List active printers")
     print("  scenario <name>        - Run a test scenario")
+    print("  scenario list          - List available scenarios")
     print("  help                   - Show this help")
     print("  quit                   - Exit (graceful shutdown)")
     print("\nAvailable scenarios: office, home, mixed, chaos")
@@ -381,10 +388,15 @@ def run_interactive_mode(simulator):
             elif cmd[0] == "list":
                 simulator.list_active_printers()
             elif cmd[0] == "scenario" and len(cmd) >= 2:
-                run_scenario(simulator, cmd[1])
+                if cmd[1] == "list":
+                    list_scenarios()
+                else:
+                    run_scenario(simulator, cmd[1])
             elif cmd[0] == "help":
                 print("Available scenarios: office, home, mixed, chaos")
-                print("Example: 'scenario office' or 'start TestPrinter 1.1.0'")
+                print(
+                    "Example: 'scenario office' or 'scenario list' or 'start TestPrinter 1.1.0'"
+                )
             else:
                 print("Unknown command. Type 'help' for available commands.")
 
@@ -394,6 +406,22 @@ def run_interactive_mode(simulator):
             print(f"Error: {e}")
 
     simulator.stop_all()
+
+
+def list_scenarios():
+    """List all available scenarios with descriptions"""
+    scenarios = {
+        "office": "Multiple printers with different firmware versions (Reception, Alice, Bob, DevTeam)",
+        "home": "Small home setup with 2 printers (Kitchen, Study)",
+        "mixed": "Simulates network issues and reconnections (some stable, some unstable)",
+        "chaos": "Rapid connect/disconnect to test system resilience (5 printers cycling)",
+    }
+
+    print("\n📋 Available scenarios:")
+    for name, description in scenarios.items():
+        print(f"  {name:8} - {description}")
+    print("\nUsage: scenario <name>")
+    print("Example: scenario office\n")
 
 
 def run_scenario(simulator, scenario_name):
@@ -431,7 +459,7 @@ def run_scenario(simulator, scenario_name):
         print("💥 Simulating network issue...")
         simulator.stop_printer("Unstable")
         time.sleep(1)
-        simulator.start_printer("NewPrinter", 103, "1.2.0")
+        simulator.start_printer("AnotherStable", 103, "1.2.0")
 
     elif scenario_name == "chaos":
         # Chaos scenario - rapid connect/disconnect

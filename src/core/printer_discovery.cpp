@@ -4,6 +4,7 @@
 #include "logging.h"
 #include "config.h"
 #include "../utils/time_utils.h"
+#include "../web/web_server.h"
 #include <WiFi.h>
 #include <esp_chip_info.h>
 
@@ -116,6 +117,9 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
             {
                 printer.status = "offline";
                 LOG_NOTICE("DISCOVERY", "Printer %s went offline (payload: %s)", printer.name.c_str(), payload.c_str());
+
+                // Notify web clients via SSE
+                sendPrinterUpdate();
             }
             else
             {
@@ -129,6 +133,9 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
                 printer.lastSeen = currentTime;
 
                 LOG_NOTICE("DISCOVERY", "Updated printer %s (%s)", printer.name.c_str(), printer.ipAddress.c_str());
+
+                // Notify web clients via SSE
+                sendPrinterUpdate();
             }
             found = true;
             break;
@@ -151,6 +158,9 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
 
         discoveredPrinters.push_back(newPrinter);
         LOG_NOTICE("DISCOVERY", "Discovered new printer %s (%s)", newPrinter.name.c_str(), newPrinter.ipAddress.c_str());
+
+        // Notify web clients via SSE
+        sendPrinterUpdate();
     }
 }
 
