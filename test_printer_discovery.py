@@ -239,6 +239,7 @@ class ScribePrinterSimulator:
 
         if self.use_tls:
             import ssl
+
             try:
                 # Try multiple SSL configuration approaches
                 context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
@@ -248,9 +249,14 @@ class ScribePrinterSimulator:
             except (AttributeError, TypeError, OSError):
                 # Fallback for older paho-mqtt versions or SSL issues
                 try:
-                    client.tls_set(ca_certs=None, certfile=None, keyfile=None, 
-                                  cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS,
-                                  ciphers=None)
+                    client.tls_set(
+                        ca_certs=None,
+                        certfile=None,
+                        keyfile=None,
+                        cert_reqs=ssl.CERT_NONE,
+                        tls_version=ssl.PROTOCOL_TLS,
+                        ciphers=None,
+                    )
                 except (AttributeError, TypeError, OSError):
                     # Last resort - basic TLS
                     client.tls_set()
@@ -284,7 +290,9 @@ class ScribePrinterSimulator:
         client = self.setup_client(name, ip_suffix, firmware)
 
         try:
-            print(f"🔗 {name}: Attempting connection to {self.broker_host}:{self.broker_port}")
+            print(
+                f"🔗 {name}: Attempting connection to {self.broker_host}:{self.broker_port}"
+            )
             client.connect(self.broker_host, self.broker_port, 60)
             client.loop_start()
 
@@ -308,8 +316,10 @@ class ScribePrinterSimulator:
         except (OSError, ValueError, ConnectionRefusedError) as e:
             error_msg = str(e)
             print(f"❌ {name}: Connection failed - {e}")
-            
-            if ("SSL" in error_msg or "TLS" in error_msg or "EOF occurred" in error_msg) and self.use_tls:
+
+            if (
+                "SSL" in error_msg or "TLS" in error_msg or "EOF occurred" in error_msg
+            ) and self.use_tls:
                 print("💡 SSL/TLS connection issue detected")
                 print("💡 Try: --tls false for non-SSL connection")
                 print("💡 Or check if broker requires different SSL settings")
@@ -325,27 +335,27 @@ class ScribePrinterSimulator:
     def _try_fallback_connection(self, name, ip_suffix, firmware="1.0.0"):
         """Try connecting without TLS as fallback"""
         print(f"🔄 {name}: Trying fallback connection without TLS...")
-        
+
         # Create a new client without TLS
         fallback_sim = ScribePrinterSimulator(
-            self.broker_host, 
+            self.broker_host,
             1883,  # Standard MQTT port without TLS
-            self.username, 
-            self.password, 
-            False  # Disable TLS
+            self.username,
+            self.password,
+            False,  # Disable TLS
         )
-        
+
         try:
             client = fallback_sim.setup_client(name, ip_suffix, firmware)
             client.connect(fallback_sim.broker_host, fallback_sim.broker_port, 60)
             client.loop_start()
-            
+
             time.sleep(1)
-            
+
             # Publish initial status
             topic = f"scribe/printer-status/{name.lower()}"
             payload = self.create_printer_payload(name, ip_suffix, firmware, "online")
-            
+
             result = client.publish(topic, json.dumps(payload), qos=1, retain=True)
             if result.rc == 0:
                 print(f"✅ {name}: Fallback connection successful (non-TLS)")
@@ -356,7 +366,7 @@ class ScribePrinterSimulator:
             else:
                 print(f"❌ {name}: Fallback connection failed to publish")
                 return False
-                
+
         except (OSError, ValueError, ConnectionRefusedError) as fallback_error:
             print(f"❌ {name}: Fallback connection also failed - {fallback_error}")
             return False
@@ -603,24 +613,20 @@ def main():
     )
     parser.add_argument("--username", default=default_username, help="MQTT username")
     parser.add_argument("--password", default=default_password, help="MQTT password")
-    
+
     # TLS arguments - allow both enabling and disabling
     tls_group = parser.add_mutually_exclusive_group()
+    tls_group.add_argument("--tls", action="store_true", help="Enable TLS/SSL")
     tls_group.add_argument(
-        "--tls", action="store_true", 
-        help="Enable TLS/SSL"
+        "--no-tls", action="store_true", help="Disable TLS/SSL (use plain MQTT)"
     )
-    tls_group.add_argument(
-        "--no-tls", action="store_true",
-        help="Disable TLS/SSL (use plain MQTT)"
-    )
-    
+
     parser.add_argument(
         "--scenario", help="Run a specific scenario (office, home, mixed, chaos)"
     )
 
     args = parser.parse_args()
-    
+
     # Determine TLS setting with priority: command line > environment > default
     if args.no_tls:
         use_tls = False
