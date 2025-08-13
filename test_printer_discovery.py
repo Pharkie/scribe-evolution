@@ -7,7 +7,12 @@ when you only have one physical device. It creates fake MQTT printer status mess
 that your real Scribe will receive and display in its web interface.
 
 Purpose:
-- Test the printer discovery feature without needing multiple physical Scribe printers
+- Te                try:
+                    # Force socket closure to trigger LWT
+                    if hasattr(self.simulator.clients[name], '_sock'):
+                        self.simulator.clients[name]._sock.close()  # pylint: disable=protected-access
+                except (AttributeError, OSError):
+                    passhe printer discovery feature without needing multiple physical Scribe printers
 - Simulate various network scenarios (printers going online/offline)
 - Validate that the web interface correctly displays discovered printers
 - Test MQTT Last Will & Testament (LWT) functionality
@@ -27,6 +32,11 @@ Or if you need to create a new virtual environment:
     python3 -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
+
+Configuration:
+Copy .env.example to .env and edit with your MQTT broker credentials:
+    cp .env.example .env
+    # Edit .env with your actual MQTT settings
 
 Usage Examples:
 
@@ -86,9 +96,10 @@ import argparse
 import threading
 import sys
 import select
+import os
 from datetime import datetime, timezone
 
-# Try to import paho.mqtt.client with helpful error message
+# Try to import required libraries with helpful error messages
 try:
     import paho.mqtt.client as mqtt
 except ImportError as e:
@@ -102,7 +113,27 @@ except ImportError as e:
         "   python3 -m venv venv && source venv/bin/activate && pip install paho-mqtt"
     )
     print(f"\nOriginal error: {e}")
-    exit(1)
+    sys.exit(1)
+
+try:
+    from dotenv import load_dotenv  # type: ignore
+
+    load_dotenv()  # Load .env file if present
+except ImportError:
+    print(
+        "⚠️  Warning: python-dotenv not found. Install with: pip install python-dotenv"
+    )
+    print("   Using command line arguments only.")
+except (OSError, ValueError) as env_error:
+    print(f"⚠️  Warning: Could not load .env file: {env_error}")
+
+
+def get_env_value(key: str, default: str = None) -> str:
+    """Get environment variable with fallback to default"""
+    value = os.getenv(key, default)
+    if value is None:
+        raise ValueError(f"Environment variable {key} not set and no default provided")
+    return value
 
 
 class KeyboardListener:
@@ -142,7 +173,7 @@ class KeyboardListener:
                         print(
                             "   Ctrl+C = GRACEFUL shutdown (publishes offline status)"
                         )
-            except:
+            except (OSError, IOError, KeyboardInterrupt):
                 # Handle any errors silently (like Windows compatibility issues)
                 time.sleep(0.1)
 
@@ -152,8 +183,12 @@ class KeyboardListener:
         for name in list(self.simulator.clients.keys()):
             print(f"⚡ {name}: Triggering LWT via socket closure")
             try:
-                self.simulator.clients[name]._sock.close()
-            except:
+                # Force socket closure to trigger LWT
+                if hasattr(self.simulator.clients[name], "_sock"):
+                    self.simulator.clients[
+                        name
+                    ]._sock.close()  # pylint: disable=protected-access
+            except (AttributeError, OSError):
                 pass
             self.simulator.clients[name].loop_stop()
             del self.simulator.clients[name]
@@ -162,9 +197,7 @@ class KeyboardListener:
             "💀 All printers abruptly disconnected - LWT messages should be triggered"
         )
         print("🛑 Exiting script...")
-        import os
-
-        os._exit(0)
+        os._exit(0)  # pylint: disable=protected-access
 
 
 class ScribePrinterSimulator:
@@ -199,12 +232,12 @@ class ScribePrinterSimulator:
         """Create a simple offline payload (just name and status)"""
         return {"name": name, "status": "offline"}
 
-    def setup_client(self, printer_name, ip_suffix, firmware="1.0.0"):
+    def setup_client(self, printer_name, _ip_suffix, _firmware="1.0.0"):
         """Setup MQTT client for a simulated printer"""
         client_id = f"ScribePrinter-{random.randint(1000, 9999)}"
-        # Use the new paho-mqtt 2.x API
+        # Use the new paho-mqtt 2.x API with VERSION2 (modern approach)
         client = mqtt.Client(
-            callback_api_version=mqtt.CallbackAPIVersion.VERSION1, client_id=client_id
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=client_id
         )
 
         if self.username:
@@ -218,14 +251,14 @@ class ScribePrinterSimulator:
         lwt_payload = self.create_offline_payload(printer_name)
         client.will_set(topic, json.dumps(lwt_payload), qos=1, retain=True)
 
-        def on_connect(client, userdata, flags, rc):
-            if rc == 0:
+        def on_connect(_client, _userdata, _flags, reason_code, _properties):
+            if reason_code == 0:
                 print(f"✅ {printer_name}: Connected to MQTT broker")
             else:
-                print(f"❌ {printer_name}: Failed to connect (code {rc})")
+                print(f"❌ {printer_name}: Failed to connect (code {reason_code})")
 
-        def on_disconnect(client, userdata, rc):
-            if rc != 0:
+        def on_disconnect(_client, _userdata, _flags, reason_code, _properties):
+            if reason_code != 0:
                 print(f"🔌 {printer_name}: Unexpectedly disconnected (LWT triggered)")
             else:
                 print(f"🔌 {printer_name}: Clean disconnect")
@@ -262,7 +295,7 @@ class ScribePrinterSimulator:
             self.clients[name] = client
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, ConnectionRefusedError) as e:
             print(f"❌ {name}: Error starting printer - {e}")
             return False
 
@@ -299,8 +332,12 @@ class ScribePrinterSimulator:
                 # Abrupt disconnection to trigger LWT
                 print(f"💀 {name}: Forcing abrupt disconnection to trigger LWT")
                 try:
-                    self.clients[name]._sock.close()
-                except:
+                    # Force socket closure to trigger LWT
+                    if hasattr(self.clients[name], "_sock"):
+                        self.clients[
+                            name
+                        ]._sock.close()  # pylint: disable=protected-access
+                except (AttributeError, OSError):
                     pass
                 self.clients[name].loop_stop()
                 print(f"⚡ {name}: LWT should be triggered")
@@ -402,7 +439,7 @@ def run_interactive_mode(simulator):
 
         except KeyboardInterrupt:
             break
-        except Exception as e:
+        except (ValueError, OSError) as e:
             print(f"Error: {e}")
 
     simulator.stop_all()
@@ -483,23 +520,32 @@ def run_scenario(simulator, scenario_name):
 
 def main():
     parser = argparse.ArgumentParser(description="Scribe Printer Discovery Test Script")
+
+    # Get defaults from environment variables
+    default_host = get_env_value("MQTT_HOST", "localhost")
+    default_port = int(get_env_value("MQTT_PORT", "1883"))
+    default_username = get_env_value("MQTT_USERNAME", "")
+    default_password = get_env_value("MQTT_PASSWORD", "")
+    default_tls = get_env_value("MQTT_USE_TLS", "false").lower() == "true"
+
     parser.add_argument(
         "--host",
-        default="a0829e28cf7842e9ba6f1e9830cdab3c.s1.eu.hivemq.cloud",
-        help="MQTT broker host (default: HiveMQ Cloud)",
+        default=default_host,
+        help=f"MQTT broker host (default: {default_host})",
     )
     parser.add_argument(
         "--port",
         type=int,
-        default=8883,
-        help="MQTT broker port (default: 8883 for TLS)",
+        default=default_port,
+        help=f"MQTT broker port (default: {default_port})",
     )
-    parser.add_argument("--username", default="REDACTED_USERNAME", help="MQTT username")
+    parser.add_argument("--username", default=default_username, help="MQTT username")
+    parser.add_argument("--password", default=default_password, help="MQTT password")
     parser.add_argument(
-        "--password", default="REDACTED_PASSWORD", help="MQTT password"
-    )
-    parser.add_argument(
-        "--tls", action="store_true", default=True, help="Use TLS/SSL (default: True)"
+        "--tls",
+        action="store_true",
+        default=default_tls,
+        help=f"Use TLS/SSL (default: {default_tls})",
     )
     parser.add_argument(
         "--scenario", help="Run a specific scenario (office, home, mixed, chaos)"
@@ -547,7 +593,7 @@ def main():
         print("📡 Publishing offline status for all printers before disconnecting...")
         simulator.stop_all()
         print("👋 All simulated printers gracefully stopped. Goodbye!")
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         print(f"💥 Error: {e}")
         simulator.stop_all()
 

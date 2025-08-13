@@ -4,3 +4,4 @@
 pyserial==3.5
 esptool>=5.0.0
 paho-mqtt>=2.1.0
+python-dotenv>=1.0.0
