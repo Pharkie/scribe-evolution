@@ -12,7 +12,6 @@
 #include "../core/logging.h"
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-#include <WebServer.h>
 
 // Static variables for rate limiting
 static unsigned long lastRequestTime = 0;
@@ -213,7 +212,7 @@ ValidationResult validateParameter(const String &param, const String &paramName,
     return ValidationResult(true);
 }
 
-ValidationResult validateRemoteParameter(AsyncWebServerRequest* request)
+ValidationResult validateRemoteParameter(AsyncWebServerRequest *request)
 {
     if (request->hasParam("remote"))
     {
@@ -263,7 +262,7 @@ String urlDecode(String str)
     return decoded;
 }
 
-void sendValidationError(AsyncWebServerRequest* request, const ValidationResult &result, int statusCode)
+void sendValidationError(AsyncWebServerRequest *request, const ValidationResult &result, int statusCode)
 {
     LOG_WARNING("WEB", "Validation error: %s", result.errorMessage.c_str());
 

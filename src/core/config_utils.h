@@ -87,7 +87,7 @@ inline const char *getDeviceOwnerKey()
     // Use runtime config if available, otherwise fallback to default
     // This is safe because getRuntimeConfig() will load defaults if needed
     const RuntimeConfig &config = getRuntimeConfig();
-    return config.deviceOwner.isEmpty() ? deviceOwner : config.deviceOwner.c_str();
+    return config.deviceOwner.isEmpty() ? defaultDeviceOwner : config.deviceOwner.c_str();
 }
 
 // ========================================
@@ -119,12 +119,12 @@ inline ValidationResult validateDeviceConfig()
 
 inline const char *getWifiSSID()
 {
-    return wifiSSID;
+    return defaultWifiSSID;
 }
 
 inline const char *getWifiPassword()
 {
-    return wifiPassword;
+    return defaultWifiPassword;
 }
 
 inline const char *getLocalPrinterName()
@@ -153,7 +153,7 @@ inline const char *getMdnsHostname()
 
 inline const char *getTimezone()
 {
-    return timezone;
+    return defaultTimezone;
 }
 
 // Simple initialization function

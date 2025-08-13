@@ -35,7 +35,7 @@ extern PubSubClient mqttClient;
 // API ENDPOINT HANDLERS
 // ========================================
 
-void handleStatus(AsyncWebServerRequest* request)
+void handleStatus(AsyncWebServerRequest *request)
 {
     // Get flash storage information
     size_t totalBytes = 0;
@@ -227,7 +227,7 @@ void handleStatus(AsyncWebServerRequest* request)
     request->send(200, "application/json", response);
 }
 
-void handleButtons(AsyncWebServerRequest* request)
+void handleButtons(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
@@ -240,7 +240,7 @@ void handleButtons(AsyncWebServerRequest* request)
     request->send(200, "application/json", buttonConfig);
 }
 
-void handleMQTTSend(AsyncWebServerRequest* request)
+void handleMQTTSend(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
@@ -256,7 +256,8 @@ void handleMQTTSend(AsyncWebServerRequest* request)
 
     // Get and validate JSON body
     String body = "";
-    if (request->hasParam("plain", true)) {
+    if (request->hasParam("plain", true))
+    {
         body = request->getParam("plain", true)->value();
     }
     if (body.length() == 0)
@@ -317,7 +318,7 @@ void handleMQTTSend(AsyncWebServerRequest* request)
     }
 }
 
-void handleConfigGet(AsyncWebServerRequest* request)
+void handleConfigGet(AsyncWebServerRequest *request)
 {
     if (isAPMode())
     {
@@ -497,7 +498,7 @@ void handleConfigGet(AsyncWebServerRequest* request)
     request->send(200, "application/json", configString);
 }
 
-void handleConfigPost(AsyncWebServerRequest* request)
+void handleConfigPost(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
@@ -507,7 +508,8 @@ void handleConfigPost(AsyncWebServerRequest* request)
 
     // Get and validate JSON body
     String body = "";
-    if (request->hasParam("plain", true)) {
+    if (request->hasParam("plain", true))
+    {
         body = request->getParam("plain", true)->value();
     }
     if (body.length() == 0)
@@ -689,13 +691,13 @@ void handleConfigPost(AsyncWebServerRequest* request)
         // MQTT topics are optional - if present, they should be strings
         if (button.containsKey("shortMqttTopic") && !button["shortMqttTopic"].is<String>())
         {
-            sendValidationError(ValidationResult(false, "shortMqttTopic must be a string for " + String(buttonKeys[i])));
+            sendValidationError(request, ValidationResult(false, "shortMqttTopic must be a string for " + String(buttonKeys[i])));
             return;
         }
 
         if (button.containsKey("longMqttTopic") && !button["longMqttTopic"].is<String>())
         {
-            sendValidationError(ValidationResult(false, "longMqttTopic must be a string for " + String(buttonKeys[i])));
+            sendValidationError(request, ValidationResult(false, "longMqttTopic must be a string for " + String(buttonKeys[i])));
             return;
         }
 
@@ -768,7 +770,7 @@ void handleConfigPost(AsyncWebServerRequest* request)
     }
 }
 
-void handleDiscoveredPrinters(AsyncWebServerRequest* request)
+void handleDiscoveredPrinters(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
