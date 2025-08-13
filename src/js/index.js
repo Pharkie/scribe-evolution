@@ -52,8 +52,8 @@ function initializePrinterSelection() {
   // Get local printer name from config
   const localPrinterName = window.GLOBAL_CONFIG?.printer?.name || 'Unknown';
   
-  // Add local-direct printer option with dynamic name
-  const localDirectOption = createPrinterOption('local-direct', '🏠', `Local direct (${localPrinterName})`, true, null);
+  // Add local-direct printer option with simple name
+  const localDirectOption = createPrinterOption('local-direct', '🏠', 'Local direct', true, null);
   container.appendChild(localDirectOption);
   
   // Add remote printers from PRINTERS config (this will now include discovered printers)
@@ -61,7 +61,7 @@ function initializePrinterSelection() {
     PRINTERS.forEach(printer => {
       // Construct the MQTT topic from printer name
       const topic = `scribe/${printer.name}/print`;
-      const option = createPrinterOption(topic, '📡', `${printer.name} via MQTT`, false, printer);
+      const option = createPrinterOption(topic, '📡', printer.name, false, printer);
       container.appendChild(option);
     });
   }
@@ -72,7 +72,7 @@ function initializePrinterSelection() {
  */
 function createPrinterOption(value, icon, name, isSelected = false, printerData = null) {
   const option = document.createElement('div');
-  option.className = `printer-option cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 hover:shadow-md ${
+  option.className = `printer-option cursor-pointer p-5 rounded-xl border-2 transition-all duration-200 hover:scale-105 hover:shadow-md ${
     isSelected ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 dark:border-orange-600' : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
   }`;
   option.setAttribute('data-value', value);
@@ -95,46 +95,62 @@ function createPrinterOption(value, icon, name, isSelected = false, printerData 
   
   // Create left side with icon and name
   const leftSide = document.createElement('div');
-  leftSide.className = 'flex items-center space-x-3 flex-1 min-w-0';
+  leftSide.className = 'flex items-center space-x-4 flex-1 min-w-0';
   
   leftSide.innerHTML = `
-    <span class="text-2xl">${icon}</span>
+    <span class="text-3xl">${icon}</span>
     <div class="flex-1 min-w-0 flex items-center">
-      <div class="font-medium text-sm truncate">${name}</div>
+      <div class="font-medium text-base truncate">${name}</div>
     </div>
   `;
   
   mainContent.appendChild(leftSide);
   
-  // Add info icon for MQTT printers (remote printers)
-  if (showInfoIcon && printerData) {
-    const infoIcon = document.createElement('div');
-    infoIcon.className = 'info-icon ml-3 flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full transition-colors duration-200 cursor-pointer';
-    infoIcon.innerHTML = '<span class="text-2xl text-gray-600 dark:text-gray-300">ⓘ</span>';
-    infoIcon.title = 'View printer details';
+  // Add info icon for all printers (both local and MQTT)
+  const infoIcon = document.createElement('div');
+  infoIcon.className = 'info-icon ml-3 flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full transition-colors duration-200 cursor-pointer';
+  infoIcon.innerHTML = '<span class="text-2xl text-gray-600 dark:text-gray-300">ⓘ</span>';
+  infoIcon.title = 'View printer details';
+  
+  // Add touch-friendly styling for mobile
+  infoIcon.style.minWidth = '56px';
+  infoIcon.style.minHeight = '56px';
+  
+  if (value === 'local-direct') {
+    // For local printer, we'll need to get local printer info
+    // Store a flag to indicate this is local
+    infoIcon.setAttribute('data-is-local', 'true');
+    infoIcon.setAttribute('data-printer-name', name.replace('Local direct (', '').replace(')', ''));
     
-    // Add touch-friendly styling for mobile
-    infoIcon.style.minWidth = '56px';
-    infoIcon.style.minHeight = '56px';
-    
-    // Store printer data for the overlay
+    // Add click handler for local printer info
+    infoIcon.addEventListener('click', (event) => {
+      event.stopPropagation(); // Prevent printer selection
+      showLocalPrinterInfo();
+    });
+  } else if (printerData) {
+    // For MQTT printers
     infoIcon.setAttribute('data-printer-info', JSON.stringify(printerData));
     infoIcon.setAttribute('data-printer-name', printerData.name || 'Unknown');
     infoIcon.setAttribute('data-printer-topic', `scribe/${printerData.name}/print`);
     
-    // Add click handler for info icon
+    // Add click handler for MQTT printer info
     infoIcon.addEventListener('click', (event) => {
       event.stopPropagation(); // Prevent printer selection
       showPrinterInfoOverlay(printerData, printerData.name || 'Unknown');
     });
-    
-    mainContent.appendChild(infoIcon);
   }
+  
+  mainContent.appendChild(infoIcon);
   
   option.appendChild(mainContent);
   
-  // Add click handler for printer selection (only on main area, not info icon)
-  leftSide.addEventListener('click', () => selectPrinter(value, option));
+  // Add click handler for printer selection to the entire option
+  option.addEventListener('click', (event) => {
+    // Don't trigger selection if clicking on the info icon
+    if (!event.target.closest('.info-icon')) {
+      selectPrinter(value, option);
+    }
+  });
   
   return option;
 }
@@ -288,9 +304,28 @@ function showCopyFeedback(buttonElement) {
 }
 
 /**
+ * Show local printer information overlay
+ */
+function showLocalPrinterInfo() {
+  // Create local printer data object with current information from loaded config
+  const deviceConfig = window.GLOBAL_CONFIG?.device || {};
+  const localPrinterData = {
+    name: deviceConfig.printer_name || deviceConfig.owner || 'Local Printer',
+    ip_address: deviceConfig.ip_address || window.location.hostname,
+    mdns: deviceConfig.mdns || window.location.hostname,
+    status: 'online',
+    firmware_version: deviceConfig.firmware_version || 'Unknown',
+    timezone: deviceConfig.timezone || 'Unknown',
+    last_power_on: deviceConfig.boot_time || 'Unknown'
+  };
+  
+  showPrinterInfoOverlay(localPrinterData, localPrinterData.name, 'local');
+}
+
+/**
  * Show printer information overlay with mobile-responsive design
  */
-function showPrinterInfoOverlay(printerData, printerName) {
+function showPrinterInfoOverlay(printerData, printerName, printerType = 'mqtt') {
   // Remove any existing overlay
   const existingOverlay = document.getElementById('printer-info-overlay');
   if (existingOverlay) {
@@ -312,10 +347,14 @@ function showPrinterInfoOverlay(printerData, printerName) {
   modal.className = 'relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl transform transition-all duration-300 ease-out';
   
   // Format the data for display
-  const topic = `scribe/${printerName}/print`;
+  const topic = printerType === 'mqtt' ? `scribe/${printerName}/print` : null;
   const ipAddress = printerData.ip_address || 'Not available';
   const mdns = printerData.mdns || `${printerName.toLowerCase()}.local`;
   const firmwareVersion = printerData.firmware_version || 'Not available';
+  
+  // Choose appropriate icon and title based on printer type
+  const printerIcon = printerType === 'local' ? '🏠' : '📡';
+  const printerTypeText = printerType === 'local' ? 'Local Printer' : 'Remote Printer';
   
   // Format last power on time with both relative and absolute
   let lastPowerOnRelative = 'Not available';
@@ -359,7 +398,7 @@ function showPrinterInfoOverlay(printerData, printerName) {
       <!-- Header with close button -->
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-          <span class="text-2xl mr-2">📡</span>
+          <span class="text-2xl mr-2">${printerIcon}</span>
           ${printerName} Details
         </h3>
         <button onclick="closePrinterInfoOverlay()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
@@ -369,6 +408,7 @@ function showPrinterInfoOverlay(printerData, printerName) {
       
       <!-- Information sections -->
       <div class="space-y-4">
+        ${topic ? `
         <div>
           <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
             <span>MQTT Topic</span>
@@ -382,6 +422,7 @@ function showPrinterInfoOverlay(printerData, printerName) {
             ${topic}
           </div>
         </div>
+        ` : ''}
         
         <div>
           <div class="text-sm text-gray-800 dark:text-gray-200">
