@@ -3,21 +3,7 @@
  * @brief Core web server setup and routing for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
- * @copyr    // Configuration endpoints (needed for settings page)
-    server.on("/config", HTTP_GET, []()
-              {
-        if (isAPMode())
-        {
-            // DEBUG: /config GET requested - AP mode only
-        }
-        handleConfigGet(); });
-    server.on("/config", HTTP_POST, []()
-              {
-        if (isAPMode())
-        {
-            // DEBUG: /config POST requested - AP mode only
-        }
-        handleConfigPost(); });right (c) 2025 Adam Knowles. All rights reserved.
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
  * This file is part of the Scribe ESP32-C3 Thermal Printer project.

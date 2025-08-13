@@ -13,9 +13,6 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 
-// Forward declaration
-extern AsyncWebServer server;
-
 /**
  * @brief Result structure for validation operations
  */
@@ -83,9 +80,9 @@ ValidationResult validateParameter(const String &param, const String &paramName,
 
 /**
  * @brief Validate optional remote parameter (for MQTT sending)
+ * @param request The async web server request
  * @return ValidationResult with validation status and error message
  */
-ValidationResult validateRemoteParameter();
 ValidationResult validateRemoteParameter(AsyncWebServerRequest* request);
 
 // ========================================
@@ -98,13 +95,6 @@ ValidationResult validateRemoteParameter(AsyncWebServerRequest* request);
  * @return Decoded string
  */
 String urlDecode(String str);
-
-/**
- * @brief Send validation error response
- * @param result The validation result containing the error
- * @param statusCode HTTP status code to send (default 400)
- */
-void sendValidationError(const ValidationResult &result, int statusCode = 400);
 
 /**
  * @brief Send validation error response for async requests

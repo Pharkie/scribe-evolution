@@ -3,11 +3,7 @@
  * @brief Main application entry point for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
- * @cop  // Setup web server routes
-  setupWebServerRoutes(maxCharacters);
-
-  // Start the async web server
-  server.begin();ht Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
  * This file is part of the Scribe ESP32-C3 Thermal Printer project.

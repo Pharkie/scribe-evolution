@@ -10,6 +10,7 @@
 #include "validation.h"
 #include "../core/config.h"
 #include "../core/logging.h"
+#include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 
 // Static variables for rate limiting
@@ -211,20 +212,6 @@ ValidationResult validateParameter(const String &param, const String &paramName,
     return ValidationResult(true);
 }
 
-ValidationResult validateRemoteParameter()
-{
-    if (server.hasArg("remote"))
-    {
-        String remote = server.arg("remote");
-        ValidationResult paramValidation = validateParameter(remote, "remote", maxRemoteParameterLength, false);
-        if (!paramValidation.isValid)
-        {
-            return paramValidation;
-        }
-    }
-    return ValidationResult(true);
-}
-
 ValidationResult validateRemoteParameter(AsyncWebServerRequest* request)
 {
     if (request->hasParam("remote"))
@@ -273,20 +260,6 @@ String urlDecode(String str)
         }
     }
     return decoded;
-}
-
-void sendValidationError(const ValidationResult &result, int statusCode)
-{
-    LOG_WARNING("WEB", "Validation error: %s", result.errorMessage.c_str());
-
-    // Return JSON error response
-    DynamicJsonDocument errorResponse(512);
-    errorResponse["success"] = false;
-    errorResponse["error"] = result.errorMessage;
-
-    String errorString;
-    serializeJson(errorResponse, errorString);
-    server.send(statusCode, "application/json", errorString);
 }
 
 void sendValidationError(AsyncWebServerRequest* request, const ValidationResult &result, int statusCode)
