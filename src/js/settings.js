@@ -745,7 +745,7 @@ async function testUnbiddenInk() {
         if (data.success && data.content) {
             // Successfully generated content, now print it locally
             try {
-                const printResponse = await fetch('/print-local', {
+                const printResponse = await fetch('/api/print-local', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

@@ -19,6 +19,7 @@
 #include "../core/printer_discovery.h"
 #include "../hardware/hardware_buttons.h"
 #include "../content/unbidden_ink.h"
+#include "../utils/time_utils.h"
 #include <vector>
 #include "../utils/json_helpers.h"
 #include <ESPAsyncWebServer.h>
@@ -396,6 +397,15 @@ void handleConfigGet(AsyncWebServerRequest *request)
         device["timezone"] = defaultTimezone;
     }
 
+    // Add runtime device information
+    device["firmware_version"] = getFirmwareVersion();
+    device["boot_time"] = getDeviceBootTime();
+    device["mdns"] = String(getMdnsHostname()) + ".local";
+    device["ip_address"] = WiFi.localIP().toString();
+    device["printer_name"] = getLocalPrinterName();
+    device["mqtt_topic"] = getLocalPrinterTopic();
+    device["type"] = "local";
+
     // WiFi configuration (empty if not configured in config.json)
     JsonObject wifi = configDoc.createNestedObject("wifi");
     if (userConfig.containsKey("wifi"))
@@ -445,12 +455,6 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         configDoc["buttons"] = userConfig["buttons"];
     }
-
-    // Add local printer configuration
-    JsonObject printer = configDoc.createNestedObject("printer");
-    printer["name"] = getLocalPrinterName();
-    printer["topic"] = getLocalPrinterTopic();
-    printer["type"] = "local";
 
     // Note: Remote printers are now served via /api/printer-discovery endpoint
 
