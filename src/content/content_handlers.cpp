@@ -143,7 +143,7 @@ void handleContentGeneration(AsyncWebServerRequest* request, ContentType content
         // Get and validate JSON body for user message input
         if (body.length() == 0)
         {
-            sendValidationError(ValidationResult(false, "No JSON body provided"));
+            sendValidationError(request, ValidationResult(false, "No JSON body provided"));
             return;
         }
 
@@ -152,14 +152,14 @@ void handleContentGeneration(AsyncWebServerRequest* request, ContentType content
         DeserializationError error = deserializeJson(doc, body);
         if (error)
         {
-            sendValidationError(ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
+            sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
             return;
         }
 
         // Validate required message field
         if (!doc.containsKey("message"))
         {
-            sendValidationError(ValidationResult(false, "Missing required field 'message' in JSON"));
+            sendValidationError(request, ValidationResult(false, "Missing required field 'message' in JSON"));
             return;
         }
 
@@ -170,7 +170,7 @@ void handleContentGeneration(AsyncWebServerRequest* request, ContentType content
         if (!messageValidation.isValid)
         {
             LOG_WARNING("WEB", "User message validation failed: %s", messageValidation.errorMessage.c_str());
-            sendValidationError(messageValidation);
+            sendValidationError(request, messageValidation);
             return;
         }
 
@@ -276,6 +276,112 @@ void handleUnbiddenInk(AsyncWebServerRequest* request)
     }
 }
 
+bool generateAndQueueUnbiddenInk()
+{
+    LOG_VERBOSE("UNBIDDENINK", "generateAndQueueUnbiddenInk() called");
+
+    // Generate unbidden ink content (no custom prompt for timer-based calls)
+    String content = generateUnbiddenInkContent("");
+
+    if (content.length() > 0)
+    {
+        // Format with header (always local, so no sender info)
+        String formattedContent = formatContentWithHeader("UNBIDDEN INK", content, "");
+
+        // Set up message for local printing (Unbidden Ink is always local-direct)
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+
+        LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink content queued for local direct printing");
+        return true;
+    }
+    else
+    {
+        LOG_ERROR("UNBIDDENINK", "Failed to generate Unbidden Ink content");
+        return false;
+    }
+}
+
+// ========================================
+// INTERNAL CONTENT GENERATION FUNCTIONS
+// ========================================
+
+bool generateAndQueueRiddle()
+{
+    String content = generateRiddleContent();
+    if (content.length() > 0)
+    {
+        String formattedContent = formatContentWithHeader("RIDDLE", content, "");
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        LOG_VERBOSE("BUTTON", "Riddle content queued for local printing");
+        return true;
+    }
+    return false;
+}
+
+bool generateAndQueueJoke()
+{
+    String content = generateJokeContent();
+    if (content.length() > 0)
+    {
+        String formattedContent = formatContentWithHeader("JOKE", content, "");
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        LOG_VERBOSE("BUTTON", "Joke content queued for local printing");
+        return true;
+    }
+    return false;
+}
+
+bool generateAndQueueQuote()
+{
+    String content = generateQuoteContent();
+    if (content.length() > 0)
+    {
+        String formattedContent = formatContentWithHeader("QUOTE", content, "");
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        LOG_VERBOSE("BUTTON", "Quote content queued for local printing");
+        return true;
+    }
+    return false;
+}
+
+bool generateAndQueueQuiz()
+{
+    String content = generateQuizContent();
+    if (content.length() > 0)
+    {
+        String formattedContent = formatContentWithHeader("QUIZ", content, "");
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        LOG_VERBOSE("BUTTON", "Quiz content queued for local printing");
+        return true;
+    }
+    return false;
+}
+
+bool generateAndQueuePrintTest()
+{
+    String content = loadPrintTestContent();
+    if (content.length() > 0)
+    {
+        String formattedContent = formatContentWithHeader("PRINT TEST", content, "");
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        LOG_VERBOSE("BUTTON", "Print test content queued for local printing");
+        return true;
+    }
+    return false;
+}
+
 void handlePrintContent(AsyncWebServerRequest* request)
 {
     if (isRateLimited())
@@ -300,14 +406,14 @@ void handlePrintContent(AsyncWebServerRequest* request)
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
-        sendValidationError(ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
+        sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
         return;
     }
 
     // Validate required message field
     if (!doc.containsKey("message"))
     {
-        sendValidationError(ValidationResult(false, "Missing required field 'message' in JSON"));
+        sendValidationError(request, ValidationResult(false, "Missing required field 'message' in JSON"));
         return;
     }
 
@@ -322,7 +428,7 @@ void handlePrintContent(AsyncWebServerRequest* request)
     if (!messageValidation.isValid)
     {
         LOG_WARNING("WEB", "Message validation failed: %s", messageValidation.errorMessage.c_str());
-        sendValidationError(messageValidation);
+        sendValidationError(request, messageValidation);
         return;
     }
 

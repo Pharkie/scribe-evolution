@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 #include <PubSubClient.h>
+#include <ESPAsyncWebServer.h>
 #include "../core/shared_types.h"
 
 // External variable reference
@@ -50,6 +51,24 @@ void handlePoke(AsyncWebServerRequest* request);
  * @brief Handle Unbidden Ink content generation request
  */
 void handleUnbiddenInk(AsyncWebServerRequest* request);
+
+/**
+ * @brief Generate and queue Unbidden Ink content for internal calls (no request)
+ * @return true if content was generated and queued successfully
+ */
+bool generateAndQueueUnbiddenInk();
+
+// ========================================
+// INTERNAL CONTENT GENERATION FUNCTIONS
+// ========================================
+// These functions are for internal calls (hardware buttons, timers, etc.)
+// They don't require request parameters and directly queue content for printing
+
+bool generateAndQueueRiddle();
+bool generateAndQueueJoke();
+bool generateAndQueueQuote();
+bool generateAndQueueQuiz();
+bool generateAndQueuePrintTest();
 
 /**
  * @brief Handle print test request
