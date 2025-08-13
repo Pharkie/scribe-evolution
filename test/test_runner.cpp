@@ -23,6 +23,7 @@ extern void run_config_validation_tests();
 extern void run_web_validation_tests();
 extern void run_time_utils_tests();
 extern void run_endpoint_integration_tests();
+extern void run_sse_tests();
 
 // Web server instance for all tests
 WebServer server(webServerPort);
@@ -113,6 +114,9 @@ void setup()
 
     Serial.println("=== Running Endpoint Integration Tests ===");
     run_endpoint_integration_tests();
+
+    Serial.println("=== Running SSE Functionality Tests ===");
+    run_sse_tests();
 
     UNITY_END();
 }
