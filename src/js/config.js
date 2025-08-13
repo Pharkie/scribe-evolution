@@ -65,65 +65,90 @@ async function loadConfig() {
 }
 
 /**
- * Initialize smart polling for real-time printer discovery updates
- * Uses efficient polling with change detection for instant updates
+ * Initialize real-time printer discovery using Server-Sent Events (SSE)
+ * Replaces polling with instant updates when printer status changes
  */
-function initializePrinterUpdates() {
-  // Get polling interval from already loaded configuration
-  function getPollingInterval() {
-    const config = window.GLOBAL_CONFIG;
-    const interval = config?.webInterface?.printerDiscoveryPollingInterval || 10000;
-    console.log(`📡 Printer polling interval: ${interval/1000}s`);
-    return Promise.resolve(interval);
-  }
+function initializePrinterDiscovery() {
+  console.log('🔌 Initializing real-time printer discovery (SSE)');
   
-  function pollForUpdates() {
-    // Build request headers with ETag if we have one
-    const headers = {};
-    if (lastETag) {
-      headers['If-None-Match'] = lastETag;
+  let eventSource = null;
+
+  function setupSSE() {
+    // Close existing connection if any
+    if (eventSource) {
+      eventSource.close();
     }
     
-    fetch('/api/printer-discovery', { headers })
-      .then(response => {
-        // Check for 304 Not Modified
-        if (response.status === 304) {
-          console.log('📡 Printer data unchanged (304)');
-          return null; // No need to process response body
-        }
+    eventSource = new EventSource('/events');
+    
+    // Handle printer discovery updates
+    eventSource.addEventListener('printer-update', function(event) {
+      try {
+        console.log('🖨️ Real-time printer update received');
+        const data = JSON.parse(event.data);
         
-        // Update ETag from response
-        const etag = response.headers.get('ETag');
-        if (etag) {
-          lastETag = etag;
-        }
-        
-        return response.json();
-      })
-      .then(data => {
-        // Handle 304 responses (data will be null)
-        if (!data) return;
-        
-        // Data has changed, update everything
-        console.log('🖨️ Printer list updated');
-        
-        // Update the global PRINTERS array (data is now the direct response)
+        // Update the global PRINTERS array
         updatePrintersFromData(data);
         
         // Refresh any UI elements that depend on the printer list
         refreshPrinterUI();
-      })
-      .catch(error => {
-        console.warn('Failed to check for printer updates:', error);
-      });
+      } catch (error) {
+        console.error('Error parsing printer update:', error);
+      }
+    });
+    
+    // Handle system status notifications
+    eventSource.addEventListener('system-status', function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        console.log(`📡 System status: ${data.status} - ${data.message}`);
+        showSystemNotification(data.status, data.message);
+      } catch (error) {
+        console.error('Error parsing system status:', error);
+      }
+    });
+    
+    eventSource.onerror = function(event) {
+      console.error('SSE connection error:', event);
+      // Reconnect after 5 seconds
+      setTimeout(() => {
+        console.log('🔄 Attempting to reconnect SSE...');
+        setupSSE();
+      }, 5000);
+    };
+    
+    eventSource.onopen = function(event) {
+      console.log('✅ Real-time updates connected');
+      showSystemNotification('connected', 'Real-time updates active');
+    };
   }
-  
-  // Start immediate check, then set up polling with configured interval
-  pollForUpdates();
-  
-  getPollingInterval().then(interval => {
-    setInterval(pollForUpdates, interval);
-    console.log(`✅ Smart printer polling initialized (${interval/1000}s updates)`);
+
+  // Load initial printer data
+  async function loadInitialPrinterData() {
+    try {
+      console.log('📊 Loading initial printer data...');
+      const response = await fetch('/api/printer-discovery');
+      if (response.ok) {
+        const data = await response.json();
+        updatePrintersFromData(data);
+        refreshPrinterUI();
+        console.log('✅ Initial printer data loaded');
+      }
+    } catch (error) {
+      console.error('Error loading initial printer data:', error);
+    }
+  }
+
+  // Initialize: load data first, then set up real-time updates
+  loadInitialPrinterData().then(() => {
+    setupSSE();
+  });
+
+  // Clean up SSE connection when page unloads
+  window.addEventListener('beforeunload', function() {
+    if (eventSource) {
+      eventSource.close();
+    }
   });
 }
 
@@ -151,4 +176,61 @@ function refreshPrinterUI() {
     detail: { printers: PRINTERS } 
   });
   document.dispatchEvent(event);
+}
+
+/**
+ * Show subtle system notifications for connection status
+ */
+function showSystemNotification(status, message) {
+  // Only show connection-related notifications to avoid spam
+  if (!['connected', 'error', 'reconnecting'].includes(status)) {
+    return;
+  }
+  
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${status}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  `;
+  
+  // Set colors based on status
+  switch (status) {
+    case 'connected':
+      notification.style.backgroundColor = '#10b981'; // green
+      break;
+    case 'error':
+      notification.style.backgroundColor = '#ef4444'; // red
+      break;
+    case 'reconnecting':
+      notification.style.backgroundColor = '#f59e0b'; // amber
+      break;
+  }
+  
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  // Fade in
+  requestAnimationFrame(() => {
+    notification.style.opacity = '1';
+  });
+  
+  // Fade out and remove after 3 seconds
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
 }
