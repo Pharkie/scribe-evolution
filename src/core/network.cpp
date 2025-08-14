@@ -159,7 +159,7 @@ void setupmDNS()
     if (MDNS.begin(getMdnsHostname()))
     {
         Serial.println("mDNS responder started");
-        Serial.println("Access the form at: http://" + String(getMdnsHostname()) + ".local");
+        Serial.println("Web interface alive at http://" + String(getMdnsHostname()) + ".local");
 
         // Add service to MDNS-SD
         MDNS.addService("http", "tcp", webServerPort);

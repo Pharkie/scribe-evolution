@@ -84,6 +84,18 @@
     @apply bg-slate-50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-700;
 }
 
+.diag-section.pink {
+    @apply bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-700;
+}
+
+.diag-section.teal {
+    @apply bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-700;
+}
+
+.diag-section.gray {
+    @apply bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-700;
+}
+
 /* Section headers */
 .diag-header {
     @apply flex items-center justify-between mb-3;
@@ -121,6 +133,18 @@
     @apply text-slate-800 dark:text-slate-300;
 }
 
+.diag-title.pink {
+    @apply text-pink-800 dark:text-pink-300;
+}
+
+.diag-title.teal {
+    @apply text-teal-800 dark:text-teal-300;
+}
+
+.diag-title.gray {
+    @apply text-gray-800 dark:text-gray-300;
+}
+
 /* Copy buttons */
 .diag-copy-btn {
     @apply px-2 py-1 text-xs rounded transition-colors;
@@ -152,6 +176,18 @@
 
 .diag-copy-btn.slate {
     @apply bg-slate-100 dark:bg-slate-900/30 hover:bg-slate-200 dark:hover:bg-slate-900/40 text-slate-700 dark:text-slate-300;
+}
+
+.diag-copy-btn.pink {
+    @apply bg-pink-100 dark:bg-pink-900/30 hover:bg-pink-200 dark:hover:bg-pink-900/40 text-pink-700 dark:text-pink-300;
+}
+
+.diag-copy-btn.teal {
+    @apply bg-teal-100 dark:bg-teal-900/30 hover:bg-teal-200 dark:hover:bg-teal-900/40 text-teal-700 dark:text-teal-300;
+}
+
+.diag-copy-btn.gray {
+    @apply bg-gray-100 dark:bg-gray-900/30 hover:bg-gray-200 dark:hover:bg-gray-900/40 text-gray-700 dark:text-gray-300;
 }
 
 /* Data rows */
@@ -261,4 +297,8 @@
 
 .diag-config-warning.slate {
     @apply text-slate-600 dark:text-slate-400;
+}
+
+.diag-config-warning.gray {
+    @apply text-gray-600 dark:text-gray-400;
 }

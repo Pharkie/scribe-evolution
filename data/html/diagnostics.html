@@ -10,22 +10,22 @@
 </head>
 
 <body class="page-body">
-    <header class="page-header">
-        <div class="header-spacer">
-            <button onclick="goBack()" class="back-button">
-                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                <span class="text-xs sm:text-sm font-medium">Back</span>
-            </button>
-        </div>
-        <div class="header-center">
-            <h1 class="page-title">📊 Diagnostics</h1>
-        </div>
-        <div class="header-spacer"></div>
-    </header>
-
     <main class="page-main">
+        <header class="page-header">
+            <div class="header-spacer">
+                <button onclick="goBack()" class="back-button">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                    <span class="text-xs sm:text-sm font-medium">Back</span>
+                </button>
+            </div>
+            <div class="header-center">
+                <h1 class="page-title">📊 Diagnostics</h1>
+            </div>
+            <div class="header-spacer"></div>
+        </header>
         <nav class="flex flex-wrap justify-center gap-2 mb-6">
             <button onclick="showSection('device-config-section')"
                 class="section-nav-btn section-nav-btn-purple active">⚙️ Device</button>
@@ -42,7 +42,7 @@
                 Buttons</button>
             <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-teal">🔗
                 Pages & Endpoints</button>
-            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-slate">📄 Config
+            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-gray">📄 Config
                 File</button>
         </nav>
 
@@ -240,10 +240,10 @@
             </div>
 
             <!-- Buttons -->
-            <div id="hardware-buttons-section" class="diag-section slate">
+            <div id="hardware-buttons-section" class="diag-section pink">
                 <div class="diag-header">
-                    <h4 class="diag-title slate"><span class="mr-2">🎛️</span>Buttons</h4>
-                    <button onclick="copyGenericSection('Buttons', this)" class="diag-copy-btn slate">
+                    <h4 class="diag-title pink"><span class="mr-2">🎛️</span>Buttons</h4>
+                    <button onclick="copyGenericSection('Buttons', this)" class="diag-copy-btn pink">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -256,10 +256,10 @@
             </div>
 
             <!-- Available Pages & Endpoints -->
-            <div id="pages-endpoints-section" class="diag-section slate">
+            <div id="pages-endpoints-section" class="diag-section teal">
                 <div class="diag-header">
-                    <h4 class="diag-title slate"><span class="mr-2">🔗</span>Pages & Endpoints</h4>
-                    <button onclick="copyGenericSection('Pages & Endpoints', this)" class="diag-copy-btn slate">
+                    <h4 class="diag-title teal"><span class="mr-2">🔗</span>Pages & Endpoints</h4>
+                    <button onclick="copyGenericSection('Pages & Endpoints', this)" class="diag-copy-btn teal">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -279,13 +279,13 @@
             </div>
 
             <!-- Configuration File -->
-            <div id="config-file-section" class="diag-section slate">
+            <div id="config-file-section" class="diag-section gray">
                 <div class="diag-header">
                     <div>
-                        <h4 class="diag-title slate"><span class="mr-2">📄</span>Config file</h4>
+                        <h4 class="diag-title gray"><span class="mr-2">📄</span>Config file</h4>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Config.json</p>
                     </div>
-                    <button onclick="copyConfigFile(this)" class="diag-copy-btn slate">
+                    <button onclick="copyConfigFile(this)" class="diag-copy-btn gray">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -294,7 +294,7 @@
                 </div>
                 <div class="space-y-3">
                     <pre id="config-content" class="diag-config-display">Loading configuration...</pre>
-                    <p class="diag-config-warning slate">🔑 Secrets are redacted</p>
+                    <p class="diag-config-warning gray">🔑 Secrets are redacted</p>
                 </div>
             </div>
         </div>
