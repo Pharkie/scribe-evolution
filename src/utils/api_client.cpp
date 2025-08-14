@@ -83,7 +83,12 @@ String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
         LOG_WARNING("API", "API request failed with code: %d", httpResponseCode);
     }
 
+    // Proper connection cleanup
     http.end();
+
+    // Feed watchdog after cleanup
+    esp_task_wdt_reset();
+
     return response;
 }
 
@@ -162,7 +167,12 @@ String fetchFromAPIWithBearer(const String &url, const String &bearerToken, cons
         LOG_WARNING("API", "Bearer API request failed with code: %d", httpResponseCode);
     }
 
+    // Proper connection cleanup
     http.end();
+
+    // Feed watchdog after cleanup
+    esp_task_wdt_reset();
+
     return response;
 }
 
@@ -243,7 +253,12 @@ String postToAPIWithBearer(const String &url, const String &bearerToken, const S
         LOG_WARNING("API", "Bearer POST API request failed with code: %d", httpResponseCode);
     }
 
+    // Proper connection cleanup
     http.end();
+
+    // Feed watchdog after cleanup
+    esp_task_wdt_reset();
+
     return response;
 }
 

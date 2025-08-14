@@ -241,11 +241,12 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
 
     if (content.length() > 0)
     {
-        // Return JSON response with the generated content
-        DynamicJsonDocument responseDoc(1024);
-        responseDoc["success"] = true;
-        responseDoc["content"] = content;
-        responseDoc["timestamp"] = getFormattedDateTime();
+        // Format content with header to match other endpoints
+        String formattedContent = formatContentWithHeader("UNBIDDEN INK", content, "");
+
+        // Return JSON response in the same format as other content endpoints
+        DynamicJsonDocument responseDoc(2048);
+        responseDoc["content"] = formattedContent;
 
         String response;
         serializeJson(responseDoc, response);
@@ -255,9 +256,8 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     }
     else
     {
-        // Return JSON error response
-        DynamicJsonDocument errorDoc(512);
-        errorDoc["success"] = false;
+        // Return JSON error response in the same format as other content endpoints
+        DynamicJsonDocument errorDoc(256);
         errorDoc["error"] = "Failed to generate Unbidden Ink content";
 
         String errorResponse;

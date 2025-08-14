@@ -24,6 +24,8 @@
 #include "../utils/json_helpers.h"
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
+#include <esp_partition.h>
+#include <esp_ota_ops.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
@@ -121,8 +123,22 @@ void handleStatus(AsyncWebServerRequest *request)
     // App partition (firmware)
     JsonObject app_partition = flash.createNestedObject("app_partition");
     uint32_t appUsed = ESP.getSketchSize();
-    uint32_t appFree = ESP.getFreeSketchSpace();
-    uint32_t appTotal = appUsed + appFree;
+
+    // Get accurate partition size using ESP-IDF APIs
+    const esp_partition_t *running_partition = esp_ota_get_running_partition();
+    uint32_t appTotal = 0;
+    if (running_partition)
+    {
+        appTotal = running_partition->size;
+    }
+    else
+    {
+        // Fallback to Arduino API if ESP-IDF fails
+        appTotal = ESP.getSketchSize() + ESP.getFreeSketchSpace();
+    }
+
+    uint32_t appFree = appTotal - appUsed;
+
     app_partition["used"] = appUsed;
     app_partition["free"] = appFree;
     app_partition["total"] = appTotal;
@@ -165,11 +181,13 @@ void handleStatus(AsyncWebServerRequest *request)
     loadUnbiddenInkSettings();
     UnbiddenInkSettings settings = getCurrentUnbiddenInkSettings();
     unbiddenInk["enabled"] = settings.enabled;
+    // Always include configuration values regardless of enabled state
+    unbiddenInk["start_hour"] = settings.startHour;
+    unbiddenInk["end_hour"] = settings.endHour;
+    unbiddenInk["frequency_minutes"] = settings.frequencyMinutes;
+    // Only include runtime data when enabled
     if (settings.enabled)
     {
-        unbiddenInk["start_hour"] = settings.startHour;
-        unbiddenInk["end_hour"] = settings.endHour;
-        unbiddenInk["frequency_minutes"] = settings.frequencyMinutes;
         unbiddenInk["next_message_time"] = getNextUnbiddenInkTime();
     }
 

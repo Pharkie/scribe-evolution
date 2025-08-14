@@ -232,7 +232,7 @@ async function displayDiagnostics(data, configData) {
     
     populateDataFields(unbiddenSection, {
       'unbidden-ink-status': unbiddenInkEnabled ? 'Enabled' : 'Disabled',
-      'working-hours': unbiddenInkData.start_hour && unbiddenInkData.end_hour ? 
+      'working-hours': unbiddenInkData.start_hour !== undefined && unbiddenInkData.end_hour !== undefined ? 
         `${unbiddenInkData.start_hour}:00 - ${unbiddenInkData.end_hour}:00` : 'Not configured',
       'frequency': unbiddenInkData.frequency_minutes ? 
         `${unbiddenInkData.frequency_minutes} minutes` : 'Not configured',

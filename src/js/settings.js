@@ -732,7 +732,10 @@ async function testUnbiddenInk() {
         
         const data = await response.json();
         
-        if (data.success && data.content) {
+        if (data.content) {
+            // Add a small delay before the print request to help with connection cleanup
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             // Successfully generated content, now print it locally
             try {
                 const printResponse = await fetch('/api/print-local', {
