@@ -170,8 +170,6 @@
                             data-field="firmware-version">-</span></div>
                     <div class="diag-row"><span class="diag-label">Uptime:</span><span class="diag-value"
                             data-field="uptime">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Free Heap:</span><span class="diag-value"
-                            data-field="free-heap">-</span></div>
                     <div class="diag-row"><span class="diag-label">Temperature:</span><span class="diag-value"
                             data-field="temperature">-</span></div>
                     <div class="diag-memory">
@@ -251,7 +249,140 @@
                     </button>
                 </div>
                 <div id="buttons-content" class="space-y-4">
-                    <!-- Button information will be populated dynamically -->
+                    <!-- Hardware Configuration Section -->
+                    <div class="border-b border-gray-200 dark:border-gray-600 pb-3 mb-3">
+                        <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Hardware Configuration
+                        </h5>
+                        <div class="space-y-1">
+                            <div class="diag-row">
+                                <span class="diag-label">Buttons:</span>
+                                <span class="diag-value" data-field="hw-buttons-count">-</span>
+                            </div>
+                            <div class="diag-row">
+                                <span class="diag-label">Debounce:</span>
+                                <span class="diag-value" data-field="hw-buttons-debounce">-</span>
+                            </div>
+                            <div class="diag-row">
+                                <span class="diag-label">Long Press:</span>
+                                <span class="diag-value" data-field="hw-buttons-long-press">-</span>
+                            </div>
+                            <div class="diag-row">
+                                <span class="diag-label">Active Low:</span>
+                                <span class="diag-value" data-field="hw-buttons-active-low">-</span>
+                            </div>
+                            <div class="diag-row">
+                                <span class="diag-label">Min Interval:</span>
+                                <span class="diag-value" data-field="hw-buttons-min-interval">-</span>
+                            </div>
+                            <div class="diag-row">
+                                <span class="diag-label">Max/Minute:</span>
+                                <span class="diag-value" data-field="hw-buttons-max-per-minute">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Buttons Section -->
+                    <div id="individual-buttons">
+                        <!-- Button 1 -->
+                        <div class="button-section" data-button="1">
+                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                🔘 <span class="button-title" data-field="button-1-title">Button 1 (GPIO -)</span>
+                            </h6>
+                            <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Short Press:</span>
+                                    <span class="diag-value" data-field="button-1-short-press">-</span>
+                                </div>
+                                <div class="diag-row">
+                                    <span class="diag-label">Long Press:</span>
+                                    <span class="diag-value" data-field="button-1-long-press">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-1-short-mqtt" style="display: none;">
+                                    <span class="diag-label">Short MQTT:</span>
+                                    <span class="diag-value" data-field="button-1-short-mqtt">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-1-long-mqtt" style="display: none;">
+                                    <span class="diag-label">Long MQTT:</span>
+                                    <span class="diag-value" data-field="button-1-long-mqtt">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Button 2 -->
+                        <div class="button-section" data-button="2">
+                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                🔘 <span class="button-title" data-field="button-2-title">Button 2 (GPIO -)</span>
+                            </h6>
+                            <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Short Press:</span>
+                                    <span class="diag-value" data-field="button-2-short-press">-</span>
+                                </div>
+                                <div class="diag-row">
+                                    <span class="diag-label">Long Press:</span>
+                                    <span class="diag-value" data-field="button-2-long-press">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-2-short-mqtt" style="display: none;">
+                                    <span class="diag-label">Short MQTT:</span>
+                                    <span class="diag-value" data-field="button-2-short-mqtt">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-2-long-mqtt" style="display: none;">
+                                    <span class="diag-label">Long MQTT:</span>
+                                    <span class="diag-value" data-field="button-2-long-mqtt">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Button 3 -->
+                        <div class="button-section" data-button="3">
+                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                🔘 <span class="button-title" data-field="button-3-title">Button 3 (GPIO -)</span>
+                            </h6>
+                            <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Short Press:</span>
+                                    <span class="diag-value" data-field="button-3-short-press">-</span>
+                                </div>
+                                <div class="diag-row">
+                                    <span class="diag-label">Long Press:</span>
+                                    <span class="diag-value" data-field="button-3-long-press">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-3-short-mqtt" style="display: none;">
+                                    <span class="diag-label">Short MQTT:</span>
+                                    <span class="diag-value" data-field="button-3-short-mqtt">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-3-long-mqtt" style="display: none;">
+                                    <span class="diag-label">Long MQTT:</span>
+                                    <span class="diag-value" data-field="button-3-long-mqtt">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Button 4 -->
+                        <div class="button-section" data-button="4">
+                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                🔘 <span class="button-title" data-field="button-4-title">Button 4 (GPIO -)</span>
+                            </h6>
+                            <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Short Press:</span>
+                                    <span class="diag-value" data-field="button-4-short-press">-</span>
+                                </div>
+                                <div class="diag-row">
+                                    <span class="diag-label">Long Press:</span>
+                                    <span class="diag-value" data-field="button-4-long-press">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-4-short-mqtt" style="display: none;">
+                                    <span class="diag-label">Short MQTT:</span>
+                                    <span class="diag-value" data-field="button-4-short-mqtt">-</span>
+                                </div>
+                                <div class="diag-row" data-field-container="button-4-long-mqtt" style="display: none;">
+                                    <span class="diag-label">Long MQTT:</span>
+                                    <span class="diag-value" data-field="button-4-long-mqtt">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -269,11 +400,23 @@
                 <div class="space-y-4">
                     <div>
                         <h5 class="diag-section-heading">📄 Web Pages</h5>
-                        <div id="web-pages" class="space-y-1 text-sm">-</div>
+                        <div id="web-pages" class="space-y-2">
+                            <!-- Static structure for web pages - values populated by JS -->
+                            <div class="diag-row loading-placeholder">
+                                <span class="diag-label">Loading web pages...</span>
+                                <span class="diag-value">-</span>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <h5 class="diag-section-heading">🔌 API Endpoints</h5>
-                        <div id="api-endpoints" class="space-y-1 text-sm">-</div>
+                        <div id="api-endpoints" class="space-y-3">
+                            <!-- Static structure for API endpoints - values populated by JS -->
+                            <div class="diag-row loading-placeholder">
+                                <span class="diag-label">Loading API endpoints...</span>
+                                <span class="diag-value">-</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
