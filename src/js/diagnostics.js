@@ -85,12 +85,18 @@ function copyGenericSection(sectionName, button) {
       });
     });
 
-    navigator.clipboard.writeText(content.trim()).then(() => {
-      showCopySuccess(button);
-    }).catch(err => {
-      console.error('Copy failed:', err);
+    // Use modern clipboard API if available, otherwise fallback
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(content.trim()).then(() => {
+        showCopySuccess(button);
+      }).catch(err => {
+        console.error('Copy failed:', err);
+        fallbackCopy(content.trim(), button);
+      });
+    } else {
+      // Fallback for non-HTTPS or older browsers
       fallbackCopy(content.trim(), button);
-    });
+    }
   } catch (error) {
     console.error('Error copying section:', error);
   }
@@ -103,12 +109,18 @@ function copyConfigFile(button) {
 
     const content = `=== Configuration File (config.json) ===\n\n${configElement.textContent.trim()}`;
     
-    navigator.clipboard.writeText(content).then(() => {
-      showCopySuccess(button);
-    }).catch(err => {
-      console.error('Copy failed:', err);
+    // Use modern clipboard API if available, otherwise fallback
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(content).then(() => {
+        showCopySuccess(button);
+      }).catch(err => {
+        console.error('Copy failed:', err);
+        fallbackCopy(content, button);
+      });
+    } else {
+      // Fallback for non-HTTPS or older browsers
       fallbackCopy(content, button);
-    });
+    }
   } catch (error) {
     console.error('Error copying config:', error);
   }
@@ -231,6 +243,7 @@ function displayDiagnostics(data, configData) {
   setFieldValue('mqtt-topic', data.network?.mqtt?.topic);
 
   // Microcontroller
+  setFieldValue('chip-model', data.hardware?.chip_model || 'Unknown');
   setFieldValue('cpu-frequency', data.hardware?.cpu_frequency_mhz + ' MHz');
   setFieldValue('flash-size', formatBytes(data.system?.flash?.total_chip_size));
   setFieldValue('firmware-version', data.hardware?.sdk_version);
@@ -257,41 +270,156 @@ function displayDiagnostics(data, configData) {
   setFieldValue('file-logging', data.features?.logging?.file_enabled ? 'Enabled' : 'Disabled');
   setFieldValue('mqtt-logging', data.features?.logging?.mqtt_enabled ? 'Enabled' : 'Disabled');
 
-  // Hardware Buttons - using actual API structure
-  const buttons = data.features?.hardware_buttons?.buttons || [];
-  setFieldValue('button-1-short', buttons[0]?.short_endpoint || 'Not configured');
-  setFieldValue('button-1-long', buttons[0]?.long_endpoint || 'Not configured');
-  setFieldValue('button-1-short-mqtt', buttons[0]?.short_mqtt_topic || '-');
-  setFieldValue('button-1-long-mqtt', buttons[0]?.long_mqtt_topic || '-');
-  setFieldValue('button-2-short', buttons[1]?.short_endpoint || 'Not configured');
-  setFieldValue('button-2-long', buttons[1]?.long_endpoint || 'Not configured');
-  setFieldValue('button-2-short-mqtt', buttons[1]?.short_mqtt_topic || '-');
-  setFieldValue('button-2-long-mqtt', buttons[1]?.long_mqtt_topic || '-');
-  setFieldValue('button-3-short', buttons[2]?.short_endpoint || 'Not configured');
-  setFieldValue('button-3-long', buttons[2]?.long_endpoint || 'Not configured');
-  setFieldValue('button-3-short-mqtt', buttons[2]?.short_mqtt_topic || '-');
-  setFieldValue('button-3-long-mqtt', buttons[2]?.long_mqtt_topic || '-');
-  setFieldValue('button-4-short', buttons[3]?.short_endpoint || 'Not configured');
-  setFieldValue('button-4-long', buttons[3]?.long_endpoint || 'Not configured');
-  setFieldValue('button-4-short-mqtt', buttons[3]?.short_mqtt_topic || '-');
-  setFieldValue('button-4-long-mqtt', buttons[3]?.long_mqtt_topic || '-');
+  // Hardware Buttons - improved layout with GPIO and configuration info
+  const buttonsContainer = document.getElementById('buttons-content');
+  if (buttonsContainer && data.features?.hardware_buttons) {
+    buttonsContainer.innerHTML = ''; // Clear existing content
+    
+    const buttonsData = data.features.hardware_buttons;
+    
+    // Add general configuration section
+    const configSection = document.createElement('div');
+    configSection.className = 'border-b border-gray-200 dark:border-gray-600 pb-3 mb-3';
+    
+    const configTitle = document.createElement('h5');
+    configTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
+    configTitle.textContent = 'Hardware Configuration';
+    configSection.appendChild(configTitle);
+    
+    const configGrid = document.createElement('div');
+    configGrid.className = 'grid grid-cols-2 gap-2 text-sm';
+    
+    const configItems = [
+      ['Buttons', buttonsData.num_buttons || 'Unknown'],
+      ['Debounce', `${buttonsData.debounce_ms || 'Unknown'} ms`],
+      ['Long Press', `${buttonsData.long_press_ms || 'Unknown'} ms`],
+      ['Active Low', buttonsData.active_low !== undefined ? (buttonsData.active_low ? 'Yes' : 'No') : 'Unknown'],
+      ['Min Interval', `${buttonsData.min_interval_ms || 'Unknown'} ms`],
+      ['Max/Minute', buttonsData.max_per_minute || 'Unknown']
+    ];
+    
+    configItems.forEach(([label, value]) => {
+      const item = document.createElement('div');
+      item.innerHTML = `<span class="text-gray-600 dark:text-gray-400">${label}:</span> <span class="font-medium">${value}</span>`;
+      configGrid.appendChild(item);
+    });
+    
+    configSection.appendChild(configGrid);
+    buttonsContainer.appendChild(configSection);
+    
+    // Add individual button sections
+    if (buttonsData.buttons && buttonsData.buttons.length > 0) {
+      buttonsData.buttons.forEach((button, index) => {
+        const buttonSection = document.createElement('div');
+        buttonSection.className = 'bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600';
+        
+        const buttonTitle = document.createElement('h6');
+        buttonTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
+        buttonTitle.textContent = `🔘 Button ${index + 1} (GPIO ${button.gpio || 'Unknown'})`;
+        buttonSection.appendChild(buttonTitle);
+        
+        const buttonDetails = document.createElement('div');
+        buttonDetails.className = 'space-y-1 text-sm';
+        
+        const addButtonDetail = (label, value) => {
+          if (value && value !== 'Not configured') {
+            const detail = document.createElement('div');
+            detail.className = 'flex justify-between';
+            detail.innerHTML = `
+              <span class="text-gray-600 dark:text-gray-400">${label}:</span>
+              <span class="font-medium text-gray-900 dark:text-gray-100">${value}</span>
+            `;
+            buttonDetails.appendChild(detail);
+          }
+        };
+        
+        addButtonDetail('Short Press', button.short_endpoint || 'Not configured');
+        addButtonDetail('Long Press', button.long_endpoint || 'Not configured');
+        if (button.short_mqtt_topic) addButtonDetail('Short MQTT', button.short_mqtt_topic);
+        if (button.long_mqtt_topic) addButtonDetail('Long MQTT', button.long_mqtt_topic);
+        
+        buttonSection.appendChild(buttonDetails);
+        buttonsContainer.appendChild(buttonSection);
+      });
+    } else {
+      const noButtonsMsg = document.createElement('div');
+      noButtonsMsg.className = 'text-gray-500 dark:text-gray-400 text-center py-4';
+      noButtonsMsg.textContent = 'No button configuration found';
+      buttonsContainer.appendChild(noButtonsMsg);
+    }
+  }
 
-  // Pages & Endpoints
+  // Pages & Endpoints - improved layout
   const webPagesContainer = document.getElementById('web-pages');
   const apiEndpointsContainer = document.getElementById('api-endpoints');
   
   if (data.endpoints?.web_pages && webPagesContainer) {
-    webPagesContainer.innerHTML = data.endpoints.web_pages.map(page => 
-      `<div class="flex justify-between"><span>${escapeHtml(page.path)}</span><span class="text-slate-600 dark:text-slate-400">${escapeHtml(page.description)}</span></div>`
-    ).join('');
+    webPagesContainer.innerHTML = '';
+    data.endpoints.web_pages.forEach(page => {
+      const pageItem = document.createElement('div');
+      pageItem.className = 'bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800';
+      
+      const pathElement = document.createElement('div');
+      pathElement.className = 'font-mono text-sm font-semibold text-blue-700 dark:text-blue-300';
+      pathElement.textContent = page.path;
+      
+      const descElement = document.createElement('div');
+      descElement.className = 'text-sm text-blue-600 dark:text-blue-400 mt-1';
+      descElement.textContent = page.description;
+      
+      pageItem.appendChild(pathElement);
+      pageItem.appendChild(descElement);
+      webPagesContainer.appendChild(pageItem);
+    });
   } else if (webPagesContainer) {
     webPagesContainer.innerHTML = '<div class="text-gray-500">Loading...</div>';
   }
   
   if (data.endpoints?.api_endpoints && apiEndpointsContainer) {
-    apiEndpointsContainer.innerHTML = data.endpoints.api_endpoints.map(endpoint => 
-      `<div class="flex justify-between"><span class="font-mono text-sm">${escapeHtml(endpoint.method)} ${escapeHtml(endpoint.path)}</span><span class="text-slate-600 dark:text-slate-400">${escapeHtml(endpoint.description)}</span></div>`
-    ).join('');
+    apiEndpointsContainer.innerHTML = '';
+    
+    // Group endpoints by method
+    const groupedEndpoints = {};
+    data.endpoints.api_endpoints.forEach(endpoint => {
+      if (!groupedEndpoints[endpoint.method]) {
+        groupedEndpoints[endpoint.method] = [];
+      }
+      groupedEndpoints[endpoint.method].push(endpoint);
+    });
+    
+    // Display grouped endpoints
+    Object.entries(groupedEndpoints).forEach(([method, endpoints]) => {
+      const methodSection = document.createElement('div');
+      methodSection.className = 'mb-4';
+      
+      const methodTitle = document.createElement('h6');
+      methodTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
+      methodTitle.textContent = `${method} Endpoints (${endpoints.length})`;
+      methodSection.appendChild(methodTitle);
+      
+      const endpointsList = document.createElement('div');
+      endpointsList.className = 'space-y-2';
+      
+      endpoints.forEach(endpoint => {
+        const endpointItem = document.createElement('div');
+        endpointItem.className = 'bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600';
+        
+        const pathElement = document.createElement('div');
+        pathElement.className = 'font-mono text-sm font-semibold text-gray-900 dark:text-gray-100';
+        pathElement.textContent = endpoint.path;
+        
+        const descElement = document.createElement('div');
+        descElement.className = 'text-sm text-gray-600 dark:text-gray-400 mt-1';
+        descElement.textContent = endpoint.description;
+        
+        endpointItem.appendChild(pathElement);
+        endpointItem.appendChild(descElement);
+        endpointsList.appendChild(endpointItem);
+      });
+      
+      methodSection.appendChild(endpointsList);
+      apiEndpointsContainer.appendChild(methodSection);
+    });
   } else if (apiEndpointsContainer) {
     apiEndpointsContainer.innerHTML = '<div class="text-gray-500">Loading...</div>';
   }
