@@ -73,7 +73,6 @@ void publishPrinterStatus()
     if (published)
     {
         LOG_VERBOSE("DISCOVERY", "Published status to %s", statusTopic.c_str());
-        delay(3000); // 3 second debug delay to observe timing
     }
     else
     {
@@ -91,6 +90,13 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
     // {
     //     return; // Ignore our own status messages
     // }
+
+    // Check for empty payload
+    if (payload.length() == 0)
+    {
+        LOG_WARNING("DISCOVERY", "Received empty status payload from printer %s - ignoring", printerId.c_str());
+        return;
+    }
 
     LOG_VERBOSE("DISCOVERY", "Received status from printer %s: %s", printerId.c_str(), payload.c_str());
 

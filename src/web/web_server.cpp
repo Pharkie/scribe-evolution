@@ -204,6 +204,12 @@ void setupWebServerRoutes(int maxChars)
         LOG_VERBOSE("WEB", "Setting up full routes for STA mode");
 
         // Add SSE endpoint for real-time updates
+        sseEvents.onConnect([](AsyncEventSourceClient *client)
+                            {
+            LOG_VERBOSE("WEB", "New SSE client connected - sending current printer data");
+            // Send current printer data immediately to new client
+            String printerData = getDiscoveredPrintersJson();
+            client->send(printerData.c_str(), "printer-update", millis()); });
         server.addHandler(&sseEvents);
 
         // HTML and JS

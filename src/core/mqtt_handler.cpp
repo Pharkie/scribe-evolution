@@ -102,18 +102,15 @@ void connectToMQTT()
             LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
         }
 
-        // Subscribe to printer discovery topics
+        // Subscribe to printer discovery topics to immediately process retained messages
         if (!mqttClient.subscribe("scribe/printer-status/+"))
         {
             LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
         }
         else
         {
-            LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics");
+            LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics. Should receive retained messages immediately");
         }
-
-        // Small delay to ensure MQTT connection is fully established
-        delay(500); // Increased delay to prevent LWT race condition
 
         // Publish initial online status immediately after connection
         LOG_INFO("MQTT", "Publishing initial online status after connection");
