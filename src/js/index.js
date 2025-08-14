@@ -519,7 +519,7 @@ function checkForSettingsSuccess() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('settings_saved') === 'true') {
     // Show success toast
-    showSuccessToast('Your Scribe settings have been tucked away safely');
+    showSuccessToast('💾 Settings saved');
     
     // Clean up the URL by removing the parameter
     const cleanUrl = window.location.pathname;
