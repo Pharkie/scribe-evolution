@@ -16,10 +16,9 @@
  * Commercial use is prohibited without explicit written permission from the author.
  * For commercial licensing inquiries, please contact Adam Knowles.
  *
- * Based on the original Project Scribe by UrbanCircles.
+ * Inspired by Project Scribe by UrbanCircles.
  *
  *  TODO:
- * - Printer remote discovery
  * - FastLED support for LED strip
  */
 
@@ -93,7 +92,7 @@ void setup()
   // Connect to WiFi (may fallback to AP mode)
   currentWiFiMode = connectToWiFi();
 
-  // Initialize logging system (before other components that use logging)
+  // Initialize logging system before other components that use logging
   setupLogging();
 
   // Configure ESP32 system component log levels
@@ -178,7 +177,7 @@ void loop()
   // Handle DNS server for captive portal in AP mode
   handleDNSServer();
 
-  // Check hardware buttons (works even without WiFi)
+  // Check hardware buttons (work without WiFi)
   checkHardwareButtons();
 
   // Handle web server requests - AsyncWebServer handles this automatically

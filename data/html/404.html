@@ -2,7 +2,7 @@
 <html lang="en" class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
 
 <head>
-        <title>404 - Page Not Found | Scribe Printer</title>
+        <title>404 - Paper Jam | Scribe Printer</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -10,85 +10,39 @@
 </head>
 
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        <div class="max-w-2xl mx-auto px-4 py-16">
+        <div class="max-w-lg mx-auto px-2 py-6">
                 <div
-                        class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-                        <h1 class="text-3xl font-bold text-red-600 dark:text-red-400 mb-6">🔍 Page Not Found</h1>
-                        <div class="text-8xl font-bold text-gray-300 dark:text-gray-600 text-center my-8">404</div>
-                        <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">Sorry, the page you're looking for
-                                doesn't exist on
-                                this Scribe thermal printer.</p>
+                        class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+                        <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">🗑️ Paper Jam</h1>
+                        <div class="text-5xl font-bold text-gray-300 dark:text-gray-600 text-center my-3">404 Not Found
+                        </div>
+                        <p class="text-base text-gray-700 dark:text-gray-300 mb-3">
+                                Looks like that page got tangled up in the rollers.
+                        </p>
 
-                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg mb-3">
                                 <strong class="text-gray-900 dark:text-gray-100">Request Details:</strong><br>
-                                <div class="text-gray-700 dark:text-gray-300 mt-2 space-y-1">
+                                <div class="text-gray-700 dark:text-gray-300 mt-1 space-y-0.5 text-xs">
                                         <div>Method: <span class="font-mono">{{METHOD}}</span></div>
                                         <div>Path: <span class="font-mono">{{URI}}</span></div>
                                         <div>Device: <span class="font-mono">{{HOSTNAME}}.local</span></div>
                                 </div>
                         </div>
 
-                        <div
-                                class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 p-4 rounded-lg mb-6">
-                                <strong class="text-green-800 dark:text-green-300">� Available Pages:</strong><br>
-                                <ul class="mt-3 space-y-2">
-                                        <li><a href="/"
-                                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">🏠
-                                                        Home</a> <span class="text-gray-600 dark:text-gray-400">- Main
-                                                        interface</span></li>
-                                        <li><a href="/settings.html"
-                                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">⚙️
-                                                        Settings</a> <span class="text-gray-600 dark:text-gray-400">-
-                                                        Device configuration</span>
-                                        </li>
-                                        <li><a href="/diagnostics.html"
-                                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">🔧
-                                                        Diagnostics</a> <span class="text-gray-600 dark:text-gray-400">-
-                                                        System diagnostics</span>
-                                        </li>
-                                </ul>
+                        <div class="text-center space-y-2">
+                                <p class="text-gray-600 dark:text-gray-400 text-xs">
+                                        Maybe check the
+                                        <a href="/diagnostics.html"
+                                                class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors underline">
+                                                diagnostics
+                                        </a>
+                                </p>
 
-                                <strong class="text-green-800 dark:text-green-300 block mt-4">🎯 API
-                                        Endpoints:</strong><br>
-                                <ul class="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                                        <li><span class="font-mono">/api/diagnostics</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">-
-                                                        System information (GET)</span></li>
-                                        <li><span class="font-mono">/api/config</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">-
-                                                        Configuration data (GET/POST)</span></li>
-                                        <li><span class="font-mono">/events</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">- Real-time printer
-                                                        updates via SSE (GET)</span></li>
-                                        <li><span class="font-mono">/api/print-local</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">-
-                                                        Print to local device (POST)</span></li>
-                                        <li><span class="font-mono">/api/mqtt-send</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">-
-                                                        Send to remote printer via MQTT (POST)</span></li>
-                                        <li><span class="font-mono">/api/joke</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">- Random
-                                                        joke (POST)</span></li>
-                                        <li><span class="font-mono">/api/quote</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">-
-                                                        Inspirational quote (POST)</span></li>
-                                        <li><span class="font-mono">/api/quiz</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">- Trivia
-                                                        question (POST)</span></li>
-                                        <li><span class="font-mono">/api/riddle</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">-
-                                                        Brain
-                                                        teaser (POST)</span></li>
-                                        <li><span class="font-mono">/api/print-test</span> <span
-                                                        class="text-gray-600 dark:text-gray-400">-
-                                                        Character test content (POST)</span></li>
-                                </ul>
+                                <a href="/"
+                                        class="inline-block bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg text-sm">
+                                        ← Home
+                                </a>
                         </div>
-
-                        <a href="/"
-                                class="inline-block bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg">
-                                ← Back to Home
-                        </a>
                 </div>
         </div>
 </body>

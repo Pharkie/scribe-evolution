@@ -13,6 +13,45 @@ function escapeHtml(text) {
 }
 
 /**
+ * Redact secrets from configuration data for safe display
+ */
+function redactSecrets(configData) {
+  // Create a deep copy to avoid modifying the original
+  const redacted = JSON.parse(JSON.stringify(configData));
+  
+  // List of keys that should be redacted (case-insensitive partial matches)
+  const secretKeys = [
+    'password', 'pass', 'secret', 'token', 'key', 'apikey', 'api_key',
+    'auth', 'credential', 'cert', 'private', 'bearer', 'oauth'
+  ];
+  
+  function redactObject(obj, path = '') {
+    if (typeof obj !== 'object' || obj === null) {
+      return obj;
+    }
+    
+    for (const [key, value] of Object.entries(obj)) {
+      const lowerKey = key.toLowerCase();
+      const shouldRedact = secretKeys.some(secretKey => lowerKey.includes(secretKey));
+      
+      if (shouldRedact && typeof value === 'string' && value.length > 0) {
+        // Redact the value, showing only first 2 and last 2 characters for longer strings
+        if (value.length > 8) {
+          obj[key] = value.substring(0, 2) + '●●●●●●●●' + value.substring(value.length - 2);
+        } else {
+          obj[key] = '●●●●●●●●';
+        }
+      } else if (typeof value === 'object' && value !== null) {
+        redactObject(value, path + '.' + key);
+      }
+    }
+  }
+  
+  redactObject(redacted);
+  return redacted;
+}
+
+/**
  * Load and display diagnostics data for the diagnostics page
  */
 async function loadDiagnostics() {
@@ -156,7 +195,7 @@ async function displayDiagnostics(data, configData) {
   
   const memoryUsedPercent = Math.round((data.system.memory.used_heap / data.system.memory.total_heap) * 100);
   
-  // Show and populate device configuration section
+  // 1. Show and populate device configuration section
   const deviceConfigSection = document.getElementById('device-config-section');
   if (deviceConfigSection) {
     populateDataFields(deviceConfigSection, {
@@ -167,36 +206,8 @@ async function displayDiagnostics(data, configData) {
     });
     deviceConfigSection.classList.remove('hidden');
   }
-
-  // Show and populate config file section - use the configData passed in
-  const configFileSection = document.getElementById('config-file-section');
-  if (configFileSection) {
-    const configFileContents = document.getElementById('config-file-contents');
-    const configFileSize = document.querySelector('[data-field="config-file-size"]');
     
-    if (configFileContents) {
-      try {
-        // Pretty print the configuration JSON with syntax highlighting
-        const configJson = JSON.stringify(configData, null, 2);
-        configFileContents.innerHTML = `<code class="language-json">${escapeHtml(configJson)}</code>`;
-        
-        // Calculate and display file size
-        const sizeInBytes = new Blob([configJson]).size;
-        const sizeDisplay = sizeInBytes < 1024 ? `${sizeInBytes} B` : `${(sizeInBytes / 1024).toFixed(1)} KB`;
-        if (configFileSize) {
-          configFileSize.textContent = sizeDisplay;
-        }
-      } catch (error) {
-        configFileContents.innerHTML = `<code class="text-red-500">Error processing config: ${escapeHtml(error.message)}</code>`;
-        if (configFileSize) {
-          configFileSize.textContent = '0 B';
-        }
-      }
-    }
-    configFileSection.classList.remove('hidden');
-  }
-    
-  // Show and populate network section
+  // 2. Show and populate network section
   const networkSection = document.getElementById('network-section');
   if (networkSection) {
     populateDataFields(networkSection, {
@@ -206,12 +217,13 @@ async function displayDiagnostics(data, configData) {
       'signal-strength': data.network?.wifi?.signal_strength_dbm ? `${data.network.wifi.signal_strength_dbm} dBm` : 'Unknown',
       'mac-address': data.network?.wifi?.mac_address || 'Unknown',
       'gateway': data.network?.wifi?.gateway || 'Unknown',
-      'dns': data.network?.wifi?.dns || 'Unknown'
+      'dns': data.network?.wifi?.dns || 'Unknown',
+      'wifi-connect-timeout': data.network?.wifi?.connect_timeout_ms ? `${Math.round(data.network.wifi.connect_timeout_ms / 1000)} seconds` : '15 seconds'
     });
     networkSection.classList.remove('hidden');
   }
   
-  // Show and populate MQTT section
+  // 3. Show and populate MQTT section
   const mqttSection = document.getElementById('mqtt-section');
   if (mqttSection) {
     populateDataFields(mqttSection, {
@@ -223,38 +235,7 @@ async function displayDiagnostics(data, configData) {
     mqttSection.classList.remove('hidden');
   }
   
-  // Show and populate Unbidden Ink section
-  const unbiddenSection = document.getElementById('unbidden-ink-section');
-  if (unbiddenSection) {
-    const unbiddenInkData = data.features?.unbidden_ink || {};
-    const configData = data.configuration || {};
-    const unbiddenInkEnabled = unbiddenInkData.enabled;
-    
-    populateDataFields(unbiddenSection, {
-      'unbidden-ink-status': unbiddenInkEnabled ? 'Enabled' : 'Disabled',
-      'working-hours': unbiddenInkData.start_hour !== undefined && unbiddenInkData.end_hour !== undefined ? 
-        `${unbiddenInkData.start_hour}:00 - ${unbiddenInkData.end_hour}:00` : 'Not configured',
-      'frequency': unbiddenInkData.frequency_minutes ? 
-        `${unbiddenInkData.frequency_minutes} minutes` : 'Not configured',
-      'next-scheduled': formatTimestamp(unbiddenInkData.next_message_time),
-      'ai-prompt-char-limit': configData.max_prompt_chars ? 
-        `${configData.max_prompt_chars} characters` : 'Unknown',
-      'settings-file-size': configData.unbidden_ink_settings_file_size ? 
-        `${configData.unbidden_ink_settings_file_size} bytes` : 'Unknown'
-    });
-    
-    // Populate file contents
-    const fileContentsElement = document.getElementById('unbidden-ink-file-contents');
-    if (fileContentsElement && configData.unbidden_ink_settings_file_contents) {
-      fileContentsElement.textContent = configData.unbidden_ink_settings_file_contents;
-    } else if (fileContentsElement) {
-      fileContentsElement.textContent = 'No file data available';
-    }
-    
-    unbiddenSection.classList.remove('hidden');
-  }
-  
-  // Show and populate microcontroller section
+  // 4. Show and populate microcontroller section
   const microcontrollerSection = document.getElementById('microcontroller-section');
   if (microcontrollerSection) {
     // Calculate storage percentages and formats
@@ -300,7 +281,52 @@ async function displayDiagnostics(data, configData) {
     microcontrollerSection.classList.remove('hidden');
   }
   
-  // Show and populate hardware buttons section
+  // 5. Show and populate Unbidden Ink section
+  const unbiddenSection = document.getElementById('unbidden-ink-section');
+  if (unbiddenSection) {
+    const unbiddenInkData = data.features?.unbidden_ink || {};
+    const configData = data.configuration || {};
+    const unbiddenInkEnabled = unbiddenInkData.enabled;
+    
+    populateDataFields(unbiddenSection, {
+      'unbidden-ink-status': unbiddenInkEnabled ? 'Enabled' : 'Disabled',
+      'working-hours': unbiddenInkData.start_hour !== undefined && unbiddenInkData.end_hour !== undefined ? 
+        `${unbiddenInkData.start_hour}:00 - ${unbiddenInkData.end_hour}:00` : 'Not configured',
+      'frequency': unbiddenInkData.frequency_minutes ? 
+        `${unbiddenInkData.frequency_minutes} minutes` : 'Not configured',
+      'next-scheduled': formatTimestamp(unbiddenInkData.next_message_time),
+      'ai-prompt-char-limit': configData.max_prompt_chars ? 
+        `${configData.max_prompt_chars} characters` : 'Unknown',
+      'settings-file-size': configData.unbidden_ink_settings_file_size ? 
+        `${configData.unbidden_ink_settings_file_size} bytes` : 'Unknown'
+    });
+    
+    // Populate file contents
+    const fileContentsElement = document.getElementById('unbidden-ink-file-contents');
+    if (fileContentsElement && configData.unbidden_ink_settings_file_contents) {
+      fileContentsElement.textContent = configData.unbidden_ink_settings_file_contents;
+    } else if (fileContentsElement) {
+      fileContentsElement.textContent = 'No file data available';
+    }
+    
+    unbiddenSection.classList.remove('hidden');
+  }
+  
+  // 6. Show and populate logging section
+  const loggingSection = document.getElementById('logging-section');
+  if (loggingSection) {
+    const loggingData = data.features?.logging || {};
+    populateDataFields(loggingSection, {
+      'log-level': loggingData.level_name || 'Unknown',
+      'serial-logging': loggingData.serial_enabled ? 'Enabled' : 'Disabled',
+      'file-logging': loggingData.file_enabled ? 'Enabled' : 'Disabled',
+      'mqtt-logging': loggingData.mqtt_enabled ? 'Enabled' : 'Disabled',
+      'betterstack-logging': loggingData.betterstack_enabled ? 'Enabled' : 'Disabled'
+    });
+    loggingSection.classList.remove('hidden');
+  }
+  
+  // 7. Show and populate hardware buttons section
   const hardwareButtonsSection = document.getElementById('hardware-buttons-section');
   if (hardwareButtonsSection && data.features?.hardware_buttons) {
     const buttonsContent = document.getElementById('hardware-buttons-content');
@@ -352,19 +378,37 @@ async function displayDiagnostics(data, configData) {
     }
     hardwareButtonsSection.classList.remove('hidden');
   }
-  
-  // Show and populate logging section
-  const loggingSection = document.getElementById('logging-section');
-  if (loggingSection) {
-    const loggingData = data.features?.logging || {};
-    populateDataFields(loggingSection, {
-      'log-level': loggingData.level_name || 'Unknown',
-      'serial-logging': loggingData.serial_enabled ? 'Enabled' : 'Disabled',
-      'file-logging': loggingData.file_enabled ? 'Enabled' : 'Disabled',
-      'mqtt-logging': loggingData.mqtt_enabled ? 'Enabled' : 'Disabled',
-      'betterstack-logging': loggingData.betterstack_enabled ? 'Enabled' : 'Disabled'
-    });
-    loggingSection.classList.remove('hidden');
+
+  // 9. Show and populate config file section - use the configData passed in
+  const configFileSection = document.getElementById('config-file-section');
+  if (configFileSection) {
+    const configFileContents = document.getElementById('config-file-contents');
+    const configFileSize = document.querySelector('[data-field="config-file-size"]');
+    
+    if (configFileContents) {
+      try {
+        // Redact secrets before displaying
+        const redactedConfig = redactSecrets(configData);
+        
+        // Pretty print the configuration JSON with syntax highlighting
+        const configJson = JSON.stringify(redactedConfig, null, 2);
+        configFileContents.innerHTML = `<code class="language-json">${escapeHtml(configJson)}</code>`;
+        
+        // Calculate and display file size (of original, not redacted)
+        const originalJson = JSON.stringify(configData, null, 2);
+        const sizeInBytes = new Blob([originalJson]).size;
+        const sizeDisplay = sizeInBytes < 1024 ? `${sizeInBytes} B` : `${(sizeInBytes / 1024).toFixed(1)} KB`;
+        if (configFileSize) {
+          configFileSize.textContent = sizeDisplay;
+        }
+      } catch (error) {
+        configFileContents.innerHTML = `<code class="text-red-500">Error processing config: ${escapeHtml(error.message)}</code>`;
+        if (configFileSize) {
+          configFileSize.textContent = '0 B';
+        }
+      }
+    }
+    configFileSection.classList.remove('hidden');
   }
 }
 
@@ -435,22 +479,48 @@ function copyGenericSection(sectionName, buttonElement) {
   // Find the parent section
   const section = buttonElement.closest('.rounded-lg');
   if (!section) return;
-  
+
   let textContent = `${sectionName}\n\n`;
-  
-  // Get all data rows
+
+  // Special handling for navigation-section: copy all links and their descriptions
+  if (section.id === 'navigation-section') {
+    const groups = section.querySelectorAll('div.space-y-4 > div');
+    groups.forEach(group => {
+      const groupTitle = group.querySelector('strong');
+      if (groupTitle) {
+        textContent += `\n${groupTitle.textContent.trim()}\n`;
+      }
+      const links = group.querySelectorAll('ul li');
+      links.forEach(linkItem => {
+        const link = linkItem.querySelector('a');
+        const desc = linkItem.querySelector('span.text-gray-600, span.text-gray-400');
+        if (link) {
+          textContent += `- ${link.textContent.trim()} (${link.getAttribute('href')})`;
+          if (desc) {
+            textContent += ` ${desc.textContent.trim()}`;
+          }
+          textContent += '\n';
+        } else {
+          // For API endpoints, just get the text
+          textContent += `- ${linkItem.textContent.trim()}\n`;
+        }
+      });
+    });
+    copyToClipboard(textContent.trim(), buttonElement);
+    return;
+  }
+
+  // Default: copy label-value pairs
   const dataRows = section.querySelectorAll('.flex.justify-between');
   dataRows.forEach(row => {
     const label = row.querySelector('.text-gray-600');
     const value = row.querySelector('.font-medium');
     if (label && value) {
-      // Clean up the text content
       const labelText = label.textContent.trim().replace(':', '');
       const valueText = value.textContent.trim();
       textContent += `${labelText}: ${valueText}\n`;
     }
   });
-  
   copyToClipboard(textContent, buttonElement);
 }
 
