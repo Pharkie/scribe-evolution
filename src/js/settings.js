@@ -45,9 +45,13 @@ async function loadConfiguration() {
         currentConfig = config;
         populateForm(config);
         
-        // Hide loading state and show form
+        // Hide loading state and show form and navigation
         document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('settings-navigation').classList.remove('hidden');
         document.getElementById('settings-form').classList.remove('hidden');
+        
+        // Initialize with the first section (WiFi)
+        showSettingsSection('wifi');
         
     } catch (error) {
         console.error('Error loading configuration:', error);
@@ -785,5 +789,36 @@ function updateNextScheduledDisplay(nextScheduled) {
         } else {
             nextScheduledElement.style.display = 'none';
         }
+    }
+}
+
+/**
+ * Show specific settings section and hide others
+ */
+function showSettingsSection(sectionName) {
+    // Hide all sections
+    const allSections = document.querySelectorAll('.settings-section');
+    allSections.forEach(section => {
+        section.classList.add('hidden');
+    });
+
+    // Show the requested section
+    const targetSection = document.getElementById(`${sectionName}-section`);
+    if (targetSection) {
+        targetSection.classList.remove('hidden');
+    }
+
+    // Update navigation button states
+    const allNavButtons = document.querySelectorAll('.section-nav-btn');
+    allNavButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Find and activate the clicked button
+    const activeButton = Array.from(allNavButtons).find(btn => 
+        btn.onclick && btn.onclick.toString().includes(`'${sectionName}'`)
+    );
+    if (activeButton) {
+        activeButton.classList.add('active');
     }
 }

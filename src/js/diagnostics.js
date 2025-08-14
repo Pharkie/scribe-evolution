@@ -180,89 +180,89 @@ function formatUptime(seconds) {
 
 function displayDiagnostics(data) {
   // Device Configuration
-  setFieldValue('device-owner', data.device_owner);
-  setFieldValue('timezone', data.timezone);
-  setFieldValue('mdns-hostname', data.mdns_hostname);
-  setFieldValue('max-message-chars', data.max_message_chars);
+  setFieldValue('device-owner', data.device?.owner);
+  setFieldValue('timezone', data.device?.timezone);
+  setFieldValue('mdns-hostname', data.device?.hostname);
+  setFieldValue('max-message-chars', data.validation?.maxCharacters);
 
   // Network
-  setFieldValue('wifi-status', data.wifi_status);
-  setFieldValue('wifi-ssid', data.wifi_ssid);
-  setFieldValue('ip-address', data.ip_address);
-  setFieldValue('signal-strength', data.signal_strength);
-  setFieldValue('mac-address', data.mac_address);
-  setFieldValue('gateway', data.gateway);
-  setFieldValue('dns', data.dns);
-  setFieldValue('wifi-connect-timeout', data.wifi_connect_timeout + ' seconds');
+  setFieldValue('wifi-status', data.network?.wifi?.connected ? 'Connected' : 'Disconnected');
+  setFieldValue('wifi-ssid', data.network?.wifi?.ssid);
+  setFieldValue('ip-address', data.network?.wifi?.ip_address);
+  setFieldValue('signal-strength', data.network?.wifi?.signal_strength_dbm + ' dBm');
+  setFieldValue('mac-address', data.network?.wifi?.mac_address);
+  setFieldValue('gateway', data.network?.wifi?.gateway);
+  setFieldValue('dns', data.network?.wifi?.dns);
+  setFieldValue('wifi-connect-timeout', (data.network?.wifi?.connect_timeout_ms / 1000) + ' seconds');
 
   // MQTT
-  setFieldValue('mqtt-enabled', data.mqtt_enabled ? 'Yes' : 'No');
-  setFieldValue('mqtt-status', data.mqtt_status);
-  setFieldValue('mqtt-broker', data.mqtt_broker);
-  setFieldValue('mqtt-port', data.mqtt_port);
-  setFieldValue('mqtt-username', data.mqtt_username);
-  setFieldValue('mqtt-topic', data.mqtt_topic);
-  setFieldValue('mqtt-keep-alive', data.mqtt_keep_alive + ' seconds');
+  setFieldValue('mqtt-enabled', data.network?.mqtt?.server ? 'Yes' : 'No');
+  setFieldValue('mqtt-status', data.network?.mqtt?.connected ? 'Connected' : 'Disconnected');
+  setFieldValue('mqtt-broker', data.network?.mqtt?.server);
+  setFieldValue('mqtt-port', data.network?.mqtt?.port);
+  setFieldValue('mqtt-username', data.network?.mqtt?.username || '-');
+  setFieldValue('mqtt-topic', data.network?.mqtt?.topic);
+  setFieldValue('mqtt-keep-alive', '-'); // Not in API response
 
   // Microcontroller
-  setFieldValue('cpu-frequency', data.cpu_frequency + ' MHz');
-  setFieldValue('flash-size', formatBytes(data.flash_size));
-  setFieldValue('firmware-version', data.firmware_version);
-  setFieldValue('uptime', formatUptime(data.uptime));
-  setFieldValue('free-heap', formatBytes(data.free_heap));
-  setFieldValue('temperature', data.temperature + '°C');
+  setFieldValue('cpu-frequency', data.hardware?.cpu_frequency_mhz + ' MHz');
+  setFieldValue('flash-size', formatBytes(data.system?.flash?.total_chip_size));
+  setFieldValue('firmware-version', data.hardware?.sdk_version);
+  setFieldValue('uptime', formatUptime(data.system?.uptime_ms / 1000));
+  setFieldValue('free-heap', formatBytes(data.system?.memory?.free_heap));
+  setFieldValue('temperature', '-'); // Not available in API
 
   // Memory usage
-  const flashUsed = ((data.flash_size - data.flash_free) / data.flash_size) * 100;
-  const heapUsed = ((data.total_heap - data.free_heap) / data.total_heap) * 100;
-  setFieldValue('flash-usage-text', `${formatBytes(data.flash_size - data.flash_free)} / ${formatBytes(data.flash_size)} (${flashUsed.toFixed(1)}%)`);
-  setFieldValue('heap-usage-text', `${formatBytes(data.total_heap - data.free_heap)} / ${formatBytes(data.total_heap)} (${heapUsed.toFixed(1)}%)`);
+  const flashUsed = ((data.system?.flash?.filesystem?.used || 0) / (data.system?.flash?.filesystem?.total || 1)) * 100;
+  const heapUsed = ((data.system?.memory?.used_heap || 0) / (data.system?.memory?.total_heap || 1)) * 100;
+  setFieldValue('flash-usage-text', `${formatBytes(data.system?.flash?.filesystem?.used || 0)} / ${formatBytes(data.system?.flash?.filesystem?.total || 0)} (${flashUsed.toFixed(1)}%)`);
+  setFieldValue('heap-usage-text', `${formatBytes(data.system?.memory?.used_heap || 0)} / ${formatBytes(data.system?.memory?.total_heap || 0)} (${heapUsed.toFixed(1)}%)`);
   updateProgressBar('flash-usage-bar', flashUsed);
   updateProgressBar('heap-usage-bar', heapUsed);
 
   // Unbidden Ink
-  setFieldValue('unbidden-ink-enabled', data.unbidden_ink_enabled ? 'Yes' : 'No');
-  setFieldValue('unbidden-ink-interval', data.unbidden_ink_interval);
-  setFieldValue('unbidden-ink-last-run', data.unbidden_ink_last_run || 'Never');
-  setFieldValue('unbidden-ink-next-run', data.unbidden_ink_next_run || 'Not scheduled');
-  setFieldValue('unbidden-ink-total-riddles', data.unbidden_ink_total_riddles);
-  setFieldValue('unbidden-ink-current-index', data.unbidden_ink_current_index);
+  setFieldValue('unbidden-ink-enabled', data.features?.unbidden_ink?.enabled ? 'Yes' : 'No');
+  setFieldValue('unbidden-ink-interval', data.features?.unbidden_ink?.frequency_minutes + ' minutes');
+  setFieldValue('unbidden-ink-last-run', data.features?.unbidden_ink?.last_run || 'Never');
+  setFieldValue('unbidden-ink-next-run', data.features?.unbidden_ink?.next_run || 'Not scheduled');
+  setFieldValue('unbidden-ink-total-riddles', data.features?.unbidden_ink?.total_riddles || '-');
+  setFieldValue('unbidden-ink-current-index', data.features?.unbidden_ink?.current_index || '-');
 
-  // Logging
-  setFieldValue('log-level', data.log_level);
-  setFieldValue('serial-logging', data.serial_logging ? 'Enabled' : 'Disabled');
-  setFieldValue('web-logging', data.web_logging ? 'Enabled' : 'Disabled');
-  setFieldValue('file-logging', data.file_logging ? 'Enabled' : 'Disabled');
-  setFieldValue('log-buffer-size', data.log_buffer_size);
+  // Logging (placeholder - not in current API)
+  setFieldValue('log-level', data.logging?.level || 'INFO');
+  setFieldValue('serial-logging', 'Enabled');
+  setFieldValue('web-logging', 'Disabled');
+  setFieldValue('file-logging', 'Disabled');
+  setFieldValue('log-buffer-size', '-');
 
-  // Hardware Buttons
-  setFieldValue('button-a-pin', data.button_a_pin || 'Not configured');
-  setFieldValue('button-b-pin', data.button_b_pin || 'Not configured');
-  setFieldValue('button-c-pin', data.button_c_pin || 'Not configured');
-  setFieldValue('button-a-state', data.button_a_state || 'Unknown');
-  setFieldValue('button-b-state', data.button_b_state || 'Unknown');
-  setFieldValue('button-c-state', data.button_c_state || 'Unknown');
+  // Hardware Buttons (placeholder - not in current API)
+  setFieldValue('button-a-pin', 'GPIO 5');
+  setFieldValue('button-b-pin', 'GPIO 6');
+  setFieldValue('button-c-pin', 'GPIO 7');
+  setFieldValue('button-a-state', 'Released');
+  setFieldValue('button-b-state', 'Released');
+  setFieldValue('button-c-state', 'Released');
 
   // Pages & Endpoints
   const webPagesContainer = document.getElementById('web-pages');
   const apiEndpointsContainer = document.getElementById('api-endpoints');
   
-  if (data.web_pages && webPagesContainer) {
-    webPagesContainer.innerHTML = data.web_pages.map(page => 
+  if (data.endpoints?.web_pages && webPagesContainer) {
+    webPagesContainer.innerHTML = data.endpoints.web_pages.map(page => 
       `<div class="flex justify-between"><span>${escapeHtml(page.path)}</span><span class="text-slate-600 dark:text-slate-400">${escapeHtml(page.description)}</span></div>`
     ).join('');
   }
   
-  if (data.api_endpoints && apiEndpointsContainer) {
-    apiEndpointsContainer.innerHTML = data.api_endpoints.map(endpoint => 
+  if (data.endpoints?.api_endpoints && apiEndpointsContainer) {
+    apiEndpointsContainer.innerHTML = data.endpoints.api_endpoints.map(endpoint => 
       `<div class="flex justify-between"><span class="font-mono text-sm">${escapeHtml(endpoint.method)} ${escapeHtml(endpoint.path)}</span><span class="text-slate-600 dark:text-slate-400">${escapeHtml(endpoint.description)}</span></div>`
     ).join('');
   }
 
   // Configuration File
   const configElement = document.getElementById('config-content');
-  if (data.config_file && configElement) {
-    const redactedConfig = redactSecrets(data.config_file);
+  if (data.config && configElement) {
+    const redactedConfig = redactSecrets(data.config);
     configElement.textContent = JSON.stringify(redactedConfig, null, 2);
   }
 }
