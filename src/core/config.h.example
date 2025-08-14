@@ -50,11 +50,11 @@ static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";
 static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
 
 // Unbidden Ink (Pipedream) API configuration
-static const bool defaultEnableUnbiddenInk = false;                                                                                                                                                                 // Enable/disable Unbidden Ink feature
+static const bool defaultEnableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
 static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token
-static const int defaultUnbiddenInkStartHour = 10;                                                                                                                                                                  // Working hours start (24-hour format)
-static const int defaultUnbiddenInkEndHour = 16;                                                                                                                                                                    // Working hours end (24-hour format)
-static const int defaultUnbiddenInkFrequencyMinutes = 60;                                                                                                                                                           // Send 1 message in every X minute window
+static const int defaultUnbiddenInkStartHour = 10;                                                 // Working hours start (24-hour format)
+static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
+static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
 // Default button actions
 static const char *defaultButtonShortActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz"};
