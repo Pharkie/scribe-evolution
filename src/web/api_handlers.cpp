@@ -47,6 +47,8 @@ void handleStatus(AsyncWebServerRequest *request)
     totalBytes = LittleFS.totalBytes();
     usedBytes = LittleFS.usedBytes();
 
+    const RuntimeConfig &runtimeConfig = getRuntimeConfig();
+
     DynamicJsonDocument doc(2048); // Large size for comprehensive data
 
     // === DEVICE INFORMATION ===
@@ -163,9 +165,9 @@ void handleStatus(AsyncWebServerRequest *request)
     wifi["signal_strength_dbm"] = WiFi.RSSI();
     wifi["gateway"] = WiFi.gatewayIP().toString();
     wifi["dns"] = WiFi.dnsIP().toString();
+    wifi["connect_timeout_ms"] = runtimeConfig.wifiConnectTimeoutMs;
 
     // MQTT information
-    const RuntimeConfig &runtimeConfig = getRuntimeConfig();
     JsonObject mqtt = network.createNestedObject("mqtt");
     mqtt["connected"] = mqttClient.connected();
     mqtt["server"] = runtimeConfig.mqttServer;
