@@ -13,6 +13,6 @@ String getFormattedDateTime();
 String formatCustomDate(String customDate);
 String getISOTimestamp();
 String getDeviceBootTime();
-void setupTimezone();
+void setupTime();
 
 #endif // TIME_UTILS_H

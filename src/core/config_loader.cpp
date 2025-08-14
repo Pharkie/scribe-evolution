@@ -95,12 +95,12 @@ bool loadRuntimeConfig()
     JsonObject validation = doc["validation"];
     g_runtimeConfig.maxCharacters = validation["maxCharacters"] | maxCharacters;
 
-    // Load Unbidden Ink configuration
+    // Load Unbidden Ink settings from config.json (with defaults from config.h)
     JsonObject unbiddenInk = doc["unbiddenInk"];
-    g_runtimeConfig.unbiddenInkEnabled = unbiddenInk["enabled"] | enableUnbiddenInk;
-    g_runtimeConfig.unbiddenInkStartHour = unbiddenInk["startHour"] | unbiddenInkStartHour;
-    g_runtimeConfig.unbiddenInkEndHour = unbiddenInk["endHour"] | unbiddenInkEndHour;
-    g_runtimeConfig.unbiddenInkFrequencyMinutes = unbiddenInk["frequencyMinutes"] | unbiddenInkFrequencyMinutes;
+    g_runtimeConfig.unbiddenInkEnabled = unbiddenInk["enabled"] | defaultEnableUnbiddenInk;
+    g_runtimeConfig.unbiddenInkStartHour = unbiddenInk["startHour"] | defaultUnbiddenInkStartHour;
+    g_runtimeConfig.unbiddenInkEndHour = unbiddenInk["endHour"] | defaultUnbiddenInkEndHour;
+    g_runtimeConfig.unbiddenInkFrequencyMinutes = unbiddenInk["frequencyMinutes"] | defaultUnbiddenInkFrequencyMinutes;
     g_runtimeConfig.unbiddenInkPrompt = unbiddenInk["prompt"] | "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
 
     // Load Button configuration (exactly 4 buttons)
@@ -162,10 +162,10 @@ void loadDefaultConfig()
 
     g_runtimeConfig.maxCharacters = maxCharacters;
 
-    g_runtimeConfig.unbiddenInkEnabled = enableUnbiddenInk;
-    g_runtimeConfig.unbiddenInkStartHour = unbiddenInkStartHour;
-    g_runtimeConfig.unbiddenInkEndHour = unbiddenInkEndHour;
-    g_runtimeConfig.unbiddenInkFrequencyMinutes = unbiddenInkFrequencyMinutes;
+    g_runtimeConfig.unbiddenInkEnabled = defaultEnableUnbiddenInk;
+    g_runtimeConfig.unbiddenInkStartHour = defaultUnbiddenInkStartHour;
+    g_runtimeConfig.unbiddenInkEndHour = defaultUnbiddenInkEndHour;
+    g_runtimeConfig.unbiddenInkFrequencyMinutes = defaultUnbiddenInkFrequencyMinutes;
     g_runtimeConfig.unbiddenInkPrompt = "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
 
     // Load default button configuration
@@ -259,10 +259,10 @@ bool createDefaultConfigFile()
 
     // Unbidden Ink Configuration
     JsonObject unbiddenInk = doc.createNestedObject("unbiddenInk");
-    unbiddenInk["enabled"] = enableUnbiddenInk;
-    unbiddenInk["startHour"] = unbiddenInkStartHour;
-    unbiddenInk["endHour"] = unbiddenInkEndHour;
-    unbiddenInk["frequencyMinutes"] = unbiddenInkFrequencyMinutes;
+    unbiddenInk["enabled"] = defaultEnableUnbiddenInk;
+    unbiddenInk["startHour"] = defaultUnbiddenInkStartHour;
+    unbiddenInk["endHour"] = defaultUnbiddenInkEndHour;
+    unbiddenInk["frequencyMinutes"] = defaultUnbiddenInkFrequencyMinutes;
     unbiddenInk["prompt"] = "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
 
     // Button Configuration (exactly 4 buttons)

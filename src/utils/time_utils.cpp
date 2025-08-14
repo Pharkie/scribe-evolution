@@ -1,7 +1,9 @@
 #include "time_utils.h"
 #include "../core/logging.h"
 #include "../core/config_utils.h"
+#include "../core/config.h"
 #include "../core/network.h"
+#include <ezTime.h>
 #include <esp_task_wdt.h>
 
 // External reference to boot time from main.cpp
@@ -82,46 +84,37 @@ String getISOTimestamp()
 }
 
 // === Timezone Setup ===
-void setupTimezone()
+void setupTime()
 {
-    // Set location (this doesn't require NTP sync)
-    myTZ.setLocation(getTimezone());
+    LOG_VERBOSE("time_utils", "Setting up time synchronization...");
 
-    // Check if we're in AP mode - skip NTP sync if so
-    if (isAPMode())
+    // Configure NTP servers from config
+    for (int i = 0; i < ntpServerCount; i++)
     {
-        LOG_NOTICE("TIME", "In AP mode - skipping NTP sync | Timezone: %s | Using system time", getTimezone());
-        return;
+        setServer(ntpServers[i]);
+        LOG_VERBOSE("time_utils", "NTP server %d: %s", i + 1, ntpServers[i]);
     }
 
-    // Log combined timezone and NTP sync start (only in STA mode)
-    LOG_VERBOSE("TIME", "Timezone set: %s | Waiting for NTP sync", getTimezone());
+    // Set timeout for initial sync
+    setInterval(ntpSyncTimeoutSeconds);
 
-    // Feed watchdog while waiting for NTP sync
-    int attempts = 0;
-    const int maxAttempts = 60; // 60 seconds maximum wait
+    // Wait for time sync with configurable timeout
+    LOG_VERBOSE("time_utils", "Waiting for NTP sync (timeout: %d seconds)...", ntpSyncTimeoutSeconds);
+    unsigned long startTime = millis();
+    waitForSync(ntpSyncTimeoutSeconds);
 
-    while (timeStatus() != timeSet && attempts < maxAttempts)
+    if (timeStatus() != timeSet)
     {
-        events();             // Process ezTime events
-        esp_task_wdt_reset(); // Feed watchdog
-        delay(1000);
-        attempts++;
-
-        if (attempts % 10 == 0) // Log every 10 seconds
-        {
-            LOG_VERBOSE("TIME", "Still waiting for NTP sync... (%d/%d seconds)", attempts, maxAttempts);
-        }
-    }
-
-    if (timeStatus() == timeSet)
-    {
-        LOG_NOTICE("TIME", "NTP sync completed successfully | Current time: %s", myTZ.dateTime().c_str());
+        LOG_WARNING("time_utils", "NTP sync failed within %d seconds", ntpSyncTimeoutSeconds);
     }
     else
     {
-        LOG_WARNING("TIME", "NTP sync timeout after %d seconds - continuing with system time | Time-dependent features may not work correctly", maxAttempts);
+        unsigned long syncTime = millis() - startTime;
+        LOG_VERBOSE("time_utils", "NTP sync successful in %lu ms", syncTime);
     }
+
+    // Set ongoing sync interval
+    setInterval(ntpSyncIntervalSeconds);
 }
 
 String getDeviceBootTime()

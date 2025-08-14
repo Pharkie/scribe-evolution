@@ -175,7 +175,7 @@ void handlePrinterDiscovery()
     // Periodic heartbeat publishing - keeps printer visible to others
     unsigned long currentTime = millis();
     static unsigned long lastStatusPublish = 0;
-    const unsigned long STATUS_PUBLISH_INTERVAL = 60000; // 1 minute
+    const unsigned long STATUS_PUBLISH_INTERVAL = printerDiscoveryHeartbeatInterval;
 
     if (currentTime - lastStatusPublish > STATUS_PUBLISH_INTERVAL)
     {
