@@ -216,4 +216,13 @@
     top: 0;
     z-index: 10;
   }
+
+  /* Settings section management */
+  .settings-section {
+    @apply block;
+  }
+  
+  .settings-section.hidden {
+    @apply hidden;
+  }
 }

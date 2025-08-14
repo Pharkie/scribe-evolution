@@ -43,572 +43,618 @@
             </div>
         </div>
 
+        <!-- Settings Section Navigation -->
+        <div id="settings-navigation" class="hidden mb-6">
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button type="button" class="section-nav-btn active" onclick="showSettingsSection('wifi')">📶
+                    WiFi</button>
+                <button type="button" class="section-nav-btn" onclick="showSettingsSection('device')">⚙️ Device</button>
+                <button type="button" class="section-nav-btn" onclick="showSettingsSection('mqtt')">📡 MQTT</button>
+                <button type="button" class="section-nav-btn" onclick="showSettingsSection('unbidden')">🎲 Unbidden
+                    Ink</button>
+                <button type="button" class="section-nav-btn" onclick="showSettingsSection('buttons')">🎛️
+                    Buttons</button>
+            </div>
+        </div>
+
         <!-- Settings Form -->
         <form id="settings-form" class="hidden space-y-6" onsubmit="saveSettings(event)">
-            <!-- WiFi -->
-            <div class="settings-card settings-card-blue">
-                <h2 class="settings-card-header settings-card-header-blue">
-                    <span class="text-3xl">📶</span>
-                    <span>WiFi</span>
-                </h2>
+            <!-- WiFi Section -->
+            <div id="wifi-section" class="settings-section">
+                <div class="settings-card settings-card-blue">
+                    <h2 class="settings-card-header settings-card-header-blue">
+                        <span class="text-3xl">📶</span>
+                        <span>WiFi</span>
+                    </h2>
 
-                <!-- WiFi Warning -->
-                <div class="warning-box">
-                    <div class="flex items-start space-x-3">
-                        <span class="text-2xl">⚠️</span>
-                        <div>
-                            <h3 class="warning-title">WiFi Change Warning
-                            </h3>
-                            <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
-                                Changing WiFi settings will cause the device to restart and connect to the new network.
-                                Make sure the SSID and password are correct, or you may lose connection to the device!
-                            </p>
+                    <!-- WiFi Warning -->
+                    <div class="warning-box">
+                        <div class="flex items-start space-x-3">
+                            <span class="text-2xl">⚠️</span>
+                            <div>
+                                <h3 class="warning-title">WiFi Change Warning
+                                </h3>
+                                <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                                    Changing WiFi settings will cause the device to restart and connect to the new
+                                    network.
+                                    Make sure the SSID and password are correct, or you may lose connection to the
+                                    device!
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label for="wifi-ssid" class="form-label">WiFi
-                            SSID:</label>
-                        <input id="wifi-ssid" name="wifi_ssid" type="text" placeholder="Enter WiFi network name"
-                            class="input-standard">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="wifi-password" class="form-label">WiFi Password:</label>
-                        <input type="password" id="wifi-password" name="wifi.password" class="input-standard">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="wifi-timeout" class="form-label">Connection Timeout
-                            (seconds):</label>
-                        <input type="number" id="wifi-timeout" name="wifi.connect_timeout" min="5" max="60" value="15"
-                            class="input-standard">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Time to wait before falling back to AP mode
-                            (5-60 seconds)</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Device -->
-            <div class="settings-card settings-card-purple">
-                <h2 class="settings-card-header settings-card-header-purple">
-                    <span class="text-3xl">⚙️</span>
-                    <span>Device</span>
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label for="device-owner" class="form-label">Device Owner:</label>
-                        <input type="text" id="device-owner" name="general.device_owner"
-                            placeholder="Enter device owner name" class="input-standard">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="timezone" class="form-label">Timezone (IANA
-                            format):</label>
-                        <input type="text" id="timezone" name="device.timezone" required
-                            placeholder="e.g. Europe/London, America/New_York, UTC"
-                            pattern="^[A-Za-z_]+/[A-Za-z_]+$|^UTC$" class="input-standard">
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Use IANA timezone format (e.g.
-                            Europe/London, America/New_York)</p>
-                    </div>
-                </div>
-                <!-- Additional device settings -->
-                <div class="mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label for="max-characters" class="form-label">Max Message
-                                Characters
-                                (100-5000):</label>
-                            <input type="number" id="max-characters" name="validation.maxCharacters" min="100"
-                                max="5000" required class="input-standard">
+                            <label for="wifi-ssid" class="form-label">WiFi
+                                SSID:</label>
+                            <input id="wifi-ssid" name="wifi_ssid" type="text" placeholder="Enter WiFi network name"
+                                class="input-standard">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="wifi-password" class="form-label">WiFi Password:</label>
+                            <input type="password" id="wifi-password" name="wifi.password" class="input-standard">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="wifi-timeout" class="form-label">Connection Timeout
+                                (seconds):</label>
+                            <input type="number" id="wifi-timeout" name="wifi.connect_timeout" min="5" max="60"
+                                value="15" class="input-standard">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Time to wait before falling back to AP
+                                mode
+                                (5-60 seconds)</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- MQTT -->
-            <div class="settings-card settings-card-yellow">
-                <h2 class="settings-card-header settings-card-header-yellow">
-                    <span class="text-3xl">📡</span>
-                    <span>MQTT</span>
-                </h2>
-                <div class="space-y-6">
-                    <!-- Server gets full width -->
-                    <div class="space-y-2">
-                        <label for="mqtt-server" class="form-label">Server:</label>
-                        <input type="text" id="mqtt-server" name="mqtt.server" required class="input-standard">
-                    </div>
-                    <!-- Username, Password, Port share the row (1/3 each) -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Device Section -->
+            <div id="device-section" class="settings-section hidden">
+                <div class="settings-card settings-card-purple">
+                    <h2 class="settings-card-header settings-card-header-purple">
+                        <span class="text-3xl">⚙️</span>
+                        <span>Device</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label for="mqtt-username" class="form-label">Username:</label>
-                            <input type="text" id="mqtt-username" name="mqtt.username" required class="input-standard">
+                            <label for="device-owner" class="form-label">Device Owner:</label>
+                            <input type="text" id="device-owner" name="general.device_owner"
+                                placeholder="Enter device owner name" class="input-standard">
                         </div>
                         <div class="space-y-2">
-                            <label for="mqtt-password" class="form-label">Password:</label>
-                            <input type="password" id="mqtt-password" name="mqtt.password" required
-                                class="input-standard">
-                        </div>
-                        <div class="space-y-2">
-                            <label for="mqtt-port" class="form-label">Port:</label>
-                            <input type="number" id="mqtt-port" name="mqtt.port" min="1" max="65535" required
-                                class="input-standard">
+                            <label for="timezone" class="form-label">Timezone (IANA
+                                format):</label>
+                            <input type="text" id="timezone" name="device.timezone" required
+                                placeholder="e.g. Europe/London, America/New_York, UTC"
+                                pattern="^[A-Za-z_]+/[A-Za-z_]+$|^UTC$" class="input-standard">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Use IANA timezone format (e.g.
+                                Europe/London, America/New_York)</p>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Unbidden Ink -->
-            <div class="settings-card settings-card-green">
-                <h2 class="settings-card-header settings-card-header-green">
-                    <span class="text-3xl">🪄</span>
-                    <span>Unbidden Ink</span>
-                </h2>
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                        <div class="flex items-center space-x-3">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Enable Unbidden Ink
-                                </h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Automatically generate and print
-                                    creative content</p>
-                            </div>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="unbidden-ink-enabled" name="unbiddenInk.enabled"
-                                class="sr-only peer" onchange="toggleUnbiddenInkSettings()">
-                            <div
-                                class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white dark:after:bg-gray-200 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500">
-                            </div>
-                        </label>
-                    </div>
-
-                    <div id="unbidden-ink-settings" class="space-y-6">
-                        <!-- ChatGPT API Token -->
-                        <div class="space-y-2">
-                            <label for="chatgpt-api-token"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">ChatGPT API
-                                Token:</label>
-                            <input type="password" id="chatgpt-api-token" name="apis.chatgptApiToken" required
-                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Your OpenAI API key for GPT access. <a
-                                    href="https://platform.openai.com/api-keys" target="_blank"
-                                    class="text-purple-600 dark:text-purple-400 hover:underline">Get your API key
-                                    here</a>.</p>
-                        </div>
-
-                        <!-- Time Range Slider -->
-                        <div class="space-y-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Active Time
-                                Range:</label>
+                    <!-- Additional device settings -->
+                    <div class="mt-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
-                                <div class="dual-range-slider">
-                                    <!-- Background track container -->
-                                    <div class="dual-range-track"></div>
-
-                                    <!-- Active time track (colored section) -->
-                                    <div id="time-track" class="dual-range-active" style="left: 33.33%; width: 58.33%;">
-                                    </div>
-
-                                    <!-- Dynamic click areas - will be positioned by JavaScript -->
-                                    <div id="click-area-start" class="dual-range-click-area"
-                                        onclick="handleSliderClick(event, 'start')"></div>
-                                    <div id="click-area-end" class="dual-range-click-area"
-                                        onclick="handleSliderClick(event, 'end')"></div>
-
-                                    <!-- Start time handle - full width -->
-                                    <input type="range" id="time-start" name="unbiddenInk.startHour" min="0" max="24"
-                                        step="1" value="8" class="dual-range-input dual-range-start"
-                                        oninput="updateTimeRange(this, 'start')" onchange="updateClickAreas()">
-
-                                    <!-- End time handle - full width -->
-                                    <input type="range" id="time-end" name="unbiddenInk.endHour" min="0" max="24"
-                                        step="1" value="22" class="dual-range-input dual-range-end"
-                                        oninput="updateTimeRange(this, 'end')" onchange="updateClickAreas()">
-                                </div>
-
-                                <!-- Time display -->
-                                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
-                                    <span id="time-display-start">08:00</span>
-                                    <span class="text-purple-600 dark:text-purple-400 font-medium">Active Period</span>
-                                    <span id="time-display-end">22:00</span>
-                                </div>
-
-                                <!-- Hour markers -->
-                                <div class="mx-2">
-                                    <div
-                                        class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1 relative">
-                                        <!-- Always show core markers -->
-                                        <span class="time-marker time-marker-0">0</span>
-                                        <span class="time-marker time-marker-4">4</span>
-                                        <span class="time-marker time-marker-8">8</span>
-                                        <span class="time-marker time-marker-12">12</span>
-                                        <span class="time-marker time-marker-16">16</span>
-                                        <span class="time-marker time-marker-20">20</span>
-                                        <span class="time-marker time-marker-24">24</span>
-
-                                        <!-- Tablet+ - show every 2 hours -->
-                                        <span class="time-marker time-marker-2 hidden sm:inline">2</span>
-                                        <span class="time-marker time-marker-6 hidden sm:inline">6</span>
-                                        <span class="time-marker time-marker-10 hidden sm:inline">10</span>
-                                        <span class="time-marker time-marker-14 hidden sm:inline">14</span>
-                                        <span class="time-marker time-marker-18 hidden sm:inline">18</span>
-                                        <span class="time-marker time-marker-22 hidden sm:inline">22</span>
-
-                                        <!-- Desktop only - show remaining hours -->
-                                        <span class="time-marker time-marker-1 hidden lg:inline">1</span>
-                                        <span class="time-marker time-marker-3 hidden lg:inline">3</span>
-                                        <span class="time-marker time-marker-5 hidden lg:inline">5</span>
-                                        <span class="time-marker time-marker-7 hidden lg:inline">7</span>
-                                        <span class="time-marker time-marker-9 hidden lg:inline">9</span>
-                                        <span class="time-marker time-marker-11 hidden lg:inline">11</span>
-                                        <span class="time-marker time-marker-13 hidden lg:inline">13</span>
-                                        <span class="time-marker time-marker-15 hidden lg:inline">15</span>
-                                        <span class="time-marker time-marker-17 hidden lg:inline">17</span>
-                                        <span class="time-marker time-marker-19 hidden lg:inline">19</span>
-                                        <span class="time-marker time-marker-21 hidden lg:inline">21</span>
-                                        <span class="time-marker time-marker-23 hidden lg:inline">23</span>
-                                        <span class="time-marker time-marker-24">24</span>
-                                    </div>
-                                </div>
+                                <label for="max-characters" class="form-label">Max Message
+                                    Characters
+                                    (100-5000):</label>
+                                <input type="number" id="max-characters" name="validation.maxCharacters" min="100"
+                                    max="5000" required class="input-standard">
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Frequency Slider -->
-                        <div class="space-y-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Generation
-                                Frequency:</label>
+            <!-- MQTT Section -->
+            <div id="mqtt-section" class="settings-section hidden">
+                <div class="settings-card settings-card-yellow">
+                    <h2 class="settings-card-header settings-card-header-yellow">
+                        <span class="text-3xl">📡</span>
+                        <span>MQTT</span>
+                    </h2>
+                    <div class="space-y-6">
+                        <!-- Server gets full width -->
+                        <div class="space-y-2">
+                            <label for="mqtt-server" class="form-label">Server:</label>
+                            <input type="text" id="mqtt-server" name="mqtt.server" required class="input-standard">
+                        </div>
+                        <!-- Username, Password, Port share the row (1/3 each) -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="space-y-2">
+                                <label for="mqtt-username" class="form-label">Username:</label>
+                                <input type="text" id="mqtt-username" name="mqtt.username" required
+                                    class="input-standard">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="mqtt-password" class="form-label">Password:</label>
+                                <input type="password" id="mqtt-password" name="mqtt.password" required
+                                    class="input-standard">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="mqtt-port" class="form-label">Port:</label>
+                                <input type="number" id="mqtt-port" name="mqtt.port" min="1" max="65535" required
+                                    class="input-standard">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unbidden Ink Section -->
+            <div id="unbidden-section" class="settings-section hidden">
+                <div class="settings-card settings-card-green">
+                    <h2 class="settings-card-header settings-card-header-green">
+                        <span class="text-3xl">🪄</span>
+                        <span>Unbidden Ink</span>
+                    </h2>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                            <div class="flex items-center space-x-3">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Enable Unbidden
+                                        Ink
+                                    </h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Automatically generate and print
+                                        creative content</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="unbidden-ink-enabled" name="unbiddenInk.enabled"
+                                    class="sr-only peer" onchange="toggleUnbiddenInkSettings()">
+                                <div
+                                    class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white dark:after:bg-gray-200 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500">
+                                </div>
+                            </label>
+                        </div>
+
+                        <div id="unbidden-ink-settings" class="space-y-6">
+                            <!-- ChatGPT API Token -->
+                            <div class="space-y-2">
+                                <label for="chatgpt-api-token"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">ChatGPT API
+                                    Token:</label>
+                                <input type="password" id="chatgpt-api-token" name="apis.chatgptApiToken" required
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Your OpenAI API key for GPT access.
+                                    <a href="https://platform.openai.com/api-keys" target="_blank"
+                                        class="text-purple-600 dark:text-purple-400 hover:underline">Get your API key
+                                        here</a>.</p>
+                            </div>
+
+                            <!-- Time Range Slider -->
                             <div class="space-y-4">
-                                <!-- Frequency slider with non-linear scale -->
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Active Time
+                                    Range:</label>
                                 <div class="space-y-2">
-                                    <div class="single-range-slider">
-                                        <!-- Background track -->
-                                        <div class="single-range-track"></div>
+                                    <div class="dual-range-slider">
+                                        <!-- Background track container -->
+                                        <div class="dual-range-track"></div>
 
-                                        <!-- Frequency slider -->
-                                        <input type="range" id="frequency-slider" min="0" max="7" step="1" value="3"
-                                            class="single-range-input" oninput="updateFrequencyFromSlider(this.value)">
+                                        <!-- Active time track (colored section) -->
+                                        <div id="time-track" class="dual-range-active"
+                                            style="left: 33.33%; width: 58.33%;">
+                                        </div>
+
+                                        <!-- Dynamic click areas - will be positioned by JavaScript -->
+                                        <div id="click-area-start" class="dual-range-click-area"
+                                            onclick="handleSliderClick(event, 'start')"></div>
+                                        <div id="click-area-end" class="dual-range-click-area"
+                                            onclick="handleSliderClick(event, 'end')"></div>
+
+                                        <!-- Start time handle - full width -->
+                                        <input type="range" id="time-start" name="unbiddenInk.startHour" min="0"
+                                            max="24" step="1" value="8" class="dual-range-input dual-range-start"
+                                            oninput="updateTimeRange(this, 'start')" onchange="updateClickAreas()">
+
+                                        <!-- End time handle - full width -->
+                                        <input type="range" id="time-end" name="unbiddenInk.endHour" min="0" max="24"
+                                            step="1" value="22" class="dual-range-input dual-range-end"
+                                            oninput="updateTimeRange(this, 'end')" onchange="updateClickAreas()">
                                     </div>
 
-                                    <!-- Frequency markers -->
-                                    <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                        <span>15min</span>
-                                        <span>30min</span>
-                                        <span>45min</span>
-                                        <span>1hr</span>
-                                        <span>2hr</span>
-                                        <span>4hr</span>
-                                        <span>6hr</span>
-                                        <span>8hr</span>
+                                    <!-- Time display -->
+                                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
+                                        <span id="time-display-start">08:00</span>
+                                        <span class="text-purple-600 dark:text-purple-400 font-medium">Active
+                                            Period</span>
+                                        <span id="time-display-end">22:00</span>
                                     </div>
-                                </div>
 
-                                <!-- Hidden input for the actual value -->
-                                <input type="hidden" id="frequency-minutes" name="unbiddenInk.frequencyMinutes"
-                                    value="60">
+                                    <!-- Hour markers -->
+                                    <div class="mx-2">
+                                        <div
+                                            class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1 relative">
+                                            <!-- Always show core markers -->
+                                            <span class="time-marker time-marker-0">0</span>
+                                            <span class="time-marker time-marker-4">4</span>
+                                            <span class="time-marker time-marker-8">8</span>
+                                            <span class="time-marker time-marker-12">12</span>
+                                            <span class="time-marker time-marker-16">16</span>
+                                            <span class="time-marker time-marker-20">20</span>
+                                            <span class="time-marker time-marker-24">24</span>
 
-                                <!-- Current selection display -->
-                                <div class="text-center">
-                                    <span
-                                        class="inline-flex items-center px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-lg text-sm font-medium">
-                                        <span class="text-lg mr-2">⏱️</span>
-                                        <span id="frequency-display">Around once per hour from 8 am to 10 pm each
-                                            day</span>
-                                    </span>
-                                    <div id="next-scheduled" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                        <!-- Next scheduled time will be populated here -->
+                                            <!-- Tablet+ - show every 2 hours -->
+                                            <span class="time-marker time-marker-2 hidden sm:inline">2</span>
+                                            <span class="time-marker time-marker-6 hidden sm:inline">6</span>
+                                            <span class="time-marker time-marker-10 hidden sm:inline">10</span>
+                                            <span class="time-marker time-marker-14 hidden sm:inline">14</span>
+                                            <span class="time-marker time-marker-18 hidden sm:inline">18</span>
+                                            <span class="time-marker time-marker-22 hidden sm:inline">22</span>
+
+                                            <!-- Desktop only - show remaining hours -->
+                                            <span class="time-marker time-marker-1 hidden lg:inline">1</span>
+                                            <span class="time-marker time-marker-3 hidden lg:inline">3</span>
+                                            <span class="time-marker time-marker-5 hidden lg:inline">5</span>
+                                            <span class="time-marker time-marker-7 hidden lg:inline">7</span>
+                                            <span class="time-marker time-marker-9 hidden lg:inline">9</span>
+                                            <span class="time-marker time-marker-11 hidden lg:inline">11</span>
+                                            <span class="time-marker time-marker-13 hidden lg:inline">13</span>
+                                            <span class="time-marker time-marker-15 hidden lg:inline">15</span>
+                                            <span class="time-marker time-marker-17 hidden lg:inline">17</span>
+                                            <span class="time-marker time-marker-19 hidden lg:inline">19</span>
+                                            <span class="time-marker time-marker-21 hidden lg:inline">21</span>
+                                            <span class="time-marker time-marker-23 hidden lg:inline">23</span>
+                                            <span class="time-marker time-marker-24">24</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Prompt Presets and Custom Input -->
-                        <div class="space-y-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Content Generation
-                                Prompt:</label>
+                            <!-- Frequency Slider -->
+                            <div class="space-y-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Generation
+                                    Frequency:</label>
+                                <div class="space-y-4">
+                                    <!-- Frequency slider with non-linear scale -->
+                                    <div class="space-y-2">
+                                        <div class="single-range-slider">
+                                            <!-- Background track -->
+                                            <div class="single-range-track"></div>
 
-                            <!-- Prompt preset buttons -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <button type="button"
-                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                    onclick="setPrompt('Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.')">
-                                    <div class="flex items-start space-x-3">
-                                        <span class="text-2xl">💭</span>
-                                        <div>
-                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Inspirational
-                                                Quotes</h4>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">Daily wisdom and
-                                                motivation</p>
+                                            <!-- Frequency slider -->
+                                            <input type="range" id="frequency-slider" min="0" max="7" step="1" value="3"
+                                                class="single-range-input"
+                                                oninput="updateFrequencyFromSlider(this.value)">
+                                        </div>
+
+                                        <!-- Frequency markers -->
+                                        <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                            <span>15min</span>
+                                            <span>30min</span>
+                                            <span>45min</span>
+                                            <span>1hr</span>
+                                            <span>2hr</span>
+                                            <span>4hr</span>
+                                            <span>6hr</span>
+                                            <span>8hr</span>
                                         </div>
                                     </div>
-                                </button>
 
-                                <button type="button"
-                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                    onclick="setPrompt('Generate a fun fact under 200 characters about BBC Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history that is esoteric and only 5% of fans might know.')">
-                                    <div class="flex items-start space-x-3">
-                                        <span class="text-2xl">🕰️</span>
-                                        <div>
-                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Doctor Who Facts
-                                            </h4>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">Timey-wimey trivia and
-                                                lore</p>
+                                    <!-- Hidden input for the actual value -->
+                                    <input type="hidden" id="frequency-minutes" name="unbiddenInk.frequencyMinutes"
+                                        value="60">
+
+                                    <!-- Current selection display -->
+                                    <div class="text-center">
+                                        <span
+                                            class="inline-flex items-center px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-lg text-sm font-medium">
+                                            <span class="text-lg mr-2">⏱️</span>
+                                            <span id="frequency-display">Around once per hour from 8 am to 10 pm each
+                                                day</span>
+                                        </span>
+                                        <div id="next-scheduled" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            <!-- Next scheduled time will be populated here -->
                                         </div>
                                     </div>
-                                </button>
-
-                                <button type="button"
-                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                    onclick="setPrompt('Write a short, humorous observation about everyday life or a witty one-liner. Keep it light and under 200 characters.')">
-                                    <div class="flex items-start space-x-3">
-                                        <span class="text-2xl">😄</span>
-                                        <div>
-                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Humor & Wit</h4>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">Light-hearted
-                                                observations</p>
-                                        </div>
-                                    </div>
-                                </button>
-
-                                <button type="button"
-                                    class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                    onclick="setPrompt('Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.')">
-                                    <div class="flex items-start space-x-3">
-                                        <span class="text-2xl">✨</span>
-                                        <div>
-                                            <h4 class="font-medium text-gray-800 dark:text-gray-100">Creative Sparks
-                                            </h4>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">Imaginative and artistic
-                                                content</p>
-                                        </div>
-                                    </div>
-                                </button>
+                                </div>
                             </div>
 
-                            <!-- Custom prompt textarea -->
-                            <div class="space-y-2">
-                                <label for="unbidden-ink-prompt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Custom
+                            <!-- Prompt Presets and Custom Input -->
+                            <div class="space-y-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Content
+                                    Generation
                                     Prompt:</label>
-                                <textarea id="unbidden-ink-prompt" name="unbiddenInk.prompt" rows="4"
-                                    placeholder="Enter your custom prompt here, or click one of the preset buttons above..."
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"></textarea>
+
+                                <!-- Prompt preset buttons -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button type="button"
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                        onclick="setPrompt('Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.')">
+                                        <div class="flex items-start space-x-3">
+                                            <span class="text-2xl">💭</span>
+                                            <div>
+                                                <h4 class="font-medium text-gray-800 dark:text-gray-100">Inspirational
+                                                    Quotes</h4>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">Daily wisdom and
+                                                    motivation</p>
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button"
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                        onclick="setPrompt('Generate a fun fact under 200 characters about BBC Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history that is esoteric and only 5% of fans might know.')">
+                                        <div class="flex items-start space-x-3">
+                                            <span class="text-2xl">🕰️</span>
+                                            <div>
+                                                <h4 class="font-medium text-gray-800 dark:text-gray-100">Doctor Who
+                                                    Facts
+                                                </h4>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">Timey-wimey trivia
+                                                    and
+                                                    lore</p>
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button"
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                        onclick="setPrompt('Write a short, humorous observation about everyday life or a witty one-liner. Keep it light and under 200 characters.')">
+                                        <div class="flex items-start space-x-3">
+                                            <span class="text-2xl">😄</span>
+                                            <div>
+                                                <h4 class="font-medium text-gray-800 dark:text-gray-100">Humor & Wit
+                                                </h4>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">Light-hearted
+                                                    observations</p>
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button"
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                                        onclick="setPrompt('Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.')">
+                                        <div class="flex items-start space-x-3">
+                                            <span class="text-2xl">✨</span>
+                                            <div>
+                                                <h4 class="font-medium text-gray-800 dark:text-gray-100">Creative Sparks
+                                                </h4>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">Imaginative and
+                                                    artistic
+                                                    content</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- Custom prompt textarea -->
+                                <div class="space-y-2">
+                                    <label for="unbidden-ink-prompt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Custom
+                                        Prompt:</label>
+                                    <textarea id="unbidden-ink-prompt" name="unbiddenInk.prompt" rows="4"
+                                        placeholder="Enter your custom prompt here, or click one of the preset buttons above..."
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"></textarea>
+                                </div>
+
+                                <!-- Test Unbidden Ink -->
+                                <div class="pt-4 text-right">
+                                    <button type="button" onclick="testUnbiddenInk()"
+                                        class="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 rounded">
+                                        Bid Unbidden Ink To Scribe Now
+                                    </button>
+                                </div>
                             </div>
 
-                            <!-- Test Unbidden Ink -->
-                            <div class="pt-4 text-right">
-                                <button type="button" onclick="testUnbiddenInk()"
-                                    class="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 rounded">
-                                    Bid Unbidden Ink To Scribe Now
-                                </button>
-                            </div>
+
                         </div>
-
-
                     </div>
                 </div>
             </div>
 
-            <!-- Buttons -->
-            <div
-                class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 shadow-2xl rounded-3xl p-8">
-                <h2 class="text-2xl font-bold text-orange-800 dark:text-orange-100 mb-6 flex items-center space-x-2">
-                    <span class="text-3xl">🔘</span>
-                    <span>Buttons</span>
-                </h2>
-                <div class="space-y-6">
+            <!-- Buttons Section -->
+            <div id="buttons-section" class="settings-section hidden">
+                <div
+                    class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 shadow-2xl rounded-3xl p-8">
+                    <h2
+                        class="text-2xl font-bold text-orange-800 dark:text-orange-100 mb-6 flex items-center space-x-2">
+                        <span class="text-3xl">🔘</span>
+                        <span>Buttons</span>
+                    </h2>
+                    <div class="space-y-6">
 
-                    <!-- Button 1 -->
-                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 1 (GPIO 5)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label for="button1-short"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
-                                    Action:</label>
-                                <select id="button1-short" name="buttons.button1.shortAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button1-short-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button1-short-mqtt" name="buttons.button1.shortMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="button1-long"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
-                                    Action:</label>
-                                <select id="button1-long" name="buttons.button1.longAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button1-long-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button1-long-mqtt" name="buttons.button1.longMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <!-- Button 1 -->
+                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 1 (GPIO 5)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="button1-short"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                        Action:</label>
+                                    <select id="button1-short" name="buttons.button1.shortAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button1-short-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button1-short-mqtt" name="buttons.button1.shortMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="button1-long"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                        Action:</label>
+                                    <select id="button1-long" name="buttons.button1.longAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button1-long-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button1-long-mqtt" name="buttons.button1.longMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Button 2 -->
-                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 2 (GPIO 6)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label for="button2-short"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
-                                    Action:</label>
-                                <select id="button2-short" name="buttons.button2.shortAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button2-short-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button2-short-mqtt" name="buttons.button2.shortMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="button2-long"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
-                                    Action:</label>
-                                <select id="button2-long" name="buttons.button2.longAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button2-long-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button2-long-mqtt" name="buttons.button2.longMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <!-- Button 2 -->
+                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 2 (GPIO 6)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="button2-short"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                        Action:</label>
+                                    <select id="button2-short" name="buttons.button2.shortAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button2-short-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button2-short-mqtt" name="buttons.button2.shortMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="button2-long"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                        Action:</label>
+                                    <select id="button2-long" name="buttons.button2.longAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button2-long-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button2-long-mqtt" name="buttons.button2.longMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Button 3 -->
-                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 3 (GPIO 7)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label for="button3-short"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
-                                    Action:</label>
-                                <select id="button3-short" name="buttons.button3.shortAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button3-short-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button3-short-mqtt" name="buttons.button3.shortMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="button3-long"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
-                                    Action:</label>
-                                <select id="button3-long" name="buttons.button3.longAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button3-long-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button3-long-mqtt" name="buttons.button3.longMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <!-- Button 3 -->
+                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 3 (GPIO 7)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="button3-short"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                        Action:</label>
+                                    <select id="button3-short" name="buttons.button3.shortAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button3-short-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button3-short-mqtt" name="buttons.button3.shortMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="button3-long"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                        Action:</label>
+                                    <select id="button3-long" name="buttons.button3.longAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button3-long-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button3-long-mqtt" name="buttons.button3.longMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Button 4 -->
-                    <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 4 (GPIO 8)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label for="button4-short"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
-                                    Action:</label>
-                                <select id="button4-short" name="buttons.button4.shortAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button4-short-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button4-short-mqtt" name="buttons.button4.shortMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="button4-long"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
-                                    Action:</label>
-                                <select id="button4-long" name="buttons.button4.longAction"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                    <option value="">None</option>
-                                    <option value="/api/joke">Joke</option>
-                                    <option value="/api/riddle">Riddle</option>
-                                    <option value="/api/quote">Quote</option>
-                                    <option value="/api/quiz">Quiz</option>
-                                    <option value="/api/print-test">Print Test</option>
-                                    <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                </select>
-                                <label for="button4-long-mqtt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic (leave
-                                    blank to scribe local direct):</label>
-                                <input type="text" id="button4-long-mqtt" name="buttons.button4.longMqttTopic"
-                                    placeholder="/scribe/Riccy/print/"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <!-- Button 4 -->
+                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Button 4 (GPIO 8)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="button4-short"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Press
+                                        Action:</label>
+                                    <select id="button4-short" name="buttons.button4.shortAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button4-short-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button4-short-mqtt" name="buttons.button4.shortMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="button4-long"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Long Press
+                                        Action:</label>
+                                    <select id="button4-long" name="buttons.button4.longAction"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="">None</option>
+                                        <option value="/api/joke">Joke</option>
+                                        <option value="/api/riddle">Riddle</option>
+                                        <option value="/api/quote">Quote</option>
+                                        <option value="/api/quiz">Quiz</option>
+                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                    </select>
+                                    <label for="button4-long-mqtt"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">MQTT topic
+                                        (leave
+                                        blank to scribe local direct):</label>
+                                    <input type="text" id="button4-long-mqtt" name="buttons.button4.longMqttTopic"
+                                        placeholder="/scribe/Riccy/print/"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                </div>
                             </div>
                         </div>
                     </div>

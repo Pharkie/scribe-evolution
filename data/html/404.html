@@ -10,37 +10,65 @@
 </head>
 
 <body class="page-body">
-        <div class="error-container">
-                <div class="error-card">
-                        <h1 class="error-title">🗑️ Paper Jam</h1>
-                        <div class="error-code">404 Not Found</div>
-                        <p class="error-message">
-                                Looks like that page got tangled up in the rollers.
-                        </p>
+        <!-- Header with title and back button -->
+        <header class="page-header">
+                <!-- Back button -->
+                <div class="header-spacer">
+                        <button onclick="goBack()" class="back-button">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                <span class="text-xs sm:text-sm font-medium">Back</span>
+                        </button>
+                </div>
 
-                        <div class="error-details">
-                                <strong class="error-details-title">Request Details:</strong><br>
-                                <div class="error-details-content">
-                                        <div>Method: <span class="error-details-item">{{METHOD}}</span></div>
-                                        <div>Path: <span class="error-details-item">{{URI}}</span></div>
-                                        <div>Device: <span class="error-details-item">{{HOSTNAME}}.local</span></div>
-                                </div>
-                        </div>
+                <!-- Centered title -->
+                <div class="header-center">
+                        <h1 class="page-title">
+                                <span class="text-4xl sm:text-5xl">🗑️</span>
+                                <span>Paper Jam</span>
+                        </h1>
+                </div>
 
-                        <div class="error-actions">
-                                <p class="error-help-text">
-                                        Maybe check the
-                                        <a href="/diagnostics.html" class="error-help-link">
-                                                diagnostics
-                                        </a>
+                <!-- Right spacer -->
+                <div class="header-spacer"></div>
+        </header>
+
+        <main class="page-main">
+                <div class="error-container">
+                        <div class="error-card">
+                                <div class="error-code">404 Not Found</div>
+                                <p class="error-message">
+                                        Looks like that page got tangled up in the rollers.
                                 </p>
 
-                                <a href="/" class="error-home-button">
-                                        ← Home
-                                </a>
+                                <div class="error-details">
+                                        <strong class="error-details-title">Request Details:</strong><br>
+                                        <div class="error-details-content">
+                                                <div>Method: <span class="error-details-item">{{METHOD}}</span></div>
+                                                <div>Path: <span class="error-details-item">{{URI}}</span></div>
+                                                <div>Device: <span class="error-details-item">{{HOSTNAME}}.local</span>
+                                                </div>
+                                        </div>
+                                </div>
+
+                                <div class="error-actions">
+                                        <p class="error-help-text">
+                                                Maybe check the
+                                                <a href="/diagnostics.html" class="error-help-link">
+                                                        diagnostics
+                                                </a>
+                                        </p>
+
+                                        <a href="/" class="error-home-button">
+                                                🏠 Home
+                                        </a>
+                                </div>
                         </div>
                 </div>
-        </div>
+        </main>
 </body>
 
 </html>
