@@ -5,542 +5,338 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Scribe - Diagnostics</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/diagnostics.min.css">
 </head>
 
-<body
-    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-    <!-- Header with title and navigation -->
-    <header class="w-full max-w-6xl mx-auto flex items-center mb-8 gap-4">
-        <!-- Left section with back button -->
+<body class="page-body">
+    <header class="page-header">
         <div class="flex-1">
-            <button onclick="goBack()"
-                class="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md">
+            <button onclick="goBack()" class="back-button">
                 <span class="text-base sm:text-lg">←</span>
                 <span class="text-xs sm:text-sm font-medium">Back</span>
             </button>
         </div>
-
-        <!-- Centered title -->
         <div class="flex-1 flex justify-center">
-            <h1
-                class="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2">
+            <h1 class="page-title">
                 <span class="text-4xl sm:text-5xl">📊</span>
                 <span>Diagnostics</span>
             </h1>
         </div>
-
-        <!-- Right section (empty now - balanced layout) -->
-        <div class="flex-1">
-        </div>
+        <div class="flex-1"></div>
     </header>
 
-    <main class="w-full max-w-6xl mx-auto flex-1">
-        <!-- Diagnostics Content -->
-        <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-            <div id="diagnostics-content" class="space-y-6">
-                <!-- Loading indicator (will be hidden when data loads) -->
-                <div id="loading-indicator" class="flex items-center justify-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <span class="ml-3 text-gray-600 dark:text-gray-400">Loading diagnostics...</span>
-                </div>
+    <main class="w-full max-w-6xl mx-auto flex-1 flex flex-col">
+        <nav class="flex flex-wrap justify-center gap-2 mb-6">
+            <button onclick="showSection('device-config-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors">⚙️
+                Device</button>
+            <button onclick="showSection('network-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">🌐
+                Network</button>
+            <button onclick="showSection('mqtt-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg transition-colors">📡
+                MQTT</button>
+            <button onclick="showSection('microcontroller-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded-lg transition-colors">🎛️
+                MCU</button>
+            <button onclick="showSection('unbidden-ink-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 rounded-lg transition-colors">📝
+                Unbidden</button>
+            <button onclick="showSection('logging-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg transition-colors">📋
+                Logging</button>
+            <button onclick="showSection('hardware-buttons-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded-lg transition-colors">🔘
+                Hardware</button>
+            <button onclick="showSection('pages-endpoints-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded-lg transition-colors">🔗
+                Pages</button>
+            <button onclick="showSection('config-file-section')"
+                class="section-nav-btn px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded-lg transition-colors">📄
+                Config</button>
+        </nav>
 
-                <!-- 1. Device Configuration Section -->
-                <div id="device-config-section"
-                    class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-purple-800 dark:text-purple-300 flex items-center">
-                            <span class="mr-2">⚙️</span>Device Configuration
-                        </h4>
-                        <button onclick="copyGenericSection('Device Configuration', this)"
-                            class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Device Owner:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="device-owner">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Timezone:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="timezone">-</span>
-                        </div>
-                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-                            <span class="text-gray-600 dark:text-gray-400">mDNS Hostname:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100 text-right sm:text-left"
-                                style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%;"
-                                data-field="mdns-hostname">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Max Message Chars:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="max-message-chars">-</span>
+        <div id="loading" class="text-center py-8"><span class="text-2xl">⏳</span><br>Loading diagnostics...</div>
+        <div id="error" class="diag-error"><span class="text-2xl">❌</span>
+            <h3 class="text-lg font-semibold mb-2">Error Loading Diagnostics</h3>
+            <p id="error-message" class="text-red-600 dark:text-red-400"></p>
+        </div>
+
+        <div id="diagnostics-content" class="space-y-6">
+            <!-- Device Configuration -->
+            <div id="device-config-section" class="diag-section purple">
+                <div class="diag-header">
+                    <h4 class="diag-title purple"><span class="mr-2">⚙️</span>Device Configuration</h4>
+                    <button onclick="copyGenericSection('Device Configuration', this)" class="diag-copy-btn purple">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div class="diag-row"><span class="diag-label">Device Owner:</span><span class="diag-value"
+                            data-field="device-owner">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Timezone:</span><span class="diag-value"
+                            data-field="timezone">-</span></div>
+                    <div class="diag-row flexible"><span class="diag-label">mDNS Hostname:</span><span
+                            class="diag-value flexible" data-field="mdns-hostname">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Max Message Chars:</span><span class="diag-value"
+                            data-field="max-message-chars">-</span></div>
+                </div>
+            </div>
+
+            <!-- Network -->
+            <div id="network-section" class="diag-section blue">
+                <div class="diag-header">
+                    <h4 class="diag-title blue"><span class="mr-2">🌐</span>Network</h4>
+                    <button onclick="copyGenericSection('Network', this)" class="diag-copy-btn blue">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div class="diag-row"><span class="diag-label">WiFi Status:</span><span class="diag-value"
+                            data-field="wifi-status">-</span></div>
+                    <div class="diag-row flexible"><span class="diag-label">SSID:</span><span
+                            class="diag-value flexible" data-field="wifi-ssid">-</span></div>
+                    <div class="diag-row"><span class="diag-label">IP Address:</span><span class="diag-value"
+                            data-field="ip-address">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Signal Strength:</span><span class="diag-value"
+                            data-field="signal-strength">-</span></div>
+                    <div class="diag-row flexible"><span class="diag-label">MAC Address:</span><span
+                            class="diag-value flexible" data-field="mac-address">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Gateway:</span><span class="diag-value"
+                            data-field="gateway">-</span></div>
+                    <div class="diag-row"><span class="diag-label">DNS:</span><span class="diag-value"
+                            data-field="dns">-</span></div>
+                    <div class="diag-reference blue">
+                        <h5 class="diag-reference-title blue"><span class="mr-2">📡</span>AP Fallback Reference</h5>
+                        <div class="diag-reference-box blue">
+                            <p class="text-blue-800 dark:text-blue-200 font-medium">If WiFi connection fails, device
+                                creates its own network:</p>
+                            <div class="space-y-1 text-blue-700 dark:text-blue-300">
+                                <div><strong>Connection Timeout:</strong> <span class="font-mono"
+                                        data-field="wifi-connect-timeout">15 seconds</span></div>
+                                <div><strong>Network Name:</strong> <span class="font-mono">Scribe-setup</span></div>
+                                <div><strong>Password:</strong> <span class="font-mono">scribe123</span></div>
+                                <div><strong>IP Address:</strong> <span class="font-mono">192.168.4.1</span></div>
+                                <div><strong>Setup URL:</strong> <span
+                                        class="font-mono">http://192.168.4.1/settings.html</span></div>
+                            </div>
+                            <p class="text-blue-600 dark:text-blue-400 text-xs mt-2">💡 Connect to this network if you
+                                can't reach the device on your main WiFi</p>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- 2. Network Section -->
-                <div id="network-section"
-                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center">
-                            <span class="mr-2">🌐</span>Network
-                        </h4>
-                        <button onclick="copyGenericSection('Network', this)"
-                            class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">WiFi Status:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="wifi-status">-</span>
-                        </div>
-                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-                            <span class="text-gray-600 dark:text-gray-400">SSID:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100 text-right sm:text-left"
-                                style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%;"
-                                data-field="wifi-ssid">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">IP Address:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="ip-address">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Signal Strength:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="signal-strength">-</span>
-                        </div>
-                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-                            <span class="text-gray-600 dark:text-gray-400">MAC Address:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100 text-right sm:text-left"
-                                style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%;"
-                                data-field="mac-address">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Gateway:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="gateway">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">DNS:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="dns">-</span>
-                        </div>
-                        <!-- AP Fallback Reference -->
-                        <div class="mt-4 pt-3 border-t border-blue-200 dark:border-blue-700">
-                            <h5 class="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
-                                <span class="mr-2">📡</span>AP Fallback Reference
-                            </h5>
-                            <div class="bg-blue-100 dark:bg-blue-800/30 p-3 rounded-lg text-sm space-y-2">
-                                <p class="text-blue-800 dark:text-blue-200 font-medium">If WiFi connection fails, device
-                                    creates its own network:</p>
-                                <div class="space-y-1 text-blue-700 dark:text-blue-300">
-                                    <div><strong>Connection Timeout:</strong> <span class="font-mono"
-                                            data-field="wifi-connect-timeout">15 seconds</span></div>
-                                    <div><strong>Network Name:</strong> <span class="font-mono">Scribe-setup</span>
-                                    </div>
-                                    <div><strong>Password:</strong> <span class="font-mono">scribe123</span></div>
-                                    <div><strong>IP Address:</strong> <span class="font-mono">192.168.4.1</span></div>
-                                    <div><strong>Setup URL:</strong> <span
-                                            class="font-mono">http://192.168.4.1/settings.html</span></div>
+            <!-- MQTT -->
+            <div id="mqtt-section" class="diag-section green">
+                <div class="diag-header">
+                    <h4 class="diag-title green"><span class="mr-2">📡</span>MQTT</h4>
+                    <button onclick="copyGenericSection('MQTT', this)" class="diag-copy-btn green">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div class="diag-row"><span class="diag-label">MQTT Enabled:</span><span class="diag-value"
+                            data-field="mqtt-enabled">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Connection Status:</span><span class="diag-value"
+                            data-field="mqtt-status">-</span></div>
+                    <div class="diag-row flexible"><span class="diag-label">Broker:</span><span
+                            class="diag-value flexible" data-field="mqtt-broker">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Port:</span><span class="diag-value"
+                            data-field="mqtt-port">-</span></div>
+                    <div class="diag-row flexible"><span class="diag-label">Username:</span><span
+                            class="diag-value flexible" data-field="mqtt-username">-</span></div>
+                    <div class="diag-row flexible"><span class="diag-label">Topic:</span><span
+                            class="diag-value flexible" data-field="mqtt-topic">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Keep Alive:</span><span class="diag-value"
+                            data-field="mqtt-keep-alive">-</span></div>
+                </div>
+            </div>
+
+            <!-- Microcontroller -->
+            <div id="microcontroller-section" class="diag-section orange">
+                <div class="diag-header">
+                    <h4 class="diag-title orange"><span class="mr-2">🎛️</span>Microcontroller</h4>
+                    <button onclick="copyGenericSection('Microcontroller', this)" class="diag-copy-btn orange">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div class="diag-row"><span class="diag-label">CPU Frequency:</span><span class="diag-value"
+                            data-field="cpu-frequency">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Flash Size:</span><span class="diag-value"
+                            data-field="flash-size">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Firmware Version:</span><span class="diag-value"
+                            data-field="firmware-version">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Uptime:</span><span class="diag-value"
+                            data-field="uptime">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Free Heap:</span><span class="diag-value"
+                            data-field="free-heap">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Temperature:</span><span class="diag-value"
+                            data-field="temperature">-</span></div>
+                    <div class="diag-memory">
+                        <div class="diag-memory-item">
+                            <div class="diag-memory-label"><span>Flash Usage</span><span
+                                    data-field="flash-usage-text">-</span></div>
+                            <div class="diag-progress-container orange">
+                                <div class="diag-progress-bar orange" data-field="flash-usage-bar" style="width: 0%">
                                 </div>
-                                <p class="text-blue-600 dark:text-blue-400 text-xs mt-2">💡 Connect to this network if
-                                    you can't reach the device on your main WiFi</p>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- 3. MQTT Section -->
-                <div id="mqtt-section"
-                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-green-800 dark:text-green-300 flex items-center">
-                            <span class="mr-2">📡</span>MQTT
-                        </h4>
-                        <button onclick="copyGenericSection('MQTT', this)"
-                            class="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Status:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="mqtt-status">-</span>
-                        </div>
-                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-                            <span class="text-gray-600 dark:text-gray-400">Server:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100 text-right sm:text-left"
-                                style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%;"
-                                data-field="mqtt-server">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Port:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="mqtt-port">-</span>
-                        </div>
-                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-                            <span class="text-gray-600 dark:text-gray-400">Topic:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100 text-right sm:text-left"
-                                style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%;"
-                                data-field="mqtt-topic">-</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Microcontroller Section -->
-                <div id="microcontroller-section"
-                    class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-orange-800 dark:text-orange-300 flex items-center">
-                            <span class="mr-2">💾</span>Microcontroller
-                        </h4>
-                        <button onclick="copyGenericSection('Microcontroller', this)"
-                            class="px-2 py-1 text-xs bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/40 text-orange-700 dark:text-orange-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Chip Model:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="chip-model">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">CPU Frequency:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="cpu-frequency">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Temperature:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="temperature">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="uptime">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Reset Reason:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="reset-reason">-</span>
-                        </div>
-                        <!-- Memory Usage Section -->
-                        <div class="mt-4 pt-3 border-t border-orange-200 dark:border-orange-700">
-                            <h5
-                                class="text-sm font-semibold text-orange-700 dark:text-orange-300 mb-3 flex items-center">
-                                <span class="mr-2">📊</span>Memory Usage
-                            </h5>
-                            <div class="space-y-3">
-                                <!-- Heap Memory -->
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-600 dark:text-gray-400">Heap Memory</span>
-                                        <span class="font-medium text-gray-900 dark:text-gray-100"
-                                            data-field="heap-usage">-</span>
-                                    </div>
-                                    <div class="w-full bg-orange-200 dark:bg-orange-800/30 rounded-full h-2">
-                                        <div class="bg-orange-500 h-2 rounded-full transition-all duration-300"
-                                            data-field="heap-bar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- App Partition (Firmware) -->
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-600 dark:text-gray-400">App Partition (Firmware)</span>
-                                        <span class="font-medium text-gray-900 dark:text-gray-100"
-                                            data-field="app-partition-usage">-</span>
-                                    </div>
-                                    <div class="w-full bg-orange-200 dark:bg-orange-800/30 rounded-full h-2">
-                                        <div class="bg-red-500 h-2 rounded-full transition-all duration-300"
-                                            data-field="app-partition-bar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <!-- File System (LittleFS) -->
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-600 dark:text-gray-400">File System (LittleFS)</span>
-                                        <span class="font-medium text-gray-900 dark:text-gray-100"
-                                            data-field="filesystem-usage">-</span>
-                                    </div>
-                                    <div class="w-full bg-orange-200 dark:bg-orange-800/30 rounded-full h-2">
-                                        <div class="bg-orange-600 h-2 rounded-full transition-all duration-300"
-                                            data-field="filesystem-bar" style="width: 0%"></div>
-                                    </div>
+                        <div class="diag-memory-item">
+                            <div class="diag-memory-label"><span>Heap Usage</span><span
+                                    data-field="heap-usage-text">-</span></div>
+                            <div class="diag-progress-container orange">
+                                <div class="diag-progress-bar orange" data-field="heap-usage-bar" style="width: 0%">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- 5. Unbidden Ink Section -->
-                <div id="unbidden-ink-section"
-                    class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-purple-800 dark:text-purple-300 flex items-center">
-                            <span class="mr-2">🪄</span>Unbidden Ink
-                        </h4>
-                        <button onclick="copyGenericSection('Unbidden Ink', this)"
-                            class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
+            <!-- Unbidden Ink -->
+            <div id="unbidden-ink-section" class="diag-section yellow">
+                <div class="diag-header">
+                    <h4 class="diag-title yellow"><span class="mr-2">📝</span>Unbidden Ink</h4>
+                    <button onclick="copyGenericSection('Unbidden Ink', this)" class="diag-copy-btn yellow">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div class="diag-row"><span class="diag-label">Enabled:</span><span class="diag-value"
+                            data-field="unbidden-ink-enabled">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Interval (minutes):</span><span class="diag-value"
+                            data-field="unbidden-ink-interval">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Last Run:</span><span class="diag-value"
+                            data-field="unbidden-ink-last-run">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Next Run:</span><span class="diag-value"
+                            data-field="unbidden-ink-next-run">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Total Riddles:</span><span class="diag-value"
+                            data-field="unbidden-ink-total-riddles">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Current Index:</span><span class="diag-value"
+                            data-field="unbidden-ink-current-index">-</span></div>
+                </div>
+            </div>
+
+            <!-- Logging -->
+            <div id="logging-section" class="diag-section indigo">
+                <div class="diag-header">
+                    <h4 class="diag-title indigo"><span class="mr-2">📋</span>Logging</h4>
+                    <button onclick="copyGenericSection('Logging', this)" class="diag-copy-btn indigo">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div class="diag-row"><span class="diag-label">Level:</span><span class="diag-value"
+                            data-field="log-level">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Serial Logging:</span><span class="diag-value"
+                            data-field="serial-logging">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Web Logging:</span><span class="diag-value"
+                            data-field="web-logging">-</span></div>
+                    <div class="diag-row"><span class="diag-label">File Logging:</span><span class="diag-value"
+                            data-field="file-logging">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Buffer Size:</span><span class="diag-value"
+                            data-field="log-buffer-size">-</span></div>
+                </div>
+            </div>
+
+            <!-- Hardware Buttons -->
+            <div id="hardware-buttons-section" class="diag-section slate">
+                <div class="diag-header">
+                    <h4 class="diag-title slate"><span class="mr-2">🔘</span>Hardware Buttons</h4>
+                    <button onclick="copyGenericSection('Hardware Buttons', this)" class="diag-copy-btn slate">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <div class="diag-row"><span class="diag-label">Button A Pin:</span><span class="diag-value"
+                            data-field="button-a-pin">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button B Pin:</span><span class="diag-value"
+                            data-field="button-b-pin">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button C Pin:</span><span class="diag-value"
+                            data-field="button-c-pin">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button A State:</span><span class="diag-value"
+                            data-field="button-a-state">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button B State:</span><span class="diag-value"
+                            data-field="button-b-state">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button C State:</span><span class="diag-value"
+                            data-field="button-c-state">-</span></div>
+                </div>
+            </div>
+
+            <!-- Available Pages & Endpoints -->
+            <div id="pages-endpoints-section" class="diag-section slate">
+                <div class="diag-header">
+                    <h4 class="diag-title slate"><span class="mr-2">🔗</span>Available Pages & Endpoints</h4>
+                    <button onclick="copyGenericSection('Available Pages & Endpoints', this)"
+                        class="diag-copy-btn slate">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h5 class="font-semibold text-slate-700 dark:text-slate-300 mb-2">📄 Web Pages</h5>
+                        <div id="web-pages" class="space-y-1 text-sm">-</div>
                     </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Status:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="unbidden-ink-status">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Working Hours:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="working-hours">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Frequency:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="frequency">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Next Scheduled:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="next-scheduled">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">AI Prompt Character Limit:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="ai-prompt-char-limit">-</span>
-                        </div>
+                    <div>
+                        <h5 class="font-semibold text-slate-700 dark:text-slate-300 mb-2">🔌 API Endpoints</h5>
+                        <div id="api-endpoints" class="space-y-1 text-sm">-</div>
                     </div>
                 </div>
+            </div>
 
-                <!-- 6. Logging Section -->
-                <div id="logging-section"
-                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-yellow-800 dark:text-yellow-300 flex items-center">
-                            <span class="mr-2">📝</span>Logging
-                        </h4>
-                        <button onclick="copyGenericSection('Logging', this)"
-                            class="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Log Level:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100" data-field="log-level">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Serial Logging:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="serial-logging">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">File Logging:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="file-logging">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">MQTT Logging:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="mqtt-logging">-</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">BetterStack Logging:</span>
-                            <span class="font-medium text-gray-900 dark:text-gray-100"
-                                data-field="betterstack-logging">-</span>
-                        </div>
-                    </div>
+            <!-- Configuration File -->
+            <div id="config-file-section" class="diag-section slate">
+                <div class="diag-header">
+                    <h4 class="diag-title slate"><span class="mr-2">📄</span>Configuration File (config.json)</h4>
+                    <button onclick="copyConfigFile(this)" class="diag-copy-btn slate">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
                 </div>
-
-                <!-- 7. Hardware Buttons Section -->
-                <div id="hardware-buttons-section"
-                    class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-indigo-800 dark:text-indigo-300 flex items-center">
-                            <span class="mr-2">🔘</span>Hardware Buttons
-                        </h4>
-                        <button onclick="copyGenericSection('Hardware Buttons', this)"
-                            class="px-2 py-1 text-xs bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div id="hardware-buttons-content" class="space-y-2">
-                        <!-- Button entries will be populated dynamically -->
-                    </div>
-                </div>
-
-                <!-- 8. Available Pages & Endpoints Section -->
-                <div id="navigation-section"
-                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-lg font-semibold text-green-800 dark:text-green-300 flex items-center">
-                            <span class="mr-2">🧭</span>Available Pages & Endpoints
-                        </h4>
-                        <button onclick="copyGenericSection('Available Pages & Endpoints', this)"
-                            class="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <strong class="text-green-800 dark:text-green-300 block mb-2">📱 User Pages:</strong>
-                            <ul class="space-y-1 text-sm">
-                                <li><a href="/"
-                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">🏠
-                                        Home</a> <span class="text-gray-600 dark:text-gray-400">- Main interface</span>
-                                </li>
-                                <li><a href="/settings.html"
-                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">⚙️
-                                        Settings</a> <span class="text-gray-600 dark:text-gray-400">- Device
-                                        configuration</span></li>
-                                <li><a href="/diagnostics.html"
-                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">🔧
-                                        Diagnostics</a> <span class="text-gray-600 dark:text-gray-400">- System
-                                        diagnostics</span></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <strong class="text-green-800 dark:text-green-300 block mb-2">🗂️ System Pages:</strong>
-                            <ul class="space-y-1 text-sm">
-                                <li><a href="/nonexistent-page"
-                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">📜
-                                        404 - Paper Jam</a> <span class="text-gray-600 dark:text-gray-400">- Page not
-                                        found error</span></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <strong class="text-green-800 dark:text-green-300 block mb-2">🎯 API Endpoints:</strong>
-                            <ul class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                                <li><span class="font-mono">/api/diagnostics</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- System information (GET)</span></li>
-                                <li><span class="font-mono">/api/config</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Configuration data (GET/POST)</span>
-                                </li>
-                                <li><span class="font-mono">/events</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Real-time printer updates via SSE
-                                        (GET)</span></li>
-                                <li><span class="font-mono">/api/print-local</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Print to local device (POST)</span>
-                                </li>
-                                <li><span class="font-mono">/api/mqtt-send</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Send to remote printer via MQTT
-                                        (POST)</span></li>
-                                <li><span class="font-mono">/api/joke</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Random joke (POST)</span></li>
-                                <li><span class="font-mono">/api/quote</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Inspirational quote (POST)</span>
-                                </li>
-                                <li><span class="font-mono">/api/quiz</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Trivia question (POST)</span></li>
-                                <li><span class="font-mono">/api/riddle</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Brain teaser (POST)</span></li>
-                                <li><span class="font-mono">/api/unbidden-ink</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- AI-generated content (POST)</span>
-                                </li>
-                                <li><span class="font-mono">/api/print-test</span> <span
-                                        class="text-gray-600 dark:text-gray-400">- Character test content (POST)</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 9. Configuration File Section -->
-                <div id="config-file-section"
-                    class="bg-slate-50 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <div>
-                            <h4 class="text-lg font-semibold text-slate-800 dark:text-slate-300 flex items-center">
-                                <span class="mr-2">📄</span>Configuration File (config.json)
-                            </h4>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">⚠️ Secrets redacted
-                                e.g. passwords</p>
-                        </div>
-                        <button onclick="copyConfigFile(this)"
-                            class="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-900/30 hover:bg-slate-200 dark:hover:bg-slate-900/40 text-slate-700 dark:text-slate-300 rounded transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div
-                        class="bg-gray-900 dark:bg-gray-950 text-gray-100 p-3 rounded-lg text-sm max-h-64 overflow-y-auto border">
-                        <pre id="config-file-contents"
-                            class="whitespace-pre-wrap break-words language-json"><code class="language-json">Loading...</code></pre>
-                    </div>
-                    <div class="flex justify-between text-xs mt-2">
-                        <span class="text-gray-600 dark:text-gray-400">File Size:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100"
-                            data-field="config-file-size">-</span>
-                    </div>
-                </div>
-
-                <!-- Error message container (hidden by default) -->
-                <div id="error-container"
-                    class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
-                    <div class="flex items-center mb-2">
-                        <span class="text-red-600 dark:text-red-400 mr-2">❌</span>
-                        <h4 class="text-lg font-semibold text-red-800 dark:text-red-300">Error Loading Diagnostics</h4>
-                    </div>
-                    <p class="text-red-700 dark:text-red-300" id="error-message">An error occurred while loading
-                        diagnostics data.</p>
+                <div class="space-y-3">
+                    <pre id="config-content" class="diag-config-display">Loading configuration...</pre>
+                    <p class="diag-config-warning slate">⚠️ This shows the actual config.json file. Sensitive data like
+                        passwords are hidden for security.</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="text-sm text-gray-400 dark:text-gray-500 mt-8 text-center space-y-3">
-        <div>
-            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
-                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 underline decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 underline-offset-2">Peter
-                / Urban Circles</a>
-        </div>
-        <div>
-            Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
-                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 underline decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 underline-offset-2">Pharkie</a>
-        </div>
+    <footer class="page-footer">
+        <p>&copy; 2025 Scribe Printer. Diagnostic information is refreshed automatically.</p>
     </footer>
 
-    <!-- Load minified JavaScript -->
-    <!-- Load main app bundle (shared functionality) -->
-    <script src="/js/app.min.js"></script>
-    <!-- Load page-specific JavaScript -->
-    <script src="/js/diagnostics.min.js"></script>
-    <script>
-        function goBack() {
-            window.location.href = '/';
-        }
-
-        // Initialize diagnostics when page loads
-        document.addEventListener('DOMContentLoaded', function () {
-            loadDiagnostics();
-        });
-    </script>
+    <script src="../js/app.min.js"></script>
+    <script src="../js/diagnostics.min.js"></script>
 </body>
 
 </html>
