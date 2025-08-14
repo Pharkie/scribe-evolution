@@ -218,7 +218,6 @@ void handleStatus(AsyncWebServerRequest *request)
     logging["level"] = logLevel;
     logging["level_name"] = getLogLevelString(logLevel);
     logging["serial_enabled"] = enableSerialLogging;
-    logging["web_enabled"] = false; // Web logging not implemented yet
     logging["file_enabled"] = enableFileLogging;
     logging["mqtt_enabled"] = enableMQTTLogging;
     logging["betterstack_enabled"] = enableBetterStackLogging;

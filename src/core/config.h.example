@@ -76,7 +76,7 @@ static const int ntpSyncTimeoutSeconds = 30;    // Maximum wait time for initial
 static const int ntpSyncIntervalSeconds = 3600; // Re-sync interval (1 hour)
 
 // Logging Configuration
-static const int logLevel = LOG_LEVEL_VERBOSE;
+static const int logLevel = LOG_LEVEL_NOTICE;
 static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
 static const bool enableSerialLogging = true;       // Serial console
 static const bool enableFileLogging = false;        // LittleFS file (untested)

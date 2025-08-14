@@ -178,6 +178,34 @@ function formatUptime(seconds) {
   return `${minutes}m`;
 }
 
+function formatSignalStrength(dbm) {
+  if (!dbm) return 'Unknown';
+  
+  let quality, color;
+  
+  if (dbm >= -30) {
+    quality = 'Excellent';
+    color = '#10b981'; // green
+  } else if (dbm >= -50) {
+    quality = 'Very Good';
+    color = '#10b981'; // green
+  } else if (dbm >= -60) {
+    quality = 'Good';
+    color = '#059669'; // darker green
+  } else if (dbm >= -70) {
+    quality = 'Fair';
+    color = '#f59e0b'; // amber
+  } else if (dbm >= -80) {
+    quality = 'Weak';
+    color = '#ef4444'; // red
+  } else {
+    quality = 'Very Weak';
+    color = '#dc2626'; // darker red
+  }
+  
+  return `${dbm} dBm (<span style="color: ${color}; font-weight: 600;">${quality}</span>)`;
+}
+
 function displayDiagnostics(data, configData) {
   // Device Configuration
   setFieldValue('device-owner', data.device?.owner);
@@ -189,7 +217,7 @@ function displayDiagnostics(data, configData) {
   setFieldValue('wifi-status', data.network?.wifi?.connected ? 'Connected' : 'Disconnected');
   setFieldValue('wifi-ssid', data.network?.wifi?.ssid);
   setFieldValue('ip-address', data.network?.wifi?.ip_address);
-  setFieldValue('signal-strength', data.network?.wifi?.signal_strength_dbm + ' dBm');
+  setFieldValue('signal-strength', formatSignalStrength(data.network?.wifi?.signal_strength_dbm), true);
   setFieldValue('mac-address', data.network?.wifi?.mac_address);
   setFieldValue('gateway', data.network?.wifi?.gateway);
   setFieldValue('dns', data.network?.wifi?.dns);
@@ -227,6 +255,7 @@ function displayDiagnostics(data, configData) {
   setFieldValue('serial-logging', data.features?.logging?.serial_enabled ? 'Enabled' : 'Disabled');
   setFieldValue('web-logging', data.features?.logging?.betterstack_enabled ? 'Enabled' : 'Disabled');
   setFieldValue('file-logging', data.features?.logging?.file_enabled ? 'Enabled' : 'Disabled');
+  setFieldValue('mqtt-logging', data.features?.logging?.mqtt_enabled ? 'Enabled' : 'Disabled');
 
   // Hardware Buttons - using actual API structure
   const buttons = data.features?.hardware_buttons?.buttons || [];
@@ -277,7 +306,7 @@ function displayDiagnostics(data, configData) {
   }
 }
 
-function loadDiagnostics() {
+async function loadDiagnostics() {
   const loadingElement = document.getElementById('loading');
   const errorElement = document.getElementById('error');
   const contentElement = document.getElementById('diagnostics-content');
@@ -286,29 +315,53 @@ function loadDiagnostics() {
   errorElement.classList.remove('show');
   contentElement.style.display = 'none';
 
-  // Load both diagnostics and config data
-  Promise.all([
-    fetch('/api/diagnostics').then(response => {
-      if (!response.ok) throw new Error(`Diagnostics API error: HTTP ${response.status}: ${response.statusText}`);
-      return response.json();
-    }),
-    fetch('/api/config').then(response => {
-      if (!response.ok) throw new Error(`Config API error: HTTP ${response.status}: ${response.statusText}`);
-      return response.json();
-    })
-  ])
-    .then(([diagnosticsData, configData]) => {
-      displayDiagnostics(diagnosticsData, configData);
-      loadingElement.style.display = 'none';
-      contentElement.style.display = 'block';
-      showSection(currentSection);
-    })
-    .catch(error => {
-      console.error('Error loading diagnostics:', error);
-      loadingElement.style.display = 'none';
-      errorElement.classList.add('show');
-      document.getElementById('error-message').textContent = error.message;
-    });
+  try {
+    // Wait for global config to be loaded (avoiding duplicate /api/config calls)
+    if (!window.GLOBAL_CONFIG || Object.keys(window.GLOBAL_CONFIG).length === 0) {
+      console.log('Waiting for global config to load...');
+      
+      // Use event-based waiting with fallback timeout
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Global config not loaded within timeout - please refresh the page'));
+        }, 10000); // 10 second timeout
+        
+        const handleConfigLoaded = (event) => {
+          clearTimeout(timeout);
+          window.removeEventListener('configLoaded', handleConfigLoaded);
+          resolve(event.detail);
+        };
+        
+        // If config is already loaded, resolve immediately
+        if (window.GLOBAL_CONFIG && Object.keys(window.GLOBAL_CONFIG).length > 0) {
+          clearTimeout(timeout);
+          resolve(window.GLOBAL_CONFIG);
+          return;
+        }
+        
+        // Otherwise wait for the event
+        window.addEventListener('configLoaded', handleConfigLoaded);
+      });
+    }
+
+    // Load only diagnostics data (config already loaded globally)
+    const response = await fetch('/api/diagnostics');
+    if (!response.ok) {
+      throw new Error(`Diagnostics API error: HTTP ${response.status}: ${response.statusText}`);
+    }
+    const diagnosticsData = await response.json();
+
+    // Use the already-loaded global config
+    displayDiagnostics(diagnosticsData, window.GLOBAL_CONFIG);
+    loadingElement.style.display = 'none';
+    contentElement.style.display = 'block';
+    showSection(currentSection);
+  } catch (error) {
+    console.error('Error loading diagnostics:', error);
+    loadingElement.style.display = 'none';
+    errorElement.classList.add('show');
+    document.getElementById('error-message').textContent = error.message;
+  }
 }
 
 // Initialize on page load
