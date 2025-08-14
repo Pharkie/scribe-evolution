@@ -28,6 +28,7 @@
 #include "../core/logging.h"
 #include "../core/network.h"
 #include "../core/printer_discovery.h"
+#include <vector>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 
@@ -135,6 +136,76 @@ String getRequestBody(AsyncWebServerRequest *request)
     return "";
 }
 
+// ========================================
+// Route Registration System
+// ========================================
+
+struct RouteInfo
+{
+    String method;
+    String path;
+    String description;
+    bool isAPI;
+};
+
+static std::vector<RouteInfo> registeredRoutes;
+
+void registerRoute(const char *method, const char *path, const char *description, ArRequestHandlerFunction handler, bool isAPI)
+{
+    // Register with AsyncWebServer
+    if (strcmp(method, "GET") == 0)
+    {
+        server.on(path, HTTP_GET, handler);
+    }
+    else if (strcmp(method, "POST") == 0)
+    {
+        server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
+                  { handler(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+            String body;
+            for (size_t i = 0; i < len; i++) body += (char)data[i];
+            storeRequestBody(request, body); });
+    }
+
+    // Track for diagnostics
+    RouteInfo route;
+    route.method = String(method);
+    route.path = String(path);
+    route.description = description ? String(description) : String("No description");
+    route.isAPI = isAPI;
+    registeredRoutes.push_back(route);
+
+    LOG_VERBOSE("WEB", "Registered route %d: %s %s - %s (API: %s)", registeredRoutes.size(), method, path, route.description.c_str(), isAPI ? "true" : "false");
+}
+
+void addRegisteredRoutesToJson(JsonObject &endpoints)
+{
+    JsonArray webPages = endpoints.createNestedArray("web_pages");
+    JsonArray apiEndpoints = endpoints.createNestedArray("api_endpoints");
+
+    LOG_VERBOSE("WEB", "Generating endpoints JSON - found %d registered routes", registeredRoutes.size());
+
+    for (size_t i = 0; i < registeredRoutes.size(); i++)
+    {
+        const auto &route = registeredRoutes[i];
+        LOG_VERBOSE("WEB", "Processing route %d: %s %s (isAPI: %s)", i, route.method.c_str(), route.path.c_str(), route.isAPI ? "true" : "false");
+
+        if (route.isAPI)
+        {
+            JsonObject api = apiEndpoints.createNestedObject();
+            api["method"] = route.method;
+            api["path"] = route.path;
+            api["description"] = route.description;
+        }
+        else
+        {
+            JsonObject page = webPages.createNestedObject();
+            page["path"] = route.path;
+            page["description"] = route.description;
+        }
+    }
+}
+
 // Helper function to register POST routes with body handling
 void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
 {
@@ -152,40 +223,34 @@ void setupWebServerRoutes(int maxChars)
     setMaxCharacters(maxChars);
 
     LOG_NOTICE("WEB", "Setting up web server routes for WiFi mode: %d (AP=%s)", currentWiFiMode, isAPMode() ? "true" : "false");
-    // DEBUG: Setting up web routes - WiFi mode and AP mode status
 
-    // Always serve settings page and its dependencies (needed for both STA and AP modes)
-    server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-        if (shouldRedirectToSettings(request)) {
-            handleCaptivePortal(request);
-            return;
-        }
-        request->send(LittleFS, "/html/settings.html", "text/html"); });
-
-    // Configuration endpoints (needed for settings page)
-    server.on("/config", HTTP_GET, [](AsyncWebServerRequest *request)
-              { handleConfigGet(request); });
-    server.on("/config", HTTP_POST, [](AsyncWebServerRequest *request)
-              { 
-        handleConfigPost(request);
-        // After successful config save in AP mode, trigger reboot to try new WiFi settings
-        if (isAPMode() && request->hasArg("wifi_ssid")) {
-            LOG_NOTICE("WEB", "WiFi configuration saved in AP mode, rebooting to try new settings...");
-            request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Configuration saved. Device will reboot and try to connect with new WiFi settings.\"}");
-            delay(1000);
-            ESP.restart();
-        } });
-
-    // CSS and JS files (always needed) - serve entire directories from LittleFS
-    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
-
-    // In AP mode, set up captive portal for all other requests
+    // In AP mode, set up minimal captive portal - no route tracking needed
     if (isAPMode())
     {
         LOG_VERBOSE("WEB", "Setting up captive portal for AP mode");
+
+        // Always serve settings page and its dependencies (needed for AP mode)
+        server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request)
+                  {
+            if (shouldRedirectToSettings(request)) {
+                handleCaptivePortal(request);
+                return;
+            }
+            request->send(LittleFS, "/html/settings.html", "text/html"); });
+
+        // Configuration endpoints (needed for settings page)
+        server.on("/config", HTTP_GET, handleConfigGet);
+        server.on("/config", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleConfigPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+            String body;
+            for (size_t i = 0; i < len; i++) body += (char)data[i];
+            storeRequestBody(request, body); });
+
+        // CSS and JS files (always needed) - serve entire directories from LittleFS
+        server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+        server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+        server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
 
         // Catch all other requests and redirect to settings
         server.onNotFound(handleCaptivePortal);
@@ -199,7 +264,33 @@ void setupWebServerRoutes(int maxChars)
     }
     else
     {
-        LOG_VERBOSE("WEB", "Setting up full routes for STA mode");
+        LOG_VERBOSE("WEB", "Setting up full routes for STA mode with route tracking");
+
+        // Initialize route tracking for STA mode only
+        registeredRoutes.clear();
+
+        // Static files - serve entire directories from LittleFS
+        server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+        server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+        server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
+
+        // Manually track static routes (since serveStatic can't be wrapped)
+        registeredRoutes.push_back({"GET", "/css/*", "CSS static files", false});
+        registeredRoutes.push_back({"GET", "/js/*", "JavaScript static files", false});
+        registeredRoutes.push_back({"GET", "/favicon.ico", "Site favicon", false});
+
+        // Register web pages
+        registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
+                      { request->send(LittleFS, "/html/index.html", "text/html"); }, false);
+
+        registerRoute("GET", "/settings.html", "Configuration settings", [](AsyncWebServerRequest *request)
+                      { request->send(LittleFS, "/html/settings.html", "text/html"); }, false);
+
+        registerRoute("GET", "/diagnostics.html", "System diagnostics", [](AsyncWebServerRequest *request)
+                      { request->send(LittleFS, "/html/diagnostics.html", "text/html"); }, false);
+
+        // Serve static files (in addition to tracked routes above)
+        server.serveStatic("/diagnostics.html", LittleFS, "/html/diagnostics.html", "text/html").setTryGzipFirst(false);
 
         // Add SSE endpoint for real-time updates
         sseEvents.onConnect([](AsyncEventSourceClient *client)
@@ -210,37 +301,30 @@ void setupWebServerRoutes(int maxChars)
             client->send(printerData.c_str(), "printer-update", millis()); });
         server.addHandler(&sseEvents);
 
-        // HTML and JS
-        // Can't use serveStatic to serve index.html from root / without causing problems. Do it this way.
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-                  { request->send(LittleFS, "/html/index.html", "text/html"); });
-        server.serveStatic("/diagnostics.html", LittleFS, "/html/diagnostics.html", "text/html").setTryGzipFirst(false);
-        // Note: JS and CSS files are now served via directory routes above
+        // Track the SSE endpoint
+        registeredRoutes.push_back({"GET", "/events", "Server-sent events", true});
 
-        // Form submission handlers
-        registerPOSTRoute("/api/print-local", handlePrintContent);
-        server.on("/api/print-local", HTTP_GET, handlePrintContent);
+        // Register API endpoints
+        registerRoute("POST", "/api/print-local", "Print custom message", handlePrintContent, true);
+        registerRoute("GET", "/api/print-local", "Print custom message", handlePrintContent, true);
 
-        // Content generation endpoints (API)
-        registerPOSTRoute("/api/print-test", handlePrintTest);
-        registerPOSTRoute("/api/riddle", handleRiddle);
-        registerPOSTRoute("/api/joke", handleJoke);
-        registerPOSTRoute("/api/quote", handleQuote);
-        registerPOSTRoute("/api/quiz", handleQuiz);
-        registerPOSTRoute("/api/poke", handlePoke);
-        registerPOSTRoute("/api/unbidden-ink", handleUnbiddenInk);
-        registerPOSTRoute("/api/user-message", handleUserMessage);
-
-        // API endpoints
-        server.on("/api/diagnostics", HTTP_GET, handleStatus);
-        server.on("/api/buttons", HTTP_GET, handleButtons);
-        registerPOSTRoute("/api/mqtt-send", handleMQTTSend);
-        server.on("/api/config", HTTP_GET, handleConfigGet);
-        registerPOSTRoute("/api/config", handleConfigPost);
+        registerRoute("POST", "/api/print-test", "Print test pattern", handlePrintTest, true);
+        registerRoute("POST", "/api/riddle", "Print random riddle", handleRiddle, true);
+        registerRoute("POST", "/api/joke", "Print random joke", handleJoke, true);
+        registerRoute("POST", "/api/quote", "Print random quote", handleQuote, true);
+        registerRoute("POST", "/api/quiz", "Print random quiz", handleQuiz, true);
+        registerRoute("POST", "/api/poke", "Send poke message", handlePoke, true);
+        registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
+        registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
+        registerRoute("GET", "/api/diagnostics", "System diagnostics", handleStatus, true);
+        registerRoute("GET", "/api/buttons", "Hardware button config", handleButtons, true);
+        registerRoute("POST", "/api/mqtt-send", "Send MQTT message", handleMQTTSend, true);
+        registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
+        registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
-        server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request)
-                  {
+        registerRoute("GET", "/debug/filesystem", "LittleFS debug info", [](AsyncWebServerRequest *request)
+                      {
             String output = "LittleFS Debug:\n\nTotal space: " + String(LittleFS.totalBytes()) + " bytes\n";
             output += "Used space: " + String(LittleFS.usedBytes()) + " bytes\n";
             output += "Free space: " + String(LittleFS.totalBytes() - LittleFS.usedBytes()) + " bytes\n\n";
@@ -253,7 +337,7 @@ void setupWebServerRoutes(int maxChars)
                 listDirectory(root, output, 0);
             }
             
-            request->send(200, "text/plain", output); });
+            request->send(200, "text/plain", output); }, true);
 
         // 404 handler for STA mode
         server.onNotFound(handleNotFound);
