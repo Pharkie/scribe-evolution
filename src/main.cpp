@@ -46,6 +46,9 @@
 #include "content/content_generators.h"
 #include "utils/api_client.h"
 #include "content/unbidden_ink.h"
+#ifdef ENABLE_LEDS
+#include "leds/LedEffects.h"
+#endif
 
 // === Web Server ===
 AsyncWebServer server(webServerPort);
@@ -141,6 +144,15 @@ void setup()
   // Initialize hardware buttons
   initializeHardwareButtons();
 
+#ifdef ENABLE_LEDS
+  // Initialize LED effects system
+  if (ledEffects.begin()) {
+    LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
+  } else {
+    LOG_WARNING("BOOT", "LED effects system initialization failed");
+  }
+#endif
+
   // Setup mDNS
   setupmDNS();
 
@@ -180,6 +192,11 @@ void loop()
 
   // Check hardware buttons (works even without WiFi)
   checkHardwareButtons();
+
+#ifdef ENABLE_LEDS
+  // Update LED effects (non-blocking)
+  ledEffects.update();
+#endif
 
   // Handle web server requests - AsyncWebServer handles this automatically
   // No need to call server.handleClient() with async server
