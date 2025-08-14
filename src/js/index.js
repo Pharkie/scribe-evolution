@@ -546,7 +546,7 @@ function showSuccessToast(message) {
   
   toast.innerHTML = `
     <div class="flex items-center space-x-2">
-      <span class="text-xl">✅</span>
+      ${message.match(/^[\u{1F000}-\u{1F9FF}]|^[\u{2600}-\u{26FF}]/u) ? '' : '<span class="text-xl">✅</span>'}
       <span class="flex-1">${message}</span>
       <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-lg font-bold opacity-50 hover:opacity-100">×</button>
     </div>
