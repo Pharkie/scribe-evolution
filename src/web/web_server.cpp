@@ -178,8 +178,8 @@ void setupWebServerRoutes(int maxChars)
         } });
 
     // CSS and JS files (always needed) - serve entire directories from LittleFS
-    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400");
-    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400");
+    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
     server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
 
     // In AP mode, set up captive portal for all other requests
