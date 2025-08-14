@@ -197,4 +197,22 @@
       transform: scale(1.05);
     }
   }
+
+  /* Page layout with settings button */
+  .page-main-container {
+    @apply relative max-w-6xl mx-auto px-4 py-6;
+  }
+
+  .settings-button-container {
+    @apply absolute top-0 right-4;
+    /* Position to the right of the main content, vertically centered with title */
+    margin-top: calc(1.5rem + 0.5rem); /* Adjust to align with main content top */
+  }
+
+  /* Hide settings button on smaller screens to prevent overlap */
+  @media (max-width: 768px) {
+    .settings-button-container {
+      @apply hidden;
+    }
+  }
 }

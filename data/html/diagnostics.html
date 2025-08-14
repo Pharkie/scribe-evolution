@@ -34,17 +34,17 @@
             <button onclick="showSection('mqtt-section')" class="section-nav-btn section-nav-btn-green">📡
                 MQTT</button>
             <button onclick="showSection('microcontroller-section')" class="section-nav-btn section-nav-btn-orange">🎛️
-                MCU</button>
+                Microcontroller</button>
             <button onclick="showSection('unbidden-ink-section')" class="section-nav-btn section-nav-btn-yellow">📝
-                Unbidden</button>
+                Unbidden Ink</button>
             <button onclick="showSection('logging-section')" class="section-nav-btn section-nav-btn-indigo">📋
                 Logging</button>
             <button onclick="showSection('hardware-buttons-section')" class="section-nav-btn section-nav-btn-slate">🔘
-                Hardware</button>
+                Hardware Buttons</button>
             <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-slate">🔗
-                Pages</button>
+                Pages & Endpoints</button>
             <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-slate">📄
-                Config</button>
+                Config File</button>
         </nav>
 
         <div id="loading" class="text-center py-8"><span class="text-2xl">⏳</span><br>Loading diagnostics...</div>
@@ -57,8 +57,8 @@
             <!-- Device Configuration -->
             <div id="device-config-section" class="diag-section purple">
                 <div class="diag-header">
-                    <h4 class="diag-title purple"><span class="mr-2">⚙️</span>Device Configuration</h4>
-                    <button onclick="copyGenericSection('Device Configuration', this)" class="diag-copy-btn purple">
+                    <h4 class="diag-title purple"><span class="mr-2">⚙️</span>Device</h4>
+                    <button onclick="copyGenericSection('Device', this)" class="diag-copy-btn purple">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -280,9 +280,8 @@
             <!-- Available Pages & Endpoints -->
             <div id="pages-endpoints-section" class="diag-section slate">
                 <div class="diag-header">
-                    <h4 class="diag-title slate"><span class="mr-2">🔗</span>Available Pages & Endpoints</h4>
-                    <button onclick="copyGenericSection('Available Pages & Endpoints', this)"
-                        class="diag-copy-btn slate">
+                    <h4 class="diag-title slate"><span class="mr-2">🔗</span>Pages & Endpoints</h4>
+                    <button onclick="copyGenericSection('Pages & Endpoints', this)" class="diag-copy-btn slate">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -304,7 +303,10 @@
             <!-- Configuration File -->
             <div id="config-file-section" class="diag-section slate">
                 <div class="diag-header">
-                    <h4 class="diag-title slate"><span class="mr-2">📄</span>Configuration File (config.json)</h4>
+                    <div>
+                        <h4 class="diag-title slate"><span class="mr-2">📄</span>Config file</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Config.json</p>
+                    </div>
                     <button onclick="copyConfigFile(this)" class="diag-copy-btn slate">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path

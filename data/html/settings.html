@@ -46,13 +46,18 @@
         <!-- Settings Section Navigation -->
         <div id="settings-navigation" class="hidden mb-6">
             <div class="flex flex-wrap gap-2 justify-center">
-                <button type="button" class="section-nav-btn active" onclick="showSettingsSection('wifi')">📶
+                <button type="button" class="section-nav-btn section-nav-btn-blue active"
+                    onclick="showSettingsSection('wifi')">📶
                     WiFi</button>
-                <button type="button" class="section-nav-btn" onclick="showSettingsSection('device')">⚙️ Device</button>
-                <button type="button" class="section-nav-btn" onclick="showSettingsSection('mqtt')">📡 MQTT</button>
-                <button type="button" class="section-nav-btn" onclick="showSettingsSection('unbidden')">🎲 Unbidden
+                <button type="button" class="section-nav-btn section-nav-btn-purple"
+                    onclick="showSettingsSection('device')">⚙️ Device</button>
+                <button type="button" class="section-nav-btn section-nav-btn-yellow"
+                    onclick="showSettingsSection('mqtt')">📡 MQTT</button>
+                <button type="button" class="section-nav-btn section-nav-btn-green"
+                    onclick="showSettingsSection('unbidden')">🎲 Unbidden
                     Ink</button>
-                <button type="button" class="section-nav-btn" onclick="showSettingsSection('buttons')">🎛️
+                <button type="button" class="section-nav-btn section-nav-btn-orange"
+                    onclick="showSettingsSection('buttons')">🎛️
                     Buttons</button>
             </div>
         </div>
@@ -185,7 +190,7 @@
             <div id="unbidden-section" class="settings-section hidden">
                 <div class="settings-card settings-card-green">
                     <h2 class="settings-card-header settings-card-header-green">
-                        <span class="text-3xl">🪄</span>
+                        <span class="text-3xl">🎲</span>
                         <span>Unbidden Ink</span>
                     </h2>
                     <div class="space-y-6">
@@ -219,7 +224,8 @@
                                 <p class="text-sm text-gray-600 dark:text-gray-400">Your OpenAI API key for GPT access.
                                     <a href="https://platform.openai.com/api-keys" target="_blank"
                                         class="text-purple-600 dark:text-purple-400 hover:underline">Get your API key
-                                        here</a>.</p>
+                                        here</a>.
+                                </p>
                             </div>
 
                             <!-- Time Range Slider -->
@@ -449,7 +455,7 @@
                     class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 shadow-2xl rounded-3xl p-8">
                     <h2
                         class="text-2xl font-bold text-orange-800 dark:text-orange-100 mb-6 flex items-center space-x-2">
-                        <span class="text-3xl">🔘</span>
+                        <span class="text-3xl">🎛️</span>
                         <span>Buttons</span>
                     </h2>
                     <div class="space-y-6">

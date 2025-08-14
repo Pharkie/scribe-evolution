@@ -277,7 +277,7 @@ function showMessage(message, type) {
     
     messageDiv.innerHTML = `
         <div class="flex items-center space-x-2">
-            <span class="text-xl">${type === 'success' ? '✅' : '❌'}</span>
+            ${message.match(/^[\u{1F000}-\u{1F9FF}]|^[\u{2600}-\u{26FF}]/u) ? '' : `<span class="text-xl">${type === 'success' ? '✅' : '❌'}</span>`}
             <span>${message}</span>
             <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-lg font-bold opacity-50 hover:opacity-100">×</button>
         </div>
