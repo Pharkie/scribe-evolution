@@ -33,7 +33,7 @@ function showSection(sectionId) {
     section.classList.remove('show');
   });
   document.querySelectorAll('.section-nav-btn').forEach(btn => {
-    btn.classList.remove('font-bold', 'ring-2');
+    btn.classList.remove('active');
   });
   
   const section = document.getElementById(sectionId);
@@ -44,7 +44,7 @@ function showSection(sectionId) {
   
   const activeBtn = event?.target;
   if (activeBtn) {
-    activeBtn.classList.add('font-bold', 'ring-2');
+    activeBtn.classList.add('active');
   }
 }
 
@@ -67,7 +67,7 @@ function copyGenericSection(sectionName, button) {
       if (label && value) {
         const labelText = label.textContent?.trim().replace(/[:：]\s*$/, '') || '';
         const valueText = value.textContent?.trim() || '';
-        if (labelText && valueText && valueText !== '-') {
+        if (labelText && valueText) {
           content += `${labelText}: ${valueText}\n`;
         }
       }
@@ -200,9 +200,8 @@ function displayDiagnostics(data) {
   setFieldValue('mqtt-status', data.network?.mqtt?.connected ? 'Connected' : 'Disconnected');
   setFieldValue('mqtt-broker', data.network?.mqtt?.server);
   setFieldValue('mqtt-port', data.network?.mqtt?.port);
-  setFieldValue('mqtt-username', data.network?.mqtt?.username || '-');
+  setFieldValue('mqtt-username', data.mqtt?.username || '-');
   setFieldValue('mqtt-topic', data.network?.mqtt?.topic);
-  setFieldValue('mqtt-keep-alive', '-'); // Not in API response
 
   // Microcontroller
   setFieldValue('cpu-frequency', data.hardware?.cpu_frequency_mhz + ' MHz');
@@ -210,12 +209,12 @@ function displayDiagnostics(data) {
   setFieldValue('firmware-version', data.hardware?.sdk_version);
   setFieldValue('uptime', formatUptime(data.system?.uptime_ms / 1000));
   setFieldValue('free-heap', formatBytes(data.system?.memory?.free_heap));
-  setFieldValue('temperature', '-'); // Not available in API
+  setFieldValue('temperature', data.system?.temperature ? `${data.system.temperature}°C` : '-');
 
   // Memory usage
-  const flashUsed = ((data.system?.flash?.filesystem?.used || 0) / (data.system?.flash?.filesystem?.total || 1)) * 100;
+  const flashUsed = ((data.system?.flash?.app_partition?.used || 0) / (data.system?.flash?.app_partition?.total || 1)) * 100;
   const heapUsed = ((data.system?.memory?.used_heap || 0) / (data.system?.memory?.total_heap || 1)) * 100;
-  setFieldValue('flash-usage-text', `${formatBytes(data.system?.flash?.filesystem?.used || 0)} / ${formatBytes(data.system?.flash?.filesystem?.total || 0)} (${flashUsed.toFixed(1)}%)`);
+  setFieldValue('flash-usage-text', `${formatBytes(data.system?.flash?.app_partition?.used || 0)} / ${formatBytes(data.system?.flash?.app_partition?.total || 0)} (${flashUsed.toFixed(1)}%)`);
   setFieldValue('heap-usage-text', `${formatBytes(data.system?.memory?.used_heap || 0)} / ${formatBytes(data.system?.memory?.total_heap || 0)} (${heapUsed.toFixed(1)}%)`);
   updateProgressBar('flash-usage-bar', flashUsed);
   updateProgressBar('heap-usage-bar', heapUsed);
@@ -225,8 +224,6 @@ function displayDiagnostics(data) {
   setFieldValue('unbidden-ink-interval', data.features?.unbidden_ink?.frequency_minutes + ' minutes');
   setFieldValue('unbidden-ink-last-run', data.features?.unbidden_ink?.last_run || 'Never');
   setFieldValue('unbidden-ink-next-run', data.features?.unbidden_ink?.next_run || 'Not scheduled');
-  setFieldValue('unbidden-ink-total-riddles', data.features?.unbidden_ink?.total_riddles || '-');
-  setFieldValue('unbidden-ink-current-index', data.features?.unbidden_ink?.current_index || '-');
 
   // Logging (placeholder - not in current API)
   setFieldValue('log-level', data.logging?.level || 'INFO');
@@ -236,12 +233,18 @@ function displayDiagnostics(data) {
   setFieldValue('log-buffer-size', '-');
 
   // Hardware Buttons (placeholder - not in current API)
-  setFieldValue('button-a-pin', 'GPIO 5');
-  setFieldValue('button-b-pin', 'GPIO 6');
-  setFieldValue('button-c-pin', 'GPIO 7');
-  setFieldValue('button-a-state', 'Released');
-  setFieldValue('button-b-state', 'Released');
-  setFieldValue('button-c-state', 'Released');
+  setFieldValue('button-1-short', data.hardware?.buttons?.button1?.short_press_action || 'Not configured');
+  setFieldValue('button-1-long', data.hardware?.buttons?.button1?.long_press_action || 'Not configured');
+  setFieldValue('button-1-mqtt', data.hardware?.buttons?.button1?.mqtt_topic || '-');
+  setFieldValue('button-2-short', data.hardware?.buttons?.button2?.short_press_action || 'Not configured');
+  setFieldValue('button-2-long', data.hardware?.buttons?.button2?.long_press_action || 'Not configured');
+  setFieldValue('button-2-mqtt', data.hardware?.buttons?.button2?.mqtt_topic || '-');
+  setFieldValue('button-3-short', data.hardware?.buttons?.button3?.short_press_action || 'Not configured');
+  setFieldValue('button-3-long', data.hardware?.buttons?.button3?.long_press_action || 'Not configured');
+  setFieldValue('button-3-mqtt', data.hardware?.buttons?.button3?.mqtt_topic || '-');
+  setFieldValue('button-4-short', data.hardware?.buttons?.button4?.short_press_action || 'Not configured');
+  setFieldValue('button-4-long', data.hardware?.buttons?.button4?.long_press_action || 'Not configured');
+  setFieldValue('button-4-mqtt', data.hardware?.buttons?.button4?.mqtt_topic || '-');
 
   // Pages & Endpoints
   const webPagesContainer = document.getElementById('web-pages');

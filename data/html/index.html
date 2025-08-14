@@ -23,13 +23,8 @@
             </h1>
         </div>
 
-        <!-- Right spacer to balance layout -->
-        <div class="header-spacer"></div>
-    </header>
-
-    <main class="page-main">
-        <!-- Settings button positioned within content area -->
-        <div class="flex justify-end mb-2">
+        <!-- Right spacer with settings button -->
+        <div class="header-spacer">
             <button onclick="goToSettings()" class="status-indicator">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -38,10 +33,11 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                <span class="text-xs sm:text-sm font-medium">Settings</span>
             </button>
         </div>
+    </header>
 
+    <main class="page-main">
         <!-- Main Printer Interface -->
         <div class="card-primary">
             <form id="printer-form" onsubmit="handleSubmit(event)" class="vertical-stack-lg">

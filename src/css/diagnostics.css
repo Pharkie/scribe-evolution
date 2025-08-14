@@ -35,6 +35,10 @@
   .section-nav-btn-slate {
     @apply bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300;
   }
+
+  .section-nav-btn.active {
+    @apply ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800;
+  }
   
   /* Diagnostic section heading styles */
   .diag-section-heading {

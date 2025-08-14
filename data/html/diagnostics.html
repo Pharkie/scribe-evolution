@@ -27,24 +27,15 @@
 
     <main class="page-main-wide">
         <nav class="flex flex-wrap justify-center gap-2 mb-6">
-            <button onclick="showSection('device-config-section')" class="section-nav-btn section-nav-btn-purple">⚙️
-                Device</button>
-            <button onclick="showSection('network-section')" class="section-nav-btn section-nav-btn-blue">🌐
-                Network</button>
-            <button onclick="showSection('mqtt-section')" class="section-nav-btn section-nav-btn-green">📡
-                MQTT</button>
-            <button onclick="showSection('microcontroller-section')" class="section-nav-btn section-nav-btn-orange">🎛️
-                Microcontroller</button>
-            <button onclick="showSection('unbidden-ink-section')" class="section-nav-btn section-nav-btn-yellow">📝
-                Unbidden Ink</button>
-            <button onclick="showSection('logging-section')" class="section-nav-btn section-nav-btn-indigo">📋
-                Logging</button>
-            <button onclick="showSection('hardware-buttons-section')" class="section-nav-btn section-nav-btn-slate">🔘
-                Hardware Buttons</button>
-            <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-slate">🔗
-                Pages & Endpoints</button>
-            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-slate">📄
-                Config File</button>
+            <button onclick="showSection('device-config-section')" class="section-nav-btn section-nav-btn-purple active">⚙️ Device</button>
+            <button onclick="showSection('network-section')" class="section-nav-btn section-nav-btn-blue">🌐 Network</button>
+            <button onclick="showSection('mqtt-section')" class="section-nav-btn section-nav-btn-green">📡 MQTT</button>
+            <button onclick="showSection('microcontroller-section')" class="section-nav-btn section-nav-btn-orange">🎛️ Microcontroller</button>
+            <button onclick="showSection('unbidden-ink-section')" class="section-nav-btn section-nav-btn-yellow">🎲 Unbidden Ink</button>
+            <button onclick="showSection('logging-section')" class="section-nav-btn section-nav-btn-indigo">📋 Logging</button>
+            <button onclick="showSection('hardware-buttons-section')" class="section-nav-btn section-nav-btn-slate">🔘 Hardware Buttons</button>
+            <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-slate">🔗 Pages & Endpoints</button>
+            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-slate">📄 Config File</button>
         </nav>
 
         <div id="loading" class="text-center py-8"><span class="text-2xl">⏳</span><br>Loading diagnostics...</div>
@@ -148,8 +139,6 @@
                             class="diag-value flexible" data-field="mqtt-username">-</span></div>
                     <div class="diag-row flexible"><span class="diag-label">Topic:</span><span
                             class="diag-value flexible" data-field="mqtt-topic">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Keep Alive:</span><span class="diag-value"
-                            data-field="mqtt-keep-alive">-</span></div>
                 </div>
             </div>
 
@@ -218,10 +207,6 @@
                             data-field="unbidden-ink-last-run">-</span></div>
                     <div class="diag-row"><span class="diag-label">Next Run:</span><span class="diag-value"
                             data-field="unbidden-ink-next-run">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Total Riddles:</span><span class="diag-value"
-                            data-field="unbidden-ink-total-riddles">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Current Index:</span><span class="diag-value"
-                            data-field="unbidden-ink-current-index">-</span></div>
                 </div>
             </div>
 
@@ -262,18 +247,30 @@
                     </button>
                 </div>
                 <div class="space-y-2">
-                    <div class="diag-row"><span class="diag-label">Button A Pin:</span><span class="diag-value"
-                            data-field="button-a-pin">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Button B Pin:</span><span class="diag-value"
-                            data-field="button-b-pin">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Button C Pin:</span><span class="diag-value"
-                            data-field="button-c-pin">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Button A State:</span><span class="diag-value"
-                            data-field="button-a-state">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Button B State:</span><span class="diag-value"
-                            data-field="button-b-state">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Button C State:</span><span class="diag-value"
-                            data-field="button-c-state">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 1 Short Press:</span><span class="diag-value"
+                            data-field="button-1-short">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 1 Long Press:</span><span class="diag-value"
+                            data-field="button-1-long">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 1 MQTT Topic:</span><span class="diag-value"
+                            data-field="button-1-mqtt">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 2 Short Press:</span><span class="diag-value"
+                            data-field="button-2-short">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 2 Long Press:</span><span class="diag-value"
+                            data-field="button-2-long">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 2 MQTT Topic:</span><span class="diag-value"
+                            data-field="button-2-mqtt">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 3 Short Press:</span><span class="diag-value"
+                            data-field="button-3-short">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 3 Long Press:</span><span class="diag-value"
+                            data-field="button-3-long">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 3 MQTT Topic:</span><span class="diag-value"
+                            data-field="button-3-mqtt">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 4 Short Press:</span><span class="diag-value"
+                            data-field="button-4-short">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 4 Long Press:</span><span class="diag-value"
+                            data-field="button-4-long">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Button 4 MQTT Topic:</span><span class="diag-value"
+                            data-field="button-4-mqtt">-</span></div>
                 </div>
             </div>
 
