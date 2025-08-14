@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+<html lang="en" class="app-root">
 
 <head>
     <meta charset="UTF-8" />
@@ -11,49 +11,37 @@
 
 <body class="page-body">
     <header class="page-header">
-        <div class="flex-1">
+        <div class="header-spacer">
             <button onclick="goBack()" class="back-button">
                 <span class="text-base sm:text-lg">←</span>
-                <span class="text-xs sm:text-sm font-medium">Back</span>
+                <span class="text-sm sm:text-base">Back</span>
             </button>
         </div>
-        <div class="flex-1 flex justify-center">
-            <h1 class="page-title">
-                <span class="text-4xl sm:text-5xl">📊</span>
-                <span>Diagnostics</span>
-            </h1>
+        <div class="header-center">
+            <h1 class="page-title">📊 Diagnostics</h1>
         </div>
-        <div class="flex-1"></div>
+        <div class="header-spacer"></div>
     </header>
 
-    <main class="w-full max-w-6xl mx-auto flex-1 flex flex-col">
+    <main class="page-main-wide">
         <nav class="flex flex-wrap justify-center gap-2 mb-6">
-            <button onclick="showSection('device-config-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg transition-colors">⚙️
+            <button onclick="showSection('device-config-section')" class="section-nav-btn section-nav-btn-purple">⚙️
                 Device</button>
-            <button onclick="showSection('network-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">🌐
+            <button onclick="showSection('network-section')" class="section-nav-btn section-nav-btn-blue">🌐
                 Network</button>
-            <button onclick="showSection('mqtt-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg transition-colors">📡
+            <button onclick="showSection('mqtt-section')" class="section-nav-btn section-nav-btn-green">📡
                 MQTT</button>
-            <button onclick="showSection('microcontroller-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded-lg transition-colors">🎛️
+            <button onclick="showSection('microcontroller-section')" class="section-nav-btn section-nav-btn-orange">🎛️
                 MCU</button>
-            <button onclick="showSection('unbidden-ink-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 rounded-lg transition-colors">📝
+            <button onclick="showSection('unbidden-ink-section')" class="section-nav-btn section-nav-btn-yellow">📝
                 Unbidden</button>
-            <button onclick="showSection('logging-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg transition-colors">📋
+            <button onclick="showSection('logging-section')" class="section-nav-btn section-nav-btn-indigo">📋
                 Logging</button>
-            <button onclick="showSection('hardware-buttons-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded-lg transition-colors">🔘
+            <button onclick="showSection('hardware-buttons-section')" class="section-nav-btn section-nav-btn-slate">🔘
                 Hardware</button>
-            <button onclick="showSection('pages-endpoints-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded-lg transition-colors">🔗
+            <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-slate">🔗
                 Pages</button>
-            <button onclick="showSection('config-file-section')"
-                class="section-nav-btn px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300 rounded-lg transition-colors">📄
+            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-slate">📄
                 Config</button>
         </nav>
 
@@ -301,11 +289,11 @@
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <h5 class="font-semibold text-slate-700 dark:text-slate-300 mb-2">📄 Web Pages</h5>
+                        <h5 class="diag-section-heading">📄 Web Pages</h5>
                         <div id="web-pages" class="space-y-1 text-sm">-</div>
                     </div>
                     <div>
-                        <h5 class="font-semibold text-slate-700 dark:text-slate-300 mb-2">🔌 API Endpoints</h5>
+                        <h5 class="diag-section-heading">🔌 API Endpoints</h5>
                         <div id="api-endpoints" class="space-y-1 text-sm">-</div>
                     </div>
                 </div>

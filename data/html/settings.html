@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+<html lang="en" class="app-root">
 
 <head>
     <meta charset="UTF-8" />
@@ -7,72 +7,13 @@
     <title>Settings - Scribe</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/settings.min.css">
-    <style>
-        /* Dual-range slider styles */
-        .range-slider-container {
-            position: relative;
-        }
-
-        .range-slider-start,
-        .range-slider-end {
-            pointer-events: none;
-            /* Disable default click behavior */
-        }
-
-        .range-slider-start::-webkit-slider-thumb,
-        .range-slider-end::-webkit-slider-thumb {
-            pointer-events: auto;
-            position: relative;
-            background: #8b5cf6;
-            border: 2px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            width: 20px;
-            height: 20px;
-        }
-
-        .range-slider-start::-webkit-slider-thumb {
-            z-index: 24;
-        }
-
-        .range-slider-end::-webkit-slider-thumb {
-            z-index: 23;
-        }
-
-        /* When dragging, bring to front */
-        .range-slider-start:active::-webkit-slider-thumb {
-            z-index: 25;
-        }
-
-        .range-slider-end:active::-webkit-slider-thumb {
-            z-index: 25;
-        }
-
-        /* Custom click areas that will be positioned dynamically */
-        .range-click-area {
-            position: absolute;
-            top: 0;
-            height: 32px;
-            cursor: pointer;
-            z-index: 20;
-        }
-
-        .range-click-area-start {
-            background: transparent;
-        }
-
-        .range-click-area-end {
-            background: transparent;
-        }
-    </style>
 </head>
 
 <body class="page-body">
     <!-- Header with title and back button -->
     <header class="page-header">
         <!-- Back button -->
-        <div class="flex-1">
+        <div class="header-spacer">
             <button onclick="goBack()" class="back-button">
                 <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -82,7 +23,7 @@
         </div>
 
         <!-- Centered title with settings icon -->
-        <div class="flex-1 flex justify-center">
+        <div class="header-center">
             <h1 class="page-title">
                 <span class="text-4xl sm:text-5xl">⚙️</span>
                 <span>Settings</span>
@@ -90,15 +31,14 @@
         </div>
 
         <!-- Right spacer -->
-        <div class="flex-1"></div>
+        <div class="header-spacer"></div>
     </header>
 
-    <main class="w-full max-w-4xl mx-auto flex-1 space-y-6">
+    <main class="page-main">
         <!-- Loading State -->
-        <div id="loading-state"
-            class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8 text-center">
+        <div id="loading-state" class="loading-card">
             <div class="flex items-center justify-center space-x-3">
-                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <div class="loading-spinner"></div>
                 <span class="text-gray-600 dark:text-gray-400">Loading configuration...</span>
             </div>
         </div>
@@ -106,20 +46,18 @@
         <!-- Settings Form -->
         <form id="settings-form" class="hidden space-y-6" onsubmit="saveSettings(event)">
             <!-- WiFi -->
-            <div
-                class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8">
-                <h2 class="text-2xl font-bold text-blue-800 dark:text-blue-100 mb-6 flex items-center space-x-2">
+            <div class="settings-card settings-card-blue">
+                <h2 class="settings-card-header settings-card-header-blue">
                     <span class="text-3xl">📶</span>
                     <span>WiFi</span>
                 </h2>
 
                 <!-- WiFi Warning -->
-                <div
-                    class="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                <div class="warning-box">
                     <div class="flex items-start space-x-3">
                         <span class="text-2xl">⚠️</span>
                         <div>
-                            <h3 class="text-lg font-semibold text-orange-800 dark:text-orange-300">WiFi Change Warning
+                            <h3 class="warning-title">WiFi Change Warning
                             </h3>
                             <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
                                 Changing WiFi settings will cause the device to restart and connect to the new network.
@@ -131,23 +69,20 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
-                        <label for="wifi-ssid" class="block text-sm font-medium text-gray-700 dark:text-gray-300">WiFi
+                        <label for="wifi-ssid" class="form-label">WiFi
                             SSID:</label>
-                        <input type="text" id="wifi-ssid" name="wifi.ssid" required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <input id="wifi-ssid" name="wifi_ssid" type="text" placeholder="Enter WiFi network name"
+                            class="input-standard">
                     </div>
                     <div class="space-y-2">
-                        <label for="wifi-password"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">WiFi Password:</label>
-                        <input type="password" id="wifi-password" name="wifi.password"
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <label for="wifi-password" class="form-label">WiFi Password:</label>
+                        <input type="password" id="wifi-password" name="wifi.password" class="input-standard">
                     </div>
                     <div class="space-y-2">
-                        <label for="wifi-timeout"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Connection Timeout
+                        <label for="wifi-timeout" class="form-label">Connection Timeout
                             (seconds):</label>
                         <input type="number" id="wifi-timeout" name="wifi.connect_timeout" min="5" max="60" value="15"
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                            class="input-standard">
                         <p class="text-xs text-gray-500 dark:text-gray-400">Time to wait before falling back to AP mode
                             (5-60 seconds)</p>
                     </div>
@@ -155,27 +90,23 @@
             </div>
 
             <!-- Device -->
-            <div
-                class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
-                <h2 class="text-2xl font-bold text-purple-800 dark:text-purple-100 mb-6 flex items-center space-x-2">
+            <div class="settings-card settings-card-purple">
+                <h2 class="settings-card-header settings-card-header-purple">
                     <span class="text-3xl">⚙️</span>
                     <span>Device</span>
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
-                        <label for="device-owner"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Owner:</label>
-                        <input type="text" id="device-owner" name="device.owner" required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <label for="device-owner" class="form-label">Device Owner:</label>
+                        <input type="text" id="device-owner" name="general.device_owner"
+                            placeholder="Enter device owner name" class="input-standard">
                     </div>
                     <div class="space-y-2">
-                        <label for="timezone"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Timezone (IANA
+                        <label for="timezone" class="form-label">Timezone (IANA
                             format):</label>
                         <input type="text" id="timezone" name="device.timezone" required
                             placeholder="e.g. Europe/London, America/New_York, UTC"
-                            pattern="^[A-Za-z_]+/[A-Za-z_]+$|^UTC$"
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                            pattern="^[A-Za-z_]+/[A-Za-z_]+$|^UTC$" class="input-standard">
                         <p class="text-sm text-gray-600 dark:text-gray-400">Use IANA timezone format (e.g.
                             Europe/London, America/New_York)</p>
                     </div>
@@ -184,61 +115,51 @@
                 <div class="mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label for="max-characters"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Message
+                            <label for="max-characters" class="form-label">Max Message
                                 Characters
                                 (100-5000):</label>
                             <input type="number" id="max-characters" name="validation.maxCharacters" min="100"
-                                max="5000" required
-                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                max="5000" required class="input-standard">
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- MQTT -->
-            <div
-                class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 shadow-2xl rounded-3xl p-8">
-                <h2 class="text-2xl font-bold text-yellow-800 dark:text-yellow-100 mb-6 flex items-center space-x-2">
+            <div class="settings-card settings-card-yellow">
+                <h2 class="settings-card-header settings-card-header-yellow">
                     <span class="text-3xl">📡</span>
                     <span>MQTT</span>
                 </h2>
                 <div class="space-y-6">
                     <!-- Server gets full width -->
                     <div class="space-y-2">
-                        <label for="mqtt-server"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Server:</label>
-                        <input type="text" id="mqtt-server" name="mqtt.server" required
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                        <label for="mqtt-server" class="form-label">Server:</label>
+                        <input type="text" id="mqtt-server" name="mqtt.server" required class="input-standard">
                     </div>
                     <!-- Username, Password, Port share the row (1/3 each) -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="space-y-2">
-                            <label for="mqtt-username"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username:</label>
-                            <input type="text" id="mqtt-username" name="mqtt.username" required
-                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                            <label for="mqtt-username" class="form-label">Username:</label>
+                            <input type="text" id="mqtt-username" name="mqtt.username" required class="input-standard">
                         </div>
                         <div class="space-y-2">
-                            <label for="mqtt-password"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password:</label>
+                            <label for="mqtt-password" class="form-label">Password:</label>
                             <input type="password" id="mqtt-password" name="mqtt.password" required
-                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                class="input-standard">
                         </div>
                         <div class="space-y-2">
-                            <label for="mqtt-port"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Port:</label>
+                            <label for="mqtt-port" class="form-label">Port:</label>
                             <input type="number" id="mqtt-port" name="mqtt.port" min="1" max="65535" required
-                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                class="input-standard">
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Unbidden Ink -->
-            <div
-                class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 shadow-2xl rounded-3xl p-8">
-                <h2 class="text-2xl font-bold text-green-800 dark:text-green-100 mb-6 flex items-center space-x-2">
+            <div class="settings-card settings-card-green">
+                <h2 class="settings-card-header settings-card-header-green">
                     <span class="text-3xl">🪄</span>
                     <span>Unbidden Ink</span>
                 </h2>
@@ -280,34 +201,29 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Active Time
                                 Range:</label>
                             <div class="space-y-2">
-                                <div class="relative h-8 range-slider-container">
+                                <div class="dual-range-slider">
                                     <!-- Background track container -->
-                                    <div class="absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg"
-                                        style="top: 12px;"></div>
+                                    <div class="dual-range-track"></div>
 
                                     <!-- Active time track (colored section) -->
-                                    <div id="time-track" class="absolute h-2 bg-purple-500 rounded-lg"
-                                        style="top: 12px; left: 33.33%; width: 58.33%;"></div>
+                                    <div id="time-track" class="dual-range-active" style="left: 33.33%; width: 58.33%;">
+                                    </div>
 
                                     <!-- Dynamic click areas - will be positioned by JavaScript -->
-                                    <div id="click-area-start" class="range-click-area range-click-area-start"
+                                    <div id="click-area-start" class="dual-range-click-area"
                                         onclick="handleSliderClick(event, 'start')"></div>
-                                    <div id="click-area-end" class="range-click-area range-click-area-end"
+                                    <div id="click-area-end" class="dual-range-click-area"
                                         onclick="handleSliderClick(event, 'end')"></div>
 
                                     <!-- Start time handle - full width -->
                                     <input type="range" id="time-start" name="unbiddenInk.startHour" min="0" max="24"
-                                        step="1" value="8"
-                                        class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer range-slider-start"
-                                        style="top: 0; z-index: 24;" oninput="updateTimeRange(this, 'start')"
-                                        onchange="updateClickAreas()">
+                                        step="1" value="8" class="dual-range-input dual-range-start"
+                                        oninput="updateTimeRange(this, 'start')" onchange="updateClickAreas()">
 
                                     <!-- End time handle - full width -->
                                     <input type="range" id="time-end" name="unbiddenInk.endHour" min="0" max="24"
-                                        step="1" value="22"
-                                        class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer range-slider-end"
-                                        style="top: 0; z-index: 23;" oninput="updateTimeRange(this, 'end')"
-                                        onchange="updateClickAreas()">
+                                        step="1" value="22" class="dual-range-input dual-range-end"
+                                        oninput="updateTimeRange(this, 'end')" onchange="updateClickAreas()">
                                 </div>
 
                                 <!-- Time display -->
@@ -322,48 +238,36 @@
                                     <div
                                         class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1 relative">
                                         <!-- Always show core markers -->
-                                        <span style="position: absolute; left: 0%;">0</span>
-                                        <span style="position: absolute; left: 16.67%;">4</span>
-                                        <span style="position: absolute; left: 33.33%;">8</span>
-                                        <span style="position: absolute; left: 50%;">12</span>
-                                        <span style="position: absolute; left: 66.67%;">16</span>
-                                        <span style="position: absolute; left: 83.33%;">20</span>
-                                        <span style="position: absolute; left: 100%;">24</span>
+                                        <span class="time-marker time-marker-0">0</span>
+                                        <span class="time-marker time-marker-4">4</span>
+                                        <span class="time-marker time-marker-8">8</span>
+                                        <span class="time-marker time-marker-12">12</span>
+                                        <span class="time-marker time-marker-16">16</span>
+                                        <span class="time-marker time-marker-20">20</span>
+                                        <span class="time-marker time-marker-24">24</span>
 
                                         <!-- Tablet+ - show every 2 hours -->
-                                        <span style="position: absolute; left: 8.33%;" class="hidden sm:inline">2</span>
-                                        <span style="position: absolute; left: 25%;" class="hidden sm:inline">6</span>
-                                        <span style="position: absolute; left: 41.67%;"
-                                            class="hidden sm:inline">10</span>
-                                        <span style="position: absolute; left: 58.33%;"
-                                            class="hidden sm:inline">14</span>
-                                        <span style="position: absolute; left: 75%;" class="hidden sm:inline">18</span>
-                                        <span style="position: absolute; left: 91.67%;"
-                                            class="hidden sm:inline">22</span>
+                                        <span class="time-marker time-marker-2 hidden sm:inline">2</span>
+                                        <span class="time-marker time-marker-6 hidden sm:inline">6</span>
+                                        <span class="time-marker time-marker-10 hidden sm:inline">10</span>
+                                        <span class="time-marker time-marker-14 hidden sm:inline">14</span>
+                                        <span class="time-marker time-marker-18 hidden sm:inline">18</span>
+                                        <span class="time-marker time-marker-22 hidden sm:inline">22</span>
 
                                         <!-- Desktop only - show remaining hours -->
-                                        <span style="position: absolute; left: 4.17%;" class="hidden lg:inline">1</span>
-                                        <span style="position: absolute; left: 12.5%;" class="hidden lg:inline">3</span>
-                                        <span style="position: absolute; left: 20.83%;"
-                                            class="hidden lg:inline">5</span>
-                                        <span style="position: absolute; left: 29.17%;"
-                                            class="hidden lg:inline">7</span>
-                                        <span style="position: absolute; left: 37.5%;" class="hidden lg:inline">9</span>
-                                        <span style="position: absolute; left: 45.83%;"
-                                            class="hidden lg:inline">11</span>
-                                        <span style="position: absolute; left: 54.17%;"
-                                            class="hidden lg:inline">13</span>
-                                        <span style="position: absolute; left: 62.5%;"
-                                            class="hidden lg:inline">15</span>
-                                        <span style="position: absolute; left: 70.83%;"
-                                            class="hidden lg:inline">17</span>
-                                        <span style="position: absolute; left: 79.17%;"
-                                            class="hidden lg:inline">19</span>
-                                        <span style="position: absolute; left: 87.5%;"
-                                            class="hidden lg:inline">21</span>
-                                        <span style="position: absolute; left: 95.83%;"
-                                            class="hidden lg:inline">23</span>
-                                        <span style="position: absolute; left: 100%;">24</span>
+                                        <span class="time-marker time-marker-1 hidden lg:inline">1</span>
+                                        <span class="time-marker time-marker-3 hidden lg:inline">3</span>
+                                        <span class="time-marker time-marker-5 hidden lg:inline">5</span>
+                                        <span class="time-marker time-marker-7 hidden lg:inline">7</span>
+                                        <span class="time-marker time-marker-9 hidden lg:inline">9</span>
+                                        <span class="time-marker time-marker-11 hidden lg:inline">11</span>
+                                        <span class="time-marker time-marker-13 hidden lg:inline">13</span>
+                                        <span class="time-marker time-marker-15 hidden lg:inline">15</span>
+                                        <span class="time-marker time-marker-17 hidden lg:inline">17</span>
+                                        <span class="time-marker time-marker-19 hidden lg:inline">19</span>
+                                        <span class="time-marker time-marker-21 hidden lg:inline">21</span>
+                                        <span class="time-marker time-marker-23 hidden lg:inline">23</span>
+                                        <span class="time-marker time-marker-24">24</span>
                                     </div>
                                 </div>
                             </div>
@@ -376,16 +280,13 @@
                             <div class="space-y-4">
                                 <!-- Frequency slider with non-linear scale -->
                                 <div class="space-y-2">
-                                    <div class="relative h-8">
+                                    <div class="single-range-slider">
                                         <!-- Background track -->
-                                        <div class="absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg"
-                                            style="top: 12px;"></div>
+                                        <div class="single-range-track"></div>
 
                                         <!-- Frequency slider -->
                                         <input type="range" id="frequency-slider" min="0" max="7" step="1" value="3"
-                                            class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer"
-                                            style="top: 0; z-index: 10;"
-                                            oninput="updateFrequencyFromSlider(this.value)">
+                                            class="single-range-input" oninput="updateFrequencyFromSlider(this.value)">
                                     </div>
 
                                     <!-- Frequency markers -->
@@ -716,12 +617,10 @@
 
             <!-- Action Buttons -->
             <div class="flex space-x-4">
-                <button type="button" onclick="goBack()" id="close-button"
-                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                <button type="button" onclick="goBack()" id="close-button" class="form-button-secondary">
                     Close
                 </button>
-                <button type="submit" id="save-button"
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                <button type="submit" id="save-button" class="form-button-primary">
                     Save Settings
                 </button>
             </div>

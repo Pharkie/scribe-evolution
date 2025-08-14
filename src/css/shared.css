@@ -2,6 +2,61 @@
 @import "tailwindcss";
 
 @layer components {
+  /* Root HTML styling */
+  .app-root {
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+  }
+  
+  /* Layout Components */
+  .header-spacer {
+    @apply flex-1;
+  }
+  
+  .header-center {
+    @apply flex-1 flex justify-center;
+  }
+  
+  .header-end {
+    @apply flex-1 flex justify-end;
+  }
+  
+  .page-main {
+    @apply w-full max-w-4xl mx-auto flex-1;
+  }
+  
+  .page-main-wide {
+    @apply w-full max-w-6xl mx-auto flex-1 flex flex-col;
+  }
+  
+  /* Form Components */
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+  
+  /* Common Cards & Containers */
+  .card-primary {
+    @apply bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700;
+  }
+}
+
+@layer utilities {
+  /* Spacing Utilities */
+  .vertical-stack-sm {
+    @apply space-y-2;
+  }
+  
+  .vertical-stack {
+    @apply space-y-3;
+  }
+  
+  .vertical-stack-md {
+    @apply space-y-4;
+  }
+  
+  .vertical-stack-lg {
+    @apply space-y-6;
+  }
+  
   /* Base page layout */
   .page-body {
     @apply flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
@@ -30,6 +85,53 @@
   
   .btn-secondary {
     @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  /* Action Buttons - for quick actions and colorful buttons */
+  .action-button {
+    @apply flex flex-col items-center px-4 py-3 border rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md;
+  }
+  
+  .action-button-icon {
+    @apply text-2xl mb-1;
+  }
+  
+  .action-button-label {
+    @apply text-sm font-medium;
+  }
+  
+  /* Action Button Color Variants */
+  .action-button-yellow {
+    @apply bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700;
+  }
+  
+  .action-button-emerald {
+    @apply bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700;
+  }
+  
+  .action-button-purple {
+    @apply bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700;
+  }
+  
+  .action-button-cyan {
+    @apply bg-cyan-50 dark:bg-cyan-900/20 hover:bg-cyan-100 dark:hover:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700;
+  }
+  
+  .action-button-pink {
+    @apply bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-700;
+  }
+  
+  .action-button-gray {
+    @apply bg-gray-50 dark:bg-gray-900/20 hover:bg-gray-100 dark:hover:bg-gray-900/30 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700;
+  }
+
+  /* Form Action Buttons - for form submit/cancel pairs */
+  .form-button-primary {
+    @apply flex-1 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg bg-blue-600 hover:bg-blue-700;
+  }
+  
+  .form-button-secondary {
+    @apply flex-1 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg bg-gray-600 hover:bg-gray-700;
   }
   
   /* Form elements */

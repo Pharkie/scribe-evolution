@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+<html lang="en" class="app-root">
 
 <head>
     <meta charset="UTF-8" />
@@ -13,10 +13,10 @@
     <!-- Header with title and dark mode toggle -->
     <header class="page-header">
         <!-- Left spacer -->
-        <div class="flex-1"></div>
+        <div class="header-spacer"></div>
 
         <!-- Centered title with printer icon -->
-        <div class="flex-1 flex justify-center">
+        <div class="header-center">
             <h1 class="page-title">
                 <span class="text-4xl sm:text-5xl">🖨️</span>
                 <span>Scribe</span>
@@ -24,9 +24,8 @@
         </div>
 
         <!-- Settings button -->
-        <div class="flex-1 flex justify-end">
-            <button onclick="goToSettings()"
-                class="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200">
+        <div class="header-end">
+            <button onclick="goToSettings()" class="status-indicator">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
@@ -39,95 +38,83 @@
         </div>
     </header>
 
-    <main class="w-full max-w-4xl mx-auto flex-1 space-y-6">
+    <main class="page-main vertical-stack-lg">
         <!-- Main Printer Interface -->
-        <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
-            <form id="printer-form" onsubmit="handleSubmit(event)" class="space-y-6">
+        <div class="card-primary">
+            <form id="printer-form" onsubmit="handleSubmit(event)" class="vertical-stack-lg">
                 <!-- Printer Selection -->
-                <div class="space-y-3">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Print to:</label>
-                    <div id="printer-selection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="vertical-stack">
+                    <label class="form-label">Print to:</label>
+                    <div id="printer-selection" class="printer-grid">
                         <!-- Printer options will be populated dynamically -->
                     </div>
                     <input type="hidden" id="printer-target" name="printer-target" value="local-direct">
                 </div>
 
                 <!-- Message Input -->
-                <div class="space-y-2">
-                    <label for="message-textarea"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message:</label>
+                <div class="vertical-stack-sm">
+                    <label for="message-textarea" class="form-label">Message:</label>
                     <textarea name="message" id="message-textarea" onkeydown="handleTextareaKeydown(event)"
                         oninput="updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS || 1000)"
-                        placeholder="Type your message…"
-                        class="w-full p-4 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700"
-                        rows="4" required></textarea>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 text-right">
+                        placeholder="Type your message…" class="textarea-custom" rows="4" required></textarea>
+                    <div class="char-counter">
                         <span id="char-counter"></span>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" id="submit-button"
-                    class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                <button type="submit" id="submit-button" class="submit-button">
                     🖨️ Scribe
                 </button>
             </form>
 
             <!-- Quick Actions -->
-            <div class="space-y-4 mt-8">
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                    <button onclick="sendQuickAction('riddle')"
-                        class="flex flex-col items-center px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md">
-                        <span class="text-2xl mb-1">🧩</span>
-                        <span class="text-sm font-medium">Riddle</span>
+            <div class="vertical-stack-md mt-8">
+                <div class="quick-actions-grid">
+                    <button onclick="sendQuickAction('riddle')" class="action-button action-button-yellow">
+                        <span class="action-button-icon">🧩</span>
+                        <span class="action-button-label">Riddle</span>
                     </button>
-                    <button onclick="sendQuickAction('joke')"
-                        class="flex flex-col items-center px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md">
-                        <span class="text-2xl mb-1">😄</span>
-                        <span class="text-sm font-medium">Joke</span>
+                    <button onclick="sendQuickAction('joke')" class="action-button action-button-emerald">
+                        <span class="action-button-icon">😄</span>
+                        <span class="action-button-label">Joke</span>
                     </button>
-                    <button onclick="sendQuickAction('quote')"
-                        class="flex flex-col items-center px-4 py-3 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md">
-                        <span class="text-2xl mb-1">💭</span>
-                        <span class="text-sm font-medium">Quote</span>
+                    <button onclick="sendQuickAction('quote')" class="action-button action-button-purple">
+                        <span class="action-button-icon">💭</span>
+                        <span class="action-button-label">Quote</span>
                     </button>
-                    <button onclick="sendQuickAction('quiz')"
-                        class="flex flex-col items-center px-4 py-3 bg-cyan-50 dark:bg-cyan-900/20 hover:bg-cyan-100 dark:hover:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md">
-                        <span class="text-2xl mb-1">🧠</span>
-                        <span class="text-sm font-medium">Quiz</span>
+                    <button onclick="sendQuickAction('quiz')" class="action-button action-button-cyan">
+                        <span class="action-button-icon">🧠</span>
+                        <span class="action-button-label">Quiz</span>
                     </button>
-                    <button onclick="sendQuickAction('poke')"
-                        class="flex flex-col items-center px-4 py-3 bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/30 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md">
-                        <span class="text-2xl mb-1">👉</span>
-                        <span class="text-sm font-medium">Poke</span>
+                    <button onclick="sendQuickAction('poke')" class="action-button action-button-pink">
+                        <span class="action-button-icon">👉</span>
+                        <span class="action-button-label">Poke</span>
                     </button>
-                    <button onclick="sendQuickAction('print-test')"
-                        class="flex flex-col items-center px-4 py-3 bg-gray-50 dark:bg-gray-900/20 hover:bg-gray-100 dark:hover:bg-gray-900/30 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md">
-                        <span class="text-2xl mb-1">🧪</span>
-                        <span class="text-sm font-medium">Print test</span>
+                    <button onclick="sendQuickAction('print-test')" class="action-button action-button-gray">
+                        <span class="action-button-icon">🧪</span>
+                        <span class="action-button-label">Print test</span>
                     </button>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="page-footer space-y-3">
-        <a href="/diagnostics.html"
-            class="inline-block px-4 py-2 bg-slate-500 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500 text-white text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg">
+    <footer class="page-footer vertical-stack">
+        <a href="/diagnostics.html" class="link-button">
             📊 Diagnostics
         </a>
         <div>
             Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
-                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 underline decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 underline-offset-2">Peter
+                class="footer-link">Peter
                 / Urban Circles</a>
         </div>
         <div>
             Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
-                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 underline decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 underline-offset-2">Pharkie</a>
+                class="footer-link">Pharkie</a>
         </div>
         <div>
-            Quotes from <a href="https://zenquotes.io/" target="_blank"
-                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 underline decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 underline-offset-2">ZenQuotes
+            Quotes from <a href="https://zenquotes.io/" target="_blank" class="footer-link">ZenQuotes
                 API</a>
         </div>
     </footer>

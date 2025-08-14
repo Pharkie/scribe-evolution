@@ -3,6 +3,72 @@
 @import "./shared.css" layer(components);
 
 @layer components {
+  /* Loading card */
+  .loading-card {
+    @apply bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8 text-center;
+  }
+  
+  /* Loading spinner */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600;
+  }
+  
+  /* Settings cards */
+  .settings-card {
+    @apply shadow-2xl rounded-3xl p-8;
+  }
+  
+  .settings-card-blue {
+    @apply bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700;
+  }
+  
+  .settings-card-purple {
+    @apply bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700;
+  }
+  
+  .settings-card-yellow {
+    @apply bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700;
+  }
+  
+  .settings-card-green {
+    @apply bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700;
+  }
+  
+  /* Settings card headers */
+  .settings-card-header {
+    @apply text-2xl font-bold mb-6 flex items-center space-x-2;
+  }
+  
+  .settings-card-header-blue {
+    @apply text-blue-800 dark:text-blue-100;
+  }
+  
+  .settings-card-header-purple {
+    @apply text-purple-800 dark:text-purple-100;
+  }
+  
+  .settings-card-header-yellow {
+    @apply text-yellow-800 dark:text-yellow-100;
+  }
+  
+  .settings-card-header-green {
+    @apply text-green-800 dark:text-green-100;
+  }
+  
+  /* Warning box */
+  .warning-box {
+    @apply mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg;
+  }
+  
+  .warning-title {
+    @apply text-lg font-semibold text-orange-800 dark:text-orange-300;
+  }
+  
+  /* Form input styling */
+  .input-standard {
+    @apply w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700;
+  }
+
   /* Settings specific components */
   .settings-panel {
     @apply fixed inset-0 bg-black/50 flex items-center justify-center p-4 opacity-0 transform scale-95 transition-all duration-200;
@@ -34,5 +100,120 @@
   
   .settings-toggle input:checked + span {
     @apply transform translate-x-6;
+  }
+  
+  /* Dual-range slider component */
+  .dual-range-slider {
+    @apply relative h-8;
+  }
+  
+  .dual-range-track {
+    @apply absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg;
+    top: 12px;
+  }
+  
+  .dual-range-active {
+    @apply absolute h-2 bg-purple-500 rounded-lg;
+    top: 12px;
+  }
+  
+  .dual-range-input {
+    @apply absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer;
+    top: 0;
+    pointer-events: none;
+  }
+  
+  .dual-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    position: relative;
+    background: #8b5cf6;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .dual-range-start {
+    z-index: 24;
+  }
+  
+  .dual-range-start::-webkit-slider-thumb {
+    z-index: 24;
+  }
+  
+  .dual-range-end {
+    z-index: 23;
+  }
+  
+  .dual-range-end::-webkit-slider-thumb {
+    z-index: 23;
+  }
+  
+  /* When dragging, bring to front */
+  .dual-range-start:active::-webkit-slider-thumb {
+    z-index: 25;
+  }
+  
+  .dual-range-end:active::-webkit-slider-thumb {
+    z-index: 25;
+  }
+  
+  /* Click areas for better UX */
+  .dual-range-click-area {
+    @apply absolute cursor-pointer;
+    top: 0;
+    height: 32px;
+    background: transparent;
+    z-index: 20;
+  }
+  
+  /* Time marker positioning - semantic positioning classes */
+  .time-marker {
+    @apply absolute;
+  }
+  
+  .time-marker-0 { left: 0%; }
+  .time-marker-1 { left: 4.17%; }
+  .time-marker-2 { left: 8.33%; }
+  .time-marker-3 { left: 12.5%; }
+  .time-marker-4 { left: 16.67%; }
+  .time-marker-5 { left: 20.83%; }
+  .time-marker-6 { left: 25%; }
+  .time-marker-7 { left: 29.17%; }
+  .time-marker-8 { left: 33.33%; }
+  .time-marker-9 { left: 37.5%; }
+  .time-marker-10 { left: 41.67%; }
+  .time-marker-11 { left: 45.83%; }
+  .time-marker-12 { left: 50%; }
+  .time-marker-13 { left: 54.17%; }
+  .time-marker-14 { left: 58.33%; }
+  .time-marker-15 { left: 62.5%; }
+  .time-marker-16 { left: 66.67%; }
+  .time-marker-17 { left: 70.83%; }
+  .time-marker-18 { left: 75%; }
+  .time-marker-19 { left: 79.17%; }
+  .time-marker-20 { left: 83.33%; }
+  .time-marker-21 { left: 87.5%; }
+  .time-marker-22 { left: 91.67%; }
+  .time-marker-23 { left: 95.83%; }
+  .time-marker-24 { left: 100%; }
+  
+  /* Single-range slider (frequency slider) */
+  .single-range-slider {
+    @apply relative h-8;
+  }
+  
+  .single-range-track {
+    @apply absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg;
+    top: 12px;
+  }
+  
+  .single-range-input {
+    @apply absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer;
+    top: 0;
+    z-index: 10;
   }
 }
