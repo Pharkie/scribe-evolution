@@ -1,0 +1,38 @@
+/* Settings page specific styles */
+@import "tailwindcss";
+@import "./shared.css" layer(components);
+
+@layer components {
+  /* Settings specific components */
+  .settings-panel {
+    @apply fixed inset-0 bg-black/50 flex items-center justify-center p-4 opacity-0 transform scale-95 transition-all duration-200;
+  }
+  
+  .settings-form {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 transform transition-all duration-200;
+  }
+  
+  .settings-field {
+    @apply space-y-2;
+  }
+  
+  .settings-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+  
+  .settings-toggle {
+    @apply relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out;
+  }
+  
+  .settings-toggle input {
+    @apply sr-only;
+  }
+  
+  .settings-toggle span {
+    @apply absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out;
+  }
+  
+  .settings-toggle input:checked + span {
+    @apply transform translate-x-6;
+  }
+}

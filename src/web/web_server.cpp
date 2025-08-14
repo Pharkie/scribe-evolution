@@ -177,11 +177,9 @@ void setupWebServerRoutes(int maxChars)
             ESP.restart();
         } });
 
-    // CSS and JS files (always needed) - serve directly from LittleFS
-    server.serveStatic("/css/tailwind.css", LittleFS, "/css/tailwind.css", "text/css").setTryGzipFirst(false);
-    server.serveStatic("/js/app.min.js", LittleFS, "/js/app.min.js", "application/javascript").setTryGzipFirst(false);
-    server.serveStatic("/js/settings.js", LittleFS, "/js/settings.min.js", "application/javascript").setTryGzipFirst(false);
-    server.serveStatic("/js/settings.min.js", LittleFS, "/js/settings.min.js", "application/javascript").setTryGzipFirst(false);
+    // CSS and JS files (always needed) - serve entire directories from LittleFS
+    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400");
+    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400");
     server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
 
     // In AP mode, set up captive portal for all other requests
@@ -217,8 +215,7 @@ void setupWebServerRoutes(int maxChars)
         server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
                   { request->send(LittleFS, "/html/index.html", "text/html"); });
         server.serveStatic("/diagnostics.html", LittleFS, "/html/diagnostics.html", "text/html").setTryGzipFirst(false);
-        server.serveStatic("/js/index.min.js", LittleFS, "/js/index.min.js", "application/javascript").setTryGzipFirst(false);
-        server.serveStatic("/js/diagnostics.min.js", LittleFS, "/js/diagnostics.min.js", "application/javascript").setTryGzipFirst(false);
+        // Note: JS and CSS files are now served via directory routes above
 
         // Form submission handlers
         registerPOSTRoute("/api/print-local", handlePrintContent);

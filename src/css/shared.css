@@ -1,0 +1,43 @@
+/* Shared base styles and components */
+@import "tailwindcss";
+
+@layer components {
+  /* Base page layout */
+  .page-body {
+    @apply flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
+  }
+  
+  .page-header {
+    @apply w-full max-w-6xl mx-auto flex items-center mb-8 gap-4;
+  }
+  
+  .page-title {
+    @apply text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2;
+  }
+  
+  .page-footer {
+    @apply w-full max-w-6xl mx-auto mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400;
+  }
+  
+  .back-button {
+    @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md;
+  }
+
+  /* Common buttons */
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  /* Form elements */
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6;
+  }
+}

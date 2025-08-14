@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # pylint: disable=undefined-variable
+# type: ignore
 # Note: Import and env are provided by PlatformIO framework
 
-Import("env")  # PlatformIO framework function
+Import(
+    "env"
+)  # PlatformIO framework function  # pylint: disable=undefined-variable  # type: ignore
+
 import os
 import subprocess
 import time
@@ -296,10 +300,10 @@ def upload_filesystem_and_firmware(source, target, env):
     kill_serial_processes()
     reset_esp32_connection()
 
-    # Step 1: Build Tailwind CSS
-    print("🎨 Building Tailwind CSS...")
+    # Step 1: Build modular CSS
+    print("🎨 Building modular CSS...")
     try:
-        # Run npm build-css command
+        # Run npm build-css command (builds all CSS modules)
         result = subprocess.run(
             ["npm", "run", "build-css"],
             cwd=os.getcwd(),
@@ -307,11 +311,11 @@ def upload_filesystem_and_firmware(source, target, env):
             capture_output=True,
             text=True,
         )
-        print("✅ Tailwind CSS build completed successfully!")
+        print("✅ Modular CSS build completed successfully!")
         if result.stdout:
             print(f"   Output: {result.stdout.strip()}")
     except subprocess.CalledProcessError as e:
-        print("❌ Tailwind CSS build failed!")
+        print("❌ CSS build failed!")
         print(f"   Error: {e.stderr}")
         env.Exit(1)
     except FileNotFoundError:
@@ -321,7 +325,7 @@ def upload_filesystem_and_firmware(source, target, env):
     # Step 2: Build and minify JavaScript
     print("📦 Building and minifying JavaScript...")
     try:
-        # Run npm build-js command
+        # Run npm build-js command (production build without source maps)
         result = subprocess.run(
             ["npm", "run", "build-js-prod"],
             cwd=os.getcwd(),  # Current working directory
@@ -367,7 +371,7 @@ def upload_filesystem_and_firmware(source, target, env):
 
 
 # Add custom target
-env.AddCustomTarget(  # pylint: disable=undefined-variable
+env.AddCustomTarget(  # pylint: disable=undefined-variable  # type: ignore  # noqa: F821
     name="upload_main",
     dependencies=None,
     actions=[upload_filesystem_and_firmware],
