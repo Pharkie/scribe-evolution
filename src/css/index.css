@@ -2,6 +2,48 @@
 @import "tailwindcss";
 @import "./shared.css" layer(components);
 
+@layer components {
+  /* Quick Actions Grid */
+  .quick-actions-grid {
+    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3;
+  }
+  
+  /* Status indicator button */
+  .status-indicator {
+    @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200;
+  }
+
+  /* Printer selection grid */
+  .printer-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3;
+  }
+
+  /* Textarea with custom styling */
+  .textarea-custom {
+    @apply w-full p-4 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700;
+  }
+
+  /* Character counter */
+  .char-counter {
+    @apply text-xs text-gray-500 dark:text-gray-400 text-right;
+  }
+
+  /* Primary submit button */
+  .submit-button {
+    @apply w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+  }
+
+  /* Footer link styling */
+  .footer-link {
+    @apply text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 underline decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 underline-offset-2;
+  }
+
+  /* Secondary link button */
+  .link-button {
+    @apply inline-block px-4 py-2 bg-slate-500 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500 text-white text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg;
+  }
+}
+
 @layer utilities {
   /* Custom animations */
   @keyframes fade-in {
