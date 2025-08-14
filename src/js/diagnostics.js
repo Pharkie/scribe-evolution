@@ -488,30 +488,36 @@ function copyGenericSection(sectionName, buttonElement) {
     groups.forEach(group => {
       const groupTitle = group.querySelector('strong');
       if (groupTitle) {
-        textContent += `\n${groupTitle.textContent.trim()}\n`;
+        textContent += `${groupTitle.textContent.trim()}\n`;
       }
+      
       const links = group.querySelectorAll('ul li');
       links.forEach(linkItem => {
         const link = linkItem.querySelector('a');
         const desc = linkItem.querySelector('span.text-gray-600, span.text-gray-400');
+        
         if (link) {
-          textContent += `- ${link.textContent.trim()} (${link.getAttribute('href')})`;
-          if (desc) {
-            textContent += ` ${desc.textContent.trim()}`;
-          }
-          textContent += '\n';
+          // Clean up the link text to remove extra whitespace and format properly
+          const linkText = link.textContent.trim();
+          const href = link.getAttribute('href');
+          const descText = desc ? desc.textContent.trim() : '';
+          
+          textContent += `- ${linkText} (${href}) ${descText}\n`;
         } else {
-          // For API endpoints, just get the text
-          textContent += `- ${linkItem.textContent.trim()}\n`;
+          // For API endpoints, clean up the text content
+          const itemText = linkItem.textContent.trim().replace(/\s+/g, ' ');
+          textContent += `- ${itemText}\n`;
         }
       });
+      textContent += '\n'; // Add spacing between groups
     });
     copyToClipboard(textContent.trim(), buttonElement);
     return;
   }
 
   // Default: copy label-value pairs
-  const dataRows = section.querySelectorAll('.flex.justify-between');
+  // Look for both standard and flexible layout rows
+  const dataRows = section.querySelectorAll('.flex.justify-between, .flex.flex-col.sm\\:flex-row.sm\\:justify-between');
   dataRows.forEach(row => {
     const label = row.querySelector('.text-gray-600');
     const value = row.querySelector('.font-medium');
