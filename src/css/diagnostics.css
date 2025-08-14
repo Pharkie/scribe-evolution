@@ -302,3 +302,14 @@
 .diag-config-warning.gray {
     @apply text-gray-600 dark:text-gray-400;
 }
+
+/* Button sections */
+.button-section {
+    @apply bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 mb-3;
+}
+
+.button-section:last-child {
+    @apply mb-0;
+}
+
+}

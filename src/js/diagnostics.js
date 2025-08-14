@@ -178,7 +178,7 @@ function formatBytes(bytes) {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(0)) + ' ' + sizes[i];
 }
 
 function formatUptime(seconds) {
@@ -218,6 +218,31 @@ function formatSignalStrength(dbm) {
   return `${dbm} dBm (<span style="color: ${color}; font-weight: 600;">${quality}</span>)`;
 }
 
+function formatTemperature(tempC) {
+  if (!tempC || isNaN(tempC)) return '-';
+  
+  let status, color;
+  
+  if (tempC < 35) {
+    status = 'Cool';
+    color = '#3b82f6'; // blue
+  } else if (tempC < 60) {
+    status = 'Normal';
+    color = '#10b981'; // green
+  } else if (tempC < 75) {
+    status = 'Warm';
+    color = '#f59e0b'; // amber
+  } else if (tempC < 85) {
+    status = 'Hot';
+    color = '#ef4444'; // red
+  } else {
+    status = 'Critical';
+    color = '#dc2626'; // darker red
+  }
+  
+  return `${tempC.toFixed(1)}°C (<span style="color: ${color}; font-weight: 600;">${status}</span>)`;
+}
+
 function displayDiagnostics(data, configData) {
   // Device Configuration
   setFieldValue('device-owner', data.device?.owner);
@@ -248,14 +273,13 @@ function displayDiagnostics(data, configData) {
   setFieldValue('flash-size', formatBytes(data.system?.flash?.total_chip_size));
   setFieldValue('firmware-version', data.hardware?.sdk_version);
   setFieldValue('uptime', formatUptime(data.system?.uptime_ms / 1000));
-  setFieldValue('free-heap', formatBytes(data.system?.memory?.free_heap));
-  setFieldValue('temperature', data.hardware?.temperature ? `${data.hardware.temperature.toFixed(1)}°C` : '-');
+  setFieldValue('temperature', formatTemperature(data.hardware?.temperature), true);
 
   // Memory usage
   const flashUsed = ((data.system?.flash?.app_partition?.used || 0) / (data.system?.flash?.app_partition?.total || 1)) * 100;
   const heapUsed = ((data.system?.memory?.used_heap || 0) / (data.system?.memory?.total_heap || 1)) * 100;
-  setFieldValue('flash-usage-text', `${formatBytes(data.system?.flash?.app_partition?.used || 0)} / ${formatBytes(data.system?.flash?.app_partition?.total || 0)} (${flashUsed.toFixed(1)}%)`);
-  setFieldValue('heap-usage-text', `${formatBytes(data.system?.memory?.used_heap || 0)} / ${formatBytes(data.system?.memory?.total_heap || 0)} (${heapUsed.toFixed(1)}%)`);
+  setFieldValue('flash-usage-text', `${formatBytes(data.system?.flash?.app_partition?.used || 0)} / ${formatBytes(data.system?.flash?.app_partition?.total || 0)} (${flashUsed.toFixed(0)}%)`);
+  setFieldValue('heap-usage-text', `${formatBytes(data.system?.memory?.used_heap || 0)} / ${formatBytes(data.system?.memory?.total_heap || 0)} (${heapUsed.toFixed(0)}%)`);
   updateProgressBar('flash-usage-bar', flashUsed);
   updateProgressBar('heap-usage-bar', heapUsed);
 
@@ -270,112 +294,111 @@ function displayDiagnostics(data, configData) {
   setFieldValue('file-logging', data.features?.logging?.file_enabled ? 'Enabled' : 'Disabled');
   setFieldValue('mqtt-logging', data.features?.logging?.mqtt_enabled ? 'Enabled' : 'Disabled');
 
-  // Hardware Buttons - improved layout with GPIO and configuration info
-  const buttonsContainer = document.getElementById('buttons-content');
-  if (buttonsContainer && data.features?.hardware_buttons) {
-    buttonsContainer.innerHTML = ''; // Clear existing content
-    
+  // Hardware Buttons - hybrid approach: static HTML structure with dynamic content
+  if (data.features?.hardware_buttons) {
     const buttonsData = data.features.hardware_buttons;
     
-    // Add general configuration section
-    const configSection = document.createElement('div');
-    configSection.className = 'border-b border-gray-200 dark:border-gray-600 pb-3 mb-3';
+    // Update hardware configuration values
+    setFieldValue('hw-buttons-count', buttonsData.num_buttons || 'Unknown');
+    setFieldValue('hw-buttons-debounce', `${buttonsData.debounce_ms || 'Unknown'} ms`);
+    setFieldValue('hw-buttons-long-press', `${buttonsData.long_press_ms || 'Unknown'} ms`);
+    setFieldValue('hw-buttons-active-low', buttonsData.active_low !== undefined ? (buttonsData.active_low ? 'Yes' : 'No') : 'Unknown');
+    setFieldValue('hw-buttons-min-interval', `${buttonsData.min_interval_ms || 'Unknown'} ms`);
+    setFieldValue('hw-buttons-max-per-minute', buttonsData.max_per_minute || 'Unknown');
     
-    const configTitle = document.createElement('h5');
-    configTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
-    configTitle.textContent = 'Hardware Configuration';
-    configSection.appendChild(configTitle);
-    
-    const configGrid = document.createElement('div');
-    configGrid.className = 'grid grid-cols-2 gap-2 text-sm';
-    
-    const configItems = [
-      ['Buttons', buttonsData.num_buttons || 'Unknown'],
-      ['Debounce', `${buttonsData.debounce_ms || 'Unknown'} ms`],
-      ['Long Press', `${buttonsData.long_press_ms || 'Unknown'} ms`],
-      ['Active Low', buttonsData.active_low !== undefined ? (buttonsData.active_low ? 'Yes' : 'No') : 'Unknown'],
-      ['Min Interval', `${buttonsData.min_interval_ms || 'Unknown'} ms`],
-      ['Max/Minute', buttonsData.max_per_minute || 'Unknown']
-    ];
-    
-    configItems.forEach(([label, value]) => {
-      const item = document.createElement('div');
-      item.innerHTML = `<span class="text-gray-600 dark:text-gray-400">${label}:</span> <span class="font-medium">${value}</span>`;
-      configGrid.appendChild(item);
-    });
-    
-    configSection.appendChild(configGrid);
-    buttonsContainer.appendChild(configSection);
-    
-    // Add individual button sections
+    // Update individual button configurations
     if (buttonsData.buttons && buttonsData.buttons.length > 0) {
       buttonsData.buttons.forEach((button, index) => {
-        const buttonSection = document.createElement('div');
-        buttonSection.className = 'bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600';
+        const buttonNum = index + 1;
         
-        const buttonTitle = document.createElement('h6');
-        buttonTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
-        buttonTitle.textContent = `🔘 Button ${index + 1} (GPIO ${button.gpio || 'Unknown'})`;
-        buttonSection.appendChild(buttonTitle);
+        // Update button title with GPIO info
+        setFieldValue(`button-${buttonNum}-title`, `Button ${buttonNum} (GPIO ${button.gpio || 'Unknown'})`);
         
-        const buttonDetails = document.createElement('div');
-        buttonDetails.className = 'space-y-1 text-sm';
+        // Update button actions
+        setFieldValue(`button-${buttonNum}-short-press`, button.short_endpoint || 'Not configured');
+        setFieldValue(`button-${buttonNum}-long-press`, button.long_endpoint || 'Not configured');
         
-        const addButtonDetail = (label, value) => {
-          if (value && value !== 'Not configured') {
-            const detail = document.createElement('div');
-            detail.className = 'flex justify-between';
-            detail.innerHTML = `
-              <span class="text-gray-600 dark:text-gray-400">${label}:</span>
-              <span class="font-medium text-gray-900 dark:text-gray-100">${value}</span>
-            `;
-            buttonDetails.appendChild(detail);
-          }
-        };
+        // Handle optional MQTT topics - show/hide rows as needed
+        const shortMqttContainer = document.querySelector(`[data-field-container="button-${buttonNum}-short-mqtt"]`);
+        const longMqttContainer = document.querySelector(`[data-field-container="button-${buttonNum}-long-mqtt"]`);
         
-        addButtonDetail('Short Press', button.short_endpoint || 'Not configured');
-        addButtonDetail('Long Press', button.long_endpoint || 'Not configured');
-        if (button.short_mqtt_topic) addButtonDetail('Short MQTT', button.short_mqtt_topic);
-        if (button.long_mqtt_topic) addButtonDetail('Long MQTT', button.long_mqtt_topic);
+        if (button.short_mqtt_topic) {
+          setFieldValue(`button-${buttonNum}-short-mqtt`, button.short_mqtt_topic);
+          if (shortMqttContainer) shortMqttContainer.style.display = 'flex';
+        } else {
+          if (shortMqttContainer) shortMqttContainer.style.display = 'none';
+        }
         
-        buttonSection.appendChild(buttonDetails);
-        buttonsContainer.appendChild(buttonSection);
+        if (button.long_mqtt_topic) {
+          setFieldValue(`button-${buttonNum}-long-mqtt`, button.long_mqtt_topic);
+          if (longMqttContainer) longMqttContainer.style.display = 'flex';
+        } else {
+          if (longMqttContainer) longMqttContainer.style.display = 'none';
+        }
       });
+      
+      // Hide unused button sections
+      for (let i = buttonsData.buttons.length + 1; i <= 4; i++) {
+        const buttonSection = document.querySelector(`[data-button="${i}"]`);
+        if (buttonSection) {
+          buttonSection.style.display = 'none';
+        }
+      }
+      
+      // Show used button sections
+      for (let i = 1; i <= buttonsData.buttons.length; i++) {
+        const buttonSection = document.querySelector(`[data-button="${i}"]`);
+        if (buttonSection) {
+          buttonSection.style.display = 'block';
+        }
+      }
     } else {
-      const noButtonsMsg = document.createElement('div');
-      noButtonsMsg.className = 'text-gray-500 dark:text-gray-400 text-center py-4';
-      noButtonsMsg.textContent = 'No button configuration found';
-      buttonsContainer.appendChild(noButtonsMsg);
+      // Hide all button sections if no buttons configured
+      for (let i = 1; i <= 4; i++) {
+        const buttonSection = document.querySelector(`[data-button="${i}"]`);
+        if (buttonSection) {
+          buttonSection.style.display = 'none';
+        }
+      }
     }
   }
 
-  // Pages & Endpoints - improved layout
+  // Pages & Endpoints - hybrid approach: static HTML structure with dynamic content
   const webPagesContainer = document.getElementById('web-pages');
   const apiEndpointsContainer = document.getElementById('api-endpoints');
   
   if (data.endpoints?.web_pages && webPagesContainer) {
+    // Clear existing content including loading placeholder
     webPagesContainer.innerHTML = '';
+    
+    // Create structured rows for each web page
     data.endpoints.web_pages.forEach(page => {
-      const pageItem = document.createElement('div');
-      pageItem.className = 'bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800';
+      const pageRow = document.createElement('div');
+      pageRow.className = 'diag-row';
       
-      const pathElement = document.createElement('div');
-      pathElement.className = 'font-mono text-sm font-semibold text-blue-700 dark:text-blue-300';
-      pathElement.textContent = page.path;
+      const pathLabel = document.createElement('span');
+      pathLabel.className = 'diag-label';
+      pathLabel.textContent = page.path;
       
-      const descElement = document.createElement('div');
-      descElement.className = 'text-sm text-blue-600 dark:text-blue-400 mt-1';
-      descElement.textContent = page.description;
+      const descValue = document.createElement('span');
+      descValue.className = 'diag-value';
+      descValue.textContent = page.description;
       
-      pageItem.appendChild(pathElement);
-      pageItem.appendChild(descElement);
-      webPagesContainer.appendChild(pageItem);
+      pageRow.appendChild(pathLabel);
+      pageRow.appendChild(descValue);
+      webPagesContainer.appendChild(pageRow);
     });
   } else if (webPagesContainer) {
-    webPagesContainer.innerHTML = '<div class="text-gray-500">Loading...</div>';
+    // Keep loading state with proper structure
+    const loadingRow = webPagesContainer.querySelector('.loading-placeholder');
+    if (loadingRow) {
+      loadingRow.querySelector('.diag-label').textContent = 'Loading web pages...';
+      loadingRow.querySelector('.diag-value').textContent = '-';
+    }
   }
   
   if (data.endpoints?.api_endpoints && apiEndpointsContainer) {
+    // Clear existing content including loading placeholder
     apiEndpointsContainer.innerHTML = '';
     
     // Group endpoints by method
@@ -387,41 +410,49 @@ function displayDiagnostics(data, configData) {
       groupedEndpoints[endpoint.method].push(endpoint);
     });
     
-    // Display grouped endpoints
+    // Create structured rows for each endpoint group
     Object.entries(groupedEndpoints).forEach(([method, endpoints]) => {
-      const methodSection = document.createElement('div');
-      methodSection.className = 'mb-4';
+      // Method header row
+      const methodRow = document.createElement('div');
+      methodRow.className = 'diag-row method-header';
       
-      const methodTitle = document.createElement('h6');
-      methodTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
-      methodTitle.textContent = `${method} Endpoints (${endpoints.length})`;
-      methodSection.appendChild(methodTitle);
+      const methodLabel = document.createElement('span');
+      methodLabel.className = 'diag-label font-semibold text-gray-700 dark:text-gray-300';
+      methodLabel.textContent = `${method} Endpoints`;
       
-      const endpointsList = document.createElement('div');
-      endpointsList.className = 'space-y-2';
+      const methodCount = document.createElement('span');
+      methodCount.className = 'diag-value font-semibold text-gray-700 dark:text-gray-300';
+      methodCount.textContent = `(${endpoints.length})`;
       
+      methodRow.appendChild(methodLabel);
+      methodRow.appendChild(methodCount);
+      apiEndpointsContainer.appendChild(methodRow);
+      
+      // Individual endpoint rows
       endpoints.forEach(endpoint => {
-        const endpointItem = document.createElement('div');
-        endpointItem.className = 'bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600';
+        const endpointRow = document.createElement('div');
+        endpointRow.className = 'diag-row ml-4';
         
-        const pathElement = document.createElement('div');
-        pathElement.className = 'font-mono text-sm font-semibold text-gray-900 dark:text-gray-100';
-        pathElement.textContent = endpoint.path;
+        const pathLabel = document.createElement('span');
+        pathLabel.className = 'diag-label font-mono text-sm';
+        pathLabel.textContent = endpoint.path;
         
-        const descElement = document.createElement('div');
-        descElement.className = 'text-sm text-gray-600 dark:text-gray-400 mt-1';
-        descElement.textContent = endpoint.description;
+        const descValue = document.createElement('span');
+        descValue.className = 'diag-value text-sm';
+        descValue.textContent = endpoint.description;
         
-        endpointItem.appendChild(pathElement);
-        endpointItem.appendChild(descElement);
-        endpointsList.appendChild(endpointItem);
+        endpointRow.appendChild(pathLabel);
+        endpointRow.appendChild(descValue);
+        apiEndpointsContainer.appendChild(endpointRow);
       });
-      
-      methodSection.appendChild(endpointsList);
-      apiEndpointsContainer.appendChild(methodSection);
     });
   } else if (apiEndpointsContainer) {
-    apiEndpointsContainer.innerHTML = '<div class="text-gray-500">Loading...</div>';
+    // Keep loading state with proper structure
+    const loadingRow = apiEndpointsContainer.querySelector('.loading-placeholder');
+    if (loadingRow) {
+      loadingRow.querySelector('.diag-label').textContent = 'Loading API endpoints...';
+      loadingRow.querySelector('.diag-value').textContent = '-';
+    }
   }
 
   // Configuration File - loaded from /api/config
