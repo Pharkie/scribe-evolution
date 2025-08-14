@@ -436,29 +436,9 @@ function displayDiagnosticsError(message) {
  * Copy section content to clipboard
  */
 function copySection(sectionId, buttonElement) {
-  const section = document.getElementById(sectionId + '-section');
-  if (!section) return;
-  
-  // Create a plain text version for copying
-  let textContent = '🪄 Unbidden Ink\n\n';
-  
-  const items = section.querySelectorAll('.flex.justify-between');
-  items.forEach(item => {
-    const label = item.querySelector('.text-gray-600');
-    const value = item.querySelector('.font-medium');
-    if (label && value) {
-      textContent += `${label.textContent.trim()}: ${value.textContent.trim()}\n`;
-    }
-  });
-  
-  // Add file contents if present
-  const fileContents = document.getElementById('unbidden-ink-file-contents');
-  if (fileContents && fileContents.textContent.trim()) {
-    textContent += '\nSettings File Contents:\n';
-    textContent += fileContents.textContent;
-  }
-  
-  copyToClipboard(textContent, buttonElement);
+  /**
+ * Copy config file contents to clipboard
+ */
 }
 
 /**
@@ -474,6 +454,7 @@ function copyFileContents(buttonElement) {
 
 /**
  * Copy generic section content to clipboard
+ * Handles all section types including navigation, data rows, and special content
  */
 function copyGenericSection(sectionName, buttonElement) {
   // Find the parent section
@@ -482,13 +463,13 @@ function copyGenericSection(sectionName, buttonElement) {
 
   let textContent = `${sectionName}\n\n`;
 
-  // Special handling for navigation-section: copy all links and their descriptions
-  if (section.id === 'navigation-section') {
-    const groups = section.querySelectorAll('div.space-y-4 > div');
+  // Handle navigation-style sections with groups and lists
+  const groups = section.querySelectorAll('div.space-y-4 > div');
+  if (groups.length > 0) {
     groups.forEach(group => {
       const groupTitle = group.querySelector('strong');
       if (groupTitle) {
-        textContent += `${groupTitle.textContent.trim()}\n`;
+        textContent += `${groupTitle.textContent.replace(/\s+/g, ' ').trim()}\n`;
       }
       
       const links = group.querySelectorAll('ul li');
@@ -497,37 +478,57 @@ function copyGenericSection(sectionName, buttonElement) {
         const desc = linkItem.querySelector('span.text-gray-600, span.text-gray-400');
         
         if (link) {
-          // Clean up the link text to remove extra whitespace and format properly
-          const linkText = link.textContent.trim();
+          // Clean up the link text and format nicely
+          const linkText = link.textContent.replace(/\s+/g, ' ').trim();
           const href = link.getAttribute('href');
-          const descText = desc ? desc.textContent.trim() : '';
+          const descText = desc ? desc.textContent.replace(/\s+/g, ' ').trim() : '';
           
           textContent += `- ${linkText} (${href}) ${descText}\n`;
         } else {
-          // For API endpoints, clean up the text content
-          const itemText = linkItem.textContent.trim().replace(/\s+/g, ' ');
+          // For API endpoints and other list items, clean up the text content
+          const itemText = linkItem.textContent.replace(/\s+/g, ' ').trim();
           textContent += `- ${itemText}\n`;
         }
       });
       textContent += '\n'; // Add spacing between groups
     });
-    copyToClipboard(textContent.trim(), buttonElement);
-    return;
+  } else {
+    // Handle standard data row sections (Device Config, Network, MQTT, etc.)
+    // Look for both standard and flexible layout rows
+    const dataRows = section.querySelectorAll('.flex.justify-between, .flex.flex-col.sm\\:flex-row.sm\\:justify-between');
+    if (dataRows.length > 0) {
+      dataRows.forEach(row => {
+        const label = row.querySelector('.text-gray-600, .text-gray-400');
+        const value = row.querySelector('.font-medium');
+        if (label && value) {
+          const labelText = label.textContent.replace(/\s+/g, ' ').trim().replace(':', '');
+          const valueText = value.textContent.replace(/\s+/g, ' ').trim();
+          textContent += `${labelText}: ${valueText}\n`;
+        }
+      });
+    } else {
+      // Fallback: extract all meaningful text content, excluding buttons and SVGs
+      const textElements = section.querySelectorAll('span, div, p, li');
+      const meaningfulTexts = [];
+      
+      textElements.forEach(el => {
+        // Skip buttons, SVGs, and very short text
+        if (el.closest('button') || el.closest('svg') || el.textContent.trim().length < 3) return;
+        
+        const text = el.textContent.replace(/\s+/g, ' ').trim();
+        // Avoid duplicates and very generic text
+        if (text && !meaningfulTexts.includes(text) && !text.match(/^(-|—|•|\d+)$/)) {
+          meaningfulTexts.push(text);
+        }
+      });
+      
+      meaningfulTexts.forEach(text => {
+        textContent += `${text}\n`;
+      });
+    }
   }
 
-  // Default: copy label-value pairs
-  // Look for both standard and flexible layout rows
-  const dataRows = section.querySelectorAll('.flex.justify-between, .flex.flex-col.sm\\:flex-row.sm\\:justify-between');
-  dataRows.forEach(row => {
-    const label = row.querySelector('.text-gray-600');
-    const value = row.querySelector('.font-medium');
-    if (label && value) {
-      const labelText = label.textContent.trim().replace(':', '');
-      const valueText = value.textContent.trim();
-      textContent += `${labelText}: ${valueText}\n`;
-    }
-  });
-  copyToClipboard(textContent, buttonElement);
+  copyToClipboard(textContent.trim(), buttonElement);
 }
 
 /**
@@ -596,7 +597,7 @@ function showCopyFeedback(buttonElement) {
   if (!buttonElement) return;
   
   const originalContent = buttonElement.innerHTML;
-  buttonElement.innerHTML = '✅';
+  buttonElement.innerHTML = '🫡';
   buttonElement.disabled = true;
   
   setTimeout(() => {
