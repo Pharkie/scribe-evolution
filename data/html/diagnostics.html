@@ -25,7 +25,7 @@
         <div class="header-spacer"></div>
     </header>
 
-    <main class="page-main-wide">
+    <main class="page-main">
         <nav class="flex flex-wrap justify-center gap-2 mb-6">
             <button onclick="showSection('device-config-section')"
                 class="section-nav-btn section-nav-btn-purple active">⚙️ Device</button>
@@ -38,9 +38,9 @@
                 Unbidden Ink</button>
             <button onclick="showSection('logging-section')" class="section-nav-btn section-nav-btn-indigo">📋
                 Logging</button>
-            <button onclick="showSection('hardware-buttons-section')" class="section-nav-btn section-nav-btn-slate">🔘
-                Hardware Buttons</button>
-            <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-slate">🔗
+            <button onclick="showSection('hardware-buttons-section')" class="section-nav-btn section-nav-btn-pink">🎛️
+                Buttons</button>
+            <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-teal">🔗
                 Pages & Endpoints</button>
             <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-slate">📄 Config
                 File</button>
@@ -232,14 +232,16 @@
                             data-field="web-logging">-</span></div>
                     <div class="diag-row"><span class="diag-label">File Logging:</span><span class="diag-value"
                             data-field="file-logging">-</span></div>
+                    <div class="diag-row"><span class="diag-label">MQTT Logging:</span><span class="diag-value"
+                            data-field="mqtt-logging">-</span></div>
                 </div>
             </div>
 
-            <!-- Hardware Buttons -->
+            <!-- Buttons -->
             <div id="hardware-buttons-section" class="diag-section slate">
                 <div class="diag-header">
-                    <h4 class="diag-title slate"><span class="mr-2">🔘</span>Hardware Buttons</h4>
-                    <button onclick="copyGenericSection('Hardware Buttons', this)" class="diag-copy-btn slate">
+                    <h4 class="diag-title slate"><span class="mr-2">🎛️</span>Buttons</h4>
+                    <button onclick="copyGenericSection('Buttons', this)" class="diag-copy-btn slate">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -321,8 +323,7 @@
                 </div>
                 <div class="space-y-3">
                     <pre id="config-content" class="diag-config-display">Loading configuration...</pre>
-                    <p class="diag-config-warning slate">⚠️ This shows the actual config.json file. Sensitive data like
-                        passwords are hidden for security.</p>
+                    <p class="diag-config-warning slate">🔑 Secrets are redacted</p>
                 </div>
             </div>
         </div>
