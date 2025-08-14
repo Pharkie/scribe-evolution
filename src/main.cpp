@@ -116,7 +116,7 @@ void setup()
   LOG_VERBOSE("BOOT", "Watchdog timer enabled (%ds timeout)", watchdogTimeoutSeconds);
 
   // Initialize timezone with conditional NTP sync (only in STA mode)
-  setupTimezone();
+  setupTime();
 
   // Record boot time for consistent reporting (after timezone is set)
   deviceBootTime = getISOTimestamp();
