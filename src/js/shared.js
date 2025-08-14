@@ -152,3 +152,16 @@ function showSuccessMessage(message) {
     }
   }, 3000);
 }
+
+/**
+ * Navigate back to previous page or home
+ */
+function goBack() {
+  // Check if there's a previous page in history
+  if (window.history.length > 1 && document.referrer) {
+    window.history.back();
+  } else {
+    // Default to home page if no history
+    window.location.href = '/';
+  }
+}

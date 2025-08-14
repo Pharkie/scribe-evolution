@@ -49,7 +49,7 @@ void handleStatus(AsyncWebServerRequest *request)
 
     const RuntimeConfig &runtimeConfig = getRuntimeConfig();
 
-    DynamicJsonDocument doc(2048); // Large size for comprehensive data
+    DynamicJsonDocument doc(4096); // Increased size for comprehensive route data
 
     // === DEVICE INFORMATION ===
     JsonObject device = doc.createNestedObject("device");
@@ -209,6 +209,8 @@ void handleStatus(AsyncWebServerRequest *request)
         button["gpio"] = buttonGPIOs[i];
         button["short_endpoint"] = runtimeConfig.buttonShortActions[i];
         button["long_endpoint"] = runtimeConfig.buttonLongActions[i];
+        button["short_mqtt_topic"] = runtimeConfig.buttonShortMqttTopics[i];
+        button["long_mqtt_topic"] = runtimeConfig.buttonLongMqttTopics[i];
     }
 
     // Logging configuration
@@ -216,18 +218,14 @@ void handleStatus(AsyncWebServerRequest *request)
     logging["level"] = logLevel;
     logging["level_name"] = getLogLevelString(logLevel);
     logging["serial_enabled"] = enableSerialLogging;
+    logging["web_enabled"] = false; // Web logging not implemented yet
     logging["file_enabled"] = enableFileLogging;
     logging["mqtt_enabled"] = enableMQTTLogging;
     logging["betterstack_enabled"] = enableBetterStackLogging;
-    if (enableMQTTLogging)
-    {
-        logging["mqtt_topic"] = mqttLogTopic;
-    }
-    if (enableFileLogging)
-    {
-        logging["file_name"] = logFileName;
-        logging["max_file_size"] = maxLogFileSize;
-    }
+
+    // === AVAILABLE ENDPOINTS ===
+    JsonObject endpoints = doc.createNestedObject("endpoints");
+    addRegisteredRoutesToJson(endpoints);
 
     // === CONFIGURATION LIMITS ===
     JsonObject config = doc.createNestedObject("configuration");

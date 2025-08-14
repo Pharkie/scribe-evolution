@@ -178,12 +178,12 @@ function formatUptime(seconds) {
   return `${minutes}m`;
 }
 
-function displayDiagnostics(data) {
+function displayDiagnostics(data, configData) {
   // Device Configuration
   setFieldValue('device-owner', data.device?.owner);
   setFieldValue('timezone', data.device?.timezone);
   setFieldValue('mdns-hostname', data.device?.hostname);
-  setFieldValue('max-message-chars', data.validation?.maxCharacters);
+  setFieldValue('max-message-chars', data.configuration?.max_message_chars);
 
   // Network
   setFieldValue('wifi-status', data.network?.wifi?.connected ? 'Connected' : 'Disconnected');
@@ -200,7 +200,6 @@ function displayDiagnostics(data) {
   setFieldValue('mqtt-status', data.network?.mqtt?.connected ? 'Connected' : 'Disconnected');
   setFieldValue('mqtt-broker', data.network?.mqtt?.server);
   setFieldValue('mqtt-port', data.network?.mqtt?.port);
-  setFieldValue('mqtt-username', data.mqtt?.username || '-');
   setFieldValue('mqtt-topic', data.network?.mqtt?.topic);
 
   // Microcontroller
@@ -209,7 +208,7 @@ function displayDiagnostics(data) {
   setFieldValue('firmware-version', data.hardware?.sdk_version);
   setFieldValue('uptime', formatUptime(data.system?.uptime_ms / 1000));
   setFieldValue('free-heap', formatBytes(data.system?.memory?.free_heap));
-  setFieldValue('temperature', data.system?.temperature ? `${data.system.temperature}°C` : '-');
+  setFieldValue('temperature', data.hardware?.temperature ? `${data.hardware.temperature.toFixed(1)}°C` : '-');
 
   // Memory usage
   const flashUsed = ((data.system?.flash?.app_partition?.used || 0) / (data.system?.flash?.app_partition?.total || 1)) * 100;
@@ -219,32 +218,34 @@ function displayDiagnostics(data) {
   updateProgressBar('flash-usage-bar', flashUsed);
   updateProgressBar('heap-usage-bar', heapUsed);
 
-  // Unbidden Ink
+  // Unbidden Ink - using actual API structure
   setFieldValue('unbidden-ink-enabled', data.features?.unbidden_ink?.enabled ? 'Yes' : 'No');
   setFieldValue('unbidden-ink-interval', data.features?.unbidden_ink?.frequency_minutes + ' minutes');
-  setFieldValue('unbidden-ink-last-run', data.features?.unbidden_ink?.last_run || 'Never');
-  setFieldValue('unbidden-ink-next-run', data.features?.unbidden_ink?.next_run || 'Not scheduled');
 
-  // Logging (placeholder - not in current API)
-  setFieldValue('log-level', data.logging?.level || 'INFO');
-  setFieldValue('serial-logging', 'Enabled');
-  setFieldValue('web-logging', 'Disabled');
-  setFieldValue('file-logging', 'Disabled');
-  setFieldValue('log-buffer-size', '-');
+  // Logging - using actual API structure
+  setFieldValue('log-level', data.features?.logging?.level_name || 'Unknown');
+  setFieldValue('serial-logging', data.features?.logging?.serial_enabled ? 'Enabled' : 'Disabled');
+  setFieldValue('web-logging', data.features?.logging?.betterstack_enabled ? 'Enabled' : 'Disabled');
+  setFieldValue('file-logging', data.features?.logging?.file_enabled ? 'Enabled' : 'Disabled');
 
-  // Hardware Buttons (placeholder - not in current API)
-  setFieldValue('button-1-short', data.hardware?.buttons?.button1?.short_press_action || 'Not configured');
-  setFieldValue('button-1-long', data.hardware?.buttons?.button1?.long_press_action || 'Not configured');
-  setFieldValue('button-1-mqtt', data.hardware?.buttons?.button1?.mqtt_topic || '-');
-  setFieldValue('button-2-short', data.hardware?.buttons?.button2?.short_press_action || 'Not configured');
-  setFieldValue('button-2-long', data.hardware?.buttons?.button2?.long_press_action || 'Not configured');
-  setFieldValue('button-2-mqtt', data.hardware?.buttons?.button2?.mqtt_topic || '-');
-  setFieldValue('button-3-short', data.hardware?.buttons?.button3?.short_press_action || 'Not configured');
-  setFieldValue('button-3-long', data.hardware?.buttons?.button3?.long_press_action || 'Not configured');
-  setFieldValue('button-3-mqtt', data.hardware?.buttons?.button3?.mqtt_topic || '-');
-  setFieldValue('button-4-short', data.hardware?.buttons?.button4?.short_press_action || 'Not configured');
-  setFieldValue('button-4-long', data.hardware?.buttons?.button4?.long_press_action || 'Not configured');
-  setFieldValue('button-4-mqtt', data.hardware?.buttons?.button4?.mqtt_topic || '-');
+  // Hardware Buttons - using actual API structure
+  const buttons = data.features?.hardware_buttons?.buttons || [];
+  setFieldValue('button-1-short', buttons[0]?.short_endpoint || 'Not configured');
+  setFieldValue('button-1-long', buttons[0]?.long_endpoint || 'Not configured');
+  setFieldValue('button-1-short-mqtt', buttons[0]?.short_mqtt_topic || '-');
+  setFieldValue('button-1-long-mqtt', buttons[0]?.long_mqtt_topic || '-');
+  setFieldValue('button-2-short', buttons[1]?.short_endpoint || 'Not configured');
+  setFieldValue('button-2-long', buttons[1]?.long_endpoint || 'Not configured');
+  setFieldValue('button-2-short-mqtt', buttons[1]?.short_mqtt_topic || '-');
+  setFieldValue('button-2-long-mqtt', buttons[1]?.long_mqtt_topic || '-');
+  setFieldValue('button-3-short', buttons[2]?.short_endpoint || 'Not configured');
+  setFieldValue('button-3-long', buttons[2]?.long_endpoint || 'Not configured');
+  setFieldValue('button-3-short-mqtt', buttons[2]?.short_mqtt_topic || '-');
+  setFieldValue('button-3-long-mqtt', buttons[2]?.long_mqtt_topic || '-');
+  setFieldValue('button-4-short', buttons[3]?.short_endpoint || 'Not configured');
+  setFieldValue('button-4-long', buttons[3]?.long_endpoint || 'Not configured');
+  setFieldValue('button-4-short-mqtt', buttons[3]?.short_mqtt_topic || '-');
+  setFieldValue('button-4-long-mqtt', buttons[3]?.long_mqtt_topic || '-');
 
   // Pages & Endpoints
   const webPagesContainer = document.getElementById('web-pages');
@@ -254,19 +255,25 @@ function displayDiagnostics(data) {
     webPagesContainer.innerHTML = data.endpoints.web_pages.map(page => 
       `<div class="flex justify-between"><span>${escapeHtml(page.path)}</span><span class="text-slate-600 dark:text-slate-400">${escapeHtml(page.description)}</span></div>`
     ).join('');
+  } else if (webPagesContainer) {
+    webPagesContainer.innerHTML = '<div class="text-gray-500">Loading...</div>';
   }
   
   if (data.endpoints?.api_endpoints && apiEndpointsContainer) {
     apiEndpointsContainer.innerHTML = data.endpoints.api_endpoints.map(endpoint => 
       `<div class="flex justify-between"><span class="font-mono text-sm">${escapeHtml(endpoint.method)} ${escapeHtml(endpoint.path)}</span><span class="text-slate-600 dark:text-slate-400">${escapeHtml(endpoint.description)}</span></div>`
     ).join('');
+  } else if (apiEndpointsContainer) {
+    apiEndpointsContainer.innerHTML = '<div class="text-gray-500">Loading...</div>';
   }
 
-  // Configuration File
+  // Configuration File - loaded from /api/config
   const configElement = document.getElementById('config-content');
-  if (data.config && configElement) {
-    const redactedConfig = redactSecrets(data.config);
+  if (configData && configElement) {
+    const redactedConfig = redactSecrets(configData);
     configElement.textContent = JSON.stringify(redactedConfig, null, 2);
+  } else if (configElement) {
+    configElement.textContent = 'Configuration not available';
   }
 }
 
@@ -279,13 +286,19 @@ function loadDiagnostics() {
   errorElement.classList.remove('show');
   contentElement.style.display = 'none';
 
-  fetch('/api/diagnostics')
-    .then(response => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  // Load both diagnostics and config data
+  Promise.all([
+    fetch('/api/diagnostics').then(response => {
+      if (!response.ok) throw new Error(`Diagnostics API error: HTTP ${response.status}: ${response.statusText}`);
+      return response.json();
+    }),
+    fetch('/api/config').then(response => {
+      if (!response.ok) throw new Error(`Config API error: HTTP ${response.status}: ${response.statusText}`);
       return response.json();
     })
-    .then(data => {
-      displayDiagnostics(data);
+  ])
+    .then(([diagnosticsData, configData]) => {
+      displayDiagnostics(diagnosticsData, configData);
       loadingElement.style.display = 'none';
       contentElement.style.display = 'block';
       showSection(currentSection);

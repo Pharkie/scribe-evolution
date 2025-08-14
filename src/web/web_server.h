@@ -24,6 +24,7 @@
 
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
+#include <ArduinoJson.h>
 
 // External declarations
 extern AsyncEventSource sseEvents;
@@ -40,6 +41,22 @@ void setupWebServerRoutes(int maxChars);
  * @return The stored request body, or empty string if none
  */
 String getRequestBody(AsyncWebServerRequest *request);
+
+/**
+ * @brief Get registered routes as JSON for diagnostics
+ * @return JSON object containing all registered web pages and API endpoints
+ */
+void addRegisteredRoutesToJson(JsonObject &endpoints);
+
+/**
+ * @brief Register a route and track it for diagnostics
+ * @param method HTTP method (GET, POST, etc.)
+ * @param path Route path
+ * @param description Human-readable description
+ * @param handler Request handler function
+ * @param isAPI Whether this is an API endpoint (vs web page)
+ */
+void registerRoute(const char *method, const char *path, const char *description, ArRequestHandlerFunction handler, bool isAPI = true);
 
 /**
  * @brief Get JSON data for discovered printers (includes self via MQTT)
