@@ -101,8 +101,33 @@ void setupTime()
     // Wait for time sync with configurable timeout
     LOG_VERBOSE("time_utils", "Waiting for NTP sync (timeout: %d seconds)...", ntpSyncTimeoutSeconds);
     unsigned long startTime = millis();
-    waitForSync(ntpSyncTimeoutSeconds);
 
+    // Use ezTime's built-in timeout but with watchdog resets
+    unsigned long lastWatchdogReset = millis();
+    bool syncStarted = false;
+
+    while (timeStatus() == timeNotSet && (millis() - startTime) < (ntpSyncTimeoutSeconds * 1000))
+    {
+        // Start sync process once
+        if (!syncStarted)
+        {
+            updateNTP(); // Trigger NTP update
+            syncStarted = true;
+        }
+
+        // Process ezTime events
+        events();
+
+        // Reset watchdog every 5 seconds during NTP sync wait
+        if (millis() - lastWatchdogReset > 5000)
+        {
+            esp_task_wdt_reset();
+            lastWatchdogReset = millis();
+            LOG_VERBOSE("time_utils", "Still waiting for NTP sync... (%lu seconds elapsed)",
+                        (millis() - startTime) / 1000);
+        }
+        delay(100); // Small delay to prevent tight polling
+    }
     if (timeStatus() != timeSet)
     {
         LOG_WARNING("time_utils", "NTP sync failed within %d seconds", ntpSyncTimeoutSeconds);
