@@ -246,19 +246,6 @@ void handleStatus(AsyncWebServerRequest *request)
     request->send(200, "application/json", response);
 }
 
-void handleButtons(AsyncWebServerRequest *request)
-{
-    if (isRateLimited())
-    {
-        sendRateLimitResponse(request);
-        return;
-    }
-
-    String buttonConfig = getButtonConfigJson();
-    LOG_VERBOSE("WEB", "Button configuration requested");
-    request->send(200, "application/json", buttonConfig);
-}
-
 void handleMQTTSend(AsyncWebServerRequest *request)
 {
     if (isRateLimited())

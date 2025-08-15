@@ -287,41 +287,6 @@ void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
     }
 }
 
-String getButtonConfigJson()
-{
-    DynamicJsonDocument doc(jsonDocumentSize);
-    JsonArray buttons = doc.createNestedArray("buttons");
-
-    // Get runtime configuration
-    const RuntimeConfig &config = getRuntimeConfig();
-
-    for (int i = 0; i < numHardwareButtons; i++)
-    {
-        JsonObject button = buttons.createNestedObject();
-        button["index"] = i;
-        button["gpio"] = defaultButtons[i].gpio;
-        button["short_endpoint"] = config.buttonShortActions[i];
-        button["long_endpoint"] = config.buttonLongActions[i];
-        button["short_mqtt_topic"] = config.buttonShortMqttTopics[i];
-        button["long_mqtt_topic"] = config.buttonLongMqttTopics[i];
-
-        button["currentState"] = buttonStates[i].currentState;
-        button["pressed"] = buttonStates[i].pressed;
-        button["longPressTriggered"] = buttonStates[i].longPressTriggered;
-    }
-
-    doc["num_buttons"] = numHardwareButtons;
-    doc["active_low"] = buttonActiveLow;
-    doc["debounce_ms"] = buttonDebounceMs;
-    doc["long_press_ms"] = buttonLongPressMs;
-    doc["min_interval_ms"] = buttonMinInterval;
-    doc["max_per_minute"] = buttonMaxPerMinute;
-
-    String result;
-    serializeJson(doc, result);
-    return result;
-}
-
 // ========================================
 // BUTTON CONTENT GENERATION FUNCTIONS
 // ========================================

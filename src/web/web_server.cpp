@@ -317,7 +317,6 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
         registerRoute("GET", "/api/diagnostics", "System diagnostics", handleStatus, true);
-        registerRoute("GET", "/api/buttons", "Hardware button config", handleButtons, true);
         registerRoute("POST", "/api/mqtt-send", "Send MQTT message", handleMQTTSend, true);
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
@@ -341,6 +340,14 @@ void setupWebServerRoutes(int maxChars)
 
         // 404 handler for STA mode
         server.onNotFound(handleNotFound);
+
+        // Add 404 handler to route tracking for diagnostics
+        RouteInfo notFoundRoute;
+        notFoundRoute.method = "*";
+        notFoundRoute.path = "*";
+        notFoundRoute.description = "404 Not Found handler (serves /html/404.html)";
+        notFoundRoute.isAPI = false;
+        registeredRoutes.push_back(notFoundRoute);
     }
 
     LOG_VERBOSE("WEB", "Web server routes configured");
