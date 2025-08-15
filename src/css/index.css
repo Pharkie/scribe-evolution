@@ -45,64 +45,6 @@
 }
 
 @layer utilities {
-  /* Custom animations */
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fade-out {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-8px); }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-  }
-
-  .animate-fade-out {
-    animation: fade-out 0.6s ease-out forwards;
-  }
-
-  /* Custom slider styling */
-  .slider {
-    -webkit-appearance: none;
-    appearance: none;
-    background: #e5e7eb;
-    outline: none;
-  }
-
-  .slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #10b981;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .slider::-webkit-slider-thumb:hover {
-    background: #059669;
-    transform: scale(1.1);
-  }
-
-  .slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #10b981;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s ease;
-  }
-
-  .slider::-moz-range-thumb:hover {
-    background: #059669;
-    transform: scale(1.1);
-  }
-
   /* Settings panel animations */
   .settings-show {
     opacity: 1 !important;
@@ -110,37 +52,6 @@
 
   .settings-show #settings-panel {
     transform: scale(1) !important;
-  }
-
-  /* Custom checkbox styling - only for visible checkboxes */
-  input[type="checkbox"]:not(.sr-only) {
-    appearance: none;
-    background-color: #fff;
-    border: 2px solid #d1d5db;
-    border-radius: 4px;
-    display: inline-block;
-    position: relative;
-    transition: all 0.2s ease;
-  }
-
-  input[type="checkbox"]:not(.sr-only):checked {
-    background-color: #10b981;
-    border-color: #10b981;
-  }
-
-  input[type="checkbox"]:not(.sr-only):checked::before {
-    content: '✓';
-    color: white;
-    font-size: 12px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  input[type="checkbox"]:not(.sr-only):focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
   }
 
   /* Settings container transition */
