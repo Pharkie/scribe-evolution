@@ -56,9 +56,35 @@ static const int defaultUnbiddenInkStartHour = 10;                              
 static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
 static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
-// Default button actions
-static const char *defaultButtonShortActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz"};
-static const char *defaultButtonLongActions[] = {"/api/print-test", "", "", ""};
+// Default button configuration (GPIO pins, actions, and MQTT topics together)
+struct ButtonConfig
+{
+    int gpio;
+    const char *shortAction;
+    const char *shortMqttTopic;
+    const char *longAction;
+    const char *longMqttTopic;
+};
+
+// Note GPIO are fixed in config.h, but endpoints can be changed in config.json
+// Empty MQTT topic means use local printing (/print-local equivalent)
+static const ButtonConfig defaultButtons[] = {
+    {5, "/api/joke", "", "/api/print-test", ""}, // Button 1: GPIO 5 - local printing for both actions
+    {6, "/api/riddle", "", "", ""},              // Button 2: GPIO 6 - local printing for short action, no long action
+    {7, "/api/quote", "", "", ""},               // Button 3: GPIO 7 - local printing for short action, no long action
+    {8, "/api/quiz", "", "", ""}                 // Button 4: GPIO 8 - local printing for short action, no long action
+};
+
+// Hardware button settings
+static const int numHardwareButtons = sizeof(defaultButtons) / sizeof(defaultButtons[0]); // Automatically calculated
+static const unsigned long buttonDebounceMs = 50;                                         // Debounce time in milliseconds
+static const unsigned long buttonLongPressMs = 2000;                                      // Long press threshold in milliseconds
+static const bool buttonActiveLow = true;                                                 // true = button pulls to ground, false = button pulls to VCC
+
+// Button rate limiting (separate from debouncing)
+static const unsigned long buttonMinInterval = 3000;      // 3 seconds minimum between button presses
+static const unsigned long buttonMaxPerMinute = 20;       // 20 button presses per minute max
+static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
 
 // ============================================================================
 // BACKEND CONSTANTS - Fixed at compile time, not user-configurable
@@ -103,22 +129,10 @@ static const int totalRiddles = 545;        // Total riddles in riddles.ndjson
 static const char *apiUserAgent = "Scribe Thermal Printer (https://github.com/Pharkie/scribe)";
 
 // Hardware Configuration
-static const int TX_PIN = 21;                                                       // TX pin to printer RX (green wire)
-static const int heatingDots = 10;                                                  // Heating dots (7-15, lower = less power)
-static const int heatingTime = 150;                                                 // Heating time (80-200ms)
-static const int heatingInterval = 250;                                             // Heating interval (200-250ms)
-static const int buttonGPIOs[] = {5, 6, 7, 8};                                      // GPIO pins for buttons 1-4
-static const int numHardwareButtons = sizeof(buttonGPIOs) / sizeof(buttonGPIOs[0]); // Automatically calculated from array
-
-// Button hardware settings
-static const unsigned long buttonDebounceMs = 50;    // Debounce time in milliseconds
-static const unsigned long buttonLongPressMs = 2000; // Long press threshold in milliseconds
-static const bool buttonActiveLow = true;            // true = button pulls to ground, false = button pulls to VCC
-
-// Button rate limiting (separate from debouncing)
-static const unsigned long buttonMinInterval = 3000;      // 3 seconds minimum between button presses
-static const unsigned long buttonMaxPerMinute = 20;       // 20 button presses per minute max
-static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
+static const int TX_PIN = 21;           // TX pin to printer RX (green wire)
+static const int heatingDots = 10;      // Heating dots (7-15, lower = less power)
+static const int heatingTime = 150;     // Heating time (80-200ms)
+static const int heatingInterval = 250; // Heating interval (200-250ms)
 
 // System Performance Settings
 static const unsigned long memCheckInterval = 60000;     // 60 seconds (memory check frequency)

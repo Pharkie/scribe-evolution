@@ -10,11 +10,15 @@
     {
         String buttonKey = "button" + String(i + 1);
         JsonObject button = buttons.createNestedObject(buttonKey);
-        button["shortAction"] = defaultButtonShortActions[i];
-        button["longAction"] = defaultButtonLongActions[i];
-    }i] = button["shortAction"] | defaultButtonShortActions[i];
-            g_runtimeConfig.buttonLongActions[i] = button["longAction"] | defaultButtonLongActions[i];
-        }e 2025
+        button["shortAction"] = defaultButtons[i].shortAction;
+        button["longAction"] = defaultButtons[i].longAction;
+    }
+
+/**
+ * @file config_loader.cpp
+ * @brief Implementation of dynamic configuration loader
+ * @author Adam Knowles
+ * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
@@ -110,10 +114,10 @@ bool loadRuntimeConfig()
         // Use defaults if buttons section is missing
         for (int i = 0; i < 4; i++)
         {
-            g_runtimeConfig.buttonShortActions[i] = defaultButtonShortActions[i];
-            g_runtimeConfig.buttonLongActions[i] = defaultButtonLongActions[i];
-            g_runtimeConfig.buttonShortMqttTopics[i] = ""; // Default to empty (local print)
-            g_runtimeConfig.buttonLongMqttTopics[i] = "";  // Default to empty (local print)
+            g_runtimeConfig.buttonShortActions[i] = defaultButtons[i].shortAction;
+            g_runtimeConfig.buttonShortMqttTopics[i] = defaultButtons[i].shortMqttTopic;
+            g_runtimeConfig.buttonLongActions[i] = defaultButtons[i].longAction;
+            g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtons[i].longMqttTopic;
         }
     }
     else
@@ -171,10 +175,10 @@ void loadDefaultConfig()
     // Load default button configuration
     for (int i = 0; i < 4; i++)
     {
-        g_runtimeConfig.buttonShortActions[i] = defaultButtonShortActions[i];
-        g_runtimeConfig.buttonLongActions[i] = defaultButtonLongActions[i];
-        g_runtimeConfig.buttonShortMqttTopics[i] = ""; // Default to empty (local print)
-        g_runtimeConfig.buttonLongMqttTopics[i] = "";  // Default to empty (local print)
+        g_runtimeConfig.buttonShortActions[i] = defaultButtons[i].shortAction;
+        g_runtimeConfig.buttonShortMqttTopics[i] = defaultButtons[i].shortMqttTopic;
+        g_runtimeConfig.buttonLongActions[i] = defaultButtons[i].longAction;
+        g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtons[i].longMqttTopic;
     }
 
     g_configLoaded = true;
@@ -267,26 +271,15 @@ bool createDefaultConfigFile()
 
     // Button Configuration (exactly 4 buttons)
     JsonObject buttons = doc.createNestedObject("buttons");
-    JsonObject button1 = buttons.createNestedObject("button1");
-    button1["shortAction"] = "/api/joke";
-    button1["longAction"] = "/api/print-test";
-    button1["shortMqttTopic"] = "";
-    button1["longMqttTopic"] = "";
-    JsonObject button2 = buttons.createNestedObject("button2");
-    button2["shortAction"] = "/api/riddle";
-    button2["longAction"] = "";
-    button2["shortMqttTopic"] = "";
-    button2["longMqttTopic"] = "";
-    JsonObject button3 = buttons.createNestedObject("button3");
-    button3["shortAction"] = "/api/quote";
-    button3["longAction"] = "";
-    button3["shortMqttTopic"] = "";
-    button3["longMqttTopic"] = "";
-    JsonObject button4 = buttons.createNestedObject("button4");
-    button4["shortAction"] = "/api/quiz";
-    button4["longAction"] = "";
-    button4["shortMqttTopic"] = "";
-    button4["longMqttTopic"] = "";
+    for (int i = 0; i < 4; i++)
+    {
+        String buttonKey = "button" + String(i + 1);
+        JsonObject button = buttons.createNestedObject(buttonKey);
+        button["shortAction"] = defaultButtons[i].shortAction;
+        button["shortMqttTopic"] = defaultButtons[i].shortMqttTopic;
+        button["longAction"] = defaultButtons[i].longAction;
+        button["longMqttTopic"] = defaultButtons[i].longMqttTopic;
+    }
 
     serializeJson(doc, configFile);
     configFile.close();
