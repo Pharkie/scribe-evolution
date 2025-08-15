@@ -58,7 +58,7 @@ void initializeUnbiddenInk()
 
     if (!currentSettings.enabled)
     {
-        LOG_NOTICE("UNBIDDENINK", "Unbidden Ink feature is disabled");
+        LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink feature is disabled");
         return;
     }
 
