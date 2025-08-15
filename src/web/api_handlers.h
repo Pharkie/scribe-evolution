@@ -24,11 +24,6 @@
 void handleStatus(AsyncWebServerRequest *request);
 
 /**
- * @brief Handle hardware button configuration request
- */
-void handleButtons(AsyncWebServerRequest *request);
-
-/**
  * @brief Handle MQTT message sending request
  */
 void handleMQTTSend(AsyncWebServerRequest *request);

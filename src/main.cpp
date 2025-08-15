@@ -20,6 +20,9 @@
  *
  *  TODO:
  * - FastLED support for LED strip
+ *
+ *  IDEAS:
+ * - Allow disabling of MQTT for purely local printing
  */
 
 #include <WiFi.h>

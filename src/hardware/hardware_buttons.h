@@ -50,11 +50,6 @@ void handleButtonLongPress(int buttonIndex);
 void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic = "");
 
 /**
- * @brief Get button configuration info as JSON string
- */
-String getButtonConfigJson();
-
-/**
  * @brief Content generation functions for button actions
  */
 String generateRiddleButtonContent();
