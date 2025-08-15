@@ -226,13 +226,13 @@ function formatTemperature(tempC) {
   if (tempC < 35) {
     status = 'Cool';
     color = '#3b82f6'; // blue
-  } else if (tempC < 60) {
+  } else if (tempC < 50) {
     status = 'Normal';
     color = '#10b981'; // green
-  } else if (tempC < 75) {
+  } else if (tempC < 65) {
     status = 'Warm';
     color = '#f59e0b'; // amber
-  } else if (tempC < 85) {
+  } else if (tempC < 80) {
     status = 'Hot';
     color = '#ef4444'; // red
   } else {
@@ -284,8 +284,53 @@ function displayDiagnostics(data, configData) {
   updateProgressBar('heap-usage-bar', heapUsed);
 
   // Unbidden Ink - using actual API structure
-  setFieldValue('unbidden-ink-enabled', data.features?.unbidden_ink?.enabled ? 'Yes' : 'No');
-  setFieldValue('unbidden-ink-interval', data.features?.unbidden_ink?.frequency_minutes + ' minutes');
+  const unbiddenInk = data.features?.unbidden_ink;
+  setFieldValue('unbidden-ink-enabled', unbiddenInk?.enabled ? 'Yes' : 'No');
+  setFieldValue('unbidden-ink-start-hour', unbiddenInk?.start_hour !== undefined ? `${String(unbiddenInk.start_hour).padStart(2, '0')}:00` : 'Unknown');
+  setFieldValue('unbidden-ink-end-hour', unbiddenInk?.end_hour !== undefined ? `${String(unbiddenInk.end_hour).padStart(2, '0')}:00` : 'Unknown');
+  setFieldValue('unbidden-ink-frequency', unbiddenInk?.frequency_minutes !== undefined ? `${unbiddenInk.frequency_minutes} minutes` : 'Unknown');
+  
+  // Format next message time
+  if (unbiddenInk?.next_message_time && unbiddenInk.next_message_time > 0) {
+    // next_message_time is in milliseconds from device boot (millis())
+    // We need to calculate the relative time from now
+    const currentDeviceTime = Date.now(); // Current time in ms since epoch
+    const deviceUptimeMs = unbiddenInk.next_message_time; // Device uptime when message is scheduled
+    
+    // We can't directly convert device uptime to real time without knowing device boot time
+    // So let's treat it as "time remaining from now" and use the system uptime from diagnostics
+    const uptimeMs = data.microcontroller?.uptime_ms || 0;
+    const timeRemainingMs = deviceUptimeMs - uptimeMs;
+    
+    if (timeRemainingMs <= 0) {
+      setFieldValue('unbidden-ink-next-message', 'Overdue');
+    } else {
+      const seconds = Math.floor(timeRemainingMs / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      
+      let timeText;
+      if (seconds <= 30) {
+        timeText = 'Imminently';
+      } else if (minutes < 1) {
+        timeText = '1 min';
+      } else if (minutes < 60) {
+        timeText = `${minutes} mins`;
+      } else if (hours === 1) {
+        timeText = 'About an hour';
+      } else if (hours < 3) {
+        const halfHours = Math.round(hours * 2) / 2;
+        timeText = `About ${halfHours} hours`;
+      } else {
+        const roundedHours = Math.round(hours * 2) / 2;
+        timeText = `About ${roundedHours} hours`;
+      }
+      
+      setFieldValue('unbidden-ink-next-message', timeText);
+    }
+  } else {
+    setFieldValue('unbidden-ink-next-message', unbiddenInk?.enabled ? 'Unknown' : 'Disabled');
+  }
 
   // Logging - using actual API structure
   setFieldValue('log-level', data.features?.logging?.level_name || 'Unknown');

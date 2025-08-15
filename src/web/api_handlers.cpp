@@ -206,7 +206,7 @@ void handleStatus(AsyncWebServerRequest *request)
     for (int i = 0; i < numHardwareButtons; i++)
     {
         JsonObject button = buttonArray.createNestedObject();
-        button["gpio"] = buttonGPIOs[i];
+        button["gpio"] = defaultButtons[i].gpio;
         button["short_endpoint"] = runtimeConfig.buttonShortActions[i];
         button["long_endpoint"] = runtimeConfig.buttonLongActions[i];
         button["short_mqtt_topic"] = runtimeConfig.buttonShortMqttTopics[i];
@@ -461,6 +461,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
     else if (userConfig.containsKey("unbiddenInk"))
     {
         configDoc["unbiddenInk"] = userConfig["unbiddenInk"];
+        // Re-initialize unbidden ink after settings change
+        initializeUnbiddenInk();
     }
     if (userConfig.containsKey("buttons"))
     {

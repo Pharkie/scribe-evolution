@@ -23,11 +23,11 @@ void initializeHardwareButtons()
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        // Configure GPIO pin using buttonGPIOs array
-        pinMode(buttonGPIOs[i], buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
+        // Configure GPIO pin using defaultButtons array
+        pinMode(defaultButtons[i].gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
 
         // Initialize button state
-        buttonStates[i].currentState = digitalRead(buttonGPIOs[i]);
+        buttonStates[i].currentState = digitalRead(defaultButtons[i].gpio);
         buttonStates[i].lastState = buttonStates[i].currentState;
         buttonStates[i].pressed = false;
         buttonStates[i].longPressTriggered = false;
@@ -40,7 +40,7 @@ void initializeHardwareButtons()
         // Get runtime configuration for logging
         const RuntimeConfig &config = getRuntimeConfig();
         LOG_VERBOSE("BUTTONS", "Button %d: GPIO %d -> %s (short), %s (long)",
-                    i, buttonGPIOs[i], config.buttonShortActions[i].c_str(), config.buttonLongActions[i].c_str());
+                    i, defaultButtons[i].gpio, config.buttonShortActions[i].c_str(), config.buttonLongActions[i].c_str());
     }
 
     // Feed watchdog after hardware button initialization
@@ -55,8 +55,8 @@ void checkHardwareButtons()
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        // Read current state using buttonGPIOs array
-        bool reading = digitalRead(buttonGPIOs[i]);
+        // Read current state using defaultButtons array
+        bool reading = digitalRead(defaultButtons[i].gpio);
 
         // Check if state changed (for debouncing)
         if (reading != buttonStates[i].lastState)
@@ -218,42 +218,41 @@ void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
     LOG_VERBOSE("BUTTONS", "Hardware button triggered: %s", endpoint);
 
     // Generate content based on endpoint
-    String content;
     bool contentGenerated = false;
 
     if (strcmp(endpoint, "/api/riddle") == 0)
     {
-        generateAndQueueRiddle();
+        contentGenerated = generateAndQueueRiddle();
     }
     else if (strcmp(endpoint, "/api/joke") == 0)
     {
-        generateAndQueueJoke();
+        contentGenerated = generateAndQueueJoke();
     }
     else if (strcmp(endpoint, "/api/quote") == 0)
     {
-        generateAndQueueQuote();
+        contentGenerated = generateAndQueueQuote();
     }
     else if (strcmp(endpoint, "/api/quiz") == 0)
     {
-        generateAndQueueQuiz();
+        contentGenerated = generateAndQueueQuiz();
     }
     else if (strcmp(endpoint, "/api/print-test") == 0)
     {
-        generateAndQueuePrintTest();
+        contentGenerated = generateAndQueuePrintTest();
     }
     else if (strcmp(endpoint, "/api/test-print") == 0)
     {
-        generateAndQueuePrintTest(); // Same handler for both endpoint variations
+        contentGenerated = generateAndQueuePrintTest(); // Same handler for both endpoint variations
     }
     else if (strcmp(endpoint, "/api/unbidden-ink") == 0)
     {
-        generateAndQueueUnbiddenInk();
+        contentGenerated = generateAndQueueUnbiddenInk();
     }
     else if (strcmp(endpoint, "/api/keep-going") == 0)
     {
         // Keep-going endpoint - generate random content
         // For now, let's default to joke
-        generateAndQueueJoke();
+        contentGenerated = generateAndQueueJoke();
     }
     else if (strlen(endpoint) == 0)
     {
@@ -267,24 +266,24 @@ void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
         return;
     }
 
-    if (!contentGenerated || content.length() == 0)
+    if (!contentGenerated)
     {
         LOG_ERROR("BUTTONS", "Failed to generate content for endpoint: %s", endpoint);
         return;
     }
 
-    // Determine if we should use MQTT or local print
+    // For hardware buttons, the generateAndQueue functions handle both content generation
+    // and queuing for local printing. MQTT functionality is handled separately.
     if (strlen(mqttTopic) > 0)
     {
-        // Send via MQTT
-        LOG_VERBOSE("BUTTONS", "Sending content via MQTT to topic: %s", mqttTopic);
-        handleMQTTSendFromButton(content, mqttTopic);
+        // For MQTT, we need to generate content separately since the queue functions
+        // are designed for local printing
+        LOG_WARNING("BUTTONS", "MQTT functionality for hardware buttons not fully implemented for endpoint: %s", endpoint);
     }
     else
     {
-        // Print locally
-        LOG_VERBOSE("BUTTONS", "Printing content locally");
-        handlePrintContentFromButton(content);
+        // Content was already queued for local printing by the generateAndQueue function
+        LOG_VERBOSE("BUTTONS", "Content queued for local printing via hardware button");
     }
 }
 
@@ -300,9 +299,11 @@ String getButtonConfigJson()
     {
         JsonObject button = buttons.createNestedObject();
         button["index"] = i;
-        button["gpio"] = buttonGPIOs[i];
+        button["gpio"] = defaultButtons[i].gpio;
         button["short_endpoint"] = config.buttonShortActions[i];
         button["long_endpoint"] = config.buttonLongActions[i];
+        button["short_mqtt_topic"] = config.buttonShortMqttTopics[i];
+        button["long_mqtt_topic"] = config.buttonLongMqttTopics[i];
 
         button["currentState"] = buttonStates[i].currentState;
         button["pressed"] = buttonStates[i].pressed;

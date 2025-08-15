@@ -22,7 +22,10 @@
                 </button>
             </div>
             <div class="header-center">
-                <h1 class="page-title">📊 Diagnostics</h1>
+                <h1 class="page-title">
+                    <span class="text-4xl sm:text-5xl">🛠️</span>
+                    <span>Diagnostics</span>
+                </h1>
             </div>
             <div class="header-spacer"></div>
         </header>
@@ -42,7 +45,7 @@
                 Buttons</button>
             <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-teal">🔗
                 Pages & Endpoints</button>
-            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-gray">📄 Config
+            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-red">📄 Config
                 File</button>
         </nav>
 
@@ -196,7 +199,7 @@
             <!-- Unbidden Ink -->
             <div id="unbidden-ink-section" class="diag-section yellow">
                 <div class="diag-header">
-                    <h4 class="diag-title yellow"><span class="mr-2">📝</span>Unbidden Ink</h4>
+                    <h4 class="diag-title yellow"><span class="mr-2">🎲</span>Unbidden Ink</h4>
                     <button onclick="copyGenericSection('Unbidden Ink', this)" class="diag-copy-btn yellow">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
@@ -207,8 +210,14 @@
                 <div class="space-y-2">
                     <div class="diag-row"><span class="diag-label">Enabled:</span><span class="diag-value"
                             data-field="unbidden-ink-enabled">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Interval (minutes):</span><span class="diag-value"
-                            data-field="unbidden-ink-interval">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Start Hour:</span><span class="diag-value"
+                            data-field="unbidden-ink-start-hour">-</span></div>
+                    <div class="diag-row"><span class="diag-label">End Hour:</span><span class="diag-value"
+                            data-field="unbidden-ink-end-hour">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Frequency (minutes):</span><span class="diag-value"
+                            data-field="unbidden-ink-frequency">-</span></div>
+                    <div class="diag-row"><span class="diag-label">Next Message Time:</span><span class="diag-value"
+                            data-field="unbidden-ink-next-message">-</span></div>
                 </div>
             </div>
 
@@ -285,10 +294,11 @@
                     <div id="individual-buttons">
                         <!-- Button 1 -->
                         <div class="button-section" data-button="1">
-                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                🔘 <span class="button-title" data-field="button-1-title">Button 1 (GPIO -)</span>
-                            </h6>
                             <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Button:</span>
+                                    <span class="diag-value" data-field="button-1-title">Button 1 (GPIO -)</span>
+                                </div>
                                 <div class="diag-row">
                                     <span class="diag-label">Short Press:</span>
                                     <span class="diag-value" data-field="button-1-short-press">-</span>
@@ -310,10 +320,11 @@
 
                         <!-- Button 2 -->
                         <div class="button-section" data-button="2">
-                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                🔘 <span class="button-title" data-field="button-2-title">Button 2 (GPIO -)</span>
-                            </h6>
                             <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Button:</span>
+                                    <span class="diag-value" data-field="button-2-title">Button 2 (GPIO -)</span>
+                                </div>
                                 <div class="diag-row">
                                     <span class="diag-label">Short Press:</span>
                                     <span class="diag-value" data-field="button-2-short-press">-</span>
@@ -335,10 +346,11 @@
 
                         <!-- Button 3 -->
                         <div class="button-section" data-button="3">
-                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                🔘 <span class="button-title" data-field="button-3-title">Button 3 (GPIO -)</span>
-                            </h6>
                             <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Button:</span>
+                                    <span class="diag-value" data-field="button-3-title">Button 3 (GPIO -)</span>
+                                </div>
                                 <div class="diag-row">
                                     <span class="diag-label">Short Press:</span>
                                     <span class="diag-value" data-field="button-3-short-press">-</span>
@@ -360,10 +372,11 @@
 
                         <!-- Button 4 -->
                         <div class="button-section" data-button="4">
-                            <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                🔘 <span class="button-title" data-field="button-4-title">Button 4 (GPIO -)</span>
-                            </h6>
                             <div class="space-y-1">
+                                <div class="diag-row">
+                                    <span class="diag-label">Button:</span>
+                                    <span class="diag-value" data-field="button-4-title">Button 4 (GPIO -)</span>
+                                </div>
                                 <div class="diag-row">
                                     <span class="diag-label">Short Press:</span>
                                     <span class="diag-value" data-field="button-4-short-press">-</span>
@@ -398,8 +411,9 @@
                     </button>
                 </div>
                 <div class="space-y-4">
-                    <div>
-                        <h5 class="diag-section-heading">📄 Web Pages</h5>
+                    <!-- Web Pages Section -->
+                    <div class="border-b border-teal-200 dark:border-teal-600 pb-3 mb-3">
+                        <h5 class="text-sm font-semibold text-teal-700 dark:text-teal-300 mb-2">📄 Web Pages</h5>
                         <div id="web-pages" class="space-y-2">
                             <!-- Static structure for web pages - values populated by JS -->
                             <div class="diag-row loading-placeholder">
@@ -408,9 +422,11 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- API Endpoints Section -->
                     <div>
-                        <h5 class="diag-section-heading">🔌 API Endpoints</h5>
-                        <div id="api-endpoints" class="space-y-3">
+                        <h5 class="text-sm font-semibold text-teal-700 dark:text-teal-300 mb-2">🔌 API Endpoints</h5>
+                        <div id="api-endpoints" class="space-y-2">
                             <!-- Static structure for API endpoints - values populated by JS -->
                             <div class="diag-row loading-placeholder">
                                 <span class="diag-label">Loading API endpoints...</span>
@@ -422,13 +438,13 @@
             </div>
 
             <!-- Configuration File -->
-            <div id="config-file-section" class="diag-section gray">
+            <div id="config-file-section" class="diag-section red">
                 <div class="diag-header">
                     <div>
-                        <h4 class="diag-title gray"><span class="mr-2">📄</span>Config file</h4>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Config.json</p>
+                        <h4 class="diag-title red"><span class="mr-2">📄</span>Config file</h4>
+                        <p class="text-sm text-red-600 dark:text-red-400 mt-1">Config.json</p>
                     </div>
-                    <button onclick="copyConfigFile(this)" class="diag-copy-btn gray">
+                    <button onclick="copyConfigFile(this)" class="diag-copy-btn red">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -437,7 +453,7 @@
                 </div>
                 <div class="space-y-3">
                     <pre id="config-content" class="diag-config-display">Loading configuration...</pre>
-                    <p class="diag-config-warning gray">🔑 Secrets are redacted</p>
+                    <p class="diag-config-warning red">🔑 Secrets are redacted</p>
                 </div>
             </div>
         </div>
