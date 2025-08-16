@@ -1,12 +1,14 @@
 /* Shared base styles and components */
 @import "tailwindcss";
 
-@layer components {
+@layer base {
   /* Root HTML styling */
   .app-root {
     @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
   }
-  
+}
+
+@layer components {
   /* Layout Components */
   .header-spacer {
     @apply flex-1;
@@ -33,9 +35,26 @@
     @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
   }
   
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+  }
+  
   /* Common Cards & Containers */
   .card-primary {
     @apply bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6;
+  }
+  
+  /* Button Components */
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
   }
 }
 
@@ -78,15 +97,6 @@
     @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md;
   }
 
-  /* Common buttons */
-  .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
-  }
-
   /* Action Buttons - for quick actions and colorful buttons */
   .action-button {
     @apply flex flex-col items-center px-4 py-3 border rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md;
@@ -99,31 +109,6 @@
   .action-button-label {
     @apply text-sm font-medium;
   }
-  
-  /* Action Button Color Variants */
-  .action-button-yellow {
-    @apply bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700;
-  }
-  
-  .action-button-emerald {
-    @apply bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700;
-  }
-  
-  .action-button-purple {
-    @apply bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700;
-  }
-  
-  .action-button-cyan {
-    @apply bg-cyan-50 dark:bg-cyan-900/20 hover:bg-cyan-100 dark:hover:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700;
-  }
-  
-  .action-button-pink {
-    @apply bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-700;
-  }
-  
-  .action-button-gray {
-    @apply bg-gray-50 dark:bg-gray-900/20 hover:bg-gray-100 dark:hover:bg-gray-900/30 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700;
-  }
 
   /* Form Action Buttons - for form submit/cancel pairs */
   .form-button-primary {
@@ -133,13 +118,214 @@
   .form-button-secondary {
     @apply flex-1 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg bg-gray-600 hover:bg-gray-700;
   }
-  
-  /* Form elements */
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+
+  /* Shared animations - moved here to eliminate duplication */
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+
+  .animate-fade-out {
+    animation: fade-out 0.6s ease-out forwards;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-out {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-8px); }
+  }
+
+  /* Custom slider styling - shared across components */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e5e7eb;
+    outline: none;
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #10b981;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .slider::-webkit-slider-thumb:hover {
+    background: #059669;
+    transform: scale(1.1);
+  }
+
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #10b981;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+
+  .slider::-moz-range-thumb:hover {
+    background: #059669;
+    transform: scale(1.1);
+  }
+
+  /* Custom checkbox styling - only for visible checkboxes */
+  input[type="checkbox"]:not(.sr-only) {
+    appearance: none;
+    background-color: #fff;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+
+  input[type="checkbox"]:not(.sr-only):checked {
+    background-color: #10b981;
+    border-color: #10b981;
+  }
+
+  input[type="checkbox"]:not(.sr-only):checked::before {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  input[type="checkbox"]:not(.sr-only):focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  }
+
+  /* Action Button Color Variants - direct implementation */
+  .action-button-yellow {
+    background-color: rgb(254 249 195);
+    border-color: rgb(254 240 138);
+    color: rgb(161 98 7);
   }
   
-  .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6;
+  .dark .action-button-yellow {
+    background-color: rgb(113 63 18 / 0.2);
+    border-color: rgb(161 98 7);
+    color: rgb(252 211 77);
+  }
+  
+  .action-button-yellow:hover {
+    background-color: rgb(254 240 138);
+  }
+  
+  .dark .action-button-yellow:hover {
+    background-color: rgb(113 63 18 / 0.3);
+  }
+  
+  .action-button-emerald {
+    background-color: rgb(236 253 245);
+    border-color: rgb(167 243 208);
+    color: rgb(5 150 105);
+  }
+  
+  .dark .action-button-emerald {
+    background-color: rgb(6 78 59 / 0.2);
+    border-color: rgb(5 150 105);
+    color: rgb(110 231 183);
+  }
+  
+  .action-button-emerald:hover {
+    background-color: rgb(209 250 229);
+  }
+  
+  .dark .action-button-emerald:hover {
+    background-color: rgb(6 78 59 / 0.3);
+  }
+  
+  .action-button-purple {
+    background-color: rgb(250 245 255);
+    border-color: rgb(221 214 254);
+    color: rgb(109 40 217);
+  }
+  
+  .dark .action-button-purple {
+    background-color: rgb(88 28 135 / 0.2);
+    border-color: rgb(109 40 217);
+    color: rgb(196 181 253);
+  }
+  
+  .action-button-purple:hover {
+    background-color: rgb(243 232 255);
+  }
+  
+  .dark .action-button-purple:hover {
+    background-color: rgb(88 28 135 / 0.5);
+  }
+  
+  .action-button-cyan {
+    background-color: rgb(236 254 255);
+    border-color: rgb(165 243 252);
+    color: rgb(14 116 144);
+  }
+  
+  .dark .action-button-cyan {
+    background-color: rgb(22 78 99 / 0.2);
+    border-color: rgb(14 116 144);
+    color: rgb(103 232 249);
+  }
+  
+  .action-button-cyan:hover {
+    background-color: rgb(207 250 254);
+  }
+  
+  .dark .action-button-cyan:hover {
+    background-color: rgb(22 78 99 / 0.3);
+  }
+  
+  .action-button-pink {
+    background-color: rgb(253 242 248);
+    border-color: rgb(251 207 232);
+    color: rgb(190 24 93);
+  }
+  
+  .dark .action-button-pink {
+    background-color: rgb(131 24 67 / 0.2);
+    border-color: rgb(190 24 93);
+    color: rgb(244 114 182);
+  }
+  
+  .action-button-pink:hover {
+    background-color: rgb(252 231 243);
+  }
+  
+  .dark .action-button-pink:hover {
+    background-color: rgb(131 24 67 / 0.3);
+  }
+  
+  .action-button-gray {
+    background-color: rgb(249 250 251);
+    border-color: rgb(229 231 235);
+    color: rgb(55 65 81);
+  }
+  
+  .dark .action-button-gray {
+    background-color: rgb(17 24 39 / 0.2);
+    border-color: rgb(55 65 81);
+    color: rgb(209 213 219);
+  }
+  
+  .action-button-gray:hover {
+    background-color: rgb(243 244 246);
+  }
+  
+  .dark .action-button-gray:hover {
+    background-color: rgb(17 24 39 / 0.3);
   }
 }

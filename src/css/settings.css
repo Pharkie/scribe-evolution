@@ -13,7 +13,7 @@
     @apply animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600;
   }
   
-  /* Settings cards */
+  /* Settings cards using direct implementation */
   .settings-card {
     @apply shadow-2xl rounded-3xl p-8;
   }
@@ -102,6 +102,35 @@
     @apply transform translate-x-6;
   }
   
+  /* Section navigation buttons - direct implementation */
+  .section-nav-btn {
+    @apply px-3 py-2 text-sm rounded-lg transition-colors;
+  }
+  
+  .section-nav-btn-purple {
+    @apply bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300;
+  }
+  
+  .section-nav-btn-blue {
+    @apply bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300;
+  }
+  
+  .section-nav-btn-green {
+    @apply bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300;
+  }
+  
+  .section-nav-btn-orange {
+    @apply bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300;
+  }
+  
+  .section-nav-btn-yellow {
+    @apply bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300;
+  }
+  
+  .section-nav-btn.active {
+    @apply ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800;
+  }
+  
   /* Dual-range slider component */
   .dual-range-slider {
     @apply relative h-8;
@@ -170,6 +199,33 @@
     z-index: 20;
   }
   
+  /* Single-range slider (frequency slider) */
+  .single-range-slider {
+    @apply relative h-8;
+  }
+  
+  .single-range-track {
+    @apply absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg;
+    top: 12px;
+  }
+  
+  .single-range-input {
+    @apply absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* Settings section management */
+  .settings-section {
+    @apply block;
+  }
+  
+  .settings-section.hidden {
+    @apply hidden;
+  }
+}
+
+@layer utilities {
   /* Time marker positioning - semantic positioning classes */
   .time-marker {
     @apply absolute;
@@ -200,58 +256,4 @@
   .time-marker-22 { left: 91.67%; }
   .time-marker-23 { left: 95.83%; }
   .time-marker-24 { left: 100%; }
-  
-  /* Single-range slider (frequency slider) */
-  .single-range-slider {
-    @apply relative h-8;
-  }
-  
-  .single-range-track {
-    @apply absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg;
-    top: 12px;
-  }
-  
-  .single-range-input {
-    @apply absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer;
-    top: 0;
-    z-index: 10;
-  }
-
-  /* Settings section management */
-  .settings-section {
-    @apply block;
-  }
-  
-  .settings-section.hidden {
-    @apply hidden;
-  }
-
-  /* Section navigation buttons */
-  .section-nav-btn {
-    @apply px-3 py-2 text-sm rounded-lg transition-colors;
-  }
-  
-  .section-nav-btn-purple {
-    @apply bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300;
-  }
-  
-  .section-nav-btn-blue {
-    @apply bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300;
-  }
-  
-  .section-nav-btn-green {
-    @apply bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300;
-  }
-  
-  .section-nav-btn-orange {
-    @apply bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300;
-  }
-  
-  .section-nav-btn-yellow {
-    @apply bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300;
-  }
-  
-  .section-nav-btn.active {
-    @apply ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800;
-  }
 }
