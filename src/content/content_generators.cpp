@@ -21,6 +21,7 @@
 
 #include "content_generators.h"
 #include "../utils/api_client.h"
+#include "../utils/time_utils.h"
 #include "../core/config.h"
 #include "../core/config_loader.h"
 #include "../core/logging.h"
@@ -308,39 +309,41 @@ String generatePokeContent()
 String generateNewsContent(int timeoutMs)
 {
     LOG_VERBOSE("NEWS", "Fetching news from BBC RSS feed");
-    
+
     // BBC RSS feed URL from config
     const String url = newsAPI;
-    
+
     // Fetch the RSS XML content
     String response = fetchFromAPI(url, apiUserAgent, timeoutMs);
-    
+
     if (response.length() == 0)
     {
         LOG_ERROR("NEWS", "Failed to fetch news from BBC RSS feed");
         return ""; // Return empty string to indicate failure
     }
-    
+
     // Parse the RSS XML response
     String newsContent = "";
     int itemCount = 0;
     const int maxItems = 5; // Limit to 5 news items to avoid overwhelming the display
-    
+
     // Simple XML parsing - find <item> blocks
     int itemStart = 0;
     while (itemCount < maxItems)
     {
         // Find next <item> tag
         itemStart = response.indexOf("<item>", itemStart);
-        if (itemStart == -1) break;
-        
+        if (itemStart == -1)
+            break;
+
         // Find the end of this item
         int itemEnd = response.indexOf("</item>", itemStart);
-        if (itemEnd == -1) break;
-        
+        if (itemEnd == -1)
+            break;
+
         // Extract item content
         String itemXML = response.substring(itemStart, itemEnd + 7);
-        
+
         // Extract title
         int titleStart = itemXML.indexOf("<title>");
         int titleEnd = itemXML.indexOf("</title>");
@@ -353,37 +356,20 @@ String generateNewsContent(int timeoutMs)
             title.replace("]]>", "");
             title.trim();
         }
-        
+
         // Extract pub date
         int pubDateStart = itemXML.indexOf("<pubDate>");
         int pubDateEnd = itemXML.indexOf("</pubDate>");
         String pubDate = "";
         if (pubDateStart != -1 && pubDateEnd != -1)
         {
-            pubDate = itemXML.substring(pubDateStart + 9, pubDateEnd);
-            pubDate.trim();
-            
-            // Format the date using our time utilities
-            // BBC RSS dates are in RFC 2822 format, we'll try to parse basic info
-            // Example: "Mon, 23 Dec 2024 14:30:00 GMT"
-            int commaPos = pubDate.indexOf(", ");
-            if (commaPos != -1)
-            {
-                pubDate = pubDate.substring(commaPos + 2); // Remove day name
-            }
-            // Take just the date part (before GMT)
-            int gmtPos = pubDate.indexOf(" GMT");
-            if (gmtPos != -1)
-            {
-                pubDate = pubDate.substring(0, gmtPos);
-            }
-            // Simplify to just date and time
-            if (pubDate.length() > 16)
-            {
-                pubDate = pubDate.substring(0, 16); // Keep "23 Dec 2024 14:30"
-            }
+            String rawPubDate = itemXML.substring(pubDateStart + 9, pubDateEnd);
+            rawPubDate.trim();
+
+            // Parse RFC 2822 format using time utils
+            pubDate = formatRFC2822Date(rawPubDate);
         }
-        
+
         // Add to news content if we have a title
         if (title.length() > 0)
         {
@@ -391,26 +377,26 @@ String generateNewsContent(int timeoutMs)
             {
                 newsContent += "\n\n";
             }
-            
+
             if (pubDate.length() > 0)
             {
                 newsContent += pubDate + "\n";
             }
             newsContent += title;
-            
+
             itemCount++;
         }
-        
+
         // Move to next item
         itemStart = itemEnd + 7;
     }
-    
+
     if (newsContent.length() == 0)
     {
         LOG_ERROR("NEWS", "No news items found in RSS feed");
         return "";
     }
-    
+
     LOG_VERBOSE("NEWS", "Generated news content with %d items", itemCount);
     return newsContent;
 }
