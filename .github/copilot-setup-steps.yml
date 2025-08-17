@@ -1,0 +1,106 @@
+name: Setup Scribe ESP32-C3 Development Environment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for frontend builds
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install Node.js dependencies
+        run: npm install
+
+      - name: Setup Python for PlatformIO
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO Core
+        run: pip install platformio
+
+      - name: Create configuration from example
+        run: |
+          if [ ! -f src/core/config.h ]; then
+            cp src/core/config.h.example src/core/config.h
+            echo "⚠️ Created config.h from example - you'll need to customize it"
+          fi
+
+      - name: Build frontend assets
+        run: |
+          npm run build-css-prod
+          npm run build-js-prod
+
+      - name: Install PlatformIO dependencies and build
+        run: |
+          pio pkg install
+          pio run -e main
+
+      - name: Run unit tests
+        run: pio test -e test
+
+      - name: Check for large files needing refactor
+        run: |
+          python3 -c "
+          import os
+          source_extensions = ['.cpp', '.h', '.py', '.js', '.css', '.html']
+          scan_directories = ['src', 'test', 'scripts', 'data']
+          large_files = []
+
+          for directory in scan_directories:
+              if os.path.exists(directory):
+                  for root, dirs, files in os.walk(directory):
+                      dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['node_modules', '__pycache__', '.git']]
+                      for file in files:
+                          if any(file.endswith(ext) for ext in source_extensions):
+                              file_path = os.path.join(root, file)
+                              try:
+                                  with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                      line_count = sum(1 for _ in f)
+                                      if line_count > 800:
+                                          relative_path = os.path.relpath(file_path)
+                                          large_files.append((relative_path, line_count))
+                              except:
+                                  continue
+
+          if large_files:
+              print('⚠️  CONSIDER FOR REFACTOR (>800 lines):')
+              print('=' * 60)
+              large_files.sort(key=lambda x: x[1], reverse=True)
+              for file_path, line_count in large_files:
+                  print(f'   📄 {file_path:<40} {line_count:>6} lines')
+              print('=' * 60)
+          else:
+              print('✅ No files over 800 lines detected - good code organization!')
+          "
+
+      - name: Environment summary
+        run: |
+          echo "🎯 Scribe ESP32-C3 Development Environment Ready!"
+          echo ""
+          echo "📋 Available Commands:"
+          echo "  Build firmware: pio run -e main"
+          echo "  Upload & monitor: pio run --target upload_main -e main"
+          echo "  Run tests: pio test -e test" 
+          echo "  Build frontend: npm run build"
+          echo "  Watch CSS: npm run watch-css"
+          echo ""
+          echo "📁 Key Files:"
+          echo "  src/main.cpp - Arduino entry point"
+          echo "  src/core/config.h - Configuration (customize this!)"
+          echo "  data/ - Web assets served from ESP32"
+          echo "  platformio.ini - Build configuration"
+          echo ""
+          echo "🔧 Next Steps:"
+          echo "  1. Customize src/core/config.h with your settings"
+          echo "  2. Build and upload with: pio run --target upload_main -e main"
+          echo "  3. Connect to WiFi network shown in config"
+          echo "  4. Access web interface at device IP address"

@@ -281,10 +281,8 @@ async function saveSettings(event) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        duration: 3, // 3 seconds for settings save confirmation
-                        color1: 'green',
-                        color2: 'green',
-                        color3: 'green'
+                        cycles: 1, // Single cycle from start to end
+                        color1: 'green'
                     })
                 });
             } catch (ledError) {
@@ -873,17 +871,35 @@ function showSettingsSection(sectionName) {
  */
 async function triggerLedEffect(effectName) {
     try {
+        let requestBody;
+        let messageText;
+        
+        if (effectName === 'simple_chase') {
+            // Cycle-based effect
+            requestBody = {
+                cycles: 1,
+                color1: 'blue',
+                color2: 'red',
+                color3: 'green'
+            };
+            messageText = `${effectName} LED effect started for 1 cycle`;
+        } else {
+            // Duration-based effects
+            requestBody = {
+                duration: 10, // 10 seconds preview
+                color1: 'blue',
+                color2: 'red',
+                color3: 'green'
+            };
+            messageText = `${effectName} LED effect started for 10 seconds`;
+        }
+
         const response = await fetch(`/api/led/${effectName}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                duration: 10, // 10 seconds preview
-                color1: 'blue',
-                color2: 'red',
-                color3: 'green'
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
@@ -892,7 +908,7 @@ async function triggerLedEffect(effectName) {
         }
 
         const result = await response.json();
-        showMessage(`${effectName} LED effect started for 10 seconds`, 'success');
+        showMessage(messageText, 'success');
         console.log('LED effect result:', result);
         
     } catch (error) {

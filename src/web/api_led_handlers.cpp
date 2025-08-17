@@ -58,7 +58,8 @@ void handleLedEffect(AsyncWebServerRequest *request)
     LOG_VERBOSE("LEDS", "LED effect request: %s", effectName.c_str());
 
     // Parse optional parameters from JSON body
-    int duration = 5;       // Default 5 seconds
+    int duration = 5;       // Default 5 seconds (for duration-based effects)
+    int cycles = 1;         // Default 1 cycle (for cycle-based effects)
     String color1 = "blue"; // Default color
     String color2 = "black";
     String color3 = "black";
@@ -74,6 +75,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
             if (!error)
             {
                 duration = doc["duration"] | duration;
+                cycles = doc["cycles"] | cycles;
                 color1 = doc["color1"] | color1;
                 color2 = doc["color2"] | color2;
                 color3 = doc["color3"] | color3;
@@ -112,18 +114,31 @@ void handleLedEffect(AsyncWebServerRequest *request)
     CRGB c2 = parseColor(color2);
     CRGB c3 = parseColor(color3);
 
-    // Start the LED effect
-    bool success = ledEffects.startEffect(effectName, duration, c1, c2, c3);
+    // Determine if this effect should be cycle-based or duration-based
+    bool useCycles = effectName.equalsIgnoreCase("simple_chase");
+    bool success;
+    
+    if (useCycles) {
+        // Cycle-based effects (simple_chase)
+        success = ledEffects.startEffectCycles(effectName, cycles, c1, c2, c3);
+        LOG_NOTICE("LEDS", "Started LED effect: %s for %d cycles", effectName.c_str(), cycles);
+    } else {
+        // Duration-based effects (rainbow, twinkle, chase, pulse, matrix)
+        success = ledEffects.startEffectDuration(effectName, duration, c1, c2, c3);
+        LOG_NOTICE("LEDS", "Started LED effect: %s for %d seconds", effectName.c_str(), duration);
+    }
 
     if (success)
     {
-        LOG_NOTICE("LEDS", "Started LED effect: %s for %d seconds", effectName.c_str(), duration);
-
         DynamicJsonDocument response(256);
         response["success"] = true;
         response["message"] = "LED effect started";
         response["effect"] = effectName;
-        response["duration"] = duration;
+        if (useCycles) {
+            response["cycles"] = cycles;
+        } else {
+            response["duration"] = duration;
+        }
         response["color1"] = color1;
         response["color2"] = color2;
         response["color3"] = color3;
