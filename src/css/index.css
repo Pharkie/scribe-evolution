@@ -3,9 +3,9 @@
 @import "./shared.css" layer(components);
 
 @layer components {
-  /* Quick Actions Grid */
+  /* Quick Actions Grid - Improved responsive layout for 7 buttons */
   .quick-actions-grid {
-    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3;
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-3;
   }
   
   /* Status indicator button */

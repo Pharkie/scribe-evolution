@@ -281,6 +281,63 @@ def ensure_python_environment():
     return True
 
 
+def check_large_files():
+    """Check for files over 800 lines that may need refactoring"""
+    print("🔍 Checking for large files that may need refactoring...")
+
+    # File extensions to check
+    source_extensions = [".cpp", ".h", ".py", ".js", ".css", ".html"]
+
+    # Directories to scan
+    scan_directories = ["src", "test", "scripts", "data"]
+
+    large_files = []
+
+    try:
+        for directory in scan_directories:
+            if os.path.exists(directory):
+                for root, dirs, files in os.walk(directory):
+                    # Skip certain directories
+                    dirs[:] = [
+                        d
+                        for d in dirs
+                        if not d.startswith(".")
+                        and d not in ["node_modules", "__pycache__", ".git"]
+                    ]
+
+                    for file in files:
+                        if any(file.endswith(ext) for ext in source_extensions):
+                            file_path = os.path.join(root, file)
+                            try:
+                                with open(
+                                    file_path, "r", encoding="utf-8", errors="ignore"
+                                ) as f:
+                                    line_count = sum(1 for _ in f)
+                                    if line_count > 800:
+                                        relative_path = os.path.relpath(file_path)
+                                        large_files.append((relative_path, line_count))
+                            except (OSError, IOError):
+                                # Skip files that can't be read
+                                continue
+
+        if large_files:
+            print("⚠️  CONSIDER FOR REFACTOR (>800 lines):")
+            print("=" * 60)
+            large_files.sort(
+                key=lambda x: x[1], reverse=True
+            )  # Sort by line count, largest first
+            for file_path, line_count in large_files:
+                print(f"   📄 {file_path:<40} {line_count:>6} lines")
+            print("=" * 60)
+            print(f"📊 Found {len(large_files)} file(s) over 800 lines")
+            print("💡 Consider breaking these files into smaller, more focused modules")
+        else:
+            print("✅ No files over 800 lines detected - good code organization!")
+
+    except (OSError, IOError, UnicodeDecodeError) as e:
+        print(f"⚠️  Warning: Could not check file sizes: {e}")
+
+
 def upload_filesystem_and_firmware(source, target, env):
     """Upload filesystem first, then firmware with enhanced reliability"""
     # Note: source and target parameters required by PlatformIO callback signature
@@ -368,6 +425,9 @@ def upload_filesystem_and_firmware(source, target, env):
 
     print("✅ Complete upload finished and monitoring started!")
     print("🎯 Device should now boot without missing initial serial messages!")
+
+    # Step 6: Check for large files that may need refactoring (success case only)
+    check_large_files()
 
 
 # Add custom target
