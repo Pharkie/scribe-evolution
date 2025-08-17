@@ -92,12 +92,12 @@ static const unsigned long DEFAULT_LED_UPDATE_INTERVAL = 1000 / DEFAULT_LED_REFR
 // LED Effect Configuration - Runtime Configurable Defaults
 static const int DEFAULT_LED_EFFECT_FADE_SPEED = 5; // Fade speed for transitions (1-255)
 static const int DEFAULT_LED_TWINKLE_DENSITY = 8;   // Number of twinkle stars simultaneously
-static const int DEFAULT_LED_CHASE_SPEED = 3;       // Chase effect speed (pixels per update)
+static const int DEFAULT_LED_CHASE_SPEED = 5;       // Chase effect delay (higher = slower: 1=60fps, 5=12fps, 10=6fps)
 static const int DEFAULT_LED_MATRIX_DROPS = 5;      // Number of matrix drops simultaneously
 
 // LED Effect Constants - Fixed behavior parameters
-static const int CHASE_TRAIL_LENGTH = 10;          // Length of chase effect trail
-static const int CHASE_TRAIL_FADE_STEP = 20;       // Fade amount per trail step (0-255)
+static const int CHASE_TRAIL_LENGTH = 15;          // Length of chase effect trail
+static const int CHASE_TRAIL_FADE_STEP = 15;       // Fade amount per trail step (0-255)
 static const int MATRIX_BACKGROUND_FADE = 64;      // Matrix background fade amount
 static const int MATRIX_TRAIL_FADE = 32;           // Matrix trail fade amount
 static const int MATRIX_BRIGHTNESS_FADE_STEP = 40; // Matrix brightness fade per tail position

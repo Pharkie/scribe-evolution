@@ -24,7 +24,7 @@ class ChaseSingle : public EffectBase
 public:
     /**
      * @brief Constructor
-     * @param chaseSpeed Speed of the chase effect (pixels per update)
+     * @param chaseSpeed Speed delay of the chase effect (higher = slower, 1=fastest)
      */
     ChaseSingle(int chaseSpeed);
 
@@ -52,7 +52,7 @@ public:
 
     /**
      * @brief Set chase speed
-     * @param speed New chase speed (pixels per update)
+     * @param speed New chase speed delay (higher = slower)
      */
     void setChaseSpeed(int speed) { chaseSpeed = speed; }
 
@@ -60,6 +60,7 @@ private:
     int chaseSpeed;
     bool isCycleBasedMode;
     int targetCycles;
+    int frameCounter; // Frame counter for speed delay
 
     void clearAllLEDs(CRGB *leds, int ledCount);
 };
