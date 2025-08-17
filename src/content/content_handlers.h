@@ -48,6 +48,11 @@ void handleQuiz(AsyncWebServerRequest* request);
 void handlePoke(AsyncWebServerRequest* request);
 
 /**
+ * @brief Handle news content generation request
+ */
+void handleNews(AsyncWebServerRequest* request);
+
+/**
  * @brief Handle Unbidden Ink content generation request
  */
 void handleUnbiddenInk(AsyncWebServerRequest* request);
@@ -69,6 +74,7 @@ bool generateAndQueueJoke();
 bool generateAndQueueQuote();
 bool generateAndQueueQuiz();
 bool generateAndQueuePrintTest();
+bool generateAndQueueNews();
 
 /**
  * @brief Handle print test request

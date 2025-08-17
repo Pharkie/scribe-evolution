@@ -71,4 +71,11 @@ String generateUnbiddenInkContent(const String &customPrompt = "");
  */
 String generatePokeContent();
 
+/**
+ * @brief Generate news content from BBC RSS feed
+ * @param timeoutMs Custom timeout in milliseconds (default: 10000)
+ * @return String containing raw news headlines with dates (no header)
+ */
+String generateNewsContent(int timeoutMs = 10000);
+
 #endif // CONTENT_GENERATORS_H

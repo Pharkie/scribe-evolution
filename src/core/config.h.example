@@ -1,5 +1,5 @@
 /**
- * @file config.h.example
+ * @file config.h.example.example.example
  * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
@@ -116,6 +116,7 @@ static const size_t maxLogFileSize = 100000; // 100KB
 static const char *jokeAPI = "https://icanhazdadjoke.com/";
 static const char *quoteAPI = "https://zenquotes.io/api/random";
 static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categories=general_knowledge&difficulty=medium&limit=1";
+static const char *newsAPI = "https://feeds.bbci.co.uk/news/rss.xml";
 static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL (NEVER exposed to frontend)
 
 // BetterStack configuration
