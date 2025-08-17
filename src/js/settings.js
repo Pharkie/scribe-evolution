@@ -155,6 +155,18 @@ function populateForm(config) {
     document.getElementById('button4-short-mqtt').value = config.buttons?.button4?.shortMqttTopic || '';
     document.getElementById('button4-long-mqtt').value = config.buttons?.button4?.longMqttTopic || '';
     
+    // LED settings
+    if (config.leds) {
+        document.getElementById('led-pin').value = config.leds.pin || 4;
+        document.getElementById('led-count').value = config.leds.count || 30;
+        document.getElementById('led-brightness').value = config.leds.brightness || 64;
+        document.getElementById('led-refresh-rate').value = config.leds.refreshRate || 60;
+        document.getElementById('led-fade-speed').value = config.leds.effectFadeSpeed || 5;
+        document.getElementById('led-twinkle-density').value = config.leds.twinkleDensity || 8;
+        document.getElementById('led-chase-speed').value = config.leds.chaseSpeed || 3;
+        document.getElementById('led-matrix-drops').value = config.leds.matrixDrops || 5;
+    }
+    
     // Update next scheduled time from config data
     updateNextScheduledDisplay(config.status?.unbiddenInk?.nextScheduled);
 }
@@ -224,6 +236,17 @@ function collectFormData() {
                 shortMqttTopic: document.getElementById('button4-short-mqtt').value,
                 longMqttTopic: document.getElementById('button4-long-mqtt').value
             }
+        },
+        // LED configuration
+        leds: {
+            pin: parseInt(document.getElementById('led-pin').value),
+            count: parseInt(document.getElementById('led-count').value),
+            brightness: parseInt(document.getElementById('led-brightness').value),
+            refreshRate: parseInt(document.getElementById('led-refresh-rate').value),
+            effectFadeSpeed: parseInt(document.getElementById('led-fade-speed').value),
+            twinkleDensity: parseInt(document.getElementById('led-twinkle-density').value),
+            chaseSpeed: parseInt(document.getElementById('led-chase-speed').value),
+            matrixDrops: parseInt(document.getElementById('led-matrix-drops').value)
         }
     };
 }

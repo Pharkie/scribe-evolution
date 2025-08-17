@@ -28,6 +28,9 @@
 #include <esp_ota_ops.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#ifdef ENABLE_LEDS
+#include "../leds/LedEffects.h"
+#endif
 #include <PubSubClient.h>
 #include <esp_system.h>
 
@@ -456,6 +459,27 @@ void handleConfigGet(AsyncWebServerRequest *request)
         configDoc["buttons"] = userConfig["buttons"];
     }
 
+#ifdef ENABLE_LEDS
+    // LED configuration (copy from config.json with defaults)
+    if (userConfig.containsKey("leds"))
+    {
+        configDoc["leds"] = userConfig["leds"];
+    }
+    else
+    {
+        // Provide defaults if leds section doesn't exist
+        JsonObject leds = configDoc.createNestedObject("leds");
+        leds["pin"] = DEFAULT_LED_PIN;
+        leds["count"] = DEFAULT_LED_COUNT;
+        leds["brightness"] = DEFAULT_LED_BRIGHTNESS;
+        leds["refreshRate"] = DEFAULT_LED_REFRESH_RATE;
+        leds["effectFadeSpeed"] = DEFAULT_LED_EFFECT_FADE_SPEED;
+        leds["twinkleDensity"] = DEFAULT_LED_TWINKLE_DENSITY;
+        leds["chaseSpeed"] = DEFAULT_LED_CHASE_SPEED;
+        leds["matrixDrops"] = DEFAULT_LED_MATRIX_DROPS;
+    }
+#endif
+
     // Note: Remote printers are now served via /api/printer-discovery endpoint
 
     // Add runtime status information for Unbidden Ink
@@ -527,8 +551,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
     // Validate required top-level sections exist
-    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "validation", "unbiddenInk", "buttons"};
-    for (int i = 0; i < 7; i++)
+    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "validation", "unbiddenInk", "buttons", "leds"};
+    for (int i = 0; i < 8; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -718,6 +742,78 @@ void handleConfigPost(AsyncWebServerRequest *request)
         }
     }
 
+#ifdef ENABLE_LEDS
+    // Validate LED configuration
+    JsonObject leds = doc["leds"];
+    if (!leds.containsKey("pin") || !leds.containsKey("count") || 
+        !leds.containsKey("brightness") || !leds.containsKey("refreshRate") ||
+        !leds.containsKey("effectFadeSpeed") || !leds.containsKey("twinkleDensity") ||
+        !leds.containsKey("chaseSpeed") || !leds.containsKey("matrixDrops"))
+    {
+        sendValidationError(request, ValidationResult(false, "Missing required LED configuration fields"));
+        return;
+    }
+
+    int ledPin = leds["pin"];
+    int ledCount = leds["count"];
+    int ledBrightness = leds["brightness"];
+    int ledRefreshRate = leds["refreshRate"];
+    int ledEffectFadeSpeed = leds["effectFadeSpeed"];
+    int ledTwinkleDensity = leds["twinkleDensity"];
+    int ledChaseSpeed = leds["chaseSpeed"];
+    int ledMatrixDrops = leds["matrixDrops"];
+
+    // Validate LED pin (ESP32-C3 specific)
+    if (ledPin < 0 || ledPin > 10)
+    {
+        sendValidationError(request, ValidationResult(false, "LED pin must be between 0 and 10 (ESP32-C3 compatible pins)"));
+        return;
+    }
+
+    // Validate LED count
+    if (ledCount < 1 || ledCount > 300)
+    {
+        sendValidationError(request, ValidationResult(false, "LED count must be between 1 and 300"));
+        return;
+    }
+
+    // Validate LED brightness
+    if (ledBrightness < 0 || ledBrightness > 255)
+    {
+        sendValidationError(request, ValidationResult(false, "LED brightness must be between 0 and 255"));
+        return;
+    }
+
+    // Validate refresh rate
+    if (ledRefreshRate < 10 || ledRefreshRate > 120)
+    {
+        sendValidationError(request, ValidationResult(false, "LED refresh rate must be between 10 and 120 Hz"));
+        return;
+    }
+
+    // Validate effect parameters
+    if (ledEffectFadeSpeed < 1 || ledEffectFadeSpeed > 255)
+    {
+        sendValidationError(request, ValidationResult(false, "LED fade speed must be between 1 and 255"));
+        return;
+    }
+    if (ledTwinkleDensity < 1 || ledTwinkleDensity > 20)
+    {
+        sendValidationError(request, ValidationResult(false, "LED twinkle density must be between 1 and 20"));
+        return;
+    }
+    if (ledChaseSpeed < 1 || ledChaseSpeed > 10)
+    {
+        sendValidationError(request, ValidationResult(false, "LED chase speed must be between 1 and 10"));
+        return;
+    }
+    if (ledMatrixDrops < 1 || ledMatrixDrops > 15)
+    {
+        sendValidationError(request, ValidationResult(false, "LED matrix drops must be between 1 and 15"));
+        return;
+    }
+#endif
+
     File configFile = LittleFS.open("/config.json", "w");
     if (!configFile)
     {
@@ -742,6 +838,21 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Update MQTT subscription to new device owner topic
         updateMQTTSubscription();
+
+#ifdef ENABLE_LEDS
+        // Reinitialize LED system with new configuration
+        const RuntimeConfig& config = getRuntimeConfig();
+        if (ledEffects.reinitialize(config.ledPin, config.ledCount, config.ledBrightness, 
+                                   config.ledRefreshRate, config.ledEffectFadeSpeed,
+                                   config.ledTwinkleDensity, config.ledChaseSpeed, config.ledMatrixDrops))
+        {
+            LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
+        }
+        else
+        {
+            LOG_WARNING("WEB", "Failed to reinitialize LED system with new configuration");
+        }
+#endif
     }
 
     sendSuccessResponse(request, "Configuration saved successfully");

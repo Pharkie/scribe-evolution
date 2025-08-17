@@ -12,11 +12,22 @@
 #ifdef ENABLE_LEDS
 
 #include "../core/logging.h"
+#include "../core/config_loader.h"
 
 // Global instance
 LedEffects ledEffects;
 
 LedEffects::LedEffects() : 
+    leds(nullptr),
+    ledCount(0),
+    ledPin(0),
+    ledBrightness(0),
+    ledRefreshRate(0),
+    ledUpdateInterval(0),
+    ledEffectFadeSpeed(0),
+    ledTwinkleDensity(0),
+    ledChaseSpeed(0),
+    ledMatrixDrops(0),
     effectActive(false),
     currentEffectName(""),
     effectStartTime(0),
@@ -27,32 +38,102 @@ LedEffects::LedEffects() :
     effectColor3(CRGB::Black),
     effectStep(0),
     effectDirection(1),
-    effectPhase(0.0f)
+    effectPhase(0.0f),
+    twinkleStars(nullptr),
+    matrixDrops(nullptr)
 {
-    // Initialize twinkle stars
-    for (int i = 0; i < LED_TWINKLE_DENSITY; i++) {
-        twinkleStars[i].active = false;
-        twinkleStars[i].position = 0;
-        twinkleStars[i].brightness = 0;
-        twinkleStars[i].fadeDirection = 1;
+    // Configuration will be loaded in begin()
+}
+
+LedEffects::~LedEffects()
+{
+    deallocateArrays();
+}
+
+void LedEffects::allocateArrays()
+{
+    deallocateArrays(); // Clean up existing allocations
+    
+    if (ledCount > 0) {
+        leds = new CRGB[ledCount];
     }
     
-    // Initialize matrix drops
-    for (int i = 0; i < LED_MATRIX_DROPS; i++) {
-        matrixDrops[i].active = false;
-        matrixDrops[i].position = 0;
-        matrixDrops[i].length = 0;
-        matrixDrops[i].speed = 1;
+    if (ledTwinkleDensity > 0) {
+        twinkleStars = new TwinkleState[ledTwinkleDensity];
+        for (int i = 0; i < ledTwinkleDensity; i++) {
+            twinkleStars[i].active = false;
+            twinkleStars[i].position = 0;
+            twinkleStars[i].brightness = 0;
+            twinkleStars[i].fadeDirection = 1;
+        }
+    }
+    
+    if (ledMatrixDrops > 0) {
+        matrixDrops = new MatrixDrop[ledMatrixDrops];
+        for (int i = 0; i < ledMatrixDrops; i++) {
+            matrixDrops[i].active = false;
+            matrixDrops[i].position = 0;
+            matrixDrops[i].length = 0;
+            matrixDrops[i].speed = 1;
+        }
+    }
+}
+
+void LedEffects::deallocateArrays()
+{
+    if (leds) {
+        delete[] leds;
+        leds = nullptr;
+    }
+    
+    if (twinkleStars) {
+        delete[] twinkleStars;
+        twinkleStars = nullptr;
+    }
+    
+    if (matrixDrops) {
+        delete[] matrixDrops;
+        matrixDrops = nullptr;
     }
 }
 
 bool LedEffects::begin()
 {
-    LOG_VERBOSE("LEDS", "Initializing LED strip - Pin: %d, Count: %d, Type: WS2812B", LED_PIN, LED_COUNT);
+    // Load LED configuration from runtime config
+    const RuntimeConfig& config = getRuntimeConfig();
+    ledPin = config.ledPin;
+    ledCount = config.ledCount;
+    ledBrightness = config.ledBrightness;
+    ledRefreshRate = config.ledRefreshRate;
+    ledUpdateInterval = 1000 / ledRefreshRate;
+    ledEffectFadeSpeed = config.ledEffectFadeSpeed;
+    ledTwinkleDensity = config.ledTwinkleDensity;
+    ledChaseSpeed = config.ledChaseSpeed;
+    ledMatrixDrops = config.ledMatrixDrops;
+    
+    // Allocate arrays based on configuration
+    allocateArrays();
+    
+    LOG_VERBOSE("LEDS", "Initializing LED strip - Pin: %d, Count: %d, Type: WS2812B", ledPin, ledCount);
     
     // Initialize FastLED with WS2812B and GRB color order
-    FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LED_COUNT);
-    FastLED.setBrightness(LED_BRIGHTNESS);
+    switch(ledPin) {
+        case 0:  FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount); break;
+        case 1:  FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount); break;
+        case 2:  FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount); break;
+        case 3:  FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount); break;
+        case 4:  FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount); break;
+        case 5:  FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount); break;
+        case 6:  FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount); break;
+        case 7:  FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount); break;
+        case 8:  FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount); break;
+        case 9:  FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount); break;
+        case 10: FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount); break;
+        default:
+            LOG_ERROR("LEDS", "Unsupported LED pin: %d. Supported pins: 0-10", ledPin);
+            return false;
+    }
+    FastLED.setBrightness(ledBrightness);
     FastLED.setMaxPowerInVoltsAndMilliamps(5, 1000); // Limit to 1A at 5V for safety
     
     // Clear all LEDs
@@ -60,6 +141,59 @@ bool LedEffects::begin()
     FastLED.show();
     
     LOG_NOTICE("LEDS", "LED strip initialized successfully");
+    return true;
+}
+
+bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRate,
+                             int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops)
+{
+    // Stop current effect before reinitializing
+    stopEffect();
+    
+    // Update configuration
+    ledPin = pin;
+    ledCount = count;
+    ledBrightness = brightness;
+    ledRefreshRate = refreshRate;
+    ledUpdateInterval = 1000 / refreshRate;
+    ledEffectFadeSpeed = fadeSpeed;
+    ledTwinkleDensity = twinkleDensity;
+    ledChaseSpeed = chaseSpeed;
+    ledMatrixDrops = matrixDrops;
+    
+    // Reallocate arrays with new sizes
+    allocateArrays();
+    
+    LOG_VERBOSE("LEDS", "Reinitializing LED strip - Pin: %d, Count: %d", ledPin, ledCount);
+    
+    // FastLED needs to be cleared and reinitialized
+    FastLED.clear();
+    
+    // Initialize FastLED with WS2812B and GRB color order
+    switch(ledPin) {
+        case 0:  FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount); break;
+        case 1:  FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount); break;
+        case 2:  FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount); break;
+        case 3:  FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount); break;
+        case 4:  FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount); break;
+        case 5:  FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount); break;
+        case 6:  FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount); break;
+        case 7:  FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount); break;
+        case 8:  FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount); break;
+        case 9:  FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount); break;
+        case 10: FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount); break;
+        default:
+            LOG_ERROR("LEDS", "Unsupported LED pin: %d. Supported pins: 0-10", ledPin);
+            return false;
+    }
+    FastLED.setBrightness(ledBrightness);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 1000);
+    
+    // Clear all LEDs
+    clearAllLEDs();
+    FastLED.show();
+    
+    LOG_NOTICE("LEDS", "LED strip reinitialized successfully");
     return true;
 }
 
@@ -78,7 +212,7 @@ void LedEffects::update()
     }
     
     // Rate limiting - only update at specified refresh rate
-    if (now - lastUpdate < LED_UPDATE_INTERVAL) {
+    if (now - lastUpdate < ledUpdateInterval) {
         return;
     }
     
@@ -135,11 +269,11 @@ bool LedEffects::startEffect(const String& effectName, unsigned long durationSec
     
     // Initialize effect-specific state
     if (lowerName.equals("twinkle")) {
-        for (int i = 0; i < LED_TWINKLE_DENSITY; i++) {
+        for (int i = 0; i < ledTwinkleDensity; i++) {
             twinkleStars[i].active = false;
         }
     } else if (lowerName.equals("matrix")) {
-        for (int i = 0; i < LED_MATRIX_DROPS; i++) {
+        for (int i = 0; i < ledMatrixDrops; i++) {
             matrixDrops[i].active = false;
         }
     }
@@ -188,7 +322,7 @@ unsigned long LedEffects::getRemainingTime() const
 
 void LedEffects::clearAllLEDs()
 {
-    fill_solid(leds, LED_COUNT, CRGB::Black);
+    fill_solid(leds, ledCount, CRGB::Black);
 }
 
 void LedEffects::updateSimpleChase()
@@ -196,21 +330,21 @@ void LedEffects::updateSimpleChase()
     clearAllLEDs();
     
     // Calculate position based on step
-    int position = effectStep % (LED_COUNT * 2); // *2 for off phase
+    int position = effectStep % (ledCount * 2); // *2 for off phase
     
-    if (position < LED_COUNT) {
+    if (position < ledCount) {
         leds[position] = effectColor1;
     }
     // else: off phase (LEDs remain black)
     
-    effectStep += LED_CHASE_SPEED;
+    effectStep += ledChaseSpeed;
 }
 
 void LedEffects::updateRainbowWave()
 {
-    for (int i = 0; i < LED_COUNT; i++) {
+    for (int i = 0; i < ledCount; i++) {
         // Create rainbow wave with moving phase
-        int hue = (i * 255 / LED_COUNT + (int)effectPhase) % 256;
+        int hue = (i * 255 / ledCount + (int)effectPhase) % 256;
         leds[i] = wheel(hue);
     }
     
@@ -223,12 +357,12 @@ void LedEffects::updateRainbowWave()
 void LedEffects::updateTwinkleStars()
 {
     // Fade all LEDs slightly
-    for (int i = 0; i < LED_COUNT; i++) {
-        fadeToBlackBy(i, LED_EFFECT_FADE_SPEED);
+    for (int i = 0; i < ledCount; i++) {
+        fadeToBlackBy(i, ledEffectFadeSpeed);
     }
     
     // Update existing twinkle stars
-    for (int i = 0; i < LED_TWINKLE_DENSITY; i++) {
+    for (int i = 0; i < ledTwinkleDensity; i++) {
         if (twinkleStars[i].active) {
             // Update brightness
             twinkleStars[i].brightness += twinkleStars[i].fadeDirection * 8;
@@ -253,7 +387,7 @@ void LedEffects::updateTwinkleStars()
                     neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
                     leds[twinkleStars[i].position - 1] += neighborColor;
                 }
-                if (twinkleStars[i].position < LED_COUNT - 1) {
+                if (twinkleStars[i].position < ledCount - 1) {
                     CRGB neighborColor = effectColor1;
                     neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
                     leds[twinkleStars[i].position + 1] += neighborColor;
@@ -264,10 +398,10 @@ void LedEffects::updateTwinkleStars()
     
     // Randomly start new twinkle stars
     if (random16(100) < 3) { // 3% chance per update
-        for (int i = 0; i < LED_TWINKLE_DENSITY; i++) {
+        for (int i = 0; i < ledTwinkleDensity; i++) {
             if (!twinkleStars[i].active) {
                 twinkleStars[i].active = true;
-                twinkleStars[i].position = random16(LED_COUNT);
+                twinkleStars[i].position = random16(ledCount);
                 twinkleStars[i].brightness = 0;
                 twinkleStars[i].fadeDirection = 1;
                 break;
@@ -281,24 +415,24 @@ void LedEffects::updateColorChase()
     // Continuous chase effect without off phase
     clearAllLEDs();
     
-    int position = effectStep % LED_COUNT;
+    int position = effectStep % ledCount;
     leds[position] = effectColor1;
     
     // Add trailing dots with fading
     for (int i = 1; i <= 3; i++) {
-        int trailPos = (position - i + LED_COUNT) % LED_COUNT;
+        int trailPos = (position - i + ledCount) % ledCount;
         CRGB trailColor = effectColor1;
         trailColor.fadeToBlackBy(i * 64); // Fade each trailing dot
         leds[trailPos] = trailColor;
     }
     
-    effectStep += LED_CHASE_SPEED;
+    effectStep += ledChaseSpeed;
 }
 
 void LedEffects::updatePulseWave()
 {
     // Create a sine wave pulse across the strip
-    for (int i = 0; i < LED_COUNT; i++) {
+    for (int i = 0; i < ledCount; i++) {
         float brightness = sin((effectPhase + i * 0.3f) * 3.14159f / 180.0f);
         brightness = (brightness + 1.0f) / 2.0f; // Normalize to 0-1
         
@@ -316,17 +450,17 @@ void LedEffects::updatePulseWave()
 void LedEffects::updateMatrixMovie()
 {
     // Fade all LEDs
-    for (int i = 0; i < LED_COUNT; i++) {
+    for (int i = 0; i < ledCount; i++) {
         fadeToBlackBy(i, 64);
     }
     
     // Update existing matrix drops
-    for (int i = 0; i < LED_MATRIX_DROPS; i++) {
+    for (int i = 0; i < ledMatrixDrops; i++) {
         if (matrixDrops[i].active) {
             // Clear previous position
             for (int j = 0; j < matrixDrops[i].length; j++) {
                 int pos = matrixDrops[i].position - j;
-                if (pos >= 0 && pos < LED_COUNT) {
+                if (pos >= 0 && pos < ledCount) {
                     fadeToBlackBy(pos, 32);
                 }
             }
@@ -337,7 +471,7 @@ void LedEffects::updateMatrixMovie()
             // Draw new position
             for (int j = 0; j < matrixDrops[i].length; j++) {
                 int pos = matrixDrops[i].position - j;
-                if (pos >= 0 && pos < LED_COUNT) {
+                if (pos >= 0 && pos < ledCount) {
                     int brightness = 255 - (j * 40); // Fade tail
                     if (brightness > 0) {
                         CRGB color = effectColor1;
@@ -348,7 +482,7 @@ void LedEffects::updateMatrixMovie()
             }
             
             // Deactivate if off the strip
-            if (matrixDrops[i].position >= LED_COUNT + matrixDrops[i].length) {
+            if (matrixDrops[i].position >= ledCount + matrixDrops[i].length) {
                 matrixDrops[i].active = false;
             }
         }
@@ -356,7 +490,7 @@ void LedEffects::updateMatrixMovie()
     
     // Randomly start new drops
     if (random16(100) < 5) { // 5% chance per update
-        for (int i = 0; i < LED_MATRIX_DROPS; i++) {
+        for (int i = 0; i < ledMatrixDrops; i++) {
             if (!matrixDrops[i].active) {
                 matrixDrops[i].active = true;
                 matrixDrops[i].position = 0;
@@ -384,7 +518,7 @@ CRGB LedEffects::wheel(byte wheelPos)
 
 void LedEffects::fadeToBlackBy(int ledIndex, int fadeValue)
 {
-    if (ledIndex >= 0 && ledIndex < LED_COUNT) {
+    if (ledIndex >= 0 && ledIndex < ledCount) {
         leds[ledIndex].fadeToBlackBy(fadeValue);
     }
 }
