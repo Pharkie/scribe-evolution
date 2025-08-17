@@ -115,15 +115,18 @@ void handleLedEffect(AsyncWebServerRequest *request)
     CRGB c3 = parseColor(color3);
 
     // Determine if this effect should be cycle-based or duration-based
-    bool useCycles = effectName.equalsIgnoreCase("simple_chase");
+    bool useCycles = effectName.equalsIgnoreCase("chase_single") || effectName.equalsIgnoreCase("chase_multi");
     bool success;
-    
-    if (useCycles) {
-        // Cycle-based effects (simple_chase)
+
+    if (useCycles)
+    {
+        // Cycle-based effects (chase_single, chase_multi)
         success = ledEffects.startEffectCycles(effectName, cycles, c1, c2, c3);
         LOG_NOTICE("LEDS", "Started LED effect: %s for %d cycles", effectName.c_str(), cycles);
-    } else {
-        // Duration-based effects (rainbow, twinkle, chase, pulse, matrix)
+    }
+    else
+    {
+        // Duration-based effects (rainbow, twinkle, pulse, matrix)
         success = ledEffects.startEffectDuration(effectName, duration, c1, c2, c3);
         LOG_NOTICE("LEDS", "Started LED effect: %s for %d seconds", effectName.c_str(), duration);
     }
@@ -134,9 +137,12 @@ void handleLedEffect(AsyncWebServerRequest *request)
         response["success"] = true;
         response["message"] = "LED effect started";
         response["effect"] = effectName;
-        if (useCycles) {
+        if (useCycles)
+        {
             response["cycles"] = cycles;
-        } else {
+        }
+        else
+        {
             response["duration"] = duration;
         }
         response["color1"] = color1;

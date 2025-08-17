@@ -24,6 +24,9 @@ extern void run_web_validation_tests();
 extern void run_time_utils_tests();
 extern void run_endpoint_integration_tests();
 
+// Test stubs for variables normally defined in main.cpp
+String deviceBootTime = "2025-08-17T12:00:00Z"; // Test stub
+
 // Web server instance for all tests
 WebServer server(webServerPort);
 

@@ -273,24 +273,7 @@ async function saveSettings(event) {
         if (response.ok && result.success) {
             currentConfig = configData; // Update current config
             
-            // Trigger green LED simple chase effect on successful save
-            try {
-                await fetch('/api/led/simple_chase', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        cycles: 1, // Single cycle from start to end
-                        color1: 'green'
-                    })
-                });
-            } catch (ledError) {
-                // Don't fail the settings save if LED effect fails
-                console.log('LED effect failed, but settings saved successfully:', ledError);
-            }
-            
-            // Brief delay to let LED effect start, then redirect
+            // Brief delay to let any server-side effects start, then redirect
             setTimeout(() => {
                 window.location.href = '/?settings_saved=true';
             }, 100);
@@ -874,8 +857,8 @@ async function triggerLedEffect(effectName) {
         let requestBody;
         let messageText;
         
-        if (effectName === 'simple_chase') {
-            // Cycle-based effect
+        if (effectName === 'chase_single' || effectName === 'chase_multi') {
+            // Cycle-based effects
             requestBody = {
                 cycles: 1,
                 color1: 'blue',
