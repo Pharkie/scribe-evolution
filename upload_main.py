@@ -283,7 +283,6 @@ def ensure_python_environment():
 
 def check_large_files():
     """Check for files over 800 lines that may need refactoring"""
-    print("🔍 Checking for large files that may need refactoring...")
 
     # File extensions to check
     source_extensions = [".cpp", ".h", ".py", ".js", ".css", ".html"]
@@ -321,7 +320,7 @@ def check_large_files():
                                 continue
 
         if large_files:
-            print("⚠️  CONSIDER FOR REFACTOR (>800 lines):")
+            print("⚠️  Consider for refactor (> 800 lines):")
             print("=" * 60)
             large_files.sort(
                 key=lambda x: x[1], reverse=True
@@ -329,10 +328,8 @@ def check_large_files():
             for file_path, line_count in large_files:
                 print(f"   📄 {file_path:<40} {line_count:>6} lines")
             print("=" * 60)
-            print(f"📊 Found {len(large_files)} file(s) over 800 lines")
-            print("💡 Consider breaking these files into smaller, more focused modules")
         else:
-            print("✅ No files over 800 lines detected - good code organization!")
+            print("✅ No files over 800 lines detected.")
 
     except (OSError, IOError, UnicodeDecodeError) as e:
         print(f"⚠️  Warning: Could not check file sizes: {e}")
@@ -424,7 +421,6 @@ def upload_filesystem_and_firmware(source, target, env):
         env.Exit(1)
 
     print("✅ Complete upload finished and monitoring started!")
-    print("🎯 Device should now boot without missing initial serial messages!")
 
     # Step 6: Check for large files that may need refactoring (success case only)
     check_large_files()
