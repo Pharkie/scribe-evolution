@@ -15,7 +15,7 @@
 #include "../../core/config.h"
 
 ChaseMulti::ChaseMulti(int chaseSpeed)
-    : chaseSpeed(chaseSpeed), isCycleBasedMode(true), targetCycles(3)
+    : chaseSpeed(chaseSpeed), isCycleBasedMode(true), targetCycles(1), frameCounter(0)
 {
 }
 
@@ -27,55 +27,83 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
 
     if (isCycleBasedMode)
     {
-        // Cycle-based: cycle through colors (color1, color2, color3, repeat)
-        int totalSteps = ledCount;
-        int currentPosition = effectStep % totalSteps;
+        // Cycle-based: run from start to end, then wait for trail to completely exit
+        // Add spacing between colors so they follow each other
+        int colorSpacing = CHASE_TRAIL_LENGTH + 2;                         // Space colors apart by trail length + gap
+        int totalSteps = ledCount + colorSpacing * 2 + CHASE_TRAIL_LENGTH; // Include space for all colors and trails
+        int currentPosition = effectStep;
 
-        // Determine which color to use based on completed cycles
-        CRGB currentColor;
-        int colorIndex = completedCycles % 3;
-        switch (colorIndex)
+        // Draw color1 (main/first color)
+        if (currentPosition >= 0 && currentPosition < ledCount)
         {
-        case 0:
-            currentColor = color1;
-            break;
-        case 1:
-            currentColor = color2;
-            break;
-        case 2:
-            currentColor = color3;
-            break;
-        default:
-            currentColor = color1;
-            break;
+            leds[currentPosition] = color1;
         }
 
-        if (currentPosition < ledCount)
+        // Add color1 trail
+        for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
         {
-            // Main LED with current color
-            leds[currentPosition] = currentColor;
-
-            // Add trailing dots with fading
-            for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
+            int trailPos = currentPosition - i;
+            if (trailPos >= 0 && trailPos < ledCount)
             {
-                int trailPos = (currentPosition - i + ledCount) % ledCount;
-                if (currentPosition >= i)
-                { // Only show trail if we're far enough along
-                    CRGB trailColor = currentColor;
-                    trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP); // Fade each trailing dot
-                    leds[trailPos] = trailColor;
-                }
+                CRGB trailColor = color1;
+                trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP);
+                leds[trailPos] = trailColor;
             }
         }
 
-        effectStep += chaseSpeed;
+        // Draw color2 (second color, following behind)
+        int color2Position = currentPosition - colorSpacing;
+        if (color2Position >= 0 && color2Position < ledCount)
+        {
+            leds[color2Position] = color2;
+        }
 
-        // Check if we've completed a cycle (reached the end)
+        // Add color2 trail
+        for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
+        {
+            int trailPos = color2Position - i;
+            if (trailPos >= 0 && trailPos < ledCount)
+            {
+                CRGB trailColor = color2;
+                trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP);
+                leds[trailPos] = trailColor;
+            }
+        }
+
+        // Draw color3 (third color, following behind color2)
+        int color3Position = currentPosition - (colorSpacing * 2);
+        if (color3Position >= 0 && color3Position < ledCount)
+        {
+            leds[color3Position] = color3;
+        }
+
+        // Add color3 trail
+        for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
+        {
+            int trailPos = color3Position - i;
+            if (trailPos >= 0 && trailPos < ledCount)
+            {
+                CRGB trailColor = color3;
+                trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP);
+                leds[trailPos] = trailColor;
+            }
+        }
+
+        // Use frame counter for speed control (higher chaseSpeed = slower movement)
+        frameCounter++;
+        if (frameCounter >= chaseSpeed)
+        {
+            frameCounter = 0;
+            effectStep++; // Only advance position when frame counter reaches speed threshold
+        }
+
+        // Check if we've completed a cycle (all colors + trails have exited the strip)
         if (effectStep >= totalSteps)
         {
             completedCycles++;
-            effectStep = 0; // Reset for next cycle
-            LOG_VERBOSE("LEDS", "Chase multi completed cycle %d/%d (color %d)", completedCycles, targetCycles, colorIndex);
+            effectStep = 0;   // Reset for next cycle
+            frameCounter = 0; // Reset frame counter
+            LOG_VERBOSE("LEDS", "Chase multi completed cycle %d/%d", completedCycles, targetCycles);
 
             // Return false if we've completed all requested cycles
             return completedCycles < targetCycles;
@@ -83,40 +111,46 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
     }
     else
     {
-        // Duration-based: continuous multi-color chase
-        int position = effectStep % ledCount;
+        // Duration-based: continuous multi-color chase with spacing
+        int colorSpacing = CHASE_TRAIL_LENGTH + 2; // Space colors apart
+        int position1 = effectStep % ledCount;
+        int position2 = (effectStep - colorSpacing + ledCount) % ledCount;
+        int position3 = (effectStep - (colorSpacing * 2) + ledCount) % ledCount;
 
-        // Cycle through colors based on position
-        CRGB currentColor;
-        int colorIndex = (effectStep / ledCount) % 3;
-        switch (colorIndex)
-        {
-        case 0:
-            currentColor = color1;
-            break;
-        case 1:
-            currentColor = color2;
-            break;
-        case 2:
-            currentColor = color3;
-            break;
-        default:
-            currentColor = color1;
-            break;
-        }
+        // Draw all three colors with their trails
+        leds[position1] = color1;
+        leds[position2] = color2;
+        leds[position3] = color3;
 
-        leds[position] = currentColor;
-
-        // Add trailing dots with fading
+        // Add trails for each color
         for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
         {
-            int trailPos = (position - i + ledCount) % ledCount;
-            CRGB trailColor = currentColor;
-            trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP); // Fade each trailing dot
-            leds[trailPos] = trailColor;
+            // Color1 trail
+            int trail1Pos = (position1 - i + ledCount) % ledCount;
+            CRGB trail1Color = color1;
+            trail1Color.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP);
+            leds[trail1Pos] = trail1Color;
+
+            // Color2 trail
+            int trail2Pos = (position2 - i + ledCount) % ledCount;
+            CRGB trail2Color = color2;
+            trail2Color.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP);
+            leds[trail2Pos] = trail2Color;
+
+            // Color3 trail
+            int trail3Pos = (position3 - i + ledCount) % ledCount;
+            CRGB trail3Color = color3;
+            trail3Color.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP);
+            leds[trail3Pos] = trail3Color;
         }
 
-        effectStep += chaseSpeed;
+        // Use frame counter for speed control (higher chaseSpeed = slower movement)
+        frameCounter++;
+        if (frameCounter >= chaseSpeed)
+        {
+            frameCounter = 0;
+            effectStep++; // Only advance position when frame counter reaches speed threshold
+        }
     }
 
     return true; // Continue running
@@ -125,6 +159,7 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
 void ChaseMulti::reset()
 {
     // Reset state variables - will be set by the effect manager
+    frameCounter = 0;
 }
 
 void ChaseMulti::clearAllLEDs(CRGB *leds, int ledCount)

@@ -805,9 +805,9 @@
                                 <div class="space-y-2">
                                     <label for="led-chase-speed"
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chase
-                                        Speed</label>
-                                    <input type="number" id="led-chase-speed" name="leds.chaseSpeed" min="1" max="10"
-                                        step="1" placeholder="3"
+                                        Speed (1=fastest, 20=slowest)</label>
+                                    <input type="number" id="led-chase-speed" name="leds.chaseSpeed" min="1" max="20"
+                                        step="1" placeholder="5"
                                         class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                 </div>
                                 <div class="space-y-2">
@@ -829,9 +829,9 @@
                             </p>
                             <!-- LED Effect Buttons with improved responsive layout -->
                             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
-                                <button type="button" onclick="triggerLedEffect('simple_chase')"
+                                <button type="button" onclick="triggerLedEffect('chase_single')"
                                     class="led-effect-btn bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-600">
-                                    🏃 Simple Chase
+                                    🏃 Chase Single
                                 </button>
                                 <button type="button" onclick="triggerLedEffect('rainbow')"
                                     class="led-effect-btn bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-600">
@@ -841,9 +841,9 @@
                                     class="led-effect-btn bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-800/40 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-600">
                                     ⭐ Twinkle Stars
                                 </button>
-                                <button type="button" onclick="triggerLedEffect('chase')"
+                                <button type="button" onclick="triggerLedEffect('chase_multi')"
                                     class="led-effect-btn bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-800/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-600">
-                                    🎯 Color Chase
+                                    🎯 Chase Multi
                                 </button>
                                 <button type="button" onclick="triggerLedEffect('pulse')"
                                     class="led-effect-btn bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-800/40 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-600">
@@ -851,12 +851,12 @@
                                 </button>
                                 <button type="button" onclick="triggerLedEffect('matrix')"
                                     class="led-effect-btn bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-800/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-600">
-                                    🔋 Matrix Movie
+                                    🔋 Matrix
                                 </button>
                                 <!-- Turn Off button integrated into the grid -->
                                 <button type="button" onclick="turnOffLeds()"
                                     class="led-effect-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/30 dark:hover:bg-gray-700/40 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600 sm:col-span-1 lg:col-span-2 xl:col-span-2">
-                                    ⚫ Turn Off LEDs
+                                    ⚫ LEDs Off
                                 </button>
                             </div>
                         </div>

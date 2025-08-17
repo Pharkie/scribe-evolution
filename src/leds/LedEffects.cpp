@@ -54,13 +54,13 @@ LedEffects::~LedEffects()
         delete currentEffect;
         currentEffect = nullptr;
     }
-    
+
     if (effectRegistry)
     {
         delete effectRegistry;
         effectRegistry = nullptr;
     }
-    
+
     if (leds)
     {
         delete[] leds;
@@ -72,15 +72,15 @@ bool LedEffects::begin()
 {
     // Load configuration
     const RuntimeConfig &config = getRuntimeConfig();
-    
+
     return reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
-                       config.ledRefreshRate, config.ledEffectFadeSpeed,
-                       config.ledTwinkleDensity, config.ledChaseSpeed, 
-                       config.ledMatrixDrops);
+                        config.ledRefreshRate, config.ledEffectFadeSpeed,
+                        config.ledTwinkleDensity, config.ledChaseSpeed,
+                        config.ledMatrixDrops);
 }
 
 bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRate,
-                             int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops)
+                              int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops)
 {
     // Stop current effect
     stopEffect();
@@ -121,20 +121,42 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
     // Initialize FastLED
     switch (ledPin)
     {
-        case 0: FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount); break;
-        case 1: FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount); break;
-        case 2: FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount); break;
-        case 3: FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount); break;
-        case 4: FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount); break;
-        case 5: FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount); break;
-        case 6: FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount); break;
-        case 7: FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount); break;
-        case 8: FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount); break;
-        case 9: FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount); break;
-        case 10: FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount); break;
-        default:
-            LOG_ERROR("LEDS", "Unsupported LED pin: %d", ledPin);
-            return false;
+    case 0:
+        FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount);
+        break;
+    case 1:
+        FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount);
+        break;
+    case 2:
+        FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount);
+        break;
+    case 3:
+        FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount);
+        break;
+    case 4:
+        FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount);
+        break;
+    case 5:
+        FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount);
+        break;
+    case 6:
+        FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount);
+        break;
+    case 7:
+        FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount);
+        break;
+    case 8:
+        FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount);
+        break;
+    case 9:
+        FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount);
+        break;
+    case 10:
+        FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount);
+        break;
+    default:
+        LOG_ERROR("LEDS", "Unsupported LED pin: %d", ledPin);
+        return false;
     }
 
     FastLED.setBrightness(ledBrightness);
@@ -151,9 +173,9 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         effectRegistry = new EffectRegistry(chaseSpeed, twinkleDensity, fadeSpeed, matrixDrops);
     }
 
-    LOG_VERBOSE("LEDS", "LED system initialized: pin=%d, count=%d, brightness=%d, refresh=%dHz", 
-               ledPin, ledCount, ledBrightness, ledRefreshRate);
-    
+    LOG_VERBOSE("LEDS", "LED system initialized: pin=%d, count=%d, brightness=%d, refresh=%dHz",
+                ledPin, ledCount, ledBrightness, ledRefreshRate);
+
     return true;
 }
 
@@ -165,7 +187,7 @@ void LedEffects::update()
     }
 
     unsigned long now = millis();
-    
+
     // Check if effect should stop (duration-based)
     if (!isCycleBased && effectDuration > 0)
     {
@@ -185,9 +207,9 @@ void LedEffects::update()
     lastUpdate = now;
 
     // Update the current effect
-    bool shouldContinue = currentEffect->update(leds, ledCount, effectStep, effectDirection, 
-                                               effectPhase, effectColor1, effectColor2, effectColor3,
-                                               completedCycles);
+    bool shouldContinue = currentEffect->update(leds, ledCount, effectStep, effectDirection,
+                                                effectPhase, effectColor1, effectColor2, effectColor3,
+                                                completedCycles);
 
     // Check if cycle-based effect is complete
     if (isCycleBased && !shouldContinue)
@@ -201,7 +223,7 @@ void LedEffects::update()
 }
 
 bool LedEffects::startEffectDuration(const String &effectName, unsigned long durationSeconds,
-                                    CRGB color1, CRGB color2, CRGB color3)
+                                     CRGB color1, CRGB color2, CRGB color3)
 {
     if (!effectRegistry || !effectRegistry->isValidEffect(effectName))
     {
@@ -239,14 +261,14 @@ bool LedEffects::startEffectDuration(const String &effectName, unsigned long dur
     effectDirection = 1;
     effectPhase = 0.0f;
 
-    LOG_VERBOSE("LEDS", "Started duration-based effect: %s (duration: %lu seconds)", 
-               effectName.c_str(), durationSeconds);
-    
+    LOG_VERBOSE("LEDS", "Started duration-based effect: %s (duration: %lu seconds)",
+                effectName.c_str(), durationSeconds);
+
     return true;
 }
 
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,
-                                  CRGB color1, CRGB color2, CRGB color3)
+                                   CRGB color1, CRGB color2, CRGB color3)
 {
     if (!effectRegistry || !effectRegistry->isValidEffect(effectName))
     {
@@ -293,9 +315,9 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
     effectDirection = 1;
     effectPhase = 0.0f;
 
-    LOG_VERBOSE("LEDS", "Started cycle-based effect: %s (cycles: %d)", 
-               effectName.c_str(), cycles);
-    
+    LOG_VERBOSE("LEDS", "Started cycle-based effect: %s (cycles: %d)",
+                effectName.c_str(), cycles);
+
     return true;
 }
 
@@ -306,17 +328,24 @@ void LedEffects::stopEffect()
         delete currentEffect;
         currentEffect = nullptr;
     }
-    
+
     effectActive = false;
     currentEffectName = "";
-    
-    // Clear all LEDs
-    if (leds)
+
+    // Clear all LEDs - be extra thorough
+    if (leds && ledCount > 0)
     {
+        // First clear our LED array
         for (int i = 0; i < ledCount; i++)
         {
             leds[i] = CRGB::Black;
         }
+
+        // Show the cleared state
+        FastLED.show();
+
+        // Additional safety: clear again and show again to ensure it takes effect
+        fill_solid(leds, ledCount, CRGB::Black);
         FastLED.show();
     }
 }
@@ -337,13 +366,13 @@ unsigned long LedEffects::getRemainingTime() const
     {
         return 0;
     }
-    
+
     unsigned long elapsed = millis() - effectStartTime;
     if (elapsed >= effectDuration)
     {
         return 0;
     }
-    
+
     return effectDuration - elapsed;
 }
 

@@ -85,6 +85,7 @@ private:
     int density;
     int fadeSpeed;
     bool initialized;
+    int frameCounter; // Frame counter for speed control
 
     void deallocateStars();
     void fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue);

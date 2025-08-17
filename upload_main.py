@@ -411,16 +411,29 @@ def upload_filesystem_and_firmware(source, target, env):
     print("⏳ Waiting for ESP32 to boot and stabilize after filesystem upload...")
     time.sleep(2.0)  # Allow ESP32 to fully boot and initialize filesystem
 
-    # Step 5: Upload firmware and start monitoring
-    print("💾 Uploading firmware and starting monitor...")
-    fw_result = env.Execute(
-        "pio run --environment main --target upload --target monitor"
-    )
+    # Step 5a: Upload firmware only (no monitor yet)
+    print("💾 Uploading firmware...")
+    fw_result = env.Execute("pio run --environment main --target upload")
     if fw_result != 0:
         print("❌ Firmware upload failed!")
         env.Exit(1)
 
-    print("✅ Complete upload finished and monitoring started!")
+    print("✅ Firmware upload completed successfully!")
+
+    # Play success sound immediately after upload completes
+    try:
+        subprocess.run(["afplay", "/System/Library/Sounds/Glass.aiff"], check=False)
+        print("🔔 Success sound played!")
+    except (OSError, subprocess.SubprocessError) as e:
+        print(f"🔇 Could not play sound: {e}")
+
+    # Step 5b: Start monitoring (this will run indefinitely until user exits)
+    print("📺 Starting serial monitor... (Press Ctrl+C to exit)")
+    time.sleep(1)  # Brief pause to let user see the success message
+    _monitor_result = env.Execute("pio run --environment main --target monitor")
+    # Note: _monitor_result will only be set if user exits the monitor
+
+    print("✅ Upload and monitoring session completed!")
 
     # Step 6: Check for large files that may need refactoring (success case only)
     check_large_files()

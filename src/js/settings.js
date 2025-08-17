@@ -858,21 +858,49 @@ async function triggerLedEffect(effectName) {
         let messageText;
         
         if (effectName === 'chase_single' || effectName === 'chase_multi') {
-            // Cycle-based effects
-            requestBody = {
-                cycles: 1,
-                color1: 'blue',
-                color2: 'red',
-                color3: 'green'
-            };
+            // Cycle-based effects with specific colors
+            if (effectName === 'chase_single') {
+                requestBody = {
+                    cycles: 1,
+                    color1: 'blue'
+                };
+            } else { // chase_multi
+                requestBody = {
+                    cycles: 1,
+                    color1: 'blue',
+                    color2: 'red',
+                    color3: 'green'
+                };
+            }
             messageText = `${effectName} LED effect started for 1 cycle`;
         } else {
-            // Duration-based effects
+            // Duration-based effects with specific color defaults
+            let color1, color2, color3;
+            
+            if (effectName === 'twinkle') {
+                color1 = 'white';
+                color2 = 'white';
+                color3 = 'white';
+            } else if (effectName === 'pulse') {
+                color1 = 'hotpink';
+                color2 = 'hotpink';
+                color3 = 'hotpink';
+            } else if (effectName === 'matrix') {
+                color1 = 'green';
+                color2 = 'green';
+                color3 = 'green';
+            } else {
+                // Default colors for rainbow and other effects
+                color1 = 'blue';
+                color2 = 'red';
+                color3 = 'green';
+            }
+            
             requestBody = {
                 duration: 10, // 10 seconds preview
-                color1: 'blue',
-                color2: 'red',
-                color3: 'green'
+                color1: color1,
+                color2: color2,
+                color3: color3
             };
             messageText = `${effectName} LED effect started for 10 seconds`;
         }

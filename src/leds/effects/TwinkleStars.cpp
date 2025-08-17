@@ -12,7 +12,7 @@
 #ifdef ENABLE_LEDS
 
 TwinkleStars::TwinkleStars(int density, int fadeSpeed)
-    : twinkleStars(nullptr), density(density), fadeSpeed(fadeSpeed), initialized(false)
+    : twinkleStars(nullptr), density(density), fadeSpeed(fadeSpeed), initialized(false), frameCounter(0)
 {
 }
 
@@ -40,8 +40,8 @@ void TwinkleStars::initialize(int ledCount)
 }
 
 bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirection,
-                                float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
-                                int &completedCycles)
+                          float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
+                          int &completedCycles)
 {
     if (!initialized || !twinkleStars)
     {
@@ -54,61 +54,72 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
         fadeToBlackBy(leds, i, fadeSpeed);
     }
 
-    // Update existing twinkle stars
-    for (int i = 0; i < density; i++)
+    // Use frame counter for speed control - update only every few frames
+    frameCounter++;
+    if (frameCounter >= 2) // Update every 2 frames for smoother twinkling
     {
-        if (twinkleStars[i].active)
+        frameCounter = 0;
+
+        // Update existing twinkle stars
+        for (int i = 0; i < density; i++)
         {
-            // Update brightness
-            twinkleStars[i].brightness += twinkleStars[i].fadeDirection * 8;
-
-            if (twinkleStars[i].brightness >= 255)
-            {
-                twinkleStars[i].brightness = 255;
-                twinkleStars[i].fadeDirection = -1;
-            }
-            else if (twinkleStars[i].brightness <= 0)
-            {
-                twinkleStars[i].brightness = 0;
-                twinkleStars[i].active = false;
-            }
-
-            // Set LED color
             if (twinkleStars[i].active)
             {
-                CRGB color = color1;
-                color.fadeToBlackBy(255 - twinkleStars[i].brightness);
-                leds[twinkleStars[i].position] = color;
+                // Update brightness
+                twinkleStars[i].brightness += twinkleStars[i].fadeDirection * 8;
 
-                // Light up neighbors with reduced brightness
-                if (twinkleStars[i].position > 0)
+                if (twinkleStars[i].brightness >= 255)
                 {
-                    CRGB neighborColor = color1;
-                    neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
-                    leds[twinkleStars[i].position - 1] += neighborColor;
+                    twinkleStars[i].brightness = 255;
+                    twinkleStars[i].fadeDirection = -1;
                 }
-                if (twinkleStars[i].position < ledCount - 1)
+                else if (twinkleStars[i].brightness <= 0)
                 {
-                    CRGB neighborColor = color1;
-                    neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
-                    leds[twinkleStars[i].position + 1] += neighborColor;
+                    twinkleStars[i].brightness = 0;
+                    twinkleStars[i].active = false;
+                }
+            }
+        }
+
+        // Randomly start new twinkle stars
+        if (random16(100) < 3)
+        { // 3% chance per update
+            for (int i = 0; i < density; i++)
+            {
+                if (!twinkleStars[i].active)
+                {
+                    twinkleStars[i].active = true;
+                    twinkleStars[i].position = random16(ledCount);
+                    twinkleStars[i].brightness = 0;
+                    twinkleStars[i].fadeDirection = 1;
+                    break;
                 }
             }
         }
     }
 
-    // Randomly start new twinkle stars
-    if (random16(100) < 3)
-    { // 3% chance per update
-        for (int i = 0; i < density; i++)
+    // Always draw current state (even if not updating logic)
+    for (int i = 0; i < density; i++)
+    {
+        if (twinkleStars[i].active)
         {
-            if (!twinkleStars[i].active)
+            // Use color1 parameter (should be white from web interface)
+            CRGB color = color1;
+            color.fadeToBlackBy(255 - twinkleStars[i].brightness);
+            leds[twinkleStars[i].position] = color;
+
+            // Light up neighbors with reduced brightness
+            if (twinkleStars[i].position > 0)
             {
-                twinkleStars[i].active = true;
-                twinkleStars[i].position = random16(ledCount);
-                twinkleStars[i].brightness = 0;
-                twinkleStars[i].fadeDirection = 1;
-                break;
+                CRGB neighborColor = color1;
+                neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
+                leds[twinkleStars[i].position - 1] += neighborColor;
+            }
+            if (twinkleStars[i].position < ledCount - 1)
+            {
+                CRGB neighborColor = color1;
+                neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
+                leds[twinkleStars[i].position + 1] += neighborColor;
             }
         }
     }
@@ -118,6 +129,7 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
 
 void TwinkleStars::reset()
 {
+    frameCounter = 0;
     if (twinkleStars)
     {
         for (int i = 0; i < density; i++)

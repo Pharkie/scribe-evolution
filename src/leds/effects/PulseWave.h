@@ -47,6 +47,9 @@ public:
      * @brief Check if this effect supports cycle-based operation
      */
     bool isCycleBased() const override { return false; } // Duration-based
+
+private:
+    int frameCounter; // Frame counter for speed control
 };
 
 #endif // ENABLE_LEDS
