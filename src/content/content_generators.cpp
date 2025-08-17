@@ -309,8 +309,8 @@ String generateNewsContent(int timeoutMs)
 {
     LOG_VERBOSE("NEWS", "Fetching news from BBC RSS feed");
     
-    // BBC RSS feed URL
-    const String url = "https://feeds.bbci.co.uk/news/rss.xml";
+    // BBC RSS feed URL from config
+    const String url = newsAPI;
     
     // Fetch the RSS XML content
     String response = fetchFromAPI(url, apiUserAgent, timeoutMs);
