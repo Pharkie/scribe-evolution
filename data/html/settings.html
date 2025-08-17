@@ -782,46 +782,8 @@
                             </div>
                         </div>
 
-                        <!-- Effect Configuration -->
-                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Settings</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="space-y-2">
-                                    <label for="led-fade-speed"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fade Speed
-                                        (1-255)</label>
-                                    <input type="number" id="led-fade-speed" name="leds.effectFadeSpeed" min="1"
-                                        max="255" step="1" placeholder="5"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                </div>
-                                <div class="space-y-2">
-                                    <label for="led-twinkle-density"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Twinkle
-                                        Density</label>
-                                    <input type="number" id="led-twinkle-density" name="leds.twinkleDensity" min="1"
-                                        max="20" step="1" placeholder="8"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                </div>
-                                <div class="space-y-2">
-                                    <label for="led-chase-speed"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chase
-                                        Speed (1=fastest, 20=slowest)</label>
-                                    <input type="number" id="led-chase-speed" name="leds.chaseSpeed" min="1" max="20"
-                                        step="1" placeholder="5"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                </div>
-                                <div class="space-y-2">
-                                    <label for="led-matrix-drops"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Matrix
-                                        Drops</label>
-                                    <input type="number" id="led-matrix-drops" name="leds.matrixDrops" min="1" max="15"
-                                        step="1" placeholder="5"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- LED Effect Triggers -->
+                    <!-- Per-Effect Autonomous Configuration included via load -->
+                    <div id="led-effects-config-container"></div>                        <!-- LED Effect Triggers -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Test LED Effects</h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -881,7 +843,11 @@
 
     <!-- Load main app bundle (shared functionality) -->
     <script src="/js/app.min.js"></script>
-    <!-- Load page-specific JavaScript -->
+    <!-- Load modular settings components in dependency order -->
+    <script src="/js/settings-core.min.js"></script>
+    <script src="/js/settings-led-config.min.js"></script>
+    <script src="/js/settings-utils.min.js"></script>
+    <!-- Load page coordinator last -->
     <script src="/js/settings.min.js"></script>
 </body>
 
