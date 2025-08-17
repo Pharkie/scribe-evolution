@@ -12,7 +12,7 @@
 #include "logging.h"
 #include <LittleFS.h>
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "led_config_loader.h"
 #endif
 
@@ -155,7 +155,7 @@ bool loadRuntimeConfig()
         }
     }
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     // Load LED configuration
     JsonObject leds = doc["leds"];
     if (leds.isNull())
@@ -226,7 +226,7 @@ void loadDefaultConfig()
         g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtons[i].longMqttTopic;
     }
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     // Load default LED configuration
     g_runtimeConfig.ledPin = DEFAULT_LED_PIN;
     g_runtimeConfig.ledCount = DEFAULT_LED_COUNT;
@@ -339,7 +339,7 @@ bool createDefaultConfigFile()
         button["longMqttTopic"] = defaultButtons[i].longMqttTopic;
     }
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     // LED Configuration
     JsonObject leds = doc.createNestedObject("leds");
     leds["pin"] = DEFAULT_LED_PIN;

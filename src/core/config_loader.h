@@ -57,7 +57,7 @@ struct RuntimeConfig
     String buttonShortMqttTopics[4]; // MQTT topics for short press actions (empty string = use local print)
     String buttonLongMqttTopics[4];  // MQTT topics for long press actions (empty string = use local print)
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     // LED Configuration (runtime configurable)
     int ledPin;         // GPIO pin for LED strip data
     int ledCount;       // Number of LEDs in the strip
@@ -105,7 +105,7 @@ bool isConfigFileValid();
  */
 bool createDefaultConfigFile();
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "led_config.h"
 #include "led_config_loader.h"
 #endif

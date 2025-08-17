@@ -9,7 +9,7 @@
 
 #include "color_utils.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 #include "../core/logging.h"
 

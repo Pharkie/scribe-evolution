@@ -20,14 +20,14 @@
 #include "../core/network.h"
 #include "../core/mqtt_handler.h"
 #include "../content/unbidden_ink.h"
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "../leds/LedEffects.h"
 #include <FastLED.h>
 #endif
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "../leds/LedEffects.h"
 extern LedEffects ledEffects;
 #endif
@@ -171,7 +171,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
         configDoc["buttons"] = userConfig["buttons"];
     }
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     // LED configuration (copy from config.json with defaults)
     if (userConfig.containsKey("leds"))
     {
@@ -454,7 +454,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         }
     }
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     // Validate LED configuration with new autonomous structure
     JsonObject leds = doc["leds"];
     if (!leds.containsKey("pin") || !leds.containsKey("count") ||
@@ -584,7 +584,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         // Update MQTT subscription to new device owner topic
         updateMQTTSubscription();
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
         // Reinitialize LED system with new configuration
         const RuntimeConfig &config = getRuntimeConfig();
         if (ledEffects.reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
