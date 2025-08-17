@@ -1,6 +1,6 @@
 /**
  * @file api_handlers.h
- * @brief API endpoint handlers (status, MQTT, settings, etc.)
+ * @brief Core API endpoint handlers and shared utilities
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -14,40 +14,44 @@
 #include <ESPAsyncWebServer.h>
 #include "../core/shared_types.h"
 
-// ========================================
-// API ENDPOINT HANDLERS
-// ========================================
-
-/**
- * @brief Handle system diagnostics request
- */
-void handleStatus(AsyncWebServerRequest *request);
-
-/**
- * @brief Handle MQTT message sending request
- */
-void handleMQTTSend(AsyncWebServerRequest *request);
-
-/**
- * @brief Handle configuration GET request (read config.json)
- */
-void handleConfigGet(AsyncWebServerRequest *request);
-
-/**
- * @brief Handle configuration POST request (write config.json)
- */
-void handleConfigPost(AsyncWebServerRequest *request);
+// Import specialized handler modules
+#include "api_system_handlers.h"
+#include "api_config_handlers.h"
 
 #ifdef ENABLE_LEDS
-/**
- * @brief Handle LED effect trigger requests
- */
-void handleLedEffect(AsyncWebServerRequest *request);
+#include "api_led_handlers.h"
+#endif
+
+// ========================================
+// SHARED API UTILITIES
+// ========================================
 
 /**
- * @brief Handle LED off request
+ * @brief Send standardized error response
+ * @param request HTTP request object
+ * @param code HTTP status code
+ * @param message Error message
  */
-void handleLedOff(AsyncWebServerRequest *request);
-#endif // ENABLE_LEDS
+void sendErrorResponse(AsyncWebServerRequest *request, int code, const String &message);
+
+/**
+ * @brief Send standardized success response
+ * @param request HTTP request object
+ * @param message Success message
+ */
+void sendSuccessResponse(AsyncWebServerRequest *request, const String &message);
+
+/**
+ * @brief Send rate limit response
+ * @param request HTTP request object
+ */
+void sendRateLimitResponse(AsyncWebServerRequest *request);
+
+/**
+ * @brief Send validation error response
+ * @param request HTTP request object
+ * @param result Validation result containing error details
+ */
+void sendValidationError(AsyncWebServerRequest *request, const ValidationResult &result);
 
 #endif // API_HANDLERS_H
