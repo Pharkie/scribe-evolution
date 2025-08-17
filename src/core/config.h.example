@@ -78,7 +78,7 @@ static const ButtonConfig defaultButtons[] = {
 // LEDs: Optional FastLED support
 // Enabled via build flags (-DENABLE_LEDS=1 in platformio.ini)
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "led_config.h"
 #endif
 

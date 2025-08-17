@@ -9,7 +9,7 @@
 
 #include "api_led_handlers.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 #include "api_handlers.h" // For sendErrorResponse
 #include "web_server.h"   // For getRequestBody function

@@ -48,8 +48,18 @@
 #include "content/content_generators.h"
 #include "utils/api_client.h"
 #include "content/unbidden_ink.h"
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "leds/LedEffects.h"
+#else
+// Forward declaration of LED stub
+extern class LedEffects
+{
+public:
+  bool begin();
+  bool startEffectCycles(const String &effectName, int cycles = 1,
+                         unsigned long color1 = 0, unsigned long color2 = 0, unsigned long color3 = 0);
+  void update();
+} ledEffects;
 #endif
 
 // === Web Server ===
@@ -143,13 +153,13 @@ void setup()
   // Initialize hardware buttons
   initializeHardwareButtons();
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
   // Initialize LED effects system
   if (ledEffects.begin())
   {
     LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
     // Trigger boot LED effect (chase single for 1 cycle)
-    ledEffects.startEffectCycles("chase_single", 1, CRGB::Blue);
+    ledEffects.startEffectCycles("chase_single", 1, 0x0000FF);
     LOG_VERBOSE("BOOT", "Boot LED effect started (chase_single, 1 cycle)");
   }
   else
@@ -198,7 +208,7 @@ void loop()
   // Check hardware buttons (work without WiFi)
   checkHardwareButtons();
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
   // Update LED effects (non-blocking)
   ledEffects.update();
 #endif

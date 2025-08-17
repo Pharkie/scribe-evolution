@@ -24,7 +24,7 @@
 #include "api_handlers.h"
 #include "api_system_handlers.h"
 #include "api_config_handlers.h"
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "api_led_handlers.h"
 #endif
 #include "validation.h"
@@ -327,7 +327,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
         // LED effect endpoints
         registerRoute("POST", "/api/led/chase_single", "Simple Chase", handleLedEffect, true);
         registerRoute("POST", "/api/led/rainbow", "Rainbow Wave", handleLedEffect, true);
