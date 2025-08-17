@@ -317,7 +317,32 @@
 
 /* Config file display */
 .diag-config-display {
-    @apply bg-gray-900 dark:bg-gray-950 text-gray-100 p-3 rounded-lg text-sm max-h-64 overflow-y-auto border;
+    @apply bg-gray-900 dark:bg-gray-950 text-gray-100 p-3 rounded-lg text-sm max-h-[32rem] overflow-y-auto border font-mono;
+}
+
+/* JSON syntax highlighting */
+.json-string {
+    @apply text-green-400;
+}
+
+.json-number {
+    @apply text-blue-300;
+}
+
+.json-boolean {
+    @apply text-yellow-400;
+}
+
+.json-null {
+    @apply text-red-400;
+}
+
+.json-key {
+    @apply text-cyan-300;
+}
+
+.json-punctuation {
+    @apply text-gray-400;
 }
 
 .diag-config-warning {

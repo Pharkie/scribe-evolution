@@ -102,11 +102,33 @@ function copyGenericSection(sectionName, button) {
   }
 }
 
+// JSON syntax highlighting function
+function highlightJSON(json) {
+  return json
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'json-key';
+        } else {
+          cls = 'json-string';
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    })
+    .replace(/([{}[\],])/g, '<span class="json-punctuation">$1</span>');
+}
+
 function copyConfigFile(button) {
   try {
     const configElement = document.getElementById('config-content');
     if (!configElement) throw new Error('Config content not found');
 
+    // Get plain text content for copying (strip HTML if present)
     const content = `=== Configuration File (config.json) ===\n\n${configElement.textContent.trim()}`;
     
     // Use modern clipboard API if available, otherwise fallback
@@ -504,7 +526,8 @@ function displayDiagnostics(data, configData) {
   const configElement = document.getElementById('config-content');
   if (configData && configElement) {
     const redactedConfig = redactSecrets(configData);
-    configElement.textContent = JSON.stringify(redactedConfig, null, 2);
+    const jsonString = JSON.stringify(redactedConfig, null, 2);
+    configElement.innerHTML = highlightJSON(jsonString);
   } else if (configElement) {
     configElement.textContent = 'Configuration not available';
   }

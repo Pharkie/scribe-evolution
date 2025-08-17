@@ -23,8 +23,8 @@
         "build-prod": "npm run build-css-prod && npm run build-js-prod"
     },
     "dependencies": {
-        "@tailwindcss/cli": "^4.1.11",
-        "tailwindcss": "^4.1.11"
+        "@tailwindcss/cli": "^4.1.12",
+        "tailwindcss": "^4.1.12"
     },
     "devDependencies": {
         "terser": "^5.43.1"
