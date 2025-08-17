@@ -19,6 +19,10 @@
 #include "../core/network.h"
 #include "../core/mqtt_handler.h"
 #include "../content/unbidden_ink.h"
+#ifdef ENABLE_LEDS
+#include "../leds/LedEffects.h"
+#include <FastLED.h>
+#endif
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
@@ -554,6 +558,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
                                     config.ledTwinkleDensity, config.ledChaseSpeed, config.ledMatrixDrops))
         {
             LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
+
+            // Trigger green chase single effect as visual confirmation of successful save
+            ledEffects.startEffectCycles("chase_single", 1, CRGB::Green);
+            LOG_VERBOSE("WEB", "LED confirmation effect triggered for config save");
         }
         else
         {

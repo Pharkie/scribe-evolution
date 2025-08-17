@@ -156,6 +156,77 @@ sources including ChatGPT, MQTT topics, and quick action buttons.
 4. **Major architecture changes**: Large refactoring efforts
 5. **Performance optimization**: Memory usage and timing-critical code
 
+## Development Best Practices (Lessons Learned)
+
+### File Management During Refactoring
+
+1. **Clean Up Temporary Files**: Always remove `_backup`, `_new`, `_old`
+   suffixes after refactoring
+
+   - These files can cause linker errors and false build failures
+   - Use `find . -name "*_backup*" -o -name "*_new*" | xargs rm` to clean up
+   - Verify no duplicate class definitions exist after major refactoring
+
+2. **File Renaming Strategy**: When renaming files systematically:
+   - Update all includes first: `#include "OldName.h"` → `#include "NewName.h"`
+   - Update class names in headers: `class OldClass` → `class NewClass`
+   - Update constructor/destructor names: `OldClass::OldClass()` →
+     `NewClass::NewClass()`
+   - Update all method references: `OldClass::method()` → `NewClass::method()`
+   - Test build after each major batch of changes
+
+### Configuration Management
+
+3. **Hardcoded Values**: Always check for hardcoded constants that should move
+   to `config.h`
+
+   - Search for numeric literals in effect code: `fadeToBlackBy(strip, 64)` →
+     use `CHASE_TRAIL_FADE_STEP`
+   - Look for magic numbers in timing: `delay(50)` → use named constants
+   - Group related constants logically in config.h with clear comments
+
+4. **Memory Buffer Sizing**: When JSON parsing fails with "NoMemory":
+   - Increase `largeJsonDocumentSize` from 2048 to 4096+ bytes
+   - Account for long API tokens (ChatGPT tokens are ~200+ chars)
+   - Update all related buffer sizes in API handlers consistently
+
+### Build System Integration
+
+5. **Preprocessor Directives**: Avoid redefinition warnings:
+   - Use build flags (`-DENABLE_LEDS=1`) OR config.h defines, not both
+   - Always use `#ifndef MACRO_NAME` guards in headers
+   - Clean builds resolve most preprocessor caching issues
+
+### User Experience Patterns
+
+7. **Toast Messages**: Avoid duplicate user feedback:
+
+   - Remove "processing..." toasts for instant operations (LED off, settings
+     save)
+   - Keep progress indicators only for operations with meaningful duration
+   - Server-side operations should trigger feedback internally, not via separate
+     JS API calls
+
+8. **LED Effect Architecture**:
+   - Name effects clearly: `chase_single` vs `chase_multi`, not confusing
+     `chase` vs `simple_chase`
+   - Use consistent parameter patterns: cycles for sequence effects, duration
+     for continuous effects
+
+### Large File Management
+
+9. **Proactive Refactoring**: Monitor files approaching 800+ lines:
+   - Break by functional responsibility, not arbitrary size
+   - Use modular patterns: base classes, registries, separate concerns
+   - Test that refactored modules have same external API
+
+### API Design Consistency
+
+11. **Server-Side Logic Preference**:
+    - Configuration changes should trigger confirmations server-side, not
+      client-side
+    - LED effects should be internal responses to successful operations
+
 ## Development Notes
 
 - Use `#ifdef ENABLE_LEDS` for LED-related code

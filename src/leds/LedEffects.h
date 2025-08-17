@@ -1,24 +1,14 @@
 /**
- * @file LedEffects.h
- * @brief LED effects manager for WS2812B LED strips using FastLED library
+ * @file LedEffectsNew.h
+ * @brief Refactored LED effects manager using modular effect system
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
- *
- * This file is part of the Scribe ESP32-C3 Thermal Printer project.
- *
- * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
- * International License. To view a copy of this license, visit
- * http://creativecommons.org/licenses/by-nc-sa/4.0/ or send a letter to
- * Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
- *
- * Commercial use is prohibited without explicit written permission from the author.
- * For commercial licensing inquiries, please contact Adam Knowles.
  */
 
-#ifndef LED_EFFECTS_H
-#define LED_EFFECTS_H
+#ifndef LED_EFFECTS_NEW_H
+#define LED_EFFECTS_NEW_H
 
 #include "../core/config.h"
 
@@ -27,12 +17,15 @@
 #include <Arduino.h>
 #include <FastLED.h>
 
+// Forward declarations
+class EffectBase;
+class EffectRegistry;
+
 /**
- * @brief Non-blocking LED effects manager for WS2812B strips
- * 
- * This class provides a framework for creating time-based LED effects that
- * integrate seamlessly with the main application loop without blocking.
- * All effects are parameterized and can be started, stopped, and replaced.
+ * @brief Non-blocking LED effects manager using modular effect system
+ *
+ * This refactored class provides a cleaner architecture where individual effects
+ * are implemented as separate classes, making the code more maintainable and extensible.
  */
 class LedEffects
 {
@@ -55,7 +48,7 @@ public:
     bool begin();
 
     /**
-     * @brief Reinitialize LED strip with new configuration  
+     * @brief Reinitialize LED strip with new configuration
      * Used when LED settings are changed at runtime
      * @param pin GPIO pin for LED strip data
      * @param count Number of LEDs in the strip
@@ -68,7 +61,7 @@ public:
      * @return true if reinitialization successful, false otherwise
      */
     bool reinitialize(int pin, int count, int brightness, int refreshRate,
-                     int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops);
+                      int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops);
 
     /**
      * @brief Update the current effect - call this in the main loop
@@ -85,8 +78,8 @@ public:
      * @param color3 Tertiary color for the effect (default: black/off)
      * @return true if effect started successfully, false if unknown effect
      */
-    bool startEffectDuration(const String& effectName, unsigned long durationSeconds = 0, 
-                            CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
+    bool startEffectDuration(const String &effectName, unsigned long durationSeconds = 0,
+                             CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
 
     /**
      * @brief Start a new LED effect (cycle-based)
@@ -97,8 +90,8 @@ public:
      * @param color3 Tertiary color for the effect (default: black/off)
      * @return true if effect started successfully, false if unknown effect
      */
-    bool startEffectCycles(const String& effectName, int cycles = 1, 
-                          CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
+    bool startEffectCycles(const String &effectName, int cycles = 1,
+                           CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
 
     /**
      * @brief Stop the current effect and turn off all LEDs
@@ -124,9 +117,9 @@ public:
     unsigned long getRemainingTime() const;
 
 private:
-    // LED strip array (dynamically allocated)
-    CRGB* leds;
-    
+    // LED strip array
+    CRGB *leds;
+
     // Runtime LED configuration
     int ledCount;
     int ledPin;
@@ -137,66 +130,36 @@ private:
     int ledTwinkleDensity;
     int ledChaseSpeed;
     int ledMatrixDrops;
-    
+
     // Effect state variables
     bool effectActive;
     String currentEffectName;
     unsigned long effectStartTime;
-    unsigned long effectDuration;  // 0 = infinite (for duration-based effects)
+    unsigned long effectDuration; // 0 = infinite (for duration-based effects)
     unsigned long lastUpdate;
-    
+
     // Effect mode and cycle tracking
-    bool isCycleBased;             // true for cycle-based, false for duration-based
-    int targetCycles;              // Number of cycles to complete
-    int completedCycles;           // Number of cycles completed so far
-    
+    bool isCycleBased;   // true for cycle-based, false for duration-based
+    int targetCycles;    // Number of cycles to complete
+    int completedCycles; // Number of cycles completed so far
+
     // Effect parameters
     CRGB effectColor1;
     CRGB effectColor2;
     CRGB effectColor3;
-    
-    // Effect-specific state variables
+
+    // Effect-specific state variables (passed to effects)
     int effectStep;
     int effectDirection;
     float effectPhase;
-    
-    // Twinkle effect state (dynamically allocated)
-    struct TwinkleState {
-        int position;
-        int brightness;
-        int fadeDirection;
-        bool active;
-    };
-    TwinkleState* twinkleStars;
-    
-    // Matrix effect state (dynamically allocated)
-    struct MatrixDrop {
-        int position;
-        int length;
-        int speed;
-        bool active;
-    };
-    MatrixDrop* matrixDrops;
 
-    // Internal effect methods
-    void clearAllLEDs();
-    void allocateArrays();
-    void deallocateArrays();
-    void updateSimpleChase();
-    void updateRainbowWave();
-    void updateTwinkleStars();
-    void updateColorChase();
-    void updatePulseWave();
-    void updateMatrixMovie();
-    
-    // Utility methods
-    CRGB wheel(byte wheelPos);
-    void fadeToBlackBy(int ledIndex, int fadeValue);
-    int random16(int max);
+    // Modular effect system
+    EffectBase* currentEffect;
+    EffectRegistry* effectRegistry;
 };
 
 extern LedEffects ledEffects;
 
 #endif // ENABLE_LEDS
 
-#endif // LED_EFFECTS_H
+#endif // LED_EFFECTS_NEW_H

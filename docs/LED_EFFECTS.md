@@ -1,13 +1,17 @@
 # FastLED Library Support for Scribe
 
-This implementation adds FastLED library support to the Scribe ESP32-C3 thermal printer project with a **runtime-configurable LED effects system**.
+This implementation adds FastLED library support to the Scribe ESP32-C3 thermal
+printer project with a **runtime-configurable LED effects system**.
 
 ## Features
 
-- **Optional compilation**: Wrapped in `#ifdef ENABLE_LEDS` - zero impact when disabled
+- **Optional compilation**: Wrapped in `#ifdef ENABLE_LEDS` - zero impact when
+  disabled
 - **Non-blocking effects**: All effects integrate seamlessly with the main loop
-- **Runtime configurable**: All LED settings can be changed via web interface without restart
-- **Dynamic memory allocation**: Only allocates LED buffer when enabled, sized for actual LED count
+- **Runtime configurable**: All LED settings can be changed via web interface
+  without restart
+- **Dynamic memory allocation**: Only allocates LED buffer when enabled, sized
+  for actual LED count
 - **Web interface integration**: Full LED settings panel with validation
 - **6 built-in effects**: Complete set of visual effects for various use cases
 - **Boot effect**: Automatic LED effect on system startup
@@ -25,17 +29,19 @@ Edit `src/core/config.h`:
 
 ### Runtime Configuration
 
-**All LED settings are now runtime-configurable via the web interface at `/settings.html`.**
+**All LED settings are now runtime-configurable via the web interface at
+`/settings.html`.**
 
 The LED Settings section provides:
 
 - **Hardware Configuration**: GPIO pin selection (0-10) and LED count (1-300)
-- **Performance Settings**: Brightness (0-255) and refresh rate (10-120 Hz) 
+- **Performance Settings**: Brightness (0-255) and refresh rate (10-120 Hz)
 - **Effect Settings**: Fine-tuning for all built-in LED effects
 
 ### Default Values
 
-Default settings from `src/core/config.h` (used for initial config.json creation):
+Default settings from `src/core/config.h` (used for initial config.json
+creation):
 
 ```cpp
 static const int DEFAULT_LED_PIN = 4;                    // GPIO pin for LED strip data
@@ -67,7 +73,8 @@ LED settings are stored in `config.json`:
 }
 ```
 
-Changes made via the web interface are **immediately applied** and **persisted** to the configuration file.
+Changes made via the web interface are **immediately applied** and **persisted**
+to the configuration file.
 
 ## API Usage
 
@@ -103,23 +110,24 @@ unsigned long timeLeft = ledEffects.getRemainingTime(); // Get remaining time
 ```cpp
 #ifdef ENABLE_LEDS
 // Update LED configuration at runtime
-updateLedConfiguration(pin, count, brightness, refreshRate, 
+updateLedConfiguration(pin, count, brightness, refreshRate,
                       fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops);
 
 // Get current LED configuration
 int pin, count, brightness, refreshRate, fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops;
-getLedConfiguration(pin, count, brightness, refreshRate, 
+getLedConfiguration(pin, count, brightness, refreshRate,
                     fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops);
 
 // Reinitialize LED system with new settings (automatically called by updateLedConfiguration)
-ledEffects.reinitialize(pin, count, brightness, refreshRate, 
+ledEffects.reinitialize(pin, count, brightness, refreshRate,
                         fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops);
 #endif
 ```
 
 **Note**: LED configuration changes via the web interface automatically:
+
 1. Validate the new settings
-2. Update `config.json` 
+2. Update `config.json`
 3. Reload runtime configuration
 4. Reinitialize the LED system
 5. Apply changes immediately (no restart required)
@@ -140,7 +148,7 @@ bool success = updateLedConfiguration(
     60,   // 60Hz refresh rate
     5,    // Fade speed
     10,   // Twinkle density
-    3,    // Chase speed  
+    3,    // Chase speed
     7     // Matrix drops
 );
 
@@ -156,7 +164,7 @@ if (success) {
 ## Available Effects
 
 1. **"simple_chase"**: Color moves start to end with off phase
-2. **"rainbow"**: Configurable palette-based rainbow effect  
+2. **"rainbow"**: Configurable palette-based rainbow effect
 3. **"twinkle"**: Random groups of 3 LEDs with fade
 4. **"chase"**: Continuous chase without off phase
 5. **"pulse"**: Brightness pulse across strip
@@ -173,21 +181,29 @@ The LED system is integrated into the main application:
 
 ## Dependencies
 
-- **FastLED 3.7.8+**: Added to both main and test environments in `platformio.ini`
+- **FastLED 3.7.8+**: Added to both main and test environments in
+  `platformio.ini`
 - **ESP32-C3 compatible**: Uses appropriate GPIO pins and power limiting
 - **Memory safe**: Configurable power limits and refresh rate controls
 
 ## Files
 
-- `src/leds/LedEffects.h`: Class declarations and API with runtime configuration support
-- `src/leds/LedEffects.cpp`: Effect implementations with dynamic memory allocation
-- `src/core/config.h`: LED default configuration constants with `DEFAULT_` prefixes
-- `src/core/config_loader.h`: Runtime configuration structure and LED config functions  
-- `src/core/config_loader.cpp`: LED configuration loading, saving, and validation
-- `src/main.cpp`: Integration points for initialization, updates, and boot effect
+- `src/leds/LedEffects.h`: Class declarations and API with runtime configuration
+  support
+- `src/leds/LedEffects.cpp`: Effect implementations with dynamic memory
+  allocation
+- `src/core/config.h`: LED default configuration constants with `DEFAULT_`
+  prefixes
+- `src/core/config_loader.h`: Runtime configuration structure and LED config
+  functions
+- `src/core/config_loader.cpp`: LED configuration loading, saving, and
+  validation
+- `src/main.cpp`: Integration points for initialization, updates, and boot
+  effect
 - `data/html/settings.html`: Web interface LED Settings section
 - `src/js/settings.js`: JavaScript for LED settings form handling
-- `src/web/api_handlers.cpp`: LED configuration validation and system reinitialization
+- `src/web/api_handlers.cpp`: LED configuration validation and system
+  reinitialization
 - `platformio.ini`: FastLED library dependency
 
 ## Web Interface
@@ -195,7 +211,7 @@ The LED system is integrated into the main application:
 The LED Settings section in the web interface (`/settings.html`) provides:
 
 - **GPIO Pin Selection**: Dropdown for ESP32-C3 compatible pins (0-10)
-- **LED Count**: Number of LEDs in the strip (1-300)  
+- **LED Count**: Number of LEDs in the strip (1-300)
 - **Brightness Control**: LED brightness from 0-255
 - **Refresh Rate**: Update frequency in Hz (10-120)
 - **Effect Parameters**: Fine-tuning for all built-in effects

@@ -148,9 +148,9 @@ void setup()
   if (ledEffects.begin())
   {
     LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
-    // Trigger boot LED effect (rainbow for 5 seconds)
-    ledEffects.startEffectDuration("chase", 5, CRGB::Blue);
-    LOG_VERBOSE("BOOT", "Boot LED effect started (rainbow, 5 seconds)");
+    // Trigger boot LED effect (chase single for 1 cycle)
+    ledEffects.startEffectCycles("chase_single", 1, CRGB::Blue);
+    LOG_VERBOSE("BOOT", "Boot LED effect started (chase_single, 1 cycle)");
   }
   else
   {

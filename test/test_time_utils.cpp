@@ -38,10 +38,10 @@ void test_custom_date_formatting()
 void test_timezone_setup()
 {
     // Test timezone setup with real hardware and WiFi connectivity
-    Serial.println("Testing setupTimezone() with real hardware...");
+    Serial.println("Testing setupTime() with real hardware...");
 
     // Call the actual timezone setup function
-    setupTimezone();
+    setupTime();
 
     // Test that timezone was set up (even if NTP sync failed, timezone should be configured)
     String currentTime = getFormattedDateTime();
@@ -66,10 +66,10 @@ void test_millis_basic()
 void test_time_constants_from_config()
 {
     // Test that time-related constants from config are reasonable
-    TEST_ASSERT_GREATER_THAN(1000, memCheckInterval);    // Should be at least 1 second
-    TEST_ASSERT_GREATER_THAN(10, buttonDebounceMs);      // Should be at least 10ms
-    TEST_ASSERT_GREATER_THAN(100, buttonLongPressMs);    // Should be at least 100ms
-    TEST_ASSERT_GREATER_THAN(1, watchdogTimeoutSeconds); // Should be at least 1 second
+    TEST_ASSERT_GREATER_THAN(1000, memCheckInterval);   // Should be at least 1 second
+    TEST_ASSERT_GREATER_THAN(10, buttonDebounceMs);     // Should be at least 10ms
+    TEST_ASSERT_GREATER_THAN(100, buttonLongPressMs);   // Should be at least 100ms
+    TEST_ASSERT_GREATER_THAN(1, ntpSyncTimeoutSeconds); // Should be at least 1 second
 }
 
 void run_time_utils_tests()
