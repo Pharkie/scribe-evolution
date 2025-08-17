@@ -237,7 +237,7 @@ String generateUnbiddenInkContent(const String &customPrompt)
     LOG_VERBOSE("UNBIDDENINK", "Using prompt: %s", prompt.c_str());
 
     // Build JSON payload for OpenAI ChatGPT API
-    DynamicJsonDocument payloadDoc(2048);
+    DynamicJsonDocument payloadDoc(largeJsonDocumentSize);
     payloadDoc["model"] = "gpt-4o-mini";
     payloadDoc["max_tokens"] = 150;
     payloadDoc["temperature"] = 0.7;

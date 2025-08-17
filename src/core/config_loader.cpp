@@ -34,6 +34,10 @@ bool g_configLoaded = false;
 
 bool loadRuntimeConfig()
 {
+    // Log available memory before config loading
+    LOG_VERBOSE("CONFIG", "Free heap before config loading: %u bytes", ESP.getFreeHeap());
+    LOG_VERBOSE("CONFIG", "JSON buffer size: %d bytes", largeJsonDocumentSize);
+
     File configFile = LittleFS.open("/config.json", "r");
     if (!configFile)
     {
@@ -56,13 +60,41 @@ bool loadRuntimeConfig()
         }
     }
 
+    // Check file size - if it's too large, it might be corrupted
+    size_t fileSize = configFile.size();
+    LOG_VERBOSE("CONFIG", "config.json file size: %u bytes", fileSize);
+
+    if (fileSize > largeJsonDocumentSize * 2) // If file is more than 2x our buffer size
+    {
+        LOG_ERROR("CONFIG", "config.json file too large (%u bytes), recreating from defaults", fileSize);
+        configFile.close();
+        if (createDefaultConfigFile())
+        {
+            configFile = LittleFS.open("/config.json", "r");
+            if (!configFile)
+            {
+                LOG_ERROR("CONFIG", "Failed to recreate config.json");
+                loadDefaultConfig();
+                return false;
+            }
+        }
+        else
+        {
+            loadDefaultConfig();
+            return false;
+        }
+    }
+
     DynamicJsonDocument doc(largeJsonDocumentSize);
+    LOG_VERBOSE("CONFIG", "Allocated JSON document, free heap: %u bytes", ESP.getFreeHeap());
+
     DeserializationError error = deserializeJson(doc, configFile);
     configFile.close();
 
     if (error)
     {
         LOG_ERROR("CONFIG", "Failed to parse config.json: %s, using defaults", error.c_str());
+        LOG_ERROR("CONFIG", "Free heap after parse failure: %u bytes", ESP.getFreeHeap());
         loadDefaultConfig();
         return false;
     }
@@ -136,7 +168,7 @@ bool loadRuntimeConfig()
     }
 
 #ifdef ENABLE_LEDS
-    // Load LED configuration 
+    // Load LED configuration
     JsonObject leds = doc["leds"];
     if (leds.isNull())
     {
@@ -260,6 +292,9 @@ bool isConfigFileValid()
 
 bool createDefaultConfigFile()
 {
+    // Check available memory before creating default config
+    LOG_VERBOSE("CONFIG", "Free heap before creating default config: %u bytes", ESP.getFreeHeap());
+
     File configFile = LittleFS.open("/config.json", "w");
     if (!configFile)
     {
@@ -268,6 +303,7 @@ bool createDefaultConfigFile()
     }
 
     DynamicJsonDocument doc(largeJsonDocumentSize);
+    LOG_VERBOSE("CONFIG", "Allocated JSON document for defaults, free heap: %u bytes", ESP.getFreeHeap());
 
     // Device Configuration
     JsonObject device = doc.createNestedObject("device");
@@ -343,7 +379,7 @@ bool createDefaultConfigFile()
 #ifdef ENABLE_LEDS
 
 bool updateLedConfiguration(int pin, int count, int brightness, int refreshRate,
-                           int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops)
+                            int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops)
 {
     // Update runtime configuration
     g_runtimeConfig.ledPin = pin;
@@ -406,8 +442,8 @@ bool saveLedConfiguration()
     return true;
 }
 
-void getLedConfiguration(int& pin, int& count, int& brightness, int& refreshRate,
-                        int& fadeSpeed, int& twinkleDensity, int& chaseSpeed, int& matrixDrops)
+void getLedConfiguration(int &pin, int &count, int &brightness, int &refreshRate,
+                         int &fadeSpeed, int &twinkleDensity, int &chaseSpeed, int &matrixDrops)
 {
     pin = g_runtimeConfig.ledPin;
     count = g_runtimeConfig.ledCount;
