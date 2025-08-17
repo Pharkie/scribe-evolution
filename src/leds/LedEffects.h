@@ -43,11 +43,32 @@ public:
     LedEffects();
 
     /**
+     * @brief Destructor - cleans up dynamically allocated memory
+     */
+    ~LedEffects();
+
+    /**
      * @brief Initialize the LED strip and effects manager
      * Must be called in setup() before using any effects
      * @return true if initialization successful, false otherwise
      */
     bool begin();
+
+    /**
+     * @brief Reinitialize LED strip with new configuration  
+     * Used when LED settings are changed at runtime
+     * @param pin GPIO pin for LED strip data
+     * @param count Number of LEDs in the strip
+     * @param brightness LED brightness (0-255)
+     * @param refreshRate Refresh rate in Hz (used to calculate update interval)
+     * @param fadeSpeed Fade speed for transitions (1-255)
+     * @param twinkleDensity Number of twinkle stars simultaneously
+     * @param chaseSpeed Chase effect speed (pixels per update)
+     * @param matrixDrops Number of matrix drops simultaneously
+     * @return true if reinitialization successful, false otherwise
+     */
+    bool reinitialize(int pin, int count, int brightness, int refreshRate,
+                     int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops);
 
     /**
      * @brief Update the current effect - call this in the main loop
@@ -91,8 +112,19 @@ public:
     unsigned long getRemainingTime() const;
 
 private:
-    // LED strip array
-    CRGB leds[LED_COUNT];
+    // LED strip array (dynamically allocated)
+    CRGB* leds;
+    
+    // Runtime LED configuration
+    int ledCount;
+    int ledPin;
+    int ledBrightness;
+    int ledRefreshRate;
+    unsigned long ledUpdateInterval;
+    int ledEffectFadeSpeed;
+    int ledTwinkleDensity;
+    int ledChaseSpeed;
+    int ledMatrixDrops;
     
     // Effect state variables
     bool effectActive;
@@ -111,26 +143,28 @@ private:
     int effectDirection;
     float effectPhase;
     
-    // Twinkle effect state
+    // Twinkle effect state (dynamically allocated)
     struct TwinkleState {
         int position;
         int brightness;
         int fadeDirection;
         bool active;
     };
-    TwinkleState twinkleStars[LED_TWINKLE_DENSITY];
+    TwinkleState* twinkleStars;
     
-    // Matrix effect state  
+    // Matrix effect state (dynamically allocated)
     struct MatrixDrop {
         int position;
         int length;
         int speed;
         bool active;
     };
-    MatrixDrop matrixDrops[LED_MATRIX_DROPS];
+    MatrixDrop* matrixDrops;
 
     // Internal effect methods
     void clearAllLEDs();
+    void allocateArrays();
+    void deallocateArrays();
     void updateSimpleChase();
     void updateRainbowWave();
     void updateTwinkleStars();

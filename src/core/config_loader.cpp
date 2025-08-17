@@ -135,6 +135,34 @@ bool loadRuntimeConfig()
         }
     }
 
+#ifdef ENABLE_LEDS
+    // Load LED configuration 
+    JsonObject leds = doc["leds"];
+    if (leds.isNull())
+    {
+        // Use defaults if leds section is missing
+        g_runtimeConfig.ledPin = DEFAULT_LED_PIN;
+        g_runtimeConfig.ledCount = DEFAULT_LED_COUNT;
+        g_runtimeConfig.ledBrightness = DEFAULT_LED_BRIGHTNESS;
+        g_runtimeConfig.ledRefreshRate = DEFAULT_LED_REFRESH_RATE;
+        g_runtimeConfig.ledEffectFadeSpeed = DEFAULT_LED_EFFECT_FADE_SPEED;
+        g_runtimeConfig.ledTwinkleDensity = DEFAULT_LED_TWINKLE_DENSITY;
+        g_runtimeConfig.ledChaseSpeed = DEFAULT_LED_CHASE_SPEED;
+        g_runtimeConfig.ledMatrixDrops = DEFAULT_LED_MATRIX_DROPS;
+    }
+    else
+    {
+        g_runtimeConfig.ledPin = leds["pin"] | DEFAULT_LED_PIN;
+        g_runtimeConfig.ledCount = leds["count"] | DEFAULT_LED_COUNT;
+        g_runtimeConfig.ledBrightness = leds["brightness"] | DEFAULT_LED_BRIGHTNESS;
+        g_runtimeConfig.ledRefreshRate = leds["refreshRate"] | DEFAULT_LED_REFRESH_RATE;
+        g_runtimeConfig.ledEffectFadeSpeed = leds["effectFadeSpeed"] | DEFAULT_LED_EFFECT_FADE_SPEED;
+        g_runtimeConfig.ledTwinkleDensity = leds["twinkleDensity"] | DEFAULT_LED_TWINKLE_DENSITY;
+        g_runtimeConfig.ledChaseSpeed = leds["chaseSpeed"] | DEFAULT_LED_CHASE_SPEED;
+        g_runtimeConfig.ledMatrixDrops = leds["matrixDrops"] | DEFAULT_LED_MATRIX_DROPS;
+    }
+#endif
+
     g_configLoaded = true;
     return true;
 }
@@ -180,6 +208,18 @@ void loadDefaultConfig()
         g_runtimeConfig.buttonLongActions[i] = defaultButtons[i].longAction;
         g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtons[i].longMqttTopic;
     }
+
+#ifdef ENABLE_LEDS
+    // Load default LED configuration
+    g_runtimeConfig.ledPin = DEFAULT_LED_PIN;
+    g_runtimeConfig.ledCount = DEFAULT_LED_COUNT;
+    g_runtimeConfig.ledBrightness = DEFAULT_LED_BRIGHTNESS;
+    g_runtimeConfig.ledRefreshRate = DEFAULT_LED_REFRESH_RATE;
+    g_runtimeConfig.ledEffectFadeSpeed = DEFAULT_LED_EFFECT_FADE_SPEED;
+    g_runtimeConfig.ledTwinkleDensity = DEFAULT_LED_TWINKLE_DENSITY;
+    g_runtimeConfig.ledChaseSpeed = DEFAULT_LED_CHASE_SPEED;
+    g_runtimeConfig.ledMatrixDrops = DEFAULT_LED_MATRIX_DROPS;
+#endif
 
     g_configLoaded = true;
     LOG_NOTICE("CONFIG", "Using default configuration from config.h");
@@ -281,8 +321,102 @@ bool createDefaultConfigFile()
         button["longMqttTopic"] = defaultButtons[i].longMqttTopic;
     }
 
+#ifdef ENABLE_LEDS
+    // LED Configuration
+    JsonObject leds = doc.createNestedObject("leds");
+    leds["pin"] = DEFAULT_LED_PIN;
+    leds["count"] = DEFAULT_LED_COUNT;
+    leds["brightness"] = DEFAULT_LED_BRIGHTNESS;
+    leds["refreshRate"] = DEFAULT_LED_REFRESH_RATE;
+    leds["effectFadeSpeed"] = DEFAULT_LED_EFFECT_FADE_SPEED;
+    leds["twinkleDensity"] = DEFAULT_LED_TWINKLE_DENSITY;
+    leds["chaseSpeed"] = DEFAULT_LED_CHASE_SPEED;
+    leds["matrixDrops"] = DEFAULT_LED_MATRIX_DROPS;
+#endif
+
     serializeJson(doc, configFile);
     configFile.close();
 
     return true;
 }
+
+#ifdef ENABLE_LEDS
+
+bool updateLedConfiguration(int pin, int count, int brightness, int refreshRate,
+                           int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops)
+{
+    // Update runtime configuration
+    g_runtimeConfig.ledPin = pin;
+    g_runtimeConfig.ledCount = count;
+    g_runtimeConfig.ledBrightness = brightness;
+    g_runtimeConfig.ledRefreshRate = refreshRate;
+    g_runtimeConfig.ledEffectFadeSpeed = fadeSpeed;
+    g_runtimeConfig.ledTwinkleDensity = twinkleDensity;
+    g_runtimeConfig.ledChaseSpeed = chaseSpeed;
+    g_runtimeConfig.ledMatrixDrops = matrixDrops;
+
+    // Save to config.json
+    return saveLedConfiguration();
+}
+
+bool saveLedConfiguration()
+{
+    // Load existing config
+    File configFile = LittleFS.open("/config.json", "r");
+    if (!configFile)
+    {
+        return false;
+    }
+
+    DynamicJsonDocument doc(largeJsonDocumentSize);
+    DeserializationError error = deserializeJson(doc, configFile);
+    configFile.close();
+
+    if (error)
+    {
+        return false;
+    }
+
+    // Update LED section
+    JsonObject leds = doc["leds"];
+    if (leds.isNull())
+    {
+        leds = doc.createNestedObject("leds");
+    }
+
+    leds["pin"] = g_runtimeConfig.ledPin;
+    leds["count"] = g_runtimeConfig.ledCount;
+    leds["brightness"] = g_runtimeConfig.ledBrightness;
+    leds["refreshRate"] = g_runtimeConfig.ledRefreshRate;
+    leds["effectFadeSpeed"] = g_runtimeConfig.ledEffectFadeSpeed;
+    leds["twinkleDensity"] = g_runtimeConfig.ledTwinkleDensity;
+    leds["chaseSpeed"] = g_runtimeConfig.ledChaseSpeed;
+    leds["matrixDrops"] = g_runtimeConfig.ledMatrixDrops;
+
+    // Save back to file
+    configFile = LittleFS.open("/config.json", "w");
+    if (!configFile)
+    {
+        return false;
+    }
+
+    serializeJson(doc, configFile);
+    configFile.close();
+
+    return true;
+}
+
+void getLedConfiguration(int& pin, int& count, int& brightness, int& refreshRate,
+                        int& fadeSpeed, int& twinkleDensity, int& chaseSpeed, int& matrixDrops)
+{
+    pin = g_runtimeConfig.ledPin;
+    count = g_runtimeConfig.ledCount;
+    brightness = g_runtimeConfig.ledBrightness;
+    refreshRate = g_runtimeConfig.ledRefreshRate;
+    fadeSpeed = g_runtimeConfig.ledEffectFadeSpeed;
+    twinkleDensity = g_runtimeConfig.ledTwinkleDensity;
+    chaseSpeed = g_runtimeConfig.ledChaseSpeed;
+    matrixDrops = g_runtimeConfig.ledMatrixDrops;
+}
+
+#endif

@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include "config.h"
 
 // Runtime configuration structure
 struct RuntimeConfig
@@ -55,6 +56,18 @@ struct RuntimeConfig
     String buttonLongActions[4];     // Long press actions for buttons 1-4 (empty string = no action)
     String buttonShortMqttTopics[4]; // MQTT topics for short press actions (empty string = use local print)
     String buttonLongMqttTopics[4];  // MQTT topics for long press actions (empty string = use local print)
+
+#ifdef ENABLE_LEDS
+    // LED Configuration (runtime configurable)
+    int ledPin;                  // GPIO pin for LED strip data
+    int ledCount;                // Number of LEDs in the strip  
+    int ledBrightness;           // LED brightness (0-255)
+    int ledRefreshRate;          // Refresh rate in Hz
+    int ledEffectFadeSpeed;      // Fade speed for transitions (1-255)
+    int ledTwinkleDensity;       // Number of twinkle stars simultaneously
+    int ledChaseSpeed;           // Chase effect speed (pixels per update)
+    int ledMatrixDrops;          // Number of matrix drops simultaneously
+#endif
 };
 
 /**
@@ -93,6 +106,43 @@ bool isConfigFileValid();
  * @return true if file was created successfully
  */
 bool createDefaultConfigFile();
+
+#ifdef ENABLE_LEDS
+/**
+ * @brief Update LED configuration at runtime and apply changes
+ * @param pin GPIO pin for LED strip data
+ * @param count Number of LEDs in the strip
+ * @param brightness LED brightness (0-255)
+ * @param refreshRate Refresh rate in Hz
+ * @param fadeSpeed Fade speed for transitions (1-255)
+ * @param twinkleDensity Number of twinkle stars simultaneously
+ * @param chaseSpeed Chase effect speed (pixels per update)
+ * @param matrixDrops Number of matrix drops simultaneously
+ * @return true if configuration updated successfully
+ */
+bool updateLedConfiguration(int pin, int count, int brightness, int refreshRate,
+                           int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops);
+
+/**
+ * @brief Save LED configuration to config.json
+ * @return true if saved successfully
+ */
+bool saveLedConfiguration();
+
+/**
+ * @brief Get current LED configuration from runtime config
+ * @param pin Output: GPIO pin for LED strip data  
+ * @param count Output: Number of LEDs in the strip
+ * @param brightness Output: LED brightness (0-255)
+ * @param refreshRate Output: Refresh rate in Hz
+ * @param fadeSpeed Output: Fade speed for transitions (1-255)
+ * @param twinkleDensity Output: Number of twinkle stars simultaneously
+ * @param chaseSpeed Output: Chase effect speed (pixels per update)
+ * @param matrixDrops Output: Number of matrix drops simultaneously
+ */
+void getLedConfiguration(int& pin, int& count, int& brightness, int& refreshRate,
+                        int& fadeSpeed, int& twinkleDensity, int& chaseSpeed, int& matrixDrops);
+#endif
 
 /**
  * @brief Global flag indicating if config has been loaded
