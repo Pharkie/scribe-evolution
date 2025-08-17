@@ -22,6 +22,11 @@
 #include "web_server.h"
 #include "web_handlers.h"
 #include "api_handlers.h"
+#include "api_system_handlers.h"
+#include "api_config_handlers.h"
+#ifdef ENABLE_LEDS
+#include "api_led_handlers.h"
+#endif
 #include "validation.h"
 #include "../content/content_handlers.h"
 #include "../core/config.h"
