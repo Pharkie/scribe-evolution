@@ -76,8 +76,7 @@ static const ButtonConfig defaultButtons[] = {
 };
 
 // LEDs: Optional FastLED support
-// Uncomment the following line to enable LED strip support
-#define ENABLE_LEDS
+// Enabled via build flags (-DENABLE_LEDS=1 in platformio.ini)
 
 #ifdef ENABLE_LEDS
 // LED Hardware Configuration - Runtime Configurable Defaults

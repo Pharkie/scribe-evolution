@@ -38,4 +38,16 @@ void handleConfigGet(AsyncWebServerRequest *request);
  */
 void handleConfigPost(AsyncWebServerRequest *request);
 
+#ifdef ENABLE_LEDS
+/**
+ * @brief Handle LED effect trigger requests
+ */
+void handleLedEffect(AsyncWebServerRequest *request);
+
+/**
+ * @brief Handle LED off request
+ */
+void handleLedOff(AsyncWebServerRequest *request);
+#endif // ENABLE_LEDS
+
 #endif // API_HANDLERS_H
