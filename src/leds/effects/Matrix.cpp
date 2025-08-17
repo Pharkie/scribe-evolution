@@ -12,7 +12,7 @@
 #ifdef ENABLE_LEDS
 
 Matrix::Matrix(int drops)
-    : matrixDrops(nullptr), drops(drops), initialized(false)
+    : matrixDrops(nullptr), drops(drops), initialized(false), frameCounter(0)
 {
 }
 
@@ -40,8 +40,8 @@ void Matrix::initialize(int ledCount)
 }
 
 bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirection,
-                               float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
-                               int &completedCycles)
+                    float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
+                    int &completedCycles)
 {
     if (!initialized || !matrixDrops)
     {
@@ -54,25 +54,61 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         fadeToBlackBy(leds, i, MATRIX_BACKGROUND_FADE);
     }
 
-    // Update existing matrix drops
+    // Use frame counter for speed control - update only every few frames
+    frameCounter++;
+    if (frameCounter >= 3) // Update every 3 frames for slower matrix effect
+    {
+        frameCounter = 0;
+
+        // Update existing matrix drops
+        for (int i = 0; i < drops; i++)
+        {
+            if (matrixDrops[i].active)
+            {
+                // Clear previous position
+                for (int j = 0; j < matrixDrops[i].length; j++)
+                {
+                    int pos = matrixDrops[i].position - j;
+                    if (pos >= 0 && pos < ledCount)
+                    {
+                        fadeToBlackBy(leds, pos, MATRIX_TRAIL_FADE);
+                    }
+                }
+
+                // Move drop down
+                matrixDrops[i].position += matrixDrops[i].speed;
+
+                // Deactivate if off the strip
+                if (matrixDrops[i].position >= ledCount + matrixDrops[i].length)
+                {
+                    matrixDrops[i].active = false;
+                }
+            }
+        }
+
+        // Randomly start new drops
+        if (random16(100) < 8)
+        { // 8% chance per update (increased from 5% for more activity)
+            for (int i = 0; i < drops; i++)
+            {
+                if (!matrixDrops[i].active)
+                {
+                    matrixDrops[i].active = true;
+                    matrixDrops[i].position = 0;
+                    matrixDrops[i].length = random16(8) + 3; // 3-10 LEDs long
+                    matrixDrops[i].speed = random16(3) + 1;  // 1-3 pixels per update
+                    break;
+                }
+            }
+        }
+    }
+
+    // Draw current positions (always draw, even if not updating movement)
     for (int i = 0; i < drops; i++)
     {
         if (matrixDrops[i].active)
         {
-            // Clear previous position
-            for (int j = 0; j < matrixDrops[i].length; j++)
-            {
-                int pos = matrixDrops[i].position - j;
-                if (pos >= 0 && pos < ledCount)
-                {
-                    fadeToBlackBy(leds, pos, MATRIX_TRAIL_FADE);
-                }
-            }
-
-            // Move drop down
-            matrixDrops[i].position += matrixDrops[i].speed;
-
-            // Draw new position
+            // Draw new position with green color (Matrix-style)
             for (int j = 0; j < matrixDrops[i].length; j++)
             {
                 int pos = matrixDrops[i].position - j;
@@ -81,33 +117,12 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                     int brightness = 255 - (j * MATRIX_BRIGHTNESS_FADE_STEP); // Fade tail
                     if (brightness > 0)
                     {
+                        // Use color1 parameter (should be green from web interface)
                         CRGB color = color1;
                         color.fadeToBlackBy(255 - brightness);
                         leds[pos] = color;
                     }
                 }
-            }
-
-            // Deactivate if off the strip
-            if (matrixDrops[i].position >= ledCount + matrixDrops[i].length)
-            {
-                matrixDrops[i].active = false;
-            }
-        }
-    }
-
-    // Randomly start new drops
-    if (random16(100) < 5)
-    { // 5% chance per update
-        for (int i = 0; i < drops; i++)
-        {
-            if (!matrixDrops[i].active)
-            {
-                matrixDrops[i].active = true;
-                matrixDrops[i].position = 0;
-                matrixDrops[i].length = random16(8) + 3; // 3-10 LEDs long
-                matrixDrops[i].speed = random16(3) + 1;  // 1-3 pixels per update
-                break;
             }
         }
     }
@@ -117,6 +132,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
 
 void Matrix::reset()
 {
+    frameCounter = 0;
     if (matrixDrops)
     {
         for (int i = 0; i < drops; i++)

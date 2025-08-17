@@ -49,6 +49,8 @@ public:
     bool isCycleBased() const override { return false; } // Duration-based
 
 private:
+    int frameCounter; // Frame counter for speed control
+
     /**
      * @brief Convert hue to RGB color (color wheel function)
      * @param wheelPos Position on the color wheel (0-255)

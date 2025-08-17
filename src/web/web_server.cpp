@@ -329,10 +329,10 @@ void setupWebServerRoutes(int maxChars)
 
 #ifdef ENABLE_LEDS
         // LED effect endpoints
-        registerRoute("POST", "/api/led/simple_chase", "Simple Chase", handleLedEffect, true);
+        registerRoute("POST", "/api/led/chase_single", "Simple Chase", handleLedEffect, true);
         registerRoute("POST", "/api/led/rainbow", "Rainbow Wave", handleLedEffect, true);
         registerRoute("POST", "/api/led/twinkle", "Twinkle Stars", handleLedEffect, true);
-        registerRoute("POST", "/api/led/chase", "Color Chase", handleLedEffect, true);
+        registerRoute("POST", "/api/led/chase_multi", "Color Chase", handleLedEffect, true);
         registerRoute("POST", "/api/led/pulse", "Pulse Wave", handleLedEffect, true);
         registerRoute("POST", "/api/led/matrix", "Matrix", handleLedEffect, true);
         registerRoute("POST", "/api/led/off", "Off", handleLedOff, true);

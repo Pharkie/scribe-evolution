@@ -60,6 +60,7 @@ private:
     int chaseSpeed;
     bool isCycleBasedMode;
     int targetCycles;
+    int frameCounter; // Frame counter for speed control
 
     void clearAllLEDs(CRGB *leds, int ledCount);
 };

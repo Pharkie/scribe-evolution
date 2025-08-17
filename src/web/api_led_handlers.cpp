@@ -12,6 +12,7 @@
 #ifdef ENABLE_LEDS
 
 #include "api_handlers.h" // For sendErrorResponse
+#include "web_server.h"   // For getRequestBody function
 #include "../core/config.h"
 #include "../core/logging.h"
 #include "../leds/LedEffects.h"
@@ -64,22 +65,24 @@ void handleLedEffect(AsyncWebServerRequest *request)
     String color2 = "black";
     String color3 = "black";
 
-    if (request->hasParam("body", true))
+    // Get request body using the proper method
+    String body = getRequestBody(request);
+    if (body.length() > 0)
     {
-        String body = request->getParam("body", true)->value();
-        if (body.length() > 0)
-        {
-            DynamicJsonDocument doc(512);
-            DeserializationError error = deserializeJson(doc, body);
+        DynamicJsonDocument doc(512);
+        DeserializationError error = deserializeJson(doc, body);
 
-            if (!error)
-            {
-                duration = doc["duration"] | duration;
-                cycles = doc["cycles"] | cycles;
-                color1 = doc["color1"] | color1;
-                color2 = doc["color2"] | color2;
-                color3 = doc["color3"] | color3;
-            }
+        if (!error)
+        {
+            duration = doc["duration"] | duration;
+            cycles = doc["cycles"] | cycles;
+            color1 = doc["color1"] | color1;
+            color2 = doc["color2"] | color2;
+            color3 = doc["color3"] | color3;
+        }
+        else
+        {
+            LOG_WARNING("API", "Failed to parse LED effect JSON: %s", error.c_str());
         }
     }
 
@@ -122,13 +125,13 @@ void handleLedEffect(AsyncWebServerRequest *request)
     {
         // Cycle-based effects (chase_single, chase_multi)
         success = ledEffects.startEffectCycles(effectName, cycles, c1, c2, c3);
-        LOG_NOTICE("LEDS", "Started LED effect: %s for %d cycles", effectName.c_str(), cycles);
+        LOG_VERBOSE("LEDS", "Started LED effect: %s for %d cycles", effectName.c_str(), cycles);
     }
     else
     {
         // Duration-based effects (rainbow, twinkle, pulse, matrix)
         success = ledEffects.startEffectDuration(effectName, duration, c1, c2, c3);
-        LOG_NOTICE("LEDS", "Started LED effect: %s for %d seconds", effectName.c_str(), duration);
+        LOG_VERBOSE("LEDS", "Started LED effect: %s for %d seconds", effectName.c_str(), duration);
     }
 
     if (success)

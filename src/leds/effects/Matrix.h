@@ -77,6 +77,7 @@ private:
     MatrixDrop *matrixDrops;
     int drops;
     bool initialized;
+    int frameCounter; // Frame counter for speed control
 
     void deallocateDrops();
     void fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue);
