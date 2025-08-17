@@ -150,6 +150,8 @@ and wants.
 
 ## 📚 Documentation
 
+- **[Configuration System Architecture](docs/configuration-system.md)** - How
+  the dual-layer config system works and rules for proper usage
 - **[Code Structure Guide](docs/code-structure.md)** - Documentation of the
   modular codebase architecture, including directory structure, component
   responsibilities, and development guidelines.
