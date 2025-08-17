@@ -41,7 +41,8 @@ enum ContentType
     QUIZ,
     PRINT_TEST,
     POKE,
-    USER_MESSAGE
+    USER_MESSAGE,
+    NEWS
 };
 
 /**
@@ -74,6 +75,9 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
         break;
     case USER_MESSAGE:
         typeName = "user message";
+        break;
+    case NEWS:
+        typeName = "news";
         break;
     default:
         typeName = "unknown";
@@ -177,6 +181,10 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
         actionName = "MESSAGE";
     }
     break;
+    case NEWS:
+        content = generateNewsContent();
+        actionName = "NEWS";
+        break;
     }
 
     if (content.length() > 0 || actionName == "POKE")
@@ -213,6 +221,7 @@ void handleQuote(AsyncWebServerRequest *request) { handleContentGeneration(reque
 void handleQuiz(AsyncWebServerRequest *request) { handleContentGeneration(request, QUIZ); }
 void handlePrintTest(AsyncWebServerRequest *request) { handleContentGeneration(request, PRINT_TEST); }
 void handlePoke(AsyncWebServerRequest *request) { handleContentGeneration(request, POKE); }
+void handleNews(AsyncWebServerRequest *request) { handleContentGeneration(request, NEWS); }
 void handleUserMessage(AsyncWebServerRequest *request) { handleContentGeneration(request, USER_MESSAGE); }
 
 void handleUnbiddenInk(AsyncWebServerRequest *request)
@@ -368,6 +377,21 @@ bool generateAndQueuePrintTest()
         currentMessage.timestamp = getFormattedDateTime();
         currentMessage.shouldPrintLocally = true;
         LOG_VERBOSE("BUTTON", "Print test content queued for local printing");
+        return true;
+    }
+    return false;
+}
+
+bool generateAndQueueNews()
+{
+    String content = generateNewsContent();
+    if (content.length() > 0)
+    {
+        String formattedContent = formatContentWithHeader("NEWS", content, "");
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        LOG_VERBOSE("BUTTON", "News content queued for local printing");
         return true;
     }
     return false;

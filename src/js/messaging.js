@@ -159,6 +159,9 @@ function sendQuickAction(action) {
     case 'quiz':
       contentEndpoint = '/api/quiz';
       break;
+    case 'news':
+      contentEndpoint = '/api/news';
+      break;
     case 'poke':
       contentEndpoint = '/api/poke';
       break;

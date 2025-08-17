@@ -313,6 +313,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/joke", "Print random joke", handleJoke, true);
         registerRoute("POST", "/api/quote", "Print random quote", handleQuote, true);
         registerRoute("POST", "/api/quiz", "Print random quiz", handleQuiz, true);
+        registerRoute("POST", "/api/news", "Print BBC news headlines", handleNews, true);
         registerRoute("POST", "/api/poke", "Send poke message", handlePoke, true);
         registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
