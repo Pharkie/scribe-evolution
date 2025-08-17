@@ -15,7 +15,7 @@
 #include "../../core/config.h"
 
 ChaseSingle::ChaseSingle(int chaseSpeed)
-    : chaseSpeed(chaseSpeed), isCycleBasedMode(true), targetCycles(1)
+    : chaseSpeed(chaseSpeed), isCycleBasedMode(true), targetCycles(1), frameCounter(0)
 {
 }
 
@@ -27,35 +27,42 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
 
     if (isCycleBasedMode)
     {
-        // Cycle-based: run from start to end once per cycle with trail
-        int totalSteps = ledCount;
-        int currentPosition = effectStep % totalSteps;
+        // Cycle-based: run from start to end, then wait for trail to completely exit
+        int totalSteps = ledCount + CHASE_TRAIL_LENGTH; // Include trail length for complete exit
+        int currentPosition = effectStep;
 
         if (currentPosition < ledCount)
         {
-            // Main LED
+            // Main LED (only show if within strip bounds)
             leds[currentPosition] = color1;
+        }
 
-            // Add trailing dots with fading
-            for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
+        // Add trailing dots with fading (only show trail positions within strip bounds)
+        for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
+        {
+            int trailPos = currentPosition - i;
+            if (trailPos >= 0 && trailPos < ledCount) // Only show trail if within strip bounds (no wrapping)
             {
-                int trailPos = (currentPosition - i + ledCount) % ledCount;
-                if (currentPosition >= i)
-                { // Only show trail if we're far enough along
-                    CRGB trailColor = color1;
-                    trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP); // Fade each trailing dot
-                    leds[trailPos] = trailColor;
-                }
+                CRGB trailColor = color1;
+                trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP); // Fade each trailing dot
+                leds[trailPos] = trailColor;
             }
         }
 
-        effectStep += chaseSpeed;
+        // Use frame counter for speed control (higher chaseSpeed = slower movement)
+        frameCounter++;
+        if (frameCounter >= chaseSpeed)
+        {
+            frameCounter = 0;
+            effectStep++; // Only advance position when frame counter reaches speed threshold
+        }
 
-        // Check if we've completed a cycle (reached the end)
+        // Check if we've completed a cycle (head + entire trail has exited the strip)
         if (effectStep >= totalSteps)
         {
             completedCycles++;
-            effectStep = 0; // Reset for next cycle
+            effectStep = 0;   // Reset for next cycle
+            frameCounter = 0; // Reset frame counter
             LOG_VERBOSE("LEDS", "Chase single completed cycle %d/%d", completedCycles, targetCycles);
 
             // Return false if we've completed all requested cycles
@@ -66,9 +73,10 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
     {
         // Duration-based: continuous chase with trail
         int position = effectStep % ledCount;
+
         leds[position] = color1;
 
-        // Add trailing dots with fading
+        // Add trailing dots with fading - always show full trail
         for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
         {
             int trailPos = (position - i + ledCount) % ledCount;
@@ -77,7 +85,13 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
             leds[trailPos] = trailColor;
         }
 
-        effectStep += chaseSpeed;
+        // Use frame counter for speed control (higher chaseSpeed = slower movement)
+        frameCounter++;
+        if (frameCounter >= chaseSpeed)
+        {
+            frameCounter = 0;
+            effectStep++; // Only advance position when frame counter reaches speed threshold
+        }
     }
 
     return true; // Continue running
@@ -86,6 +100,7 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
 void ChaseSingle::reset()
 {
     // Reset state variables - will be set by the effect manager
+    frameCounter = 0;
 }
 
 void ChaseSingle::clearAllLEDs(CRGB *leds, int ledCount)
