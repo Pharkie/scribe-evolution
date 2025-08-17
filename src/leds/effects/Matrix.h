@@ -23,9 +23,9 @@ class Matrix : public EffectBase
 public:
     /**
      * @brief Constructor
-     * @param drops Number of simultaneous matrix drops
+     * @param config Configuration for the matrix effect
      */
-    Matrix(int drops);
+    Matrix(const MatrixConfig &config);
 
     /**
      * @brief Destructor - cleanup allocated memory
@@ -66,6 +66,7 @@ public:
     void setDrops(int drops);
 
 private:
+    MatrixConfig config; // Store the autonomous configuration
     struct MatrixDrop
     {
         int position;
@@ -75,7 +76,6 @@ private:
     };
 
     MatrixDrop *matrixDrops;
-    int drops;
     bool initialized;
     int frameCounter; // Frame counter for speed control
 

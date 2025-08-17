@@ -31,13 +31,10 @@ class EffectRegistry
 {
 public:
     /**
-     * @brief Constructor
-     * @param chaseSpeed Speed for chase effects
-     * @param twinkleDensity Density for twinkle effect
-     * @param fadeSpeed Fade speed for twinkle effect
-     * @param matrixDrops Number of drops for matrix effect
+     * @brief Constructor with autonomous per-effect configuration
+     * @param effectsConfig Complete effects configuration structure
      */
-    EffectRegistry(int chaseSpeed, int twinkleDensity, int fadeSpeed, int matrixDrops);
+    EffectRegistry(const LedEffectsConfig &effectsConfig);
 
     /**
      * @brief Destructor
@@ -45,7 +42,7 @@ public:
     ~EffectRegistry();
 
     /**
-     * @brief Create an effect by name
+     * @brief Create an effect by name using autonomous configuration
      * @param effectName Name of the effect to create
      * @return Pointer to the effect, or nullptr if not found
      */
@@ -65,19 +62,13 @@ public:
     String getAvailableEffects() const;
 
     /**
-     * @brief Update configuration parameters
-     * @param chaseSpeed New chase speed
-     * @param twinkleDensity New twinkle density
-     * @param fadeSpeed New fade speed
-     * @param matrixDrops New matrix drops count
+     * @brief Update autonomous configuration for all effects
+     * @param newEffectsConfig New complete effects configuration
      */
-    void updateConfig(int chaseSpeed, int twinkleDensity, int fadeSpeed, int matrixDrops);
+    void updateConfig(const LedEffectsConfig &newEffectsConfig);
 
 private:
-    int chaseSpeed;
-    int twinkleDensity;
-    int fadeSpeed;
-    int matrixDrops;
+    LedEffectsConfig effectsConfig; // Autonomous per-effect configurations
 
     static const String effectNames[];
     static const int numEffects;

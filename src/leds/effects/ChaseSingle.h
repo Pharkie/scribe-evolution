@@ -24,9 +24,9 @@ class ChaseSingle : public EffectBase
 public:
     /**
      * @brief Constructor
-     * @param chaseSpeed Speed delay of the chase effect (higher = slower, 1=fastest)
+     * @param config Configuration for the chase single effect
      */
-    ChaseSingle(int chaseSpeed);
+    ChaseSingle(const ChaseSingleConfig &config);
 
     /**
      * @brief Update the chase single effect
@@ -54,10 +54,10 @@ public:
      * @brief Set chase speed
      * @param speed New chase speed delay (higher = slower)
      */
-    void setChaseSpeed(int speed) { chaseSpeed = speed; }
+    void setChaseSpeed(int speed) { config.speed = speed; }
 
 private:
-    int chaseSpeed;
+    ChaseSingleConfig config; // Store the autonomous configuration
     bool isCycleBasedMode;
     int targetCycles;
     int frameCounter; // Frame counter for speed delay

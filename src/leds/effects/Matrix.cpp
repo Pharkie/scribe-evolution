@@ -11,8 +11,10 @@
 
 #ifdef ENABLE_LEDS
 
-Matrix::Matrix(int drops)
-    : matrixDrops(nullptr), drops(drops), initialized(false), frameCounter(0)
+#include "../../core/led_config.h"
+
+Matrix::Matrix(const MatrixConfig &config)
+    : config(config), matrixDrops(nullptr), initialized(false), frameCounter(0)
 {
 }
 
@@ -25,10 +27,10 @@ void Matrix::initialize(int ledCount)
 {
     deallocateDrops(); // Clean up any existing allocation
 
-    if (drops > 0)
+    if (config.drops > 0)
     {
-        matrixDrops = new MatrixDrop[drops];
-        for (int i = 0; i < drops; i++)
+        matrixDrops = new MatrixDrop[config.drops];
+        for (int i = 0; i < config.drops; i++)
         {
             matrixDrops[i].active = false;
             matrixDrops[i].position = 0;
@@ -51,7 +53,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
     // Fade all LEDs
     for (int i = 0; i < ledCount; i++)
     {
-        fadeToBlackBy(leds, i, MATRIX_BACKGROUND_FADE);
+        fadeToBlackBy(leds, i, config.backgroundFade);
     }
 
     // Use frame counter for speed control - update only every few frames
@@ -61,7 +63,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         frameCounter = 0;
 
         // Update existing matrix drops
-        for (int i = 0; i < drops; i++)
+        for (int i = 0; i < config.drops; i++)
         {
             if (matrixDrops[i].active)
             {
@@ -71,7 +73,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                     int pos = matrixDrops[i].position - j;
                     if (pos >= 0 && pos < ledCount)
                     {
-                        fadeToBlackBy(leds, pos, MATRIX_TRAIL_FADE);
+                        fadeToBlackBy(leds, pos, config.trailFade);
                     }
                 }
 
@@ -89,7 +91,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         // Randomly start new drops
         if (random16(100) < 8)
         { // 8% chance per update (increased from 5% for more activity)
-            for (int i = 0; i < drops; i++)
+            for (int i = 0; i < config.drops; i++)
             {
                 if (!matrixDrops[i].active)
                 {
@@ -104,7 +106,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
     }
 
     // Draw current positions (always draw, even if not updating movement)
-    for (int i = 0; i < drops; i++)
+    for (int i = 0; i < config.drops; i++)
     {
         if (matrixDrops[i].active)
         {
@@ -114,7 +116,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                 int pos = matrixDrops[i].position - j;
                 if (pos >= 0 && pos < ledCount)
                 {
-                    int brightness = 255 - (j * MATRIX_BRIGHTNESS_FADE_STEP); // Fade tail
+                    int brightness = 255 - (j * config.brightnessFade); // Fade tail
                     if (brightness > 0)
                     {
                         // Use color1 parameter (should be green from web interface)
@@ -135,7 +137,7 @@ void Matrix::reset()
     frameCounter = 0;
     if (matrixDrops)
     {
-        for (int i = 0; i < drops; i++)
+        for (int i = 0; i < config.drops; i++)
         {
             matrixDrops[i].active = false;
             matrixDrops[i].position = 0;
@@ -147,9 +149,9 @@ void Matrix::reset()
 
 void Matrix::setDrops(int newDrops)
 {
-    if (newDrops != drops)
+    if (newDrops != config.drops)
     {
-        drops = newDrops;
+        config.drops = newDrops;
         initialized = false; // Force reinitialization
     }
 }

@@ -1,6 +1,6 @@
 /**
- * @file ChaseMultiEffect.h
- * @brief Multi-color chase effect cycling through three colors
+ * @file ChaseMulti.h
+ * @brief Multi-color chase effect with autonomous configuration
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -10,23 +10,23 @@
 #ifndef CHASE_MULTI_H
 #define CHASE_MULTI_H
 
-#include "EffectBase.h"
+#include "../../core/config.h"
 
 #ifdef ENABLE_LEDS
 
+#include "EffectBase.h"
+
 /**
- * @brief Multi-color chase effect with trailing fade
- * A LED travels along the strip cycling through three colors with a fading trail.
- * Supports both cycle-based (color change per cycle) and duration-based modes.
+ * @brief Multi-color chase effect with autonomous per-effect configuration
  */
 class ChaseMulti : public EffectBase
 {
 public:
     /**
      * @brief Constructor
-     * @param chaseSpeed Speed of the chase effect (pixels per update)
+     * @param config Chase multi configuration parameters
      */
-    ChaseMulti(int chaseSpeed);
+    ChaseMulti(const ChaseMultiConfig &config);
 
     /**
      * @brief Update the chase multi effect
@@ -51,16 +51,16 @@ public:
     bool isCycleBased() const override { return true; }
 
     /**
-     * @brief Set chase speed
-     * @param speed New chase speed (pixels per update)
+     * @brief Update configuration for this effect
+     * @param newConfig New configuration parameters
      */
-    void setChaseSpeed(int speed) { chaseSpeed = speed; }
+    void updateConfig(const ChaseMultiConfig &newConfig) { config = newConfig; }
 
 private:
-    int chaseSpeed;
-    bool isCycleBasedMode;
-    int targetCycles;
-    int frameCounter; // Frame counter for speed control
+    ChaseMultiConfig config; // Autonomous configuration for this effect
+    bool isCycleBasedMode;   // Cycle vs duration mode
+    int targetCycles;        // Target cycles for cycle-based mode
+    int frameCounter;        // Frame counter for speed control
 
     void clearAllLEDs(CRGB *leds, int ledCount);
 };

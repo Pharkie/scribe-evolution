@@ -54,14 +54,11 @@ public:
      * @param count Number of LEDs in the strip
      * @param brightness LED brightness (0-255)
      * @param refreshRate Refresh rate in Hz (used to calculate update interval)
-     * @param fadeSpeed Fade speed for transitions (1-255)
-     * @param twinkleDensity Number of twinkle stars simultaneously
-     * @param chaseSpeed Chase effect speed (pixels per update)
-     * @param matrixDrops Number of matrix drops simultaneously
+     * @param effectsConfig Autonomous configuration for all effects
      * @return true if reinitialization successful, false otherwise
      */
     bool reinitialize(int pin, int count, int brightness, int refreshRate,
-                      int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops);
+                      const LedEffectsConfig &effectsConfig);
 
     /**
      * @brief Update the current effect - call this in the main loop
@@ -128,7 +125,8 @@ private:
     unsigned long ledUpdateInterval;
     int ledEffectFadeSpeed;
     int ledTwinkleDensity;
-    int ledChaseSpeed;
+    int ledChaseSingleSpeed;
+    int ledChaseMultiSpeed;
     int ledMatrixDrops;
 
     // Effect state variables
@@ -154,8 +152,8 @@ private:
     float effectPhase;
 
     // Modular effect system
-    EffectBase* currentEffect;
-    EffectRegistry* effectRegistry;
+    EffectBase *currentEffect;
+    EffectRegistry *effectRegistry;
 };
 
 extern LedEffects ledEffects;

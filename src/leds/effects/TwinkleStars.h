@@ -23,10 +23,9 @@ class TwinkleStars : public EffectBase
 public:
     /**
      * @brief Constructor
-     * @param density Number of simultaneous twinkle stars
-     * @param fadeSpeed Fade speed for background dimming
+     * @param config Configuration for the twinkle effect
      */
-    TwinkleStars(int density, int fadeSpeed);
+    TwinkleStars(const TwinkleConfig &config);
 
     /**
      * @brief Destructor - cleanup allocated memory
@@ -70,9 +69,10 @@ public:
      * @brief Set fade speed
      * @param fadeSpeed Background fade speed
      */
-    void setFadeSpeed(int fadeSpeed) { this->fadeSpeed = fadeSpeed; }
+    void setFadeSpeed(int fadeSpeed) { config.fadeSpeed = fadeSpeed; }
 
 private:
+    TwinkleConfig config; // Store the autonomous configuration
     struct TwinkleState
     {
         int position;
@@ -82,8 +82,6 @@ private:
     };
 
     TwinkleState *twinkleStars;
-    int density;
-    int fadeSpeed;
     bool initialized;
     int frameCounter; // Frame counter for speed control
 

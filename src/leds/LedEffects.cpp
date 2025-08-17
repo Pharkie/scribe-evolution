@@ -26,7 +26,8 @@ LedEffects::LedEffects() : leds(nullptr),
                            ledUpdateInterval(0),
                            ledEffectFadeSpeed(0),
                            ledTwinkleDensity(0),
-                           ledChaseSpeed(0),
+                           ledChaseSingleSpeed(0),
+                           ledChaseMultiSpeed(0),
                            ledMatrixDrops(0),
                            effectActive(false),
                            currentEffectName(""),
@@ -74,13 +75,11 @@ bool LedEffects::begin()
     const RuntimeConfig &config = getRuntimeConfig();
 
     return reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
-                        config.ledRefreshRate, config.ledEffectFadeSpeed,
-                        config.ledTwinkleDensity, config.ledChaseSpeed,
-                        config.ledMatrixDrops);
+                        config.ledRefreshRate, config.ledEffects);
 }
 
 bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRate,
-                              int fadeSpeed, int twinkleDensity, int chaseSpeed, int matrixDrops)
+                              const LedEffectsConfig &effectsConfig)
 {
     // Stop current effect
     stopEffect();
@@ -91,10 +90,6 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
     ledBrightness = brightness;
     ledRefreshRate = refreshRate;
     ledUpdateInterval = 1000 / refreshRate; // Convert Hz to milliseconds
-    ledEffectFadeSpeed = fadeSpeed;
-    ledTwinkleDensity = twinkleDensity;
-    ledChaseSpeed = chaseSpeed;
-    ledMatrixDrops = matrixDrops;
 
     // Validate parameters
     if (ledCount <= 0 || ledPin < 0)
@@ -166,11 +161,11 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
     // Create or update effect registry
     if (effectRegistry)
     {
-        effectRegistry->updateConfig(chaseSpeed, twinkleDensity, fadeSpeed, matrixDrops);
+        effectRegistry->updateConfig(effectsConfig);
     }
     else
     {
-        effectRegistry = new EffectRegistry(chaseSpeed, twinkleDensity, fadeSpeed, matrixDrops);
+        effectRegistry = new EffectRegistry(effectsConfig);
     }
 
     LOG_VERBOSE("LEDS", "LED system initialized: pin=%d, count=%d, brightness=%d, refresh=%dHz",
