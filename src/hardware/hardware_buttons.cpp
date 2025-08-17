@@ -236,6 +236,10 @@ void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
     {
         contentGenerated = generateAndQueueQuiz();
     }
+    else if (strcmp(endpoint, "/api/news") == 0)
+    {
+        contentGenerated = generateAndQueueNews();
+    }
     else if (strcmp(endpoint, "/api/print-test") == 0)
     {
         contentGenerated = generateAndQueuePrintTest();
