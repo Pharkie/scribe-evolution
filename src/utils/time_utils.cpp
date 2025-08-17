@@ -77,6 +77,75 @@ String formatCustomDate(String customDate)
     return getFormattedDateTime();
 }
 
+String formatRFC2822Date(const String &rfc2822Date)
+{
+    // Parse RFC 2822 format: "Mon, 16 Aug 2025 23:00:00 GMT"
+    // Extract components for makeTime
+    int commaPos = rfc2822Date.indexOf(", ");
+    if (commaPos == -1)
+        return "";
+
+    String dateTimePart = rfc2822Date.substring(commaPos + 2);
+
+    // Parse "16 Aug 2025 23:00:00 GMT"
+    int spacePos1 = dateTimePart.indexOf(' ');                // After day
+    int spacePos2 = dateTimePart.indexOf(' ', spacePos1 + 1); // After month
+    int spacePos3 = dateTimePart.indexOf(' ', spacePos2 + 1); // After year
+
+    if (spacePos1 <= 0 || spacePos2 <= spacePos1 || spacePos3 <= spacePos2)
+        return "";
+
+    int day = dateTimePart.substring(0, spacePos1).toInt();
+    String monthStr = dateTimePart.substring(spacePos1 + 1, spacePos2);
+    int year = dateTimePart.substring(spacePos2 + 1, spacePos3).toInt();
+    String timeStr = dateTimePart.substring(spacePos3 + 1, spacePos3 + 9); // "HH:MM:SS"
+
+    // Convert month name to number
+    int month = 0;
+    if (monthStr == "Jan")
+        month = 1;
+    else if (monthStr == "Feb")
+        month = 2;
+    else if (monthStr == "Mar")
+        month = 3;
+    else if (monthStr == "Apr")
+        month = 4;
+    else if (monthStr == "May")
+        month = 5;
+    else if (monthStr == "Jun")
+        month = 6;
+    else if (monthStr == "Jul")
+        month = 7;
+    else if (monthStr == "Aug")
+        month = 8;
+    else if (monthStr == "Sep")
+        month = 9;
+    else if (monthStr == "Oct")
+        month = 10;
+    else if (monthStr == "Nov")
+        month = 11;
+    else if (monthStr == "Dec")
+        month = 12;
+
+    if (month == 0)
+        return "";
+
+    // Parse time
+    if (timeStr.length() < 8)
+        return "";
+    int hour = timeStr.substring(0, 2).toInt();
+    int minute = timeStr.substring(3, 5).toInt();
+    int second = timeStr.substring(6, 8).toInt();
+
+    // Create time_t using ezTime's makeTime
+    time_t parsedTime = makeTime(hour, minute, second, day, month, year);
+    if (parsedTime <= 0)
+        return "";
+
+    // Format to match other quick actions: "Mon 16 Aug 23:00"
+    return myTZ.dateTime(parsedTime, "D d M H:i");
+}
+
 String getISOTimestamp()
 {
     // Return ISO 8601 timestamp in UTC: 2025-01-01T12:00:00Z
