@@ -148,9 +148,12 @@ void setup()
 
 #ifdef ENABLE_LEDS
   // Initialize LED effects system
-  if (ledEffects.begin()) {
+  if (ledEffects.begin())
+  {
     LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
-  } else {
+  }
+  else
+  {
     LOG_WARNING("BOOT", "LED effects system initialization failed");
   }
 #endif
