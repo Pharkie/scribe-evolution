@@ -256,4 +256,9 @@
   .time-marker-22 { left: 91.67%; }
   .time-marker-23 { left: 95.83%; }
   .time-marker-24 { left: 100%; }
+
+  /* LED Effect Buttons */
+  .led-effect-btn {
+    @apply px-4 py-3 rounded-xl border-2 font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2;
+  }
 }

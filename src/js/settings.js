@@ -845,3 +845,66 @@ function showSettingsSection(sectionName) {
         activeButton.classList.add('active');
     }
 }
+
+/**
+ * Trigger an LED effect
+ * @param {string} effectName - Name of the LED effect to trigger
+ */
+async function triggerLedEffect(effectName) {
+    try {
+        const response = await fetch(`/api/led/${effectName}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                duration: 10, // 10 seconds preview
+                color1: 'blue',
+                color2: 'red',
+                color3: 'green'
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Failed to trigger ${effectName} effect`);
+        }
+
+        const result = await response.json();
+        showMessage(`${effectName} LED effect started for 10 seconds`, 'success');
+        console.log('LED effect result:', result);
+        
+    } catch (error) {
+        console.error('LED effect error:', error);
+        showMessage(`Failed to trigger ${effectName} effect: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Turn off all LEDs
+ */
+async function turnOffLeds() {
+    try {
+        showMessage('Turning off LEDs...', 'info');
+        
+        const response = await fetch('/api/led/off', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to turn off LEDs');
+        }
+
+        const result = await response.json();
+        showMessage('LEDs turned off', 'success');
+        console.log('LED off result:', result);
+        
+    } catch (error) {
+        console.error('LED off error:', error);
+        showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
+    }
+}
