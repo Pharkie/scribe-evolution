@@ -125,6 +125,8 @@ function getActionConfig(action) {
       return { colors: ['#8b5cf6', '#7c3aed', '#a78bfa'], name: 'Quote' }; // Purple
     case 'quiz':
       return { colors: ['#f59e0b', '#d97706', '#fbbf24'], name: 'Quiz' }; // Amber
+    case 'news':
+      return { colors: ['#f97316', '#ea580c', '#fb923c'], name: 'News' }; // Orange
     case 'poke':
       return { colors: ['#ec4899', '#be185d', '#f472b6'], name: 'Poke' }; // Pink
     case 'print-test':
