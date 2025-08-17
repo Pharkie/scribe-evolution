@@ -827,7 +827,8 @@
                             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                                 Shows for 10 seconds.
                             </p>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <!-- LED Effect Buttons with improved responsive layout -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
                                 <button type="button" onclick="triggerLedEffect('simple_chase')"
                                     class="led-effect-btn bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-600">
                                     🏃 Simple Chase
@@ -852,10 +853,9 @@
                                     class="led-effect-btn bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-800/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-600">
                                     🔋 Matrix Movie
                                 </button>
-                            </div>
-                            <div class="mt-3 text-center">
+                                <!-- Turn Off button integrated into the grid -->
                                 <button type="button" onclick="turnOffLeds()"
-                                    class="led-effect-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/30 dark:hover:bg-gray-700/40 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600">
+                                    class="led-effect-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-800/30 dark:hover:bg-gray-700/40 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600 sm:col-span-1 lg:col-span-2 xl:col-span-2">
                                     ⚫ Turn Off LEDs
                                 </button>
                             </div>

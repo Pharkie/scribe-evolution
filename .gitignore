@@ -31,6 +31,11 @@ Thumbs.db
 node_modules/
 package-lock.json
 
+# Generated CSS and JS files
+data/css/*.min.css
+data/js/*.min.js
+data/js/*.min.js.map
+
 # Python virtual environment
 .venv/
 __pycache__/

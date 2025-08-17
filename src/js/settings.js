@@ -273,8 +273,29 @@ async function saveSettings(event) {
         if (response.ok && result.success) {
             currentConfig = configData; // Update current config
             
-            // Redirect to index page immediately with success parameter
-            window.location.href = '/?settings_saved=true';
+            // Trigger green LED simple chase effect on successful save
+            try {
+                await fetch('/api/led/simple_chase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        duration: 3, // 3 seconds for settings save confirmation
+                        color1: 'green',
+                        color2: 'green',
+                        color3: 'green'
+                    })
+                });
+            } catch (ledError) {
+                // Don't fail the settings save if LED effect fails
+                console.log('LED effect failed, but settings saved successfully:', ledError);
+            }
+            
+            // Brief delay to let LED effect start, then redirect
+            setTimeout(() => {
+                window.location.href = '/?settings_saved=true';
+            }, 100);
         } else {
             throw new Error(result.error || 'Failed to save settings');
         }
@@ -885,8 +906,6 @@ async function triggerLedEffect(effectName) {
  */
 async function turnOffLeds() {
     try {
-        showMessage('Turning off LEDs...', 'info');
-        
         const response = await fetch('/api/led/off', {
             method: 'POST',
             headers: {

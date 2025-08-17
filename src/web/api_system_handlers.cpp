@@ -13,6 +13,7 @@
 #include "web_server.h" // For addRegisteredRoutesToJson
 #include "../core/config.h"
 #include "../core/config_loader.h"
+#include "../core/config_utils.h"
 #include "../core/logging.h"
 #include "../core/network.h"
 #include "../core/mqtt_handler.h"

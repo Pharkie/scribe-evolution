@@ -13,6 +13,8 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 #include "../core/shared_types.h"
+#include "../utils/json_helpers.h"
+#include "validation.h"
 
 // Import specialized handler modules
 #include "api_system_handlers.h"
@@ -25,33 +27,6 @@
 // ========================================
 // SHARED API UTILITIES
 // ========================================
-
-/**
- * @brief Send standardized error response
- * @param request HTTP request object
- * @param code HTTP status code
- * @param message Error message
- */
-void sendErrorResponse(AsyncWebServerRequest *request, int code, const String &message);
-
-/**
- * @brief Send standardized success response
- * @param request HTTP request object
- * @param message Success message
- */
-void sendSuccessResponse(AsyncWebServerRequest *request, const String &message);
-
-/**
- * @brief Send rate limit response
- * @param request HTTP request object
- */
-void sendRateLimitResponse(AsyncWebServerRequest *request);
-
-/**
- * @brief Send validation error response
- * @param request HTTP request object
- * @param result Validation result containing error details
- */
-void sendValidationError(AsyncWebServerRequest *request, const ValidationResult &result);
+// Note: Response utility functions are defined in json_helpers.h
 
 #endif // API_HANDLERS_H

@@ -9,55 +9,12 @@
 
 #include "api_handlers.h"
 #include "validation.h"
+#include "../utils/json_helpers.h"
 #include "../core/config.h"
 #include "../core/logging.h"
-#include <ArduinoJson.h>
 
 // ========================================
 // SHARED API UTILITIES
 // ========================================
-
-void sendErrorResponse(AsyncWebServerRequest *request, int code, const String &message)
-{
-    DynamicJsonDocument errorResponse(256);
-    errorResponse["success"] = false;
-    errorResponse["error"] = message;
-
-    String errorString;
-    serializeJson(errorResponse, errorString);
-    request->send(code, "application/json", errorString);
-}
-
-void sendSuccessResponse(AsyncWebServerRequest *request, const String &message)
-{
-    DynamicJsonDocument successResponse(256);
-    successResponse["success"] = true;
-    successResponse["message"] = message;
-
-    String successString;
-    serializeJson(successResponse, successString);
-    request->send(200, "application/json", successString);
-}
-
-void sendRateLimitResponse(AsyncWebServerRequest *request)
-{
-    DynamicJsonDocument errorResponse(256);
-    errorResponse["success"] = false;
-    errorResponse["error"] = getRateLimitReason();
-
-    String errorString;
-    serializeJson(errorResponse, errorString);
-    request->send(429, "application/json", errorString);
-}
-
-void sendValidationError(AsyncWebServerRequest *request, const ValidationResult &result)
-{
-    DynamicJsonDocument errorResponse(512);
-    errorResponse["success"] = false;
-    errorResponse["error"] = "Validation failed";
-    errorResponse["details"] = result.errorMessage;
-
-    String errorString;
-    serializeJson(errorResponse, errorString);
-    request->send(400, "application/json", errorString);
-}
+// Note: Core response functions (sendErrorResponse, sendSuccessResponse, sendRateLimitResponse)
+// are implemented in json_helpers.cpp and included via json_helpers.h
