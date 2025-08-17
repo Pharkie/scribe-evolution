@@ -1,5 +1,5 @@
 /**
- * @file config.h.example
+ * @file config.h.example.example
  * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
@@ -166,5 +166,29 @@ static const int topicBufferSize = 64;                // MQTT topic buffer size
 static const int maxWifiPasswordLength = 64;          // Max WiFi password length
 static const int maxTimezoneLength = 64;              // Max timezone string length
 static const int minJokeLength = 10;                  // Minimum joke length to be considered valid
+
+// ============================================================================
+// LED STRIP CONFIGURATION - Optional FastLED support
+// ============================================================================
+// Uncomment the following line to enable LED strip support (requires FastLED library)
+// #define ENABLE_LEDS
+
+#ifdef ENABLE_LEDS
+// LED Hardware Configuration
+static const int LED_PIN = 4;                         // GPIO pin for LED strip data (avoid pins used for other functions)
+static const int LED_COUNT = 30;                      // Number of LEDs in the strip
+// Note: LED_TYPE and COLOR_ORDER are defined in LedEffects.cpp using FastLED constants
+
+// LED Performance Configuration  
+static const int LED_BRIGHTNESS = 64;                 // Default brightness (0-255, 64 = 25% to save power)
+static const int LED_REFRESH_RATE = 60;               // Refresh rate in Hz (60Hz is smooth for most effects)
+static const unsigned long LED_UPDATE_INTERVAL = 1000 / LED_REFRESH_RATE; // Update interval in milliseconds
+
+// LED Effect Configuration
+static const int LED_EFFECT_FADE_SPEED = 5;           // Fade speed for transitions (1-255)
+static const int LED_TWINKLE_DENSITY = 8;             // Number of twinkle stars simultaneously
+static const int LED_CHASE_SPEED = 3;                 // Chase effect speed (pixels per update)
+static const int LED_MATRIX_DROPS = 5;                // Number of matrix drops simultaneously
+#endif // ENABLE_LEDS
 
 #endif
