@@ -77,7 +77,7 @@ public:
     void update();
 
     /**
-     * @brief Start a new LED effect
+     * @brief Start a new LED effect (duration-based)
      * @param effectName Name of the effect (case-insensitive)
      * @param durationSeconds Duration to run the effect (0 = infinite)
      * @param color1 Primary color for the effect (default: blue)
@@ -85,8 +85,20 @@ public:
      * @param color3 Tertiary color for the effect (default: black/off)
      * @return true if effect started successfully, false if unknown effect
      */
-    bool startEffect(const String& effectName, unsigned long durationSeconds = 0, 
-                    CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
+    bool startEffectDuration(const String& effectName, unsigned long durationSeconds = 0, 
+                            CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
+
+    /**
+     * @brief Start a new LED effect (cycle-based)
+     * @param effectName Name of the effect (case-insensitive)
+     * @param cycles Number of cycles/sequences to run (1 = single sequence)
+     * @param color1 Primary color for the effect (default: blue)
+     * @param color2 Secondary color for the effect (default: black/off)
+     * @param color3 Tertiary color for the effect (default: black/off)
+     * @return true if effect started successfully, false if unknown effect
+     */
+    bool startEffectCycles(const String& effectName, int cycles = 1, 
+                          CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
 
     /**
      * @brief Stop the current effect and turn off all LEDs
@@ -130,8 +142,13 @@ private:
     bool effectActive;
     String currentEffectName;
     unsigned long effectStartTime;
-    unsigned long effectDuration;  // 0 = infinite
+    unsigned long effectDuration;  // 0 = infinite (for duration-based effects)
     unsigned long lastUpdate;
+    
+    // Effect mode and cycle tracking
+    bool isCycleBased;             // true for cycle-based, false for duration-based
+    int targetCycles;              // Number of cycles to complete
+    int completedCycles;           // Number of cycles completed so far
     
     // Effect parameters
     CRGB effectColor1;

@@ -33,6 +33,9 @@ LedEffects::LedEffects() :
     effectStartTime(0),
     effectDuration(0),
     lastUpdate(0),
+    isCycleBased(false),
+    targetCycles(1),
+    completedCycles(0),
     effectColor1(CRGB::Blue),
     effectColor2(CRGB::Black),
     effectColor3(CRGB::Black),
@@ -205,8 +208,14 @@ void LedEffects::update()
     
     unsigned long now = millis();
     
-    // Check if effect has expired
-    if (effectDuration > 0 && (now - effectStartTime) >= effectDuration) {
+    // Check if duration-based effect has expired
+    if (!isCycleBased && effectDuration > 0 && (now - effectStartTime) >= effectDuration) {
+        stopEffect();
+        return;
+    }
+    
+    // Check if cycle-based effect has completed all cycles
+    if (isCycleBased && completedCycles >= targetCycles) {
         stopEffect();
         return;
     }
@@ -236,8 +245,8 @@ void LedEffects::update()
     FastLED.show();
 }
 
-bool LedEffects::startEffect(const String& effectName, unsigned long durationSeconds, 
-                            CRGB color1, CRGB color2, CRGB color3)
+bool LedEffects::startEffectDuration(const String& effectName, unsigned long durationSeconds, 
+                                     CRGB color1, CRGB color2, CRGB color3)
 {
     // Stop current effect
     stopEffect();
@@ -253,7 +262,7 @@ bool LedEffects::startEffect(const String& effectName, unsigned long durationSec
         return false;
     }
     
-    // Set effect parameters
+    // Set effect parameters - duration-based mode
     currentEffectName = lowerName;
     effectColor1 = color1;
     effectColor2 = color2;
@@ -261,6 +270,9 @@ bool LedEffects::startEffect(const String& effectName, unsigned long durationSec
     effectStartTime = millis();
     effectDuration = durationSeconds * 1000; // Convert to milliseconds
     effectActive = true;
+    isCycleBased = false;
+    targetCycles = 0;
+    completedCycles = 0;
     
     // Reset effect state
     effectStep = 0;
@@ -284,6 +296,57 @@ bool LedEffects::startEffect(const String& effectName, unsigned long durationSec
     return true;
 }
 
+bool LedEffects::startEffectCycles(const String& effectName, int cycles, 
+                                  CRGB color1, CRGB color2, CRGB color3)
+{
+    // Stop current effect
+    stopEffect();
+    
+    // Validate effect name
+    String lowerName = effectName;
+    lowerName.toLowerCase();
+    
+    if (!(lowerName.equals("simple_chase") || lowerName.equals("rainbow") || 
+          lowerName.equals("twinkle") || lowerName.equals("chase") ||
+          lowerName.equals("pulse") || lowerName.equals("matrix"))) {
+        LOG_WARNING("LEDS", "Unknown effect name: %s", effectName.c_str());
+        return false;
+    }
+    
+    // Set effect parameters - cycle-based mode
+    currentEffectName = lowerName;
+    effectColor1 = color1;
+    effectColor2 = color2;
+    effectColor3 = color3;
+    effectStartTime = millis();
+    effectDuration = 0; // Not used in cycle mode
+    effectActive = true;
+    isCycleBased = true;
+    targetCycles = cycles;
+    completedCycles = 0;
+    
+    // Reset effect state
+    effectStep = 0;
+    effectDirection = 1;
+    effectPhase = 0.0f;
+    
+    // Initialize effect-specific state
+    if (lowerName.equals("twinkle")) {
+        for (int i = 0; i < ledTwinkleDensity; i++) {
+            twinkleStars[i].active = false;
+        }
+    } else if (lowerName.equals("matrix")) {
+        for (int i = 0; i < ledMatrixDrops; i++) {
+            matrixDrops[i].active = false;
+        }
+    }
+    
+    LOG_VERBOSE("LEDS", "Started effect: %s, cycles: %d", 
+                effectName.c_str(), cycles);
+    
+    return true;
+}
+
 void LedEffects::stopEffect()
 {
     if (effectActive) {
@@ -292,6 +355,9 @@ void LedEffects::stopEffect()
     
     effectActive = false;
     currentEffectName = "";
+    isCycleBased = false;
+    targetCycles = 0;
+    completedCycles = 0;
     clearAllLEDs();
     FastLED.show();
 }
@@ -329,15 +395,34 @@ void LedEffects::updateSimpleChase()
 {
     clearAllLEDs();
     
-    // Calculate position based on step
-    int position = effectStep % (ledCount * 2); // *2 for off phase
-    
-    if (position < ledCount) {
-        leds[position] = effectColor1;
+    if (isCycleBased) {
+        // Cycle-based: run from start to end once per cycle
+        int totalSteps = ledCount;
+        int currentPosition = effectStep % totalSteps;
+        
+        if (currentPosition < ledCount) {
+            leds[currentPosition] = effectColor1;
+        }
+        
+        effectStep += ledChaseSpeed;
+        
+        // Check if we've completed a cycle (reached the end)
+        if (effectStep >= totalSteps) {
+            completedCycles++;
+            effectStep = 0; // Reset for next cycle
+            LOG_VERBOSE("LEDS", "Simple chase completed cycle %d/%d", completedCycles, targetCycles);
+        }
+    } else {
+        // Duration-based: continuous loop with off phase
+        int position = effectStep % (ledCount * 2); // *2 for off phase
+        
+        if (position < ledCount) {
+            leds[position] = effectColor1;
+        }
+        // else: off phase (LEDs remain black)
+        
+        effectStep += ledChaseSpeed;
     }
-    // else: off phase (LEDs remain black)
-    
-    effectStep += ledChaseSpeed;
 }
 
 void LedEffects::updateRainbowWave()

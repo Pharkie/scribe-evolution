@@ -82,9 +82,13 @@ ledEffects.begin();
 ledEffects.update();
 
 // Start effects with custom parameters
-ledEffects.startEffect("chase", 10, CRGB::Blue);    // 10s blue chase
-ledEffects.startEffect("rainbow", 30);              // 30s rainbow wave
-ledEffects.startEffect("matrix", 0, CRGB::Green);   // Infinite green matrix
+ledEffects.startEffectDuration("chase", 10, CRGB::Blue);    // 10s blue chase
+ledEffects.startEffectDuration("rainbow", 30);              // 30s rainbow wave
+ledEffects.startEffectDuration("matrix", 0, CRGB::Green);   // Infinite green matrix
+
+// Cycle-based effects (run specific number of sequences)
+ledEffects.startEffectCycles("simple_chase", 1, CRGB::Green); // Single green chase from start to end
+ledEffects.startEffectCycles("simple_chase", 3, CRGB::Red);   // Three red chase sequences
 
 // Control and query
 ledEffects.stopEffect();                            // Stop current effect
