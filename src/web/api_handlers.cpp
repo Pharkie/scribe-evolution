@@ -377,7 +377,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     }
 
     // Parse config.json
-    DynamicJsonDocument userConfig(2048);
+    DynamicJsonDocument userConfig(largeJsonDocumentSize);
     DeserializationError error = deserializeJson(userConfig, configFile);
     configFile.close();
 
@@ -389,7 +389,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     }
 
     // Create response with config.json data (with defaults for missing keys)
-    DynamicJsonDocument configDoc(2048);
+    DynamicJsonDocument configDoc(largeJsonDocumentSize);
 
     // Device configuration (with defaults)
     JsonObject device = configDoc.createNestedObject("device");
@@ -745,7 +745,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 #ifdef ENABLE_LEDS
     // Validate LED configuration
     JsonObject leds = doc["leds"];
-    if (!leds.containsKey("pin") || !leds.containsKey("count") || 
+    if (!leds.containsKey("pin") || !leds.containsKey("count") ||
         !leds.containsKey("brightness") || !leds.containsKey("refreshRate") ||
         !leds.containsKey("effectFadeSpeed") || !leds.containsKey("twinkleDensity") ||
         !leds.containsKey("chaseSpeed") || !leds.containsKey("matrixDrops"))
@@ -841,10 +841,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
 #ifdef ENABLE_LEDS
         // Reinitialize LED system with new configuration
-        const RuntimeConfig& config = getRuntimeConfig();
-        if (ledEffects.reinitialize(config.ledPin, config.ledCount, config.ledBrightness, 
-                                   config.ledRefreshRate, config.ledEffectFadeSpeed,
-                                   config.ledTwinkleDensity, config.ledChaseSpeed, config.ledMatrixDrops))
+        const RuntimeConfig &config = getRuntimeConfig();
+        if (ledEffects.reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
+                                    config.ledRefreshRate, config.ledEffectFadeSpeed,
+                                    config.ledTwinkleDensity, config.ledChaseSpeed, config.ledMatrixDrops))
         {
             LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
         }

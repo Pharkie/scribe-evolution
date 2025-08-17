@@ -104,9 +104,6 @@ void setup()
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
 
-  // Log main startup message immediately after logging is ready
-  LOG_NOTICE("BOOT", "=== Scribe Starting ===");
-
   // Log logging system configuration
   LOG_VERBOSE("BOOT", "Logging system initialized - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
               getLogLevelString(logLevel).c_str(),
@@ -152,7 +149,7 @@ void setup()
   {
     LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
     // Trigger boot LED effect (rainbow for 5 seconds)
-    ledEffects.startEffect("rainbow", 5, CRGB::Blue);
+    ledEffects.startEffect("chase", 5, CRGB::Blue);
     LOG_VERBOSE("BOOT", "Boot LED effect started (rainbow, 5 seconds)");
   }
   else

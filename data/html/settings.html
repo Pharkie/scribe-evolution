@@ -56,8 +56,8 @@
                     onclick="showSettingsSection('unbidden')">🎲 Unbidden Ink</button>
                 <button type="button" class="section-nav-btn section-nav-btn-orange"
                     onclick="showSettingsSection('buttons')">🎛️ Buttons</button>
-                <button type="button" class="section-nav-btn section-nav-btn-red"
-                    onclick="showSettingsSection('leds')">💡 LED Settings</button>
+                <button type="button" class="section-nav-btn section-nav-btn-purple"
+                    onclick="showSettingsSection('leds')">🌈 LEDs</button>
             </div>
         </div>
 
@@ -674,16 +674,16 @@
                 </div>
             </div>
 
-            <!-- LED Settings Section -->
+            <!-- LEDs Section -->
             <div id="leds-section" class="settings-section hidden">
                 <div
-                    class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 shadow-2xl rounded-3xl p-8">
+                    class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
                     <h2
-                        class="text-2xl font-bold text-red-800 dark:text-red-100 mb-6 flex items-center space-x-2">
-                        <span class="text-3xl">💡</span>
-                        <span>LED Settings</span>
+                        class="text-2xl font-bold text-purple-800 dark:text-purple-100 mb-6 flex items-center space-x-2">
+                        <span class="text-3xl">🌈</span>
+                        <span>LEDs</span>
                     </h2>
-                    
+
                     <!-- LED Configuration Notice -->
                     <div class="warning-box mb-6">
                         <div class="flex items-center space-x-2">
@@ -691,62 +691,93 @@
                             <div class="flex-1">
                                 <p class="font-semibold text-amber-800 dark:text-amber-200">LED Configuration</p>
                                 <p class="text-sm text-amber-700 dark:text-amber-300">
-                                    Changes to LED settings will reinitialize the LED strip. Make sure your LED strip is properly connected before saving.
+                                    Changes to LED settings will reinitialize the LED strip. Make sure your LED strip is
+                                    properly connected before saving.
                                 </p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="space-y-6">
                         <!-- Hardware Configuration -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hardware Configuration</h3>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hardware Configuration
+                            </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <label for="led-pin"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">GPIO Pin</label>
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">GPIO
+                                        Pin</label>
                                     <select id="led-pin" name="leds.pin"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
-                                        <option value="0">GPIO 0</option>
-                                        <option value="1">GPIO 1</option>
-                                        <option value="2">GPIO 2</option>
-                                        <option value="3">GPIO 3</option>
-                                        <option value="4" selected>GPIO 4</option>
-                                        <option value="5">GPIO 5</option>
-                                        <option value="6">GPIO 6</option>
-                                        <option value="7">GPIO 7</option>
-                                        <option value="8">GPIO 8</option>
-                                        <option value="9">GPIO 9</option>
-                                        <option value="10">GPIO 10</option>
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        <option value="0">GPIO0 (boot mode, avoid)</option>
+                                        <option value="1">GPIO1 (usable)</option>
+                                        <option value="2">GPIO2 (usable)</option>
+                                        <option value="3">GPIO3 (usable)</option>
+                                        <option value="4" selected>GPIO4 (usable)</option>
+                                        <option value="5">GPIO5 (usable)</option>
+                                        <option value="6">GPIO6 (usable)</option>
+                                        <option value="7">GPIO7 (usable)</option>
+                                        <option value="8">GPIO8 (flash, avoid)</option>
+                                        <option value="9">GPIO9 (flash, avoid)</option>
+                                        <option value="10">GPIO10 (flash, avoid)</option>
+                                        <option value="11">GPIO11 (not broken out)</option>
+                                        <option value="12">GPIO12 (not broken out)</option>
+                                        <option value="13">GPIO13 (usable, often SCL)</option>
+                                        <option value="14">GPIO14 (usable, often SDA)</option>
+                                        <option value="15">GPIO15 (not broken out)</option>
+                                        <option value="16">GPIO16 (not broken out)</option>
+                                        <option value="17">GPIO17 (not broken out)</option>
+                                        <option value="18">GPIO18 (USB/JTAG, avoid unless advanced)</option>
+                                        <option value="19">GPIO19 (USB/JTAG, avoid unless advanced)</option>
+                                        <option value="20">GPIO20 (usable, often RX)</option>
+                                        <option value="21">GPIO21 (usable, often TX)</option>
                                     </select>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        ⚠️ Not all boards expose every pin. On boards like the ESP32-C3 SuperMini,
+                                        usually ~15–16 of these are available. Pins marked avoid are connected to flash
+                                        or USB and should not be reassigned.
+                                    </p>
                                 </div>
                                 <div class="space-y-2">
                                     <label for="led-count"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">LED Count</label>
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">LED
+                                        Count</label>
                                     <input type="number" id="led-count" name="leds.count" min="1" max="300" step="1"
                                         placeholder="30"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Performance Configuration -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Performance Settings</h3>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Performance Settings
+                            </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <label for="led-brightness"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness (0-255)</label>
-                                    <input type="number" id="led-brightness" name="leds.brightness" min="0" max="255" step="1"
-                                        placeholder="64"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness
+                                        (0-255)</label>
+                                    <input type="number" id="led-brightness" name="leds.brightness" min="0" max="255"
+                                        step="1" placeholder="64"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        ⚡ High brightness (&gt;128) significantly increases current draw. Consider power
+                                        supply limits and heat generation.
+                                    </p>
                                 </div>
                                 <div class="space-y-2">
                                     <label for="led-refresh-rate"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh Rate (Hz)</label>
-                                    <input type="number" id="led-refresh-rate" name="leds.refreshRate" min="10" max="120" step="1"
-                                        placeholder="60"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh Rate
+                                        (Hz)</label>
+                                    <input type="number" id="led-refresh-rate" name="leds.refreshRate" min="10"
+                                        max="120" step="1" placeholder="60"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        🧠 Higher refresh rates (&gt;60Hz) use more memory and CPU. 30-60Hz is optimal
+                                        for most effects.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -757,31 +788,35 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <label for="led-fade-speed"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fade Speed (1-255)</label>
-                                    <input type="number" id="led-fade-speed" name="leds.effectFadeSpeed" min="1" max="255" step="1"
-                                        placeholder="5"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fade Speed
+                                        (1-255)</label>
+                                    <input type="number" id="led-fade-speed" name="leds.effectFadeSpeed" min="1"
+                                        max="255" step="1" placeholder="5"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                 </div>
                                 <div class="space-y-2">
                                     <label for="led-twinkle-density"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Twinkle Density</label>
-                                    <input type="number" id="led-twinkle-density" name="leds.twinkleDensity" min="1" max="20" step="1"
-                                        placeholder="8"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Twinkle
+                                        Density</label>
+                                    <input type="number" id="led-twinkle-density" name="leds.twinkleDensity" min="1"
+                                        max="20" step="1" placeholder="8"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                 </div>
                                 <div class="space-y-2">
                                     <label for="led-chase-speed"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chase Speed</label>
-                                    <input type="number" id="led-chase-speed" name="leds.chaseSpeed" min="1" max="10" step="1"
-                                        placeholder="3"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chase
+                                        Speed</label>
+                                    <input type="number" id="led-chase-speed" name="leds.chaseSpeed" min="1" max="10"
+                                        step="1" placeholder="3"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                 </div>
                                 <div class="space-y-2">
                                     <label for="led-matrix-drops"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Matrix Drops</label>
-                                    <input type="number" id="led-matrix-drops" name="leds.matrixDrops" min="1" max="15" step="1"
-                                        placeholder="5"
-                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Matrix
+                                        Drops</label>
+                                    <input type="number" id="led-matrix-drops" name="leds.matrixDrops" min="1" max="15"
+                                        step="1" placeholder="5"
+                                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700">
                                 </div>
                             </div>
                         </div>
