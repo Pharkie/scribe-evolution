@@ -12,9 +12,10 @@
 #ifdef ENABLE_LEDS
 
 #include <math.h>
+#include "../../core/led_config.h"
 
-PulseWave::PulseWave()
-    : frameCounter(0)
+PulseWave::PulseWave(const PulseConfig &config)
+    : config(config), frameCounter(0)
 {
 }
 

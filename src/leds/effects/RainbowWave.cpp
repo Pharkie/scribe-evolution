@@ -11,8 +11,10 @@
 
 #ifdef ENABLE_LEDS
 
-RainbowWave::RainbowWave()
-    : frameCounter(0)
+#include "../../core/led_config.h"
+
+RainbowWave::RainbowWave(const RainbowConfig &config)
+    : config(config), frameCounter(0)
 {
 }
 
@@ -32,7 +34,7 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
     if (frameCounter >= 3) // Update every 3 frames for smoother but controlled speed
     {
         frameCounter = 0;
-        effectPhase += RAINBOW_WAVE_SPEED; // Speed of wave movement
+        effectPhase += config.speed; // Speed of wave movement
         if (effectPhase >= 256.0f)
         {
             effectPhase = 0.0f;

@@ -11,8 +11,10 @@
 
 #ifdef ENABLE_LEDS
 
-TwinkleStars::TwinkleStars(int density, int fadeSpeed)
-    : twinkleStars(nullptr), density(density), fadeSpeed(fadeSpeed), initialized(false), frameCounter(0)
+#include "../../core/led_config.h"
+
+TwinkleStars::TwinkleStars(const TwinkleConfig &config)
+    : config(config), twinkleStars(nullptr), initialized(false), frameCounter(0)
 {
 }
 
@@ -25,10 +27,10 @@ void TwinkleStars::initialize(int ledCount)
 {
     deallocateStars(); // Clean up any existing allocation
 
-    if (density > 0)
+    if (config.density > 0)
     {
-        twinkleStars = new TwinkleState[density];
-        for (int i = 0; i < density; i++)
+        twinkleStars = new TwinkleState[config.density];
+        for (int i = 0; i < config.density; i++)
         {
             twinkleStars[i].active = false;
             twinkleStars[i].position = 0;
@@ -51,7 +53,7 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
     // Fade all LEDs slightly
     for (int i = 0; i < ledCount; i++)
     {
-        fadeToBlackBy(leds, i, fadeSpeed);
+        fadeToBlackBy(leds, i, config.fadeSpeed);
     }
 
     // Use frame counter for speed control - update only every few frames
@@ -61,7 +63,7 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
         frameCounter = 0;
 
         // Update existing twinkle stars
-        for (int i = 0; i < density; i++)
+        for (int i = 0; i < config.density; i++)
         {
             if (twinkleStars[i].active)
             {
@@ -84,7 +86,7 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
         // Randomly start new twinkle stars
         if (random16(100) < 3)
         { // 3% chance per update
-            for (int i = 0; i < density; i++)
+            for (int i = 0; i < config.density; i++)
             {
                 if (!twinkleStars[i].active)
                 {
@@ -99,7 +101,7 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
     }
 
     // Always draw current state (even if not updating logic)
-    for (int i = 0; i < density; i++)
+    for (int i = 0; i < config.density; i++)
     {
         if (twinkleStars[i].active)
         {
@@ -132,7 +134,7 @@ void TwinkleStars::reset()
     frameCounter = 0;
     if (twinkleStars)
     {
-        for (int i = 0; i < density; i++)
+        for (int i = 0; i < config.density; i++)
         {
             twinkleStars[i].active = false;
             twinkleStars[i].position = 0;
@@ -144,9 +146,9 @@ void TwinkleStars::reset()
 
 void TwinkleStars::setDensity(int newDensity)
 {
-    if (newDensity != density)
+    if (newDensity != config.density)
     {
-        density = newDensity;
+        config.density = newDensity;
         initialized = false; // Force reinitialization
     }
 }

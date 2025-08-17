@@ -24,8 +24,8 @@ const String EffectRegistry::effectNames[] = {
 
 const int EffectRegistry::numEffects = 6;
 
-EffectRegistry::EffectRegistry(int chaseSpeed, int twinkleDensity, int fadeSpeed, int matrixDrops)
-    : chaseSpeed(chaseSpeed), twinkleDensity(twinkleDensity), fadeSpeed(fadeSpeed), matrixDrops(matrixDrops)
+EffectRegistry::EffectRegistry(const LedEffectsConfig &config)
+    : effectsConfig(config)
 {
 }
 
@@ -40,27 +40,27 @@ EffectBase *EffectRegistry::createEffect(const String &effectName)
 
     if (lowerName.equals("chase_single"))
     {
-        return new ChaseSingle(chaseSpeed);
+        return new ChaseSingle(effectsConfig.chaseSingle);
     }
     else if (lowerName.equals("rainbow"))
     {
-        return new RainbowWave();
+        return new RainbowWave(effectsConfig.rainbow);
     }
     else if (lowerName.equals("twinkle"))
     {
-        return new TwinkleStars(twinkleDensity, fadeSpeed);
+        return new TwinkleStars(effectsConfig.twinkle);
     }
     else if (lowerName.equals("chase_multi"))
     {
-        return new ChaseMulti(chaseSpeed);
+        return new ChaseMulti(effectsConfig.chaseMulti);
     }
     else if (lowerName.equals("pulse"))
     {
-        return new PulseWave();
+        return new PulseWave(effectsConfig.pulse);
     }
     else if (lowerName.equals("matrix"))
     {
-        return new Matrix(matrixDrops);
+        return new Matrix(effectsConfig.matrix);
     }
 
     LOG_WARNING("LEDS", "Unknown effect name: %s", effectName.c_str());
@@ -93,12 +93,9 @@ String EffectRegistry::getAvailableEffects() const
     return result;
 }
 
-void EffectRegistry::updateConfig(int newChaseSpeed, int newTwinkleDensity, int newFadeSpeed, int newMatrixDrops)
+void EffectRegistry::updateConfig(const LedEffectsConfig &newEffectsConfig)
 {
-    chaseSpeed = newChaseSpeed;
-    twinkleDensity = newTwinkleDensity;
-    fadeSpeed = newFadeSpeed;
-    matrixDrops = newMatrixDrops;
+    effectsConfig = newEffectsConfig;
 }
 
 String EffectRegistry::toLowerCase(const String &str) const

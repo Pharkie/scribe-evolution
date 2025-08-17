@@ -13,6 +13,7 @@
 #include "../core/config.h"
 #include "../core/config_loader.h"
 #include "../core/config_utils.h"
+#include "../core/led_config_loader.h"
 #include "../core/logging.h"
 #include "../core/printer_discovery.h"
 #include "../utils/time_utils.h"
@@ -184,10 +185,10 @@ void handleConfigGet(AsyncWebServerRequest *request)
         leds["count"] = DEFAULT_LED_COUNT;
         leds["brightness"] = DEFAULT_LED_BRIGHTNESS;
         leds["refreshRate"] = DEFAULT_LED_REFRESH_RATE;
-        leds["effectFadeSpeed"] = DEFAULT_LED_EFFECT_FADE_SPEED;
-        leds["twinkleDensity"] = DEFAULT_LED_TWINKLE_DENSITY;
-        leds["chaseSpeed"] = DEFAULT_LED_CHASE_SPEED;
-        leds["matrixDrops"] = DEFAULT_LED_MATRIX_DROPS;
+
+        // Add autonomous per-effect configuration structure
+        LedEffectsConfig defaultEffects = getDefaultLedEffectsConfig();
+        saveLedEffectsToJson(leds, defaultEffects);
     }
 #endif
 
@@ -454,14 +455,12 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
 #ifdef ENABLE_LEDS
-    // Validate LED configuration
+    // Validate LED configuration with new autonomous structure
     JsonObject leds = doc["leds"];
     if (!leds.containsKey("pin") || !leds.containsKey("count") ||
-        !leds.containsKey("brightness") || !leds.containsKey("refreshRate") ||
-        !leds.containsKey("effectFadeSpeed") || !leds.containsKey("twinkleDensity") ||
-        !leds.containsKey("chaseSpeed") || !leds.containsKey("matrixDrops"))
+        !leds.containsKey("brightness") || !leds.containsKey("refreshRate"))
     {
-        sendValidationError(request, ValidationResult(false, "Missing required LED configuration fields"));
+        sendValidationError(request, ValidationResult(false, "Missing required LED hardware configuration fields"));
         return;
     }
 
@@ -469,10 +468,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
     int ledCount = leds["count"];
     int ledBrightness = leds["brightness"];
     int ledRefreshRate = leds["refreshRate"];
-    int ledEffectFadeSpeed = leds["effectFadeSpeed"];
-    int ledTwinkleDensity = leds["twinkleDensity"];
-    int ledChaseSpeed = leds["chaseSpeed"];
-    int ledMatrixDrops = leds["matrixDrops"];
 
     // Validate LED pin (ESP32-C3 specific)
     if (ledPin < 0 || ledPin > 10)
@@ -502,26 +497,65 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Validate effect parameters
-    if (ledEffectFadeSpeed < 1 || ledEffectFadeSpeed > 255)
+    // Validate autonomous per-effect configurations if present
+    JsonObject effects = leds["effects"];
+    if (!effects.isNull())
     {
-        sendValidationError(request, ValidationResult(false, "LED fade speed must be between 1 and 255"));
-        return;
-    }
-    if (ledTwinkleDensity < 1 || ledTwinkleDensity > 20)
-    {
-        sendValidationError(request, ValidationResult(false, "LED twinkle density must be between 1 and 20"));
-        return;
-    }
-    if (ledChaseSpeed < 1 || ledChaseSpeed > 10)
-    {
-        sendValidationError(request, ValidationResult(false, "LED chase speed must be between 1 and 10"));
-        return;
-    }
-    if (ledMatrixDrops < 1 || ledMatrixDrops > 15)
-    {
-        sendValidationError(request, ValidationResult(false, "LED matrix drops must be between 1 and 15"));
-        return;
+        // Validate Chase Single if present
+        JsonObject chaseSingle = effects["chaseSingle"];
+        if (!chaseSingle.isNull())
+        {
+            int speed = chaseSingle["speed"];
+            if (speed < 1 || speed > 100)
+            {
+                sendValidationError(request, ValidationResult(false, "Chase Single speed must be between 1 and 100"));
+                return;
+            }
+        }
+
+        // Validate Chase Multi if present
+        JsonObject chaseMulti = effects["chaseMulti"];
+        if (!chaseMulti.isNull())
+        {
+            int speed = chaseMulti["speed"];
+            if (speed < 1 || speed > 100)
+            {
+                sendValidationError(request, ValidationResult(false, "Chase Multi speed must be between 1 and 100"));
+                return;
+            }
+        }
+
+        // Validate Matrix if present
+        JsonObject matrix = effects["matrix"];
+        if (!matrix.isNull())
+        {
+            int drops = matrix["drops"];
+            if (drops < 1 || drops > 20)
+            {
+                sendValidationError(request, ValidationResult(false, "Matrix drops must be between 1 and 20"));
+                return;
+            }
+        }
+
+        // Validate Twinkle if present
+        JsonObject twinkle = effects["twinkle"];
+        if (!twinkle.isNull())
+        {
+            int density = twinkle["density"];
+            if (density < 1 || density > 20)
+            {
+                sendValidationError(request, ValidationResult(false, "Twinkle density must be between 1 and 20"));
+                return;
+            }
+            int fadeSpeed = twinkle["fadeSpeed"];
+            if (fadeSpeed < 1 || fadeSpeed > 255)
+            {
+                sendValidationError(request, ValidationResult(false, "Twinkle fade speed must be between 1 and 255"));
+                return;
+            }
+        }
+
+        // Add more effect validations as needed...
     }
 #endif
 
@@ -554,8 +588,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         // Reinitialize LED system with new configuration
         const RuntimeConfig &config = getRuntimeConfig();
         if (ledEffects.reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
-                                    config.ledRefreshRate, config.ledEffectFadeSpeed,
-                                    config.ledTwinkleDensity, config.ledChaseSpeed, config.ledMatrixDrops))
+                                    config.ledRefreshRate, config.ledEffects))
         {
             LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
 

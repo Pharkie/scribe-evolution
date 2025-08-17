@@ -23,8 +23,9 @@ class PulseWave : public EffectBase
 public:
     /**
      * @brief Constructor
+     * @param config Configuration for the pulse effect
      */
-    PulseWave();
+    PulseWave(const PulseConfig &config);
 
     /**
      * @brief Update the pulse wave effect
@@ -49,7 +50,8 @@ public:
     bool isCycleBased() const override { return false; } // Duration-based
 
 private:
-    int frameCounter; // Frame counter for speed control
+    PulseConfig config; // Store the autonomous configuration
+    int frameCounter;   // Frame counter for speed control
 };
 
 #endif // ENABLE_LEDS

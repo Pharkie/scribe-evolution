@@ -79,29 +79,7 @@ static const ButtonConfig defaultButtons[] = {
 // Enabled via build flags (-DENABLE_LEDS=1 in platformio.ini)
 
 #ifdef ENABLE_LEDS
-// LED Hardware Configuration - Runtime Configurable Defaults
-static const int DEFAULT_LED_PIN = 4;    // GPIO pin for LED strip data (avoid pins used for other functions)
-static const int DEFAULT_LED_COUNT = 30; // Number of LEDs in the strip
-// Note: LED_TYPE and COLOR_ORDER are defined in LedEffects.cpp using FastLED constants
-
-// LED Performance Configuration - Runtime Configurable Defaults
-static const int DEFAULT_LED_BRIGHTNESS = 64;                                             // Default brightness (0-255, 64 = 25% to save power)
-static const int DEFAULT_LED_REFRESH_RATE = 60;                                           // Refresh rate in Hz (60Hz is smooth for most effects)
-static const unsigned long DEFAULT_LED_UPDATE_INTERVAL = 1000 / DEFAULT_LED_REFRESH_RATE; // Update interval in milliseconds
-
-// LED Effect Configuration - Runtime Configurable Defaults
-static const int DEFAULT_LED_EFFECT_FADE_SPEED = 5; // Fade speed for transitions (1-255)
-static const int DEFAULT_LED_TWINKLE_DENSITY = 8;   // Number of twinkle stars simultaneously
-static const int DEFAULT_LED_CHASE_SPEED = 5;       // Chase effect delay (higher = slower: 1=60fps, 5=12fps, 10=6fps)
-static const int DEFAULT_LED_MATRIX_DROPS = 5;      // Number of matrix drops simultaneously
-
-// LED Effect Constants - Fixed behavior parameters
-static const int CHASE_TRAIL_LENGTH = 15;          // Length of chase effect trail
-static const int CHASE_TRAIL_FADE_STEP = 15;       // Fade amount per trail step (0-255)
-static const int MATRIX_BACKGROUND_FADE = 64;      // Matrix background fade amount
-static const int MATRIX_TRAIL_FADE = 32;           // Matrix trail fade amount
-static const int MATRIX_BRIGHTNESS_FADE_STEP = 40; // Matrix brightness fade per tail position
-static const float RAINBOW_WAVE_SPEED = 2.0f;      // Rainbow wave animation speed
+#include "led_config.h"
 #endif
 
 // ============================================================================

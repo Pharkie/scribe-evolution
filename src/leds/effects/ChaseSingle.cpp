@@ -13,9 +13,10 @@
 
 #include "../../core/logging.h"
 #include "../../core/config.h"
+#include "../../core/led_config.h"
 
-ChaseSingle::ChaseSingle(int chaseSpeed)
-    : chaseSpeed(chaseSpeed), isCycleBasedMode(true), targetCycles(1), frameCounter(0)
+ChaseSingle::ChaseSingle(const ChaseSingleConfig &config)
+    : config(config), isCycleBasedMode(true), targetCycles(1), frameCounter(0)
 {
 }
 
@@ -28,7 +29,7 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
     if (isCycleBasedMode)
     {
         // Cycle-based: run from start to end, then wait for trail to completely exit
-        int totalSteps = ledCount + CHASE_TRAIL_LENGTH; // Include trail length for complete exit
+        int totalSteps = ledCount + config.trailLength; // Include trail length for complete exit
         int currentPosition = effectStep;
 
         if (currentPosition < ledCount)
@@ -38,20 +39,20 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         }
 
         // Add trailing dots with fading (only show trail positions within strip bounds)
-        for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
+        for (int i = 1; i <= config.trailLength; i++)
         {
             int trailPos = currentPosition - i;
             if (trailPos >= 0 && trailPos < ledCount) // Only show trail if within strip bounds (no wrapping)
             {
                 CRGB trailColor = color1;
-                trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP); // Fade each trailing dot
+                trailColor.fadeToBlackBy(i * config.trailFade); // Fade each trailing dot
                 leds[trailPos] = trailColor;
             }
         }
 
-        // Use frame counter for speed control (higher chaseSpeed = slower movement)
+        // Use frame counter for speed control (higher speed = slower movement)
         frameCounter++;
-        if (frameCounter >= chaseSpeed)
+        if (frameCounter >= config.speed)
         {
             frameCounter = 0;
             effectStep++; // Only advance position when frame counter reaches speed threshold
@@ -77,17 +78,17 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         leds[position] = color1;
 
         // Add trailing dots with fading - always show full trail
-        for (int i = 1; i <= CHASE_TRAIL_LENGTH; i++)
+        for (int i = 1; i <= config.trailLength; i++)
         {
             int trailPos = (position - i + ledCount) % ledCount;
             CRGB trailColor = color1;
-            trailColor.fadeToBlackBy(i * CHASE_TRAIL_FADE_STEP); // Fade each trailing dot
+            trailColor.fadeToBlackBy(i * config.trailFade); // Fade each trailing dot
             leds[trailPos] = trailColor;
         }
 
-        // Use frame counter for speed control (higher chaseSpeed = slower movement)
+        // Use frame counter for speed control (higher speed = slower movement)
         frameCounter++;
-        if (frameCounter >= chaseSpeed)
+        if (frameCounter >= config.speed)
         {
             frameCounter = 0;
             effectStep++; // Only advance position when frame counter reaches speed threshold

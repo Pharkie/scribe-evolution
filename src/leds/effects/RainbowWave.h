@@ -23,8 +23,9 @@ class RainbowWave : public EffectBase
 public:
     /**
      * @brief Constructor
+     * @param config Configuration for the rainbow effect
      */
-    RainbowWave();
+    RainbowWave(const RainbowConfig &config);
 
     /**
      * @brief Update the rainbow wave effect
@@ -49,7 +50,8 @@ public:
     bool isCycleBased() const override { return false; } // Duration-based
 
 private:
-    int frameCounter; // Frame counter for speed control
+    RainbowConfig config; // Store the autonomous configuration
+    int frameCounter;     // Frame counter for speed control
 
     /**
      * @brief Convert hue to RGB color (color wheel function)
