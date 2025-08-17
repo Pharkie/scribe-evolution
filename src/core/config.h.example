@@ -18,7 +18,7 @@
  *
  * Based on the original Project Scribe by UrbanCircles.
  * 
- * INSTRUCTIONS: This file contains default configuration values.
+ * INSTRUCTIONS: Copy this file to config.h and fill in your actual credentials.
  * The config.h file is gitignored to keep your secrets safe.
  */
 
@@ -75,6 +75,32 @@ static const ButtonConfig defaultButtons[] = {
     {8, "/api/quiz", "", "", ""}                 // Button 4: GPIO 8 - local printing for short action, no long action
 };
 
+// LEDs: Optional FastLED support
+// Uncomment the following line to enable LED strip support
+#define ENABLE_LEDS
+
+#ifdef ENABLE_LEDS
+// LED Hardware Configuration - Runtime Configurable Defaults
+static const int DEFAULT_LED_PIN = 4;    // GPIO pin for LED strip data (avoid pins used for other functions)
+static const int DEFAULT_LED_COUNT = 30; // Number of LEDs in the strip
+// Note: LED_TYPE and COLOR_ORDER are defined in LedEffects.cpp using FastLED constants
+
+// LED Performance Configuration - Runtime Configurable Defaults
+static const int DEFAULT_LED_BRIGHTNESS = 64;                                             // Default brightness (0-255, 64 = 25% to save power)
+static const int DEFAULT_LED_REFRESH_RATE = 60;                                           // Refresh rate in Hz (60Hz is smooth for most effects)
+static const unsigned long DEFAULT_LED_UPDATE_INTERVAL = 1000 / DEFAULT_LED_REFRESH_RATE; // Update interval in milliseconds
+
+// LED Effect Configuration - Runtime Configurable Defaults
+static const int DEFAULT_LED_EFFECT_FADE_SPEED = 5; // Fade speed for transitions (1-255)
+static const int DEFAULT_LED_TWINKLE_DENSITY = 8;   // Number of twinkle stars simultaneously
+static const int DEFAULT_LED_CHASE_SPEED = 3;       // Chase effect speed (pixels per update)
+static const int DEFAULT_LED_MATRIX_DROPS = 5;      // Number of matrix drops simultaneously
+#endif
+
+// ============================================================================
+// BACKEND CONSTANTS - Fixed at compile time, not user-configurable
+// ============================================================================
+
 // Hardware button settings
 static const int numHardwareButtons = sizeof(defaultButtons) / sizeof(defaultButtons[0]); // Automatically calculated
 static const unsigned long buttonDebounceMs = 50;                                         // Debounce time in milliseconds
@@ -85,34 +111,6 @@ static const bool buttonActiveLow = true;                                       
 static const unsigned long buttonMinInterval = 3000;      // 3 seconds minimum between button presses
 static const unsigned long buttonMaxPerMinute = 20;       // 20 button presses per minute max
 static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
-
-// ============================================================================
-// LED STRIP CONFIGURATION - Optional FastLED support
-// ============================================================================
-// Uncomment the following line to enable LED strip support
-#define ENABLE_LEDS
-
-#ifdef ENABLE_LEDS
-// LED Hardware Configuration - Runtime Configurable Defaults
-static const int DEFAULT_LED_PIN = 4;    // GPIO pin for LED strip data (avoid pins used for other functions)
-static const int DEFAULT_LED_COUNT = 30; // Number of LEDs in the strip
-// Note: LED_TYPE and COLOR_ORDER are defined in LedEffects.cpp using FastLED constants
-
-// LED Performance Configuration - Runtime Configurable Defaults  
-static const int DEFAULT_LED_BRIGHTNESS = 64;                                     // Default brightness (0-255, 64 = 25% to save power)
-static const int DEFAULT_LED_REFRESH_RATE = 60;                                   // Refresh rate in Hz (60Hz is smooth for most effects)
-static const unsigned long DEFAULT_LED_UPDATE_INTERVAL = 1000 / DEFAULT_LED_REFRESH_RATE; // Update interval in milliseconds
-
-// LED Effect Configuration - Runtime Configurable Defaults
-static const int DEFAULT_LED_EFFECT_FADE_SPEED = 5; // Fade speed for transitions (1-255)
-static const int DEFAULT_LED_TWINKLE_DENSITY = 8;   // Number of twinkle stars simultaneously
-static const int DEFAULT_LED_CHASE_SPEED = 3;       // Chase effect speed (pixels per update)
-static const int DEFAULT_LED_MATRIX_DROPS = 5;      // Number of matrix drops simultaneously
-#endif                                      // ENABLE_LEDS
-
-// ============================================================================
-// BACKEND CONSTANTS - Fixed at compile time, not user-configurable
-// ============================================================================
 
 // Network & Time Configuration
 static const char *ntpServers[] = {
