@@ -38,10 +38,18 @@ function populateForm(config) {
     setElementValue('time-end', config.unbiddenInk?.endHour !== undefined ? config.unbiddenInk.endHour : 22);
     updateTimeRange();
     
+    // Initialize click areas after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        updateClickAreas();
+    }, 100);
+    
     // Frequency and prompt
     setElementValue('frequency-minutes', config.unbiddenInk?.frequencyMinutes || 60);
     updateSliderFromFrequency(config.unbiddenInk?.frequencyMinutes || 60);
     setElementValue('unbidden-ink-prompt', config.unbiddenInk?.prompt || '');
+    
+    // Check if custom prompt matches any preset and select it visually
+    matchCustomPromptToPreset(config.unbiddenInk?.prompt || '');
     
     // Button configuration
     for (let i = 0; i < 4; i++) {
@@ -245,9 +253,14 @@ function updateTimeRange(slider, type) {
     // Debug: Log the values
     console.log('updateTimeRange - startVal:', startVal, 'endVal:', endVal, 'type:', type);
     
-    // Special case: Allow 0-0 for full day operation (24 hours)
-    if (startVal === 0 && endVal === 0) {
-        // This is valid - full day operation
+    // Special case: Allow 0-0 for full day operation (24 hours) OR 0-24 for full day
+    if ((startVal === 0 && endVal === 0) || (startVal === 0 && endVal === 24)) {
+        // This is valid - full day operation  
+        // Normalize 0-24 to 0-0 for consistency
+        if (endVal === 24) {
+            endSlider.value = 0;
+            endVal = 0;
+        }
     } else {
         // Smart collision handling - move the other handle when possible
         if (type === 'start') {
@@ -276,7 +289,7 @@ function updateTimeRange(slider, type) {
             }
         } else {
             // No type specified - use original logic for when called from config loading
-            if (startVal >= endVal) {
+            if (startVal >= endVal && !(startVal === 0 && endVal === 0)) {
                 if (endVal < 24) {
                     // Move end handle forward
                     endVal = startVal + 1;
@@ -298,9 +311,10 @@ function updateTimeRange(slider, type) {
     const track = document.getElementById('time-track');
     if (track) {
         if (startVal === 0 && endVal === 0) {
-            // Full day operation - show full width
+            // Full day operation - show full width with special styling
             track.style.left = '0%';
             track.style.width = '100%';
+            track.classList.add('all-day-track'); // Add CSS class for special styling if needed
         } else {
             // Calculate percentages based on where the slider thumbs actually appear
             const startPercent = (startVal / 24) * 100;
@@ -308,6 +322,7 @@ function updateTimeRange(slider, type) {
             
             track.style.left = startPercent + '%';
             track.style.width = (endPercent - startPercent) + '%';
+            track.classList.remove('all-day-track');
         }
     }
     
@@ -315,14 +330,21 @@ function updateTimeRange(slider, type) {
     const startDisplay = document.getElementById('time-display-start');
     const endDisplay = document.getElementById('time-display-end');
     
-    // Format hour 24 as 00:00 (midnight of next day)
-    const formatHour = (hour) => {
-        if (hour === 24) return '00:00';
+    // Format hour with special handling for all-day and midnight
+    const formatHour = (hour, isEnd = false) => {
+        // Special case: 0-0 means "All Day"
+        if (startVal === 0 && endVal === 0) {
+            return isEnd ? '24:00 (All Day)' : '00:00 (All Day)';
+        }
+        
+        // Normal case: format as 24-hour time
+        if (hour === 24) return '00:00 (next day)';
+        if (hour === 0) return '00:00';
         return String(hour).padStart(2, '0') + ':00';
     };
     
-    if (startDisplay) startDisplay.textContent = formatHour(startVal);
-    if (endDisplay) endDisplay.textContent = formatHour(endVal);
+    if (startDisplay) startDisplay.textContent = formatHour(startVal, false);
+    if (endDisplay) endDisplay.textContent = formatHour(endVal, true);
     
     // Update click areas after any changes
     updateClickAreas();
@@ -501,20 +523,33 @@ function updateFrequencyDisplay() {
         return `${hour - 12} pm`;
     };
     
-    const startTime = formatHour(startHour);
-    const endTime = formatHour(endHour);
-    
-    let text;
-    
-    if (minutes < 60) {
-        text = `Around every ${minutes} minutes from ${startTime} to ${endTime} each day`;
-    } else {
-        const hours = Math.floor(minutes / 60);
-        const remainingMinutes = minutes % 60;
-        if (remainingMinutes === 0) {
-            text = `Around every ${hours} hour${hours !== 1 ? 's' : ''} from ${startTime} to ${endTime} each day`;
+    // Special case for all-day operation
+    if (startHour === 0 && endHour === 0) {
+        if (minutes < 60) {
+            text = `Around every ${minutes} minutes, all day long`;
         } else {
-            text = `Around every ${hours}h ${remainingMinutes}m from ${startTime} to ${endTime} each day`;
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            if (remainingMinutes === 0) {
+                text = `Around every ${hours} hour${hours !== 1 ? 's' : ''}, all day long`;
+            } else {
+                text = `Around every ${hours}h ${remainingMinutes}m, all day long`;
+            }
+        }
+    } else {
+        const startTime = formatHour(startHour);
+        const endTime = formatHour(endHour);
+        
+        if (minutes < 60) {
+            text = `Around every ${minutes} minutes from ${startTime} to ${endTime} each day`;
+        } else {
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            if (remainingMinutes === 0) {
+                text = `Around every ${hours} hour${hours !== 1 ? 's' : ''} from ${startTime} to ${endTime} each day`;
+            } else {
+                text = `Around every ${hours}h ${remainingMinutes}m from ${startTime} to ${endTime} each day`;
+            }
         }
     }
     
@@ -544,7 +579,55 @@ function setPrompt(promptText) {
         textarea.value = promptText;
         // Trigger any change events
         textarea.dispatchEvent(new Event('input'));
+        
+        // Highlight the matching preset button
+        highlightMatchingPreset(promptText);
     }
+}
+
+/**
+ * Match custom prompt to preset and highlight if exact match
+ * @param {string} customPrompt - The custom prompt text to match
+ */
+function matchCustomPromptToPreset(customPrompt) {
+    if (!customPrompt) return;
+    
+    // Define the preset prompts (must match exactly with HTML onclick values)
+    const presetPrompts = [
+        'Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.',
+        'Generate a fun fact under 200 characters about BBC Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history that is esoteric and only 5% of fans might know.',
+        'Write a short, humorous observation about everyday life or a witty one-liner. Keep it light and under 200 characters.',
+        'Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.'
+    ];
+    
+    // Check for exact match
+    const matchingIndex = presetPrompts.findIndex(preset => preset === customPrompt);
+    
+    if (matchingIndex !== -1) {
+        // Highlight the matching preset after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            highlightMatchingPreset(customPrompt);
+        }, 150);
+    }
+}
+
+/**
+ * Highlight the preset button that matches the given prompt text
+ * @param {string} promptText - The prompt text to find and highlight
+ */
+function highlightMatchingPreset(promptText) {
+    // Remove existing highlights
+    document.querySelectorAll('.prompt-preset').forEach(button => {
+        button.classList.remove('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
+    });
+    
+    // Find and highlight the matching preset
+    document.querySelectorAll('.prompt-preset').forEach(button => {
+        const onclick = button.getAttribute('onclick');
+        if (onclick && onclick.includes(promptText.replace(/'/g, "\\'"))) {
+            button.classList.add('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
+        }
+    });
 }
 
 // =============================================================================
@@ -637,5 +720,7 @@ window.SettingsUI = {
     updateSliderFromFrequency,
     updateFrequencyDisplay,
     setFrequency,
-    setPrompt
+    setPrompt,
+    matchCustomPromptToPreset,
+    highlightMatchingPreset
 };
