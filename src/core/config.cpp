@@ -20,3 +20,6 @@
  */
 
 #include "config.h"
+
+// This file can contain runtime configuration variables if needed in the future
+// Currently all configuration constants are defined as constexpr in config.h
