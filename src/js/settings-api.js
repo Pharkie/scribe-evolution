@@ -35,7 +35,6 @@ async function loadConfiguration() {
 async function saveConfiguration(configData) {
     try {
         console.log('API: Sending config to server...');
-        console.log('API: Config data:', JSON.stringify(configData, null, 2));
         
         const response = await fetch('/api/config', {
             method: 'POST',

@@ -5,7 +5,16 @@
  */
 
 /**
- * Populate all form s/**
+ * Format hour for 24-hour display
+ * @param {number} hour - Hour value (0-23, or 24 for midnight next day)
+ * @returns {string} Formatted time string
+ */
+function formatHour(hour) {
+    if (hour === 24) return '00:00';
+    return String(hour).padStart(2, '0') + ':00';
+}
+
+/**
  * Update the visual time range display only - no collision detection
  * Used when loading configuration to preserve exact values
  */
@@ -18,18 +27,16 @@ function updateTimeRangeDisplay() {
     const startVal = parseInt(startSlider.value);
     const endVal = parseInt(endSlider.value);
     
-    console.log('DEBUG updateTimeRangeDisplay: startVal =', startVal, 'endVal =', endVal);
-    
     const track = document.getElementById('time-track');
     if (track) {
-        if (startVal === 0 && endVal === 0) {
+        if (startVal === 0 && endVal === 24) {
             // Full day operation - show full width
             track.style.left = '0%';
             track.style.width = '100%';
         } else {
-            // Calculate percentages based on slider positioning - track should end at handle position
+            // Calculate percentages based on slider positioning
             const startPercent = (startVal / 23) * 100;
-            const endPercent = (endVal / 23) * 100; // End exactly at the handle position
+            const endPercent = (endVal / 23) * 100;
             
             track.style.left = startPercent + '%';
             track.style.width = (endPercent - startPercent) + '%';
@@ -39,15 +46,6 @@ function updateTimeRangeDisplay() {
     // Update time display labels  
     const startDisplay = document.getElementById('time-display-start');
     const endDisplay = document.getElementById('time-display-end');
-    
-    // Format hour display
-    const formatHour = (hour) => {
-        console.log('DEBUG formatHour: input hour =', hour);
-        if (hour === 24) return '00:00';
-        const result = String(hour).padStart(2, '0') + ':00';
-        console.log('DEBUG formatHour: output =', result);
-        return result;
-    };
     
     if (startDisplay) startDisplay.textContent = formatHour(startVal);
     if (endDisplay) endDisplay.textContent = formatHour(endVal);
@@ -85,17 +83,16 @@ function populateForm(config) {
     // Unbidden Ink configuration
     setElementChecked('unbidden-ink-enabled', config.unbiddenInk.enabled);
     
+    // Show/hide Unbidden Ink settings based on checkbox state
+    toggleUnbiddenInkSettings();
+    
     // Time range sliders
-    console.log('DEBUG populateForm: setting startHour =', config.unbiddenInk.startHour, 'endHour =', config.unbiddenInk.endHour);
     setElementValue('time-start', config.unbiddenInk.startHour);
     setElementValue('time-end', config.unbiddenInk.endHour);
     
     // Initialize time range display and click areas immediately
-    console.log('DEBUG populateForm: about to call updateTimeRangeDisplay()');
     updateTimeRangeDisplay(); 
-    updateClickAreas();
-    
-    // Frequency and prompt
+    updateClickAreas();    // Frequency and prompt
     setElementValue('frequency-minutes', config.unbiddenInk.frequencyMinutes);
     updateSliderFromFrequency(config.unbiddenInk.frequencyMinutes);
     
@@ -299,18 +296,15 @@ function updateTimeRange(slider, type) {
     let startVal = parseInt(startSlider.value);
     let endVal = parseInt(endSlider.value);
     
-    // Debug: Log the values
-    console.log('updateTimeRange - startVal:', startVal, 'endVal:', endVal, 'type:', type);
-    
-    // Special case: Allow 0-0 for full day operation (24 hours)  
-    if (startVal === 0 && endVal === 0) {
-        // This is valid - full day operation
+    // Special case: Allow 0-24 for full day operation (24 hours)  
+    if (startVal === 0 && endVal === 24) {
+        // This is valid - full day operation, no collision
     } else {
-        // Smart collision handling - move the other handle when possible
-        if (type === 'start') {
-            if (startVal >= endVal) {
+        // Only fix actual collisions where start >= end
+        if (startVal >= endVal) {
+            if (type === 'start') {
+                // User moved start handle, adjust end if possible
                 if (endVal < 23) {
-                    // Move end handle forward
                     endVal = startVal + 1;
                     endSlider.value = endVal;
                 } else {
@@ -318,11 +312,9 @@ function updateTimeRange(slider, type) {
                     startVal = 22;
                     startSlider.value = startVal;
                 }
-            }
-        } else if (type === 'end') {
-            if (endVal <= startVal) {
+            } else if (type === 'end') {
+                // User moved end handle, adjust start if possible
                 if (startVal > 0) {
-                    // Move start handle backward
                     startVal = endVal - 1;
                     startSlider.value = startVal;
                 } else {
@@ -331,20 +323,8 @@ function updateTimeRange(slider, type) {
                     endSlider.value = endVal;
                 }
             }
-        } else {
-            // No type specified - use original logic for when called from config loading
-            if (startVal >= endVal) {
-                if (endVal < 23) {
-                    // Move end handle forward
-                    endVal = startVal + 1;
-                    endSlider.value = endVal;
-                } else {
-                    // End can't move, constrain start
-                    startVal = 22;
-                    startSlider.value = startVal;
-                }
-            }
         }
+        // If startVal < endVal, no collision - do nothing
     }
     
     // Get final values after any adjustments
@@ -354,7 +334,7 @@ function updateTimeRange(slider, type) {
     // Update visual track with accurate positioning
     const track = document.getElementById('time-track');
     if (track) {
-        if (startVal === 0 && endVal === 0) {
+        if (startVal === 0 && endVal === 24) {
             // Full day operation - show full width
             track.style.left = '0%';
             track.style.width = '100%';
@@ -371,12 +351,6 @@ function updateTimeRange(slider, type) {
     // Update time displays
     const startDisplay = document.getElementById('time-display-start');
     const endDisplay = document.getElementById('time-display-end');
-    
-    // Format hour 24 as 00:00 (midnight of next day)
-    const formatHour = (hour) => {
-        if (hour === 24) return '00:00';
-        return String(hour).padStart(2, '0') + ':00';
-    };
     
     if (startDisplay) startDisplay.textContent = formatHour(startVal);
     if (endDisplay) endDisplay.textContent = formatHour(endVal);
@@ -430,37 +404,37 @@ function handleSliderClick(event, type) {
         const endVal = parseInt(endSlider.value);
         
         // Collision avoidance: move other handle if necessary
-        if (newStartVal >= endVal && !(newStartVal === 0 && endVal === 0)) {
+        if (newStartVal >= endVal && !(newStartVal === 0 && endVal === 24)) {
             if (endVal < 24) {
                 endSlider.value = newStartVal + 1;
             } else {
                 startSlider.value = endVal - 1;
-                updateTimeRange();
+                updateTimeRange(startSlider, 'start');
                 updateClickAreas();
                 return;
             }
         }
         
         startSlider.value = newStartVal;
-        updateTimeRange();
+        updateTimeRange(startSlider, 'start');
     } else if (type === 'end') {
         const newEndVal = Math.max(0, Math.min(24, clickHour));
         const startVal = parseInt(startSlider.value);
         
         // Collision avoidance: move other handle if necessary
-        if (newEndVal <= startVal && !(startVal === 0 && newEndVal === 0)) {
+        if (newEndVal <= startVal && !(startVal === 0 && newEndVal === 24)) {
             if (startVal > 0) {
                 startSlider.value = newEndVal - 1;
             } else {
                 endSlider.value = startVal + 1;
-                updateTimeRange();
+                updateTimeRange(endSlider, 'end');
                 updateClickAreas();
                 return;
             }
         }
         
         endSlider.value = newEndVal;
-        updateTimeRange();
+        updateTimeRange(endSlider, 'end');
     }
     
     updateClickAreas();
@@ -549,11 +523,6 @@ function updateFrequencyDisplay() {
     const minutes = parseInt(input.value);
     const startHour = parseInt(startSlider.value);
     const endHour = parseInt(endSlider.value);
-    
-    // Format hours for display using 24-hour format
-    const formatHour = (hour) => {
-        return String(hour).padStart(2, '0') + ':00';
-    };
     
     const startTime = formatHour(startHour);
     const endTime = formatHour(endHour);
@@ -679,12 +648,8 @@ function highlightMatchingPreset(promptText) {
 function setElementValue(id, value) {
     const element = document.getElementById(id);
     if (element) {
-        element.value = value || '';
-        
-        // Only debug time-related elements
-        if (id === 'time-start' || id === 'time-end') {
-            console.log('DEBUG setElementValue: id =', id, 'value =', value, 'element.value after set =', element.value);
-        }
+        // Use nullish coalescing (??) instead of logical OR (||) to preserve falsy values like 0
+        element.value = value ?? '';
     }
 }
 
