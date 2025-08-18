@@ -4,6 +4,9 @@
  * @description Focused module for user interface operations, form population, and message display
  */
 
+// Constants for frequency slider mapping
+const FREQUENCY_VALUES = [15, 30, 45, 60, 120, 240, 360, 480];
+
 /**
  * Format hour for 24-hour display
  * @param {number} hour - Hour value (0-24)
@@ -484,8 +487,7 @@ function updateClickAreas() {
  */
 function updateFrequencyFromSlider(sliderValue) {
     // Map slider positions to frequency values
-    const frequencyValues = [15, 30, 45, 60, 120, 240, 360, 480];
-    const minutes = frequencyValues[parseInt(sliderValue)];
+    const minutes = FREQUENCY_VALUES[parseInt(sliderValue)];
     
     const input = document.getElementById('frequency-minutes');
     if (input) {
@@ -499,8 +501,7 @@ function updateFrequencyFromSlider(sliderValue) {
  * @param {number} minutes - Frequency in minutes
  */
 function updateSliderFromFrequency(minutes) {
-    const frequencyValues = [15, 30, 45, 60, 120, 240, 360, 480];
-    const sliderPosition = frequencyValues.indexOf(parseInt(minutes));
+    const sliderPosition = FREQUENCY_VALUES.indexOf(parseInt(minutes));
     
     const slider = document.getElementById('frequency-slider');
     if (slider && sliderPosition !== -1) {

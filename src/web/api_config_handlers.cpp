@@ -375,7 +375,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    if (frequency < 15 || frequency > 480)
+    if (frequency < minUnbiddenInkFrequencyMinutes || frequency > maxUnbiddenInkFrequencyMinutes)
     {
         sendValidationError(request, ValidationResult(false, "Frequency must be between 15 minutes and 8 hours"));
         return;
