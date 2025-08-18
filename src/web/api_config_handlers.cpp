@@ -363,9 +363,9 @@ void handleConfigPost(AsyncWebServerRequest *request)
     int endHour = unbiddenInk["endHour"];
     int frequency = unbiddenInk["frequencyMinutes"];
 
-    if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23)
+    if (startHour < 0 || startHour > 24 || endHour < 0 || endHour > 24)
     {
-        sendValidationError(request, ValidationResult(false, "Hours must be between 0 and 23"));
+        sendValidationError(request, ValidationResult(false, "Hours must be between 0 and 24"));
         return;
     }
 
