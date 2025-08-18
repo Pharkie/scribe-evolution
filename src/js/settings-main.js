@@ -205,38 +205,21 @@ function setupPromptPresetHandlers() {
         'Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.'
     ];
     
-    // Find all prompt preset buttons and set up their data attributes and event listeners
-    const buttons = document.querySelectorAll('.prompt-preset[onclick*="setPrompt"]');
+    // Find all prompt preset buttons by class and set up event listeners
+    const buttons = document.querySelectorAll('.prompt-preset');
     
-    buttons.forEach(button => {
-        const onclickAttr = button.getAttribute('onclick');
-        if (onclickAttr) {
-            // Extract the prompt text from the onclick attribute with robust parsing
-            // This regex handles escaped single quotes properly: (?:[^'\\]|\\.)*
-            const match = onclickAttr.match(/setPrompt\('((?:[^'\\]|\\.)*)'\)/);
-            if (match) {
-                // Properly unescape the captured text
-                const promptText = match[1]
-                    .replace(/\\'/g, "'")    // Unescape single quotes
-                    .replace(/\\"/g, '"')    // Unescape double quotes  
-                    .replace(/\\\\/g, "\\")  // Unescape backslashes
-                    .replace(/\\n/g, "\n")   // Unescape newlines
-                    .replace(/\\t/g, "\t");  // Unescape tabs
-                
-                // Set up event listener
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    window.SettingsUI.setPrompt(promptText);
-                });
-                
-                // Store the prompt text as a data attribute for later use in highlighting
-                button.setAttribute('data-prompt-text', promptText);
-                
-                // Remove inline handler after storing the data
-                button.removeAttribute('onclick');
-            } else {
-                console.warn('Could not parse onclick attribute:', onclickAttr);
-            }
+    buttons.forEach((button, index) => {
+        if (index < presetPrompts.length) {
+            const promptText = presetPrompts[index];
+            
+            // Set up event listener
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.SettingsUI.setPrompt(promptText);
+            });
+            
+            // Store the prompt text as a data attribute for later use in highlighting
+            button.setAttribute('data-prompt-text', promptText);
         }
     });
 }
@@ -252,16 +235,12 @@ function setupTimeRangeClickHandlers() {
         startClickArea.addEventListener('click', function(e) {
             window.SettingsUI.handleSliderClick(e, 'start');
         });
-        // Remove inline handler
-        startClickArea.removeAttribute('onclick');
     }
     
     if (endClickArea) {
         endClickArea.addEventListener('click', function(e) {
             window.SettingsUI.handleSliderClick(e, 'end');
         });
-        // Remove inline handler
-        endClickArea.removeAttribute('onclick');
     }
 }
 
@@ -275,8 +254,6 @@ function setupBackButtonHandler() {
             e.preventDefault();
             window.SettingsUI.goBack();
         });
-        // Remove inline handler
-        backButton.removeAttribute('onclick');
     }
 }
 
@@ -284,14 +261,12 @@ function setupBackButtonHandler() {
  * Setup test button handlers
  */
 function setupTestButtonHandlers() {
-    const testUnbiddenButton = document.querySelector('[onclick*="testUnbiddenInk()"]');
+    const testUnbiddenButton = document.querySelector('[data-test-action="unbidden-ink"]');
     if (testUnbiddenButton) {
         testUnbiddenButton.addEventListener('click', function(e) {
             e.preventDefault();
             handleTestUnbiddenInk();
         });
-        // Remove inline handler
-        testUnbiddenButton.removeAttribute('onclick');
     }
 }
 
@@ -299,35 +274,27 @@ function setupTestButtonHandlers() {
  * Setup LED demo button handlers
  */
 function setupLedDemoHandlers() {
-    // Find all LED demo buttons and add event listeners
-    const ledButtons = document.querySelectorAll('[onclick*="demoLedEffect"]');
+    // Find all LED demo buttons using data attributes
+    const ledButtons = document.querySelectorAll('[data-demo-led-effect]');
     ledButtons.forEach(button => {
-        // Extract effect name from onclick attribute
-        const onclickAttr = button.getAttribute('onclick');
-        const effectMatch = onclickAttr.match(/demoLedEffect\('([^']+)'\)/);
-        
-        if (effectMatch) {
-            const effectName = effectMatch[1];
+        const effectName = button.getAttribute('data-demo-led-effect');
+        if (effectName) {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (window.SettingsLED && window.SettingsLED.demoLedEffect) {
                     window.SettingsLED.demoLedEffect(effectName);
                 }
             });
-            // Remove inline handler
-            button.removeAttribute('onclick');
         }
     });
     
-    // Handle LED off buttons
-    const ledOffButtons = document.querySelectorAll('[onclick*="turnOffLeds"]');
+    // Handle LED off buttons using data attributes
+    const ledOffButtons = document.querySelectorAll('[data-led-action="turn-off"]');
     ledOffButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             handleTurnOffLeds();
         });
-        // Remove inline handler
-        button.removeAttribute('onclick');
     });
 }
 

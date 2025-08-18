@@ -69,10 +69,10 @@ struct ButtonConfig
 // Note GPIO are fixed in config.h, but endpoints can be changed in config.json
 // Empty MQTT topic means use local printing (/print-local equivalent)
 static const ButtonConfig defaultButtons[] = {
-    {5, "/api/joke", "", "/api/print-test", ""}, // Button 1: GPIO 5 - local printing for both actions
-    {6, "/api/riddle", "", "", ""},              // Button 2: GPIO 6 - local printing for short action, no long action
-    {7, "/api/quote", "", "", ""},               // Button 3: GPIO 7 - local printing for short action, no long action
-    {8, "/api/quiz", "", "", ""}                 // Button 4: GPIO 8 - local printing for short action, no long action
+    {5, "/api/joke", "", "/api/character-test", ""}, // Button 1: GPIO 5 - local printing for both actions
+    {6, "/api/riddle", "", "", ""},                  // Button 2: GPIO 6 - local printing for short action, no long action
+    {7, "/api/quote", "", "", ""},                   // Button 3: GPIO 7 - local printing for short action, no long action
+    {8, "/api/quiz", "", "", ""}                     // Button 4: GPIO 8 - local printing for short action, no long action
 };
 
 // LEDs: Optional FastLED support

@@ -447,7 +447,7 @@ function showPrinterInfoOverlay(printerData, printerName, printerType = 'mqtt') 
           <span class="text-2xl mr-2">${printerIcon}</span>
           ${printerName} Details
         </h3>
-        <button onclick="closePrinterInfoOverlay()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+        <button class="close-overlay-btn w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
           <span class="text-gray-600 dark:text-gray-400 text-xl">×</span>
         </button>
       </div>
@@ -458,7 +458,7 @@ function showPrinterInfoOverlay(printerData, printerName, printerType = 'mqtt') 
         <div>
           <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
             <span>MQTT Topic</span>
-            <button onclick="copyToClipboard('${topic}', this)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" title="Copy to clipboard">
+            <button class="copy-topic-btn p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" title="Copy to clipboard" data-topic="${topic}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-gray-500 dark:text-gray-400">
                 <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
               </svg>
@@ -506,6 +506,20 @@ function showPrinterInfoOverlay(printerData, printerName, printerType = 'mqtt') 
   overlay.appendChild(backdrop);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+  
+  // Set up event listeners after DOM creation
+  const closeBtn = modal.querySelector('.close-overlay-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closePrinterInfoOverlay);
+  }
+  
+  const copyBtn = modal.querySelector('.copy-topic-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function() {
+      const topic = this.getAttribute('data-topic');
+      copyToClipboard(topic, this);
+    });
+  }
   
   // Animate in
   requestAnimationFrame(() => {
@@ -594,9 +608,17 @@ function showSuccessToast(message) {
     <div class="flex items-center space-x-2">
       ${message.match(/^[\u{1F000}-\u{1F9FF}]|^[\u{2600}-\u{26FF}]/u) ? '' : '<span class="text-xl">✅</span>'}
       <span class="flex-1">${message}</span>
-      <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-lg font-bold opacity-50 hover:opacity-100">×</button>
+      <button class="toast-close-btn ml-2 text-lg font-bold opacity-50 hover:opacity-100">×</button>
     </div>
   `;
+  
+  // Set up close button event listener
+  const closeBtn = toast.querySelector('.toast-close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function() {
+      this.parentElement.parentElement.remove();
+    });
+  }
   
   container.appendChild(toast);
   

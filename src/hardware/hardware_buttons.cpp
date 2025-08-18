@@ -240,7 +240,7 @@ void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
     {
         contentGenerated = generateAndQueueNews();
     }
-    else if (strcmp(endpoint, "/api/print-test") == 0)
+    else if (strcmp(endpoint, "/api/character-test") == 0)
     {
         contentGenerated = generateAndQueuePrintTest();
     }

@@ -313,7 +313,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/print-local", "Print custom message", handlePrintContent, true);
         registerRoute("GET", "/api/print-local", "Print custom message", handlePrintContent, true);
 
-        registerRoute("POST", "/api/print-test", "Print test pattern", handlePrintTest, true);
+        registerRoute("POST", "/api/character-test", "Print character test pattern", handlePrintTest, true);
         registerRoute("POST", "/api/riddle", "Print random riddle", handleRiddle, true);
         registerRoute("POST", "/api/joke", "Print random joke", handleJoke, true);
         registerRoute("POST", "/api/quote", "Print random quote", handleQuote, true);

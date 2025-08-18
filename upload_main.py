@@ -427,11 +427,37 @@ def upload_filesystem_and_firmware(source, target, env):
     except (OSError, subprocess.SubprocessError) as e:
         print(f"🔇 Could not play sound: {e}")
 
-    # Step 5b: Start monitoring (this will run indefinitely until user exits)
-    print("📺 Starting serial monitor... (Press Ctrl+C to exit)")
-    time.sleep(1)  # Brief pause to let user see the success message
-    _monitor_result = env.Execute("pio run --environment main --target monitor")
-    # Note: _monitor_result will only be set if user exits the monitor
+    # Step 5b: Start monitoring without triggering another reset
+    print("📺 Starting serial monitor without reset... (Press Ctrl+C to exit)")
+    print("⏳ Waiting for natural ESP32 boot to complete...")
+    time.sleep(3)  # Let the ESP32 complete its first boot cycle naturally
+
+    # Find the ESP32 port for monitoring
+    esp32_port = find_esp32_port()
+
+    if esp32_port:
+        print(f"🔌 Monitoring on port: {esp32_port}")
+        try:
+            # Use direct pio device monitor with --no-reset to prevent second reset
+            subprocess.run(
+                [
+                    "pio",
+                    "device",
+                    "monitor",
+                    "--port",
+                    esp32_port,
+                    "--baud",
+                    "115200",
+                    "--no-reset",  # This prevents the monitor from resetting the ESP32
+                ],
+                check=False,
+            )  # Don't fail on Ctrl+C exit
+            print("✅ Serial monitor session ended")
+        except KeyboardInterrupt:
+            print("✅ Serial monitor stopped by user")
+    else:
+        print("⚠️  Could not find ESP32 port, falling back to standard monitor")
+        _monitor_result = env.Execute("pio run --environment main --target monitor")
 
     print("✅ Upload and monitoring session completed!")
 

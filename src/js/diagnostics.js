@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   setupDiagnosticsEventListeners();
   loadDiagnostics();
+  showSection('device-config-section');
 });
 
 /**
@@ -25,6 +26,16 @@ function setupDiagnosticsEventListeners() {
     button.addEventListener('click', function() {
       const sectionName = this.dataset.sectionName;
       copyGenericSection(sectionName, this);
+    });
+  });
+
+  // Quick action buttons (for character test)
+  document.querySelectorAll('.quick-action-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const action = this.dataset.action;
+      if (action) {
+        handleQuickAction(action);
+      }
     });
   });
   
@@ -610,8 +621,49 @@ async function loadDiagnostics() {
   }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-  loadDiagnostics();
-  showSection('device-config-section');
-});
+/**
+ * Handle quick action button clicks (for character test)
+ */
+async function handleQuickAction(action) {
+  try {
+    let endpoint = `/api/${action}`;
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (response.ok) {
+      showToast(`${action} sent successfully!`, 'success');
+    } else {
+      const errorData = await response.text();
+      showToast(`Error: ${errorData}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error sending quick action:', error);
+    showToast(`Network error: ${error.message}`, 'error');
+  }
+}
+
+/**
+ * Show toast notification
+ */
+function showToast(message, type = 'info') {
+  // Simple toast implementation for diagnostics page
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${
+    type === 'success' ? 'bg-green-500' : 
+    type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+  }`;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+
