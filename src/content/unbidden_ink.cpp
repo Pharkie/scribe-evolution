@@ -63,8 +63,8 @@ void initializeUnbiddenInk()
     }
 
     scheduleNextUnbiddenInk();
-    LOG_NOTICE("UNBIDDENINK", "Unbidden Ink feature enabled - Working hours: %02d:00-%02d:00, Frequency: %d minutes",
-               currentSettings.startHour, currentSettings.endHour, currentSettings.frequencyMinutes);
+    LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink feature enabled - Working hours: %02d:00-%02d:00, Frequency: %d minutes",
+                currentSettings.startHour, currentSettings.endHour, currentSettings.frequencyMinutes);
 }
 
 bool isInWorkingHours()
