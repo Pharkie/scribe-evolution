@@ -12,7 +12,21 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize basic UI elements
   initializeSharedUI();
+  
+  // Setup back button event listeners
+  setupBackButtonListeners();
 });
+
+/**
+ * Setup back button event listeners
+ */
+function setupBackButtonListeners() {
+  // Handle back buttons (used on 404 and diagnostics pages)
+  const backButton = document.getElementById('back-button');
+  if (backButton) {
+    backButton.addEventListener('click', goBack);
+  }
+}
 
 /**
  * Keyboard shortcut handling

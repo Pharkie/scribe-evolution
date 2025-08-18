@@ -72,15 +72,73 @@ function setupFormHandler() {
  * Set up additional UI event handlers
  */
 function setupEventHandlers() {
-    // Unbidden Ink toggle handler
-    const unbiddenInkToggle = document.getElementById('unbidden-ink-enabled');
+    // Settings section navigation handlers using data attributes
+    document.querySelectorAll('[data-settings-section]').forEach(button => {
+        button.addEventListener('click', function() {
+            const section = this.dataset.settingsSection;
+            if (typeof showSettingsSection === 'function') {
+                showSettingsSection(section);
+            }
+        });
+    });
+    
+    // Unbidden Ink toggle handler using data attribute
+    const unbiddenInkToggle = document.querySelector('[data-toggle="unbidden-ink-settings"]');
     if (unbiddenInkToggle) {
         unbiddenInkToggle.addEventListener('change', window.SettingsUI.toggleUnbiddenInkSettings);
-        // Remove inline handler
-        unbiddenInkToggle.removeAttribute('onchange');
         // Trigger initial state
         window.SettingsUI.toggleUnbiddenInkSettings();
     }
+    
+    // Slider click handlers using data attributes
+    document.querySelectorAll('[data-slider-type]').forEach(element => {
+        element.addEventListener('click', function(event) {
+            const sliderType = this.dataset.sliderType;
+            if (typeof handleSliderClick === 'function') {
+                handleSliderClick(event, sliderType);
+            }
+        });
+    });
+    
+    // Frequency slider handler using data attribute
+    const frequencySlider = document.querySelector('[data-frequency-slider="true"]');
+    if (frequencySlider) {
+        frequencySlider.addEventListener('input', function() {
+            if (typeof updateFrequencyFromSlider === 'function') {
+                updateFrequencyFromSlider(this.value);
+            }
+        });
+    }
+    
+    // Test button handlers using data attributes  
+    document.querySelectorAll('[data-test-action]').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.dataset.testAction;
+            if (action === 'unbidden-ink' && typeof testUnbiddenInk === 'function') {
+                testUnbiddenInk();
+            }
+        });
+    });
+    
+    // LED demo button handlers using data attributes
+    document.querySelectorAll('[data-demo-led-effect]').forEach(button => {
+        button.addEventListener('click', function() {
+            const effect = this.dataset.demoLedEffect;
+            if (typeof demoLedEffect === 'function') {
+                demoLedEffect(effect);
+            }
+        });
+    });
+    
+    // LED action handlers
+    document.querySelectorAll('[data-led-action]').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.dataset.ledAction;
+            if (action === 'turn-off' && typeof turnOffLeds === 'function') {
+                turnOffLeds();
+            }
+        });
+    });
     
     // Time range slider handlers
     const timeStartSlider = document.getElementById('time-start');
@@ -96,12 +154,6 @@ function setupEventHandlers() {
         // Change handlers for click areas update
         timeStartSlider.addEventListener('change', window.SettingsUI.updateClickAreas);
         timeEndSlider.addEventListener('change', window.SettingsUI.updateClickAreas);
-        
-        // Remove inline handlers since we're handling these events now
-        timeStartSlider.removeAttribute('oninput');
-        timeStartSlider.removeAttribute('onchange');
-        timeEndSlider.removeAttribute('oninput');
-        timeEndSlider.removeAttribute('onchange');
     }
     
     // Custom prompt textarea handler - clear preset highlights when user types
@@ -117,53 +169,15 @@ function setupEventHandlers() {
         });
     }
     
-    // Navigation button handlers
-    setupNavigationHandlers();
-    
-    // Frequency slider handler
-    setupFrequencyHandlers();
-    
-    // Prompt preset button handlers
-    setupPromptPresetHandlers();
-    
-    // Click area handlers for time range sliders
-    setupTimeRangeClickHandlers();
-    
-    // Back button handler
-    setupBackButtonHandler();
-    
-    // Test buttons handlers
-    setupTestButtonHandlers();
-    
-    // LED demo button handlers  
-    setupLedDemoHandlers();
-}
-
-/**
- * Setup navigation button handlers
- */
-function setupNavigationHandlers() {
-    // Settings section navigation buttons
-    const navButtons = [
-        { id: 'nav-wifi', section: 'wifi' },
-        { id: 'nav-device', section: 'device' },
-        { id: 'nav-mqtt', section: 'mqtt' },
-        { id: 'nav-unbidden', section: 'unbidden' },
-        { id: 'nav-buttons', section: 'buttons' },
-        { id: 'nav-leds', section: 'leds' }
-    ];
-    
-    navButtons.forEach(nav => {
-        const button = document.querySelector(`[onclick*="showSettingsSection('${nav.section}')"]`);
-        if (button) {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                window.SettingsUI.showSettingsSection(nav.section);
-            });
-            // Remove inline handler
-            button.removeAttribute('onclick');
-        }
-    });
+    // Setup close button handler
+    const closeButton = document.getElementById('close-button');
+    if (closeButton) {
+        closeButton.addEventListener('click', function() {
+            if (typeof goBack === 'function') {
+                goBack();
+            }
+        });
+    }
 }
 
 /**
