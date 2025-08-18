@@ -216,7 +216,7 @@ function showSettingsSection(sectionName) {
     });
     
     // Find and activate the correct nav button
-    const activeButton = document.querySelector(`[onclick="showSettingsSection('${sectionName}')"]`);
+    const activeButton = document.querySelector(`[data-settings-section="${sectionName}"]`);
     if (activeButton) {
         activeButton.classList.add('active');
     }

@@ -215,6 +215,41 @@
     z-index: 10;
   }
 
+  /* Webkit thumb styling for single-range slider */
+  .single-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    @apply w-6 h-6 bg-blue-500 rounded-full shadow-lg cursor-pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .single-range-input::-webkit-slider-thumb:hover {
+    @apply bg-blue-600;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .single-range-input::-webkit-slider-thumb:active {
+    @apply bg-blue-700;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Firefox thumb styling for single-range slider */
+  .single-range-input::-moz-range-thumb {
+    @apply w-6 h-6 bg-blue-500 rounded-full shadow-lg cursor-pointer border-0;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .single-range-input::-moz-range-thumb:hover {
+    @apply bg-blue-600;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .single-range-input::-moz-range-thumb:active {
+    @apply bg-blue-700;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
   /* Settings section management */
   .settings-section {
     @apply block;

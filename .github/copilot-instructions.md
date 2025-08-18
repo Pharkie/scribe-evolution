@@ -187,6 +187,7 @@ For detailed, context-specific guidance:
    - Verify no duplicate class definitions exist after major refactoring
 
 2. **File Renaming Strategy**: When renaming files systematically:
+
    - Update all includes first: `#include "OldName.h"` → `#include "NewName.h"`
    - Update class names in headers: `class OldClass` → `class NewClass`
    - Update constructor/destructor names: `OldClass::OldClass()` →
@@ -194,9 +195,19 @@ For detailed, context-specific guidance:
    - Update all method references: `OldClass::method()` → `NewClass::method()`
    - Test build after each major batch of changes
 
+3. **Git-Aware File Operations**: When suggesting or executing file moves,
+   copies or deletions, always use Git-aware commands rather than plain shell
+   commands:
+   - For moving/renaming files, use `git mv` instead of `mv`
+   - For deleting files, use `git rm` instead of `rm`
+   - If untracking without deleting, use `git rm --cached`
+   - Avoid suggesting plain `mv` or `rm` unless explicitly operating outside Git
+   - Ensure that all Git operations are staged properly so that commits reflect
+     the intended changes without unnecessary deletion/addition noise
+
 ### Configuration Management
 
-3. **Hardcoded Values**: Always check for hardcoded constants that should move
+4. **Hardcoded Values**: Always check for hardcoded constants that should move
    to `config.h`
 
    - Search for numeric literals in effect code: `fadeToBlackBy(strip, 64)` →
@@ -204,14 +215,14 @@ For detailed, context-specific guidance:
    - Look for magic numbers in timing: `delay(50)` → use named constants
    - Group related constants logically in config.h with clear comments
 
-4. **Memory Buffer Sizing**: When JSON parsing fails with "NoMemory":
+5. **Memory Buffer Sizing**: When JSON parsing fails with "NoMemory":
    - Increase `largeJsonDocumentSize` from 2048 to 4096+ bytes
    - Account for long API tokens (ChatGPT tokens are ~200+ chars)
    - Update all related buffer sizes in API handlers consistently
 
 ### Build System Integration
 
-5. **Preprocessor Directives**: Avoid redefinition warnings:
+6. **Preprocessor Directives**: Avoid redefinition warnings:
    - Use build flags (`-DENABLE_LEDS=1`) OR config.h defines, not both
    - Always use `#ifndef MACRO_NAME` guards in headers
    - Clean builds resolve most preprocessor caching issues
@@ -241,14 +252,14 @@ For detailed, context-specific guidance:
 
 ### API Design Consistency
 
-11. **Server-Side Logic Preference**:
+10. **Server-Side Logic Preference**:
     - Configuration changes should trigger confirmations server-side, not
       client-side
     - LED effects should be internal responses to successful operations
 
 ### Error Handling Philosophy
 
-14. **Fail Fast - No Silent Fallbacks**:
+11. **Fail Fast - No Silent Fallbacks**:
     - Never use default values or fallbacks that mask missing backend data
     - Throw explicit errors when expected configuration or DOM elements are
       missing

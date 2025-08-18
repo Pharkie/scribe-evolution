@@ -517,7 +517,7 @@ String formatContentWithHeader(const String &action, const String &content, cons
 
 String loadPrintTestContent()
 {
-    File file = LittleFS.open("/resources/print-test.txt", "r");
+    File file = LittleFS.open("/resources/character-test.txt", "r");
     if (!file)
     {
         return "ASCII: Hello World 123!@#\n\nFailed to load print test file";

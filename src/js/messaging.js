@@ -168,7 +168,7 @@ function sendQuickAction(action) {
       contentEndpoint = '/api/poke';
       break;
     case 'print-test':
-      contentEndpoint = '/api/print-test';
+      contentEndpoint = '/api/character-test';
       break;
     default:
       console.error('Unknown action:', action);

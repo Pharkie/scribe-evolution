@@ -232,6 +232,43 @@
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Active Time
                                     Range:</label>
                                 <div class="space-y-2">
+                                    <!-- Hour markers (moved above slider) -->
+                                    <div class="mx-2">
+                                        <div
+                                            class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2 relative">
+                                            <!-- Always show core markers -->
+                                            <span class="time-marker time-marker-0">0</span>
+                                            <span class="time-marker time-marker-4">4</span>
+                                            <span class="time-marker time-marker-8">8</span>
+                                            <span class="time-marker time-marker-12">12</span>
+                                            <span class="time-marker time-marker-16">16</span>
+                                            <span class="time-marker time-marker-20">20</span>
+                                            <span class="time-marker time-marker-24">24</span>
+
+                                            <!-- Tablet+ - show every 2 hours -->
+                                            <span class="time-marker time-marker-2 hidden sm:inline">2</span>
+                                            <span class="time-marker time-marker-6 hidden sm:inline">6</span>
+                                            <span class="time-marker time-marker-10 hidden sm:inline">10</span>
+                                            <span class="time-marker time-marker-14 hidden sm:inline">14</span>
+                                            <span class="time-marker time-marker-18 hidden sm:inline">18</span>
+                                            <span class="time-marker time-marker-22 hidden sm:inline">22</span>
+
+                                            <!-- Desktop - show every hour -->
+                                            <span class="time-marker time-marker-1 hidden md:inline">1</span>
+                                            <span class="time-marker time-marker-3 hidden md:inline">3</span>
+                                            <span class="time-marker time-marker-5 hidden md:inline">5</span>
+                                            <span class="time-marker time-marker-7 hidden md:inline">7</span>
+                                            <span class="time-marker time-marker-9 hidden md:inline">9</span>
+                                            <span class="time-marker time-marker-11 hidden md:inline">11</span>
+                                            <span class="time-marker time-marker-13 hidden md:inline">13</span>
+                                            <span class="time-marker time-marker-15 hidden md:inline">15</span>
+                                            <span class="time-marker time-marker-17 hidden md:inline">17</span>
+                                            <span class="time-marker time-marker-19 hidden md:inline">19</span>
+                                            <span class="time-marker time-marker-21 hidden md:inline">21</span>
+                                            <span class="time-marker time-marker-23 hidden md:inline">23</span>
+                                        </div>
+                                    </div>
+
                                     <div class="dual-range-slider">
                                         <!-- Background track container -->
                                         <div class="dual-range-track"></div>
@@ -263,44 +300,6 @@
                                             Period</span>
                                         <span id="time-display-end">22:00</span>
                                     </div>
-
-                                    <!-- Hour markers -->
-                                    <div class="mx-2">
-                                        <div
-                                            class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1 relative">
-                                            <!-- Always show core markers -->
-                                            <span class="time-marker time-marker-0">0</span>
-                                            <span class="time-marker time-marker-4">4</span>
-                                            <span class="time-marker time-marker-8">8</span>
-                                            <span class="time-marker time-marker-12">12</span>
-                                            <span class="time-marker time-marker-16">16</span>
-                                            <span class="time-marker time-marker-20">20</span>
-                                            <span class="time-marker time-marker-24">24</span>
-
-                                            <!-- Tablet+ - show every 2 hours -->
-                                            <span class="time-marker time-marker-2 hidden sm:inline">2</span>
-                                            <span class="time-marker time-marker-6 hidden sm:inline">6</span>
-                                            <span class="time-marker time-marker-10 hidden sm:inline">10</span>
-                                            <span class="time-marker time-marker-14 hidden sm:inline">14</span>
-                                            <span class="time-marker time-marker-18 hidden sm:inline">18</span>
-                                            <span class="time-marker time-marker-22 hidden sm:inline">22</span>
-
-                                            <!-- Desktop only - show remaining hours -->
-                                            <span class="time-marker time-marker-1 hidden lg:inline">1</span>
-                                            <span class="time-marker time-marker-3 hidden lg:inline">3</span>
-                                            <span class="time-marker time-marker-5 hidden lg:inline">5</span>
-                                            <span class="time-marker time-marker-7 hidden lg:inline">7</span>
-                                            <span class="time-marker time-marker-9 hidden lg:inline">9</span>
-                                            <span class="time-marker time-marker-11 hidden lg:inline">11</span>
-                                            <span class="time-marker time-marker-13 hidden lg:inline">13</span>
-                                            <span class="time-marker time-marker-15 hidden lg:inline">15</span>
-                                            <span class="time-marker time-marker-17 hidden lg:inline">17</span>
-                                            <span class="time-marker time-marker-19 hidden lg:inline">19</span>
-                                            <span class="time-marker time-marker-21 hidden lg:inline">21</span>
-                                            <span class="time-marker time-marker-23 hidden lg:inline">23</span>
-                                            <span class="time-marker time-marker-24">24</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -311,7 +310,7 @@
                                 <div class="space-y-4">
                                     <!-- Frequency slider with non-linear scale -->
                                     <div class="space-y-2">
-                                        <div class="single-range-slider">
+                                        <div class="mx-2 single-range-slider">
                                             <!-- Background track -->
                                             <div class="single-range-track"></div>
 
@@ -321,7 +320,8 @@
                                         </div>
 
                                         <!-- Frequency markers -->
-                                        <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                        <div
+                                            class="mx-2 flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
                                             <span>15min</span>
                                             <span>30min</span>
                                             <span>45min</span>
@@ -468,7 +468,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button1-short-mqtt"
@@ -491,7 +491,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button1-long-mqtt"
@@ -521,7 +521,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button2-short-mqtt"
@@ -544,7 +544,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button2-long-mqtt"
@@ -574,7 +574,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button3-short-mqtt"
@@ -597,7 +597,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button3-long-mqtt"
@@ -627,7 +627,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button4-short-mqtt"
@@ -650,7 +650,7 @@
                                         <option value="/api/quote">Quote</option>
                                         <option value="/api/quiz">Quiz</option>
                                         <option value="/api/news">News</option>
-                                        <option value="/api/print-test">Print Test</option>
+                                        <option value="/api/character-test">Character Test</option>
                                         <option value="/api/unbidden-ink">Unbidden Ink</option>
                                     </select>
                                     <label for="button4-long-mqtt"

@@ -64,7 +64,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         // DEBUG: handleConfigGet - getting runtime config
     }
-    
+
     // Get current runtime configuration (from NVS or defaults)
     const RuntimeConfig &config = getRuntimeConfig();
 
@@ -273,10 +273,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
         sendValidationError(request, ValidationResult(false, "MQTT port must be between 1 and 65535"));
         return;
     }
-    newConfig.mqttServer = mqtt["server"].as<const char*>();
+    newConfig.mqttServer = mqtt["server"].as<const char *>();
     newConfig.mqttPort = port;
-    newConfig.mqttUsername = mqtt["username"].as<const char*>();
-    newConfig.mqttPassword = mqtt["password"].as<const char*>();
+    newConfig.mqttUsername = mqtt["username"].as<const char *>();
+    newConfig.mqttPassword = mqtt["password"].as<const char *>();
 
     // Validate APIs configuration (only user-configurable fields)
     JsonObject apis = doc["apis"];
@@ -285,8 +285,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
         sendValidationError(request, ValidationResult(false, "Missing required ChatGPT API token"));
         return;
     }
-    newConfig.chatgptApiToken = apis["chatgptApiToken"].as<const char*>();
-    
+    newConfig.chatgptApiToken = apis["chatgptApiToken"].as<const char *>();
+
     // Non-user configurable APIs remain as constants
     newConfig.jokeAPI = jokeAPI;
     newConfig.quoteAPI = quoteAPI;
@@ -352,7 +352,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     // Validate button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];
     const char *buttonKeys[] = {"button1", "button2", "button3", "button4"};
-    const char *validActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz", "/api/news", "/api/print-test", "/api/unbidden-ink", ""};
+    const char *validActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz", "/api/news", "/api/character-test", "/api/unbidden-ink", ""};
 
     for (int i = 0; i < 4; i++)
     {
@@ -531,7 +531,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.ledCount = ledCount;
     newConfig.ledBrightness = ledBrightness;
     newConfig.ledRefreshRate = ledRefreshRate;
-    
+
     // Load LED effects configuration (simplified for now)
     newConfig.ledEffects = getDefaultLedEffectsConfig(); // TODO: Parse effects from JSON
 #endif
