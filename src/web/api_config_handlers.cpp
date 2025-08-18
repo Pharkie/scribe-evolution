@@ -62,59 +62,19 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     if (isAPMode())
     {
-        // DEBUG: handleConfigGet - checking config file validity
+        // DEBUG: handleConfigGet - getting runtime config
     }
-    // Ensure config.json exists (create from defaults if needed)
-    if (!isConfigFileValid())
-    {
-        if (isAPMode())
-        {
-            // DEBUG: handleConfigGet - config file invalid, creating defaults
-        }
-        LOG_NOTICE("WEB", "config.json not found or invalid, creating from defaults");
-        if (!createDefaultConfigFile())
-        {
-            LOG_ERROR("WEB", "Failed to create default config.json");
-            sendErrorResponse(request, 500, "Failed to create configuration file.");
-            return;
-        }
-    }
+    
+    // Get current runtime configuration (from NVS or defaults)
+    const RuntimeConfig &config = getRuntimeConfig();
 
-    File configFile = LittleFS.open("/config.json", "r");
-    if (!configFile)
-    {
-        LOG_ERROR("WEB", "config.json still not accessible after creation");
-        sendErrorResponse(request, 500, "Configuration file access error.");
-        return;
-    }
-
-    // Parse config.json
-    DynamicJsonDocument userConfig(largeJsonDocumentSize);
-    DeserializationError error = deserializeJson(userConfig, configFile);
-    configFile.close();
-
-    if (error)
-    {
-        LOG_ERROR("WEB", "Failed to parse config.json: %s", error.c_str());
-        sendErrorResponse(request, 500, "Invalid config.json format");
-        return;
-    }
-
-    // Create response with config.json data (with defaults for missing keys)
+    // Create response with runtime configuration data
     DynamicJsonDocument configDoc(largeJsonDocumentSize);
 
-    // Device configuration (with defaults)
+    // Device configuration
     JsonObject device = configDoc.createNestedObject("device");
-    if (userConfig.containsKey("device"))
-    {
-        device["owner"] = userConfig["device"]["owner"] | defaultDeviceOwner;
-        device["timezone"] = userConfig["device"]["timezone"] | defaultTimezone;
-    }
-    else
-    {
-        device["owner"] = defaultDeviceOwner;
-        device["timezone"] = defaultTimezone;
-    }
+    device["owner"] = config.deviceOwner;
+    device["timezone"] = config.timezone;
 
     // Add runtime device information
     device["firmware_version"] = getFirmwareVersion();
@@ -125,86 +85,65 @@ void handleConfigGet(AsyncWebServerRequest *request)
     device["mqtt_topic"] = getLocalPrinterTopic();
     device["type"] = "local";
 
-    // WiFi configuration (empty if not configured in config.json)
+    // WiFi configuration
     JsonObject wifi = configDoc.createNestedObject("wifi");
-    if (userConfig.containsKey("wifi"))
-    {
-        wifi["ssid"] = userConfig["wifi"]["ssid"] | "";
-        wifi["password"] = userConfig["wifi"]["password"] | "";
-        wifi["connect_timeout"] = userConfig["wifi"]["connect_timeout"] | 15000;
-    }
-    else
-    {
-        wifi["ssid"] = "";
-        wifi["password"] = "";
-        wifi["connect_timeout"] = 15000;
-    }
+    wifi["ssid"] = config.wifiSSID;
+    wifi["password"] = config.wifiPassword;
+    wifi["connect_timeout"] = config.wifiConnectTimeoutMs;
 
     // MQTT configuration
-    if (userConfig.containsKey("mqtt"))
+    JsonObject mqtt = configDoc.createNestedObject("mqtt");
+    mqtt["server"] = config.mqttServer;
+    mqtt["port"] = config.mqttPort;
+    mqtt["username"] = config.mqttUsername;
+    mqtt["password"] = config.mqttPassword;
+
+    // API configuration (only expose chatgptApiToken, not endpoints)
+    JsonObject apis = configDoc.createNestedObject("apis");
+    apis["chatgptApiToken"] = config.chatgptApiToken;
+
+    // Validation configuration (only maxCharacters)
+    JsonObject validation = configDoc.createNestedObject("validation");
+    validation["maxCharacters"] = config.maxCharacters;
+
+    // Unbidden Ink configuration
+    JsonObject unbiddenInk = configDoc.createNestedObject("unbiddenInk");
+    unbiddenInk["enabled"] = config.unbiddenInkEnabled;
+    unbiddenInk["startHour"] = config.unbiddenInkStartHour;
+    unbiddenInk["endHour"] = config.unbiddenInkEndHour;
+    unbiddenInk["frequencyMinutes"] = config.unbiddenInkFrequencyMinutes;
+    unbiddenInk["prompt"] = config.unbiddenInkPrompt;
+
+    // Button configuration (exactly 4 buttons)
+    JsonObject buttons = configDoc.createNestedObject("buttons");
+    for (int i = 0; i < 4; i++)
     {
-        configDoc["mqtt"] = userConfig["mqtt"];
-    }
-    if (userConfig.containsKey("apis"))
-    {
-        // Only expose chatgptApiToken, not endpoints
-        JsonObject apis = configDoc.createNestedObject("apis");
-        if (userConfig["apis"].containsKey("chatgptApiToken"))
-        {
-            apis["chatgptApiToken"] = userConfig["apis"]["chatgptApiToken"];
-        }
-    }
-    if (userConfig.containsKey("validation"))
-    {
-        configDoc["validation"] = userConfig["validation"];
-    }
-    if (userConfig.containsKey("webInterface"))
-    {
-        configDoc["webInterface"] = userConfig["webInterface"];
-    }
-    else if (userConfig.containsKey("unbiddenInk"))
-    {
-        configDoc["unbiddenInk"] = userConfig["unbiddenInk"];
-        // Re-initialize unbidden ink after settings change
-        initializeUnbiddenInk();
-    }
-    if (userConfig.containsKey("buttons"))
-    {
-        configDoc["buttons"] = userConfig["buttons"];
+        String buttonKey = "button" + String(i + 1);
+        JsonObject button = buttons.createNestedObject(buttonKey);
+        button["shortAction"] = config.buttonShortActions[i];
+        button["shortMqttTopic"] = config.buttonShortMqttTopics[i];
+        button["longAction"] = config.buttonLongActions[i];
+        button["longMqttTopic"] = config.buttonLongMqttTopics[i];
     }
 
 #if ENABLE_LEDS
-    // LED configuration (copy from config.json with defaults)
-    if (userConfig.containsKey("leds"))
-    {
-        configDoc["leds"] = userConfig["leds"];
-    }
-    else
-    {
-        // Provide defaults if leds section doesn't exist
-        JsonObject leds = configDoc.createNestedObject("leds");
-        leds["pin"] = DEFAULT_LED_PIN;
-        leds["count"] = DEFAULT_LED_COUNT;
-        leds["brightness"] = DEFAULT_LED_BRIGHTNESS;
-        leds["refreshRate"] = DEFAULT_LED_REFRESH_RATE;
+    // LED configuration
+    JsonObject leds = configDoc.createNestedObject("leds");
+    leds["pin"] = config.ledPin;
+    leds["count"] = config.ledCount;
+    leds["brightness"] = config.ledBrightness;
+    leds["refreshRate"] = config.ledRefreshRate;
 
-        // Add autonomous per-effect configuration structure
-        LedEffectsConfig defaultEffects = getDefaultLedEffectsConfig();
-        saveLedEffectsToJson(leds, defaultEffects);
-    }
+    // Add per-effect autonomous configurations
+    saveLedEffectsToJson(leds, config.ledEffects);
 #endif
-
-    // Note: Remote printers are now served via /api/printer-discovery endpoint
-
     // Add runtime status information for Unbidden Ink
     JsonObject status = configDoc.createNestedObject("status");
     JsonObject unbiddenInkStatus = status.createNestedObject("unbiddenInk");
 
     // Get current unbidden ink settings and next scheduled time
-    // Reload settings from file to ensure we have the latest values
-    loadUnbiddenInkSettings();
-    UnbiddenInkSettings currentSettings = getCurrentUnbiddenInkSettings();
-    if (currentSettings.enabled)
+    // Settings are already loaded from NVS into RuntimeConfig
+    if (config.unbiddenInkEnabled)
     {
         unsigned long nextTime = getNextUnbiddenInkTime();
         unsigned long currentTime = millis();
@@ -234,7 +173,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     String configString;
     serializeJson(configDoc, configString);
 
-    LOG_VERBOSE("WEB", "Configuration from config.json, returning %d bytes", configString.length());
+    LOG_VERBOSE("WEB", "Configuration from NVS, returning %d bytes", configString.length());
     request->send(200, "application/json", configString);
 }
 
@@ -275,7 +214,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
         }
     }
 
-    // Validate device configuration
+    // Create new runtime configuration from JSON
+    RuntimeConfig newConfig;
+
+    // Validate and extract device configuration
     JsonObject device = doc["device"];
     if (!device.containsKey("owner") || !device.containsKey("timezone"))
     {
@@ -290,6 +232,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
         sendValidationError(request, ValidationResult(false, "Device owner and timezone cannot be empty"));
         return;
     }
+    newConfig.deviceOwner = owner;
+    newConfig.timezone = timezone;
 
     // Validate WiFi configuration
     JsonObject wifi = doc["wifi"];
@@ -310,7 +254,11 @@ void handleConfigPost(AsyncWebServerRequest *request)
     {
         sendValidationError(request, ValidationResult(false, "WiFi password cannot be empty"));
         return;
-    } // Validate MQTT configuration
+    }
+    newConfig.wifiSSID = ssid;
+    newConfig.wifiPassword = password;
+    newConfig.wifiConnectTimeoutMs = wifi["connect_timeout"] | wifiConnectTimeoutMs;
+    // Validate MQTT configuration
     JsonObject mqtt = doc["mqtt"];
     if (!mqtt.containsKey("server") || !mqtt.containsKey("port") ||
         !mqtt.containsKey("username") || !mqtt.containsKey("password"))
@@ -325,6 +273,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
         sendValidationError(request, ValidationResult(false, "MQTT port must be between 1 and 65535"));
         return;
     }
+    newConfig.mqttServer = mqtt["server"].as<const char*>();
+    newConfig.mqttPort = port;
+    newConfig.mqttUsername = mqtt["username"].as<const char*>();
+    newConfig.mqttPassword = mqtt["password"].as<const char*>();
 
     // Validate APIs configuration (only user-configurable fields)
     JsonObject apis = doc["apis"];
@@ -333,6 +285,15 @@ void handleConfigPost(AsyncWebServerRequest *request)
         sendValidationError(request, ValidationResult(false, "Missing required ChatGPT API token"));
         return;
     }
+    newConfig.chatgptApiToken = apis["chatgptApiToken"].as<const char*>();
+    
+    // Non-user configurable APIs remain as constants
+    newConfig.jokeAPI = jokeAPI;
+    newConfig.quoteAPI = quoteAPI;
+    newConfig.triviaAPI = triviaAPI;
+    newConfig.betterStackToken = betterStackToken;
+    newConfig.betterStackEndpoint = betterStackEndpoint;
+    newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     // Validate validation configuration (only maxCharacters)
     JsonObject validation = doc["validation"];
@@ -348,6 +309,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         sendValidationError(request, ValidationResult(false, "Max characters must be between 100 and 5000"));
         return;
     }
+    newConfig.maxCharacters = maxChars;
 
     // Validate unbidden ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];
@@ -454,6 +416,12 @@ void handleConfigPost(AsyncWebServerRequest *request)
             sendValidationError(request, ValidationResult(false, "Invalid long action for " + String(buttonKeys[i]) + ": " + longAction));
             return;
         }
+
+        // Store validated button configuration
+        newConfig.buttonShortActions[i] = shortAction;
+        newConfig.buttonLongActions[i] = longAction;
+        newConfig.buttonShortMqttTopics[i] = button["shortMqttTopic"] | "";
+        newConfig.buttonLongMqttTopics[i] = button["longMqttTopic"] | "";
     }
 
 #if ENABLE_LEDS
@@ -556,54 +524,50 @@ void handleConfigPost(AsyncWebServerRequest *request)
                 return;
             }
         }
-
-        // Add more effect validations as needed...
     }
+
+    // Store LED configuration
+    newConfig.ledPin = ledPin;
+    newConfig.ledCount = ledCount;
+    newConfig.ledBrightness = ledBrightness;
+    newConfig.ledRefreshRate = ledRefreshRate;
+    
+    // Load LED effects configuration (simplified for now)
+    newConfig.ledEffects = getDefaultLedEffectsConfig(); // TODO: Parse effects from JSON
 #endif
 
-    File configFile = LittleFS.open("/config.json", "w");
-    if (!configFile)
+    // Save configuration to NVS
+    if (!saveNVSConfig(newConfig))
     {
-        LOG_ERROR("WEB", "Failed to open config.json for writing");
-        sendErrorResponse(request, 500, "Failed to save configuration");
+        LOG_ERROR("WEB", "Failed to save configuration to NVS");
+        sendErrorResponse(request, 500, "Failed to save configuration to NVS");
         return;
     }
 
-    serializeJson(doc, configFile);
-    configFile.close();
+    LOG_NOTICE("WEB", "Configuration saved successfully to NVS");
 
-    LOG_NOTICE("WEB", "Configuration saved successfully");
+    // Update global runtime configuration
+    setRuntimeConfig(newConfig);
 
-    // Reload runtime configuration to reflect changes immediately
-    if (!loadRuntimeConfig())
+    // Update MQTT subscription to new device owner topic
+    updateMQTTSubscription();
+
+#if ENABLE_LEDS
+    // Reinitialize LED system with new configuration
+    if (ledEffects.reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
+                                newConfig.ledRefreshRate, newConfig.ledEffects))
     {
-        LOG_WARNING("WEB", "Failed to reload runtime config after save");
+        LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
+
+        // Trigger green chase single effect as visual confirmation of successful save
+        ledEffects.startEffectCycles("chase_single", 1, CRGB::Green);
+        LOG_VERBOSE("WEB", "LED confirmation effect triggered for config save");
     }
     else
     {
-        LOG_VERBOSE("WEB", "Runtime configuration reloaded successfully");
-
-        // Update MQTT subscription to new device owner topic
-        updateMQTTSubscription();
-
-#if ENABLE_LEDS
-        // Reinitialize LED system with new configuration
-        const RuntimeConfig &config = getRuntimeConfig();
-        if (ledEffects.reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
-                                    config.ledRefreshRate, config.ledEffects))
-        {
-            LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
-
-            // Trigger green chase single effect as visual confirmation of successful save
-            ledEffects.startEffectCycles("chase_single", 1, CRGB::Green);
-            LOG_VERBOSE("WEB", "LED confirmation effect triggered for config save");
-        }
-        else
-        {
-            LOG_WARNING("WEB", "Failed to reinitialize LED system with new configuration");
-        }
-#endif
+        LOG_WARNING("WEB", "Failed to reinitialize LED system with new configuration");
     }
+#endif
 
     sendSuccessResponse(request, "Configuration saved successfully");
 

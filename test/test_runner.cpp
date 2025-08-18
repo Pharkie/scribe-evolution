@@ -22,6 +22,7 @@ extern void run_config_validation_tests();
 extern void run_web_validation_tests();
 extern void run_time_utils_tests();
 extern void run_endpoint_integration_tests();
+extern void run_nvs_config_tests();
 
 // Test stubs for variables normally defined in main.cpp
 String deviceBootTime = "2025-08-17T12:00:00Z"; // Test stub
@@ -109,6 +110,9 @@ void setup()
 
     Serial.println("=== Running Time Utils Tests ===");
     run_time_utils_tests();
+
+    Serial.println("=== Running NVS Config Tests ===");
+    run_nvs_config_tests();
 
     Serial.println("=== Running Endpoint Integration Tests ===");
     run_endpoint_integration_tests();
