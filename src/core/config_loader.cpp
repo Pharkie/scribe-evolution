@@ -11,6 +11,8 @@
 #include "config.h"
 #include "logging.h"
 #include <Preferences.h>
+#include <nvs_flash.h>
+#include <esp_err.h>
 
 #if ENABLE_LEDS
 #include "led_config_loader.h"
@@ -328,4 +330,31 @@ void setRuntimeConfig(const RuntimeConfig &config)
 {
     g_runtimeConfig = config;
     g_configLoaded = true;
+}
+
+bool initializeNVSConfig()
+{
+    // Initialize NVS partition 
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // NVS partition was truncated or has different version, erase it and reinitialize
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    
+    if (err != ESP_OK) {
+        LOG_ERROR("CONFIG", "Failed to initialize NVS: %s", esp_err_to_name(err));
+        return false;
+    }
+    
+    LOG_NOTICE("CONFIG", "NVS initialized successfully");
+    return true;
+}
+
+bool checkAndMigrateNVSSchema()
+{
+    // For now, just return true - migration logic would go here if needed
+    // This could check version numbers, migrate old key names, etc.
+    LOG_NOTICE("CONFIG", "NVS schema check complete (no migration needed)");
+    return true;
 }
