@@ -18,7 +18,8 @@ function updateTimeRangeDisplay() {
     const startVal = parseInt(startSlider.value);
     const endVal = parseInt(endSlider.value);
     
-    // Update the visual track
+    console.log('DEBUG updateTimeRangeDisplay: startVal =', startVal, 'endVal =', endVal);
+    
     const track = document.getElementById('time-track');
     if (track) {
         if (startVal === 0 && endVal === 0) {
@@ -41,8 +42,11 @@ function updateTimeRangeDisplay() {
     
     // Format hour display
     const formatHour = (hour) => {
+        console.log('DEBUG formatHour: input hour =', hour);
         if (hour === 24) return '00:00';
-        return String(hour).padStart(2, '0') + ':00';
+        const result = String(hour).padStart(2, '0') + ':00';
+        console.log('DEBUG formatHour: output =', result);
+        return result;
     };
     
     if (startDisplay) startDisplay.textContent = formatHour(startVal);
@@ -82,10 +86,12 @@ function populateForm(config) {
     setElementChecked('unbidden-ink-enabled', config.unbiddenInk.enabled);
     
     // Time range sliders
+    console.log('DEBUG populateForm: setting startHour =', config.unbiddenInk.startHour, 'endHour =', config.unbiddenInk.endHour);
     setElementValue('time-start', config.unbiddenInk.startHour);
     setElementValue('time-end', config.unbiddenInk.endHour);
     
     // Initialize time range display and click areas immediately
+    console.log('DEBUG populateForm: about to call updateTimeRangeDisplay()');
     updateTimeRangeDisplay(); 
     updateClickAreas();
     
@@ -106,8 +112,8 @@ function populateForm(config) {
         setElementValue(`button${buttonNum}-long`, config.buttons[buttonKey].longAction);
         
         // MQTT topic fields
-        setElementValue(`button${buttonNum}-short-mqtt-topic`, config.buttons[buttonKey].shortMqttTopic);
-        setElementValue(`button${buttonNum}-long-mqtt-topic`, config.buttons[buttonKey].longMqttTopic);
+        setElementValue(`button${buttonNum}-short-mqtt`, config.buttons[buttonKey].shortMqttTopic);
+        setElementValue(`button${buttonNum}-long-mqtt`, config.buttons[buttonKey].longMqttTopic);
     }
     
     // LED configuration (delegate to LED module)
@@ -171,8 +177,8 @@ function collectFormData() {
         formData.buttons[buttonKey] = {
             shortAction: getElementValue(`button${buttonNum}-short`),
             longAction: getElementValue(`button${buttonNum}-long`),
-            shortMqttTopic: getElementValue(`button${buttonNum}-short-mqtt-topic`),
-            longMqttTopic: getElementValue(`button${buttonNum}-long-mqtt-topic`)
+            shortMqttTopic: getElementValue(`button${buttonNum}-short-mqtt`),
+            longMqttTopic: getElementValue(`button${buttonNum}-long-mqtt`)
         };
     }
     
@@ -638,8 +644,6 @@ function matchCustomPromptToPreset(customPrompt) {
  * @param {string} promptText - The prompt text to find and highlight
  */
 function highlightMatchingPreset(promptText) {
-    console.log('Highlighting preset for prompt:', promptText);
-    
     // Remove existing highlights
     document.querySelectorAll('.prompt-preset').forEach(button => {
         button.classList.remove('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
@@ -657,16 +661,10 @@ function highlightMatchingPreset(promptText) {
         
         // Compare with the provided prompt text (exact match)
         if (buttonPromptText && buttonPromptText.trim() === promptText.trim()) {
-            console.log('Found matching preset button, highlighting');
             button.classList.add('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
             foundMatch = true;
         }
     });
-    
-    console.log('Available button prompts:', buttonPrompts);
-    if (!foundMatch) {
-        console.log('No matching preset found');
-    }
 }
 
 // =============================================================================
@@ -682,6 +680,11 @@ function setElementValue(id, value) {
     const element = document.getElementById(id);
     if (element) {
         element.value = value || '';
+        
+        // Only debug time-related elements
+        if (id === 'time-start' || id === 'time-end') {
+            console.log('DEBUG setElementValue: id =', id, 'value =', value, 'element.value after set =', element.value);
+        }
     }
 }
 
@@ -729,17 +732,6 @@ function getElementIntValue(id) {
 function getElementChecked(id) {
     const element = document.getElementById(id);
     return element ? element.checked : false;
-}
-
-/**
- * Format hour (0-23) as 12-hour time string
- * @param {number} hour - Hour in 24-hour format
- * @returns {string} Formatted time string
- */
-function formatTime(hour) {
-    const period = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    return `${displayHour}:00 ${period}`;
 }
 
 // Export UI module

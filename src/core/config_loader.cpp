@@ -125,7 +125,7 @@ bool loadRuntimeConfig()
     g_runtimeConfig.unbiddenInkStartHour = unbiddenInk["startHour"] | defaultUnbiddenInkStartHour;
     g_runtimeConfig.unbiddenInkEndHour = unbiddenInk["endHour"] | defaultUnbiddenInkEndHour;
     g_runtimeConfig.unbiddenInkFrequencyMinutes = unbiddenInk["frequencyMinutes"] | defaultUnbiddenInkFrequencyMinutes;
-    g_runtimeConfig.unbiddenInkPrompt = unbiddenInk["prompt"] | "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
+    g_runtimeConfig.unbiddenInkPrompt = unbiddenInk["prompt"] | "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.";
 
     // Load Button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];
@@ -215,7 +215,7 @@ void loadDefaultConfig()
     g_runtimeConfig.unbiddenInkStartHour = defaultUnbiddenInkStartHour;
     g_runtimeConfig.unbiddenInkEndHour = defaultUnbiddenInkEndHour;
     g_runtimeConfig.unbiddenInkFrequencyMinutes = defaultUnbiddenInkFrequencyMinutes;
-    g_runtimeConfig.unbiddenInkPrompt = "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
+    g_runtimeConfig.unbiddenInkPrompt = "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.";
 
     // Load default button configuration
     for (int i = 0; i < 4; i++)
@@ -325,7 +325,7 @@ bool createDefaultConfigFile()
     unbiddenInk["startHour"] = defaultUnbiddenInkStartHour;
     unbiddenInk["endHour"] = defaultUnbiddenInkEndHour;
     unbiddenInk["frequencyMinutes"] = defaultUnbiddenInkFrequencyMinutes;
-    unbiddenInk["prompt"] = "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
+    unbiddenInk["prompt"] = "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.";
 
     // Button Configuration (exactly 4 buttons)
     JsonObject buttons = doc.createNestedObject("buttons");

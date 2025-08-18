@@ -9,7 +9,7 @@ let MAX_PROMPT_CHARS = 500; // Default fallback
 let PRINTERS = []; // Will store all available printers
 
 // Default prompts - keep in sync with C++ constants
-const DEFAULT_MOTIVATION_PROMPT = "Generate a short, encouraging motivational message to help me stay focused and positive. Keep it brief, uplifting, and practical.";
+const DEFAULT_MOTIVATION_PROMPT = "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.";
 
 /**
  * Simple utility function to load configuration from server

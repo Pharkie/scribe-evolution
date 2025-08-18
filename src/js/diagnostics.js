@@ -42,12 +42,18 @@ function showSection(sectionId) {
     currentSection = sectionId;
   }
   
-  // Only try to access event if it exists and is the right type
+  // Find and activate the button that corresponds to this section
+  // Try event.target first (for clicks), then find by onclick attribute (for programmatic calls)
+  let activeBtn = null;
   if (typeof event !== 'undefined' && event && event.target) {
-    const activeBtn = event.target;
-    if (activeBtn && activeBtn.classList) {
-      activeBtn.classList.add('active');
-    }
+    activeBtn = event.target;
+  } else {
+    // Find button by onclick attribute when called programmatically
+    activeBtn = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
+  }
+  
+  if (activeBtn && activeBtn.classList) {
+    activeBtn.classList.add('active');
   }
 }
 

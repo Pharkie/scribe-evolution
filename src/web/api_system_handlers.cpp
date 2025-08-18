@@ -99,13 +99,13 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     // Temperature (ESP32-C3 internal sensor)
     float temp = temperatureRead();
-    LOG_NOTICE("WEB", "Raw temperature reading: %.2f°C, isnan: %s, isfinite: %s",
-               temp, isnan(temp) ? "true" : "false", isfinite(temp) ? "true" : "false");
+    LOG_VERBOSE("WEB", "Raw temperature reading: %.2f°C, isnan: %s, isfinite: %s",
+                temp, isnan(temp) ? "true" : "false", isfinite(temp) ? "true" : "false");
 
     if (isfinite(temp) && temp > -100 && temp < 200) // Very lenient range for debugging
     {
         hardware["temperature"] = temp;
-        LOG_NOTICE("WEB", "Temperature added to JSON: %.2f°C", temp);
+        LOG_VERBOSE("WEB", "Temperature added to JSON: %.2f°C", temp);
     }
     else
     {
