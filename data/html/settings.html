@@ -784,25 +784,16 @@
 
                         <!-- Effect Playground Configuration -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Playground</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Try out different settings here.
-                                Settings are not saved and need to be compiled into config.h instead.</p>
-
-                            <!-- LED Control Buttons -->
-                            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <div class="flex flex-wrap gap-3">
-                                    <button type="button" onclick="turnOffLeds()"
-                                        class="py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors">
-                                        🚫 Turn Off LEDs
-                                    </button>
-                                </div>
-                            </div>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effects Playground
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Settings are not saved and need to
+                                be compiled into config.h.</p>
 
                             <!-- Chase Single Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                                 <summary
                                     class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Chase Single Effect Settings
+                                    Chase Single
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -840,8 +831,8 @@
 
                                     <!-- Demo Button for Chase Single -->
                                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                        <button type="button" onclick="triggerLedEffect('chase_single')"
-                                            class="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors">
+                                        <button type="button" onclick="demoLedEffect('chase_single')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🎮 Demo Chase Single
                                         </button>
                                     </div>
@@ -852,7 +843,7 @@
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                                 <summary
                                     class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Chase Multi Effect Settings
+                                    Chase Multi
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -911,8 +902,8 @@
 
                                     <!-- Demo Button for Chase Multi -->
                                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                        <button type="button" onclick="triggerLedEffect('chase_multi')"
-                                            class="w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors">
+                                        <button type="button" onclick="demoLedEffect('chase_multi')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🎮 Demo Chase Multi
                                         </button>
                                     </div>
@@ -923,7 +914,7 @@
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                                 <summary
                                     class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Matrix Effect Settings
+                                    Matrix
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -972,8 +963,8 @@
 
                                     <!-- Demo Button for Matrix -->
                                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                        <button type="button" onclick="triggerLedEffect('matrix')"
-                                            class="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                                        <button type="button" onclick="demoLedEffect('matrix')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🎮 Demo Matrix
                                         </button>
                                     </div>
@@ -984,7 +975,7 @@
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                                 <summary
                                     class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Twinkle Stars Effect Settings
+                                    Twinkle Stars
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1026,8 +1017,8 @@
 
                                     <!-- Demo Button for Twinkle -->
                                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                        <button type="button" onclick="triggerLedEffect('twinkle')"
-                                            class="w-full py-2 px-4 bg-white hover:bg-gray-100 text-gray-800 border-2 border-gray-300 rounded-lg font-medium transition-colors">
+                                        <button type="button" onclick="demoLedEffect('twinkle')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             ⭐ Demo Twinkle Stars
                                         </button>
                                     </div>
@@ -1038,7 +1029,7 @@
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                                 <summary
                                     class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Pulse Wave Effect Settings
+                                    Pulse Wave
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1080,8 +1071,8 @@
 
                                     <!-- Demo Button for Pulse -->
                                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                        <button type="button" onclick="triggerLedEffect('pulse')"
-                                            class="w-full py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium transition-colors">
+                                        <button type="button" onclick="demoLedEffect('pulse')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             💓 Demo Pulse
                                         </button>
                                     </div>
@@ -1092,7 +1083,7 @@
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                                 <summary
                                     class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Rainbow Wave Effect Settings
+                                    Rainbow Wave
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1126,13 +1117,21 @@
 
                                     <!-- Demo Button for Rainbow -->
                                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                        <button type="button" onclick="triggerLedEffect('rainbow')"
-                                            class="w-full py-2 px-4 bg-gradient-to-r from-red-400 via-yellow-400 to-purple-400 hover:from-red-500 hover:via-yellow-500 hover:to-purple-500 text-white rounded-lg font-medium transition-colors">
+                                        <button type="button" onclick="demoLedEffect('rainbow')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🌈 Demo Rainbow
                                         </button>
                                     </div>
                                 </div>
                             </details>
+
+                            <!-- LED Control Button -->
+                            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                <button type="button" onclick="turnOffLeds()"
+                                    class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
+                                    💡 Turn Off LEDs
+                                </button>
+                            </div>
                         </div> <!-- LED Effect Playground -->
                     </div>
                 </div>

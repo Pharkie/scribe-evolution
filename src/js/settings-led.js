@@ -176,106 +176,95 @@ function collectBasicLedConfig() {
  * Demo/test a specific LED effect with current form values
  * @param {string} effectName - Name of the effect to demo
  */
+/**
+ * Demo an LED effect with current form settings
+ * @param {string} effectName - Name of the effect to demo
+ */
 async function demoLedEffect(effectName) {
     try {
-        // Helper functions to get current form values
-        const getIntValue = (id, fallback) => {
-            const element = document.getElementById(id);
-            if (!element) return fallback;
-            const value = parseInt(element.value);
-            return isNaN(value) ? fallback : value;
-        };
-
-        const getFloatValue = (id, fallback) => {
-            const element = document.getElementById(id);
-            if (!element) return fallback;
-            const value = parseFloat(element.value);
-            return isNaN(value) ? fallback : value;
-        };
-
-        const getStringValue = (id, fallback) => {
-            const element = document.getElementById(id);
-            return element ? element.value || fallback : fallback;
-        };
-
-        // Build effect configuration based on effect type
-        let effectConfig = {
-            effect: effectName,
-            duration: 10000 // 10 seconds demo
-        };
-
-        // Add effect-specific parameters
-        switch (effectName) {
-            case 'chase_single':
-                effectConfig.speed = getIntValue('chase-single-speed', 5);
-                effectConfig.trailLength = getIntValue('chase-single-trail-length', 15);
-                effectConfig.trailFade = getIntValue('chase-single-trail-fade', 15);
-                effectConfig.color1 = getStringValue('chase-single-color', '#0062ff');
-                break;
-            case 'chase_multi':
-                effectConfig.speed = getIntValue('chase-multi-speed', 2);
-                effectConfig.trailLength = getIntValue('chase-multi-trail-length', 20);
-                effectConfig.trailFade = getIntValue('chase-multi-trail-fade', 20);
-                effectConfig.colorSpacing = getIntValue('chase-multi-color-spacing', 12);
-                effectConfig.color1 = getStringValue('chase-multi-color1', '#ff9900');
-                effectConfig.color2 = getStringValue('chase-multi-color2', '#008f00');
-                effectConfig.color3 = getStringValue('chase-multi-color3', '#78cffe');
-                break;
-            case 'matrix':
-                effectConfig.speed = getIntValue('matrix-speed', 3);
-                effectConfig.drops = getIntValue('matrix-drops', 5);
-                effectConfig.backgroundFade = getIntValue('matrix-background-fade', 64);
-                effectConfig.trailFade = getIntValue('matrix-trail-fade', 32);
-                effectConfig.brightnessFade = getIntValue('matrix-brightness-fade', 40);
-                effectConfig.color1 = getStringValue('matrix-color', '#009100');
-                break;
-            case 'twinkle':
-                effectConfig.density = getIntValue('twinkle-density', 8);
-                effectConfig.fadeSpeed = getIntValue('twinkle-fade-speed', 5);
-                effectConfig.minBrightness = getIntValue('twinkle-min-brightness', 50);
-                effectConfig.maxBrightness = getIntValue('twinkle-max-brightness', 255);
-                effectConfig.color1 = getStringValue('twinkle-color', '#ffffff');
-                break;
-            case 'pulse':
-                effectConfig.speed = getIntValue('pulse-speed', 4);
-                effectConfig.minBrightness = getIntValue('pulse-min-brightness', 0);
-                effectConfig.maxBrightness = getIntValue('pulse-max-brightness', 255);
-                effectConfig.waveFrequency = getFloatValue('pulse-wave-frequency', 0.05);
-                effectConfig.color1 = getStringValue('pulse-color', '#ff00f2');
-                break;
-            case 'rainbow':
-                effectConfig.speed = getFloatValue('rainbow-speed', 2.0);
-                effectConfig.saturation = getIntValue('rainbow-saturation', 255);
-                effectConfig.brightness = getIntValue('rainbow-brightness', 255);
-                effectConfig.hueStep = getFloatValue('rainbow-hue-step', 2.5);
-                break;
-        }
-
-        console.log(`Demoing ${effectName} with config:`, effectConfig);
-
-        const response = await fetch('/api/led-effect', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(effectConfig)
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
+        // Collect effect-specific settings from form
+        const effectSettings = collectEffectSettings(effectName);
         
-        if (window.SettingsCore && window.SettingsCore.showMessage) {
-            window.SettingsCore.showMessage(`${effectName} demo started!`, 'success');
-        }
+        // Trigger effect with collected settings
+        await window.SettingsAPI.triggerLedEffect(effectName, 10000, effectSettings);
         
+        if (window.SettingsUI && window.SettingsUI.showMessage) {
+            window.SettingsUI.showMessage(`${effectName} effect triggered with custom settings!`, 'success');
+        }
     } catch (error) {
-        console.error(`Failed to demo LED effect ${effectName}:`, error);
-        if (window.SettingsCore && window.SettingsCore.showMessage) {
-            window.SettingsCore.showMessage(`Failed to demo ${effectName}: ${error.message}`, 'error');
+        console.error('Failed to demo LED effect:', error);
+        if (window.SettingsUI && window.SettingsUI.showMessage) {
+            window.SettingsUI.showMessage(`Failed to demo ${effectName}: ${error.message}`, 'error');
         }
+    }
+}
+
+/**
+ * Collect effect-specific settings from form fields
+ * @param {string} effectName - Name of the effect
+ * @returns {Object} Effect configuration object
+ */
+function collectEffectSettings(effectName) {
+    switch (effectName) {
+        case 'chase_single':
+            return {
+                speed: parseInt(document.getElementById('chase-single-speed')?.value) || 5,
+                trailLength: parseInt(document.getElementById('chase-single-trail-length')?.value) || 15,
+                trailFade: parseInt(document.getElementById('chase-single-trail-fade')?.value) || 15,
+                color: colorToRgba(document.getElementById('chase-single-color')?.value) || '#0062ffff'
+            };
+            
+        case 'chase_multi':
+            return {
+                speed: parseInt(document.getElementById('chase-multi-speed')?.value) || 2,
+                trailLength: parseInt(document.getElementById('chase-multi-trail-length')?.value) || 20,
+                trailFade: parseInt(document.getElementById('chase-multi-trail-fade')?.value) || 20,
+                colorSpacing: parseInt(document.getElementById('chase-multi-color-spacing')?.value) || 12,
+                colors: [
+                    colorToRgba(document.getElementById('chase-multi-color1')?.value) || '#ff9900ff',
+                    colorToRgba(document.getElementById('chase-multi-color2')?.value) || '#008f00ff',
+                    colorToRgba(document.getElementById('chase-multi-color3')?.value) || '#78cffeff'
+                ]
+            };
+            
+        case 'matrix':
+            return {
+                speed: parseInt(document.getElementById('matrix-speed')?.value) || 3,
+                drops: parseInt(document.getElementById('matrix-drops')?.value) || 5,
+                backgroundFade: parseInt(document.getElementById('matrix-background-fade')?.value) || 64,
+                trailFade: parseInt(document.getElementById('matrix-trail-fade')?.value) || 32,
+                brightnessFade: parseInt(document.getElementById('matrix-brightness-fade')?.value) || 40,
+                color: colorToRgba(document.getElementById('matrix-color')?.value) || '#009100ff'
+            };
+            
+        case 'twinkle':
+            return {
+                density: parseInt(document.getElementById('twinkle-density')?.value) || 8,
+                fadeSpeed: parseInt(document.getElementById('twinkle-fade-speed')?.value) || 5,
+                minBrightness: parseInt(document.getElementById('twinkle-min-brightness')?.value) || 50,
+                maxBrightness: parseInt(document.getElementById('twinkle-max-brightness')?.value) || 255,
+                color: colorToRgba(document.getElementById('twinkle-color')?.value) || '#ffffffff'
+            };
+            
+        case 'pulse':
+            return {
+                speed: parseInt(document.getElementById('pulse-speed')?.value) || 4,
+                minBrightness: parseInt(document.getElementById('pulse-min-brightness')?.value) || 0,
+                maxBrightness: parseInt(document.getElementById('pulse-max-brightness')?.value) || 255,
+                waveFrequency: parseFloat(document.getElementById('pulse-wave-frequency')?.value) || 0.05,
+                color: colorToRgba(document.getElementById('pulse-color')?.value) || '#ff00f2ff'
+            };
+            
+        case 'rainbow':
+            return {
+                speed: parseFloat(document.getElementById('rainbow-speed')?.value) || 2.0,
+                saturation: parseInt(document.getElementById('rainbow-saturation')?.value) || 255,
+                brightness: parseInt(document.getElementById('rainbow-brightness')?.value) || 255,
+                hueStep: parseFloat(document.getElementById('rainbow-hue-step')?.value) || 2.5
+            };
+            
+        default:
+            return {};
     }
 }
 
@@ -344,5 +333,6 @@ window.SettingsLED = {
     validateLedConfig,
     colorToHtml,
     colorToRgba,
-    demoLedEffect
+    demoLedEffect,
+    collectEffectSettings
 };
