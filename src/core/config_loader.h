@@ -1,6 +1,6 @@
 /**
  * @file config_loader.h
- * @brief Dynamic configuration loader for Scribe ESP32-C3 Thermal Printer
+ * @brief NVS-based configuration loader for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <Preferences.h>
 #include "config.h"
 
 // Runtime configuration structure
@@ -69,8 +70,8 @@ struct RuntimeConfig
 };
 
 /**
- * @brief Load configuration from config.json file
- * If file doesn't exist or is invalid, uses defaults from config.h
+ * @brief Load configuration from NVS storage
+ * If NVS is empty or invalid, populates with defaults from config.h
  * @return true if configuration loaded successfully, false if using defaults
  */
 bool loadRuntimeConfig();
@@ -87,23 +88,42 @@ void loadDefaultConfig();
 const RuntimeConfig &getRuntimeConfig();
 
 /**
- * @brief Initialize configuration system - must be called after LittleFS.begin()
+ * @brief Initialize NVS configuration system
  * @return true if initialization successful
  */
 bool initializeConfigSystem();
 
 /**
- * @brief Check if configuration file exists and is valid
- * @return true if config.json exists and is parseable
+ * @brief Initialize NVS with default values from config.h
+ * Called on first boot or when schema version changes
+ * @return true if NVS was initialized successfully
  */
-bool isConfigFileValid();
+bool initializeNVSConfig();
 
 /**
- * @brief Create default config.json file if it doesn't exist
- * Uses constants from config.h to populate the file
- * @return true if file was created successfully
+ * @brief Load configuration from NVS storage
+ * @return true if configuration loaded successfully
  */
-bool createDefaultConfigFile();
+bool loadNVSConfig();
+
+/**
+ * @brief Save complete configuration to NVS storage
+ * @param config Configuration to save
+ * @return true if configuration was saved successfully
+ */
+bool saveNVSConfig(const RuntimeConfig &config);
+
+/**
+ * @brief Check NVS schema version and migrate if needed
+ * @return true if schema is current or migration successful
+ */
+bool checkAndMigrateNVSSchema();
+
+/**
+ * @brief Update the global runtime configuration
+ * @param config New configuration to set
+ */
+void setRuntimeConfig(const RuntimeConfig &config);
 
 #if ENABLE_LEDS
 #include "led_config.h"
