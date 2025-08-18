@@ -15,14 +15,14 @@ async function initializeSettings() {
         // Load configuration from API
         const config = await window.SettingsAPI.loadConfiguration();
         
+        // Set up UI event handlers FIRST (before form population)
+        setupEventHandlers();
+        
         // Populate the form with loaded configuration
         window.SettingsUI.populateForm(config);
         
         // Set up form submission handler
         setupFormHandler();
-        
-        // Set up UI event handlers (this sets data attributes on preset buttons)
-        setupEventHandlers();
         
         // Now that event handlers are set up, match custom prompt to preset
         window.SettingsUI.matchCustomPromptToPreset(config.unbiddenInk?.prompt || '');
