@@ -284,14 +284,14 @@ async function turnOffLeds() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        if (window.SettingsCore && window.SettingsCore.showMessage) {
-            window.SettingsCore.showMessage('LEDs turned off successfully!', 'success');
+        if (window.SettingsUI && window.SettingsUI.showMessage) {
+            window.SettingsUI.showMessage('LEDs turned off successfully!', 'success');
         }
         
     } catch (error) {
         console.error('Failed to turn off LEDs:', error);
-        if (window.SettingsCore && window.SettingsCore.showMessage) {
-            window.SettingsCore.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
+        if (window.SettingsUI && window.SettingsUI.showMessage) {
+            window.SettingsUI.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
         }
     }
 }
