@@ -73,6 +73,8 @@ function setupEventHandlers() {
     const unbiddenInkToggle = document.getElementById('unbidden-ink-enabled');
     if (unbiddenInkToggle) {
         unbiddenInkToggle.addEventListener('change', window.SettingsUI.toggleUnbiddenInkSettings);
+        // Remove inline handler
+        unbiddenInkToggle.removeAttribute('onchange');
         // Trigger initial state
         window.SettingsUI.toggleUnbiddenInkSettings();
     }
@@ -87,6 +89,16 @@ function setupEventHandlers() {
         timeEndSlider.addEventListener('input', function() {
             window.SettingsUI.updateTimeRange(this, 'end');
         });
+        
+        // Change handlers for click areas update
+        timeStartSlider.addEventListener('change', window.SettingsUI.updateClickAreas);
+        timeEndSlider.addEventListener('change', window.SettingsUI.updateClickAreas);
+        
+        // Remove inline handlers since we're handling these events now
+        timeStartSlider.removeAttribute('oninput');
+        timeStartSlider.removeAttribute('onchange');
+        timeEndSlider.removeAttribute('oninput');
+        timeEndSlider.removeAttribute('onchange');
     }
     
     // Custom prompt textarea handler - clear preset highlights when user types
@@ -101,6 +113,183 @@ function setupEventHandlers() {
             }, 100);
         });
     }
+    
+    // Navigation button handlers
+    setupNavigationHandlers();
+    
+    // Frequency slider handler
+    setupFrequencyHandlers();
+    
+    // Prompt preset button handlers
+    setupPromptPresetHandlers();
+    
+    // Click area handlers for time range sliders
+    setupTimeRangeClickHandlers();
+    
+    // Back button handler
+    setupBackButtonHandler();
+    
+    // Test buttons handlers
+    setupTestButtonHandlers();
+    
+    // LED demo button handlers  
+    setupLedDemoHandlers();
+}
+
+/**
+ * Setup navigation button handlers
+ */
+function setupNavigationHandlers() {
+    // Settings section navigation buttons
+    const navButtons = [
+        { id: 'nav-wifi', section: 'wifi' },
+        { id: 'nav-device', section: 'device' },
+        { id: 'nav-mqtt', section: 'mqtt' },
+        { id: 'nav-unbidden', section: 'unbidden' },
+        { id: 'nav-buttons', section: 'buttons' },
+        { id: 'nav-leds', section: 'leds' }
+    ];
+    
+    navButtons.forEach(nav => {
+        const button = document.querySelector(`[onclick*="showSettingsSection('${nav.section}')"]`);
+        if (button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.SettingsUI.showSettingsSection(nav.section);
+            });
+            // Remove inline handler
+            button.removeAttribute('onclick');
+        }
+    });
+}
+
+/**
+ * Setup frequency slider handler
+ */
+function setupFrequencyHandlers() {
+    const frequencySlider = document.getElementById('frequency-slider');
+    if (frequencySlider) {
+        frequencySlider.addEventListener('input', function() {
+            window.SettingsUI.updateFrequencyFromSlider(this.value);
+        });
+        // Remove inline handler
+        frequencySlider.removeAttribute('oninput');
+    }
+}
+
+/**
+ * Setup prompt preset button handlers
+ */
+function setupPromptPresetHandlers() {
+    const presetPrompts = [
+        'Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.',
+        'Generate a fun fact under 200 characters about BBC Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history that is esoteric and only 5% of fans might know.',
+        'Write a short, humorous observation about everyday life or a witty one-liner. Keep it light and under 200 characters.',
+        'Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.'
+    ];
+    
+    // Find all prompt preset buttons by their onclick content
+    presetPrompts.forEach(prompt => {
+        const button = document.querySelector(`[onclick*="setPrompt('${prompt.replace(/'/g, "\\'")}')"]`);
+        if (button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.SettingsUI.setPrompt(prompt);
+            });
+            // Remove inline handler
+            button.removeAttribute('onclick');
+        }
+    });
+}
+
+/**
+ * Setup time range click area handlers
+ */
+function setupTimeRangeClickHandlers() {
+    const startClickArea = document.getElementById('click-area-start');
+    const endClickArea = document.getElementById('click-area-end');
+    
+    if (startClickArea) {
+        startClickArea.addEventListener('click', function(e) {
+            window.SettingsUI.handleSliderClick(e, 'start');
+        });
+        // Remove inline handler
+        startClickArea.removeAttribute('onclick');
+    }
+    
+    if (endClickArea) {
+        endClickArea.addEventListener('click', function(e) {
+            window.SettingsUI.handleSliderClick(e, 'end');
+        });
+        // Remove inline handler
+        endClickArea.removeAttribute('onclick');
+    }
+}
+
+/**
+ * Setup back button handler
+ */
+function setupBackButtonHandler() {
+    const backButton = document.querySelector('.back-button');
+    if (backButton) {
+        backButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.SettingsUI.goBack();
+        });
+        // Remove inline handler
+        backButton.removeAttribute('onclick');
+    }
+}
+
+/**
+ * Setup test button handlers
+ */
+function setupTestButtonHandlers() {
+    const testUnbiddenButton = document.querySelector('[onclick*="testUnbiddenInk()"]');
+    if (testUnbiddenButton) {
+        testUnbiddenButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleTestUnbiddenInk();
+        });
+        // Remove inline handler
+        testUnbiddenButton.removeAttribute('onclick');
+    }
+}
+
+/**
+ * Setup LED demo button handlers
+ */
+function setupLedDemoHandlers() {
+    // Find all LED demo buttons and add event listeners
+    const ledButtons = document.querySelectorAll('[onclick*="demoLedEffect"]');
+    ledButtons.forEach(button => {
+        // Extract effect name from onclick attribute
+        const onclickAttr = button.getAttribute('onclick');
+        const effectMatch = onclickAttr.match(/demoLedEffect\('([^']+)'\)/);
+        
+        if (effectMatch) {
+            const effectName = effectMatch[1];
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.SettingsLED && window.SettingsLED.demoLedEffect) {
+                    window.SettingsLED.demoLedEffect(effectName);
+                }
+            });
+            // Remove inline handler
+            button.removeAttribute('onclick');
+        }
+    });
+    
+    // Handle LED off buttons
+    const ledOffButtons = document.querySelectorAll('[onclick*="turnOffLeds"]');
+    ledOffButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleTurnOffLeds();
+        });
+        // Remove inline handler
+        button.removeAttribute('onclick');
+    });
 }
 
 /**
@@ -215,31 +404,23 @@ async function handleTestUnbiddenInk() {
 }
 
 // =============================================================================
-// GLOBAL FUNCTION EXPORTS (for HTML onclick handlers)
+// GLOBAL FUNCTION EXPORTS (minimal - most now handled by event listeners)
 // =============================================================================
 
-// Navigation functions
-window.showSettingsSection = window.SettingsUI.showSettingsSection;
-window.goBack = window.SettingsUI.goBack;
-
-// Form and save functions
+// Form and save functions (still needed for form submission and external calls)
 window.saveSettings = handleFormSubmit;
 
-// LED functions
+// LED functions (may be called externally)
 window.triggerLedEffect = handleLedEffect;
 window.turnOffLeds = handleTurnOffLeds;
 
-// Unbidden Ink functions
+// Keep these as fallbacks in case any external code still references them
+window.showSettingsSection = window.SettingsUI.showSettingsSection;
+window.goBack = window.SettingsUI.goBack;
 window.testUnbiddenInk = handleTestUnbiddenInk;
 window.toggleUnbiddenInkSettings = window.SettingsUI.toggleUnbiddenInkSettings;
-
-// Unbidden Ink UI interaction functions
-window.handleSliderClick = window.SettingsUI.handleSliderClick;
-window.updateFrequencyFromSlider = window.SettingsUI.updateFrequencyFromSlider;
-window.updateTimeRange = window.SettingsUI.updateTimeRange;
-window.updateClickAreas = window.SettingsUI.updateClickAreas;
-window.setFrequency = window.SettingsUI.setFrequency;
 window.setPrompt = window.SettingsUI.setPrompt;
+window.setFrequency = window.SettingsUI.setFrequency;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
