@@ -56,6 +56,10 @@ static const int defaultUnbiddenInkStartHour = 10;                              
 static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
 static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
+// Unbidden Ink frequency validation limits
+static const int minUnbiddenInkFrequencyMinutes = 15;                                               // Minimum frequency: 15 minutes
+static const int maxUnbiddenInkFrequencyMinutes = 480;                                              // Maximum frequency: 8 hours (480 minutes)
+
 // Default button configuration (GPIO pins, actions, and MQTT topics together)
 struct ButtonConfig
 {
