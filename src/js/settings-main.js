@@ -216,6 +216,12 @@ window.turnOffLeds = handleTurnOffLeds;
 window.testUnbiddenInk = handleTestUnbiddenInk;
 window.toggleUnbiddenInkSettings = window.SettingsUI.toggleUnbiddenInkSettings;
 
+// Unbidden Ink UI interaction functions
+window.handleSliderClick = window.SettingsUI.handleSliderClick;
+window.updateFrequencyFromSlider = window.SettingsUI.updateFrequencyFromSlider;
+window.setFrequency = window.SettingsUI.setFrequency;
+window.setPrompt = window.SettingsUI.setPrompt;
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeSettings);

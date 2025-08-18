@@ -785,8 +785,18 @@
                         <!-- Effect Playground Configuration -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Playground</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Try out different settings here.
-                                Settings are not saved. Need to be compiled in config.h instead.</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Try out different settings here.
+                                Settings are not saved and need to be compiled into config.h instead.</p>
+
+                            <!-- LED Control Buttons -->
+                            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div class="flex flex-wrap gap-3">
+                                    <button type="button" onclick="turnOffLeds()"
+                                        class="py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors">
+                                        🚫 Turn Off LEDs
+                                    </button>
+                                </div>
+                            </div>
 
                             <!-- Chase Single Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
@@ -826,6 +836,14 @@
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
                                         <input type="color" id="chase-single-color" value="#0062ff"
                                             class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                    </div>
+
+                                    <!-- Demo Button for Chase Single -->
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <button type="button" onclick="triggerLedEffect('chase_single')"
+                                            class="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors">
+                                            🎮 Demo Chase Single
+                                        </button>
                                     </div>
                                 </div>
                             </details>
@@ -890,6 +908,14 @@
                                                 class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
                                         </div>
                                     </div>
+
+                                    <!-- Demo Button for Chase Multi -->
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <button type="button" onclick="triggerLedEffect('chase_multi')"
+                                            class="w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors">
+                                            🎮 Demo Chase Multi
+                                        </button>
+                                    </div>
                                 </div>
                             </details>
 
@@ -943,6 +969,14 @@
                                                 class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
                                         </div>
                                     </div>
+
+                                    <!-- Demo Button for Matrix -->
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <button type="button" onclick="triggerLedEffect('matrix')"
+                                            class="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                                            🎮 Demo Matrix
+                                        </button>
+                                    </div>
                                 </div>
                             </details>
 
@@ -988,6 +1022,14 @@
                                             <input type="color" id="twinkle-color" value="#ffffff"
                                                 class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
                                         </div>
+                                    </div>
+
+                                    <!-- Demo Button for Twinkle -->
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <button type="button" onclick="triggerLedEffect('twinkle')"
+                                            class="w-full py-2 px-4 bg-white hover:bg-gray-100 text-gray-800 border-2 border-gray-300 rounded-lg font-medium transition-colors">
+                                            ⭐ Demo Twinkle Stars
+                                        </button>
                                     </div>
                                 </div>
                             </details>
@@ -1035,6 +1077,14 @@
                                                 class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
                                         </div>
                                     </div>
+
+                                    <!-- Demo Button for Pulse -->
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <button type="button" onclick="triggerLedEffect('pulse')"
+                                            class="w-full py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium transition-colors">
+                                            💓 Demo Pulse
+                                        </button>
+                                    </div>
                                 </div>
                             </details>
 
@@ -1072,6 +1122,14 @@
                                             <input type="number" id="rainbow-hue-step" min="0.1" max="10.0" step="0.1"
                                                 value="2.5" class="input-standard">
                                         </div>
+                                    </div>
+
+                                    <!-- Demo Button for Rainbow -->
+                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <button type="button" onclick="triggerLedEffect('rainbow')"
+                                            class="w-full py-2 px-4 bg-gradient-to-r from-red-400 via-yellow-400 to-purple-400 hover:from-red-500 hover:via-yellow-500 hover:to-purple-500 text-white rounded-lg font-medium transition-colors">
+                                            🌈 Demo Rainbow
+                                        </button>
                                     </div>
                                 </div>
                             </details>
