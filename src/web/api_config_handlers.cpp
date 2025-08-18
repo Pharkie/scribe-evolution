@@ -114,6 +114,9 @@ void handleConfigGet(AsyncWebServerRequest *request)
     unbiddenInk["frequencyMinutes"] = config.unbiddenInkFrequencyMinutes;
     unbiddenInk["prompt"] = config.unbiddenInkPrompt;
 
+    LOG_NOTICE("API", "DEBUG: API response - prompt length=%d, first 50 chars='%s'",
+               config.unbiddenInkPrompt.length(), config.unbiddenInkPrompt.substring(0, 50).c_str());
+
     // Button configuration (exactly 4 buttons)
     JsonObject buttons = configDoc.createNestedObject("buttons");
     for (int i = 0; i < 4; i++)
