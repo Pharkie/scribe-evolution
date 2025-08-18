@@ -141,11 +141,19 @@ bool loadNVSConfig()
     g_runtimeConfig.maxCharacters = getNVSInt(prefs, "max_characters", maxCharacters, 100, 5000);
 
     // Load Unbidden Ink settings
+    LOG_NOTICE("CONFIG", "DEBUG: Default values - startHour=%d, endHour=%d, frequency=%d",
+               defaultUnbiddenInkStartHour, defaultUnbiddenInkEndHour, defaultUnbiddenInkFrequencyMinutes);
+
     g_runtimeConfig.unbiddenInkEnabled = getNVSBool(prefs, "unbid_enabled", defaultEnableUnbiddenInk);
     g_runtimeConfig.unbiddenInkStartHour = getNVSInt(prefs, "unbid_start_hr", defaultUnbiddenInkStartHour, 0, 24);
     g_runtimeConfig.unbiddenInkEndHour = getNVSInt(prefs, "unbid_end_hr", defaultUnbiddenInkEndHour, 0, 24);
     g_runtimeConfig.unbiddenInkFrequencyMinutes = getNVSInt(prefs, "unbid_freq_min", defaultUnbiddenInkFrequencyMinutes, minUnbiddenInkFrequencyMinutes, maxUnbiddenInkFrequencyMinutes);
+
+    LOG_NOTICE("CONFIG", "DEBUG: Loaded values - startHour=%d, endHour=%d, frequency=%d",
+               g_runtimeConfig.unbiddenInkStartHour, g_runtimeConfig.unbiddenInkEndHour, g_runtimeConfig.unbiddenInkFrequencyMinutes);
     g_runtimeConfig.unbiddenInkPrompt = getNVSString(prefs, "unbidden_prompt", "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.");
+    LOG_NOTICE("CONFIG", "DEBUG: Loaded prompt length=%d, first 50 chars='%s'",
+               g_runtimeConfig.unbiddenInkPrompt.length(), g_runtimeConfig.unbiddenInkPrompt.substring(0, 50).c_str());
 
     // Load button configuration (4 buttons, 4 fields each = 16 keys)
     for (int i = 0; i < 4; i++)
@@ -198,6 +206,9 @@ void loadDefaultConfig()
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     g_runtimeConfig.maxCharacters = maxCharacters;
+
+    LOG_NOTICE("CONFIG", "DEBUG: Setting defaults - startHour=%d, endHour=%d, frequency=%d",
+               defaultUnbiddenInkStartHour, defaultUnbiddenInkEndHour, defaultUnbiddenInkFrequencyMinutes);
 
     g_runtimeConfig.unbiddenInkEnabled = defaultEnableUnbiddenInk;
     g_runtimeConfig.unbiddenInkStartHour = defaultUnbiddenInkStartHour;
