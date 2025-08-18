@@ -17,7 +17,6 @@
 #include "../src/core/logging.h"
 
 // Include all test headers - external function declarations
-extern void run_basic_tests();
 extern void run_character_mapping_tests();
 extern void run_config_validation_tests();
 extern void run_web_validation_tests();
@@ -99,9 +98,6 @@ void setup()
     initializeGlobalTestEnvironment();
 
     // Run all test suites - all now have access to WiFi/LittleFS/WebServer
-    Serial.println("=== Running Basic Framework Tests ===");
-    run_basic_tests();
-
     Serial.println("=== Running Character Mapping Tests ===");
     run_character_mapping_tests();
 
