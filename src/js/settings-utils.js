@@ -10,12 +10,21 @@
 function toggleUnbiddenInkSettings() {
     const enabled = document.getElementById('unbidden-ink-enabled').checked;
     const settings = document.getElementById('unbidden-ink-settings');
+    const chatgptApiToken = document.getElementById('chatgpt-api-token');
     
     if (settings) {
         if (enabled) {
             settings.style.display = 'block';
+            // Make ChatGPT API token required when Unbidden Ink is enabled
+            if (chatgptApiToken) {
+                chatgptApiToken.setAttribute('required', 'required');
+            }
         } else {
             settings.style.display = 'none';
+            // Remove required attribute when Unbidden Ink is disabled
+            if (chatgptApiToken) {
+                chatgptApiToken.removeAttribute('required');
+            }
         }
     }
 }

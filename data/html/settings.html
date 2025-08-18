@@ -62,7 +62,7 @@
         </div>
 
         <!-- Settings Form -->
-        <form id="settings-form" class="hidden space-y-6" onsubmit="saveSettings(event)">
+        <form id="settings-form" class="hidden space-y-6" onsubmit="saveSettings(event)" novalidate>
             <!-- WiFi Section -->
             <div id="wifi-section" class="settings-section">
                 <div class="settings-card settings-card-blue">
@@ -848,6 +848,252 @@
                                     </div>
                                 </div>
                             </details>
+
+                            <!-- Chase Multi Configuration -->
+                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                    Chase Multi Effect Settings
+                                </summary>
+                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div class="space-y-2">
+                                            <label for="chase-multi-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="chase-multi-speed" min="1" max="100" step="1"
+                                                value="2" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="chase-multi-trail-length"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trail
+                                                Length</label>
+                                            <input type="number" id="chase-multi-trail-length" min="1" max="50" step="1"
+                                                value="20" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="chase-multi-trail-fade"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trail
+                                                Fade</label>
+                                            <input type="number" id="chase-multi-trail-fade" min="0" max="255" step="1"
+                                                value="20" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="chase-multi-color-spacing"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color
+                                                Spacing</label>
+                                            <input type="number" id="chase-multi-color-spacing" min="1" max="30"
+                                                step="1" value="12" class="input-standard">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="space-y-2">
+                                            <label for="chase-multi-color1"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color
+                                                1</label>
+                                            <input type="color" id="chase-multi-color1" value="#ff9900"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="chase-multi-color2"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color
+                                                2</label>
+                                            <input type="color" id="chase-multi-color2" value="#008f00"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="chase-multi-color3"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color
+                                                3</label>
+                                            <input type="color" id="chase-multi-color3" value="#78cffe"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Matrix Configuration -->
+                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                    Matrix Effect Settings
+                                </summary>
+                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div class="space-y-2">
+                                            <label for="matrix-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="matrix-speed" min="1" max="100" step="1" value="3"
+                                                class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="matrix-drops"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number
+                                                of Drops</label>
+                                            <input type="number" id="matrix-drops" min="1" max="20" step="1" value="5"
+                                                class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="matrix-background-fade"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Background
+                                                Fade</label>
+                                            <input type="number" id="matrix-background-fade" min="1" max="255" step="1"
+                                                value="64" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="matrix-trail-fade"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trail
+                                                Fade</label>
+                                            <input type="number" id="matrix-trail-fade" min="1" max="255" step="1"
+                                                value="32" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="matrix-brightness-fade"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness
+                                                Fade</label>
+                                            <input type="number" id="matrix-brightness-fade" min="1" max="100" step="1"
+                                                value="40" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="matrix-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="matrix-color" value="#009100"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Twinkle Configuration -->
+                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                    Twinkle Stars Effect Settings
+                                </summary>
+                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div class="space-y-2">
+                                            <label for="twinkle-density"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Density
+                                                (1-30)</label>
+                                            <input type="number" id="twinkle-density" min="1" max="30" step="1"
+                                                value="8" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="twinkle-fade-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fade
+                                                Speed</label>
+                                            <input type="number" id="twinkle-fade-speed" min="1" max="50" step="1"
+                                                value="5" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="twinkle-min-brightness"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Min
+                                                Brightness</label>
+                                            <input type="number" id="twinkle-min-brightness" min="0" max="255" step="1"
+                                                value="50" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="twinkle-max-brightness"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max
+                                                Brightness</label>
+                                            <input type="number" id="twinkle-max-brightness" min="0" max="255" step="1"
+                                                value="255" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="twinkle-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="twinkle-color" value="#ffffff"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Pulse Configuration -->
+                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                    Pulse Wave Effect Settings
+                                </summary>
+                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div class="space-y-2">
+                                            <label for="pulse-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="pulse-speed" min="1" max="100" step="1" value="4"
+                                                class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="pulse-min-brightness"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Min
+                                                Brightness</label>
+                                            <input type="number" id="pulse-min-brightness" min="0" max="255" step="1"
+                                                value="0" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="pulse-max-brightness"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max
+                                                Brightness</label>
+                                            <input type="number" id="pulse-max-brightness" min="0" max="255" step="1"
+                                                value="255" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="pulse-wave-frequency"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wave
+                                                Frequency</label>
+                                            <input type="number" id="pulse-wave-frequency" value="0.05"
+                                                class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="pulse-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="pulse-color" value="#ff00f2"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Rainbow Configuration -->
+                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                    Rainbow Wave Effect Settings
+                                </summary>
+                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div class="space-y-2">
+                                            <label for="rainbow-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (0.1-10.0)</label>
+                                            <input type="number" id="rainbow-speed" min="0.1" max="10.0" step="0.1"
+                                                value="2.0" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="rainbow-saturation"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Saturation</label>
+                                            <input type="number" id="rainbow-saturation" min="0" max="255" step="1"
+                                                value="255" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="rainbow-brightness"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness</label>
+                                            <input type="number" id="rainbow-brightness" min="0" max="255" step="1"
+                                                value="255" class="input-standard">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="rainbow-hue-step"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Hue
+                                                Step</label>
+                                            <input type="number" id="rainbow-hue-step" min="0.1" max="10.0" step="0.1"
+                                                value="2.5" class="input-standard">
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
                         </div> <!-- LED Effect Triggers -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Test LED Effects</h3>
@@ -908,11 +1154,7 @@
 
     <!-- Load main app bundle (shared functionality) -->
     <script src="/js/app.min.js"></script>
-    <!-- Load global configuration (included in app.min.js) -->
-    <!-- Load modular settings JavaScript -->
-    <script src="/js/settings-utils.min.js"></script>
-    <script src="/js/settings-core.min.js"></script>
-    <script src="/js/settings-led-config.min.js"></script>
+    <!-- Load consolidated settings JavaScript -->
     <script src="/js/settings.min.js"></script>
 </body>
 

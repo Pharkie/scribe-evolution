@@ -31,7 +31,7 @@ extern PubSubClient mqttClient;
 // SYSTEM API HANDLERS
 // ========================================
 
-void handleStatus(AsyncWebServerRequest *request)
+void handleDiagnostics(AsyncWebServerRequest *request)
 {
     // Get flash storage information
     size_t totalBytes = 0;
@@ -41,7 +41,7 @@ void handleStatus(AsyncWebServerRequest *request)
 
     const RuntimeConfig &runtimeConfig = getRuntimeConfig();
 
-    DynamicJsonDocument doc(4096); // Increased size for comprehensive route data
+    DynamicJsonDocument doc(4096);
 
     // === DEVICE INFORMATION ===
     JsonObject device = doc.createNestedObject("device");
@@ -96,6 +96,23 @@ void handleStatus(AsyncWebServerRequest *request)
         break;
     }
     hardware["reset_reason"] = resetReasonStr;
+
+    // Temperature (ESP32-C3 internal sensor)
+    float temp = temperatureRead();
+    LOG_NOTICE("WEB", "Raw temperature reading: %.2f°C, isnan: %s, isfinite: %s",
+               temp, isnan(temp) ? "true" : "false", isfinite(temp) ? "true" : "false");
+
+    if (isfinite(temp) && temp > -100 && temp < 200) // Very lenient range for debugging
+    {
+        hardware["temperature"] = temp;
+        LOG_NOTICE("WEB", "Temperature added to JSON: %.2f°C", temp);
+    }
+    else
+    {
+        hardware["temperature"] = nullptr; // Explicitly set to null for JSON
+        LOG_WARNING("WEB", "Invalid temperature reading filtered out: %.2f°C (isnan: %s, isfinite: %s)",
+                    temp, isnan(temp) ? "true" : "false", isfinite(temp) ? "true" : "false");
+    }
 
     // === SYSTEM STATUS ===
     JsonObject system = doc.createNestedObject("system");
@@ -222,21 +239,6 @@ void handleStatus(AsyncWebServerRequest *request)
     JsonObject config = doc.createNestedObject("configuration");
     config["max_message_chars"] = runtimeConfig.maxCharacters;
     config["max_prompt_chars"] = maxPromptCharacters;
-
-    // Temperature (ESP32-C3 internal sensor)
-    float temp = temperatureRead();
-    LOG_VERBOSE("WEB", "Temperature read: %.1f°C, isnan: %s", temp, isnan(temp) ? "true" : "false");
-
-    if (!isnan(temp) && temp > -50 && temp < 150) // More lenient range for ESP32-C3
-    {
-        hardware["temperature"] = temp;
-        LOG_VERBOSE("WEB", "Temperature added to JSON: %.1f°C", temp);
-    }
-    else
-    {
-        hardware["temperature"] = nullptr; // Explicitly set to null for JSON
-        LOG_WARNING("WEB", "Invalid temperature reading: %.1f°C (isnan: %s)", temp, isnan(temp) ? "true" : "false");
-    }
 
     // Serialize and send
     String response;

@@ -56,7 +56,6 @@ void structuredLog(const char *component, int level, const char *format, ...);
 #define LOG_NOTICE(component, format, ...) structuredLog(component, LOG_LEVEL_NOTICE, format, ##__VA_ARGS__)
 #define LOG_ERROR(component, format, ...) structuredLog(component, LOG_LEVEL_ERROR, format, ##__VA_ARGS__)
 #define LOG_WARNING(component, format, ...) structuredLog(component, LOG_LEVEL_WARNING, format, ##__VA_ARGS__)
-#define LOG_INFO(component, format, ...) structuredLog(component, LOG_LEVEL_NOTICE, format, ##__VA_ARGS__)
 #define LOG_VERBOSE(component, format, ...) structuredLog(component, LOG_LEVEL_VERBOSE, format, ##__VA_ARGS__)
 
 void logToFile(const char *message);

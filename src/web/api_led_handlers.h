@@ -19,8 +19,9 @@
  * @brief Handle LED effect trigger requests
  * @param request The HTTP request containing effect parameters
  *
- * Endpoint: POST /api/led/{effect_name}
- * Body: JSON with duration, color1, color2, color3 parameters
+ * Endpoint: POST /api/led-effect
+ * Body: JSON with effect, duration, cycles, color1, color2, color3 parameters
+ * Example: {"effect": "chase_single", "duration": 10, "color1": "blue"}
  *
  * Supported effects: simple_chase, rainbow, twinkle, chase, pulse, matrix
  * Supported colors: red, green, blue, yellow, purple, cyan, white, orange, pink, black
@@ -31,7 +32,7 @@ void handleLedEffect(AsyncWebServerRequest *request);
  * @brief Handle LED off request (stops all effects)
  * @param request The HTTP request
  *
- * Endpoint: POST /api/led/off
+ * Endpoint: POST /api/leds-off
  */
 void handleLedOff(AsyncWebServerRequest *request);
 
