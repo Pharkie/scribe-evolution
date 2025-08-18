@@ -1,7 +1,7 @@
 /**
- * @file settings-led-config.js
- * @brief LED configuration module for settings page
- * @description Handles all LED-related configuration including autonomous per-effect settings
+ * @file settings-led.js
+ * @brief LED functionality module - handles all LED-related operations
+ * @description Focused module for LED configuration, effects, and testing
  */
 
 /**
@@ -337,11 +337,12 @@ function validateLedConfig(ledConfig) {
     return { isValid: true };
 }
 
-// Make functions available globally
-window.LEDConfig = {
+// Export LED module
+window.SettingsLED = {
     populateLedForm,
-    collectLedFormData,
+    collectLedConfig: collectBasicLedConfig, // Alias for consistency
     validateLedConfig,
     colorToHtml,
-    colorToRgba
+    colorToRgba,
+    demoLedEffect
 };

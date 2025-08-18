@@ -131,11 +131,13 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         wifi["ssid"] = userConfig["wifi"]["ssid"] | "";
         wifi["password"] = userConfig["wifi"]["password"] | "";
+        wifi["connect_timeout"] = userConfig["wifi"]["connect_timeout"] | 15000;
     }
     else
     {
         wifi["ssid"] = "";
         wifi["password"] = "";
+        wifi["connect_timeout"] = 15000;
     }
 
     // MQTT configuration

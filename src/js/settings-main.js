@@ -1,43 +1,37 @@
 /**
- * @file settings.js
- * @brief Main settings page coordinator
- * @description Lightweight coordinator that orchestrates the modular settings components
+ * @file settings-main.js
+ * @brief Main coordination module - initialization and module orchestration
+ * @description Lightweight coordinator that manages module interactions and page initialization
  */
 
-// Import note: The actual modules are loaded via HTML script tags
-// This file serves as the main entry point and coordinator
-
 /**
- * Initialize the settings page
+ * Initialize the settings page and coordinate all modules
  */
 async function initializeSettings() {
     try {
         // Wait for all modules to be available
         await waitForModules();
         
-        // Initialize UI components
-        if (window.SettingsUtils && window.SettingsUtils.initializeUI) {
-            window.SettingsUtils.initializeUI();
-        }
+        // Load configuration from API
+        const config = await window.SettingsAPI.loadConfiguration();
         
-        // Load and populate configuration
-        if (window.SettingsCore && window.SettingsCore.loadConfiguration) {
-            await window.SettingsCore.loadConfiguration();
-        }
+        // Populate the form with loaded configuration
+        window.SettingsUI.populateForm(config);
         
         // Set up form submission handler
-        const settingsForm = document.getElementById('settings-form');
-        if (settingsForm && window.SettingsCore && window.SettingsCore.saveSettings) {
-            settingsForm.addEventListener('submit', window.SettingsCore.saveSettings);
-        }
+        setupFormHandler();
+        
+        // Set up UI event handlers
+        setupEventHandlers();
+        
+        // Hide loading state and show settings
+        window.SettingsUI.hideLoadingState();
         
         console.log('Settings page initialized successfully');
         
     } catch (error) {
         console.error('Failed to initialize settings page:', error);
-        if (window.SettingsCore && window.SettingsCore.showMessage) {
-            window.SettingsCore.showMessage('Failed to initialize settings page: ' + error.message, 'error');
-        }
+        window.SettingsUI.showMessage('Failed to initialize settings page: ' + error.message, 'error');
     }
 }
 
@@ -50,7 +44,7 @@ async function waitForModules() {
     let waitTime = 0;
     
     while (waitTime < maxWaitTime) {
-        if (window.SettingsCore && window.LEDConfig && window.SettingsUtils) {
+        if (window.SettingsAPI && window.SettingsUI && window.SettingsLED) {
             return; // All modules loaded
         }
         
@@ -61,42 +55,166 @@ async function waitForModules() {
     throw new Error('Timeout waiting for settings modules to load');
 }
 
-// Legacy function aliases for backward compatibility
-async function loadConfiguration() {
-    if (window.SettingsCore && window.SettingsCore.loadConfiguration) {
-        return window.SettingsCore.loadConfiguration();
+/**
+ * Set up form submission handler
+ */
+function setupFormHandler() {
+    const settingsForm = document.getElementById('settings-form');
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', handleFormSubmit);
     }
 }
 
-async function saveSettings(event) {
-    if (window.SettingsCore && window.SettingsCore.saveSettings) {
-        return window.SettingsCore.saveSettings(event);
+/**
+ * Set up additional UI event handlers
+ */
+function setupEventHandlers() {
+    // Unbidden Ink toggle handler
+    const unbiddenInkToggle = document.getElementById('unbidden-ink-enabled');
+    if (unbiddenInkToggle) {
+        unbiddenInkToggle.addEventListener('change', window.SettingsUI.toggleUnbiddenInkSettings);
+        // Trigger initial state
+        window.SettingsUI.toggleUnbiddenInkSettings();
+    }
+    
+    // Time range slider handlers
+    const timeStartSlider = document.getElementById('time-start');
+    const timeEndSlider = document.getElementById('time-end');
+    if (timeStartSlider && timeEndSlider) {
+        timeStartSlider.addEventListener('input', window.SettingsUI.updateTimeRange);
+        timeEndSlider.addEventListener('input', window.SettingsUI.updateTimeRange);
     }
 }
 
-function showMessage(message, type) {
-    if (window.SettingsCore && window.SettingsCore.showMessage) {
-        return window.SettingsCore.showMessage(message, type);
+/**
+ * Handle form submission
+ * @param {Event} event - Form submit event
+ */
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    
+    try {
+        // Collect form data
+        const formData = window.SettingsUI.collectFormData();
+        
+        // Validate LED configuration
+        if (window.SettingsLED.validateLedConfig) {
+            const ledValidation = window.SettingsLED.validateLedConfig(formData.leds);
+            if (!ledValidation.isValid) {
+                window.SettingsUI.showMessage(ledValidation.error, 'error');
+                return;
+            }
+        }
+        
+        // Save configuration via API
+        await window.SettingsAPI.saveConfiguration(formData);
+        
+        // Redirect to index page with success message
+        window.location.href = '/?message=Settings saved successfully!&type=success';
+        
+    } catch (error) {
+        console.error('Failed to save settings:', error);
+        window.SettingsUI.showMessage('Failed to save settings: ' + error.message, 'error');
     }
 }
 
-function toggleUnbiddenInkSettings() {
-    if (window.SettingsUtils && window.SettingsUtils.toggleUnbiddenInkSettings) {
-        return window.SettingsUtils.toggleUnbiddenInkSettings();
+/**
+ * Handle LED effect testing
+ * @param {string} effectName - Name of the effect to trigger
+ */
+async function handleLedEffect(effectName) {
+    try {
+        await window.SettingsAPI.triggerLedEffect(effectName);
+        window.SettingsUI.showMessage(`${effectName} effect triggered successfully!`, 'success');
+    } catch (error) {
+        console.error('Failed to trigger LED effect:', error);
+        window.SettingsUI.showMessage(`Failed to trigger ${effectName} effect: ${error.message}`, 'error');
     }
 }
 
-function goBack() {
-    if (window.SettingsUtils && window.SettingsUtils.goBack) {
-        return window.SettingsUtils.goBack();
+/**
+ * Handle turning off LEDs
+ */
+async function handleTurnOffLeds() {
+    try {
+        await window.SettingsAPI.turnOffLeds();
+        window.SettingsUI.showMessage('LEDs turned off successfully!', 'success');
+    } catch (error) {
+        console.error('Failed to turn off LEDs:', error);
+        window.SettingsUI.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
     }
 }
 
-function updateTimeRange() {
-    if (window.SettingsUtils && window.SettingsUtils.updateTimeRange) {
-        return window.SettingsUtils.updateTimeRange();
+/**
+ * Handle Unbidden Ink testing
+ */
+async function handleTestUnbiddenInk() {
+    const button = event.target;
+    const originalText = button.textContent;
+    
+    try {
+        // Validate prerequisites
+        const chatgptToken = document.getElementById('chatgpt-api-token').value.trim();
+        if (!chatgptToken) {
+            window.SettingsUI.showMessage('Please configure your ChatGPT API Token first. You can get one from https://platform.openai.com/api-keys', 'error');
+            return;
+        }
+        
+        const unbiddenInkEnabled = document.getElementById('unbidden-ink-enabled').checked;
+        if (!unbiddenInkEnabled) {
+            window.SettingsUI.showMessage('Please enable Unbidden Ink first before testing.', 'error');
+            return;
+        }
+        
+        const currentPrompt = document.getElementById('unbidden-ink-prompt').value.trim();
+        if (!currentPrompt) {
+            window.SettingsUI.showMessage('Please enter a prompt in the Custom Prompt field before testing.', 'error');
+            return;
+        }
+        
+        // Show loading state
+        button.disabled = true;
+        button.textContent = 'Generating...';
+        
+        // Generate content via API
+        const result = await window.SettingsAPI.testUnbiddenInkGeneration(currentPrompt);
+        
+        if (result.content) {
+            // Print the generated content
+            await window.SettingsAPI.printLocalContent(result.content);
+            window.SettingsUI.showMessage('Unbidden Ink generated and printed successfully', 'success');
+        } else {
+            throw new Error(result.error || 'No content generated');
+        }
+        
+    } catch (error) {
+        console.error('Failed to test Unbidden Ink:', error);
+        window.SettingsUI.showMessage(`Failed to test Unbidden Ink: ${error.message}`, 'error');
+    } finally {
+        // Restore button state
+        button.disabled = false;
+        button.textContent = originalText;
     }
 }
+
+// =============================================================================
+// GLOBAL FUNCTION EXPORTS (for HTML onclick handlers)
+// =============================================================================
+
+// Navigation functions
+window.showSettingsSection = window.SettingsUI.showSettingsSection;
+window.goBack = window.SettingsUI.goBack;
+
+// Form and save functions
+window.saveSettings = handleFormSubmit;
+
+// LED functions
+window.triggerLedEffect = handleLedEffect;
+window.turnOffLeds = handleTurnOffLeds;
+
+// Unbidden Ink functions
+window.testUnbiddenInk = handleTestUnbiddenInk;
+window.toggleUnbiddenInkSettings = window.SettingsUI.toggleUnbiddenInkSettings;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
