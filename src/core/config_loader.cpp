@@ -17,8 +17,8 @@
 #endif
 
 // NVS configuration constants
-static const char* NVS_NAMESPACE = "scribe-app";
-static const char* SCHEMA_VERSION_KEY = "prefs_version";
+static const char *NVS_NAMESPACE = "scribe-app";
+static const char *SCHEMA_VERSION_KEY = "prefs_version";
 static const int CURRENT_SCHEMA_VERSION = 1;
 
 // Global runtime configuration instance
@@ -26,16 +26,19 @@ static RuntimeConfig g_runtimeConfig;
 bool g_configLoaded = false;
 
 // Helper function to validate and get string from NVS with fallback
-String getNVSString(Preferences &prefs, const char* key, const String& defaultValue) {
+String getNVSString(Preferences &prefs, const char *key, const String &defaultValue)
+{
     String value = prefs.getString(key, defaultValue);
     // Add validation logic here if needed
     return value;
 }
 
 // Helper function to validate and get int from NVS with fallback
-int getNVSInt(Preferences &prefs, const char* key, int defaultValue, int minVal = INT_MIN, int maxVal = INT_MAX) {
+int getNVSInt(Preferences &prefs, const char *key, int defaultValue, int minVal = INT_MIN, int maxVal = INT_MAX)
+{
     int value = prefs.getInt(key, defaultValue);
-    if (value < minVal || value > maxVal) {
+    if (value < minVal || value > maxVal)
+    {
         LOG_WARNING("CONFIG", "Invalid NVS value for %s: %d, using default: %d", key, value, defaultValue);
         return defaultValue;
     }
@@ -43,28 +46,31 @@ int getNVSInt(Preferences &prefs, const char* key, int defaultValue, int minVal 
 }
 
 // Helper function to validate and get bool from NVS with fallback
-bool getNVSBool(Preferences &prefs, const char* key, bool defaultValue) {
+bool getNVSBool(Preferences &prefs, const char *key, bool defaultValue)
+{
     return prefs.getBool(key, defaultValue);
 }
 
 bool loadRuntimeConfig()
 {
     LOG_VERBOSE("CONFIG", "Loading runtime configuration from NVS");
-    
+
     // Check schema version and migrate if needed
-    if (!checkAndMigrateNVSSchema()) {
+    if (!checkAndMigrateNVSSchema())
+    {
         LOG_ERROR("CONFIG", "Schema migration failed, using defaults");
         loadDefaultConfig();
         return false;
     }
-    
+
     // Load configuration from NVS
-    if (!loadNVSConfig()) {
+    if (!loadNVSConfig())
+    {
         LOG_WARNING("CONFIG", "Failed to load from NVS, using defaults");
         loadDefaultConfig();
         return false;
     }
-    
+
     g_configLoaded = true;
     LOG_NOTICE("CONFIG", "Runtime configuration loaded from NVS");
     return true;
@@ -73,7 +79,8 @@ bool loadRuntimeConfig()
 bool loadNVSConfig()
 {
     Preferences prefs;
-    if (!prefs.begin(NVS_NAMESPACE, true)) { // read-only
+    if (!prefs.begin(NVS_NAMESPACE, true))
+    { // read-only
         LOG_ERROR("CONFIG", "Failed to open NVS namespace: %s", NVS_NAMESPACE);
         return false;
     }
@@ -113,7 +120,8 @@ bool loadNVSConfig()
     g_runtimeConfig.unbiddenInkPrompt = getNVSString(prefs, "unbidden_prompt", "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.");
 
     // Load button configuration (4 buttons, 4 fields each = 16 keys)
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         String buttonPrefix = "button" + String(i + 1) + "_";
         g_runtimeConfig.buttonShortActions[i] = getNVSString(prefs, (buttonPrefix + "short_action").c_str(), defaultButtons[i].shortAction);
         g_runtimeConfig.buttonShortMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "short_mqtt").c_str(), defaultButtons[i].shortMqttTopic);
@@ -127,9 +135,9 @@ bool loadNVSConfig()
     g_runtimeConfig.ledCount = getNVSInt(prefs, "led_count", DEFAULT_LED_COUNT, 1, 1000);
     g_runtimeConfig.ledBrightness = getNVSInt(prefs, "led_brightness", DEFAULT_LED_BRIGHTNESS, 1, 255);
     g_runtimeConfig.ledRefreshRate = getNVSInt(prefs, "led_refresh_rate", DEFAULT_LED_REFRESH_RATE, 10, 120);
-    
+
     // Load LED effects configuration (this will need custom handling if complex)
-    g_runtimeConfig.ledEffects = getDefaultLedEffectsConfig(); // TODO: Implement NVS LED effects loading
+    g_runtimeConfig.ledEffects = getDefaultLedEffectsConfig();
 #endif
 
     prefs.end();
@@ -194,7 +202,8 @@ void loadDefaultConfig()
 bool saveNVSConfig(const RuntimeConfig &config)
 {
     Preferences prefs;
-    if (!prefs.begin(NVS_NAMESPACE, false)) { // read-write
+    if (!prefs.begin(NVS_NAMESPACE, false))
+    { // read-write
         LOG_ERROR("CONFIG", "Failed to open NVS namespace for writing: %s", NVS_NAMESPACE);
         return false;
     }
@@ -228,7 +237,8 @@ bool saveNVSConfig(const RuntimeConfig &config)
     prefs.putString("unbidden_prompt", config.unbiddenInkPrompt);
 
     // Save button configuration
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         String buttonPrefix = "button" + String(i + 1) + "_";
         prefs.putString((buttonPrefix + "short_action").c_str(), config.buttonShortActions[i]);
         prefs.putString((buttonPrefix + "short_mqtt").c_str(), config.buttonShortMqttTopics[i]);
@@ -242,7 +252,7 @@ bool saveNVSConfig(const RuntimeConfig &config)
     prefs.putInt("led_count", config.ledCount);
     prefs.putInt("led_brightness", config.ledBrightness);
     prefs.putInt("led_refresh_rate", config.ledRefreshRate);
-    
+
     // TODO: Save LED effects configuration if needed
 #endif
 
@@ -254,7 +264,8 @@ bool saveNVSConfig(const RuntimeConfig &config)
 bool checkAndMigrateNVSSchema()
 {
     Preferences prefs;
-    if (!prefs.begin(NVS_NAMESPACE, true)) { // read-only first
+    if (!prefs.begin(NVS_NAMESPACE, true))
+    { // read-only first
         LOG_ERROR("CONFIG", "Failed to open NVS namespace: %s", NVS_NAMESPACE);
         return false;
     }
@@ -262,12 +273,14 @@ bool checkAndMigrateNVSSchema()
     int currentVersion = prefs.getInt(SCHEMA_VERSION_KEY, 0);
     prefs.end();
 
-    if (currentVersion == 0) {
+    if (currentVersion == 0)
+    {
         LOG_NOTICE("CONFIG", "First boot detected, initializing NVS with defaults");
         return initializeNVSConfig();
     }
-    
-    if (currentVersion != CURRENT_SCHEMA_VERSION) {
+
+    if (currentVersion != CURRENT_SCHEMA_VERSION)
+    {
         LOG_WARNING("CONFIG", "NVS schema version mismatch: found %d, expected %d", currentVersion, CURRENT_SCHEMA_VERSION);
         LOG_NOTICE("CONFIG", "Resetting NVS to defaults for schema migration");
         return initializeNVSConfig();
@@ -280,30 +293,34 @@ bool checkAndMigrateNVSSchema()
 bool initializeNVSConfig()
 {
     Preferences prefs;
-    if (!prefs.begin(NVS_NAMESPACE, false)) { // read-write
+    if (!prefs.begin(NVS_NAMESPACE, false))
+    { // read-write
         LOG_ERROR("CONFIG", "Failed to open NVS namespace for initialization: %s", NVS_NAMESPACE);
         return false;
     }
 
     // Clear all existing preferences
     prefs.clear();
-    
+
     // Set schema version
     prefs.putInt(SCHEMA_VERSION_KEY, CURRENT_SCHEMA_VERSION);
 
     // Initialize with defaults from config.h
     loadDefaultConfig();
-    
+
     // Save defaults to NVS
     prefs.end(); // Close first, then reopen for saving
     bool result = saveNVSConfig(g_runtimeConfig);
-    
-    if (result) {
+
+    if (result)
+    {
         LOG_NOTICE("CONFIG", "NVS initialized with defaults from config.h (schema version %d)", CURRENT_SCHEMA_VERSION);
-    } else {
+    }
+    else
+    {
         LOG_ERROR("CONFIG", "Failed to initialize NVS with defaults");
     }
-    
+
     return result;
 }
 
