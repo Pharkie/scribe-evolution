@@ -21,8 +21,11 @@ async function initializeSettings() {
         // Set up form submission handler
         setupFormHandler();
         
-        // Set up UI event handlers
+        // Set up UI event handlers (this sets data attributes on preset buttons)
         setupEventHandlers();
+        
+        // Now that event handlers are set up, match custom prompt to preset
+        window.SettingsUI.matchCustomPromptToPreset(config.unbiddenInk?.prompt || '');
         
         // Hide loading state and show settings
         window.SettingsUI.hideLoadingState();
@@ -196,7 +199,9 @@ function setupPromptPresetHandlers() {
                 e.preventDefault();
                 window.SettingsUI.setPrompt(prompt);
             });
-            // Remove inline handler
+            // Store the prompt text as a data attribute for later use in highlighting
+            button.setAttribute('data-prompt-text', prompt);
+            // Remove inline handler after storing the data
             button.removeAttribute('onclick');
         }
     });

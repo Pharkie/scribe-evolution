@@ -5,7 +5,55 @@
  */
 
 /**
- * Populate all form sections with configuration data
+ * Populate all form s/**
+ * Update the visual time range display only - no collision detection
+ * Used when loading configuration to preserve exact values
+ */
+function updateTimeRangeDisplay() {
+    const startSlider = document.getElementById('time-start');
+    const endSlider = document.getElementById('time-end');
+    
+    if (!startSlider || !endSlider) return;
+    
+    const startVal = parseInt(startSlider.value);
+    const endVal = parseInt(endSlider.value);
+    
+    // Update the visual track
+    const track = document.getElementById('time-track');
+    if (track) {
+        if (startVal === 0 && endVal === 0) {
+            // Full day operation - show full width
+            track.style.left = '0%';
+            track.style.width = '100%';
+        } else {
+            // Calculate percentages based on slider positioning - track should end at handle position
+            const startPercent = (startVal / 23) * 100;
+            const endPercent = (endVal / 23) * 100; // End exactly at the handle position
+            
+            track.style.left = startPercent + '%';
+            track.style.width = (endPercent - startPercent) + '%';
+        }
+    }
+    
+    // Update time display labels  
+    const startDisplay = document.getElementById('time-display-start');
+    const endDisplay = document.getElementById('time-display-end');
+    
+    // Format hour display
+    const formatHour = (hour) => {
+        if (hour === 24) return '00:00';
+        return String(hour).padStart(2, '0') + ':00';
+    };
+    
+    if (startDisplay) startDisplay.textContent = formatHour(startVal);
+    if (endDisplay) endDisplay.textContent = formatHour(endVal);
+    
+    // Update frequency display
+    updateFrequencyDisplay();
+}
+
+/**
+ * Populate form with configuration data
  * @param {Object} config - Configuration object from server
  */
 function populateForm(config) {
@@ -36,10 +84,10 @@ function populateForm(config) {
     // Time range sliders
     setElementValue('time-start', config.unbiddenInk?.startHour !== undefined ? config.unbiddenInk.startHour : 8);
     setElementValue('time-end', config.unbiddenInk?.endHour !== undefined ? config.unbiddenInk.endHour : 22);
-    updateTimeRange();
     
-    // Initialize click areas after a short delay to ensure DOM is ready
+    // Initialize time range display and click areas after a short delay to ensure DOM is ready
     setTimeout(() => {
+        updateTimeRangeDisplay(); 
         updateClickAreas();
     }, 100);
     
@@ -51,9 +99,6 @@ function populateForm(config) {
     updateFrequencyDisplay();
     
     setElementValue('unbidden-ink-prompt', config.unbiddenInk?.prompt || '');
-    
-    // Check if custom prompt matches any preset and select it visually
-    matchCustomPromptToPreset(config.unbiddenInk?.prompt || '');
     
     // Button configuration
     for (let i = 0; i < 4; i++) {
@@ -241,9 +286,9 @@ function toggleUnbiddenInkSettings() {
 }
 
 /**
- * Update time range display from sliders with collision handling
- * @param {HTMLElement} slider - The slider that triggered the update (optional)
- * @param {string} type - Type of slider: 'start' or 'end' (optional)
+ * Update time range with collision detection for user interactions
+ * @param {HTMLElement} slider - The slider element that triggered the change
+ * @param {string} type - Either 'start' or 'end' to indicate which slider moved
  */
 function updateTimeRange(slider, type) {
     const startSlider = document.getElementById('time-start');
@@ -257,25 +302,20 @@ function updateTimeRange(slider, type) {
     // Debug: Log the values
     console.log('updateTimeRange - startVal:', startVal, 'endVal:', endVal, 'type:', type);
     
-    // Special case: Allow 0-0 for full day operation (24 hours) OR 0-24 for full day
-    if ((startVal === 0 && endVal === 0) || (startVal === 0 && endVal === 24)) {
-        // This is valid - full day operation  
-        // Normalize 0-24 to 0-0 for consistency
-        if (endVal === 24) {
-            endSlider.value = 0;
-            endVal = 0;
-        }
+    // Special case: Allow 0-0 for full day operation (24 hours)  
+    if (startVal === 0 && endVal === 0) {
+        // This is valid - full day operation
     } else {
         // Smart collision handling - move the other handle when possible
         if (type === 'start') {
             if (startVal >= endVal) {
-                if (endVal < 24) {
+                if (endVal < 23) {
                     // Move end handle forward
                     endVal = startVal + 1;
                     endSlider.value = endVal;
                 } else {
                     // End can't move, constrain start
-                    startVal = 23;
+                    startVal = 22;
                     startSlider.value = startVal;
                 }
             }
@@ -293,14 +333,14 @@ function updateTimeRange(slider, type) {
             }
         } else {
             // No type specified - use original logic for when called from config loading
-            if (startVal >= endVal && !(startVal === 0 && endVal === 0)) {
-                if (endVal < 24) {
+            if (startVal >= endVal) {
+                if (endVal < 23) {
                     // Move end handle forward
                     endVal = startVal + 1;
                     endSlider.value = endVal;
                 } else {
                     // End can't move, constrain start
-                    startVal = 23;
+                    startVal = 22;
                     startSlider.value = startVal;
                 }
             }
@@ -315,18 +355,16 @@ function updateTimeRange(slider, type) {
     const track = document.getElementById('time-track');
     if (track) {
         if (startVal === 0 && endVal === 0) {
-            // Full day operation - show full width with special styling
+            // Full day operation - show full width
             track.style.left = '0%';
             track.style.width = '100%';
-            track.classList.add('all-day-track'); // Add CSS class for special styling if needed
         } else {
-            // Calculate percentages based on where the slider thumbs actually appear
-            const startPercent = (startVal / 24) * 100;
-            const endPercent = (endVal / 24) * 100;
+            // Calculate percentages based on slider positioning - track should end at handle position
+            const startPercent = (startVal / 23) * 100;
+            const endPercent = (endVal / 23) * 100; // End exactly at the handle position
             
             track.style.left = startPercent + '%';
             track.style.width = (endPercent - startPercent) + '%';
-            track.classList.remove('all-day-track');
         }
     }
     
@@ -334,21 +372,14 @@ function updateTimeRange(slider, type) {
     const startDisplay = document.getElementById('time-display-start');
     const endDisplay = document.getElementById('time-display-end');
     
-    // Format hour with special handling for all-day and midnight
-    const formatHour = (hour, isEnd = false) => {
-        // Special case: 0-0 means "All Day"
-        if (startVal === 0 && endVal === 0) {
-            return isEnd ? '24:00 (All Day)' : '00:00 (All Day)';
-        }
-        
-        // Normal case: format as 24-hour time
-        if (hour === 24) return '00:00 (next day)';
-        if (hour === 0) return '00:00';
+    // Format hour 24 as 00:00 (midnight of next day)
+    const formatHour = (hour) => {
+        if (hour === 24) return '00:00';
         return String(hour).padStart(2, '0') + ':00';
     };
     
-    if (startDisplay) startDisplay.textContent = formatHour(startVal, false);
-    if (endDisplay) endDisplay.textContent = formatHour(endVal, true);
+    if (startDisplay) startDisplay.textContent = formatHour(startVal);
+    if (endDisplay) endDisplay.textContent = formatHour(endVal);
     
     // Update click areas after any changes
     updateClickAreas();
@@ -449,7 +480,7 @@ function updateClickAreas() {
     const startVal = parseInt(startSlider.value);
     const endVal = parseInt(endSlider.value);
     
-    // Calculate positions as percentages for 24-hour scale (0-24)
+    // Calculate positions as percentages for 24-hour scale (0-24) - matching old behavior
     const startPercent = (startVal / 24) * 100;
     const endPercent = ((endVal + 1) / 24) * 100; // +1 because hour 23 represents 23:00-24:00
     
@@ -524,33 +555,21 @@ function updateFrequencyDisplay() {
         return String(hour).padStart(2, '0') + ':00';
     };
     
-    // Special case for all-day operation
-    if (startHour === 0 && endHour === 0) {
-        if (minutes < 60) {
-            text = `Around every ${minutes} minutes, all day long`;
-        } else {
-            const hours = Math.floor(minutes / 60);
-            const remainingMinutes = minutes % 60;
-            if (remainingMinutes === 0) {
-                text = `Around every ${hours} hour${hours !== 1 ? 's' : ''}, all day long`;
-            } else {
-                text = `Around every ${hours}h ${remainingMinutes}m, all day long`;
-            }
-        }
+    const startTime = formatHour(startHour);
+    const endTime = formatHour(endHour);
+    
+    let text;
+    
+    if (minutes < 60) {
+        text = `Around every ${minutes} minutes from ${startTime} to ${endTime} each day`;
     } else {
-        const startTime = formatHour(startHour);
-        const endTime = formatHour(endHour);
-        
-        if (minutes < 60) {
-            text = `Around every ${minutes} minutes from ${startTime} to ${endTime} each day`;
+        const hours = minutes / 60;
+        if (hours === 1) {
+            text = `Around once per hour from ${startTime} to ${endTime} each day`;
+        } else if (hours % 1 === 0) {
+            text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
         } else {
-            const hours = Math.floor(minutes / 60);
-            const remainingMinutes = minutes % 60;
-            if (remainingMinutes === 0) {
-                text = `Around every ${hours} hour${hours !== 1 ? 's' : ''} from ${startTime} to ${endTime} each day`;
-            } else {
-                text = `Around every ${hours}h ${remainingMinutes}m from ${startTime} to ${endTime} each day`;
-            }
+            text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
         }
     }
     
@@ -581,7 +600,7 @@ function setPrompt(promptText) {
         // Trigger any change events
         textarea.dispatchEvent(new Event('input'));
         
-        // Highlight the matching preset button
+        // Highlight the matching preset button immediately
         highlightMatchingPreset(promptText);
     }
 }
@@ -591,7 +610,13 @@ function setPrompt(promptText) {
  * @param {string} customPrompt - The custom prompt text to match
  */
 function matchCustomPromptToPreset(customPrompt) {
-    if (!customPrompt) return;
+    if (!customPrompt) {
+        // Clear highlights if no prompt
+        document.querySelectorAll('.prompt-preset').forEach(button => {
+            button.classList.remove('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
+        });
+        return;
+    }
     
     // Define the preset prompts (must match exactly with HTML onclick values)
     const presetPrompts = [
@@ -601,14 +626,16 @@ function matchCustomPromptToPreset(customPrompt) {
         'Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.'
     ];
     
-    // Check for exact match
+    // Check for exact match and highlight immediately
     const matchingIndex = presetPrompts.findIndex(preset => preset === customPrompt);
     
     if (matchingIndex !== -1) {
-        // Highlight the matching preset after a short delay to ensure DOM is ready
-        setTimeout(() => {
-            highlightMatchingPreset(customPrompt);
-        }, 150);
+        highlightMatchingPreset(customPrompt);
+    } else {
+        // Clear highlights if no match
+        document.querySelectorAll('.prompt-preset').forEach(button => {
+            button.classList.remove('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
+        });
     }
 }
 
@@ -617,15 +644,33 @@ function matchCustomPromptToPreset(customPrompt) {
  * @param {string} promptText - The prompt text to find and highlight
  */
 function highlightMatchingPreset(promptText) {
+    console.log('Highlighting preset for prompt:', promptText);
+    
     // Remove existing highlights
     document.querySelectorAll('.prompt-preset').forEach(button => {
         button.classList.remove('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
     });
     
-    // Find and highlight the matching preset
+    // Find and highlight the matching preset by checking the data attribute or onclick
     document.querySelectorAll('.prompt-preset').forEach(button => {
-        const onclick = button.getAttribute('onclick');
-        if (onclick && onclick.includes(promptText.replace(/'/g, "\\'"))) {
+        let buttonPromptText = button.getAttribute('data-prompt-text');
+        
+        // Fallback to checking onclick if data attribute is not set yet
+        if (!buttonPromptText) {
+            const onclick = button.getAttribute('onclick');
+            if (onclick) {
+                const match = onclick.match(/setPrompt\('([^']*)'\)/);
+                if (match) {
+                    buttonPromptText = match[1];
+                }
+            }
+        }
+        
+        console.log('Checking button prompt:', buttonPromptText);
+        
+        // Compare with the provided prompt text (exact match)
+        if (buttonPromptText && buttonPromptText.trim() === promptText.trim()) {
+            console.log('Found matching preset button, highlighting');
             button.classList.add('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
         }
     });
@@ -712,6 +757,7 @@ window.SettingsUI = {
     hideLoadingState,
     showMessage,
     toggleUnbiddenInkSettings,
+    updateTimeRangeDisplay,
     updateTimeRange,
     updateNextScheduledDisplay,
     goBack,
