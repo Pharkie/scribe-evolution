@@ -113,6 +113,12 @@ public:
      */
     unsigned long getRemainingTime() const;
 
+    /**
+     * @brief Temporarily update effect configuration for playground use
+     * @param newConfig New effects configuration to use
+     */
+    void updateEffectConfig(const LedEffectsConfig &newConfig);
+
 private:
     // LED strip array
     CRGB *leds;

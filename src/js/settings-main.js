@@ -219,6 +219,8 @@ window.toggleUnbiddenInkSettings = window.SettingsUI.toggleUnbiddenInkSettings;
 // Unbidden Ink UI interaction functions
 window.handleSliderClick = window.SettingsUI.handleSliderClick;
 window.updateFrequencyFromSlider = window.SettingsUI.updateFrequencyFromSlider;
+window.updateTimeRange = window.SettingsUI.updateTimeRange;
+window.updateClickAreas = window.SettingsUI.updateClickAreas;
 window.setFrequency = window.SettingsUI.setFrequency;
 window.setPrompt = window.SettingsUI.setPrompt;
 
