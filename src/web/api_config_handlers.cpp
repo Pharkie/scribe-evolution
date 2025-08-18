@@ -114,10 +114,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
     unbiddenInk["frequencyMinutes"] = config.unbiddenInkFrequencyMinutes;
     unbiddenInk["prompt"] = config.unbiddenInkPrompt;
 
-    LOG_NOTICE("API", "DEBUG: API response - prompt length=%d, first 50 chars='%s'",
-               config.unbiddenInkPrompt.length(), config.unbiddenInkPrompt.substring(0, 50).c_str());
-
-    // Button configuration (exactly 4 buttons)
+    LOG_VERBOSE("API", "DEBUG: API response - prompt length=%d, first 50 chars='%s'",
+                config.unbiddenInkPrompt.length(), config.unbiddenInkPrompt.substring(0, 50).c_str()); // Button configuration (exactly 4 buttons)
     JsonObject buttons = configDoc.createNestedObject("buttons");
     for (int i = 0; i < 4; i++)
     {
@@ -316,40 +314,71 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // Validate unbidden ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];
-    if (!unbiddenInk.containsKey("enabled") || !unbiddenInk.containsKey("startHour") ||
-        !unbiddenInk.containsKey("endHour") || !unbiddenInk.containsKey("frequencyMinutes"))
+    if (!unbiddenInk.containsKey("enabled"))
     {
-        sendValidationError(request, ValidationResult(false, "Missing required Unbidden Ink configuration fields"));
+        sendValidationError(request, ValidationResult(false, "Missing required Unbidden Ink 'enabled' field"));
         return;
     }
 
     bool enabled = unbiddenInk["enabled"];
-    int startHour = unbiddenInk["startHour"];
-    int endHour = unbiddenInk["endHour"];
-    int frequency = unbiddenInk["frequencyMinutes"];
 
-    if (startHour < 0 || startHour > 24 || endHour < 0 || endHour > 24)
+    // Only validate time fields if unbidden ink is enabled
+    if (enabled)
     {
-        sendValidationError(request, ValidationResult(false, "Hours must be between 0 and 24"));
-        return;
+        if (!unbiddenInk.containsKey("startHour") || !unbiddenInk.containsKey("endHour") ||
+            !unbiddenInk.containsKey("frequencyMinutes"))
+        {
+            sendValidationError(request, ValidationResult(false, "Missing required Unbidden Ink time configuration fields"));
+            return;
+        }
+
+        int startHour = unbiddenInk["startHour"];
+        int endHour = unbiddenInk["endHour"];
+        int frequency = unbiddenInk["frequencyMinutes"];
+
+        if (startHour < 0 || startHour > 24 || endHour < 0 || endHour > 24)
+        {
+            sendValidationError(request, ValidationResult(false, "Hours must be between 0 and 24"));
+            return;
+        }
+
+        if (startHour >= endHour)
+        {
+            sendValidationError(request, ValidationResult(false, "Start hour must be before end hour"));
+            return;
+        }
+
+        if (frequency < minUnbiddenInkFrequencyMinutes || frequency > maxUnbiddenInkFrequencyMinutes)
+        {
+            sendValidationError(request, ValidationResult(false, "Frequency must be between 15 minutes and 8 hours"));
+            return;
+        }
+
+        if (!unbiddenInk.containsKey("prompt") || String((const char *)unbiddenInk["prompt"]).length() == 0)
+        {
+            sendValidationError(request, ValidationResult(false, "Prompt required when Unbidden Ink is enabled"));
+            return;
+        }
     }
 
-    if (startHour >= endHour)
+    // Apply validated unbidden ink settings to newConfig
+    newConfig.unbiddenInkEnabled = enabled;
+    if (enabled)
     {
-        sendValidationError(request, ValidationResult(false, "Start hour must be before end hour"));
-        return;
+        // Only save time values if they were validated (when enabled=true)
+        newConfig.unbiddenInkStartHour = unbiddenInk["startHour"];
+        newConfig.unbiddenInkEndHour = unbiddenInk["endHour"];
+        newConfig.unbiddenInkFrequencyMinutes = unbiddenInk["frequencyMinutes"];
+        newConfig.unbiddenInkPrompt = String((const char *)unbiddenInk["prompt"]);
     }
-
-    if (frequency < minUnbiddenInkFrequencyMinutes || frequency > maxUnbiddenInkFrequencyMinutes)
+    else
     {
-        sendValidationError(request, ValidationResult(false, "Frequency must be between 15 minutes and 8 hours"));
-        return;
-    }
-
-    if (enabled && (!unbiddenInk.containsKey("prompt") || String((const char *)unbiddenInk["prompt"]).length() == 0))
-    {
-        sendValidationError(request, ValidationResult(false, "Prompt required when Unbidden Ink is enabled"));
-        return;
+        // When disabled, preserve existing values from current config to avoid garbage
+        RuntimeConfig currentConfig = getRuntimeConfig();
+        newConfig.unbiddenInkStartHour = currentConfig.unbiddenInkStartHour;
+        newConfig.unbiddenInkEndHour = currentConfig.unbiddenInkEndHour;
+        newConfig.unbiddenInkFrequencyMinutes = currentConfig.unbiddenInkFrequencyMinutes;
+        newConfig.unbiddenInkPrompt = currentConfig.unbiddenInkPrompt;
     }
 
     // Validate button configuration (exactly 4 buttons)
