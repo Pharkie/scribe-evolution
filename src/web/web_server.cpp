@@ -322,20 +322,15 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/poke", "Send poke message", handlePoke, true);
         registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
-        registerRoute("GET", "/api/diagnostics", "System diagnostics", handleStatus, true);
+        registerRoute("GET", "/api/diagnostics", "System diagnostics", handleDiagnostics, true);
         registerRoute("POST", "/api/mqtt-send", "Send MQTT message", handleMQTTSend, true);
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
 
 #if ENABLE_LEDS
-        // LED effect endpoints
-        registerRoute("POST", "/api/led/chase_single", "Simple Chase", handleLedEffect, true);
-        registerRoute("POST", "/api/led/rainbow", "Rainbow Wave", handleLedEffect, true);
-        registerRoute("POST", "/api/led/twinkle", "Twinkle Stars", handleLedEffect, true);
-        registerRoute("POST", "/api/led/chase_multi", "Color Chase", handleLedEffect, true);
-        registerRoute("POST", "/api/led/pulse", "Pulse Wave", handleLedEffect, true);
-        registerRoute("POST", "/api/led/matrix", "Matrix", handleLedEffect, true);
-        registerRoute("POST", "/api/led/off", "Off", handleLedOff, true);
+        // Consolidated LED effect endpoints
+        registerRoute("POST", "/api/led-effect", "Trigger LED Effect", handleLedEffect, true);
+        registerRoute("POST", "/api/leds-off", "Turn LEDs Off", handleLedOff, true);
 #endif
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
@@ -360,8 +355,8 @@ void setupWebServerRoutes(int maxChars)
 
         // Add 404 handler to route tracking for diagnostics
         RouteInfo notFoundRoute;
-        notFoundRoute.method = "*";
-        notFoundRoute.path = "*";
+        notFoundRoute.method = "ALL";
+        notFoundRoute.path = "(unmatched routes)";
         notFoundRoute.description = "404 Not Found handler (serves /html/404.html)";
         notFoundRoute.isAPI = false;
         registeredRoutes.push_back(notFoundRoute);

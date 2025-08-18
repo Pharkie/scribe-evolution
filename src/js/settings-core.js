@@ -57,7 +57,7 @@ function populateForm(config) {
     document.getElementById('max-characters').value = config.validation?.maxCharacters || 500;
     
     // ChatGPT configuration
-    document.getElementById('chatgpt-api-token').value = config.chatgpt?.apiToken || '';
+    document.getElementById('chatgpt-api-token').value = config.apis?.chatgptApiToken || '';
     
     // Unbidden Ink configuration
     const unbiddenInkEnabled = document.getElementById('unbidden-ink-enabled');
@@ -142,9 +142,9 @@ function collectFormData() {
         validation: {
             maxCharacters: parseInt(document.getElementById('max-characters').value)
         },
-        // ChatGPT configuration (overrides config.h)
-        chatgpt: {
-            apiToken: document.getElementById('chatgpt-api-token').value
+        // APIs configuration (includes ChatGPT)
+        apis: {
+            chatgptApiToken: document.getElementById('chatgpt-api-token').value
         },
         // Unbidden Ink configuration
         unbiddenInk: {

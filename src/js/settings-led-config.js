@@ -59,6 +59,95 @@ function populateLedForm(config) {
     if (chaseSingleElements.trailLength) chaseSingleElements.trailLength.value = chaseSingle.trailLength || 15;
     if (chaseSingleElements.trailFade) chaseSingleElements.trailFade.value = chaseSingle.trailFade || 15;
     if (chaseSingleElements.color) chaseSingleElements.color.value = colorToHtml(chaseSingle.defaultColor, '#0062ff');
+
+    // Chase Multi
+    const chaseMulti = effects.chaseMulti || {};
+    
+    const chaseMultiElements = {
+        speed: document.getElementById('chase-multi-speed'),
+        trailLength: document.getElementById('chase-multi-trail-length'),
+        trailFade: document.getElementById('chase-multi-trail-fade'),
+        colorSpacing: document.getElementById('chase-multi-color-spacing'),
+        color1: document.getElementById('chase-multi-color1'),
+        color2: document.getElementById('chase-multi-color2'),
+        color3: document.getElementById('chase-multi-color3')
+    };
+    
+    if (chaseMultiElements.speed) chaseMultiElements.speed.value = chaseMulti.speed || 2;
+    if (chaseMultiElements.trailLength) chaseMultiElements.trailLength.value = chaseMulti.trailLength || 20;
+    if (chaseMultiElements.trailFade) chaseMultiElements.trailFade.value = chaseMulti.trailFade || 20;
+    if (chaseMultiElements.colorSpacing) chaseMultiElements.colorSpacing.value = chaseMulti.colorSpacing || 12;
+    if (chaseMultiElements.color1) chaseMultiElements.color1.value = colorToHtml(chaseMulti.color1, '#ff9900');
+    if (chaseMultiElements.color2) chaseMultiElements.color2.value = colorToHtml(chaseMulti.color2, '#008f00');
+    if (chaseMultiElements.color3) chaseMultiElements.color3.value = colorToHtml(chaseMulti.color3, '#78cffe');
+
+    // Matrix
+    const matrix = effects.matrix || {};
+    
+    const matrixElements = {
+        speed: document.getElementById('matrix-speed'),
+        drops: document.getElementById('matrix-drops'),
+        backgroundFade: document.getElementById('matrix-background-fade'),
+        trailFade: document.getElementById('matrix-trail-fade'),
+        brightnessFade: document.getElementById('matrix-brightness-fade'),
+        color: document.getElementById('matrix-color')
+    };
+    
+    if (matrixElements.speed) matrixElements.speed.value = matrix.speed || 3;
+    if (matrixElements.drops) matrixElements.drops.value = matrix.drops || 5;
+    if (matrixElements.backgroundFade) matrixElements.backgroundFade.value = matrix.backgroundFade || 64;
+    if (matrixElements.trailFade) matrixElements.trailFade.value = matrix.trailFade || 32;
+    if (matrixElements.brightnessFade) matrixElements.brightnessFade.value = matrix.brightnessFade || 40;
+    if (matrixElements.color) matrixElements.color.value = colorToHtml(matrix.defaultColor, '#009100');
+
+    // Twinkle
+    const twinkle = effects.twinkle || {};
+    
+    const twinkleElements = {
+        density: document.getElementById('twinkle-density'),
+        fadeSpeed: document.getElementById('twinkle-fade-speed'),
+        minBrightness: document.getElementById('twinkle-min-brightness'),
+        maxBrightness: document.getElementById('twinkle-max-brightness'),
+        color: document.getElementById('twinkle-color')
+    };
+    
+    if (twinkleElements.density) twinkleElements.density.value = twinkle.density || 8;
+    if (twinkleElements.fadeSpeed) twinkleElements.fadeSpeed.value = twinkle.fadeSpeed || 5;
+    if (twinkleElements.minBrightness) twinkleElements.minBrightness.value = twinkle.minBrightness || 50;
+    if (twinkleElements.maxBrightness) twinkleElements.maxBrightness.value = twinkle.maxBrightness || 255;
+    if (twinkleElements.color) twinkleElements.color.value = colorToHtml(twinkle.defaultColor, '#ffffff');
+
+    // Pulse
+    const pulse = effects.pulse || {};
+    
+    const pulseElements = {
+        speed: document.getElementById('pulse-speed'),
+        minBrightness: document.getElementById('pulse-min-brightness'),
+        maxBrightness: document.getElementById('pulse-max-brightness'),
+        waveFrequency: document.getElementById('pulse-wave-frequency'),
+        color: document.getElementById('pulse-color')
+    };
+    
+    if (pulseElements.speed) pulseElements.speed.value = pulse.speed || 4;
+    if (pulseElements.minBrightness) pulseElements.minBrightness.value = pulse.minBrightness || 0;
+    if (pulseElements.maxBrightness) pulseElements.maxBrightness.value = pulse.maxBrightness || 255;
+    if (pulseElements.waveFrequency) pulseElements.waveFrequency.value = pulse.waveFrequency || 0.05;
+    if (pulseElements.color) pulseElements.color.value = colorToHtml(pulse.defaultColor, '#ff00f2');
+
+    // Rainbow
+    const rainbow = effects.rainbow || {};
+    
+    const rainbowElements = {
+        speed: document.getElementById('rainbow-speed'),
+        saturation: document.getElementById('rainbow-saturation'),
+        brightness: document.getElementById('rainbow-brightness'),
+        hueStep: document.getElementById('rainbow-hue-step')
+    };
+    
+    if (rainbowElements.speed) rainbowElements.speed.value = rainbow.speed || 2.0;
+    if (rainbowElements.saturation) rainbowElements.saturation.value = rainbow.saturation || 255;
+    if (rainbowElements.brightness) rainbowElements.brightness.value = rainbow.brightness || 255;
+    if (rainbowElements.hueStep) rainbowElements.hueStep.value = rainbow.hueStep || 2.5;
 }
 
 /**

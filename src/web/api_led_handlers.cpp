@@ -35,56 +35,41 @@ void handleLedEffect(AsyncWebServerRequest *request)
         return;
     }
 
-    // Get effect name from URL path
-    String path = request->url();
-    String effectName = "";
-
-    if (path.startsWith("/api/led/"))
+    // Get request body using the proper method
+    String body = getRequestBody(request);
+    if (body.length() == 0)
     {
-        effectName = path.substring(9); // Remove "/api/led/" prefix
-    }
-    else
-    {
-        sendErrorResponse(request, 400, "Invalid LED effect endpoint");
+        sendErrorResponse(request, 400, "Missing JSON body with effect configuration");
         return;
     }
 
-    // Validate effect name
+    // Parse JSON body
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, body);
+
+    if (error)
+    {
+        LOG_ERROR("API", "Failed to parse LED effect JSON: %s", error.c_str());
+        sendErrorResponse(request, 400, "Invalid JSON in request body");
+        return;
+    }
+
+    // Get effect name from JSON
+    String effectName = doc["effect"] | "";
     if (effectName.length() == 0)
     {
-        sendErrorResponse(request, 400, "No effect name provided");
+        sendErrorResponse(request, 400, "No effect name provided in JSON");
         return;
     }
 
     LOG_VERBOSE("LEDS", "LED effect request: %s", effectName.c_str());
 
     // Parse optional parameters from JSON body
-    int duration = 5;       // Default 5 seconds (for duration-based effects)
-    int cycles = 1;         // Default 1 cycle (for cycle-based effects)
-    String color1 = "blue"; // Default color
-    String color2 = "black";
-    String color3 = "black";
-
-    // Get request body using the proper method
-    String body = getRequestBody(request);
-    if (body.length() > 0)
-    {
-        DynamicJsonDocument doc(512);
-        DeserializationError error = deserializeJson(doc, body);
-
-        if (!error)
-        {
-            duration = doc["duration"] | duration;
-            cycles = doc["cycles"] | cycles;
-            color1 = doc["color1"] | color1;
-            color2 = doc["color2"] | color2;
-            color3 = doc["color3"] | color3;
-        }
-        else
-        {
-            LOG_WARNING("API", "Failed to parse LED effect JSON: %s", error.c_str());
-        }
-    }
+    int duration = doc["duration"] | 5;     // Default 5 seconds (for duration-based effects)
+    int cycles = doc["cycles"] | 1;         // Default 1 cycle (for cycle-based effects)
+    String color1 = doc["color1"] | "blue"; // Default color
+    String color2 = doc["color2"] | "black";
+    String color3 = doc["color3"] | "black";
 
     // Convert color names to CRGB values
     auto parseColor = [](const String &colorName) -> CRGB

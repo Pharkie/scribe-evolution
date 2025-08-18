@@ -26,7 +26,7 @@
  * - Available endpoints and configuration limits
  * - Flash storage breakdown (app partition, filesystem)
  */
-void handleStatus(AsyncWebServerRequest *request);
+void handleDiagnostics(AsyncWebServerRequest *request);
 
 /**
  * @brief Handle MQTT message sending request

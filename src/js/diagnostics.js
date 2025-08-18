@@ -273,7 +273,7 @@ function displayDiagnostics(data, configData) {
   setFieldValue('device-owner', data.device?.owner);
   setFieldValue('timezone', data.device?.timezone);
   setFieldValue('mdns-hostname', data.device?.hostname);
-  setFieldValue('max-message-chars', data.configuration?.max_message_chars);
+  setFieldValue('max-message-chars', configData?.validation?.maxCharacters);
 
   // Network
   setFieldValue('wifi-status', data.network?.wifi?.connected ? 'Connected' : 'Disconnected');

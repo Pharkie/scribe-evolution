@@ -141,6 +141,81 @@ async function saveSettings(event) {
 // Make saveSettings globally available for form onsubmit
 window.saveSettings = saveSettings;
 
+/**
+ * Trigger a LED effect for testing
+ * @param {string} effectName - Name of the effect to trigger
+ */
+async function triggerLedEffect(effectName) {
+    try {
+        const response = await fetch('/api/led-effect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                effect: effectName,
+                duration: 10000 // 10 seconds
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (window.SettingsCore && window.SettingsCore.showMessage) {
+            window.SettingsCore.showMessage(`${effectName} effect triggered successfully!`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('Failed to trigger LED effect:', error);
+        if (window.SettingsCore && window.SettingsCore.showMessage) {
+            window.SettingsCore.showMessage(`Failed to trigger ${effectName} effect: ${error.message}`, 'error');
+        }
+    }
+}
+
+// Make triggerLedEffect globally available for button onclick
+window.triggerLedEffect = triggerLedEffect;
+
+/**
+ * Turn off LEDs
+ */
+async function turnOffLeds() {
+    try {
+        const response = await fetch('/api/leds-off', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (window.SettingsCore && window.SettingsCore.showMessage) {
+            window.SettingsCore.showMessage('LEDs turned off successfully!', 'success');
+        }
+        
+    } catch (error) {
+        console.error('Failed to turn off LEDs:', error);
+        if (window.SettingsCore && window.SettingsCore.showMessage) {
+            window.SettingsCore.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
+        }
+    }
+}
+
+// Make turnOffLeds globally available for button onclick  
+window.turnOffLeds = turnOffLeds;
+
+// Make other functions globally available for HTML onclick handlers
+window.toggleUnbiddenInkSettings = toggleUnbiddenInkSettings;
+window.goBack = goBack;
+
 async function saveSettings(event) {
     if (window.SettingsCore && window.SettingsCore.saveSettings) {
         return window.SettingsCore.saveSettings(event);

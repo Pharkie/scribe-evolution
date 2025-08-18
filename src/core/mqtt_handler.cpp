@@ -113,7 +113,7 @@ void connectToMQTT()
         }
 
         // Publish initial online status immediately after connection
-        LOG_INFO("MQTT", "Publishing initial online status after connection");
+        LOG_NOTICE("MQTT", "Publishing initial online status after connection");
         publishPrinterStatus();
     }
     else
