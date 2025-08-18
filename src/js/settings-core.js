@@ -118,41 +118,61 @@ function populateForm(config) {
  * Collect form data and build configuration object - all user-configurable settings
  */
 function collectFormData() {
+    // Helper function to safely get integer value with fallback
+    const getIntValue = (id, fallback) => {
+        const element = document.getElementById(id);
+        if (!element) return fallback;
+        const value = parseInt(element.value);
+        return isNaN(value) ? fallback : value;
+    };
+
+    // Helper function to safely get string value with fallback
+    const getStringValue = (id, fallback = '') => {
+        const element = document.getElementById(id);
+        return element ? element.value || fallback : fallback;
+    };
+
+    // Helper function to safely get boolean value
+    const getBoolValue = (id) => {
+        const element = document.getElementById(id);
+        return element ? element.checked : false;
+    };
+
     const formData = {
         // Device configuration (overrides config.h)
         device: {
-            owner: document.getElementById('device-owner').value,
-            timezone: document.getElementById('timezone').value
+            owner: getStringValue('device-owner'),
+            timezone: getStringValue('timezone')
         },
         // WiFi configuration (overrides config.h)
         wifi: {
-            ssid: document.getElementById('wifi-ssid').value,
-            password: document.getElementById('wifi-password').value,
-            connect_timeout: parseInt(document.getElementById('wifi-timeout').value) * 1000 // Convert to milliseconds
+            ssid: getStringValue('wifi-ssid'),
+            password: getStringValue('wifi-password'),
+            connect_timeout: getIntValue('wifi-timeout', 15) * 1000 // Convert to milliseconds
         },
         // MQTT configuration (overrides config.h)
         mqtt: {
-            enabled: document.getElementById('mqtt-enabled').checked,
-            server: document.getElementById('mqtt-server').value,
-            port: parseInt(document.getElementById('mqtt-port').value),
-            username: document.getElementById('mqtt-username').value,
-            password: document.getElementById('mqtt-password').value
+            enabled: getBoolValue('mqtt-enabled'),
+            server: getStringValue('mqtt-server'),
+            port: getIntValue('mqtt-port', 1883),
+            username: getStringValue('mqtt-username'),
+            password: getStringValue('mqtt-password')
         },
         // Validation configuration (overrides config.h)
         validation: {
-            maxCharacters: parseInt(document.getElementById('max-characters').value)
+            maxCharacters: getIntValue('max-characters', 500)
         },
         // APIs configuration (includes ChatGPT)
         apis: {
-            chatgptApiToken: document.getElementById('chatgpt-api-token').value
+            chatgptApiToken: getStringValue('chatgpt-api-token')
         },
         // Unbidden Ink configuration
         unbiddenInk: {
-            enabled: document.getElementById('unbidden-ink-enabled').checked,
-            startHour: parseInt(document.getElementById('time-start').value),
-            endHour: parseInt(document.getElementById('time-end').value),
-            frequencyMinutes: parseInt(document.getElementById('frequency-minutes').value),
-            prompt: document.getElementById('unbidden-ink-prompt').value // Fixed ID
+            enabled: getBoolValue('unbidden-ink-enabled'),
+            startHour: getIntValue('time-start', 8),
+            endHour: getIntValue('time-end', 22),
+            frequencyMinutes: getIntValue('frequency-minutes', 60),
+            prompt: getStringValue('unbidden-ink-prompt')
         },
         // Button configuration
         buttons: {}
@@ -166,16 +186,24 @@ function collectFormData() {
         const longSelect = document.getElementById(`button${buttonNum}-long`);
         
         formData.buttons[buttonKey] = {
-            shortAction: shortSelect ? shortSelect.value : '',
-            longAction: longSelect ? longSelect.value : '',
+            shortAction: shortSelect ? shortSelect.value || '' : '',
+            longAction: longSelect ? longSelect.value || '' : '',
             shortMqttTopic: '', // Not in current HTML form
             longMqttTopic: ''   // Not in current HTML form
         };
     }
     
-    // LED configuration (handled by LED module)
-    if (window.LEDConfig && window.LEDConfig.collectLedFormData) {
-        formData.leds = window.LEDConfig.collectLedFormData();
+    // LED basic configuration only (no effects)
+    if (window.LEDConfig && window.LEDConfig.collectBasicLedConfig) {
+        formData.leds = window.LEDConfig.collectBasicLedConfig();
+    } else {
+        // Fallback basic LED config
+        formData.leds = {
+            pin: getIntValue('led-pin', 4),
+            count: getIntValue('led-count', 30),
+            brightness: getIntValue('led-brightness', 64),
+            refreshRate: getIntValue('led-refresh-rate', 60)
+        };
     }
     
     return formData;
@@ -189,6 +217,7 @@ async function saveSettings(event) {
     
     try {
         const configData = collectFormData();
+        console.log('Settings: Collected form data:', JSON.stringify(configData, null, 2));
         
         // Client-side validation
         if (window.LEDConfig && window.LEDConfig.validateLedConfig) {
@@ -199,6 +228,7 @@ async function saveSettings(event) {
             }
         }
         
+        console.log('Settings: Sending config to server...');
         const response = await fetch('/api/config', {
             method: 'POST',
             headers: {
@@ -209,12 +239,14 @@ async function saveSettings(event) {
         
         if (response.ok) {
             const result = await response.text();
+            console.log('Settings: Server response:', result);
             showMessage('Settings saved successfully!', 'success');
             
             // Update current config with saved data
             currentConfig = configData;
         } else {
             const errorText = await response.text();
+            console.error('Settings: Server error response:', errorText);
             throw new Error(`Server error: ${response.status} - ${errorText}`);
         }
     } catch (error) {
