@@ -371,4 +371,13 @@ unsigned long LedEffects::getRemainingTime() const
     return effectDuration - elapsed;
 }
 
+void LedEffects::updateEffectConfig(const LedEffectsConfig &newConfig)
+{
+    if (effectRegistry)
+    {
+        effectRegistry->updateConfig(newConfig);
+        LOG_VERBOSE("LEDS", "Updated effect configuration for playground use");
+    }
+}
+
 #endif // ENABLE_LEDS

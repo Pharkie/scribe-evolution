@@ -40,6 +40,7 @@ function populateForm(config) {
     
     // Frequency and prompt
     setElementValue('frequency-minutes', config.unbiddenInk?.frequencyMinutes || 60);
+    updateSliderFromFrequency(config.unbiddenInk?.frequencyMinutes || 60);
     setElementValue('unbidden-ink-prompt', config.unbiddenInk?.prompt || '');
     
     // Button configuration
@@ -229,8 +230,10 @@ function toggleUnbiddenInkSettings() {
 
 /**
  * Update time range display from sliders with collision handling
+ * @param {HTMLElement} slider - The slider that triggered the update (optional)
+ * @param {string} type - Type of slider: 'start' or 'end' (optional)
  */
-function updateTimeRange() {
+function updateTimeRange(slider, type) {
     const startSlider = document.getElementById('time-start');
     const endSlider = document.getElementById('time-end');
     
@@ -239,20 +242,50 @@ function updateTimeRange() {
     let startVal = parseInt(startSlider.value);
     let endVal = parseInt(endSlider.value);
     
+    // Debug: Log the values
+    console.log('updateTimeRange - startVal:', startVal, 'endVal:', endVal, 'type:', type);
+    
     // Special case: Allow 0-0 for full day operation (24 hours)
     if (startVal === 0 && endVal === 0) {
         // This is valid - full day operation
     } else {
         // Smart collision handling - move the other handle when possible
-        if (startVal >= endVal) {
-            if (endVal < 24) {
-                // Move end handle forward
-                endVal = startVal + 1;
-                endSlider.value = endVal;
-            } else {
-                // End can't move, constrain start
-                startVal = 23;
-                startSlider.value = startVal;
+        if (type === 'start') {
+            if (startVal >= endVal) {
+                if (endVal < 24) {
+                    // Move end handle forward
+                    endVal = startVal + 1;
+                    endSlider.value = endVal;
+                } else {
+                    // End can't move, constrain start
+                    startVal = 23;
+                    startSlider.value = startVal;
+                }
+            }
+        } else if (type === 'end') {
+            if (endVal <= startVal) {
+                if (startVal > 0) {
+                    // Move start handle backward
+                    startVal = endVal - 1;
+                    startSlider.value = startVal;
+                } else {
+                    // Start can't move, constrain end
+                    endVal = 1;
+                    endSlider.value = endVal;
+                }
+            }
+        } else {
+            // No type specified - use original logic for when called from config loading
+            if (startVal >= endVal) {
+                if (endVal < 24) {
+                    // Move end handle forward
+                    endVal = startVal + 1;
+                    endSlider.value = endVal;
+                } else {
+                    // End can't move, constrain start
+                    startVal = 23;
+                    startSlider.value = startVal;
+                }
             }
         }
     }
