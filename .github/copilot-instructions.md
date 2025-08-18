@@ -246,6 +246,16 @@ For detailed, context-specific guidance:
       client-side
     - LED effects should be internal responses to successful operations
 
+### Error Handling Philosophy
+
+14. **Fail Fast - No Silent Fallbacks**:
+    - Never use default values or fallbacks that mask missing backend data
+    - Throw explicit errors when expected configuration or DOM elements are
+      missing
+    - Let the frontend crash with clear error messages rather than operating
+      with wrong assumptions
+    - This makes debugging immediate and obvious rather than hiding problems
+
 ### JavaScript Frontend Architecture (Critical Patterns)
 
 12. **Event Handling Modernization**:
