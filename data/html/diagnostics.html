@@ -13,7 +13,7 @@
     <main class="page-main">
         <header class="page-header">
             <div class="header-spacer">
-                <button onclick="goBack()" class="back-button">
+                <button id="back-button" class="back-button">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                         </path>
@@ -30,22 +30,22 @@
             <div class="header-spacer"></div>
         </header>
         <nav class="flex flex-wrap justify-center gap-2 mb-6">
-            <button onclick="showSection('device-config-section')"
-                class="section-nav-btn section-nav-btn-purple active">⚙️ Device</button>
-            <button onclick="showSection('network-section')" class="section-nav-btn section-nav-btn-blue">🌐
+            <button data-section="device-config-section" class="section-nav-btn section-nav-btn-purple active">⚙️
+                Device</button>
+            <button data-section="network-section" class="section-nav-btn section-nav-btn-blue">🌐
                 Network</button>
-            <button onclick="showSection('mqtt-section')" class="section-nav-btn section-nav-btn-green">📡 MQTT</button>
-            <button onclick="showSection('microcontroller-section')" class="section-nav-btn section-nav-btn-orange">🎛️
+            <button data-section="mqtt-section" class="section-nav-btn section-nav-btn-green">📡 MQTT</button>
+            <button data-section="microcontroller-section" class="section-nav-btn section-nav-btn-orange">🎛️
                 Microcontroller</button>
-            <button onclick="showSection('unbidden-ink-section')" class="section-nav-btn section-nav-btn-yellow">🎲
+            <button data-section="unbidden-ink-section" class="section-nav-btn section-nav-btn-yellow">🎲
                 Unbidden Ink</button>
-            <button onclick="showSection('logging-section')" class="section-nav-btn section-nav-btn-indigo">📋
+            <button data-section="logging-section" class="section-nav-btn section-nav-btn-indigo">📋
                 Logging</button>
-            <button onclick="showSection('hardware-buttons-section')" class="section-nav-btn section-nav-btn-pink">🎛️
+            <button data-section="hardware-buttons-section" class="section-nav-btn section-nav-btn-pink">🎛️
                 Buttons</button>
-            <button onclick="showSection('pages-endpoints-section')" class="section-nav-btn section-nav-btn-teal">🔗
+            <button data-section="pages-endpoints-section" class="section-nav-btn section-nav-btn-teal">🔗
                 Pages & Endpoints</button>
-            <button onclick="showSection('config-file-section')" class="section-nav-btn section-nav-btn-red">📄 Config
+            <button data-section="config-file-section" class="section-nav-btn section-nav-btn-red">📄 Config
                 File</button>
         </nav>
 
@@ -60,7 +60,7 @@
             <div id="device-config-section" class="diag-section purple">
                 <div class="diag-header">
                     <h4 class="diag-title purple"><span class="mr-2">⚙️</span>Device</h4>
-                    <button onclick="copyGenericSection('Device', this)" class="diag-copy-btn purple">
+                    <button data-section-name="Device" class="diag-copy-btn purple generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -83,7 +83,7 @@
             <div id="network-section" class="diag-section blue">
                 <div class="diag-header">
                     <h4 class="diag-title blue"><span class="mr-2">🌐</span>Network</h4>
-                    <button onclick="copyGenericSection('Network', this)" class="diag-copy-btn blue">
+                    <button data-section-name="Network" class="diag-copy-btn blue generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -130,7 +130,7 @@
             <div id="mqtt-section" class="diag-section green">
                 <div class="diag-header">
                     <h4 class="diag-title green"><span class="mr-2">📡</span>MQTT</h4>
-                    <button onclick="copyGenericSection('MQTT', this)" class="diag-copy-btn green">
+                    <button data-section-name="MQTT" class="diag-copy-btn green generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -155,7 +155,7 @@
             <div id="microcontroller-section" class="diag-section orange">
                 <div class="diag-header">
                     <h4 class="diag-title orange"><span class="mr-2">🎛️</span>Microcontroller</h4>
-                    <button onclick="copyGenericSection('Microcontroller', this)" class="diag-copy-btn orange">
+                    <button data-section-name="orange" class="diag-copy-btn orange generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -200,7 +200,7 @@
             <div id="unbidden-ink-section" class="diag-section yellow">
                 <div class="diag-header">
                     <h4 class="diag-title yellow"><span class="mr-2">🎲</span>Unbidden Ink</h4>
-                    <button onclick="copyGenericSection('Unbidden Ink', this)" class="diag-copy-btn yellow">
+                    <button data-section-name="yellow" class="diag-copy-btn yellow generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -225,7 +225,7 @@
             <div id="logging-section" class="diag-section indigo">
                 <div class="diag-header">
                     <h4 class="diag-title indigo"><span class="mr-2">📋</span>Logging</h4>
-                    <button onclick="copyGenericSection('Logging', this)" class="diag-copy-btn indigo">
+                    <button data-section-name="indigo" class="diag-copy-btn indigo generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -250,7 +250,7 @@
             <div id="hardware-buttons-section" class="diag-section pink">
                 <div class="diag-header">
                     <h4 class="diag-title pink"><span class="mr-2">🎛️</span>Buttons</h4>
-                    <button onclick="copyGenericSection('Buttons', this)" class="diag-copy-btn pink">
+                    <button data-section-name="pink" class="diag-copy-btn pink generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -403,7 +403,7 @@
             <div id="pages-endpoints-section" class="diag-section teal">
                 <div class="diag-header">
                     <h4 class="diag-title teal"><span class="mr-2">🔗</span>Pages & Endpoints</h4>
-                    <button onclick="copyGenericSection('Pages & Endpoints', this)" class="diag-copy-btn teal">
+                    <button data-section-name="teal" class="diag-copy-btn teal generic-copy-btn">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -444,7 +444,7 @@
                         <h4 class="diag-title red"><span class="mr-2">📄</span>Config file</h4>
                         <p class="text-sm text-red-600 dark:text-red-400 mt-1">Config.json</p>
                     </div>
-                    <button onclick="copyConfigFile(this)" class="diag-copy-btn red">
+                    <button id="config-copy-btn" class="diag-copy-btn red">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />

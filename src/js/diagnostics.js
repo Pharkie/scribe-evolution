@@ -1,5 +1,42 @@
 // System diagnostics and status display functionality
 
+/**
+ * Initialize diagnostics page when DOM is loaded
+ */
+document.addEventListener('DOMContentLoaded', function() {
+  setupDiagnosticsEventListeners();
+  loadDiagnostics();
+});
+
+/**
+ * Setup event listeners for diagnostics page
+ */
+function setupDiagnosticsEventListeners() {
+  // Section navigation buttons
+  document.querySelectorAll('[data-section]').forEach(button => {
+    button.addEventListener('click', function() {
+      const sectionId = this.dataset.section;
+      showSection(sectionId);
+    });
+  });
+  
+  // Generic copy buttons
+  document.querySelectorAll('.generic-copy-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const sectionName = this.dataset.sectionName;
+      copyGenericSection(sectionName, this);
+    });
+  });
+  
+  // Config copy button
+  const configCopyBtn = document.getElementById('config-copy-btn');
+  if (configCopyBtn) {
+    configCopyBtn.addEventListener('click', function() {
+      copyConfigFile(this);
+    });
+  }
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -43,15 +80,7 @@ function showSection(sectionId) {
   }
   
   // Find and activate the button that corresponds to this section
-  // Try event.target first (for clicks), then find by onclick attribute (for programmatic calls)
-  let activeBtn = null;
-  if (typeof event !== 'undefined' && event && event.target) {
-    activeBtn = event.target;
-  } else {
-    // Find button by onclick attribute when called programmatically
-    activeBtn = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
-  }
-  
+  const activeBtn = document.querySelector(`[data-section="${sectionId}"]`);
   if (activeBtn && activeBtn.classList) {
     activeBtn.classList.add('active');
   }

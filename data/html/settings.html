@@ -15,7 +15,7 @@
         <header class="page-header">
             <!-- Back button -->
             <div class="header-spacer">
-                <button onclick="goBack()" class="back-button">
+                <button id="back-button" class="back-button">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                         </path>
@@ -47,17 +47,17 @@
         <div id="settings-navigation" class="hidden mb-6">
             <div class="flex flex-wrap gap-2 justify-center">
                 <button type="button" class="section-nav-btn section-nav-btn-blue active"
-                    onclick="showSettingsSection('wifi')">📶 WiFi</button>
-                <button type="button" class="section-nav-btn section-nav-btn-purple"
-                    onclick="showSettingsSection('device')">⚙️ Device</button>
-                <button type="button" class="section-nav-btn section-nav-btn-yellow"
-                    onclick="showSettingsSection('mqtt')">📡 MQTT</button>
-                <button type="button" class="section-nav-btn section-nav-btn-green"
-                    onclick="showSettingsSection('unbidden')">🎲 Unbidden Ink</button>
-                <button type="button" class="section-nav-btn section-nav-btn-orange"
-                    onclick="showSettingsSection('buttons')">🎛️ Buttons</button>
-                <button type="button" class="section-nav-btn section-nav-btn-purple"
-                    onclick="showSettingsSection('leds')">🌈 LEDs</button>
+                    data-settings-section="wifi">📶 WiFi</button>
+                <button type="button" class="section-nav-btn section-nav-btn-purple" data-settings-section="device">⚙️
+                    Device</button>
+                <button type="button" class="section-nav-btn section-nav-btn-yellow" data-settings-section="mqtt">📡
+                    MQTT</button>
+                <button type="button" class="section-nav-btn section-nav-btn-green" data-settings-section="unbidden">🎲
+                    Unbidden Ink</button>
+                <button type="button" class="section-nav-btn section-nav-btn-orange" data-settings-section="buttons">🎛️
+                    Buttons</button>
+                <button type="button" class="section-nav-btn section-nav-btn-purple" data-settings-section="leds">🌈
+                    LEDs</button>
             </div>
         </div>
 
@@ -205,7 +205,7 @@
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="unbidden-ink-enabled" name="unbiddenInk.enabled"
-                                    class="sr-only peer" onchange="toggleUnbiddenInkSettings()">
+                                    class="sr-only peer" data-toggle="unbidden-ink-settings">
                                 <div
                                     class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white dark:after:bg-gray-200 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500">
                                 </div>
@@ -243,9 +243,9 @@
 
                                         <!-- Dynamic click areas - will be positioned by JavaScript -->
                                         <div id="click-area-start" class="dual-range-click-area"
-                                            onclick="handleSliderClick(event, 'start')"></div>
-                                        <div id="click-area-end" class="dual-range-click-area"
-                                            onclick="handleSliderClick(event, 'end')"></div>
+                                            data-slider-type="start"></div>
+                                        <div id="click-area-end" class="dual-range-click-area" data-slider-type="end">
+                                        </div>
 
                                         <!-- Start time handle - full width -->
                                         <input type="range" id="time-start" name="unbiddenInk.startHour" min="0"
@@ -317,8 +317,7 @@
 
                                             <!-- Frequency slider -->
                                             <input type="range" id="frequency-slider" min="0" max="7" step="1" value="3"
-                                                class="single-range-input"
-                                                oninput="updateFrequencyFromSlider(this.value)">
+                                                class="single-range-input" data-frequency-slider="true">
                                         </div>
 
                                         <!-- Frequency markers -->
@@ -362,8 +361,7 @@
                                 <!-- Prompt preset buttons -->
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <button type="button"
-                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                        onclick="setPrompt('Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.')">
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
                                         <div class="flex items-start space-x-3">
                                             <span class="text-2xl">💭</span>
                                             <div>
@@ -376,8 +374,7 @@
                                     </button>
 
                                     <button type="button"
-                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                        onclick="setPrompt('Generate a fun fact under 200 characters about BBC Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history that is esoteric and only 5% of fans might know.')">
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
                                         <div class="flex items-start space-x-3">
                                             <span class="text-2xl">🕰️</span>
                                             <div>
@@ -392,8 +389,7 @@
                                     </button>
 
                                     <button type="button"
-                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                        onclick="setPrompt('Write a short, humorous observation about everyday life or a witty one-liner. Keep it light and under 200 characters.')">
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
                                         <div class="flex items-start space-x-3">
                                             <span class="text-2xl">😄</span>
                                             <div>
@@ -406,8 +402,7 @@
                                     </button>
 
                                     <button type="button"
-                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                                        onclick="setPrompt('Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.')">
+                                        class="prompt-preset text-left p-4 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
                                         <div class="flex items-start space-x-3">
                                             <span class="text-2xl">✨</span>
                                             <div>
@@ -433,7 +428,7 @@
 
                                 <!-- Test Unbidden Ink -->
                                 <div class="pt-4 text-right">
-                                    <button type="button" onclick="testUnbiddenInk()"
+                                    <button type="button" data-test-action="unbidden-ink"
                                         class="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 rounded">
                                         Bid Unbidden Ink To Scribe Now
                                     </button>
@@ -829,7 +824,7 @@
 
                                     <!-- Demo Button for Chase Single -->
                                     <div class="mt-4 pt-4">
-                                        <button type="button" onclick="demoLedEffect('chase_single')"
+                                        <button type="button" data-demo-led-effect="chase_single"
                                             class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🎮 Demo Chase Single
                                         </button>
@@ -900,7 +895,7 @@
 
                                     <!-- Demo Button for Chase Multi -->
                                     <div class="mt-4 pt-4">
-                                        <button type="button" onclick="demoLedEffect('chase_multi')"
+                                        <button type="button" data-demo-led-effect="chase_multi"
                                             class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🎮 Demo Chase Multi
                                         </button>
@@ -961,7 +956,7 @@
 
                                     <!-- Demo Button for Matrix -->
                                     <div class="mt-4 pt-4">
-                                        <button type="button" onclick="demoLedEffect('matrix')"
+                                        <button type="button" data-demo-led-effect="matrix"
                                             class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🎮 Demo Matrix
                                         </button>
@@ -1015,7 +1010,7 @@
 
                                     <!-- Demo Button for Twinkle -->
                                     <div class="mt-4 pt-4">
-                                        <button type="button" onclick="demoLedEffect('twinkle')"
+                                        <button type="button" data-demo-led-effect="twinkle"
                                             class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             ⭐ Demo Twinkle Stars
                                         </button>
@@ -1069,7 +1064,7 @@
 
                                     <!-- Demo Button for Pulse -->
                                     <div class="mt-4 pt-4">
-                                        <button type="button" onclick="demoLedEffect('pulse')"
+                                        <button type="button" data-demo-led-effect="pulse"
                                             class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             💓 Demo Pulse
                                         </button>
@@ -1115,7 +1110,7 @@
 
                                     <!-- Demo Button for Rainbow -->
                                     <div class="mt-4 pt-4">
-                                        <button type="button" onclick="demoLedEffect('rainbow')"
+                                        <button type="button" data-demo-led-effect="rainbow"
                                             class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🌈 Demo Rainbow
                                         </button>
@@ -1125,7 +1120,7 @@
 
                             <!-- LED Control Button -->
                             <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <button type="button" onclick="turnOffLeds()"
+                                <button type="button" data-led-action="turn-off"
                                     class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
                                     💡 Turn Off LEDs
                                 </button>
@@ -1137,7 +1132,7 @@
 
             <!-- Action Buttons -->
             <div class="flex space-x-4">
-                <button type="button" onclick="goBack()" id="close-button" class="form-button-secondary">
+                <button type="button" id="close-button" class="form-button-secondary">
                     Close
                 </button>
                 <button type="submit" id="save-button" class="form-button-primary">

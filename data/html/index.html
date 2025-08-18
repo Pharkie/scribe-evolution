@@ -26,7 +26,7 @@
 
             <!-- Right spacer with settings button -->
             <div class="header-spacer flex justify-end">
-                <button onclick="goToSettings()" class="status-indicator">
+                <button id="settings-button" class="status-indicator">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
@@ -40,7 +40,7 @@
         </header>
         <!-- Main Printer Interface -->
         <div class="card-primary">
-            <form id="printer-form" onsubmit="handleSubmit(event)" class="vertical-stack-lg">
+            <form id="printer-form" class="vertical-stack-lg">
                 <!-- Printer Selection -->
                 <div class="vertical-stack">
                     <label class="form-label">Print to:</label>
@@ -53,9 +53,8 @@
                 <!-- Message Input -->
                 <div class="vertical-stack-sm">
                     <label for="message-textarea" class="form-label">Message:</label>
-                    <textarea name="message" id="message-textarea" onkeydown="handleTextareaKeydown(event)"
-                        oninput="updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS || 1000)"
-                        placeholder="Type your message…" class="textarea-custom" rows="4" required></textarea>
+                    <textarea name="message" id="message-textarea" placeholder="Type your message…"
+                        class="textarea-custom" rows="4" required></textarea>
                     <div class="char-counter">
                         <span id="char-counter"></span>
                     </div>
@@ -70,31 +69,31 @@
             <!-- Quick Actions -->
             <div class="vertical-stack-md mt-8">
                 <div class="quick-actions-grid">
-                    <button onclick="sendQuickAction('riddle')" class="action-button action-button-yellow">
+                    <button data-action="riddle" class="action-button action-button-yellow quick-action-btn">
                         <span class="action-button-icon">🧩</span>
                         <span class="action-button-label">Riddle</span>
                     </button>
-                    <button onclick="sendQuickAction('joke')" class="action-button action-button-emerald">
+                    <button data-action="joke" class="action-button action-button-emerald quick-action-btn">
                         <span class="action-button-icon">😄</span>
                         <span class="action-button-label">Joke</span>
                     </button>
-                    <button onclick="sendQuickAction('quote')" class="action-button action-button-purple">
+                    <button data-action="quote" class="action-button action-button-purple quick-action-btn">
                         <span class="action-button-icon">💭</span>
                         <span class="action-button-label">Quote</span>
                     </button>
-                    <button onclick="sendQuickAction('quiz')" class="action-button action-button-cyan">
+                    <button data-action="quiz" class="action-button action-button-cyan quick-action-btn">
                         <span class="action-button-icon">🧠</span>
                         <span class="action-button-label">Quiz</span>
                     </button>
-                    <button onclick="sendQuickAction('news')" class="action-button action-button-orange">
+                    <button data-action="news" class="action-button action-button-orange quick-action-btn">
                         <span class="action-button-icon">📰</span>
                         <span class="action-button-label">News</span>
                     </button>
-                    <button onclick="sendQuickAction('poke')" class="action-button action-button-pink">
+                    <button data-action="poke" class="action-button action-button-pink quick-action-btn">
                         <span class="action-button-icon">👉</span>
                         <span class="action-button-label">Poke</span>
                     </button>
-                    <button onclick="sendQuickAction('print-test')" class="action-button action-button-gray">
+                    <button data-action="print-test" class="action-button action-button-gray quick-action-btn">
                         <span class="action-button-icon">🧪</span>
                         <span class="action-button-label">Print test</span>
                     </button>

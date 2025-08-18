@@ -45,13 +45,44 @@ document.addEventListener('DOMContentLoaded', async function() {
  * Initialize index page specific UI elements
  */
 function initializeIndexUI() {
+  // Setup form submission
+  const printerForm = document.getElementById('printer-form');
+  if (printerForm) {
+    printerForm.addEventListener('submit', handleSubmit);
+  }
+  
+  // Setup settings button
+  const settingsButton = document.getElementById('settings-button');
+  if (settingsButton) {
+    settingsButton.addEventListener('click', goToSettings);
+  }
+  
   // Update character counter on input for main message textarea
   const messageInput = document.getElementById('message-textarea');
   if (messageInput) {
     messageInput.addEventListener('input', () => updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS));
-    // Set initial character counter
+    messageInput.addEventListener('keydown', handleTextareaKeydown);
+    
+    // Initialize character counter on load
     updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS);
   }
+  
+  // Setup quick action buttons using event delegation
+  const quickActionsGrid = document.querySelector('.quick-actions-grid');
+  if (quickActionsGrid) {
+    quickActionsGrid.addEventListener('click', function(event) {
+      const button = event.target.closest('.quick-action-btn');
+      if (button) {
+        const action = button.dataset.action;
+        if (action) {
+          sendQuickAction(action);
+        }
+      }
+    });
+  }
+  
+  // Set initial character counter
+  updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS);
 }
 
 /**
