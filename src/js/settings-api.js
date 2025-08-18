@@ -123,22 +123,30 @@ async function printLocalContent(content) {
 }
 
 /**
- * Trigger LED effect via API
+ * Trigger LED effect via API with optional settings
  * @param {string} effectName - Name of the LED effect
  * @param {number} duration - Duration in milliseconds (default 10000)
+ * @param {Object} settings - Effect-specific settings (optional)
  * @returns {Promise<Object>} API response
  */
-async function triggerLedEffect(effectName, duration = 10000) {
+async function triggerLedEffect(effectName, duration = 10000, settings = null) {
     try {
+        const payload = {
+            effect: effectName,
+            duration: duration
+        };
+        
+        // Add settings to payload if provided
+        if (settings && Object.keys(settings).length > 0) {
+            payload.settings = settings;
+        }
+        
         const response = await fetch('/api/led-effect', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                effect: effectName,
-                duration: duration
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {

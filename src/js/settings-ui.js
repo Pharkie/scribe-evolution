@@ -34,8 +34,8 @@ function populateForm(config) {
     setElementChecked('unbidden-ink-enabled', config.unbiddenInk?.enabled || false);
     
     // Time range sliders
-    setElementValue('time-start', config.unbiddenInk?.startHour || 8);
-    setElementValue('time-end', config.unbiddenInk?.endHour || 22);
+    setElementValue('time-start', config.unbiddenInk?.startHour !== undefined ? config.unbiddenInk.startHour : 8);
+    setElementValue('time-end', config.unbiddenInk?.endHour !== undefined ? config.unbiddenInk.endHour : 22);
     updateTimeRange();
     
     // Frequency and prompt
