@@ -524,6 +524,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
                 return;
             }
         }
+    }
 
     // Store LED configuration
     newConfig.ledPin = ledPin;
