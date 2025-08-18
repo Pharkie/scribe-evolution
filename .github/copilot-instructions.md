@@ -4,6 +4,19 @@ This is a C++/Arduino-based ESP32-C3 thermal printer project with web interface,
 LED effects, and MQTT integration. The device prints messages from various
 sources including ChatGPT, MQTT topics, and quick action buttons.
 
+## Specialized Instructions
+
+For detailed, context-specific guidance:
+
+- **Settings UI & Unbidden Ink**: See
+  `.github/instructions/settings-ui.instructions.md`
+- **JavaScript Frontend**: See
+  `.github/instructions/javascript-frontend.instructions.md`
+- **Tailwind CSS**: See `.github/instructions/tailwind-css.instructions.md`
+- **Web API Handlers**: See
+  `.github/instructions/web-api-handlers.instructions.md`
+- **Unit Tests**: See `.github/instructions/unit-tests.instructions.md`
+
 ## Project Structure
 
 ### Core Directories
@@ -67,6 +80,8 @@ sources including ChatGPT, MQTT topics, and quick action buttons.
 2. **CSS**: Use Tailwind utility classes, responsive design (sm:, md:, lg:, xl:)
 3. **HTML**: Semantic markup, accessibility considerations
 4. **API**: RESTful endpoints with JSON responses, proper HTTP status codes
+5. **Event Handling**: Use modern addEventListener, avoid inline HTML handlers
+6. **Module Architecture**: 4-module system (API, UI, LED, Main coordination)
 
 ### Configuration System
 
@@ -147,6 +162,8 @@ sources including ChatGPT, MQTT topics, and quick action buttons.
 4. **Code cleanup**: Removing redundant code, improving error handling
 5. **Documentation**: API documentation, configuration guides
 6. **Testing**: Adding unit tests for existing functionality
+7. **JavaScript modernization**: Converting inline handlers to event listeners
+8. **Settings UI fixes**: Time range, frequency, and preset prompt issues
 
 ### Tasks to Handle Manually
 
@@ -155,6 +172,8 @@ sources including ChatGPT, MQTT topics, and quick action buttons.
 3. **Security reviews**: Authentication and API token handling
 4. **Major architecture changes**: Large refactoring efforts
 5. **Performance optimization**: Memory usage and timing-critical code
+6. **Complex time logic**: Unbidden ink scheduling edge cases requiring manual
+   testing
 
 ## Development Best Practices (Lessons Learned)
 
@@ -227,6 +246,24 @@ sources including ChatGPT, MQTT topics, and quick action buttons.
       client-side
     - LED effects should be internal responses to successful operations
 
+### JavaScript Frontend Architecture (Critical Patterns)
+
+12. **Event Handling Modernization**:
+
+    - ALWAYS use `addEventListener()` instead of inline HTML handlers
+    - Remove all `onclick`, `oninput`, `onchange` attributes from HTML
+    - Set up event listeners in `setupEventHandlers()` function
+    - Use proper event delegation for dynamic content
+    - Preserve all functionality when converting from inline handlers
+
+13. **Modular JavaScript Structure**:
+    - **settings-api.js**: HTTP requests and server communication
+    - **settings-ui.js**: DOM manipulation, form handling, visual updates
+    - **settings-led.js**: LED-specific functionality and demo effects
+    - **settings-main.js**: Coordination, initialization, event listener setup
+    - Export functions via `window.ModuleName = { ... }` pattern
+    - Keep global exports minimal - most handled by event listeners
+
 ## Development Notes
 
 - Use `#ifdef ENABLE_LEDS` for LED-related code
@@ -234,3 +271,11 @@ sources including ChatGPT, MQTT topics, and quick action buttons.
 - Use `DynamicJsonDocument` for JSON parsing with appropriate sizes
 - Handle async web requests properly with error responses
 - Maintain consistent code formatting and documentation
+
+### JavaScript/Frontend Specific Notes
+
+- Always run `npm run build-js-prod` after JavaScript changes
+- Use modern `addEventListener()` instead of inline HTML handlers
+- See `.github/instructions/settings-ui.instructions.md` for detailed settings
+  UI patterns
+- Test all interactive elements after modernizing event handlers

@@ -46,6 +46,10 @@ function populateForm(config) {
     // Frequency and prompt
     setElementValue('frequency-minutes', config.unbiddenInk?.frequencyMinutes || 60);
     updateSliderFromFrequency(config.unbiddenInk?.frequencyMinutes || 60);
+    
+    // Update frequency display to reflect loaded values
+    updateFrequencyDisplay();
+    
     setElementValue('unbidden-ink-prompt', config.unbiddenInk?.prompt || '');
     
     // Check if custom prompt matches any preset and select it visually
@@ -515,12 +519,9 @@ function updateFrequencyDisplay() {
     const startHour = parseInt(startSlider.value);
     const endHour = parseInt(endSlider.value);
     
-    // Format hours for display
+    // Format hours for display using 24-hour format
     const formatHour = (hour) => {
-        if (hour === 0 || hour === 24) return '12 am';  // Midnight
-        if (hour < 12) return `${hour} am`;
-        if (hour === 12) return '12 pm';  // Noon
-        return `${hour - 12} pm`;
+        return String(hour).padStart(2, '0') + ':00';
     };
     
     // Special case for all-day operation
