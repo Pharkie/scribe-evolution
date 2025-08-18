@@ -58,57 +58,56 @@ function updateTimeRangeDisplay() {
  */
 function populateForm(config) {
     // Device configuration
-    setElementValue('device-owner', config.device?.owner || '');
-    setElementValue('timezone', config.device?.timezone || '');
+    setElementValue('device-owner', config.device.owner);
+    setElementValue('timezone', config.device.timezone);
     
     // WiFi configuration
-    setElementValue('wifi-ssid', config.wifi?.ssid || '');
-    setElementValue('wifi-password', config.wifi?.password || '');
-    setElementValue('wifi-timeout', (config.wifi?.connect_timeout || 15000) / 1000); // Convert from milliseconds
+    setElementValue('wifi-ssid', config.wifi.ssid);
+    setElementValue('wifi-password', config.wifi.password);
+    setElementValue('wifi-timeout', config.wifi.connect_timeout / 1000); // Convert from milliseconds
     
     // MQTT configuration
-    setElementValue('mqtt-server', config.mqtt?.server || '');
-    setElementValue('mqtt-port', config.mqtt?.port || 1883);
-    setElementValue('mqtt-username', config.mqtt?.username || '');
-    setElementValue('mqtt-password', config.mqtt?.password || '');
+    setElementValue('mqtt-server', config.mqtt.server);
+    setElementValue('mqtt-port', config.mqtt.port);
+    setElementValue('mqtt-username', config.mqtt.username);
+    setElementValue('mqtt-password', config.mqtt.password);
     
     // Validation configuration
-    setElementValue('max-characters', config.validation?.maxCharacters || 500);
+    setElementValue('max-characters', config.validation.maxCharacters);
     
     // ChatGPT configuration
-    setElementValue('chatgpt-api-token', config.apis?.chatgptApiToken || '');
+    setElementValue('chatgpt-api-token', config.apis.chatgptApiToken);
     
     // Unbidden Ink configuration
-    setElementChecked('unbidden-ink-enabled', config.unbiddenInk?.enabled || false);
+    setElementChecked('unbidden-ink-enabled', config.unbiddenInk.enabled);
     
     // Time range sliders
-    setElementValue('time-start', config.unbiddenInk?.startHour !== undefined ? config.unbiddenInk.startHour : 8);
-    setElementValue('time-end', config.unbiddenInk?.endHour !== undefined ? config.unbiddenInk.endHour : 22);
+    setElementValue('time-start', config.unbiddenInk.startHour);
+    setElementValue('time-end', config.unbiddenInk.endHour);
     
-    // Initialize time range display and click areas after a short delay to ensure DOM is ready
-    setTimeout(() => {
-        updateTimeRangeDisplay(); 
-        updateClickAreas();
-    }, 100);
+    // Initialize time range display and click areas immediately
+    updateTimeRangeDisplay(); 
+    updateClickAreas();
     
     // Frequency and prompt
-    setElementValue('frequency-minutes', config.unbiddenInk?.frequencyMinutes || 60);
-    updateSliderFromFrequency(config.unbiddenInk?.frequencyMinutes || 60);
+    setElementValue('frequency-minutes', config.unbiddenInk.frequencyMinutes);
+    updateSliderFromFrequency(config.unbiddenInk.frequencyMinutes);
     
     // Update frequency display to reflect loaded values
     updateFrequencyDisplay();
     
-    setElementValue('unbidden-ink-prompt', config.unbiddenInk?.prompt || '');
+    setElementValue('unbidden-ink-prompt', config.unbiddenInk.prompt);
     
     // Button configuration
     for (let i = 0; i < 4; i++) {
         const buttonNum = i + 1;
-        setElementValue(`button${buttonNum}-short`, config.buttons?.[`button${buttonNum}`]?.shortAction || '');
-        setElementValue(`button${buttonNum}-long`, config.buttons?.[`button${buttonNum}`]?.longAction || '');
+        const buttonKey = `button${buttonNum}`;
+        setElementValue(`button${buttonNum}-short`, config.buttons[buttonKey].shortAction);
+        setElementValue(`button${buttonNum}-long`, config.buttons[buttonKey].longAction);
         
-        // MQTT topic fields (optional)
-        setElementValue(`button${buttonNum}-short-mqtt-topic`, config.buttons?.[`button${buttonNum}`]?.shortMqttTopic || '');
-        setElementValue(`button${buttonNum}-long-mqtt-topic`, config.buttons?.[`button${buttonNum}`]?.longMqttTopic || '');
+        // MQTT topic fields
+        setElementValue(`button${buttonNum}-short-mqtt-topic`, config.buttons[buttonKey].shortMqttTopic);
+        setElementValue(`button${buttonNum}-long-mqtt-topic`, config.buttons[buttonKey].longMqttTopic);
     }
     
     // LED configuration (delegate to LED module)
@@ -135,18 +134,18 @@ function collectFormData() {
         wifi: {
             ssid: getElementValue('wifi-ssid'),
             password: getElementValue('wifi-password'),
-            connect_timeout: getElementIntValue('wifi-timeout', 15) * 1000 // Convert to milliseconds
+            connect_timeout: getElementIntValue('wifi-timeout') * 1000 // Convert to milliseconds
         },
         // MQTT configuration
         mqtt: {
             server: getElementValue('mqtt-server'),
-            port: getElementIntValue('mqtt-port', 1883),
+            port: getElementIntValue('mqtt-port'),
             username: getElementValue('mqtt-username'),
             password: getElementValue('mqtt-password')
         },
         // Validation configuration
         validation: {
-            maxCharacters: getElementIntValue('max-characters', 500)
+            maxCharacters: getElementIntValue('max-characters')
         },
         // APIs configuration
         apis: {
@@ -155,9 +154,9 @@ function collectFormData() {
         // Unbidden Ink configuration
         unbiddenInk: {
             enabled: getElementChecked('unbidden-ink-enabled'),
-            startHour: getElementIntValue('time-start', 8),
-            endHour: getElementIntValue('time-end', 22),
-            frequencyMinutes: getElementIntValue('frequency-minutes', 60),
+            startHour: getElementIntValue('time-start'),
+            endHour: getElementIntValue('time-end'),
+            frequencyMinutes: getElementIntValue('frequency-minutes'),
             prompt: getElementValue('unbidden-ink-prompt')
         },
         // Button configuration
@@ -181,13 +180,8 @@ function collectFormData() {
     if (window.SettingsLED && window.SettingsLED.collectLedConfig) {
         formData.leds = window.SettingsLED.collectLedConfig();
     } else {
-        // Fallback basic LED config
-        formData.leds = {
-            pin: getElementIntValue('led-pin', 4),
-            count: getElementIntValue('led-count', 30),
-            brightness: getElementIntValue('led-brightness', 64),
-            refreshRate: getElementIntValue('led-refresh-rate', 60)
-        };
+        // No fallback - LED module must be present
+        throw new Error('LED module not available - SettingsLED.collectLedConfig not found');
     }
     
     return formData;
@@ -704,27 +698,27 @@ function setElementChecked(id, checked) {
 }
 
 /**
- * Safely get element value with fallback
+ * Get element value - throws error if element not found
  * @param {string} id - Element ID
- * @param {string} fallback - Fallback value
- * @returns {string} Element value or fallback
+ * @returns {string} Element value
  */
-function getElementValue(id, fallback = '') {
+function getElementValue(id) {
     const element = document.getElementById(id);
-    return element ? (element.value || fallback) : fallback;
+    if (!element) throw new Error(`Element with id '${id}' not found`);
+    return element.value;
 }
 
 /**
- * Safely get element integer value with fallback
+ * Get element integer value - throws error if element not found or invalid value
  * @param {string} id - Element ID
- * @param {number} fallback - Fallback value
- * @returns {number} Element integer value or fallback
+ * @returns {number} Element integer value
  */
-function getElementIntValue(id, fallback) {
+function getElementIntValue(id) {
     const element = document.getElementById(id);
-    if (!element) return fallback;
+    if (!element) throw new Error(`Element with id '${id}' not found`);
     const value = parseInt(element.value);
-    return isNaN(value) ? fallback : value;
+    if (isNaN(value)) throw new Error(`Element '${id}' does not contain a valid integer value: '${element.value}'`);
+    return value;
 }
 
 /**
