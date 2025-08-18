@@ -6,11 +6,10 @@
 
 /**
  * Format hour for 24-hour display
- * @param {number} hour - Hour value (0-23, or 24 for midnight next day)
+ * @param {number} hour - Hour value (0-24)
  * @returns {string} Formatted time string
  */
 function formatHour(hour) {
-    if (hour === 24) return '00:00';
     return String(hour).padStart(2, '0') + ':00';
 }
 
@@ -34,9 +33,9 @@ function updateTimeRangeDisplay() {
             track.style.left = '0%';
             track.style.width = '100%';
         } else {
-            // Calculate percentages based on slider positioning
-            const startPercent = (startVal / 23) * 100;
-            const endPercent = (endVal / 23) * 100;
+                    // Calculate positioning percentages (0-24 range = 0-100%)
+        const startPercent = (startVal / 24) * 100;
+        const endPercent = (endVal / 24) * 100;
             
             track.style.left = startPercent + '%';
             track.style.width = (endPercent - startPercent) + '%';
@@ -304,12 +303,12 @@ function updateTimeRange(slider, type) {
         if (startVal >= endVal) {
             if (type === 'start') {
                 // User moved start handle, adjust end if possible
-                if (endVal < 23) {
+                if (endVal < 24) {
                     endVal = startVal + 1;
                     endSlider.value = endVal;
                 } else {
                     // End can't move, constrain start
-                    startVal = 22;
+                    startVal = 23;
                     startSlider.value = startVal;
                 }
             } else if (type === 'end') {
@@ -339,9 +338,9 @@ function updateTimeRange(slider, type) {
             track.style.left = '0%';
             track.style.width = '100%';
         } else {
-            // Calculate percentages based on slider positioning - track should end at handle position
-            const startPercent = (startVal / 23) * 100;
-            const endPercent = (endVal / 23) * 100; // End exactly at the handle position
+            // Calculate percentages based on slider positioning for 0-24 range
+            const startPercent = (startVal / 24) * 100;
+            const endPercent = (endVal / 24) * 100;
             
             track.style.left = startPercent + '%';
             track.style.width = (endPercent - startPercent) + '%';
@@ -454,9 +453,9 @@ function updateClickAreas() {
     const startVal = parseInt(startSlider.value);
     const endVal = parseInt(endSlider.value);
     
-    // Calculate positions as percentages for 24-hour scale (0-24) - matching old behavior
+    // Calculate positions as percentages for 24-hour scale (0-24)
     const startPercent = (startVal / 24) * 100;
-    const endPercent = ((endVal + 1) / 24) * 100; // +1 because hour 23 represents 23:00-24:00
+    const endPercent = (endVal / 24) * 100;
     
     // Define click area size (in percentage of total width)
     const clickAreaSize = 15; // 15% of total width for each click area
@@ -524,21 +523,38 @@ function updateFrequencyDisplay() {
     const startHour = parseInt(startSlider.value);
     const endHour = parseInt(endSlider.value);
     
-    const startTime = formatHour(startHour);
-    const endTime = formatHour(endHour);
-    
     let text;
     
-    if (minutes < 60) {
-        text = `Around every ${minutes} minutes from ${startTime} to ${endTime} each day`;
-    } else {
-        const hours = minutes / 60;
-        if (hours === 1) {
-            text = `Around once per hour from ${startTime} to ${endTime} each day`;
-        } else if (hours % 1 === 0) {
-            text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
+    // Check for full day operation (0-24 range)
+    if (startHour === 0 && endHour === 24) {
+        if (minutes < 60) {
+            text = `Around every ${minutes} minutes all day long`;
         } else {
-            text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
+            const hours = minutes / 60;
+            if (hours === 1) {
+                text = `Around once per hour all day long`;
+            } else if (hours % 1 === 0) {
+                text = `Around once every ${hours} hours all day long`;
+            } else {
+                text = `Around once every ${hours} hours all day long`;
+            }
+        }
+    } else {
+        // Standard time range display
+        const startTime = formatHour(startHour);
+        const endTime = formatHour(endHour);
+        
+        if (minutes < 60) {
+            text = `Around every ${minutes} minutes from ${startTime} to ${endTime} each day`;
+        } else {
+            const hours = minutes / 60;
+            if (hours === 1) {
+                text = `Around once per hour from ${startTime} to ${endTime} each day`;
+            } else if (hours % 1 === 0) {
+                text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
+            } else {
+                text = `Around once every ${hours} hours from ${startTime} to ${endTime} each day`;
+            }
         }
     }
     
