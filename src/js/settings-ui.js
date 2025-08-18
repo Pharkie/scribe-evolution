@@ -651,29 +651,28 @@ function highlightMatchingPreset(promptText) {
         button.classList.remove('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
     });
     
-    // Find and highlight the matching preset by checking the data attribute or onclick
+    // Collect all button prompts for debugging
+    const buttonPrompts = [];
+    let foundMatch = false;
+    
+    // Find and highlight the matching preset using data attributes only
     document.querySelectorAll('.prompt-preset').forEach(button => {
-        let buttonPromptText = button.getAttribute('data-prompt-text');
+        const buttonPromptText = button.getAttribute('data-prompt-text');
         
-        // Fallback to checking onclick if data attribute is not set yet
-        if (!buttonPromptText) {
-            const onclick = button.getAttribute('onclick');
-            if (onclick) {
-                const match = onclick.match(/setPrompt\('([^']*)'\)/);
-                if (match) {
-                    buttonPromptText = match[1];
-                }
-            }
-        }
-        
-        console.log('Checking button prompt:', buttonPromptText);
+        buttonPrompts.push(buttonPromptText);
         
         // Compare with the provided prompt text (exact match)
         if (buttonPromptText && buttonPromptText.trim() === promptText.trim()) {
             console.log('Found matching preset button, highlighting');
             button.classList.add('bg-purple-100', 'dark:bg-purple-900/40', 'ring-2', 'ring-purple-400');
+            foundMatch = true;
         }
     });
+    
+    console.log('Available button prompts:', buttonPrompts);
+    if (!foundMatch) {
+        console.log('No matching preset found');
+    }
 }
 
 // =============================================================================
