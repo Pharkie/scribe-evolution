@@ -31,6 +31,9 @@ async function initializeSettings() {
             settingsForm.addEventListener('submit', window.SettingsCore.saveSettings);
         }
         
+        // Hide loading state and show settings
+        hideLoadingState();
+        
         console.log('Settings page initialized successfully');
         
     } catch (error) {
@@ -67,6 +70,76 @@ async function loadConfiguration() {
         return window.SettingsCore.loadConfiguration();
     }
 }
+
+/**
+ * Hide loading state and show settings form
+ */
+function hideLoadingState() {
+    const loadingState = document.getElementById('loading-state');
+    const settingsNavigation = document.getElementById('settings-navigation');
+    const settingsForm = document.getElementById('settings-form');
+    
+    if (loadingState) {
+        loadingState.style.display = 'none';
+    }
+    
+    if (settingsNavigation) {
+        settingsNavigation.classList.remove('hidden');
+    }
+    
+    if (settingsForm) {
+        settingsForm.classList.remove('hidden');
+        // Show the first section by default
+        showSettingsSection('wifi');
+    }
+}
+
+/**
+ * Show a specific settings section
+ * @param {string} sectionName - The name of the section to show
+ */
+function showSettingsSection(sectionName) {
+    // Hide all sections
+    const sections = document.querySelectorAll('.settings-section');
+    sections.forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Show the selected section
+    const targetSection = document.getElementById(`${sectionName}-section`);
+    if (targetSection) {
+        targetSection.classList.remove('hidden');
+    }
+    
+    // Update navigation buttons
+    const navButtons = document.querySelectorAll('.section-nav-btn');
+    navButtons.forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Find and activate the correct nav button
+    const activeButton = document.querySelector(`[onclick="showSettingsSection('${sectionName}')"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+}
+
+// Make functions globally available
+window.showSettingsSection = showSettingsSection;
+window.hideLoadingState = hideLoadingState;
+
+/**
+ * Save settings form (global function for form onsubmit)
+ * @param {Event} event - Form submit event
+ */
+async function saveSettings(event) {
+    if (window.SettingsCore && window.SettingsCore.saveSettings) {
+        return window.SettingsCore.saveSettings(event);
+    }
+}
+
+// Make saveSettings globally available for form onsubmit
+window.saveSettings = saveSettings;
 
 async function saveSettings(event) {
     if (window.SettingsCore && window.SettingsCore.saveSettings) {

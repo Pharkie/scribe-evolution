@@ -6,18 +6,33 @@
 /**
  * Initialize index page when DOM is loaded
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   // Initialize index-specific UI
   initializeIndexUI(); 
   
   // Check for settings saved success message
   checkForSettingsSuccess();
   
-  // Listen for config loaded event to initialize printer discovery
-  window.addEventListener('configLoaded', function(event) {
-    console.log('📋 Config loaded, initializing printer discovery for index page');
+  try {
+    // Load configuration for this page
+    console.log('📋 Index: Loading configuration...');
+    const config = await loadConfigForPage();
+    console.log('📋 Index: Config loaded, initializing printer discovery');
+    
+    // Store config for use by other functions on this page
+    window.indexPageConfig = config;
+    
+    // Initialize printer discovery
     initializePrinterDiscovery();
-  });
+    
+    // Initialize printer selection UI
+    initializePrinterSelection();
+  } catch (error) {
+    console.error('📋 Index: Failed to load config:', error);
+    // Continue with defaults - page should still work
+    initializePrinterDiscovery();
+    initializePrinterSelection();
+  }
   
   // Listen for printer updates from the SSE system
   document.addEventListener('printersUpdated', function(event) {
@@ -50,7 +65,7 @@ function initializePrinterSelection() {
   container.innerHTML = '';
   
   // Get local printer name from config
-  const localPrinterName = window.GLOBAL_CONFIG?.printer?.name || 'Unknown';
+  const localPrinterName = window.indexPageConfig?.printer?.name || 'Unknown';
   
   // Add local-direct printer option with simple name
   const localDirectOption = createPrinterOption('local-direct', '🏠', 'Local direct', true, null);
@@ -308,7 +323,7 @@ function showCopyFeedback(buttonElement) {
  */
 function showLocalPrinterInfo() {
   // Create local printer data object with current information from loaded config
-  const deviceConfig = window.GLOBAL_CONFIG?.device || {};
+  const deviceConfig = window.indexPageConfig?.device || {};
   const localPrinterData = {
     name: deviceConfig.printer_name || deviceConfig.owner || 'Local Printer',
     ip_address: deviceConfig.ip_address || window.location.hostname,
