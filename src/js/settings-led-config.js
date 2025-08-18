@@ -27,65 +27,38 @@ function colorToRgba(color) {
  * @param {Object} config - Full configuration object
  */
 function populateLedForm(config) {
-    if (!config.leds) return;
+    if (!config.leds) {
+        return;
+    }
 
     // Hardware settings
-    document.getElementById('led-pin').value = config.leds.pin || 4;
-    document.getElementById('led-count').value = config.leds.count || 30;
-    document.getElementById('led-brightness').value = config.leds.brightness || 64;
-    document.getElementById('led-refresh-rate').value = config.leds.refreshRate || 60;
+    const ledPin = document.getElementById('led-pin');
+    const ledCount = document.getElementById('led-count');
+    const ledBrightness = document.getElementById('led-brightness');
+    const ledRefreshRate = document.getElementById('led-refresh-rate');
+    
+    if (ledPin) ledPin.value = config.leds.pin || 4;
+    if (ledCount) ledCount.value = config.leds.count || 30;
+    if (ledBrightness) ledBrightness.value = config.leds.brightness || 64;
+    if (ledRefreshRate) ledRefreshRate.value = config.leds.refreshRate || 60;
     
     // Populate autonomous per-effect configurations
     const effects = config.leds.effects || {};
     
     // Chase Single
     const chaseSingle = effects.chaseSingle || {};
-    document.getElementById('chase-single-speed').value = chaseSingle.speed || 5;
-    document.getElementById('chase-single-trail-length').value = chaseSingle.trailLength || 15;
-    document.getElementById('chase-single-trail-fade').value = chaseSingle.trailFade || 15;
-    document.getElementById('chase-single-color').value = colorToHtml(chaseSingle.defaultColor, '#0062ff');
     
-    // Chase Multi
-    const chaseMulti = effects.chaseMulti || {};
-    document.getElementById('chase-multi-speed').value = chaseMulti.speed || 2;
-    document.getElementById('chase-multi-trail-length').value = chaseMulti.trailLength || 20;
-    document.getElementById('chase-multi-trail-fade').value = chaseMulti.trailFade || 20;
-    document.getElementById('chase-multi-color-spacing').value = chaseMulti.colorSpacing || 12;
-    document.getElementById('chase-multi-color1').value = colorToHtml(chaseMulti.color1, '#ff9900');
-    document.getElementById('chase-multi-color2').value = colorToHtml(chaseMulti.color2, '#008f00');
-    document.getElementById('chase-multi-color3').value = colorToHtml(chaseMulti.color3, '#78cffe');
+    const chaseSingleElements = {
+        speed: document.getElementById('chase-single-speed'),
+        trailLength: document.getElementById('chase-single-trail-length'),
+        trailFade: document.getElementById('chase-single-trail-fade'),
+        color: document.getElementById('chase-single-color')
+    };
     
-    // Matrix
-    const matrix = effects.matrix || {};
-    document.getElementById('matrix-speed').value = matrix.speed || 3;
-    document.getElementById('matrix-drops').value = matrix.drops || 5;
-    document.getElementById('matrix-background-fade').value = matrix.backgroundFade || 64;
-    document.getElementById('matrix-trail-fade').value = matrix.trailFade || 32;
-    document.getElementById('matrix-brightness-fade').value = matrix.brightnessFade || 40;
-    document.getElementById('matrix-color').value = colorToHtml(matrix.defaultColor, '#009100');
-    
-    // Twinkle
-    const twinkle = effects.twinkle || {};
-    document.getElementById('twinkle-density').value = twinkle.density || 8;
-    document.getElementById('twinkle-fade-speed').value = twinkle.fadeSpeed || 5;
-    document.getElementById('twinkle-min-brightness').value = twinkle.minBrightness || 50;
-    document.getElementById('twinkle-max-brightness').value = twinkle.maxBrightness || 255;
-    document.getElementById('twinkle-color').value = colorToHtml(twinkle.defaultColor, '#ffffff');
-    
-    // Pulse
-    const pulse = effects.pulse || {};
-    document.getElementById('pulse-speed').value = pulse.speed || 4;
-    document.getElementById('pulse-min-brightness').value = pulse.minBrightness || 0;
-    document.getElementById('pulse-max-brightness').value = pulse.maxBrightness || 255;
-    document.getElementById('pulse-wave-frequency').value = pulse.waveFrequency || 0.05;
-    document.getElementById('pulse-color').value = colorToHtml(pulse.defaultColor, '#ff00f2');
-    
-    // Rainbow
-    const rainbow = effects.rainbow || {};
-    document.getElementById('rainbow-speed').value = rainbow.speed || 2.0;
-    document.getElementById('rainbow-saturation').value = rainbow.saturation || 255;
-    document.getElementById('rainbow-brightness').value = rainbow.brightness || 255;
-    document.getElementById('rainbow-hue-step').value = rainbow.hueStep || 2.5;
+    if (chaseSingleElements.speed) chaseSingleElements.speed.value = chaseSingle.speed || 5;
+    if (chaseSingleElements.trailLength) chaseSingleElements.trailLength.value = chaseSingle.trailLength || 15;
+    if (chaseSingleElements.trailFade) chaseSingleElements.trailFade.value = chaseSingle.trailFade || 15;
+    if (chaseSingleElements.color) chaseSingleElements.color.value = colorToHtml(chaseSingle.defaultColor, '#0062ff');
 }
 
 /**

@@ -208,25 +208,29 @@
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
   }
 
-  /* Action Button Color Variants - direct implementation */
+  /* Action Button Color Variants - media query implementation */
   .action-button-yellow {
     background-color: rgb(254 249 195);
     border-color: rgb(254 240 138);
     color: rgb(161 98 7);
   }
   
-  .dark .action-button-yellow {
-    background-color: rgb(113 63 18 / 0.2);
-    border-color: rgb(161 98 7);
-    color: rgb(252 211 77);
+  @media (prefers-color-scheme: dark) {
+    .action-button-yellow {
+      background-color: rgb(113 63 18 / 0.2);
+      border-color: rgb(161 98 7);
+      color: rgb(252 211 77);
+    }
   }
   
   .action-button-yellow:hover {
     background-color: rgb(254 240 138);
   }
   
-  .dark .action-button-yellow:hover {
-    background-color: rgb(113 63 18 / 0.3);
+  @media (prefers-color-scheme: dark) {
+    .action-button-yellow:hover {
+      background-color: rgb(113 63 18 / 0.3);
+    }
   }
   
   .action-button-emerald {
@@ -235,18 +239,22 @@
     color: rgb(5 150 105);
   }
   
-  .dark .action-button-emerald {
-    background-color: rgb(6 78 59 / 0.2);
-    border-color: rgb(5 150 105);
-    color: rgb(110 231 183);
+  @media (prefers-color-scheme: dark) {
+    .action-button-emerald {
+      background-color: rgb(6 78 59 / 0.2);
+      border-color: rgb(5 150 105);
+      color: rgb(110 231 183);
+    }
   }
   
   .action-button-emerald:hover {
     background-color: rgb(209 250 229);
   }
   
-  .dark .action-button-emerald:hover {
-    background-color: rgb(6 78 59 / 0.3);
+  @media (prefers-color-scheme: dark) {
+    .action-button-emerald:hover {
+      background-color: rgb(6 78 59 / 0.3);
+    }
   }
   
   .action-button-purple {
@@ -255,18 +263,22 @@
     color: rgb(109 40 217);
   }
   
-  .dark .action-button-purple {
-    background-color: rgb(88 28 135 / 0.2);
-    border-color: rgb(109 40 217);
-    color: rgb(196 181 253);
+  @media (prefers-color-scheme: dark) {
+    .action-button-purple {
+      background-color: rgb(88 28 135 / 0.2);
+      border-color: rgb(109 40 217);
+      color: rgb(196 181 253);
+    }
   }
   
   .action-button-purple:hover {
     background-color: rgb(243 232 255);
   }
   
-  .dark .action-button-purple:hover {
-    background-color: rgb(88 28 135 / 0.5);
+  @media (prefers-color-scheme: dark) {
+    .action-button-purple:hover {
+      background-color: rgb(88 28 135 / 0.5);
+    }
   }
   
   .action-button-cyan {
@@ -275,18 +287,22 @@
     color: rgb(14 116 144);
   }
   
-  .dark .action-button-cyan {
-    background-color: rgb(22 78 99 / 0.2);
-    border-color: rgb(14 116 144);
-    color: rgb(103 232 249);
+  @media (prefers-color-scheme: dark) {
+    .action-button-cyan {
+      background-color: rgb(22 78 99 / 0.2);
+      border-color: rgb(14 116 144);
+      color: rgb(103 232 249);
+    }
   }
   
   .action-button-cyan:hover {
     background-color: rgb(207 250 254);
   }
   
-  .dark .action-button-cyan:hover {
-    background-color: rgb(22 78 99 / 0.3);
+  @media (prefers-color-scheme: dark) {
+    .action-button-cyan:hover {
+      background-color: rgb(22 78 99 / 0.3);
+    }
   }
   
   .action-button-pink {
@@ -295,18 +311,22 @@
     color: rgb(190 24 93);
   }
   
-  .dark .action-button-pink {
-    background-color: rgb(131 24 67 / 0.2);
-    border-color: rgb(190 24 93);
-    color: rgb(244 114 182);
+  @media (prefers-color-scheme: dark) {
+    .action-button-pink {
+      background-color: rgb(131 24 67 / 0.2);
+      border-color: rgb(190 24 93);
+      color: rgb(244 114 182);
+    }
   }
   
   .action-button-pink:hover {
     background-color: rgb(252 231 243);
   }
   
-  .dark .action-button-pink:hover {
-    background-color: rgb(131 24 67 / 0.3);
+  @media (prefers-color-scheme: dark) {
+    .action-button-pink:hover {
+      background-color: rgb(131 24 67 / 0.3);
+    }
   }
   
   .action-button-gray {
@@ -315,17 +335,21 @@
     color: rgb(55 65 81);
   }
   
-  .dark .action-button-gray {
-    background-color: rgb(17 24 39 / 0.2);
-    border-color: rgb(55 65 81);
-    color: rgb(209 213 219);
+  @media (prefers-color-scheme: dark) {
+    .action-button-gray {
+      background-color: rgb(17 24 39 / 0.2);
+      border-color: rgb(55 65 81);
+      color: rgb(209 213 219);
+    }
   }
   
   .action-button-gray:hover {
     background-color: rgb(243 244 246);
   }
   
-  .dark .action-button-gray:hover {
-    background-color: rgb(17 24 39 / 0.3);
+  @media (prefers-color-scheme: dark) {
+    .action-button-gray:hover {
+      background-color: rgb(17 24 39 / 0.3);
+    }
   }
 }

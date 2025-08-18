@@ -7,48 +7,28 @@
 let currentConfig = {};
 
 /**
- * Load configuration - wait for global config to be available
+ * Load configuration directly from API
  */
 async function loadConfiguration() {
     try {
-        let config;
+        console.log('Settings: Loading configuration from API...');
         
-        // Wait for global config to be loaded using event listener (more reliable)
-        if (!window.GLOBAL_CONFIG || Object.keys(window.GLOBAL_CONFIG).length === 0) {
-            console.log('Waiting for global config to load...');
-            
-            // Use event-based waiting with fallback timeout
-            config = await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                    reject(new Error('Global config load timeout'));
-                }, 10000); // 10 second timeout
-                
-                const checkConfig = () => {
-                    if (window.GLOBAL_CONFIG && Object.keys(window.GLOBAL_CONFIG).length > 0) {
-                        clearTimeout(timeout);
-                        document.removeEventListener('configLoaded', checkConfig);
-                        resolve(window.GLOBAL_CONFIG);
-                    }
-                };
-                
-                document.addEventListener('configLoaded', checkConfig);
-                
-                // Check immediately in case event already fired
-                checkConfig();
-            });
-        } else {
-            config = window.GLOBAL_CONFIG;
+        const response = await fetch('/api/config');
+        if (!response.ok) {
+            throw new Error(`Config API returned ${response.status}: ${response.statusText}`);
         }
         
+        const config = await response.json();
         console.log('Settings: Configuration loaded successfully');
-        currentConfig = config;
         
-        // Populate form with loaded configuration
+        // Populate the form with the loaded configuration
         populateForm(config);
         
+        return config;
     } catch (error) {
         console.error('Settings: Failed to load configuration:', error);
-        showMessage('Failed to load configuration: ' + error.message, 'error');
+        showMessage('Failed to load settings: ' + error.message, 'error');
+        throw error;
     }
 }
 
@@ -59,12 +39,12 @@ async function loadConfiguration() {
 function populateForm(config) {
     // Device configuration
     document.getElementById('device-owner').value = config.device?.owner || '';
-    document.getElementById('timezone').value = config.device?.timezone || 'UTC';
+    document.getElementById('timezone').value = config.device?.timezone || '';
     
     // WiFi configuration
     document.getElementById('wifi-ssid').value = config.wifi?.ssid || '';
     document.getElementById('wifi-password').value = config.wifi?.password || '';
-    document.getElementById('wifi-timeout').value = (config.wifi?.connect_timeout || 30000) / 1000;
+    document.getElementById('wifi-timeout').value = (config.wifi?.connect_timeout || 15000) / 1000; // Convert from milliseconds
     
     // MQTT configuration
     document.getElementById('mqtt-enabled').checked = config.mqtt?.enabled || false;
@@ -72,14 +52,12 @@ function populateForm(config) {
     document.getElementById('mqtt-port').value = config.mqtt?.port || 1883;
     document.getElementById('mqtt-username').value = config.mqtt?.username || '';
     document.getElementById('mqtt-password').value = config.mqtt?.password || '';
-    document.getElementById('mqtt-device-topic').value = config.mqtt?.deviceTopic || '';
     
     // Validation configuration
     document.getElementById('max-characters').value = config.validation?.maxCharacters || 500;
     
     // ChatGPT configuration
     document.getElementById('chatgpt-api-token').value = config.chatgpt?.apiToken || '';
-    document.getElementById('chatgpt-api-endpoint').value = config.chatgpt?.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
     
     // Unbidden Ink configuration
     const unbiddenInkEnabled = document.getElementById('unbidden-ink-enabled');
@@ -101,14 +79,30 @@ function populateForm(config) {
     
     // Frequency and prompt
     document.getElementById('frequency-minutes').value = config.unbiddenInk?.frequencyMinutes || 60;
-    document.getElementById('unbidden-prompt').value = config.unbiddenInk?.prompt || '';
+    document.getElementById('unbidden-ink-prompt').value = config.unbiddenInk?.prompt || '';
     
-    // Button configuration
+    // Button configuration - with proper error handling
     for (let i = 0; i < 4; i++) {
-        document.getElementById(`button-${i+1}-short-action`).value = config.buttons?.[`button${i+1}`]?.shortAction || '';
-        document.getElementById(`button-${i+1}-long-action`).value = config.buttons?.[`button${i+1}`]?.longAction || '';
-        document.getElementById(`button-${i+1}-short-mqtt-topic`).value = config.buttons?.[`button${i+1}`]?.shortMqttTopic || '';
-        document.getElementById(`button-${i+1}-long-mqtt-topic`).value = config.buttons?.[`button${i+1}`]?.longMqttTopic || '';
+        const buttonNum = i + 1;
+        const shortSelect = document.getElementById(`button${buttonNum}-short`);
+        const longSelect = document.getElementById(`button${buttonNum}-long`);
+        
+        if (shortSelect) {
+            shortSelect.value = config.buttons?.[`button${buttonNum}`]?.shortAction || '';
+        }
+        if (longSelect) {
+            longSelect.value = config.buttons?.[`button${buttonNum}`]?.longAction || '';
+        }
+        
+        // MQTT topic fields might not exist in current HTML - check first
+        const shortMqttField = document.getElementById(`button${buttonNum}-short-mqtt-topic`);
+        const longMqttField = document.getElementById(`button${buttonNum}-long-mqtt-topic`);
+        if (shortMqttField) {
+            shortMqttField.value = config.buttons?.[`button${buttonNum}`]?.shortMqttTopic || '';
+        }
+        if (longMqttField) {
+            longMqttField.value = config.buttons?.[`button${buttonNum}`]?.longMqttTopic || '';
+        }
     }
     
     // LED configuration (handled by LED module)
@@ -142,8 +136,7 @@ function collectFormData() {
             server: document.getElementById('mqtt-server').value,
             port: parseInt(document.getElementById('mqtt-port').value),
             username: document.getElementById('mqtt-username').value,
-            password: document.getElementById('mqtt-password').value,
-            deviceTopic: document.getElementById('mqtt-device-topic').value
+            password: document.getElementById('mqtt-password').value
         },
         // Validation configuration (overrides config.h)
         validation: {
@@ -151,8 +144,7 @@ function collectFormData() {
         },
         // ChatGPT configuration (overrides config.h)
         chatgpt: {
-            apiToken: document.getElementById('chatgpt-api-token').value,
-            apiEndpoint: document.getElementById('chatgpt-api-endpoint').value
+            apiToken: document.getElementById('chatgpt-api-token').value
         },
         // Unbidden Ink configuration
         unbiddenInk: {
@@ -160,7 +152,7 @@ function collectFormData() {
             startHour: parseInt(document.getElementById('time-start').value),
             endHour: parseInt(document.getElementById('time-end').value),
             frequencyMinutes: parseInt(document.getElementById('frequency-minutes').value),
-            prompt: document.getElementById('unbidden-prompt').value
+            prompt: document.getElementById('unbidden-ink-prompt').value // Fixed ID
         },
         // Button configuration
         buttons: {}
@@ -168,12 +160,16 @@ function collectFormData() {
     
     // Collect button configurations
     for (let i = 0; i < 4; i++) {
-        const buttonKey = `button${i+1}`;
+        const buttonNum = i + 1;
+        const buttonKey = `button${buttonNum}`;
+        const shortSelect = document.getElementById(`button${buttonNum}-short`);
+        const longSelect = document.getElementById(`button${buttonNum}-long`);
+        
         formData.buttons[buttonKey] = {
-            shortAction: document.getElementById(`button-${i+1}-short-action`).value,
-            longAction: document.getElementById(`button-${i+1}-long-action`).value,
-            shortMqttTopic: document.getElementById(`button-${i+1}-short-mqtt-topic`).value,
-            longMqttTopic: document.getElementById(`button-${i+1}-long-mqtt-topic`).value
+            shortAction: shortSelect ? shortSelect.value : '',
+            longAction: longSelect ? longSelect.value : '',
+            shortMqttTopic: '', // Not in current HTML form
+            longMqttTopic: ''   // Not in current HTML form
         };
     }
     

@@ -7,9 +7,6 @@
  * Initialize shared functionality when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', function() {
-  // Load initial configuration
-  loadConfig();
-  
   // Add keyboard event listeners
   document.addEventListener('keydown', handleKeyPress);
   

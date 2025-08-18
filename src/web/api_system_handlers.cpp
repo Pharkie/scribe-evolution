@@ -220,17 +220,23 @@ void handleStatus(AsyncWebServerRequest *request)
 
     // === CONFIGURATION LIMITS ===
     JsonObject config = doc.createNestedObject("configuration");
-    config["max_message_chars"] = maxCharacters;
+    config["max_message_chars"] = runtimeConfig.maxCharacters;
     config["max_prompt_chars"] = maxPromptCharacters;
 
-    // Temperature (if available)
-#ifdef SOC_TEMP_SENSOR_SUPPORTED
+    // Temperature (ESP32-C3 internal sensor)
     float temp = temperatureRead();
-    if (!isnan(temp))
+    LOG_VERBOSE("WEB", "Temperature read: %.1f°C, isnan: %s", temp, isnan(temp) ? "true" : "false");
+
+    if (!isnan(temp) && temp > -50 && temp < 150) // More lenient range for ESP32-C3
     {
         hardware["temperature"] = temp;
+        LOG_VERBOSE("WEB", "Temperature added to JSON: %.1f°C", temp);
     }
-#endif
+    else
+    {
+        hardware["temperature"] = nullptr; // Explicitly set to null for JSON
+        LOG_WARNING("WEB", "Invalid temperature reading: %.1f°C (isnan: %s)", temp, isnan(temp) ? "true" : "false");
+    }
 
     // Serialize and send
     String response;
