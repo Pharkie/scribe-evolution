@@ -81,8 +81,25 @@ function setupEventHandlers() {
     const timeStartSlider = document.getElementById('time-start');
     const timeEndSlider = document.getElementById('time-end');
     if (timeStartSlider && timeEndSlider) {
-        timeStartSlider.addEventListener('input', window.SettingsUI.updateTimeRange);
-        timeEndSlider.addEventListener('input', window.SettingsUI.updateTimeRange);
+        timeStartSlider.addEventListener('input', function() {
+            window.SettingsUI.updateTimeRange(this, 'start');
+        });
+        timeEndSlider.addEventListener('input', function() {
+            window.SettingsUI.updateTimeRange(this, 'end');
+        });
+    }
+    
+    // Custom prompt textarea handler - clear preset highlights when user types
+    const customPromptTextarea = document.getElementById('unbidden-ink-prompt');
+    if (customPromptTextarea) {
+        customPromptTextarea.addEventListener('input', function() {
+            // Clear preset highlights when user modifies the text
+            setTimeout(() => {
+                // Check if current text matches any preset exactly
+                const currentText = this.value;
+                window.SettingsUI.matchCustomPromptToPreset(currentText);
+            }, 100);
+        });
     }
 }
 
