@@ -191,18 +191,38 @@ function setupPromptPresetHandlers() {
         'Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.'
     ];
     
-    // Find all prompt preset buttons by their onclick content
-    presetPrompts.forEach(prompt => {
-        const button = document.querySelector(`[onclick*="setPrompt('${prompt.replace(/'/g, "\\'")}')"]`);
-        if (button) {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                window.SettingsUI.setPrompt(prompt);
-            });
-            // Store the prompt text as a data attribute for later use in highlighting
-            button.setAttribute('data-prompt-text', prompt);
-            // Remove inline handler after storing the data
-            button.removeAttribute('onclick');
+    // Find all prompt preset buttons and set up their data attributes and event listeners
+    const buttons = document.querySelectorAll('.prompt-preset[onclick*="setPrompt"]');
+    
+    buttons.forEach(button => {
+        const onclickAttr = button.getAttribute('onclick');
+        if (onclickAttr) {
+            // Extract the prompt text from the onclick attribute with robust parsing
+            // This regex handles escaped single quotes properly: (?:[^'\\]|\\.)*
+            const match = onclickAttr.match(/setPrompt\('((?:[^'\\]|\\.)*)'\)/);
+            if (match) {
+                // Properly unescape the captured text
+                const promptText = match[1]
+                    .replace(/\\'/g, "'")    // Unescape single quotes
+                    .replace(/\\"/g, '"')    // Unescape double quotes  
+                    .replace(/\\\\/g, "\\")  // Unescape backslashes
+                    .replace(/\\n/g, "\n")   // Unescape newlines
+                    .replace(/\\t/g, "\t");  // Unescape tabs
+                
+                // Set up event listener
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.SettingsUI.setPrompt(promptText);
+                });
+                
+                // Store the prompt text as a data attribute for later use in highlighting
+                button.setAttribute('data-prompt-text', promptText);
+                
+                // Remove inline handler after storing the data
+                button.removeAttribute('onclick');
+            } else {
+                console.warn('Could not parse onclick attribute:', onclickAttr);
+            }
         }
     });
 }
