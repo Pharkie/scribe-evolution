@@ -127,7 +127,7 @@ function initializeSettingsStore() {
         },
         
         // Initialize store with data from server
-        async loadConfiguration() {
+        async init() {
             this.loading = true;
             try {
                 // Use existing SettingsAPI
