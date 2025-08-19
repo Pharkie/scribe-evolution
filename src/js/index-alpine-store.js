@@ -3,9 +3,9 @@
  * @brief Alpine.js reactive store for index page functionality
  */
 
-// Alpine.js Store for Index Page
-window.IndexStore = function() {
-  return {
+// Initialize Alpine.js index store with data loading
+function initializeIndexStore() {
+  const store = {
     // Core state
     config: {},
     loading: true,
@@ -432,4 +432,12 @@ window.IndexStore = function() {
       window.location.href = '/settings.html';
     }
   };
-};
+  
+  // Initialize data loading
+  store.init();
+  
+  return store;
+}
+
+// Export for use in HTML
+window.initializeIndexStore = initializeIndexStore;

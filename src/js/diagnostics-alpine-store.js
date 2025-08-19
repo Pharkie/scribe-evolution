@@ -3,9 +3,9 @@
  * @brief Alpine.js reactive store for diagnostics page functionality
  */
 
-// Alpine.js Store for Diagnostics Page
-window.DiagnosticsStore = function() {
-  return {
+// Initialize Alpine.js diagnostics store with data loading
+function initializeDiagnosticsStore() {
+  const store = {
     // Core state
     loading: true,
     error: null,
@@ -570,4 +570,12 @@ window.DiagnosticsStore = function() {
       window.location.href = '/';
     }
   };
-};
+  
+  // Initialize data loading
+  store.init();
+  
+  return store;
+}
+
+// Export for use in HTML
+window.initializeDiagnosticsStore = initializeDiagnosticsStore;
