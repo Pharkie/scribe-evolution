@@ -94,14 +94,17 @@ function initializeIndexStore() {
     // Load configuration
     async loadConfig() {
       try {
-        console.log('📋 Index: Loading configuration...');
+        console.log('📋 Index: Loading configuration from API...');
         const response = await fetch('/api/config');
+        console.log('📋 Index: API response received:', response.ok, response.status);
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         this.config = await response.json();
         console.log('📋 Index: Raw config received:', this.config);
+        console.log('📋 Index: Config keys:', Object.keys(this.config));
         
         if (this.config?.device?.printer_name === undefined) {
           throw new Error('Printer name configuration is missing from server');
@@ -444,8 +447,8 @@ function initializeIndexStore() {
     }
   };
   
-  // Initialize data loading
-  store.init();
+  // Initialize data loading - Alpine.js will call init() automatically
+  // No need to call it manually
   
   return store;
 }

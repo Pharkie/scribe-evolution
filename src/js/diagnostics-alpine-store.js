@@ -40,21 +40,31 @@ function initializeDiagnosticsStore() {
       }
       this.initialized = true;
       
+      console.log('🛠️ Diagnostics: Starting initialization...');
       await this.loadDiagnostics();
+      console.log('🛠️ Diagnostics: Initialization complete, loading:', this.loading, 'error:', this.error);
     },
     
         // Load all diagnostics data
     async loadDiagnostics() {
       this.loading = true;
       this.error = null;
+      console.log('🛠️ Diagnostics: Loading data from APIs...');
       
       try {
+        console.log('🛠️ Diagnostics: Making parallel API calls...');
         // Load diagnostics, config, and NVS data in parallel - must all succeed
         const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.all([
           fetch('/api/diagnostics'),
           fetch('/api/config'),
           fetch('/api/nvs-dump')
         ]);
+        
+        console.log('🛠️ Diagnostics: API responses received:', {
+          diagnostics: diagnosticsResponse.ok,
+          config: configResponse.ok,
+          nvs: nvsResponse.ok
+        });
         
         // All endpoints must succeed - no fallbacks
         if (!diagnosticsResponse.ok) {
@@ -69,14 +79,21 @@ function initializeDiagnosticsStore() {
           throw new Error(`NVS dump API failed: ${nvsResponse.status} ${nvsResponse.statusText}`);
         }
         
+        console.log('🛠️ Diagnostics: Parsing JSON responses...');
         // Parse all responses
         this.diagnosticsData = await diagnosticsResponse.json();
         this.configData = await configResponse.json();
         this.nvsData = await nvsResponse.json();
         
+        console.log('🛠️ Diagnostics: Data loaded successfully:', {
+          diagnosticsKeys: Object.keys(this.diagnosticsData).length,
+          configKeys: Object.keys(this.configData).length,
+          nvsKeys: this.nvsData.keys ? Object.keys(this.nvsData.keys).length : 0
+        });
+        
         this.loading = false;
       } catch (error) {
-        console.error('Error loading diagnostics:', error);
+        console.error('🛠️ Diagnostics: Error loading diagnostics:', error);
         this.error = error.message;
         this.loading = false;
       }
@@ -565,8 +582,8 @@ function initializeDiagnosticsStore() {
     }
   };
   
-  // Initialize data loading
-  store.init();
+  // Initialize data loading - Alpine.js will call init() automatically
+  // No need to call it manually
   
   return store;
 }

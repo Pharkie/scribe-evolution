@@ -16,10 +16,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // Setup back button event listeners
   setupBackButtonListeners();
   
-  // Start Alpine.js after all stores are loaded
-  if (window.startAlpine && typeof window.startAlpine === 'function') {
-    window.startAlpine();
-  }
+  // Start Alpine.js with a slight delay to ensure all page stores are loaded
+  setTimeout(() => {
+    if (window.startAlpine && typeof window.startAlpine === 'function') {
+      console.log('🏔️ Starting Alpine.js...');
+      window.startAlpine();
+    } else {
+      console.error('🏔️ Alpine.js startAlpine function not available');
+    }
+  }, 50);
 });
 
 /**
