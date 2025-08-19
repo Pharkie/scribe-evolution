@@ -148,7 +148,7 @@ into commercial software), please contact the author.
 You can view the full license text at:
 https://creativecommons.org/licenses/by-nc-sa/4.0/
 
-### Copyright (extended code)
+### Copyright
 
 © 2025 Adam Knowles. All rights reserved.
 
