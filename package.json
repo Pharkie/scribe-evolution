@@ -15,6 +15,7 @@
         "build-js-diagnostics": "npx terser src/js/diagnostics.js --compress --mangle --output data/js/diagnostics.min.js --source-map",
         "build-js-settings": "npx terser src/js/settings-api.js src/js/settings-ui.js src/js/settings-led.js src/js/settings-main.js --compress --mangle --output data/js/settings.min.js --source-map",
         "build-js-settings-combined": "npx terser src/js/settings-api.js src/js/settings-ui.js src/js/settings-led.js src/js/settings-main.js --compress --mangle --output data/js/settings.min.js --source-map",
+        "build-js-settings-alpine": "cp node_modules/alpinejs/dist/cdn.min.js data/js/alpine.min.js && npx terser src/js/settings-alpine-store.js src/js/settings-api.js --compress --mangle --output data/js/settings-alpine.min.js --source-map",
         "build-css-shared": "npx @tailwindcss/cli --input ./src/css/shared.css --output ./data/css/shared.min.css --minify",
         "build-css-index": "npx @tailwindcss/cli --input ./src/css/index.css --output ./data/css/index.min.css --minify",
         "build-css-diagnostics": "npx @tailwindcss/cli --input ./src/css/diagnostics.css --output ./data/css/diagnostics.min.css --minify",
@@ -25,6 +26,7 @@
     },
     "dependencies": {
         "@tailwindcss/cli": "^4.1.12",
+        "alpinejs": "^3.14.9",
         "tailwindcss": "^4.1.12"
     },
     "devDependencies": {
