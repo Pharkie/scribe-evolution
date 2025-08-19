@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Setup back button event listeners
   setupBackButtonListeners();
+  
+  // Start Alpine.js after all stores are loaded
+  if (window.startAlpine && typeof window.startAlpine === 'function') {
+    window.startAlpine();
+  }
 });
 
 /**

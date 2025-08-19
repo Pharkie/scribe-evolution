@@ -31,7 +31,10 @@ window.IndexStore = function() {
     
     // Character limits
     get maxChars() {
-      return this.config?.validation?.maxCharacters || 1000;
+      if (this.config?.validation?.maxCharacters === undefined) {
+        throw new Error('Maximum characters configuration is missing from server');
+      }
+      return this.config.validation.maxCharacters;
     },
     
     get charCount() {
@@ -74,7 +77,11 @@ window.IndexStore = function() {
         }
         
         this.config = await response.json();
-        this.localPrinterName = this.config?.printer?.name || 'Unknown';
+        
+        if (this.config?.printer?.name === undefined) {
+          throw new Error('Printer name configuration is missing from server');
+        }
+        this.localPrinterName = this.config.printer.name;
         console.log('📋 Index: Config loaded successfully');
         this.loading = false;
         
@@ -238,15 +245,19 @@ window.IndexStore = function() {
     
     // Printer info overlay
     showLocalPrinterInfo() {
-      const deviceConfig = this.config?.device || {};
+      if (!this.config?.device) {
+        throw new Error('Device configuration is missing from server');
+      }
+      
+      const deviceConfig = this.config.device;
       const localPrinterData = {
-        name: deviceConfig.printer_name || deviceConfig.owner || 'Local Printer',
-        ip_address: deviceConfig.ip_address || window.location.hostname,
-        mdns: deviceConfig.mdns || window.location.hostname,
+        name: deviceConfig.printer_name || deviceConfig.owner,
+        ip_address: deviceConfig.ip_address,
+        mdns: deviceConfig.mdns,
         status: 'online',
-        firmware_version: deviceConfig.firmware_version || 'Unknown',
-        timezone: deviceConfig.timezone || 'Unknown',
-        last_power_on: deviceConfig.boot_time || 'Unknown'
+        firmware_version: deviceConfig.firmware_version,
+        timezone: deviceConfig.timezone,
+        last_power_on: deviceConfig.boot_time
       };
       
       this.showPrinterOverlay(localPrinterData, localPrinterData.name, 'local');
@@ -272,9 +283,9 @@ window.IndexStore = function() {
       const printerType = this.overlayPrinterType;
       
       const topic = printerType === 'mqtt' ? `scribe/${this.overlayPrinterName}/print` : null;
-      const ipAddress = printerData.ip_address || 'Not available';
-      const mdns = printerData.mdns || `${this.overlayPrinterName.toLowerCase()}.local`;
-      const firmwareVersion = printerData.firmware_version || 'Not available';
+      const ipAddress = printerData.ip_address;
+      const mdns = printerData.mdns; 
+      const firmwareVersion = printerData.firmware_version;
       const printerIcon = printerType === 'local' ? '🏠' : '📡';
       
       // Format last power on time
@@ -311,7 +322,7 @@ window.IndexStore = function() {
         }
       }
       
-      const timezone = printerData.timezone || 'Same as local';
+      const timezone = printerData.timezone;
       
       return {
         topic,

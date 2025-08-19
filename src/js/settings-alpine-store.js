@@ -441,7 +441,7 @@ function initializeSettingsStore() {
                 if (result.success) {
                     window.showMessage(`Testing ${effectName} effect for 10 seconds`, 'info');
                 } else {
-                    throw new Error(result.message || 'Unknown error');
+                    throw new Error(result.message);
                 }
             } catch (error) {
                 console.error('LED effect test failed:', error);
@@ -468,7 +468,7 @@ function initializeSettingsStore() {
                 if (result.success) {
                     window.showMessage('LEDs turned off', 'success');
                 } else {
-                    throw new Error(result.message || 'Unknown error');
+                    throw new Error(result.message);
                 }
             } catch (error) {
                 console.error('Turn off LEDs failed:', error);
