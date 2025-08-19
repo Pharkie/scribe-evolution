@@ -468,7 +468,7 @@ function initializeSettingsStore() {
                 const customParams = this.getEffectCustomParams(effectName);
                 Object.assign(effectParams, customParams);
                 
-                const response = await fetch('/api/led-test', {
+                const response = await fetch('/api/led-effect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(effectParams)
@@ -676,8 +676,8 @@ function initializeSettingsStore() {
         
         // Cancel configuration changes
         cancelConfiguration() {
-            // Reset to defaults or reload from server
-            window.location.reload();
+            // Navigate back to index instead of reloading
+            window.location.href = '/';
         },
     };
 }
