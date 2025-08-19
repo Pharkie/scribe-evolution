@@ -10,6 +10,7 @@
 #include "api_nvs_handlers.h"
 #include "api_handlers.h" // For shared utilities
 #include "../core/config_loader.h"
+#include "../core/nvs_keys.h"
 #include "../core/logging.h"
 #include "../utils/time_utils.h"
 #include <ArduinoJson.h>
@@ -57,34 +58,32 @@ void handleNVSDump(AsyncWebServerRequest *request)
 
     const NVSKey knownKeys[] = {
         // Device Configuration
-        {"device_owner", "string", "Device owner name", false, 0, 0},
-        {"device_tz", "string", "Device timezone", false, 0, 0},
-        {"max_chars", "int", "Maximum message characters", false, 50, 2000},
+        {NVS_DEVICE_OWNER, "string", "Device owner name", false, 0, 0},
+        {NVS_DEVICE_TIMEZONE, "string", "Device timezone", false, 0, 0},
+        {NVS_MAX_CHARACTERS, "int", "Maximum message characters", false, 50, 2000},
 
         // WiFi Configuration
-        {"wifi_ssid", "string", "WiFi network SSID", false, 0, 0},
-        {"wifi_pass", "string", "WiFi network password", true, 0, 0},
-        {"wifi_timeout", "int", "WiFi connect timeout (ms)", false, 5000, 60000},
+        {NVS_WIFI_SSID, "string", "WiFi network SSID", false, 0, 0},
+        {NVS_WIFI_PASSWORD, "string", "WiFi network password", true, 0, 0},
+        {NVS_WIFI_TIMEOUT, "int", "WiFi connect timeout (ms)", false, 5000, 60000},
 
         // MQTT Configuration
-        {"mqtt_enabled", "bool", "MQTT connection enabled", false, 0, 0},
-        {"mqtt_server", "string", "MQTT broker hostname", false, 0, 0},
-        {"mqtt_port", "int", "MQTT broker port", false, 1, 65535},
-        {"mqtt_user", "string", "MQTT username", false, 0, 0},
-        {"mqtt_pass", "string", "MQTT password", true, 0, 0},
-        {"mqtt_tls", "bool", "MQTT TLS enabled", false, 0, 0},
+        {NVS_MQTT_SERVER, "string", "MQTT broker server", false, 0, 0},
+        {NVS_MQTT_PORT, "int", "MQTT broker port", false, 1, 65535},
+        {NVS_MQTT_USERNAME, "string", "MQTT username", false, 0, 0},
+        {NVS_MQTT_PASSWORD, "string", "MQTT password", true, 0, 0},
 
         // API Configuration
-        {"chatgpt_token", "string", "ChatGPT API token", true, 0, 0},
+        {NVS_CHATGPT_TOKEN, "string", "ChatGPT API token", true, 0, 0},
 
         // Unbidden Ink Configuration
-        {"unbid_enabled", "bool", "Unbidden ink enabled", false, 0, 0},
-        {"unbid_start_hr", "int", "Unbidden ink start hour", false, 0, 23},
-        {"unbid_end_hr", "int", "Unbidden ink end hour", false, 0, 23},
-        {"unbid_freq_min", "int", "Unbidden ink frequency (minutes)", false, 15, 1440},
-        {"unbidden_prompt", "string", "Unbidden ink custom prompt", false, 0, 0},
+        {NVS_UNBIDDEN_ENABLED, "bool", "Unbidden Ink enabled", false, 0, 0},
+        {NVS_UNBIDDEN_FREQUENCY, "int", "Unbidden Ink frequency (minutes)", false, 30, 1440},
+        {NVS_UNBIDDEN_START_HOUR, "int", "Unbidden Ink start hour", false, 0, 23},
+        {NVS_UNBIDDEN_END_HOUR, "int", "Unbidden Ink end hour", false, 0, 23},
+        {NVS_UNBIDDEN_PROMPT, "string", "Unbidden Ink prompt template", false, 0, 0},
 
-        // Button Configuration - All 4 buttons
+        // Button Configuration (4 buttons × 4 fields = 16 keys)
         {"btn1_short_act", "string", "Button 1 short press action", false, 0, 0},
         {"btn1_short_mq", "string", "Button 1 short press MQTT topic", false, 0, 0},
         {"btn1_long_act", "string", "Button 1 long press action", false, 0, 0},
@@ -102,14 +101,16 @@ void handleNVSDump(AsyncWebServerRequest *request)
         {"btn4_long_act", "string", "Button 4 long press action", false, 0, 0},
         {"btn4_long_mq", "string", "Button 4 long press MQTT topic", false, 0, 0},
 
-        // LED Configuration
-        {"led_refresh", "int", "LED refresh rate", false, 10, 200},
-        {"led_brightness", "int", "LED brightness level", false, 1, 255}};
+        // LED Configuration (only when ENABLE_LEDS is defined)
+        {NVS_LED_PIN, "int", "LED strip GPIO pin", false, 0, 39},
+        {NVS_LED_COUNT, "int", "Number of LEDs", false, 1, 1000},
+        {NVS_LED_BRIGHTNESS, "int", "LED brightness", false, 1, 255},
+        {NVS_LED_REFRESH_RATE, "int", "LED refresh rate", false, 10, 120}};
 
-    const int numKeys = sizeof(knownKeys) / sizeof(NVSKey);
+    const size_t numKeys = sizeof(knownKeys) / sizeof(knownKeys[0]);
 
     // Check each known key
-    for (int i = 0; i < numKeys; i++)
+    for (size_t i = 0; i < numKeys; i++)
     {
         const NVSKey &keyInfo = knownKeys[i];
         JsonObject keyObj = keys.createNestedObject(keyInfo.key);

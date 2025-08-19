@@ -65,14 +65,51 @@ For detailed, context-specific guidance:
 
 ## Code Standards
 
+### **DRY Principle (Don't Repeat Yourself) - CRITICAL**
+
+**Always apply DRY principle to prevent maintenance nightmares:**
+
+1. **Centralized Constants**: Define all shared values (NVS keys, configuration
+   names, API endpoints) in single header files
+
+   - ✅ **Example**: `src/core/nvs_keys.h` - All NVS key names defined once,
+     used everywhere
+   - ❌ **Never**: Duplicate hardcoded strings across files that can get out of
+     sync
+
+2. **Single Source of Truth**: Any value used in multiple places must have ONE
+   canonical definition
+
+   - Configuration validation rules
+   - Error messages and status codes
+   - Default values and ranges
+   - Database/storage key names
+
+3. **Shared Utilities**: Extract common functionality into reusable utilities
+
+   - JSON response formatting
+   - Validation patterns
+   - Error handling patterns
+   - Logging helpers
+
+4. **Template/Pattern Reuse**: Use consistent patterns across similar components
+   - API endpoint structure
+   - Configuration loading/saving
+   - Event handling patterns
+
+**When Copilot identifies duplicate code or hardcoded values used in multiple
+places, immediately suggest DRY refactoring.**
+
 ### C++ Guidelines
 
 1. **File Organization**: Use modular architecture - avoid files >800 lines
-2. **Naming**: Use camelCase for functions, PascalCase for classes
-3. **Includes**: Use relative paths, group by system/library/local
-4. **Error Handling**: Use proper error codes and logging
-5. **Memory**: Minimize heap allocations, prefer stack/static
-6. **Async**: Use ESPAsyncWebServer patterns for web handlers
+2. **DRY Implementation**: Use shared headers for constants (nvs_keys.h,
+   shared_types.h)
+3. **Naming**: Use camelCase for functions, PascalCase for classes
+4. **Includes**: Use relative paths, group by system/library/local
+5. **Error Handling**: Use proper error codes and logging
+6. **Memory**: Minimize heap allocations, prefer stack/static
+7. **Async**: Use ESPAsyncWebServer patterns for web handlers
 
 ### Web Development
 
@@ -177,16 +214,39 @@ For detailed, context-specific guidance:
 
 ## Development Best Practices (Lessons Learned)
 
+### DRY Principle Success Stories
+
+1. **NVS Key Constants (August 2025)**: Created `src/core/nvs_keys.h` to
+   centralize all NVS key definitions
+
+   - **Problem**: `api_nvs_handlers.cpp` and `config_loader.cpp` had duplicate
+     hardcoded NVS key strings that got out of sync
+   - **Symptoms**: Diagnostic endpoint showed keys as "missing" when they
+     existed with slightly different names
+   - **Solution**: Extracted all NVS key names to constants in shared header,
+     both files now import same constants
+   - **Result**: Impossible for NVS key names to get out of sync again,
+     diagnostic accuracy restored
+   - **Lesson**: Always use shared constants for any string/value used in
+     multiple files
+
+2. **When to Apply DRY Refactoring**:
+   - Any hardcoded string that appears in 2+ files
+   - Configuration key names, API endpoints, error messages
+   - Magic numbers and default values
+   - File paths and resource names
+   - Always prefer compile-time constants over runtime string matching
+
 ### File Management During Refactoring
 
-1. **Clean Up Temporary Files**: Always remove `_backup`, `_new`, `_old`
+3. **Clean Up Temporary Files**: Always remove `_backup`, `_new`, `_old`
    suffixes after refactoring
 
    - These files can cause linker errors and false build failures
    - Use `find . -name "*_backup*" -o -name "*_new*" | xargs rm` to clean up
    - Verify no duplicate class definitions exist after major refactoring
 
-2. **File Renaming Strategy**: When renaming files systematically:
+4. **File Renaming Strategy**: When renaming files systematically:
 
    - Update all includes first: `#include "OldName.h"` → `#include "NewName.h"`
    - Update class names in headers: `class OldClass` → `class NewClass`
@@ -195,7 +255,7 @@ For detailed, context-specific guidance:
    - Update all method references: `OldClass::method()` → `NewClass::method()`
    - Test build after each major batch of changes
 
-3. **Git-Aware File Operations**: When suggesting or executing file moves,
+5. **Git-Aware File Operations**: When suggesting or executing file moves,
    copies or deletions, always use Git-aware commands rather than plain shell
    commands:
    - For moving/renaming files, use `git mv` instead of `mv`
@@ -207,7 +267,7 @@ For detailed, context-specific guidance:
 
 ### Configuration Management
 
-4. **Hardcoded Values**: Always check for hardcoded constants that should move
+6. **Hardcoded Values**: Always check for hardcoded constants that should move
    to `config.h`
 
    - Search for numeric literals in effect code: `fadeToBlackBy(strip, 64)` →
@@ -215,21 +275,21 @@ For detailed, context-specific guidance:
    - Look for magic numbers in timing: `delay(50)` → use named constants
    - Group related constants logically in config.h with clear comments
 
-5. **Memory Buffer Sizing**: When JSON parsing fails with "NoMemory":
+7. **Memory Buffer Sizing**: When JSON parsing fails with "NoMemory":
    - Increase `largeJsonDocumentSize` from 2048 to 4096+ bytes
    - Account for long API tokens (ChatGPT tokens are ~200+ chars)
    - Update all related buffer sizes in API handlers consistently
 
 ### Build System Integration
 
-6. **Preprocessor Directives**: Avoid redefinition warnings:
+8. **Preprocessor Directives**: Avoid redefinition warnings:
    - Use build flags (`-DENABLE_LEDS=1`) OR config.h defines, not both
    - Always use `#ifndef MACRO_NAME` guards in headers
    - Clean builds resolve most preprocessor caching issues
 
 ### User Experience Patterns
 
-7. **Toast Messages**: Avoid duplicate user feedback:
+9. **Toast Messages**: Avoid duplicate user feedback:
 
    - Remove "processing..." toasts for instant operations (LED off, settings
      save)
@@ -237,29 +297,31 @@ For detailed, context-specific guidance:
    - Server-side operations should trigger feedback internally, not via separate
      JS API calls
 
-8. **LED Effect Architecture**:
-   - Name effects clearly: `chase_single` vs `chase_multi`, not confusing
-     `chase` vs `simple_chase`
-   - Use consistent parameter patterns: cycles for sequence effects, duration
-     for continuous effects
+10. **LED Effect Architecture**:
+
+- Name effects clearly: `chase_single` vs `chase_multi`, not confusing `chase`
+  vs `simple_chase`
+- Use consistent parameter patterns: cycles for sequence effects, duration for
+  continuous effects
 
 ### Large File Management
 
-9. **Proactive Refactoring**: Monitor files approaching 800+ lines:
-   - Break by functional responsibility, not arbitrary size
-   - Use modular patterns: base classes, registries, separate concerns
-   - Test that refactored modules have same external API
+11. **Proactive Refactoring**: Monitor files approaching 800+ lines:
+
+- Break by functional responsibility, not arbitrary size
+- Use modular patterns: base classes, registries, separate concerns
+- Test that refactored modules have same external API
 
 ### API Design Consistency
 
-10. **Server-Side Logic Preference**:
+12. **Server-Side Logic Preference**:
     - Configuration changes should trigger confirmations server-side, not
       client-side
     - LED effects should be internal responses to successful operations
 
 ### Error Handling Philosophy
 
-11. **Fail Fast - No Silent Fallbacks**:
+13. **Fail Fast - No Silent Fallbacks**:
     - Never use default values or fallbacks that mask missing backend data
     - Throw explicit errors when expected configuration or DOM elements are
       missing
@@ -269,7 +331,7 @@ For detailed, context-specific guidance:
 
 ### JavaScript Frontend Architecture (Critical Patterns)
 
-12. **Event Handling Modernization**:
+14. **Event Handling Modernization**:
 
     - ALWAYS use `addEventListener()` instead of inline HTML handlers
     - Remove all `onclick`, `oninput`, `onchange` attributes from HTML
@@ -277,7 +339,7 @@ For detailed, context-specific guidance:
     - Use proper event delegation for dynamic content
     - Preserve all functionality when converting from inline handlers
 
-13. **Modular JavaScript Structure**:
+15. **Modular JavaScript Structure**:
     - **settings-api.js**: HTTP requests and server communication
     - **settings-ui.js**: DOM manipulation, form handling, visual updates
     - **settings-led.js**: LED-specific functionality and demo effects

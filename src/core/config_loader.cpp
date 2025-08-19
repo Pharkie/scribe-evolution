@@ -9,6 +9,7 @@
 
 #include "config_loader.h"
 #include "config.h"
+#include "nvs_keys.h"
 #include "logging.h"
 #include <Preferences.h>
 #include <nvs_flash.h>
@@ -123,19 +124,19 @@ bool loadNVSConfig()
     }
 
     // Load device configuration
-    g_runtimeConfig.deviceOwner = getNVSString(prefs, "device_owner", defaultDeviceOwner, 50);
-    g_runtimeConfig.timezone = getNVSString(prefs, "device_timezone", defaultTimezone, 50);
+    g_runtimeConfig.deviceOwner = getNVSString(prefs, NVS_DEVICE_OWNER, defaultDeviceOwner, 50);
+    g_runtimeConfig.timezone = getNVSString(prefs, NVS_DEVICE_TIMEZONE, defaultTimezone, 50);
 
     // Load WiFi configuration
-    g_runtimeConfig.wifiSSID = getNVSString(prefs, "wifi_ssid", defaultWifiSSID, 32);
-    g_runtimeConfig.wifiPassword = getNVSString(prefs, "wifi_password", defaultWifiPassword, 63);
-    g_runtimeConfig.wifiConnectTimeoutMs = getNVSInt(prefs, "wifi_timeout", wifiConnectTimeoutMs, 5000, 60000);
+    g_runtimeConfig.wifiSSID = getNVSString(prefs, NVS_WIFI_SSID, defaultWifiSSID, 32);
+    g_runtimeConfig.wifiPassword = getNVSString(prefs, NVS_WIFI_PASSWORD, defaultWifiPassword, 63);
+    g_runtimeConfig.wifiConnectTimeoutMs = getNVSInt(prefs, NVS_WIFI_TIMEOUT, wifiConnectTimeoutMs, 5000, 60000);
 
     // Load MQTT configuration
-    g_runtimeConfig.mqttServer = getNVSString(prefs, "mqtt_server", defaultMqttServer, 255);
-    g_runtimeConfig.mqttPort = getNVSInt(prefs, "mqtt_port", defaultMqttPort, 1, 65535);
-    g_runtimeConfig.mqttUsername = getNVSString(prefs, "mqtt_username", defaultMqttUsername, 100);
-    g_runtimeConfig.mqttPassword = getNVSString(prefs, "mqtt_password", defaultMqttPassword, 100);
+    g_runtimeConfig.mqttServer = getNVSString(prefs, NVS_MQTT_SERVER, defaultMqttServer, 255);
+    g_runtimeConfig.mqttPort = getNVSInt(prefs, NVS_MQTT_PORT, defaultMqttPort, 1, 65535);
+    g_runtimeConfig.mqttUsername = getNVSString(prefs, NVS_MQTT_USERNAME, defaultMqttUsername, 100);
+    g_runtimeConfig.mqttPassword = getNVSString(prefs, NVS_MQTT_PASSWORD, defaultMqttPassword, 100);
 
     // Load API configuration (non-user configurable APIs remain as constants)
     g_runtimeConfig.jokeAPI = jokeAPI;
@@ -143,24 +144,24 @@ bool loadNVSConfig()
     g_runtimeConfig.triviaAPI = triviaAPI;
     g_runtimeConfig.betterStackToken = betterStackToken;
     g_runtimeConfig.betterStackEndpoint = betterStackEndpoint;
-    g_runtimeConfig.chatgptApiToken = getNVSString(prefs, "chatgpt_token", defaultChatgptApiToken, 300);
+    g_runtimeConfig.chatgptApiToken = getNVSString(prefs, NVS_CHATGPT_TOKEN, defaultChatgptApiToken, 300);
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     // Load validation configuration
-    g_runtimeConfig.maxCharacters = getNVSInt(prefs, "max_characters", maxCharacters, 100, 5000);
+    g_runtimeConfig.maxCharacters = getNVSInt(prefs, NVS_MAX_CHARACTERS, maxCharacters, 100, 5000);
 
     // Load Unbidden Ink settings
     LOG_VERBOSE("CONFIG", "DEBUG: Default values - startHour=%d, endHour=%d, frequency=%d",
                 defaultUnbiddenInkStartHour, defaultUnbiddenInkEndHour, defaultUnbiddenInkFrequencyMinutes);
 
-    g_runtimeConfig.unbiddenInkEnabled = getNVSBool(prefs, "unbid_enabled", defaultEnableUnbiddenInk);
-    g_runtimeConfig.unbiddenInkStartHour = getNVSInt(prefs, "unbid_start_hr", defaultUnbiddenInkStartHour, 0, 24);
-    g_runtimeConfig.unbiddenInkEndHour = getNVSInt(prefs, "unbid_end_hr", defaultUnbiddenInkEndHour, 0, 24);
-    g_runtimeConfig.unbiddenInkFrequencyMinutes = getNVSInt(prefs, "unbid_freq_min", defaultUnbiddenInkFrequencyMinutes, minUnbiddenInkFrequencyMinutes, maxUnbiddenInkFrequencyMinutes);
+    g_runtimeConfig.unbiddenInkEnabled = getNVSBool(prefs, NVS_UNBIDDEN_ENABLED, defaultEnableUnbiddenInk);
+    g_runtimeConfig.unbiddenInkStartHour = getNVSInt(prefs, NVS_UNBIDDEN_START_HOUR, defaultUnbiddenInkStartHour, 0, 24);
+    g_runtimeConfig.unbiddenInkEndHour = getNVSInt(prefs, NVS_UNBIDDEN_END_HOUR, defaultUnbiddenInkEndHour, 0, 24);
+    g_runtimeConfig.unbiddenInkFrequencyMinutes = getNVSInt(prefs, NVS_UNBIDDEN_FREQUENCY, defaultUnbiddenInkFrequencyMinutes, minUnbiddenInkFrequencyMinutes, maxUnbiddenInkFrequencyMinutes);
 
     LOG_VERBOSE("CONFIG", "DEBUG: Loaded values - startHour=%d, endHour=%d, frequency=%d",
                 g_runtimeConfig.unbiddenInkStartHour, g_runtimeConfig.unbiddenInkEndHour, g_runtimeConfig.unbiddenInkFrequencyMinutes);
-    g_runtimeConfig.unbiddenInkPrompt = getNVSString(prefs, "unbidden_prompt", "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.", 500);
+    g_runtimeConfig.unbiddenInkPrompt = getNVSString(prefs, NVS_UNBIDDEN_PROMPT, "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.", 500);
     LOG_VERBOSE("CONFIG", "DEBUG: Loaded prompt length=%d, first 50 chars='%s'",
                 g_runtimeConfig.unbiddenInkPrompt.length(), g_runtimeConfig.unbiddenInkPrompt.substring(0, 50).c_str());
 
@@ -176,10 +177,10 @@ bool loadNVSConfig()
 
 #if ENABLE_LEDS
     // Load LED configuration
-    g_runtimeConfig.ledPin = getNVSInt(prefs, "led_pin", DEFAULT_LED_PIN, 0, 39);
-    g_runtimeConfig.ledCount = getNVSInt(prefs, "led_count", DEFAULT_LED_COUNT, 1, 1000);
-    g_runtimeConfig.ledBrightness = getNVSInt(prefs, "led_brightness", DEFAULT_LED_BRIGHTNESS, 1, 255);
-    g_runtimeConfig.ledRefreshRate = getNVSInt(prefs, "led_refresh", DEFAULT_LED_REFRESH_RATE, 10, 120);
+    g_runtimeConfig.ledPin = getNVSInt(prefs, NVS_LED_PIN, DEFAULT_LED_PIN, 0, 39);
+    g_runtimeConfig.ledCount = getNVSInt(prefs, NVS_LED_COUNT, DEFAULT_LED_COUNT, 1, 1000);
+    g_runtimeConfig.ledBrightness = getNVSInt(prefs, NVS_LED_BRIGHTNESS, DEFAULT_LED_BRIGHTNESS, 1, 255);
+    g_runtimeConfig.ledRefreshRate = getNVSInt(prefs, NVS_LED_REFRESH_RATE, DEFAULT_LED_REFRESH_RATE, 10, 120);
 
     // Load LED effects configuration (this will need custom handling if complex)
     g_runtimeConfig.ledEffects = getDefaultLedEffectsConfig();
@@ -257,32 +258,32 @@ bool saveNVSConfig(const RuntimeConfig &config)
     }
 
     // Save device configuration
-    prefs.putString("device_owner", config.deviceOwner);
-    prefs.putString("device_timezone", config.timezone);
+    prefs.putString(NVS_DEVICE_OWNER, config.deviceOwner);
+    prefs.putString(NVS_DEVICE_TIMEZONE, config.timezone);
 
     // Save WiFi configuration
-    prefs.putString("wifi_ssid", config.wifiSSID);
-    prefs.putString("wifi_password", config.wifiPassword);
-    prefs.putULong("wifi_timeout", config.wifiConnectTimeoutMs);
+    prefs.putString(NVS_WIFI_SSID, config.wifiSSID);
+    prefs.putString(NVS_WIFI_PASSWORD, config.wifiPassword);
+    prefs.putULong(NVS_WIFI_TIMEOUT, config.wifiConnectTimeoutMs);
 
     // Save MQTT configuration
-    prefs.putString("mqtt_server", config.mqttServer);
-    prefs.putInt("mqtt_port", config.mqttPort);
-    prefs.putString("mqtt_username", config.mqttUsername);
-    prefs.putString("mqtt_password", config.mqttPassword);
+    prefs.putString(NVS_MQTT_SERVER, config.mqttServer);
+    prefs.putInt(NVS_MQTT_PORT, config.mqttPort);
+    prefs.putString(NVS_MQTT_USERNAME, config.mqttUsername);
+    prefs.putString(NVS_MQTT_PASSWORD, config.mqttPassword);
 
     // Save ChatGPT API token (other APIs are constants)
-    prefs.putString("chatgpt_token", config.chatgptApiToken);
+    prefs.putString(NVS_CHATGPT_TOKEN, config.chatgptApiToken);
 
     // Save validation configuration
-    prefs.putInt("max_characters", config.maxCharacters);
+    prefs.putInt(NVS_MAX_CHARACTERS, config.maxCharacters);
 
     // Save Unbidden Ink configuration
     prefs.putBool("unbid_enabled", config.unbiddenInkEnabled);
     prefs.putInt("unbid_start_hr", config.unbiddenInkStartHour);
     prefs.putInt("unbid_end_hr", config.unbiddenInkEndHour);
     prefs.putInt("unbid_freq_min", config.unbiddenInkFrequencyMinutes);
-    prefs.putString("unbidden_prompt", config.unbiddenInkPrompt);
+    prefs.putString(NVS_UNBIDDEN_PROMPT, config.unbiddenInkPrompt);
 
     // Save button configuration
     for (int i = 0; i < 4; i++)
@@ -296,10 +297,10 @@ bool saveNVSConfig(const RuntimeConfig &config)
 
 #if ENABLE_LEDS
     // Save LED configuration
-    prefs.putInt("led_pin", config.ledPin);
-    prefs.putInt("led_count", config.ledCount);
-    prefs.putInt("led_brightness", config.ledBrightness);
-    prefs.putInt("led_refresh", config.ledRefreshRate);
+    prefs.putInt(NVS_LED_PIN, config.ledPin);
+    prefs.putInt(NVS_LED_COUNT, config.ledCount);
+    prefs.putInt(NVS_LED_BRIGHTNESS, config.ledBrightness);
+    prefs.putInt(NVS_LED_REFRESH_RATE, config.ledRefreshRate);
 
     // TODO: Save LED effects configuration if needed
 #endif
