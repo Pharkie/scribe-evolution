@@ -1,6 +1,8 @@
 /* Diagnostics page specific styles */
-@import "tailwindcss";
-@import "./shared.css" layer(components);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "./shared.css";
 
 @layer components {
   /* Section navigation buttons - simplified approach */

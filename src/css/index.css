@@ -1,6 +1,8 @@
 /* Index page specific styles */
-@import "tailwindcss";
-@import "./shared.css" layer(components);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "./shared.css";
 
 @layer components {
   /* Quick Actions Grid - 6 buttons: 2 cols mobile, 3 cols tablet, 6 cols desktop, 3 cols (2 rows) at 1200px+ */
