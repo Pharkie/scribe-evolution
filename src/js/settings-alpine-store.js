@@ -49,6 +49,12 @@ function initializeSettingsStore() {
                 button2: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
                 button3: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
                 button4: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' }
+            },
+            leds: {
+                pin: 4,
+                count: 60,
+                brightness: 128,
+                refreshRate: 60
             }
         },
         
@@ -332,6 +338,62 @@ function initializeSettingsStore() {
         // Helper to get nested object values
         getNestedValue(fieldName) {
             return fieldName.split('.').reduce((obj, key) => obj && obj[key], this.config);
+        },
+        
+        // LED effect functions
+        async testLedEffect(effectName) {
+            try {
+                const response = await fetch('/api/led-effect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        effect: effectName,
+                        duration: 10, // 10 seconds for testing
+                        color: 'blue', // Default test color
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                if (result.success) {
+                    window.showMessage(`Testing ${effectName} effect for 10 seconds`, 'info');
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('LED effect test failed:', error);
+                window.showMessage(`Failed to test LED effect: ${error.message}`, 'error');
+            }
+        },
+        
+        async turnOffLeds() {
+            try {
+                const response = await fetch('/api/led-effect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        effect: 'turn_off',
+                        duration: 0
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                if (result.success) {
+                    window.showMessage('LEDs turned off', 'success');
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Turn off LEDs failed:', error);
+                window.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
+            }
         },
     };
 }
