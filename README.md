@@ -4,7 +4,7 @@
   <img alt="Scribe Logo" src="docs/assets/ScribeEvolution-FullHoriz.svg">
 </picture>
 
-**An AI-powered, network-connected thermal printer to bring joy to your space.**
+**An AI-powered, network-connected thermal printer to bring you joy**
 
 Scribe transforms a simple thermal printer into an intelligent, delightful device that can surprise you with jokes, help you with daily tasks, create ambient lighting effects, and integrate seamlessly into your smart home ecosystem.
 
