@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/css/index.min.css">
     <script src="/js/vendor.min.js" defer></script>
     <script src="/js/app.min.js" defer></script>
-    <script src="/js/page-index.min.js" defer></script>
+    <script src="/js/page-index.min.js"></script>
 </head>
 
 <body class="page-body" x-data="initializeIndexStore()">
@@ -121,28 +121,28 @@
                 <!-- Quick Actions -->
                 <div class="vertical-stack-md mt-8">
                     <div class="quick-actions-grid">
-                        <button type="button" @click="sendQuickAction('riddle')" class="action-button action-button-yellow quick-action-btn"
-                            data-action="riddle">
+                        <button type="button" @click="sendQuickAction('riddle')"
+                            class="action-button action-button-yellow quick-action-btn" data-action="riddle">
                             <span class="action-button-icon">🧩</span>
                             <span class="action-button-label">Riddle</span>
                         </button>
-                        <button type="button" @click="sendQuickAction('joke')" class="action-button action-button-emerald quick-action-btn"
-                            data-action="joke">
+                        <button type="button" @click="sendQuickAction('joke')"
+                            class="action-button action-button-emerald quick-action-btn" data-action="joke">
                             <span class="action-button-icon">😄</span>
                             <span class="action-button-label">Joke</span>
                         </button>
-                        <button type="button" @click="sendQuickAction('quote')" class="action-button action-button-purple quick-action-btn"
-                            data-action="quote">
+                        <button type="button" @click="sendQuickAction('quote')"
+                            class="action-button action-button-purple quick-action-btn" data-action="quote">
                             <span class="action-button-icon">💭</span>
                             <span class="action-button-label">Quote</span>
                         </button>
-                        <button type="button" @click="sendQuickAction('quiz')" class="action-button action-button-cyan quick-action-btn"
-                            data-action="quiz">
+                        <button type="button" @click="sendQuickAction('quiz')"
+                            class="action-button action-button-cyan quick-action-btn" data-action="quiz">
                             <span class="action-button-icon">🧠</span>
                             <span class="action-button-label">Quiz</span>
                         </button>
-                        <button type="button" @click="sendQuickAction('news')" class="action-button action-button-orange quick-action-btn"
-                            data-action="news">
+                        <button type="button" @click="sendQuickAction('news')"
+                            class="action-button action-button-orange quick-action-btn" data-action="news">
                             <span class="action-button-icon">📰</span>
                             <span class="action-button-label">News</span>
                         </button>
@@ -153,7 +153,8 @@
                 <button type="submit" :disabled="!canSubmit" :class="{
                         'opacity-50 cursor-not-allowed': !canSubmit,
                         'hover:bg-blue-600 dark:hover:bg-blue-500': canSubmit
-                    }" class="w-full px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                    }"
+                    class="w-full px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
                     <span x-show="!submitting && !buttonTextOverride">🖨️ Print Message</span>
                     <span x-show="!submitting && buttonTextOverride" x-text="buttonTextOverride"></span>
                     <span x-show="submitting" class="flex items-center justify-center">
@@ -290,10 +291,12 @@
             🛠️ Diagnostics
         </a>
         <div>
-            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank" class="footer-link">Peter / Urban Circles</a>
+            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
+                class="footer-link">Peter / Urban Circles</a>
         </div>
         <div>
-            Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank" class="footer-link">Pharkie</a>
+            Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
+                class="footer-link">Pharkie</a>
         </div>
         <div>
             Quotes from <a href="https://zenquotes.io/" target="_blank" class="footer-link">ZenQuotes API</a>
