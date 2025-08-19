@@ -92,7 +92,106 @@
                 </div>
             </div>
 
-            <!-- Unbidden Ink Section (Complex Alpine Implementation) -->
+            <!-- Device Section -->
+            <div class="settings-section">
+                <div class="settings-card settings-card-purple">
+                    <h2 class="settings-card-header settings-card-header-purple">
+                        <span class="text-3xl">⚙️</span>
+                        <span>Device</span>
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="device-owner" class="form-label">Device Owner:</label>
+                            <input 
+                                id="device-owner" 
+                                type="text" 
+                                placeholder="Enter device owner name"
+                                class="input-standard"
+                                x-model="config.device.owner">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="timezone" class="form-label">Timezone:</label>
+                            <select 
+                                id="timezone" 
+                                class="input-standard"
+                                x-model="config.device.timezone">
+                                <option value="America/New_York">America/New_York (EST/EDT)</option>
+                                <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+                                <option value="America/Denver">America/Denver (MST/MDT)</option>
+                                <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+                                <option value="Europe/London">Europe/London (GMT/BST)</option>
+                                <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                                <option value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="max-characters" class="form-label">Max Characters per Message:</label>
+                            <input 
+                                type="number" 
+                                id="max-characters" 
+                                min="100" 
+                                max="5000"
+                                class="input-standard"
+                                x-model.number="config.validation.maxCharacters">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Maximum number of characters allowed per message (100-5000)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MQTT Section -->
+            <div class="settings-section">
+                <div class="settings-card settings-card-yellow">
+                    <h2 class="settings-card-header settings-card-header-yellow">
+                        <span class="text-3xl">📡</span>
+                        <span>MQTT</span>
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="mqtt-server" class="form-label">MQTT Server:</label>
+                            <input 
+                                id="mqtt-server" 
+                                type="text" 
+                                placeholder="Enter MQTT broker address"
+                                class="input-standard"
+                                x-model="config.mqtt.server">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-port" class="form-label">MQTT Port:</label>
+                            <input 
+                                type="number" 
+                                id="mqtt-port" 
+                                min="1" 
+                                max="65535"
+                                class="input-standard"
+                                x-model.number="config.mqtt.port">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-username" class="form-label">MQTT Username:</label>
+                            <input 
+                                id="mqtt-username" 
+                                type="text" 
+                                placeholder="Optional MQTT username"
+                                class="input-standard"
+                                x-model="config.mqtt.username">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-password" class="form-label">MQTT Password:</label>
+                            <input 
+                                type="password" 
+                                id="mqtt-password" 
+                                placeholder="Optional MQTT password"
+                                class="input-standard"
+                                x-model="config.mqtt.password">
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="settings-section">
                 <div class="settings-card settings-card-green">
                     <h2 class="settings-card-header settings-card-header-green">
@@ -239,6 +338,90 @@
                                 placeholder="Enter a custom prompt for content generation..."
                                 x-model="config.unbiddenInk.prompt"></textarea>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons Section -->
+            <div class="settings-section">
+                <div class="settings-card settings-card-orange">
+                    <h2 class="settings-card-header settings-card-header-orange">
+                        <span class="text-3xl">🎛️</span>
+                        <span>Button Actions</span>
+                    </h2>
+
+                    <div class="space-y-6">
+                        <template x-for="buttonNum in [1, 2, 3, 4]" :key="buttonNum">
+                            <div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4" 
+                                    x-text="`Button ${buttonNum} Configuration`"></h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Short Press Action -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-short`" class="form-label">
+                                            Short Press Action:
+                                        </label>
+                                        <select 
+                                            :id="`button${buttonNum}-short`"
+                                            class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].shortAction">
+                                            <option value="">No Action</option>
+                                            <option value="print_message">Print Custom Message</option>
+                                            <option value="print_status">Print Status</option>
+                                            <option value="print_time">Print Current Time</option>
+                                            <option value="unbidden_ink">Trigger Unbidden Ink</option>
+                                            <option value="mqtt_publish">Send MQTT Message</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Long Press Action -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-long`" class="form-label">
+                                            Long Press Action:
+                                        </label>
+                                        <select 
+                                            :id="`button${buttonNum}-long`"
+                                            class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].longAction">
+                                            <option value="">No Action</option>
+                                            <option value="print_message">Print Custom Message</option>
+                                            <option value="print_status">Print Status</option>
+                                            <option value="print_time">Print Current Time</option>
+                                            <option value="unbidden_ink">Trigger Unbidden Ink</option>
+                                            <option value="mqtt_publish">Send MQTT Message</option>
+                                            <option value="restart">Restart Device</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Short Press MQTT Topic -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-short-mqtt`" class="form-label">
+                                            Short Press MQTT Topic:
+                                        </label>
+                                        <input 
+                                            :id="`button${buttonNum}-short-mqtt`"
+                                            type="text" 
+                                            placeholder="Optional MQTT topic"
+                                            class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].shortMqttTopic">
+                                    </div>
+
+                                    <!-- Long Press MQTT Topic -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-long-mqtt`" class="form-label">
+                                            Long Press MQTT Topic:
+                                        </label>
+                                        <input 
+                                            :id="`button${buttonNum}-long-mqtt`"
+                                            type="text" 
+                                            placeholder="Optional MQTT topic"
+                                            class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].longMqttTopic">
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

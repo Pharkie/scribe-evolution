@@ -55,7 +55,14 @@ function initializeSettingsStore() {
         // Form validation states
         validation: {
             errors: {},
-            touched: {}
+            touched: {},
+            isValid: true
+        },
+        
+        // UI state management
+        ui: {
+            activeSection: 'wifi',
+            showValidationFeedback: false
         },
         
         // Computed properties for complex UI states
@@ -134,12 +141,20 @@ function initializeSettingsStore() {
         
         // Save configuration to server
         async saveConfiguration() {
+            // Validate form before saving
+            if (!this.validateForm()) {
+                this.ui.showValidationFeedback = true;
+                this.showMessage('Please fix the errors in the form before saving', 'error');
+                return;
+            }
+            
             this.saving = true;
             try {
                 // Use existing SettingsAPI with reactive config
                 const message = await window.SettingsAPI.saveConfiguration(this.config);
                 
                 this.showMessage(message, 'success');
+                this.ui.showValidationFeedback = false;
                 
                 // Trigger LED confirmation effect if available
                 if (window.SettingsLED && window.SettingsLED.triggerEffect) {
@@ -232,7 +247,92 @@ function initializeSettingsStore() {
             if (window.SettingsUI && window.SettingsUI.showMessage) {
                 window.SettingsUI.showMessage(message, type);
             }
-        }
+        },
+        
+        // Form validation
+        validateField(fieldName, value) {
+            this.validation.touched[fieldName] = true;
+            
+            // Clear previous errors
+            delete this.validation.errors[fieldName];
+            
+            // Required field validation
+            const requiredFields = ['device.owner', 'wifi.ssid'];
+            if (this.config.unbiddenInk.enabled) {
+                requiredFields.push('apis.chatgptApiToken');
+            }
+            
+            if (requiredFields.includes(fieldName) && (!value || value.trim() === '')) {
+                this.validation.errors[fieldName] = 'This field is required';
+                this.validation.isValid = false;
+                return false;
+            }
+            
+            // Field-specific validation
+            switch (fieldName) {
+                case 'wifi.connect_timeout':
+                    const timeout = parseInt(value);
+                    if (isNaN(timeout) || timeout < 5 || timeout > 60) {
+                        this.validation.errors[fieldName] = 'Timeout must be between 5 and 60 seconds';
+                        this.validation.isValid = false;
+                        return false;
+                    }
+                    break;
+                    
+                case 'mqtt.port':
+                    const port = parseInt(value);
+                    if (isNaN(port) || port < 1 || port > 65535) {
+                        this.validation.errors[fieldName] = 'Port must be between 1 and 65535';
+                        this.validation.isValid = false;
+                        return false;
+                    }
+                    break;
+                    
+                case 'validation.maxCharacters':
+                    const maxChars = parseInt(value);
+                    if (isNaN(maxChars) || maxChars < 100 || maxChars > 5000) {
+                        this.validation.errors[fieldName] = 'Max characters must be between 100 and 5000';
+                        this.validation.isValid = false;
+                        return false;
+                    }
+                    break;
+            }
+            
+            // Check overall form validity
+            this.validation.isValid = Object.keys(this.validation.errors).length === 0;
+            return true;
+        },
+        
+        // Validate all fields
+        validateForm() {
+            this.validation.errors = {};
+            this.validation.isValid = true;
+            
+            // Validate all required and visible fields
+            const fieldsToValidate = [
+                'device.owner',
+                'wifi.ssid', 
+                'wifi.connect_timeout',
+                'mqtt.port',
+                'validation.maxCharacters'
+            ];
+            
+            if (this.config.unbiddenInk.enabled) {
+                fieldsToValidate.push('apis.chatgptApiToken');
+            }
+            
+            fieldsToValidate.forEach(fieldName => {
+                const value = this.getNestedValue(fieldName);
+                this.validateField(fieldName, value);
+            });
+            
+            return this.validation.isValid;
+        },
+        
+        // Helper to get nested object values
+        getNestedValue(fieldName) {
+            return fieldName.split('.').reduce((obj, key) => obj && obj[key], this.config);
+        },
     };
 }
 
