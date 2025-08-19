@@ -105,21 +105,16 @@ window.IndexStore = function() {
     
     // Initialize printer discovery
     initializePrinterDiscovery() {
-      // Initialize global PRINTERS array if not exists
-      if (typeof window.PRINTERS === 'undefined') {
-        window.PRINTERS = [];
-      }
-      
       // Start SSE for printer discovery
-      if (typeof window.startPrinterDiscovery === 'function') {
-        window.startPrinterDiscovery();
+      if (typeof window.initializePrinterDiscovery === 'function') {
+        window.initializePrinterDiscovery();
       }
       
       this.updatePrinterList();
     },
     
-    // Update printer list from global PRINTERS
-    updatePrinterList() {
+    // Update printer list from discovered printers
+    updatePrinterList(discoveredPrinters = []) {
       this.printers = [
         {
           value: 'local-direct',
@@ -130,28 +125,26 @@ window.IndexStore = function() {
         }
       ];
       
-      // Add remote printers
-      if (typeof window.PRINTERS !== 'undefined') {
-        window.PRINTERS.forEach(printer => {
-          const topic = `scribe/${printer.name}/print`;
-          this.printers.push({
-            value: topic,
-            icon: '📡',
-            name: printer.name,
-            isLocal: false,
-            data: printer,
-            selected: this.selectedPrinter === topic
-          });
+      // Add remote printers from discovered list
+      discoveredPrinters.forEach(printer => {
+        const topic = `scribe/${printer.name}/print`;
+        this.printers.push({
+          value: topic,
+          icon: '📡',
+          name: printer.name,
+          isLocal: false,
+          data: printer,
+          selected: this.selectedPrinter === topic
         });
-      }
+      });
     },
     
     // Setup event listeners
     setupEventListeners() {
       // Listen for printer updates from SSE
-      document.addEventListener('printersUpdated', () => {
+      document.addEventListener('printersUpdated', (event) => {
         console.log('🔄 Printers updated, refreshing index page printer selection');
-        this.updatePrinterList();
+        this.updatePrinterList(event.detail.printers || []);
       });
     },
     

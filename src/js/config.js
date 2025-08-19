@@ -3,42 +3,9 @@
  * @brief Simple configuration utilities - no global state
  */
 
-// Legacy variables for backward compatibility (will be set by individual pages as needed)
-let MAX_CHARS = 1000; // Default fallback
-let MAX_PROMPT_CHARS = 500; // Default fallback
-let PRINTERS = []; // Will store all available printers
-
-// Default prompts - keep in sync with C++ constants
-const DEFAULT_MOTIVATION_PROMPT = "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.";
-
-/**
- * Simple utility function to load configuration from server
- * DISABLED - Alpine.js stores handle all config loading now
- */
-/*
-async function loadConfigForPage() {
-  try {
-    const response = await fetch('/api/config');
-    if (!response.ok) {
-      throw new Error(`Config API returned ${response.status}: ${response.statusText}`);
-    }
-    const config = await response.json();
-    
-    // Set legacy variables for backward compatibility
-    MAX_CHARS = config.validation?.maxCharacters || 1000;
-    MAX_PROMPT_CHARS = 500; // Default from C++ config
-    
-    return config;
-  } catch (error) {
-    console.error('Failed to load config:', error);
-    throw error;
-  }
-}
-*/
-
 /**
  * Initialize real-time printer discovery using Server-Sent Events (SSE)
- * This is independent of configuration loading
+ * This is independent of configuration loading and works with Alpine.js stores
  */
 function initializePrinterDiscovery() {
   console.log('🔌 Initializing real-time printer discovery (SSE)');
@@ -96,30 +63,25 @@ function initializePrinterDiscovery() {
 }
 
 /**
- * Update the global PRINTERS array from SSE printer update data
+ * Update printer data via Alpine.js stores
  */
 function updatePrintersFromData(printerData) {
   if (printerData && printerData.discovered_printers) {
-    // SSE sends all discovered printers (including local via MQTT discovery)
-    PRINTERS.length = 0; // Clear existing
-    PRINTERS.push(...printerData.discovered_printers); // Add all discovered printers
+    // Dispatch event that Alpine.js stores can listen to
+    const event = new CustomEvent('printersUpdated', { 
+      detail: { printers: printerData.discovered_printers } 
+    });
+    document.dispatchEvent(event);
   }
 }
 
 /**
  * Refresh UI elements that show printer information
+ * This is now handled by Alpine.js reactive stores
  */
 function refreshPrinterUI() {
-  // Refresh printer dropdown if it exists
-  if (typeof populatePrinterDropdown === 'function') {
-    populatePrinterDropdown();
-  }
-  
-  // Trigger custom event for other components
-  const event = new CustomEvent('printersUpdated', { 
-    detail: { printers: PRINTERS } 
-  });
-  document.dispatchEvent(event);
+  // This is now automatically handled by Alpine.js reactivity
+  // The updatePrintersFromData function dispatches events that stores listen to
 }
 
 /**

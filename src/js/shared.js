@@ -58,23 +58,20 @@ function handleKeyPress(event) {
 
 /**
  * Handle textarea keydown events for Enter/Shift+Enter behavior
+ * This is for backward compatibility with any non-Alpine forms
  */
 function handleTextareaKeydown(event) {
   // Enter to submit form (unless Shift is held)
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    const form = document.getElementById('printer-form');
+    const form = event.target.closest('form');
     if (form) {
-      // Create a proper submit event that won't cause double submission
+      // Trigger form submission through Alpine.js if available
       const submitEvent = new Event('submit', { 
-        bubbles: false,  // Don't bubble to prevent duplicate handlers
+        bubbles: true,
         cancelable: true 
       });
-      Object.defineProperty(submitEvent, 'target', {
-        value: form,
-        enumerable: true
-      });
-      handleSubmit(submitEvent);
+      form.dispatchEvent(submitEvent);
     }
   }
   // Shift+Enter allows normal line break (default behavior)
