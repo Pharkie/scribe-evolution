@@ -57,7 +57,11 @@ window.IndexStore = function() {
     },
     
     get canSubmit() {
-      return this.message.trim() && !this.submitting && this.charCount <= this.maxChars;
+      return this.isConfigReady && this.message.trim() && !this.submitting && this.charCount <= this.maxChars;
+    },
+    
+    get isConfigReady() {
+      return !this.loading && !this.error && this.config && this.config.validation && this.config.validation.maxCharacters;
     },
     
     // Initialize store
@@ -86,7 +90,7 @@ window.IndexStore = function() {
         
         this.config = await response.json();
         
-        if (this.config?.printer?.name === undefined) {
+        if (this.config?.device?.printer_name === undefined) {
           throw new Error('Printer name configuration is missing from server');
         }
         if (this.config?.validation?.maxCharacters === undefined) {
@@ -96,7 +100,7 @@ window.IndexStore = function() {
           throw new Error('Device configuration is missing from server');
         }
         
-        this.localPrinterName = this.config.printer.name;
+        this.localPrinterName = this.config.device.printer_name;
         console.log('📋 Index: Config loaded successfully');
         this.loading = false;
         

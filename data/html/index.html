@@ -97,12 +97,25 @@
                 <!-- Message Input -->
                 <div class="vertical-stack">
                     <label for="message-textarea" class="form-label">Message:</label>
-                    <textarea id="message-textarea" x-model="message" @keydown="handleTextareaKeydown($event)"
-                        :maxlength="maxChars" class="form-textarea" rows="8" placeholder="Enter your message here..."
-                        required></textarea>
-                    <div :class="charCountClass" class="text-xs text-right">
-                        <span x-text="charCountText"></span>
-                    </div>
+                    <template x-if="isConfigReady">
+                        <div>
+                            <textarea id="message-textarea" x-model="message" @keydown="handleTextareaKeydown($event)"
+                                :maxlength="maxChars" class="form-textarea" rows="8"
+                                placeholder="Enter your message here..." required></textarea>
+                            <div :class="charCountClass" class="text-xs text-right">
+                                <span x-text="charCountText"></span>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="!isConfigReady">
+                        <div>
+                            <textarea disabled class="form-textarea opacity-50" rows="8"
+                                placeholder="Loading configuration..."></textarea>
+                            <div class="text-xs text-right text-gray-400">
+                                <span>Loading...</span>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Quick Actions -->

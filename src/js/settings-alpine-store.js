@@ -83,8 +83,8 @@ function initializeSettingsStore() {
         
         // Computed properties for complex UI states
         get timeRangeDisplay() {
-            const start = this.config.unbiddenInk.startHour;
-            const end = this.config.unbiddenInk.endHour;
+            const start = this.config?.unbiddenInk?.startHour ?? 0;
+            const end = this.config?.unbiddenInk?.endHour ?? 24;
             
             if (start === 0 && (end === 0 || end === 24)) {
                 return 'All Day';
@@ -94,12 +94,12 @@ function initializeSettingsStore() {
         },
         
         get frequencyDisplay() {
-            const minutes = this.config.unbiddenInk.frequencyMinutes;
+            const minutes = this.config?.unbiddenInk?.frequencyMinutes ?? 120;
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
             
-            const start = this.config.unbiddenInk.startHour;
-            const end = this.config.unbiddenInk.endHour;
+            const start = this.config?.unbiddenInk?.startHour ?? 0;
+            const end = this.config?.unbiddenInk?.endHour ?? 24;
             
             let timeText = '';
             if (start === 0 && (end === 0 || end === 24)) {
@@ -120,8 +120,8 @@ function initializeSettingsStore() {
         },
         
         get timeRangeStyle() {
-            const start = this.config.unbiddenInk.startHour;
-            const end = this.config.unbiddenInk.endHour;
+            const start = this.config?.unbiddenInk?.startHour ?? 0;
+            const end = this.config?.unbiddenInk?.endHour ?? 24;
             
             if (start === 0 && (end === 0 || end === 24)) {
                 return { left: '0%', width: '100%' };
@@ -567,7 +567,7 @@ function initializeSettingsStore() {
         
         get frequencySliderValue() {
             const options = this.frequencyOptions;
-            const current = this.config.unbiddenInk.frequencyMinutes;
+            const current = this.config?.unbiddenInk?.frequencyMinutes ?? 120;
             const index = options.indexOf(current);
             return index >= 0 ? index : 3; // Default to 2hr (index 3)
         },
