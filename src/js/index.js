@@ -7,7 +7,7 @@
  * Initialize index page when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', async function() {
-  // Initialize index-specific UI
+  // Initialize index-specific UI (without config-dependent features)
   initializeIndexUI(); 
   
   // Check for settings saved success message
@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Store config for use by other functions on this page
     window.indexPageConfig = config;
+    
+    // Update UI elements that depend on config
+    updateConfigDependentUI();
     
     // Initialize printer discovery
     initializePrinterDiscovery();
@@ -63,8 +66,7 @@ function initializeIndexUI() {
     messageInput.addEventListener('input', () => updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS));
     messageInput.addEventListener('keydown', handleTextareaKeydown);
     
-    // Initialize character counter on load
-    updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS);
+    // Don't initialize character counter here - wait for config to load
   }
   
   // Setup quick action buttons using event delegation
@@ -80,9 +82,6 @@ function initializeIndexUI() {
       }
     });
   }
-  
-  // Set initial character counter
-  updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS);
 }
 
 /**
@@ -221,6 +220,23 @@ function selectPrinter(value, element) {
   if (hiddenInput) {
     hiddenInput.value = value;
   }
+}
+
+/**
+ * Initialize UI components that depend on config being loaded
+ */
+function updateConfigDependentUI() {
+  // Update character counter with the correct max length from config
+  updateCharacterCount('message-textarea', 'char-counter', MAX_CHARS);
+  
+  // Update maxlength attribute on the textarea for client-side validation
+  const messageInput = document.getElementById('message-textarea');
+  if (messageInput) {
+    messageInput.setAttribute('maxlength', MAX_CHARS);
+  }
+  
+  // Initialize printer selection (config-dependent)
+  initializePrinterSelection();
 }
 
 /**
