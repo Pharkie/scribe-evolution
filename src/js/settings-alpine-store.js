@@ -11,7 +11,7 @@
 function initializeSettingsStore() {
     return {
         // Loading states
-        loading: false,
+        loading: true, // Start as loading to prevent flicker
         saving: false,
         error: null, // Error state for the UI
         initialized: false, // Flag to prevent duplicate initialization
@@ -206,6 +206,11 @@ function initializeSettingsStore() {
             } finally {
                 this.saving = false;
             }
+        },
+        
+        // Cancel configuration changes and return to index
+        cancelConfiguration() {
+            window.location.href = '/';
         },
         
         // Helper methods
@@ -594,13 +599,9 @@ function initializeSettingsStore() {
         
         async turnOffLeds() {
             try {
-                const response = await fetch('/api/led-effect', {
+                const response = await fetch('/api/leds-off', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        effect: 'turn_off',
-                        duration: 0
-                    })
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 
                 if (!response.ok) {

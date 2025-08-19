@@ -86,6 +86,8 @@
                             <label for="wifi-ssid" class="form-label">WiFi SSID:</label>
                             <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
                                 class="input-standard" x-model="config.wifi.ssid">
+                            <p x-show="validation.errors['wifi.ssid']" class="text-xs text-red-600 dark:text-red-400" 
+                               x-text="validation.errors['wifi.ssid']"></p>
                         </div>
                         <div class="space-y-2">
                             <label for="wifi-password" class="form-label">WiFi Password:</label>
@@ -97,7 +99,9 @@
                             <input type="number" id="wifi-timeout" min="5" max="60" class="input-standard"
                                 :value="Math.floor(config.wifi.connect_timeout / 1000)"
                                 @input="config.wifi.connect_timeout = parseInt($el.value) * 1000">
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <p x-show="validation.errors['wifi.connect_timeout']" class="text-xs text-red-600 dark:text-red-400" 
+                               x-text="validation.errors['wifi.connect_timeout']"></p>
+                            <p x-show="!validation.errors['wifi.connect_timeout']" class="text-xs text-gray-500 dark:text-gray-400">
                                 Time to wait before falling back to AP mode (5-60 seconds)
                             </p>
                         </div>
@@ -118,6 +122,8 @@
                             <label for="device-owner" class="form-label">Device Owner:</label>
                             <input id="device-owner" type="text" placeholder="Enter device owner name"
                                 class="input-standard" x-model="config.device.owner">
+                            <p x-show="validation.errors['device.owner']" class="text-xs text-red-600 dark:text-red-400" 
+                               x-text="validation.errors['device.owner']"></p>
                         </div>
                         <div class="space-y-2">
                             <label for="timezone" class="form-label">Timezone:</label>
@@ -290,6 +296,19 @@
                             </div>
 
                             <div class="space-y-3">
+                                <!-- Frequency slider markers -->
+                                <div class="mx-2">
+                                    <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2">
+                                        <span>15min</span>
+                                        <span>30min</span>
+                                        <span>1hr</span>
+                                        <span>2hr</span>
+                                        <span>4hr</span>
+                                        <span>6hr</span>
+                                        <span>8hr</span>
+                                    </div>
+                                </div>
+                                
                                 <input type="range" min="0" max="6" step="1"
                                     class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple"
                                     x-model.number="frequencySliderValue">
@@ -557,6 +576,11 @@
                                     </select>
                                 </div>
 
+                                <!-- Effect Description -->
+                                <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300" x-text="getEffectDescription()"></p>
+                                </div>
+
                                 <!-- Generic Parameters -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <!-- Speed -->
@@ -647,11 +671,6 @@
                                         class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
                                         💡 Turn Off LEDs
                                     </button>
-                                </div>
-
-                                <!-- Effect Description -->
-                                <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                    <p class="text-sm text-gray-600 dark:text-gray-300" x-text="getEffectDescription()"></p>
                                 </div>
                             </div>
                         </div>

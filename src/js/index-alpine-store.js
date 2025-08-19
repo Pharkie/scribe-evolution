@@ -177,7 +177,10 @@ function initializeIndexStore() {
     // Select printer
     selectPrinter(value) {
       this.selectedPrinter = value;
-      this.updatePrinterList();
+      // Update selection status for existing printers instead of rebuilding the list
+      this.printers.forEach(printer => {
+        printer.selected = printer.value === value;
+      });
     },
     
     // Submit form
