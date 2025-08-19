@@ -1,6 +1,6 @@
-# Project Scribe Evolution
+# Scribe Evolution
 
-A networked ESP32-C3 for thermal printing delight.
+Your networked ESP32-C3 for thermal printing delights.
 
 ![Scribe Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
 
@@ -54,7 +54,7 @@ pio run --target upload_all
 ```
 
 ### 4. Access Your Printer
-- **Local**: http://scribe.local or use IP address from boot message
+- **Local**: http://scribe-[devicename].local or use IP address from boot message
 - **Remote**: Configure MQTT for printing from anywhere
 
 > **Need help?** See the [Build Instructions](docs/build-instructions.md) for detailed setup steps.
