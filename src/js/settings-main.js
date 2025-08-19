@@ -316,7 +316,8 @@ async function handleFormSubmit(event) {
         await window.SettingsAPI.saveConfiguration(formData);
         
         // Redirect to index page with success message
-        window.location.href = '/?message=Settings saved successfully!&type=success';
+        // Redirect immediately with settings_saved flag for proper toast styling
+        window.location.href = '/?settings_saved=true';
         
     } catch (error) {
         console.error('Failed to save settings:', error);
