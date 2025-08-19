@@ -86,13 +86,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
 
     LOG_VERBOSE("LEDS", "LED effect request: %s", effectName.c_str());
     LOG_VERBOSE("LEDS", "Full request body: %s", body.c_str());
-    
+
     // Map frontend effect names to backend effect names for compatibility
     String backendEffectName = effectName;
-    if (effectName.equalsIgnoreCase("simple_chase")) {
+    if (effectName.equalsIgnoreCase("simple_chase"))
+    {
         backendEffectName = "chase_single";
-    } else if (effectName.equalsIgnoreCase("chase")) {
-        backendEffectName = "chase_multi";  
+    }
+    else if (effectName.equalsIgnoreCase("chase"))
+    {
+        backendEffectName = "chase_multi";
     }
     // Other effects (rainbow, twinkle, pulse, matrix) use same names
 
@@ -153,39 +156,50 @@ void handleLedEffect(AsyncWebServerRequest *request)
     // Parse colors - handle both old settings object format and new unified format
     CRGB c1 = CRGB::Blue, c2 = CRGB::Black, c3 = CRGB::Black;
     std::vector<CRGB> colors;
-    
+
     JsonObject settings;
     bool hasSettingsObject = doc.containsKey("settings") && doc["settings"].is<JsonObject>();
-    
-    if (hasSettingsObject) {
+
+    if (hasSettingsObject)
+    {
         // Old format with settings object
         settings = doc["settings"];
         LOG_VERBOSE("LEDS", "Processing old settings object format");
-    } else {
+    }
+    else
+    {
         // New unified format - create settings object from root level parameters
         LOG_VERBOSE("LEDS", "Processing new unified parameter format");
         DynamicJsonDocument settingsDoc(256);
         JsonObject newSettings = settingsDoc.to<JsonObject>();
-        
+
         // Map unified parameters to effect-specific settings
-        if (doc.containsKey("speed")) newSettings["speed"] = doc["speed"];
-        if (doc.containsKey("intensity")) {
+        if (doc.containsKey("speed"))
+            newSettings["speed"] = doc["speed"];
+        if (doc.containsKey("intensity"))
+        {
             // Map intensity to effect-specific parameter based on effect type
             int intensity = doc["intensity"];
-            if (effectName.equalsIgnoreCase("twinkle") || effectName.equalsIgnoreCase("rainbow")) {
+            if (effectName.equalsIgnoreCase("twinkle") || effectName.equalsIgnoreCase("rainbow"))
+            {
                 newSettings["density"] = intensity;
-            } else if (effectName.equalsIgnoreCase("chase") || effectName.equalsIgnoreCase("chase_single")) {
+            }
+            else if (effectName.equalsIgnoreCase("chase") || effectName.equalsIgnoreCase("chase_single"))
+            {
                 newSettings["trailLength"] = intensity / 8; // Map 0-255 to reasonable trail length
             }
             // For other effects, intensity might be unused or mapped differently
         }
-        if (doc.containsKey("color")) newSettings["color"] = doc["color"];
-        if (doc.containsKey("palette")) newSettings["palette"] = doc["palette"];
-        
+        if (doc.containsKey("color"))
+            newSettings["color"] = doc["color"];
+        if (doc.containsKey("palette"))
+            newSettings["palette"] = doc["palette"];
+
         settings = newSettings;
     }
 
-    if (settings.isNull()) {
+    if (settings.isNull())
+    {
         LOG_ERROR("LEDS", "No settings found - neither old settings object nor new unified parameters");
         sendErrorResponse(request, 400, "Settings object or unified parameters required");
         return;
@@ -222,10 +236,11 @@ void handleLedEffect(AsyncWebServerRequest *request)
     c2 = colors.size() > 1 ? colors[1] : CRGB::Black;
     c3 = colors.size() > 2 ? colors[2] : CRGB::Black;
 
-// Parse ALL settings based on effect type and apply them
-// Create a temporary effects configuration with frontend settings
-// This will be used for the playground without saving to permanent config
+    // Parse ALL settings based on effect type and apply them
+    // Create a temporary effects configuration with frontend settings
+    // This will be used for the playground without saving to permanent config
 #ifdef ENABLE_LEDS
+    {
         LedEffectsConfig playgroundConfig = {}; // Start with empty config
 
         if (backendEffectName.equalsIgnoreCase("chase_single"))
@@ -284,17 +299,11 @@ void handleLedEffect(AsyncWebServerRequest *request)
 
         // Apply the playground configuration temporarily
         ledEffects.updateEffectConfig(playgroundConfig);
+    }
 #endif
 
-        LOG_VERBOSE("LEDS", "Applied all frontend settings for effect: %s (backend: %s)", effectName.c_str(), backendEffectName.c_str());
-        LOG_VERBOSE("LEDS", "Using colors from frontend settings: %d colors parsed", (int)colors.size());
-    }
-    else
-    {
-        LOG_ERROR("LEDS", "No settings object found - only new format supported");
-        request->send(400, "application/json", "{\"success\":false,\"message\":\"Settings object required\"}");
-        return;
-    }
+    LOG_VERBOSE("LEDS", "Applied all frontend settings for effect: %s (backend: %s)", effectName.c_str(), backendEffectName.c_str());
+    LOG_VERBOSE("LEDS", "Using colors from frontend settings: %d colors parsed", (int)colors.size());
 
     // Determine if this effect should be cycle-based or duration-based
     bool useCycles = backendEffectName.equalsIgnoreCase("chase_single") || backendEffectName.equalsIgnoreCase("chase_multi");
