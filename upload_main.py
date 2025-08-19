@@ -354,6 +354,32 @@ def upload_filesystem_and_firmware(source, target, env):
     kill_serial_processes()
     reset_esp32_connection()
 
+    # Step 0.6: Ensure npm dependencies are installed
+    print("📦 Checking npm dependencies...")
+    if os.path.exists("package.json"):
+        try:
+            # Check if node_modules exists and has the key dependencies
+            alpine_path = os.path.join("node_modules", "alpinejs", "dist", "cdn.min.js")
+            if not os.path.exists(alpine_path):
+                print("   Installing npm dependencies...")
+                result = subprocess.run(
+                    ["npm", "install"],
+                    cwd=os.getcwd(),
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                print("✅ npm dependencies installed successfully!")
+            else:
+                print("✅ npm dependencies already installed")
+        except subprocess.CalledProcessError as e:
+            print("❌ npm install failed!")
+            print(f"   Error: {e.stderr}")
+            env.Exit(1)
+        except FileNotFoundError:
+            print("❌ npm not found! Please ensure Node.js and npm are installed.")
+            env.Exit(1)
+
     # Step 1: Build modular CSS
     print("🎨 Building modular CSS...")
     try:
