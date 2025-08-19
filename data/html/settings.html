@@ -55,6 +55,23 @@
                         <span>WiFi</span>
                     </h2>
 
+                    <!-- WiFi Warning -->
+                    <div class="warning-box">
+                        <div class="flex items-start space-x-3">
+                            <span class="text-2xl">⚠️</span>
+                            <div>
+                                <h3 class="warning-title">WiFi Change Warning
+                                </h3>
+                                <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                                    Changing WiFi settings will cause the device to restart and connect to the new
+                                    network. Make sure the SSID and password are correct, or you may lose connection to
+                                    the
+                                    device.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label for="wifi-ssid" class="form-label">WiFi SSID:</label>
@@ -95,10 +112,11 @@
                         </div>
                         <div class="space-y-2">
                             <label for="timezone" class="form-label">Timezone:</label>
-                            <input id="timezone" type="text" placeholder="Enter IANA timezone (e.g., America/New_York)" 
+                            <input id="timezone" type="text" placeholder="Enter IANA timezone (e.g., America/New_York)"
                                 class="input-standard" x-model="config.device.timezone">
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Enter a valid IANA timezone identifier. Examples: America/New_York, Europe/London, Asia/Tokyo, Australia/Sydney
+                                Enter a valid IANA timezone identifier. Examples: America/New_York, Europe/London,
+                                Asia/Tokyo, Australia/Sydney
                             </p>
                         </div>
                         <div class="space-y-2">
@@ -356,8 +374,10 @@
 
             <!-- LEDs Section -->
             <div class="settings-section">
-                <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
-                    <h2 class="text-2xl font-bold text-purple-800 dark:text-purple-100 mb-6 flex items-center space-x-2">
+                <div
+                    class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
+                    <h2
+                        class="text-2xl font-bold text-purple-800 dark:text-purple-100 mb-6 flex items-center space-x-2">
                         <span class="text-3xl">🌈</span>
                         <span>LEDs</span>
                     </h2>
@@ -369,7 +389,8 @@
                             <div class="flex-1">
                                 <p class="font-semibold text-amber-800 dark:text-amber-200">LED Configuration</p>
                                 <p class="text-sm text-amber-700 dark:text-amber-300">
-                                    Changes to LED settings will reinitialize the LED strip. Make sure your LED strip is properly connected before saving.
+                                    Changes to LED settings will reinitialize the LED strip. Make sure your LED strip is
+                                    properly connected before saving.
                                 </p>
                             </div>
                         </div>
@@ -378,10 +399,13 @@
                     <div class="space-y-6">
                         <!-- Hardware Configuration -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hardware Configuration</h3>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hardware Configuration
+                            </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-2">
-                                    <label for="led-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">GPIO Pin</label>
+                                    <label for="led-pin"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">GPIO
+                                        Pin</label>
                                     <select id="led-pin" class="input-standard" x-model="config.leds.pin">
                                         <option value="0">GPIO0 (boot mode, avoid)</option>
                                         <option value="1">GPIO1 (usable)</option>
@@ -407,13 +431,19 @@
                                         <option value="21">GPIO21 (usable, often TX)</option>
                                     </select>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        ⚠️ Not all boards expose every pin. On boards like the ESP32-C3 SuperMini, usually ~15–16 of these are available. Pins marked avoid are connected to flash or USB and should not be reassigned.
+                                        ⚠️ Not all boards expose every pin. On boards like the ESP32-C3 SuperMini,
+                                        usually ~15–16 of these are available. Pins marked avoid are connected to flash
+                                        or USB and should not be reassigned.
                                     </p>
                                 </div>
                                 <div class="space-y-2">
-                                    <label for="led-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">LED Count</label>
-                                    <input type="number" id="led-count" min="1" max="300" class="input-standard" x-model="config.leds.count" placeholder="60">
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Number of LEDs in your strip (typically 30, 60, or 144 per meter)</p>
+                                    <label for="led-count"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">LED
+                                        Count</label>
+                                    <input type="number" id="led-count" min="1" max="300" class="input-standard"
+                                        x-model="config.leds.count" placeholder="60">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Number of LEDs in your strip
+                                        (typically 30, 60, or 144 per meter)</p>
                                 </div>
                             </div>
                         </div>
@@ -423,14 +453,22 @@
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">System Settings</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-2">
-                                    <label for="led-brightness" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness (0-255)</label>
-                                    <input type="number" id="led-brightness" min="0" max="255" class="input-standard" x-model="config.leds.brightness" placeholder="128">
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Lower values save power and reduce heat</p>
+                                    <label for="led-brightness"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness
+                                        (0-255)</label>
+                                    <input type="number" id="led-brightness" min="0" max="255" class="input-standard"
+                                        x-model="config.leds.brightness" placeholder="128">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Lower values save power and
+                                        reduce heat</p>
                                 </div>
                                 <div class="space-y-2">
-                                    <label for="led-refresh-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh Rate (Hz)</label>
-                                    <input type="number" id="led-refresh-rate" min="10" max="120" class="input-standard" x-model="config.leds.refreshRate" placeholder="60">
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Higher values make animations smoother but use more CPU</p>
+                                    <label for="led-refresh-rate"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh Rate
+                                        (Hz)</label>
+                                    <input type="number" id="led-refresh-rate" min="10" max="120" class="input-standard"
+                                        x-model="config.leds.refreshRate" placeholder="30">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Higher values make animations
+                                        smoother but use more CPU</p>
                                 </div>
                             </div>
                         </div>
@@ -438,26 +476,34 @@
                         <!-- LED Effect Playground -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Playground</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Test different LED effects and save your preferred settings</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Test different LED effects and save
+                                your preferred settings</p>
 
                             <!-- Simple Chase Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                                     Simple Chase
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div class="space-y-2">
-                                            <label for="simple-chase-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed (1-100)</label>
-                                            <input type="number" id="simple-chase-speed" min="1" max="100" step="1" value="10" class="input-standard">
+                                            <label for="simple-chase-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="simple-chase-speed" min="1" max="100" step="1"
+                                                value="10" class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="simple-chase-color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="simple-chase-color" value="#0062ff" class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                            <label for="simple-chase-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="simple-chase-color" value="#0062ff"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
                                         </div>
                                     </div>
                                     <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('simple_chase')" class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
+                                        <button type="button" @click="testLedEffect('simple_chase')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🏃 Demo Simple Chase
                                         </button>
                                     </div>
@@ -466,22 +512,30 @@
 
                             <!-- Rainbow Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                                     Rainbow Wave
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div class="space-y-2">
-                                            <label for="rainbow-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed (0.1-10.0)</label>
-                                            <input type="number" id="rainbow-speed" min="0.1" max="10.0" step="0.1" value="1.0" class="input-standard">
+                                            <label for="rainbow-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (0.1-10.0)</label>
+                                            <input type="number" id="rainbow-speed" min="0.1" max="10.0" step="0.1"
+                                                value="1.0" class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="rainbow-density" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Density (1-10)</label>
-                                            <input type="number" id="rainbow-density" min="1" max="10" step="1" value="5" class="input-standard">
+                                            <label for="rainbow-density"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Density
+                                                (1-10)</label>
+                                            <input type="number" id="rainbow-density" min="1" max="10" step="1"
+                                                value="5" class="input-standard">
                                         </div>
                                     </div>
                                     <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('rainbow')" class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
+                                        <button type="button" @click="testLedEffect('rainbow')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🌈 Demo Rainbow
                                         </button>
                                     </div>
@@ -490,26 +544,36 @@
 
                             <!-- Twinkle Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                                     Twinkle
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div class="space-y-2">
-                                            <label for="twinkle-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed (1-100)</label>
-                                            <input type="number" id="twinkle-speed" min="1" max="100" step="1" value="5" class="input-standard">
+                                            <label for="twinkle-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="twinkle-speed" min="1" max="100" step="1" value="5"
+                                                class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="twinkle-density" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Density (1-50)</label>
-                                            <input type="number" id="twinkle-density" min="1" max="50" step="1" value="10" class="input-standard">
+                                            <label for="twinkle-density"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Density
+                                                (1-50)</label>
+                                            <input type="number" id="twinkle-density" min="1" max="50" step="1"
+                                                value="10" class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="twinkle-color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="twinkle-color" value="#ffff00" class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                            <label for="twinkle-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="twinkle-color" value="#ffff00"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400">
                                         </div>
                                     </div>
                                     <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('twinkle')" class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
+                                        <button type="button" @click="testLedEffect('twinkle')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             ✨ Demo Twinkle
                                         </button>
                                     </div>
@@ -518,26 +582,36 @@
 
                             <!-- Chase Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                                     Chase
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div class="space-y-2">
-                                            <label for="chase-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed (1-100)</label>
-                                            <input type="number" id="chase-speed" min="1" max="100" step="1" value="15" class="input-standard">
+                                            <label for="chase-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="chase-speed" min="1" max="100" step="1" value="15"
+                                                class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="chase-trail-length" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trail Length</label>
-                                            <input type="number" id="chase-trail-length" min="1" max="50" step="1" value="10" class="input-standard">
+                                            <label for="chase-trail-length"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trail
+                                                Length</label>
+                                            <input type="number" id="chase-trail-length" min="1" max="50" step="1"
+                                                value="10" class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="chase-color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="chase-color" value="#00ff00" class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+                                            <label for="chase-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="chase-color" value="#00ff00"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400">
                                         </div>
                                     </div>
                                     <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('chase')" class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
+                                        <button type="button" @click="testLedEffect('chase')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🎮 Demo Chase
                                         </button>
                                     </div>
@@ -546,22 +620,29 @@
 
                             <!-- Pulse Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                                     Pulse
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div class="space-y-2">
-                                            <label for="pulse-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed (1-100)</label>
-                                            <input type="number" id="pulse-speed" min="1" max="100" step="1" value="4" class="input-standard">
+                                            <label for="pulse-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="pulse-speed" min="1" max="100" step="1" value="4"
+                                                class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="pulse-color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="pulse-color" value="#800080" class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                            <label for="pulse-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="pulse-color" value="#800080"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400">
                                         </div>
                                     </div>
                                     <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('pulse')" class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
+                                        <button type="button" @click="testLedEffect('pulse')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             💓 Demo Pulse
                                         </button>
                                     </div>
@@ -570,31 +651,39 @@
 
                             <!-- Matrix Configuration -->
                             <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                <summary
+                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                                     Matrix
                                 </summary>
                                 <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div class="space-y-2">
-                                            <label for="matrix-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed (1-100)</label>
-                                            <input type="number" id="matrix-speed" min="1" max="100" step="1" value="25" class="input-standard">
+                                            <label for="matrix-speed"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
+                                                (1-100)</label>
+                                            <input type="number" id="matrix-speed" min="1" max="100" step="1" value="25"
+                                                class="input-standard">
                                         </div>
                                         <div class="space-y-2">
-                                            <label for="matrix-color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="matrix-color" value="#808080" class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                                            <label for="matrix-color"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                            <input type="color" id="matrix-color" value="#808080"
+                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
                                         </div>
                                     </div>
                                     <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('matrix')" class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
+                                        <button type="button" @click="testLedEffect('matrix')"
+                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
                                             🖥️ Demo Matrix
                                         </button>
                                     </div>
                                 </div>
                             </details>
 
-                            <!-- LED Control Button -->
+                            <!-- LED Off Button -->
                             <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <button type="button" @click="turnOffLeds()" class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
+                                <button type="button" @click="turnOffLeds()"
+                                    class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
                                     💡 Turn Off LEDs
                                 </button>
                             </div>
