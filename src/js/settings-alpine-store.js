@@ -246,6 +246,14 @@ function initializeSettingsStore() {
                     }
                 }
             }
+            
+            // LEDs
+            if (serverConfig.leds) {
+                this.config.leds.pin = serverConfig.leds.pin || 4;
+                this.config.leds.count = serverConfig.leds.count || 60;
+                this.config.leds.brightness = serverConfig.leds.brightness || 128;
+                this.config.leds.refreshRate = serverConfig.leds.refreshRate || 60;
+            }
         },
         
         // Message display (delegates to existing system)
