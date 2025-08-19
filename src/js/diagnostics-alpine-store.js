@@ -43,34 +43,42 @@ window.DiagnosticsStore = function() {
       await this.loadDiagnostics();
     },
     
-    // Load all diagnostics data
+        // Load all diagnostics data
     async loadDiagnostics() {
       this.loading = true;
       this.error = null;
       
       try {
-        // Load diagnostics, config, and NVS data in parallel
-        const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.all([
+        // Load diagnostics, config, and NVS data in parallel with individual error handling
+        const responses = await Promise.allSettled([
           fetch('/api/diagnostics'),
           fetch('/api/config'),
           fetch('/api/nvs-dump')
         ]);
         
-        if (!diagnosticsResponse.ok) {
-          throw new Error(`Diagnostics API error: HTTP ${diagnosticsResponse.status}: ${diagnosticsResponse.statusText}`);
+        // Handle diagnostics response
+        if (responses[0].status === 'fulfilled' && responses[0].value.ok) {
+          this.diagnosticsData = await responses[0].value.json();
+        } else {
+          console.warn('Failed to load diagnostics data:', responses[0].reason || responses[0].value.statusText);
+          this.diagnosticsData = {};
         }
         
-        if (!configResponse.ok) {
-          throw new Error(`Config API error: HTTP ${configResponse.status}: ${configResponse.statusText}`);
+        // Handle config response
+        if (responses[1].status === 'fulfilled' && responses[1].value.ok) {
+          this.configData = await responses[1].value.json();
+        } else {
+          console.warn('Failed to load config data:', responses[1].reason || responses[1].value.statusText);
+          this.configData = {};
         }
         
-        if (!nvsResponse.ok) {
-          throw new Error(`NVS API error: HTTP ${nvsResponse.status}: ${nvsResponse.statusText}`);
+        // Handle NVS dump response
+        if (responses[2].status === 'fulfilled' && responses[2].value.ok) {
+          this.nvsData = await responses[2].value.json();
+        } else {
+          console.warn('Failed to load NVS data:', responses[2].reason || responses[2].value.statusText);
+          this.nvsData = {};
         }
-        
-        this.diagnosticsData = await diagnosticsResponse.json();
-        this.configData = await configResponse.json();
-        this.nvsData = await nvsResponse.json();
         
         this.loading = false;
       } catch (error) {
