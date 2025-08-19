@@ -23,6 +23,7 @@
 #include "web_handlers.h"
 #include "api_handlers.h"
 #include "api_system_handlers.h"
+#include "api_nvs_handlers.h"
 #include "api_config_handlers.h"
 #if ENABLE_LEDS
 #include "api_led_handlers.h"
@@ -323,6 +324,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
         registerRoute("GET", "/api/diagnostics", "System diagnostics", handleDiagnostics, true);
+        registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump", handleNVSDump, true);
         registerRoute("POST", "/api/mqtt-send", "Send MQTT message", handleMQTTSend, true);
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);

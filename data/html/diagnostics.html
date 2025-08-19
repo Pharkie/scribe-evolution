@@ -45,8 +45,10 @@
                 Buttons</button>
             <button data-section="pages-endpoints-section" class="section-nav-btn section-nav-btn-teal">🔗
                 Pages & Endpoints</button>
-            <button data-section="config-file-section" class="section-nav-btn section-nav-btn-red">📄 Config
-                File</button>
+            <button data-section="config-file-section" class="section-nav-btn section-nav-btn-red">⚙️ Runtime
+                Configuration</button>
+            <button data-section="nvs-storage-section" class="section-nav-btn section-nav-btn-cyan">💾 NVS
+                Storage</button>
         </nav>
 
         <div id="loading" class="text-center py-8"><span class="text-2xl">⏳</span><br>Loading diagnostics...</div>
@@ -459,6 +461,31 @@
                 <div class="space-y-3">
                     <pre id="config-content" class="diag-config-display">Loading configuration...</pre>
                     <p class="diag-config-warning red">🔑 Secrets are redacted</p>
+                </div>
+            </div>
+
+            <!-- NVS Raw Storage -->
+            <div id="nvs-storage-section" class="diag-section cyan">
+                <div class="diag-header">
+                    <div>
+                        <h4 class="diag-title cyan"><span class="mr-2">💾</span>NVS Storage (Raw)</h4>
+                        <p class="text-sm text-cyan-600 dark:text-cyan-400 mt-1">Raw NVS key-value pairs from
+                            "scribe-app" namespace</p>
+                    </div>
+                    <button id="nvs-copy-btn" class="diag-copy-btn cyan">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <p class="text-sm text-cyan-600 dark:text-cyan-400 mb-3">
+                        🔧 Complete NVS storage dump with validation status • Shows actual stored values before config
+                        processing
+                    </p>
+                    <pre id="nvs-content" class="diag-config-display">Loading NVS data...</pre>
+                    <p class="diag-config-warning cyan">🔑 Secrets are redacted • ✅⚠️❌ Validation status shown</p>
                 </div>
             </div>
         </div>

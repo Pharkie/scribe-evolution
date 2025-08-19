@@ -46,6 +46,14 @@ function setupDiagnosticsEventListeners() {
       copyConfigFile(this);
     });
   }
+  
+  // NVS copy button
+  const nvsCopyBtn = document.getElementById('nvs-copy-btn');
+  if (nvsCopyBtn) {
+    nvsCopyBtn.addEventListener('click', function() {
+      copyNVSData(this);
+    });
+  }
 }
 
 function escapeHtml(text) {
@@ -194,6 +202,82 @@ function copyConfigFile(button) {
     }
   } catch (error) {
     console.error('Error copying config:', error);
+  }
+}
+
+function displayNVSData(nvsData) {
+  const nvsElement = document.getElementById('nvs-content');
+  if (nvsData && nvsElement) {
+    // Format the NVS data for display with validation indicators
+    const formattedData = {
+      namespace: nvsData.namespace,
+      timestamp: nvsData.timestamp,
+      status: nvsData.status,
+      summary: {
+        totalKeys: nvsData.totalKeys || 0,
+        validKeys: nvsData.validKeys || 0,
+        correctedKeys: nvsData.correctedKeys || 0,
+        invalidKeys: nvsData.invalidKeys || 0
+      },
+      keys: {}
+    };
+    
+    // Sort keys alphabetically for better readability
+    if (nvsData.keys) {
+      const sortedKeys = Object.keys(nvsData.keys).sort();
+      sortedKeys.forEach(key => {
+        const keyData = nvsData.keys[key];
+        formattedData.keys[key] = {
+          type: keyData.type,
+          description: keyData.description,
+          exists: keyData.exists,
+          value: keyData.value,
+          validation: keyData.validation,
+          status: keyData.status
+        };
+        
+        // Include additional fields if present
+        if (keyData.originalValue !== undefined) {
+          formattedData.keys[key].originalValue = keyData.originalValue;
+        }
+        if (keyData.note) {
+          formattedData.keys[key].note = keyData.note;
+        }
+        if (keyData.length !== undefined) {
+          formattedData.keys[key].length = keyData.length;
+        }
+      });
+    }
+    
+    const jsonString = JSON.stringify(formattedData, null, 2);
+    nvsElement.innerHTML = highlightJSON(jsonString);
+  } else if (nvsElement) {
+    nvsElement.textContent = 'NVS data not available';
+  }
+}
+
+function copyNVSData(button) {
+  try {
+    const nvsElement = document.getElementById('nvs-content');
+    if (!nvsElement) throw new Error('NVS content not found');
+
+    // Get plain text content for copying (strip HTML if present)
+    const content = `=== NVS Storage Raw Data ===\n\n${nvsElement.textContent.trim()}`;
+    
+    // Use modern clipboard API if available, otherwise fallback
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(content).then(() => {
+        showCopySuccess(button);
+      }).catch(err => {
+        console.error('Copy failed:', err);
+        fallbackCopy(content, button);
+      });
+    } else {
+      // Fallback for non-HTTPS or older browsers
+      fallbackCopy(content, button);
+    }
+  } catch (error) {
+    console.error('Error copying NVS data:', error);
   }
 }
 
@@ -592,10 +676,11 @@ async function loadDiagnostics() {
   contentElement.style.display = 'none';
 
   try {
-    // Load both diagnostics and config data in parallel
-    const [diagnosticsResponse, configResponse] = await Promise.all([
+    // Load diagnostics, config, and NVS data in parallel
+    const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.all([
       fetch('/api/diagnostics'),
-      fetch('/api/config')
+      fetch('/api/config'),
+      fetch('/api/nvs-dump')
     ]);
     
     if (!diagnosticsResponse.ok) {
@@ -606,10 +691,17 @@ async function loadDiagnostics() {
       throw new Error(`Config API error: HTTP ${configResponse.status}: ${configResponse.statusText}`);
     }
     
+    if (!nvsResponse.ok) {
+      throw new Error(`NVS API error: HTTP ${nvsResponse.status}: ${nvsResponse.statusText}`);
+    }
+    
     const diagnosticsData = await diagnosticsResponse.json();
     const configData = await configResponse.json();
+    const nvsData = await nvsResponse.json();
 
     displayDiagnostics(diagnosticsData, configData);
+    displayNVSData(nvsData);
+    
     loadingElement.style.display = 'none';
     contentElement.style.display = 'block';
     showSection(currentSection);
