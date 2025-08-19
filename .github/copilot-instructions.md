@@ -4,11 +4,11 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 
 ## Specialized Instructions
 
-- **Settings UI**: `.github/instructions/settings-ui.instructions.md`
-- **JavaScript**: `.github/instructions/javascript-frontend.instructions.md`
-- **Tailwind CSS**: `.github/instructions/tailwind-css.instructions.md`
-- **Web API**: `.github/instructions/web-api-handlers.instructions.md`
-- **Unit Tests**: `.github/instructions/unit-tests.instructions.md`
+- **Settings UI**: [`.github/instructions/settings-ui.instructions.md`](.github/instructions/settings-ui.instructions.md)
+- **JavaScript**: [`.github/instructions/javascript-frontend.instructions.md`](.github/instructions/javascript-frontend.instructions.md)
+- **Tailwind CSS**: [`.github/instructions/tailwind-css.instructions.md`](.github/instructions/tailwind-css.instructions.md)
+- **Web API**: [`.github/instructions/web-api-handlers.instructions.md`](.github/instructions/web-api-handlers.instructions.md)
+- **Unit Tests**: [`.github/instructions/unit-tests.instructions.md`](.github/instructions/unit-tests.instructions.md)
 
 ## Project Structure
 
@@ -59,7 +59,7 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 
 ### ESP32-C3 Configuration
 - Target: `esp32-c3-devkitc-02`
-- GPIO 0-10 for LED strips
+- GPIO 0-21
 - 4MB flash with LittleFS
 - Thermal printer via UART
 

@@ -1,34 +1,28 @@
-# Project Scribe
+# Project Scribe Evolution
 
-A networked ESP32-C3 thermal printer for tangible logging of life's meaningful moments, thoughts, and memories. Print from anywhere via MQTT or locally through an elegant web interface.
+A networked ESP32-C3 for thermal printing delight.
 
 ![Scribe Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
 
 ## Key Features
 
-### Enhanced Hardware & Platform
-- **ESP32-C3 support** - Upgraded from ESP8266 to ESP32-C3 with hardware serial communication
-- **Professional 3D design** - Elegant flowing curves inspired by Dalí and Gaudí
-- **Robust construction** - 3D printed enclosure with integrated cable management
+### Hardware Platform
+- **ESP32-C3 support** - Changed from the original project ESP8266 to a more capable ESP32-C3 with hardware serial communication
 - **CSN-A4L thermal printer** - Commercial-grade printer with reliable performance
 
 ### Network & Remote Capabilities  
 - **MQTT remote printing** - Network multiple Scribe printers, print from anywhere
 - **mDNS integration** - Access via http://scribe.local or IP address
-- **Secure TLS connections** - Encrypted MQTT communication via cloud brokers
-- **Multi-printer web interface** - Control local and remote printers from single UI
 
 ### Content & Automation
-- **Quick action buttons** - Jokes, quotes, riddles, quiz questions, and test prints
-- **API integrations** - icanhazdadjoke.com, ZenQuotes.io, The Trivia API
-- **Apple Shortcuts support** - Print from anywhere via HTTP-to-MQTT bridges
-- **Webhook integrations** - IFTTT, Zapier, n8n, and custom automation support
+- **Quick fun buttons** - Jokes, quotes, riddles, quiz questions etc
+- **Apple Shortcuts support** - Print from anywhere via a HTTP-to-MQTT bridge
 
 ### Developer Experience
 - **Comprehensive logging** - Multiple output destinations (Serial, file, MQTT, BetterStack)
 - **Modular codebase** - Well-organized, documented, and testable architecture  
-- **Configuration centralization** - All settings in `src/config.h`
-- **Professional tooling** - PlatformIO, npm build system, automated testing
+- **Configuration centralization** - Settings centralised to `src/config.h` then stored to NVS which survive firmware updates, with many user configurable on the front-end.
+- **Modern tooling** - PlatformIO, npm build system, automated testing. Not a monolithic Arduino .ino.
 
 ## Quick Start
 
@@ -93,33 +87,6 @@ pio run --target upload_all
 - **[Settings Modular Refactoring](docs/settings-modular-refactoring.md)** - Architecture improvements
 - **[Refactoring Summary](docs/refactoring-summary.md)** & **[Release Notes](docs/release.md)** - Project evolution
 
-## Core Features
-
-### Hardware & Design
-- **Commercial-grade thermal printing** - Clean, permanent records with no ink or mess
-- **Low power operation** - Runs on USB power (~0.5W idle, supports standard 57.5mm thermal paper)
-- **Elegant 3D printed design** - Organic curves inspired by Dalí and Gaudí ([3D files available](https://makerworld.com/en/models/1577165-project-scribe))
-
-### Connectivity & Control
-- **Local web interface** - Minimalist, distraction-free printing with instant feedback
-- **MQTT networking** - Print remotely from anywhere, support multiple networked printers
-- **External integrations** - Apple Shortcuts, IFTTT, webhooks, and automation platforms
-
-### Content & Entertainment
-- **Quick action buttons** - Instant jokes, quotes, riddles, trivia questions, and printer tests
-- **API integrations** - Real-time content from icanhazdadjoke.com, ZenQuotes.io, The Trivia API
-- **Local content** - 545+ curated riddles stored locally for offline entertainment
-
-## Usage Examples
-
-**Personal logging**: Print daily thoughts, achievements, or memorable moments  
-**Smart home integration**: Automated notifications, weather alerts, calendar events  
-**Family messaging**: Send messages between rooms using multiple networked printers  
-**Developer tool**: Print API responses, log messages, or debugging information  
-**Creative projects**: Generate random content for writing prompts or creative inspiration
-
-> **Ready to build?** Start with the [Hardware Guide](docs/hardware.md) and [Build Instructions](docs/build-instructions.md).
-
 ## Credits and Acknowledgments
 
 ### Riddles Collection
@@ -132,13 +99,13 @@ collection is provided under the MIT License.
 - **Author:** Nikhil Mohite
 - **License:** MIT License
 
-We thank Nikhil for making this wonderful collection of riddles available to the
+I thank Nikhil for making this wonderful collection of riddles available to the
 open source community.
 
 ### Original Project
 
-All credit to **UrbanCircles** for the original Project Scribe concept, 3D
-model, and initial codebase that made this ESP32-C3 thermal printer possible.
+Credit to **UrbanCircles** for the original Project Scribe concept, 3D
+model, and initial codebase that inspired Scribe Evolution.
 
 ## Disclaimer
 
@@ -175,7 +142,7 @@ Attribution-NonCommercial-ShareAlike 4.0 International License**.
 **Commercial use is prohibited without a licensing agreement.** If you wish to
 use this project commercially (including but not limited to selling products
 based on this design, using it in commercial environments, or incorporating it
-into commercial software), please contact the authors.
+into commercial software), please contact the author.
 
 ### Full License
 
@@ -186,5 +153,4 @@ https://creativecommons.org/licenses/by-nc-sa/4.0/
 
 © 2025 Adam Knowles. All rights reserved.
 
-**Original Project:** Based on the original Project Scribe by UrbanCircles, used
-with permission and adapted under the same Creative Commons license terms.
+**Original Project:** This project, with a new foundation for the codebase, was inspired by the original Project Scribe by UrbanCircles.
