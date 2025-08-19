@@ -537,216 +537,122 @@
                         <!-- LED Effect Playground -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Playground</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Test different LED effects and save
-                                your preferred settings</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Test different LED effects using WLED-style unified controls</p>
 
-                            <!-- Simple Chase Configuration -->
-                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary
-                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Simple Chase
-                                </summary>
-                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div class="space-y-2">
-                                            <label for="simple-chase-speed"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
-                                                (1-100)</label>
-                                            <input type="number" id="simple-chase-speed" min="1" max="100" step="1"
-                                                value="10" class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="simple-chase-color"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="simple-chase-color" value="#0062ff"
-                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                                        </div>
+                            <!-- Effect Selection -->
+                            <div class="space-y-4">
+                                <div class="space-y-2">
+                                    <label for="led-effect-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Effect
+                                    </label>
+                                    <select id="led-effect-selector" class="input-standard" 
+                                            x-model="selectedEffect" 
+                                            @change="initEffectParams()">
+                                        <option value="simple_chase">Simple Chase</option>
+                                        <option value="rainbow">Rainbow Wave</option>
+                                        <option value="twinkle">Twinkle</option>
+                                        <option value="chase">Chase</option>
+                                        <option value="pulse">Pulse</option>
+                                        <option value="matrix">Matrix</option>
+                                    </select>
+                                </div>
+
+                                <!-- Generic Parameters -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Speed -->
+                                    <div class="space-y-2">
+                                        <label for="led-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Speed (1-100)
+                                        </label>
+                                        <input type="range" id="led-speed" min="1" max="100" step="1" 
+                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+                                               x-model="effectParams.speed">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.speed"></div>
                                     </div>
-                                    <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('simple_chase')"
-                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
-                                            🏃 Demo Simple Chase
-                                        </button>
+
+                                    <!-- Intensity -->
+                                    <div class="space-y-2">
+                                        <label for="led-intensity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Intensity (1-100)
+                                        </label>
+                                        <input type="range" id="led-intensity" min="1" max="100" step="1" 
+                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+                                               x-model="effectParams.intensity">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.intensity"></div>
+                                    </div>
+
+                                    <!-- Palette/Color -->
+                                    <div class="space-y-2">
+                                        <label for="led-palette" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color
+                                        </label>
+                                        <input type="color" id="led-palette" 
+                                               class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                               x-model="effectParams.palette">
                                     </div>
                                 </div>
-                            </details>
 
-                            <!-- Rainbow Configuration -->
-                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary
-                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Rainbow Wave
-                                </summary>
-                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div class="space-y-2">
-                                            <label for="rainbow-speed"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
-                                                (0.1-10.0)</label>
-                                            <input type="number" id="rainbow-speed" min="0.1" max="10.0" step="0.1"
-                                                value="1.0" class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="rainbow-density"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Density
-                                                (1-10)</label>
-                                            <input type="number" id="rainbow-density" min="1" max="10" step="1"
-                                                value="5" class="input-standard">
-                                        </div>
+                                <!-- Effect-Specific Sliders -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <!-- Custom Slider 1 -->
+                                    <div class="space-y-2" x-show="getCustomSlider1Label()">
+                                        <label for="led-custom1" class="block text-sm font-medium text-gray-700 dark:text-gray-300" 
+                                               x-text="getCustomSlider1Label()">
+                                        </label>
+                                        <input type="range" id="led-custom1" 
+                                               :min="getCustomSlider1Range().min" 
+                                               :max="getCustomSlider1Range().max" 
+                                               :step="getCustomSlider1Range().step" 
+                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+                                               x-model="effectParams.custom1">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom1"></div>
                                     </div>
-                                    <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('rainbow')"
-                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
-                                            🌈 Demo Rainbow
-                                        </button>
+
+                                    <!-- Custom Slider 2 -->
+                                    <div class="space-y-2" x-show="getCustomSlider2Label()">
+                                        <label for="led-custom2" class="block text-sm font-medium text-gray-700 dark:text-gray-300" 
+                                               x-text="getCustomSlider2Label()">
+                                        </label>
+                                        <input type="range" id="led-custom2" 
+                                               :min="getCustomSlider2Range().min" 
+                                               :max="getCustomSlider2Range().max" 
+                                               :step="getCustomSlider2Range().step" 
+                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+                                               x-model="effectParams.custom2">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom2"></div>
+                                    </div>
+
+                                    <!-- Custom Slider 3 -->
+                                    <div class="space-y-2" x-show="getCustomSlider3Label()">
+                                        <label for="led-custom3" class="block text-sm font-medium text-gray-700 dark:text-gray-300" 
+                                               x-text="getCustomSlider3Label()">
+                                        </label>
+                                        <input type="range" id="led-custom3" 
+                                               :min="getCustomSlider3Range().min" 
+                                               :max="getCustomSlider3Range().max" 
+                                               :step="getCustomSlider3Range().step" 
+                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+                                               x-model="effectParams.custom3">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom3"></div>
                                     </div>
                                 </div>
-                            </details>
 
-                            <!-- Twinkle Configuration -->
-                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary
-                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Twinkle
-                                </summary>
-                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div class="space-y-2">
-                                            <label for="twinkle-speed"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
-                                                (1-100)</label>
-                                            <input type="number" id="twinkle-speed" min="1" max="100" step="1" value="5"
-                                                class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="twinkle-density"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Density
-                                                (1-50)</label>
-                                            <input type="number" id="twinkle-density" min="1" max="50" step="1"
-                                                value="10" class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="twinkle-color"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="twinkle-color" value="#ffff00"
-                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('twinkle')"
-                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
-                                            ✨ Demo Twinkle
-                                        </button>
-                                    </div>
+                                <!-- Control Buttons -->
+                                <div class="flex gap-3 pt-4">
+                                    <button type="button" @click="testLedEffect(selectedEffect)"
+                                        class="py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors text-sm">
+                                        🎨 Test Effect
+                                    </button>
+                                    <button type="button" @click="turnOffLeds()"
+                                        class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
+                                        💡 Turn Off LEDs
+                                    </button>
                                 </div>
-                            </details>
 
-                            <!-- Chase Configuration -->
-                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary
-                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Chase
-                                </summary>
-                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div class="space-y-2">
-                                            <label for="chase-speed"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
-                                                (1-100)</label>
-                                            <input type="number" id="chase-speed" min="1" max="100" step="1" value="15"
-                                                class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="chase-trail-length"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trail
-                                                Length</label>
-                                            <input type="number" id="chase-trail-length" min="1" max="50" step="1"
-                                                value="10" class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="chase-color"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="chase-color" value="#00ff00"
-                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400">
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('chase')"
-                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
-                                            🎮 Demo Chase
-                                        </button>
-                                    </div>
+                                <!-- Effect Description -->
+                                <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300" x-text="getEffectDescription()"></p>
                                 </div>
-                            </details>
-
-                            <!-- Pulse Configuration -->
-                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary
-                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Pulse
-                                </summary>
-                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div class="space-y-2">
-                                            <label for="pulse-speed"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
-                                                (1-100)</label>
-                                            <input type="number" id="pulse-speed" min="1" max="100" step="1" value="4"
-                                                class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="pulse-color"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="pulse-color" value="#800080"
-                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400">
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('pulse')"
-                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
-                                            💓 Demo Pulse
-                                        </button>
-                                    </div>
-                                </div>
-                            </details>
-
-                            <!-- Matrix Configuration -->
-                            <details class="group mb-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <summary
-                                    class="cursor-pointer p-3 bg-gray-50 dark:bg-gray-700 rounded-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                                    Matrix
-                                </summary>
-                                <div class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div class="space-y-2">
-                                            <label for="matrix-speed"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Speed
-                                                (1-100)</label>
-                                            <input type="number" id="matrix-speed" min="1" max="100" step="1" value="25"
-                                                class="input-standard">
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="matrix-color"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
-                                            <input type="color" id="matrix-color" value="#808080"
-                                                class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 pt-4">
-                                        <button type="button" @click="testLedEffect('matrix')"
-                                            class="py-1 px-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded text-sm transition-colors">
-                                            🖥️ Demo Matrix
-                                        </button>
-                                    </div>
-                                </div>
-                            </details>
-
-                            <!-- LED Off Button -->
-                            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <button type="button" @click="turnOffLeds()"
-                                    class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
-                                    💡 Turn Off LEDs
-                                </button>
                             </div>
                         </div>
                     </div>

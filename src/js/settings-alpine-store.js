@@ -71,6 +71,17 @@ function initializeSettingsStore() {
         activeSection: 'wifi',
         showValidationFeedback: false,
         
+        // LED Effect Parameters (WLED-style unified interface)
+        selectedEffect: 'simple_chase',
+        effectParams: {
+            speed: 10,
+            intensity: 50,
+            palette: '#0062ff',
+            custom1: 10,
+            custom2: 5,
+            custom3: 1
+        },
+        
         // Section definitions for navigation
         sections: [
             { id: 'wifi', name: 'WiFi', icon: '📶', color: 'blue' },
@@ -145,6 +156,9 @@ function initializeSettingsStore() {
             }
             this.initialized = true;
             
+            // Initialize LED effect parameters
+            this.initEffectParams();
+            
             this.loading = true;
             try {
                 // Use existing SettingsAPI
@@ -156,7 +170,8 @@ function initializeSettingsStore() {
                 console.log('Alpine Store: Configuration loaded successfully');
             } catch (error) {
                 console.error('Alpine Store: Failed to load configuration:', error);
-                this.showMessage('Failed to load configuration: ' + error.message, 'error');
+                this.error = error.message;
+                window.showMessage('Failed to load configuration: ' + error.message, 'error');
             } finally {
                 this.loading = false;
             }
@@ -167,7 +182,7 @@ function initializeSettingsStore() {
             // Validate form before saving
             if (!this.validateForm()) {
                 this.showValidationFeedback = true;
-                showMessage('Please fix the errors in the form before saving', 'error');
+                window.showMessage('Please fix the errors in the form before saving', 'error');
                 return;
             }
             
@@ -176,7 +191,7 @@ function initializeSettingsStore() {
                 // Use existing SettingsAPI with reactive config
                 const message = await window.SettingsAPI.saveConfiguration(this.config);
                 
-                showMessage(message, 'success');
+                window.showMessage(message, 'success');
                 this.showValidationFeedback = false;
                 
                 // Trigger LED confirmation effect if available
@@ -187,7 +202,7 @@ function initializeSettingsStore() {
                 console.log('Alpine Store: Configuration saved successfully');
             } catch (error) {
                 console.error('Alpine Store: Failed to save configuration:', error);
-                showMessage('Failed to save configuration: ' + error.message, 'error');
+                window.showMessage('Failed to save configuration: ' + error.message, 'error');
             } finally {
                 this.saving = false;
             }
@@ -437,58 +452,21 @@ function initializeSettingsStore() {
             return fieldName.split('.').reduce((obj, key) => obj && obj[key], this.config);
         },
         
-        // LED effect functions
+        // LED effect functions (WLED-style unified interface)
         async testLedEffect(effectName) {
             try {
-                // Get parameters from form fields based on effect
+                // Build unified payload with generic parameters
                 let effectParams = {
                     effect: effectName,
-                    duration: 10 // 10 seconds for testing
+                    duration: 10, // 10 seconds for testing
+                    speed: this.effectParams.speed,
+                    intensity: this.effectParams.intensity,
+                    palette: this.effectParams.palette
                 };
                 
-                // Add effect-specific parameters based on HTML form fields
-                switch(effectName) {
-                    case 'simple_chase':
-                        const simpleChaseSpeed = document.getElementById('simple-chase-speed');
-                        const simpleChaseColor = document.getElementById('simple-chase-color');
-                        if (simpleChaseSpeed) effectParams.speed = parseInt(simpleChaseSpeed.value);
-                        if (simpleChaseColor) effectParams.color = simpleChaseColor.value;
-                        break;
-                    case 'rainbow':
-                        const rainbowSpeed = document.getElementById('rainbow-speed');
-                        const rainbowDensity = document.getElementById('rainbow-density');
-                        if (rainbowSpeed) effectParams.speed = parseFloat(rainbowSpeed.value);
-                        if (rainbowDensity) effectParams.density = parseInt(rainbowDensity.value);
-                        break;
-                    case 'twinkle':
-                        const twinkleSpeed = document.getElementById('twinkle-speed');
-                        const twinkleDensity = document.getElementById('twinkle-density');
-                        const twinkleColor = document.getElementById('twinkle-color');
-                        if (twinkleSpeed) effectParams.speed = parseInt(twinkleSpeed.value);
-                        if (twinkleDensity) effectParams.density = parseInt(twinkleDensity.value);
-                        if (twinkleColor) effectParams.color = twinkleColor.value;
-                        break;
-                    case 'chase':
-                        const chaseSpeed = document.getElementById('chase-speed');
-                        const chaseTrailLength = document.getElementById('chase-trail-length');
-                        const chaseColor = document.getElementById('chase-color');
-                        if (chaseSpeed) effectParams.speed = parseInt(chaseSpeed.value);
-                        if (chaseTrailLength) effectParams.trail_length = parseInt(chaseTrailLength.value);
-                        if (chaseColor) effectParams.color = chaseColor.value;
-                        break;
-                    case 'pulse':
-                        const pulseSpeed = document.getElementById('pulse-speed');
-                        const pulseColor = document.getElementById('pulse-color');
-                        if (pulseSpeed) effectParams.speed = parseInt(pulseSpeed.value);
-                        if (pulseColor) effectParams.color = pulseColor.value;
-                        break;
-                    case 'matrix':
-                        const matrixSpeed = document.getElementById('matrix-speed');
-                        const matrixColor = document.getElementById('matrix-color');
-                        if (matrixSpeed) effectParams.speed = parseInt(matrixSpeed.value);
-                        if (matrixColor) effectParams.color = matrixColor.value;
-                        break;
-                }
+                // Add effect-specific custom parameters
+                const customParams = this.getEffectCustomParams(effectName);
+                Object.assign(effectParams, customParams);
                 
                 const response = await fetch('/api/led-test', {
                     method: 'POST',
@@ -502,14 +480,116 @@ function initializeSettingsStore() {
                 
                 const result = await response.json();
                 if (result.success) {
-                    showMessage(`Testing ${effectName} effect for 10 seconds`, 'info');
+                    window.showMessage(`Testing ${effectName} effect for 10 seconds`, 'info');
                 } else {
                     throw new Error(result.message);
                 }
             } catch (error) {
                 console.error('LED effect test failed:', error);
-                showMessage(`Failed to test LED effect: ${error.message}`, 'error');
+                window.showMessage(`Failed to test LED effect: ${error.message}`, 'error');
             }
+        },
+        
+        // Map generic parameters to effect-specific ones
+        getEffectCustomParams(effectName) {
+            const params = {};
+            
+            switch(effectName) {
+                case 'simple_chase':
+                    // intensity = unused, custom1-3 = unused
+                    break;
+                case 'rainbow':
+                    // intensity = density, custom1 = unused
+                    params.density = this.effectParams.intensity;
+                    break;
+                case 'twinkle':
+                    // intensity = density
+                    params.density = this.effectParams.intensity;
+                    break;
+                case 'chase':
+                    // intensity = trail_length
+                    params.trail_length = this.effectParams.intensity;
+                    break;
+                case 'pulse':
+                    // intensity = unused
+                    break;
+                case 'matrix':
+                    // intensity = unused
+                    break;
+            }
+            
+            return params;
+        },
+        
+        // Get custom slider labels and ranges for current effect
+        getCustomSlider1Label() {
+            switch(this.selectedEffect) {
+                case 'rainbow': return 'Wave Length';
+                case 'twinkle': return 'Fade Speed';
+                case 'chase': return 'Dot Size';
+                default: return null;
+            }
+        },
+        
+        getCustomSlider1Range() {
+            switch(this.selectedEffect) {
+                case 'rainbow': return { min: 1, max: 20, step: 1 };
+                case 'twinkle': return { min: 1, max: 10, step: 1 };
+                case 'chase': return { min: 1, max: 10, step: 1 };
+                default: return { min: 1, max: 100, step: 1 };
+            }
+        },
+        
+        getCustomSlider2Label() {
+            switch(this.selectedEffect) {
+                case 'matrix': return 'Drop Rate';
+                default: return null;
+            }
+        },
+        
+        getCustomSlider2Range() {
+            switch(this.selectedEffect) {
+                case 'matrix': return { min: 1, max: 20, step: 1 };
+                default: return { min: 1, max: 100, step: 1 };
+            }
+        },
+        
+        getCustomSlider3Label() {
+            // Currently no effects use 3 custom sliders
+            return null;
+        },
+        
+        getCustomSlider3Range() {
+            return { min: 1, max: 100, step: 1 };
+        },
+        
+        // Initialize effect parameters based on selected effect  
+        initEffectParams() {
+            const defaults = {
+                'simple_chase': { speed: 10, intensity: 50, palette: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
+                'rainbow': { speed: 20, intensity: 5, palette: '#ff0000', custom1: 5, custom2: 3, custom3: 1 },
+                'twinkle': { speed: 5, intensity: 10, palette: '#ffff00', custom1: 3, custom2: 2, custom3: 1 },
+                'chase': { speed: 15, intensity: 10, palette: '#00ff00', custom1: 3, custom2: 5, custom3: 1 },
+                'pulse': { speed: 4, intensity: 50, palette: '#800080', custom1: 5, custom2: 3, custom3: 1 },
+                'matrix': { speed: 25, intensity: 20, palette: '#008000', custom1: 8, custom2: 10, custom3: 1 }
+            };
+            
+            if (defaults[this.selectedEffect]) {
+                this.effectParams = { ...defaults[this.selectedEffect] };
+            }
+        },
+        
+        // Get effect description
+        getEffectDescription() {
+            const descriptions = {
+                'simple_chase': 'A single colored dot chasing around the strip. Speed controls movement rate.',
+                'rainbow': 'Smooth rainbow wave moving across the strip. Speed controls wave movement, Intensity controls density of colors.',
+                'twinkle': 'Random twinkling stars effect. Speed controls twinkle rate, Intensity controls number of active twinkles.',
+                'chase': 'Multiple dots chasing with trails. Speed controls movement, Intensity controls trail length.',
+                'pulse': 'Entire strip pulsing in selected color. Speed controls pulse rate.',
+                'matrix': 'Matrix-style digital rain effect. Speed controls falling rate, Intensity affects brightness variations.'
+            };
+            return descriptions[this.selectedEffect] || 'LED effect description not available.';
         },
         
         async turnOffLeds() {
@@ -529,13 +609,13 @@ function initializeSettingsStore() {
                 
                 const result = await response.json();
                 if (result.success) {
-                    showMessage('LEDs turned off', 'success');
+                    window.showMessage('LEDs turned off', 'success');
                 } else {
                     throw new Error(result.message);
                 }
             } catch (error) {
                 console.error('Turn off LEDs failed:', error);
-                showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
+                window.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
             }
         },
         
@@ -596,8 +676,8 @@ function initializeSettingsStore() {
         
         // Cancel configuration changes
         cancelConfiguration() {
-            // Reload config to reset form
-            this.init();
+            // Reset to defaults or reload from server
+            window.location.reload();
         },
     };
 }

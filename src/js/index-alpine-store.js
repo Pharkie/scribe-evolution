@@ -74,10 +74,21 @@ function initializeIndexStore() {
       }
       this.initialized = true;
       
+      console.log('📋 Index: Starting initialization...');
       this.checkForSettingsSuccess();
-      await this.loadConfig();
+      
+      try {
+        await this.loadConfig();
+      } catch (error) {
+        console.error('📋 Index: Config loading failed but continuing with defaults:', error);
+        // Config loading failed, but we can still show the interface
+        this.error = error.message;
+        this.loading = false;
+      }
+      
       this.initializePrinterDiscovery();
       this.setupEventListeners();
+      console.log('📋 Index: Initialization complete');
     },
     
     // Load configuration
@@ -90,6 +101,7 @@ function initializeIndexStore() {
         }
         
         this.config = await response.json();
+        console.log('📋 Index: Raw config received:', this.config);
         
         if (this.config?.device?.printer_name === undefined) {
           throw new Error('Printer name configuration is missing from server');
@@ -102,7 +114,7 @@ function initializeIndexStore() {
         }
         
         this.localPrinterName = this.config.device.printer_name;
-        console.log('📋 Index: Config loaded successfully');
+        console.log('📋 Index: Config loaded successfully, printer name:', this.localPrinterName);
         this.loading = false;
         
         return this.config;
@@ -110,8 +122,7 @@ function initializeIndexStore() {
         console.error('📋 Index: Failed to load config:', error);
         this.error = error.message;
         this.loading = false;
-        // Continue with defaults - page should still work
-        return {};
+        throw error; // Re-throw to ensure proper error handling
       }
     },
     
