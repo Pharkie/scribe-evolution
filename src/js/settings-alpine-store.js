@@ -194,42 +194,90 @@ function initializeSettingsStore() {
         mergeConfig(serverConfig) {
             // Device
             if (serverConfig.device) {
-                this.config.device.owner = serverConfig.device.owner || '';
-                this.config.device.timezone = serverConfig.device.timezone || '';
+                if (serverConfig.device.owner === undefined) {
+                    throw new Error('Device owner configuration is missing from server');
+                }
+                if (serverConfig.device.timezone === undefined) {
+                    throw new Error('Device timezone configuration is missing from server');
+                }
+                this.config.device.owner = serverConfig.device.owner;
+                this.config.device.timezone = serverConfig.device.timezone;
             }
             
-            // WiFi  
+            // WiFi
             if (serverConfig.wifi) {
-                this.config.wifi.ssid = serverConfig.wifi.ssid || '';
-                this.config.wifi.password = serverConfig.wifi.password || '';
-                this.config.wifi.connect_timeout = serverConfig.wifi.connect_timeout || 15000;
+                if (serverConfig.wifi.ssid === undefined) {
+                    throw new Error('WiFi SSID configuration is missing from server');
+                }
+                if (serverConfig.wifi.password === undefined) {
+                    throw new Error('WiFi password configuration is missing from server');
+                }
+                if (serverConfig.wifi.connect_timeout === undefined) {
+                    throw new Error('WiFi connect timeout configuration is missing from server');
+                }
+                this.config.wifi.ssid = serverConfig.wifi.ssid;
+                this.config.wifi.password = serverConfig.wifi.password;
+                this.config.wifi.connect_timeout = serverConfig.wifi.connect_timeout;
             }
             
             // MQTT
             if (serverConfig.mqtt) {
-                this.config.mqtt.server = serverConfig.mqtt.server || '';
-                this.config.mqtt.port = serverConfig.mqtt.port || 1883;
-                this.config.mqtt.username = serverConfig.mqtt.username || '';
-                this.config.mqtt.password = serverConfig.mqtt.password || '';
+                if (serverConfig.mqtt.server === undefined) {
+                    throw new Error('MQTT server configuration is missing from server');
+                }
+                if (serverConfig.mqtt.port === undefined) {
+                    throw new Error('MQTT port configuration is missing from server');
+                }
+                if (serverConfig.mqtt.username === undefined) {
+                    throw new Error('MQTT username configuration is missing from server');
+                }
+                if (serverConfig.mqtt.password === undefined) {
+                    throw new Error('MQTT password configuration is missing from server');
+                }
+                this.config.mqtt.server = serverConfig.mqtt.server;
+                this.config.mqtt.port = serverConfig.mqtt.port;
+                this.config.mqtt.username = serverConfig.mqtt.username;
+                this.config.mqtt.password = serverConfig.mqtt.password;
             }
             
             // Validation
             if (serverConfig.validation) {
-                this.config.validation.maxCharacters = serverConfig.validation.maxCharacters || 1000;
+                if (serverConfig.validation.maxCharacters === undefined) {
+                    throw new Error('Validation maxCharacters configuration is missing from server');
+                }
+                this.config.validation.maxCharacters = serverConfig.validation.maxCharacters;
             }
             
             // APIs
             if (serverConfig.apis) {
-                this.config.apis.chatgptApiToken = serverConfig.apis.chatgptApiToken || '';
+                if (serverConfig.apis.chatgptApiToken === undefined) {
+                    throw new Error('ChatGPT API token configuration is missing from server');
+                }
+                this.config.apis.chatgptApiToken = serverConfig.apis.chatgptApiToken;
             }
             
             // Unbidden Ink
             if (serverConfig.unbiddenInk) {
-                this.config.unbiddenInk.enabled = serverConfig.unbiddenInk.enabled || false;
-                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour || 8;
-                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour || 22;
-                this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes || 120;
-                this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt || '';
+                if (serverConfig.unbiddenInk.enabled === undefined) {
+                    throw new Error('Unbidden Ink enabled configuration is missing from server');
+                }
+                if (serverConfig.unbiddenInk.startHour === undefined) {
+                    throw new Error('Unbidden Ink startHour configuration is missing from server');
+                }
+                if (serverConfig.unbiddenInk.endHour === undefined) {
+                    throw new Error('Unbidden Ink endHour configuration is missing from server');
+                }
+                if (serverConfig.unbiddenInk.frequencyMinutes === undefined) {
+                    throw new Error('Unbidden Ink frequencyMinutes configuration is missing from server');
+                }
+                if (serverConfig.unbiddenInk.prompt === undefined) {
+                    throw new Error('Unbidden Ink prompt configuration is missing from server');
+                }
+                this.config.unbiddenInk.enabled = serverConfig.unbiddenInk.enabled;
+                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour;
+                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour;
+                this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes;
+                this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt;
             }
             
             // Buttons
@@ -237,11 +285,23 @@ function initializeSettingsStore() {
                 for (let i = 1; i <= 4; i++) {
                     const buttonKey = `button${i}`;
                     if (serverConfig.buttons[buttonKey]) {
+                        if (serverConfig.buttons[buttonKey].shortAction === undefined) {
+                            throw new Error(`Button ${i} shortAction configuration is missing from server`);
+                        }
+                        if (serverConfig.buttons[buttonKey].longAction === undefined) {
+                            throw new Error(`Button ${i} longAction configuration is missing from server`);
+                        }
+                        if (serverConfig.buttons[buttonKey].shortMqttTopic === undefined) {
+                            throw new Error(`Button ${i} shortMqttTopic configuration is missing from server`);
+                        }
+                        if (serverConfig.buttons[buttonKey].longMqttTopic === undefined) {
+                            throw new Error(`Button ${i} longMqttTopic configuration is missing from server`);
+                        }
                         this.config.buttons[buttonKey] = {
-                            shortAction: serverConfig.buttons[buttonKey].shortAction || '',
-                            longAction: serverConfig.buttons[buttonKey].longAction || '',
-                            shortMqttTopic: serverConfig.buttons[buttonKey].shortMqttTopic || '',
-                            longMqttTopic: serverConfig.buttons[buttonKey].longMqttTopic || ''
+                            shortAction: serverConfig.buttons[buttonKey].shortAction,
+                            longAction: serverConfig.buttons[buttonKey].longAction,
+                            shortMqttTopic: serverConfig.buttons[buttonKey].shortMqttTopic,
+                            longMqttTopic: serverConfig.buttons[buttonKey].longMqttTopic
                         };
                     }
                 }
@@ -249,10 +309,22 @@ function initializeSettingsStore() {
             
             // LEDs
             if (serverConfig.leds) {
-                this.config.leds.pin = serverConfig.leds.pin || 4;
-                this.config.leds.count = serverConfig.leds.count || 60;
-                this.config.leds.brightness = serverConfig.leds.brightness || 128;
-                this.config.leds.refreshRate = serverConfig.leds.refreshRate || 60;
+                if (serverConfig.leds.pin === undefined) {
+                    throw new Error('LED pin configuration is missing from server');
+                }
+                if (serverConfig.leds.count === undefined) {
+                    throw new Error('LED count configuration is missing from server');
+                }
+                if (serverConfig.leds.brightness === undefined) {
+                    throw new Error('LED brightness configuration is missing from server');
+                }
+                if (serverConfig.leds.refreshRate === undefined) {
+                    throw new Error('LED refreshRate configuration is missing from server');
+                }
+                this.config.leds.pin = serverConfig.leds.pin;
+                this.config.leds.count = serverConfig.leds.count;
+                this.config.leds.brightness = serverConfig.leds.brightness;
+                this.config.leds.refreshRate = serverConfig.leds.refreshRate;
             }
         },
         
