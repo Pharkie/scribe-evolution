@@ -7,9 +7,12 @@
     <title>Scribe</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/index.min.css">
+    <script src="/js/alpine.min.js" defer></script>
+    <script src="/js/app.min.js"></script>
+    <script src="/js/index-alpine.min.js"></script>
 </head>
 
-<body class="page-body">
+<body class="page-body" x-data="IndexStore()" x-init="init()">
     <main class="page-main">
         <!-- Header with title and dark mode toggle -->
         <header class="page-header">
@@ -26,7 +29,7 @@
 
             <!-- Right spacer with settings button -->
             <div class="header-spacer flex justify-end">
-                <button id="settings-button" class="status-indicator">
+                <button @click="goToSettings()" class="status-indicator">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
@@ -38,93 +41,257 @@
                 </button>
             </div>
         </header>
+
+        <!-- Loading State -->
+        <div x-show="loading" class="card-primary text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-400">Loading configuration...</p>
+        </div>
+
+        <!-- Error State -->
+        <div x-show="error" class="card-primary bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <div class="text-center">
+                <span class="text-4xl mb-4 block">⚠️</span>
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Error</h3>
+                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                <p class="text-sm text-red-500 dark:text-red-400">The printer interface will work with default settings.</p>
+            </div>
+        </div>
+
         <!-- Main Printer Interface -->
-        <div class="card-primary">
-            <form id="printer-form" class="vertical-stack-lg">
+        <div x-show="!loading" class="card-primary">
+            <form @submit="handleSubmit($event)" class="vertical-stack-lg">
                 <!-- Printer Selection -->
                 <div class="vertical-stack">
                     <label class="form-label">Print to:</label>
-                    <div id="printer-selection" class="printer-grid">
-                        <!-- Printer options will be populated dynamically -->
+                    <div class="printer-grid">
+                        <template x-for="printer in printers" :key="printer.value">
+                            <div 
+                                @click="selectPrinter(printer.value)"
+                                :class="{
+                                    'border-orange-400 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 dark:border-orange-600': printer.selected,
+                                    'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500': !printer.selected
+                                }"
+                                class="printer-option cursor-pointer p-5 rounded-xl border-2 transition-all duration-200 hover:scale-105 hover:shadow-md">
+                                
+                                <div class="flex items-center justify-between w-full">
+                                    <!-- Left side with icon and name -->
+                                    <div class="flex items-center space-x-4 flex-1 min-w-0">
+                                        <span class="text-3xl" x-text="printer.icon"></span>
+                                        <div class="flex-1 min-w-0 flex items-center">
+                                            <div class="font-medium text-base truncate" x-text="printer.name"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Info icon -->
+                                    <div 
+                                        @click.stop="printer.isLocal ? showLocalPrinterInfo() : showPrinterOverlay(printer.data, printer.name, 'mqtt')"
+                                        class="info-icon ml-3 flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full transition-colors duration-200 cursor-pointer"
+                                        style="min-width: 56px; min-height: 56px;"
+                                        title="View printer details">
+                                        <span class="text-2xl text-gray-600 dark:text-gray-300">ⓘ</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
-                    <input type="hidden" id="printer-target" name="printer-target" value="local-direct">
                 </div>
 
                 <!-- Message Input -->
-                <div class="vertical-stack-sm">
+                <div class="vertical-stack">
                     <label for="message-textarea" class="form-label">Message:</label>
-                    <textarea name="message" id="message-textarea" placeholder="Type your message…"
-                        class="textarea-custom" rows="4" required></textarea>
-                    <div class="char-counter">
-                        <span id="char-counter"></span>
+                    <textarea 
+                        id="message-textarea"
+                        x-model="message"
+                        @keydown="handleTextareaKeydown($event)"
+                        :maxlength="maxChars"
+                        class="form-textarea"
+                        rows="8" 
+                        placeholder="Enter your message here..."
+                        required></textarea>
+                    <div :class="charCountClass" class="text-xs text-right">
+                        <span x-text="charCountText"></span>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="vertical-stack">
+                    <label class="form-label">Quick Actions:</label>
+                    <div class="quick-actions-grid">
+                        <button type="button" @click="sendQuickAction('haiku')" class="quick-action-btn" data-action="haiku">
+                            <span class="text-2xl">🎋</span>
+                            <span class="font-medium">Haiku</span>
+                        </button>
+                        <button type="button" @click="sendQuickAction('fact')" class="quick-action-btn" data-action="fact">
+                            <span class="text-2xl">💡</span>
+                            <span class="font-medium">Fact</span>
+                        </button>
+                        <button type="button" @click="sendQuickAction('joke')" class="quick-action-btn" data-action="joke">
+                            <span class="text-2xl">😄</span>
+                            <span class="font-medium">Joke</span>
+                        </button>
+                        <button type="button" @click="sendQuickAction('quote')" class="quick-action-btn" data-action="quote">
+                            <span class="text-2xl">💬</span>
+                            <span class="font-medium">Quote</span>
+                        </button>
+                        <button type="button" @click="sendQuickAction('story')" class="quick-action-btn" data-action="story">
+                            <span class="text-2xl">📖</span>
+                            <span class="font-medium">Story</span>
+                        </button>
+                        <button type="button" @click="sendQuickAction('weather')" class="quick-action-btn" data-action="weather">
+                            <span class="text-2xl">🌤️</span>
+                            <span class="font-medium">Weather</span>
+                        </button>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" id="submit-button" class="submit-button">
-                    🖨️ Scribe
+                <button 
+                    type="submit" 
+                    :disabled="!canSubmit"
+                    :class="{
+                        'opacity-50 cursor-not-allowed': !canSubmit,
+                        'hover:bg-orange-700': canSubmit
+                    }"
+                    class="btn-primary btn-lg transition-all duration-200">
+                    <span x-show="!submitting">🖨️ Print Message</span>
+                    <span x-show="submitting" class="flex items-center justify-center">
+                        <span class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                        Printing...
+                    </span>
                 </button>
             </form>
-
-            <!-- Quick Actions -->
-            <div class="vertical-stack-md mt-8">
-                <div class="quick-actions-grid">
-                    <button data-action="riddle" class="action-button action-button-yellow quick-action-btn">
-                        <span class="action-button-icon">🧩</span>
-                        <span class="action-button-label">Riddle</span>
-                    </button>
-                    <button data-action="joke" class="action-button action-button-emerald quick-action-btn">
-                        <span class="action-button-icon">😄</span>
-                        <span class="action-button-label">Joke</span>
-                    </button>
-                    <button data-action="quote" class="action-button action-button-purple quick-action-btn">
-                        <span class="action-button-icon">💭</span>
-                        <span class="action-button-label">Quote</span>
-                    </button>
-                    <button data-action="quiz" class="action-button action-button-cyan quick-action-btn">
-                        <span class="action-button-icon">🧠</span>
-                        <span class="action-button-label">Quiz</span>
-                    </button>
-                    <button data-action="news" class="action-button action-button-orange quick-action-btn">
-                        <span class="action-button-icon">📰</span>
-                        <span class="action-button-label">News</span>
-                    </button>
-                    <button data-action="poke" class="action-button action-button-pink quick-action-btn">
-                        <span class="action-button-icon">👉</span>
-                        <span class="action-button-label">Poke</span>
-                    </button>
-                </div>
-            </div>
         </div>
     </main>
 
-    <footer class="page-footer vertical-stack">
-        <a href="/diagnostics.html" class="link-button">
-            🛠️ Diagnostics
-        </a>
-        <div>
-            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
-                class="footer-link">Peter
-                / Urban Circles</a>
+    <!-- Printer Info Overlay -->
+    <div x-show="showPrinterOverlay" 
+         x-transition:enter="transition ease-out duration-300" 
+         x-transition:enter-start="opacity-0" 
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200" 
+         x-transition:leave-start="opacity-100" 
+         x-transition:leave-end="opacity-0"
+         @click.self="closePrinterOverlay()"
+         @keydown.escape.window="closePrinterOverlay()"
+         class="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center p-4"
+         style="display: none;">
+        
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        
+        <!-- Modal -->
+        <div 
+            x-show="showPrinterOverlay"
+            x-transition:enter="transition ease-out duration-300 transform" 
+            x-transition:enter-start="translate-y-full sm:translate-y-0 sm:scale-95" 
+            x-transition:enter-end="translate-y-0 sm:scale-100"
+            x-transition:leave="transition ease-in duration-200 transform" 
+            x-transition:leave-start="translate-y-0 sm:scale-100" 
+            x-transition:leave-end="translate-y-full sm:translate-y-0 sm:scale-95"
+            class="relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl">
+            
+            <div class="p-6" x-show="overlayData">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <span class="text-2xl mr-2" x-text="overlayData?.printerIcon"></span>
+                        <span x-text="overlayPrinterName + ' Details'"></span>
+                    </h3>
+                    <button @click="closePrinterOverlay()" 
+                            class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        <span class="text-gray-600 dark:text-gray-400 text-xl">×</span>
+                    </button>
+                </div>
+                
+                <!-- Information sections -->
+                <div class="space-y-4">
+                    <!-- MQTT Topic (for remote printers) -->
+                    <div x-show="overlayData?.topic">
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                            <span>MQTT Topic</span>
+                            <button @click="copyTopic(overlayData?.topic)" 
+                                    class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" 
+                                    title="Copy to clipboard">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-gray-500 dark:text-gray-400">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg font-mono text-gray-800 dark:text-gray-200 break-all" 
+                             x-text="overlayData?.topic"></div>
+                    </div>
+                    
+                    <!-- IP Address -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Local IP Address:</span> 
+                            <span x-text="overlayData?.ipAddress"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- mDNS -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Local mDNS:</span> 
+                            <span x-text="overlayData?.mdns"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Firmware Version -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Firmware Version:</span> 
+                            <span x-text="overlayData?.firmwareVersion"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Last Power On -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Last Power On:</span> 
+                            <span x-text="overlayData?.lastPowerOnText"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Timezone -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Timezone:</span> 
+                            <span x-text="overlayData?.timezone"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
-                class="footer-link">Pharkie</a>
-        </div>
-        <div>
-            Quotes from <a href="https://zenquotes.io/" target="_blank" class="footer-link">ZenQuotes
-                API</a>
-        </div>
-    </footer>
+    </div>
 
-    <!-- Load external libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <!-- Load minified JavaScript -->
-    <!-- Load main app bundle (shared functionality) -->
-    <script src="/js/app.min.js"></script>
-    <!-- Load page-specific JavaScript -->
-    <script src="/js/index.min.js"></script>
+    <!-- Toast Container -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div 
+                x-show="true"
+                x-transition:enter="transition ease-out duration-300 transform" 
+                x-transition:enter-start="translate-x-full opacity-0" 
+                x-transition:enter-end="translate-x-0 opacity-100"
+                x-transition:leave="transition ease-in duration-200 transform" 
+                x-transition:leave-start="translate-x-0 opacity-100" 
+                x-transition:leave-end="translate-x-full opacity-0"
+                :class="{
+                    'bg-green-100 text-green-800 border-green-200': toast.type === 'success',
+                    'bg-red-100 text-red-800 border-red-200': toast.type === 'error',
+                    'bg-blue-100 text-blue-800 border-blue-200': toast.type === 'info'
+                }"
+                class="border p-4 rounded-lg shadow-lg max-w-sm">
+                
+                <div class="flex items-center space-x-2">
+                    <span class="flex-1" x-text="toast.message"></span>
+                    <button @click="removeToast(toast.id)" 
+                            class="ml-2 text-lg font-bold opacity-50 hover:opacity-100">×</button>
+                </div>
+            </div>
+        </template>
+    </div>
 </body>
 
 </html>

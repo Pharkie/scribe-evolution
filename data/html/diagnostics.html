@@ -7,13 +7,16 @@
     <title>Scribe - Diagnostics</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/diagnostics.min.css">
+    <script src="/js/alpine.min.js" defer></script>
+    <script src="/js/app.min.js"></script>
+    <script src="/js/diagnostics-alpine.min.js"></script>
 </head>
 
-<body class="page-body">
+<body class="page-body" x-data="DiagnosticsStore()" x-init="init()">
     <main class="page-main">
         <header class="page-header">
             <div class="header-spacer">
-                <button id="back-button" class="back-button">
+                <button @click="goBack()" class="back-button">
                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                         </path>
@@ -29,414 +32,390 @@
             </div>
             <div class="header-spacer"></div>
         </header>
+
+        <!-- Navigation -->
         <nav class="flex flex-wrap justify-center gap-2 mb-6">
-            <button data-section="device-config-section" class="section-nav-btn section-nav-btn-purple active">⚙️
-                Device</button>
-            <button data-section="network-section" class="section-nav-btn section-nav-btn-blue">🌐
-                Network</button>
-            <button data-section="mqtt-section" class="section-nav-btn section-nav-btn-green">📡 MQTT</button>
-            <button data-section="microcontroller-section" class="section-nav-btn section-nav-btn-orange">🎛️
-                Microcontroller</button>
-            <button data-section="unbidden-ink-section" class="section-nav-btn section-nav-btn-yellow">🎲
-                Unbidden Ink</button>
-            <button data-section="logging-section" class="section-nav-btn section-nav-btn-indigo">📋
-                Logging</button>
-            <button data-section="hardware-buttons-section" class="section-nav-btn section-nav-btn-pink">🎛️
-                Buttons</button>
-            <button data-section="pages-endpoints-section" class="section-nav-btn section-nav-btn-teal">🔗
-                Pages & Endpoints</button>
-            <button data-section="config-file-section" class="section-nav-btn section-nav-btn-red">⚙️ Runtime
-                Configuration</button>
-            <button data-section="nvs-storage-section" class="section-nav-btn section-nav-btn-cyan">💾 NVS
-                Storage</button>
+            <template x-for="section in sections" :key="section.id">
+                <button 
+                    @click="showSection(section.id)"
+                    :class="getSectionClass(section.id)"
+                    x-text="`${section.icon} ${section.name}`">
+                </button>
+            </template>
         </nav>
 
-        <div id="loading" class="text-center py-8"><span class="text-2xl">⏳</span><br>Loading diagnostics...</div>
-        <div id="error" class="diag-error"><span class="text-2xl">❌</span>
-            <h3 class="text-lg font-semibold mb-2">Error Loading Diagnostics</h3>
-            <p id="error-message" class="text-red-600 dark:text-red-400"></p>
+        <!-- Loading State -->
+        <div x-show="loading" class="text-center py-8">
+            <span class="text-2xl">⏳</span><br>Loading diagnostics...
         </div>
 
-        <div id="diagnostics-content" class="space-y-6">
-            <!-- Device Configuration -->
-            <div id="device-config-section" class="diag-section purple">
+        <!-- Error State -->
+        <div x-show="error" class="diag-error">
+            <span class="text-2xl">❌</span>
+            <h3 class="text-lg font-semibold mb-2">Error Loading Diagnostics</h3>
+            <p class="text-red-600 dark:text-red-400" x-text="error"></p>
+        </div>
+
+        <!-- Diagnostics Content -->
+        <div x-show="!loading && !error" class="space-y-6">
+            
+            <!-- Device Configuration Section -->
+            <div x-show="currentSection === 'device-config-section'" class="diag-section purple">
                 <div class="diag-header">
                     <h4 class="diag-title purple"><span class="mr-2">⚙️</span>Device</h4>
-                    <button data-section-name="Device" class="diag-copy-btn purple generic-copy-btn">
+                    <button @click="copyGenericSection('Device')" class="diag-copy-btn purple">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-2">
-                    <div class="diag-row"><span class="diag-label">Device Owner:</span><span class="diag-value"
-                            data-field="device-owner">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Timezone:</span><span class="diag-value"
-                            data-field="timezone">-</span></div>
-                    <div class="diag-row flexible"><span class="diag-label">mDNS Hostname:</span><span
-                            class="diag-value flexible" data-field="mdns-hostname">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Max Message Chars:</span><span class="diag-value"
-                            data-field="max-message-chars">-</span></div>
                     <div class="diag-row">
-                        <button data-action="character-test"
-                            class="px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-colors quick-action-btn">
+                        <span class="diag-label">Device Owner:</span>
+                        <span class="diag-value" x-text="deviceConfig.owner"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Timezone:</span>
+                        <span class="diag-value" x-text="deviceConfig.timezone"></span>
+                    </div>
+                    <div class="diag-row flexible">
+                        <span class="diag-label">mDNS Hostname:</span>
+                        <span class="diag-value flexible" x-text="deviceConfig.mdnsHostname"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Max Message Chars:</span>
+                        <span class="diag-value" x-text="deviceConfig.maxMessageChars"></span>
+                    </div>
+                    <div class="diag-row">
+                        <button @click="handleQuickAction('character-test')"
+                            class="px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-colors">
                             🧪 Print Character Test
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Network -->
-            <div id="network-section" class="diag-section blue">
+            <!-- Network Section -->
+            <div x-show="currentSection === 'network-section'" class="diag-section blue">
                 <div class="diag-header">
                     <h4 class="diag-title blue"><span class="mr-2">🌐</span>Network</h4>
-                    <button data-section-name="Network" class="diag-copy-btn blue generic-copy-btn">
+                    <button @click="copyGenericSection('Network')" class="diag-copy-btn blue">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-2">
-                    <div class="diag-row"><span class="diag-label">WiFi Status:</span><span class="diag-value"
-                            data-field="wifi-status">-</span></div>
-                    <div class="diag-row flexible"><span class="diag-label">SSID:</span><span
-                            class="diag-value flexible" data-field="wifi-ssid">-</span></div>
-                    <div class="diag-row"><span class="diag-label">IP Address:</span><span class="diag-value"
-                            data-field="ip-address">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Signal Strength:</span><span class="diag-value"
-                            data-field="signal-strength">-</span></div>
-                    <div class="diag-row flexible"><span class="diag-label">MAC Address:</span><span
-                            class="diag-value flexible" data-field="mac-address">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Gateway:</span><span class="diag-value"
-                            data-field="gateway">-</span></div>
-                    <div class="diag-row"><span class="diag-label">DNS:</span><span class="diag-value"
-                            data-field="dns">-</span></div>
-                    <div class="diag-reference blue">
-                        <h5 class="diag-reference-title blue"><span class="mr-2">📡</span>AP Fallback Reference</h5>
-                        <div class="diag-reference-box blue">
-                            <p class="text-blue-800 dark:text-blue-200 font-medium">If WiFi connection fails, device
-                                creates its own network:</p>
-                            <div class="space-y-1 text-blue-700 dark:text-blue-300">
-                                <div><strong>Connection Timeout:</strong> <span class="font-mono"
-                                        data-field="wifi-connect-timeout">15 seconds</span></div>
-                                <div><strong>Network Name:</strong> <span class="font-mono">Scribe-setup</span></div>
-                                <div><strong>Password:</strong> <span class="font-mono">scribe123</span></div>
-                                <div><strong>IP Address:</strong> <span class="font-mono">192.168.4.1</span></div>
-                                <div><strong>Setup URL:</strong> <span
-                                        class="font-mono">http://192.168.4.1/settings.html</span></div>
-                            </div>
-                            <p class="text-blue-600 dark:text-blue-400 text-xs mt-2">💡 Connect to this network if you
-                                can't reach the device on your main WiFi</p>
-                        </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Wi-Fi Status:</span>
+                        <span class="diag-value" x-text="networkInfo.wifiStatus"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">SSID:</span>
+                        <span class="diag-value" x-text="networkInfo.ssid"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">IP Address:</span>
+                        <span class="diag-value" x-text="networkInfo.ipAddress"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Signal Strength:</span>
+                        <span class="diag-value" x-text="networkInfo.signalStrength"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">MAC Address:</span>
+                        <span class="diag-value" x-text="networkInfo.macAddress"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Gateway:</span>
+                        <span class="diag-value" x-text="networkInfo.gateway"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">DNS:</span>
+                        <span class="diag-value" x-text="networkInfo.dns"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Connect Timeout:</span>
+                        <span class="diag-value" x-text="networkInfo.connectTimeout"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- MQTT -->
-            <div id="mqtt-section" class="diag-section green">
+            <!-- MQTT Section -->
+            <div x-show="currentSection === 'mqtt-section'" class="diag-section green">
                 <div class="diag-header">
                     <h4 class="diag-title green"><span class="mr-2">📡</span>MQTT</h4>
-                    <button data-section-name="MQTT" class="diag-copy-btn green generic-copy-btn">
+                    <button @click="copyGenericSection('MQTT')" class="diag-copy-btn green">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-2">
-                    <div class="diag-row"><span class="diag-label">MQTT Enabled:</span><span class="diag-value"
-                            data-field="mqtt-enabled">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Connection Status:</span><span class="diag-value"
-                            data-field="mqtt-status">-</span></div>
-                    <div class="diag-row flexible"><span class="diag-label">Broker:</span><span
-                            class="diag-value flexible" data-field="mqtt-broker">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Port:</span><span class="diag-value"
-                            data-field="mqtt-port">-</span></div>
-                    <div class="diag-row flexible"><span class="diag-label">Topic:</span><span
-                            class="diag-value flexible" data-field="mqtt-topic">-</span></div>
+                    <div class="diag-row">
+                        <span class="diag-label">Enabled:</span>
+                        <span class="diag-value" x-text="mqttInfo.enabled"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Status:</span>
+                        <span class="diag-value" x-text="mqttInfo.status"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Broker:</span>
+                        <span class="diag-value" x-text="mqttInfo.broker"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Port:</span>
+                        <span class="diag-value" x-text="mqttInfo.port"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Topic:</span>
+                        <span class="diag-value" x-text="mqttInfo.topic"></span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Microcontroller -->
-            <div id="microcontroller-section" class="diag-section orange">
+            <!-- Microcontroller Section -->
+            <div x-show="currentSection === 'microcontroller-section'" class="diag-section orange">
                 <div class="diag-header">
                     <h4 class="diag-title orange"><span class="mr-2">🎛️</span>Microcontroller</h4>
-                    <button data-section-name="orange" class="diag-copy-btn orange generic-copy-btn">
+                    <button @click="copyGenericSection('Microcontroller')" class="diag-copy-btn orange">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-2">
-                    <div class="diag-row"><span class="diag-label">Chip Model:</span><span class="diag-value"
-                            data-field="chip-model">-</span></div>
-                    <div class="diag-row"><span class="diag-label">CPU Frequency:</span><span class="diag-value"
-                            data-field="cpu-frequency">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Flash Size:</span><span class="diag-value"
-                            data-field="flash-size">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Firmware Version:</span><span class="diag-value"
-                            data-field="firmware-version">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Uptime:</span><span class="diag-value"
-                            data-field="uptime">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Temperature:</span><span class="diag-value"
-                            data-field="temperature">-</span></div>
-                    <div class="diag-memory">
-                        <div class="diag-memory-item">
-                            <div class="diag-memory-label"><span>Flash Usage</span><span
-                                    data-field="flash-usage-text">-</span></div>
-                            <div class="diag-progress-container orange">
-                                <div class="diag-progress-bar orange" data-field="flash-usage-bar" style="width: 0%">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="diag-memory-item">
-                            <div class="diag-memory-label"><span>Heap Usage</span><span
-                                    data-field="heap-usage-text">-</span></div>
-                            <div class="diag-progress-container orange">
-                                <div class="diag-progress-bar orange" data-field="heap-usage-bar" style="width: 0%">
-                                </div>
-                            </div>
-                        </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Chip Model:</span>
+                        <span class="diag-value" x-text="microcontrollerInfo.chipModel"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">CPU Frequency:</span>
+                        <span class="diag-value" x-text="microcontrollerInfo.cpuFrequency"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Flash Size:</span>
+                        <span class="diag-value" x-text="microcontrollerInfo.flashSize"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Firmware Version:</span>
+                        <span class="diag-value" x-text="microcontrollerInfo.firmwareVersion"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Uptime:</span>
+                        <span class="diag-value" x-text="microcontrollerInfo.uptime"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Temperature:</span>
+                        <span class="diag-value" x-text="microcontrollerInfo.temperature"></span>
+                    </div>
+                    
+                    <!-- Memory Usage -->
+                    <div class="diag-row">
+                        <span class="diag-label">Flash Usage:</span>
+                        <span class="diag-value" x-text="memoryUsage.flashUsageText"></span>
+                    </div>
+                    <div class="diag-progress-bar">
+                        <div :class="getProgressBarClass(memoryUsage.flashUsagePercent)" 
+                             :style="`width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%`"
+                             class="h-full rounded-full transition-all duration-300"></div>
+                    </div>
+                    
+                    <div class="diag-row">
+                        <span class="diag-label">Heap Usage:</span>
+                        <span class="diag-value" x-text="memoryUsage.heapUsageText"></span>
+                    </div>
+                    <div class="diag-progress-bar">
+                        <div :class="getProgressBarClass(memoryUsage.heapUsagePercent)" 
+                             :style="`width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%`"
+                             class="h-full rounded-full transition-all duration-300"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Unbidden Ink -->
-            <div id="unbidden-ink-section" class="diag-section yellow">
+            <!-- Unbidden Ink Section -->
+            <div x-show="currentSection === 'unbidden-ink-section'" class="diag-section yellow">
                 <div class="diag-header">
                     <h4 class="diag-title yellow"><span class="mr-2">🎲</span>Unbidden Ink</h4>
-                    <button data-section-name="yellow" class="diag-copy-btn yellow generic-copy-btn">
+                    <button @click="copyGenericSection('Unbidden Ink')" class="diag-copy-btn yellow">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-2">
-                    <div class="diag-row"><span class="diag-label">Enabled:</span><span class="diag-value"
-                            data-field="unbidden-ink-enabled">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Start Hour:</span><span class="diag-value"
-                            data-field="unbidden-ink-start-hour">-</span></div>
-                    <div class="diag-row"><span class="diag-label">End Hour:</span><span class="diag-value"
-                            data-field="unbidden-ink-end-hour">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Frequency (minutes):</span><span class="diag-value"
-                            data-field="unbidden-ink-frequency">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Next Message Time:</span><span class="diag-value"
-                            data-field="unbidden-ink-next-message">-</span></div>
+                    <div class="diag-row">
+                        <span class="diag-label">Enabled:</span>
+                        <span class="diag-value" x-text="unbiddenInkInfo.enabled"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Start Hour:</span>
+                        <span class="diag-value" x-text="unbiddenInkInfo.startHour"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">End Hour:</span>
+                        <span class="diag-value" x-text="unbiddenInkInfo.endHour"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Frequency:</span>
+                        <span class="diag-value" x-text="unbiddenInkInfo.frequency"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Next Message:</span>
+                        <span class="diag-value" x-text="unbiddenInkInfo.nextMessage"></span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Logging -->
-            <div id="logging-section" class="diag-section indigo">
+            <!-- Logging Section -->
+            <div x-show="currentSection === 'logging-section'" class="diag-section indigo">
                 <div class="diag-header">
                     <h4 class="diag-title indigo"><span class="mr-2">📋</span>Logging</h4>
-                    <button data-section-name="indigo" class="diag-copy-btn indigo generic-copy-btn">
+                    <button @click="copyGenericSection('Logging')" class="diag-copy-btn indigo">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-2">
-                    <div class="diag-row"><span class="diag-label">Level:</span><span class="diag-value"
-                            data-field="log-level">-</span></div>
-                    <div class="diag-row"><span class="diag-label">Serial Logging:</span><span class="diag-value"
-                            data-field="serial-logging">-</span></div>
-                    <div class="diag-row"><span class="diag-label">BetterStack Logging:</span><span class="diag-value"
-                            data-field="web-logging">-</span></div>
-                    <div class="diag-row"><span class="diag-label">File Logging:</span><span class="diag-value"
-                            data-field="file-logging">-</span></div>
-                    <div class="diag-row"><span class="diag-label">MQTT Logging:</span><span class="diag-value"
-                            data-field="mqtt-logging">-</span></div>
+                    <div class="diag-row">
+                        <span class="diag-label">Log Level:</span>
+                        <span class="diag-value" x-text="loggingInfo.level"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Serial Logging:</span>
+                        <span class="diag-value" x-text="loggingInfo.serialLogging"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Web Logging:</span>
+                        <span class="diag-value" x-text="loggingInfo.webLogging"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">File Logging:</span>
+                        <span class="diag-value" x-text="loggingInfo.fileLogging"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">MQTT Logging:</span>
+                        <span class="diag-value" x-text="loggingInfo.mqttLogging"></span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Buttons -->
-            <div id="hardware-buttons-section" class="diag-section pink">
+            <!-- Hardware Buttons Section -->
+            <div x-show="currentSection === 'hardware-buttons-section'" class="diag-section pink">
                 <div class="diag-header">
-                    <h4 class="diag-title pink"><span class="mr-2">🎛️</span>Buttons</h4>
-                    <button data-section-name="pink" class="diag-copy-btn pink generic-copy-btn">
+                    <h4 class="diag-title pink"><span class="mr-2">🎛️</span>Hardware Buttons</h4>
+                    <button @click="copyGenericSection('Hardware Buttons')" class="diag-copy-btn pink">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
-                <div id="buttons-content" class="space-y-4">
-                    <!-- Hardware Configuration Section -->
-                    <div class="border-b border-gray-200 dark:border-gray-600 pb-3 mb-3">
-                        <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Hardware Configuration
-                        </h5>
-                        <div class="space-y-1">
-                            <div class="diag-row">
-                                <span class="diag-label">Buttons:</span>
-                                <span class="diag-value" data-field="hw-buttons-count">-</span>
-                            </div>
-                            <div class="diag-row">
-                                <span class="diag-label">Debounce:</span>
-                                <span class="diag-value" data-field="hw-buttons-debounce">-</span>
-                            </div>
-                            <div class="diag-row">
-                                <span class="diag-label">Long Press:</span>
-                                <span class="diag-value" data-field="hw-buttons-long-press">-</span>
-                            </div>
-                            <div class="diag-row">
-                                <span class="diag-label">Active Low:</span>
-                                <span class="diag-value" data-field="hw-buttons-active-low">-</span>
-                            </div>
-                            <div class="diag-row">
-                                <span class="diag-label">Min Interval:</span>
-                                <span class="diag-value" data-field="hw-buttons-min-interval">-</span>
-                            </div>
-                            <div class="diag-row">
-                                <span class="diag-label">Max/Minute:</span>
-                                <span class="diag-value" data-field="hw-buttons-max-per-minute">-</span>
-                            </div>
-                        </div>
+                <div class="space-y-2">
+                    <!-- Configuration -->
+                    <div class="diag-row">
+                        <span class="diag-label">Button Count:</span>
+                        <span class="diag-value" x-text="hardwareButtonsInfo.count"></span>
                     </div>
-
-                    <!-- Individual Buttons Section -->
-                    <div id="individual-buttons">
-                        <!-- Button 1 -->
-                        <div class="button-section" data-button="1">
-                            <div class="space-y-1">
-                                <div class="diag-row">
-                                    <span class="diag-label">Button:</span>
-                                    <span class="diag-value" data-field="button-1-title">Button 1 (GPIO -)</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Short Press:</span>
-                                    <span class="diag-value" data-field="button-1-short-press">-</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Long Press:</span>
-                                    <span class="diag-value" data-field="button-1-long-press">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-1-short-mqtt" style="display: none;">
-                                    <span class="diag-label">Short MQTT:</span>
-                                    <span class="diag-value" data-field="button-1-short-mqtt">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-1-long-mqtt" style="display: none;">
-                                    <span class="diag-label">Long MQTT:</span>
-                                    <span class="diag-value" data-field="button-1-long-mqtt">-</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Button 2 -->
-                        <div class="button-section" data-button="2">
-                            <div class="space-y-1">
-                                <div class="diag-row">
-                                    <span class="diag-label">Button:</span>
-                                    <span class="diag-value" data-field="button-2-title">Button 2 (GPIO -)</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Short Press:</span>
-                                    <span class="diag-value" data-field="button-2-short-press">-</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Long Press:</span>
-                                    <span class="diag-value" data-field="button-2-long-press">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-2-short-mqtt" style="display: none;">
-                                    <span class="diag-label">Short MQTT:</span>
-                                    <span class="diag-value" data-field="button-2-short-mqtt">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-2-long-mqtt" style="display: none;">
-                                    <span class="diag-label">Long MQTT:</span>
-                                    <span class="diag-value" data-field="button-2-long-mqtt">-</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Button 3 -->
-                        <div class="button-section" data-button="3">
-                            <div class="space-y-1">
-                                <div class="diag-row">
-                                    <span class="diag-label">Button:</span>
-                                    <span class="diag-value" data-field="button-3-title">Button 3 (GPIO -)</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Short Press:</span>
-                                    <span class="diag-value" data-field="button-3-short-press">-</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Long Press:</span>
-                                    <span class="diag-value" data-field="button-3-long-press">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-3-short-mqtt" style="display: none;">
-                                    <span class="diag-label">Short MQTT:</span>
-                                    <span class="diag-value" data-field="button-3-short-mqtt">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-3-long-mqtt" style="display: none;">
-                                    <span class="diag-label">Long MQTT:</span>
-                                    <span class="diag-value" data-field="button-3-long-mqtt">-</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Button 4 -->
-                        <div class="button-section" data-button="4">
-                            <div class="space-y-1">
-                                <div class="diag-row">
-                                    <span class="diag-label">Button:</span>
-                                    <span class="diag-value" data-field="button-4-title">Button 4 (GPIO -)</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Short Press:</span>
-                                    <span class="diag-value" data-field="button-4-short-press">-</span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Long Press:</span>
-                                    <span class="diag-value" data-field="button-4-long-press">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-4-short-mqtt" style="display: none;">
-                                    <span class="diag-label">Short MQTT:</span>
-                                    <span class="diag-value" data-field="button-4-short-mqtt">-</span>
-                                </div>
-                                <div class="diag-row" data-field-container="button-4-long-mqtt" style="display: none;">
-                                    <span class="diag-label">Long MQTT:</span>
-                                    <span class="diag-value" data-field="button-4-long-mqtt">-</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Debounce Time:</span>
+                        <span class="diag-value" x-text="hardwareButtonsInfo.debounce"></span>
                     </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Long Press Time:</span>
+                        <span class="diag-value" x-text="hardwareButtonsInfo.longPress"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Active Low:</span>
+                        <span class="diag-value" x-text="hardwareButtonsInfo.activeLow"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Min Interval:</span>
+                        <span class="diag-value" x-text="hardwareButtonsInfo.minInterval"></span>
+                    </div>
+                    <div class="diag-row">
+                        <span class="diag-label">Max Per Minute:</span>
+                        <span class="diag-value" x-text="hardwareButtonsInfo.maxPerMinute"></span>
+                    </div>
+                    
+                    <!-- Individual Buttons -->
+                    <template x-for="button in hardwareButtonsInfo.buttons" :key="button.num">
+                        <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2" 
+                                x-text="`Button ${button.num} (GPIO ${button.gpio})`"></h5>
+                            <div class="space-y-1 text-sm">
+                                <div class="diag-row">
+                                    <span class="diag-label">Short Press:</span>
+                                    <span class="diag-value" x-text="button.shortPress"></span>
+                                </div>
+                                <div class="diag-row">
+                                    <span class="diag-label">Long Press:</span>
+                                    <span class="diag-value" x-text="button.longPress"></span>
+                                </div>
+                                <div x-show="button.shortMqtt" class="diag-row">
+                                    <span class="diag-label">Short Press MQTT:</span>
+                                    <span class="diag-value" x-text="button.shortMqtt"></span>
+                                </div>
+                                <div x-show="button.longMqtt" class="diag-row">
+                                    <span class="diag-label">Long Press MQTT:</span>
+                                    <span class="diag-value" x-text="button.longMqtt"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
 
-            <!-- Available Pages & Endpoints -->
-            <div id="pages-endpoints-section" class="diag-section teal">
+            <!-- Pages & Endpoints Section -->
+            <div x-show="currentSection === 'pages-endpoints-section'" class="diag-section teal">
                 <div class="diag-header">
                     <h4 class="diag-title teal"><span class="mr-2">🔗</span>Pages & Endpoints</h4>
-                    <button data-section-name="teal" class="diag-copy-btn teal generic-copy-btn">
+                    <button @click="copyGenericSection('Pages & Endpoints')" class="diag-copy-btn teal">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-4">
-                    <!-- Web Pages Section -->
-                    <div class="border-b border-teal-200 dark:border-teal-600 pb-3 mb-3">
-                        <h5 class="text-sm font-semibold text-teal-700 dark:text-teal-300 mb-2">📄 Web Pages</h5>
-                        <div id="web-pages" class="space-y-2">
-                            <!-- Static structure for web pages - values populated by JS -->
-                            <div class="diag-row loading-placeholder">
+                    <!-- Web Pages -->
+                    <div>
+                        <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Web Pages</h5>
+                        <div class="space-y-1">
+                            <template x-for="page in webPages" :key="page.path">
+                                <div class="diag-row">
+                                    <span class="diag-label" x-text="page.path"></span>
+                                    <span class="diag-value" x-text="page.description"></span>
+                                </div>
+                            </template>
+                            <div x-show="webPages.length === 0" class="diag-row">
                                 <span class="diag-label">Loading web pages...</span>
                                 <span class="diag-value">-</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- API Endpoints Section -->
+                    
+                    <!-- API Endpoints -->
                     <div>
-                        <h5 class="text-sm font-semibold text-teal-700 dark:text-teal-300 mb-2">🔌 API Endpoints</h5>
-                        <div id="api-endpoints" class="space-y-2">
-                            <!-- Static structure for API endpoints - values populated by JS -->
-                            <div class="diag-row loading-placeholder">
+                        <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">API Endpoints</h5>
+                        <div class="space-y-2">
+                            <template x-for="(endpoints, method) in apiEndpoints" :key="method">
+                                <div>
+                                    <div class="diag-row method-header">
+                                        <span class="diag-label font-semibold text-gray-700 dark:text-gray-300" 
+                                              x-text="`${method} Endpoints`"></span>
+                                        <span class="diag-value font-semibold text-gray-700 dark:text-gray-300" 
+                                              x-text="`(${endpoints.length})`"></span>
+                                    </div>
+                                    <template x-for="endpoint in endpoints" :key="endpoint.path">
+                                        <div class="diag-row ml-4">
+                                            <span class="diag-label font-mono text-sm" x-text="endpoint.path"></span>
+                                            <span class="diag-value text-sm" x-text="endpoint.description"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                            <div x-show="Object.keys(apiEndpoints).length === 0" class="diag-row">
                                 <span class="diag-label">Loading API endpoints...</span>
                                 <span class="diag-value">-</span>
                             </div>
@@ -445,69 +424,34 @@
                 </div>
             </div>
 
-            <!-- Configuration File -->
-            <div id="config-file-section" class="diag-section red">
+            <!-- Runtime Configuration Section -->
+            <div x-show="currentSection === 'config-file-section'" class="diag-section red">
                 <div class="diag-header">
-                    <div>
-                        <h4 class="diag-title red"><span class="mr-2">⚙️</span>Runtime Configuration</h4>
-                    </div>
-                    <button id="config-copy-btn" class="diag-copy-btn red">
+                    <h4 class="diag-title red"><span class="mr-2">⚙️</span>Runtime Configuration</h4>
+                    <button @click="copyConfigFile()" class="diag-copy-btn red">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
-                <div class="space-y-3">
-                    <pre id="config-content" class="diag-config-display">Loading configuration...</pre>
-                    <p class="diag-config-warning red">🔑 Secrets are redacted</p>
-                </div>
+                <pre class="diag-json-content" x-text="configFileFormatted"></pre>
             </div>
 
-            <!-- NVS Raw Storage -->
-            <div id="nvs-storage-section" class="diag-section cyan">
+            <!-- NVS Storage Section -->
+            <div x-show="currentSection === 'nvs-storage-section'" class="diag-section cyan">
                 <div class="diag-header">
-                    <div>
-                        <h4 class="diag-title cyan"><span class="mr-2">💾</span>NVS Storage</h4>
-                        <p class="text-sm text-cyan-600 dark:text-cyan-400 mt-1">NVS key-value pairs from
-                            "scribe-app" namespace</p>
-                    </div>
-                    <button id="nvs-copy-btn" class="diag-copy-btn cyan">
+                    <h4 class="diag-title cyan"><span class="mr-2">💾</span>NVS Storage</h4>
+                    <button @click="copyNVSData()" class="diag-copy-btn cyan">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
-                <div class="space-y-3">
-                    <pre id="nvs-content" class="diag-config-display">Loading NVS data...</pre>
-                    <p class="diag-config-warning cyan">🔑 Secrets are redacted</p>
-                </div>
+                <pre class="diag-json-content" x-text="nvsDataFormatted"></pre>
             </div>
+
         </div>
     </main>
-
-    <footer class="page-footer vertical-stack">
-        <a href="/" class="link-button">
-            🏠 Home
-        </a>
-        <div>
-            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
-                class="footer-link">Peter
-                / Urban Circles</a>
-        </div>
-        <div>
-            Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
-                class="footer-link">Pharkie</a>
-        </div>
-        <div>
-            Quotes from <a href="https://zenquotes.io/" target="_blank" class="footer-link">ZenQuotes
-                API</a>
-        </div>
-    </footer>
-
-    <script src="/js/app.min.js"></script>
-    <script src="/js/diagnostics.min.js"></script>
 </body>
 
 </html>

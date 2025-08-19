@@ -31,8 +31,10 @@ src/js/
 └── shared modules        # Common utilities
 
 data/html/
-├── *-alpine.html         # Alpine.js templates
-└── original files        # Preserved for gradual migration
+├── index.html            # Alpine.js printer interface
+├── diagnostics.html      # Alpine.js system monitoring 
+├── settings.html         # Alpine.js configuration forms
+└── 404.html             # Alpine.js error handling
 
 data/js/
 ├── alpine.min.js         # Alpine.js framework (44KB)
@@ -265,17 +267,23 @@ data/js/404-alpine.min.js          4.2KB (404 store)
 
 ## Migration Strategy
 
-### Gradual Adoption
-1. **Alpine.js files** serve as modern alternatives
-2. **Original files** preserved for compatibility
-3. **A/B testing** capability via URL routing
-4. **Feature flags** for experimental deployment
+### Complete Migration
+1. **Primary files** now use Alpine.js architecture
+2. **Original vanilla JS** files available in git history
+3. **Build system** updated for Alpine.js compilation
+4. **Feature parity** maintained across all pages
 
 ### Development Workflow
 ```bash
 # Development
-npm run build-js-alpine-all   # Build all Alpine.js stores
-npm run watch-css              # Watch CSS changes
+npm run build-js              # Build all Alpine.js stores
+npm run watch-css             # Watch CSS changes
+
+# Individual builds
+npm run build-js-index        # Build index page
+npm run build-js-diagnostics  # Build diagnostics page
+npm run build-js-settings     # Build settings page
+npm run build-js-404          # Build 404 page
 
 # Production
 npm run build-prod            # Build everything for production
@@ -290,7 +298,7 @@ npm run build-prod            # Build everything for production
 
 ### Browser Support
 - **Modern browsers**: Full Alpine.js feature support
-- **Legacy browsers**: Graceful degradation to original implementation
+- **Legacy browsers**: JavaScript fallbacks ensure functionality
 - **Mobile**: Touch-optimized with responsive design
 
 ## Future Enhancements
