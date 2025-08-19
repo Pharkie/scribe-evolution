@@ -22,7 +22,7 @@ window.IndexStore = function() {
     localPrinterName: 'Unknown',
     
     // UI state
-    showPrinterOverlay: false,
+    overlayVisible: false,
     overlayPrinterData: null,
     overlayPrinterName: '',
     overlayPrinterType: 'mqtt',
@@ -32,7 +32,7 @@ window.IndexStore = function() {
     
     // Character limits
     get maxChars() {
-      if (this.config?.validation?.maxCharacters === undefined) {
+      if (!this.config?.validation?.maxCharacters) {
         throw new Error('Maximum characters configuration is missing from server');
       }
       return this.config.validation.maxCharacters;
@@ -89,6 +89,13 @@ window.IndexStore = function() {
         if (this.config?.printer?.name === undefined) {
           throw new Error('Printer name configuration is missing from server');
         }
+        if (this.config?.validation?.maxCharacters === undefined) {
+          throw new Error('Maximum characters validation configuration is missing from server');
+        }
+        if (this.config?.device === undefined) {
+          throw new Error('Device configuration is missing from server');
+        }
+        
         this.localPrinterName = this.config.printer.name;
         console.log('📋 Index: Config loaded successfully');
         this.loading = false;
@@ -268,11 +275,11 @@ window.IndexStore = function() {
       this.overlayPrinterData = printerData;
       this.overlayPrinterName = printerName;
       this.overlayPrinterType = printerType;
-      this.showPrinterOverlay = true;
+      this.overlayVisible = true;
     },
     
     closePrinterOverlay() {
-      this.showPrinterOverlay = false;
+      this.overlayVisible = false;
       this.overlayPrinterData = null;
     },
     

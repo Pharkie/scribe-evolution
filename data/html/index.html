@@ -60,7 +60,7 @@
         </div>
 
         <!-- Main Printer Interface -->
-        <div x-show="!loading" class="card-primary">
+        <div x-show="!loading && !error" class="card-primary">
             <form @submit="handleSubmit($event)" class="vertical-stack-lg">
                 <!-- Printer Selection -->
                 <div class="vertical-stack">
@@ -158,7 +158,7 @@
     </main>
 
     <!-- Printer Info Overlay -->
-    <div x-show="showPrinterOverlay" x-transition:enter="transition ease-out duration-300"
+    <div x-show="overlayVisible" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0" @click.self="closePrinterOverlay()"
@@ -169,7 +169,7 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
         <!-- Modal -->
-        <div x-show="showPrinterOverlay" x-transition:enter="transition ease-out duration-300 transform"
+        <div x-show="overlayVisible" x-transition:enter="transition ease-out duration-300 transform"
             x-transition:enter-start="translate-y-full sm:translate-y-0 sm:scale-95"
             x-transition:enter-end="translate-y-0 sm:scale-100"
             x-transition:leave="transition ease-in duration-200 transform"
