@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Settings (Alpine.js) - Scribe</title>
+    <title>Settings - Scribe</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/settings.min.css">
 </head>
@@ -28,13 +28,22 @@
             <div class="header-center">
                 <h1 class="page-title">
                     <span class="text-4xl sm:text-5xl">⚙️</span>
-                    <span>Settings (Alpine.js)</span>
+                    <span>Settings</span>
                 </h1>
             </div>
 
             <!-- Right spacer -->
             <div class="header-spacer"></div>
         </header>
+
+        <!-- Navigation -->
+        <nav class="flex flex-wrap justify-center gap-2 mb-6" x-show="!loading">
+            <template x-for="section in sections" :key="section.id">
+                <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
+                    x-text="`${section.icon} ${section.name}`">
+                </button>
+            </template>
+        </nav>
 
         <!-- Loading State -->
         <div x-show="loading" class="loading-card" x-transition>
@@ -44,11 +53,11 @@
             </div>
         </div>
 
-        <!-- Settings Form -->
-        <form @submit.prevent="saveConfiguration()" class="space-y-6" x-show="!loading" x-transition>
+        <!-- Settings Content -->
+        <div x-show="!loading && !error" class="space-y-6">
 
-            <!-- WiFi Section (Basic Alpine Implementation) -->
-            <div class="settings-section">
+            <!-- WiFi Section -->
+            <div x-show="activeSection === 'wifi'" class="settings-section">
                 <div class="settings-card settings-card-blue">
                     <h2 class="settings-card-header settings-card-header-blue">
                         <span class="text-3xl">📶</span>
@@ -97,7 +106,7 @@
             </div>
 
             <!-- Device Section -->
-            <div class="settings-section">
+            <div x-show="activeSection === 'device'" class="settings-section">
                 <div class="settings-card settings-card-purple">
                     <h2 class="settings-card-header settings-card-header-purple">
                         <span class="text-3xl">⚙️</span>
@@ -132,7 +141,7 @@
             </div>
 
             <!-- MQTT Section -->
-            <div class="settings-section">
+            <div x-show="activeSection === 'mqtt'" class="settings-section">
                 <div class="settings-card settings-card-yellow">
                     <h2 class="settings-card-header settings-card-header-yellow">
                         <span class="text-3xl">📡</span>
@@ -163,7 +172,9 @@
                     </div>
                 </div>
             </div>
-            <div class="settings-section">
+            
+            <!-- Unbidden Ink Section -->
+            <div x-show="activeSection === 'unbidden'" class="settings-section">
                 <div class="settings-card settings-card-green">
                     <h2 class="settings-card-header settings-card-header-green">
                         <span class="text-3xl">🎲</span>
@@ -266,9 +277,9 @@
                             </label>
 
                             <div class="space-y-3">
-                                <input type="range" min="15" max="480" step="15"
+                                <input type="range" min="0" max="6" step="1"
                                     class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple"
-                                    x-model.number="config.unbiddenInk.frequencyMinutes">
+                                    x-model.number="frequencySliderValue">
 
                                 <!-- Frequency display (reactive) -->
                                 <div class="text-center">
@@ -277,6 +288,35 @@
                                         <span x-text="frequencyDisplay"></span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Prompts -->
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Quick Prompts:
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="setQuickPrompt('creative')"
+                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🎨 Creative</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Artistic & imaginative content</div>
+                                </button>
+                                <button type="button" @click="setQuickPrompt('doctorwho')"
+                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🚀 Doctor Who</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Sci-fi themed content</div>
+                                </button>
+                                <button type="button" @click="setQuickPrompt('wisdom')"
+                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🧙 Wisdom</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Philosophical insights</div>
+                                </button>
+                                <button type="button" @click="setQuickPrompt('humor')"
+                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">😄 Humor</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Jokes & funny content</div>
+                                </button>
                             </div>
                         </div>
 
@@ -296,7 +336,7 @@
             </div>
 
             <!-- Buttons Section -->
-            <div class="settings-section">
+            <div x-show="activeSection === 'buttons'" class="settings-section">
                 <div class="settings-card settings-card-orange">
                     <h2 class="settings-card-header settings-card-header-orange">
                         <span class="text-3xl">🎛️</span>
@@ -373,7 +413,7 @@
             </div>
 
             <!-- LEDs Section -->
-            <div class="settings-section">
+            <div x-show="activeSection === 'leds'" class="settings-section">
                 <div
                     class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
                     <h2
@@ -692,8 +732,16 @@
                 </div>
             </div>
 
-            <!-- Save Button -->
-            <div class="flex justify-center pt-6">
+        </div>
+
+        <!-- Form Actions (shown when not loading and no error) -->
+        <form @submit.prevent="saveConfiguration()" x-show="!loading && !error" x-transition>
+            <!-- Action Buttons -->
+            <div class="flex justify-center gap-4 pt-6">
+                <button type="button" @click="cancelConfiguration()" 
+                    class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-xl transition-colors duration-200">
+                    🚫 Cancel
+                </button>
                 <button type="submit" :disabled="saving" class="btn-primary btn-primary-large"
                     :class="{ 'opacity-50 cursor-not-allowed': saving }">
                     <span x-show="!saving">💾 Save Settings</span>

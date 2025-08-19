@@ -66,10 +66,18 @@ function initializeSettingsStore() {
         },
         
         // UI state management
-        ui: {
-            activeSection: 'wifi',
-            showValidationFeedback: false
-        },
+        activeSection: 'wifi',
+        showValidationFeedback: false,
+        
+        // Section definitions for navigation
+        sections: [
+            { id: 'wifi', name: 'WiFi', icon: '📶', color: 'blue' },
+            { id: 'device', name: 'Device', icon: '⚙️', color: 'purple' },
+            { id: 'mqtt', name: 'MQTT', icon: '📡', color: 'yellow' },
+            { id: 'unbidden', name: 'Unbidden Ink', icon: '🎲', color: 'green' },
+            { id: 'buttons', name: 'Buttons', icon: '🎛️', color: 'orange' },
+            { id: 'leds', name: 'LEDs', icon: '🌈', color: 'purple' }
+        ],
         
         // Computed properties for complex UI states
         get timeRangeDisplay() {
@@ -423,14 +431,54 @@ function initializeSettingsStore() {
         // LED effect functions
         async testLedEffect(effectName) {
             try {
+                // Get parameters from form fields based on effect
+                let effectParams = {
+                    effect: effectName,
+                    duration: 10 // 10 seconds for testing
+                };
+                
+                // Add effect-specific parameters
+                switch(effectName) {
+                    case 'simple_chase':
+                        const simpleChaseSpeed = document.getElementById('simple-chase-speed');
+                        const simpleChaseColor = document.getElementById('simple-chase-color');
+                        if (simpleChaseSpeed) effectParams.speed = parseInt(simpleChaseSpeed.value) || 10;
+                        if (simpleChaseColor) effectParams.color = simpleChaseColor.value || '#0062ff';
+                        break;
+                    case 'rainbow':
+                        const rainbowSpeed = document.getElementById('rainbow-speed');
+                        if (rainbowSpeed) effectParams.speed = parseInt(rainbowSpeed.value) || 10;
+                        break;
+                    case 'twinkle':
+                        const twinkleColor = document.getElementById('twinkle-color');
+                        const twinkleChance = document.getElementById('twinkle-chance');
+                        if (twinkleColor) effectParams.color = twinkleColor.value || '#ffff00';
+                        if (twinkleChance) effectParams.chance = parseInt(twinkleChance.value) || 10;
+                        break;
+                    case 'chase':
+                        const chaseSpeed = document.getElementById('chase-speed');
+                        const chaseColor = document.getElementById('chase-color');
+                        if (chaseSpeed) effectParams.speed = parseInt(chaseSpeed.value) || 15;
+                        if (chaseColor) effectParams.color = chaseColor.value || '#00ff00';
+                        break;
+                    case 'pulse':
+                        const pulseColor = document.getElementById('pulse-color');
+                        const pulseDuration = document.getElementById('pulse-duration');
+                        if (pulseColor) effectParams.color = pulseColor.value || '#800080';
+                        if (pulseDuration) effectParams.pulse_duration = parseInt(pulseDuration.value) || 1000;
+                        break;
+                    case 'matrix':
+                        const matrixSpeed = document.getElementById('matrix-speed');
+                        if (matrixSpeed) effectParams.speed = parseInt(matrixSpeed.value) || 20;
+                        break;
+                    default:
+                        effectParams.color = 'blue'; // Default color
+                }
+                
                 const response = await fetch('/api/led-effect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        effect: effectName,
-                        duration: 10, // 10 seconds for testing
-                        color: 'blue', // Default test color
-                    })
+                    body: JSON.stringify(effectParams)
                 });
                 
                 if (!response.ok) {
@@ -474,6 +522,55 @@ function initializeSettingsStore() {
                 console.error('Turn off LEDs failed:', error);
                 window.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
             }
+        },
+        
+        // Section management methods
+        showSection(sectionId) {
+            this.activeSection = sectionId;
+        },
+        
+        getSectionClass(sectionId) {
+            const section = this.sections.find(s => s.id === sectionId);
+            const baseClass = 'section-nav-btn';
+            const colorClass = `section-nav-btn-${section?.color || 'purple'}`;
+            const activeClass = this.activeSection === sectionId ? 'active' : '';
+            return `${baseClass} ${colorClass} ${activeClass}`.trim();
+        },
+        
+        // Quick prompt presets
+        setQuickPrompt(type) {
+            const prompts = {
+                creative: "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+                doctorwho: "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone.",
+                wisdom: "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
+                humor: "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining."
+            };
+            
+            if (prompts[type]) {
+                this.config.unbiddenInk.prompt = prompts[type];
+            }
+        },
+        
+        // Frequency slider specific values
+        get frequencyOptions() {
+            return [15, 30, 60, 120, 240, 360, 480]; // 15min, 30min, 1hr, 2hr, 4hr, 6hr, 8hr
+        },
+        
+        get frequencySliderValue() {
+            const options = this.frequencyOptions;
+            const current = this.config.unbiddenInk.frequencyMinutes;
+            const index = options.indexOf(current);
+            return index >= 0 ? index : 3; // Default to 2hr (index 3)
+        },
+        
+        set frequencySliderValue(index) {
+            this.config.unbiddenInk.frequencyMinutes = this.frequencyOptions[index] || 120;
+        },
+        
+        // Cancel configuration changes
+        cancelConfiguration() {
+            // Reload config to reset form
+            this.init();
         },
     };
 }
