@@ -13,8 +13,9 @@ const DEFAULT_MOTIVATION_PROMPT = "Generate a short, inspiring quote about creat
 
 /**
  * Simple utility function to load configuration from server
- * Each page should call this directly when it needs config data
+ * DISABLED - Alpine.js stores handle all config loading now
  */
+/*
 async function loadConfigForPage() {
   try {
     const response = await fetch('/api/config');
@@ -33,6 +34,7 @@ async function loadConfigForPage() {
     throw error;
   }
 }
+*/
 
 /**
  * Initialize real-time printer discovery using Server-Sent Events (SSE)

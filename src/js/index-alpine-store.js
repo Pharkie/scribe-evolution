@@ -10,6 +10,7 @@ window.IndexStore = function() {
     config: {},
     loading: true,
     error: null,
+    initialized: false, // Flag to prevent duplicate initialization
     
     // Form state
     message: '',
@@ -61,6 +62,13 @@ window.IndexStore = function() {
     
     // Initialize store
     async init() {
+      // Prevent duplicate initialization
+      if (this.initialized) {
+        console.log('📋 Index: Already initialized, skipping');
+        return;
+      }
+      this.initialized = true;
+      
       this.checkForSettingsSuccess();
       await this.loadConfig();
       this.initializePrinterDiscovery();

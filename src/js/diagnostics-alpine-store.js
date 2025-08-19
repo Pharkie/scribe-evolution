@@ -9,6 +9,7 @@ window.DiagnosticsStore = function() {
     // Core state
     loading: true,
     error: null,
+    initialized: false, // Flag to prevent duplicate initialization
     diagnosticsData: {},
     configData: {},
     nvsData: {},
@@ -32,6 +33,13 @@ window.DiagnosticsStore = function() {
     
     // Initialize store
     async init() {
+      // Prevent duplicate initialization
+      if (this.initialized) {
+        console.log('🛠️ Diagnostics: Already initialized, skipping');
+        return;
+      }
+      this.initialized = true;
+      
       await this.loadDiagnostics();
     },
     

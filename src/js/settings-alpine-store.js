@@ -13,6 +13,7 @@ function initializeSettingsStore() {
         // Loading states
         loading: false,
         saving: false,
+        initialized: false, // Flag to prevent duplicate initialization
         
         // Configuration data (reactive)
         config: {
@@ -136,6 +137,13 @@ function initializeSettingsStore() {
         
         // Initialize store with data from server
         async init() {
+            // Prevent duplicate initialization
+            if (this.initialized) {
+                console.log('⚙️ Settings: Already initialized, skipping');
+                return;
+            }
+            this.initialized = true;
+            
             this.loading = true;
             try {
                 // Use existing SettingsAPI
