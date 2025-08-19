@@ -441,13 +441,20 @@
                         </svg>
                     </button>
                 </div>
-                <pre class="diag-json-content" x-text="configFileFormatted"></pre>
+                <div class="space-y-3">
+                    <pre class="diag-json-content" x-text="configFileFormatted"></pre>
+                    <p class="diag-config-warning red">🔑 Secrets are redacted</p>
+                </div>
             </div>
 
             <!-- NVS Storage Section -->
             <div x-show="currentSection === 'nvs-storage-section'" class="diag-section cyan">
                 <div class="diag-header">
-                    <h4 class="diag-title cyan"><span class="mr-2">💾</span>NVS Storage</h4>
+                    <div>
+                        <h4 class="diag-title cyan"><span class="mr-2">💾</span>NVS Storage</h4>
+                        <p class="text-sm text-cyan-600 dark:text-cyan-400 mt-1">NVS key-value pairs from
+                            "scribe-app" namespace</p>
+                    </div>
                     <button @click="copyNVSData()" class="diag-copy-btn cyan">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path
@@ -455,11 +462,33 @@
                         </svg>
                     </button>
                 </div>
-                <pre class="diag-json-content" x-text="nvsDataFormatted"></pre>
+                <div class="space-y-3">
+                    <pre class="diag-json-content" x-text="nvsDataFormatted"></pre>
+                    <p class="diag-config-warning cyan">🔑 Secrets are redacted</p>
+                </div>
             </div>
 
         </div>
     </main>
+
+    <footer class="page-footer vertical-stack">
+        <a href="/" class="link-button">
+            🏠 Home
+        </a>
+        <div>
+            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
+                class="footer-link">Peter
+                / Urban Circles</a>
+        </div>
+        <div>
+            Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
+                class="footer-link">Pharkie</a>
+        </div>
+        <div>
+            Quotes from <a href="https://zenquotes.io/" target="_blank" class="footer-link">ZenQuotes
+                API</a>
+        </div>
+    </footer>
 </body>
 
 </html>
