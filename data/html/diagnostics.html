@@ -36,9 +36,7 @@
         <!-- Navigation -->
         <nav class="flex flex-wrap justify-center gap-2 mb-6">
             <template x-for="section in sections" :key="section.id">
-                <button 
-                    @click="showSection(section.id)"
-                    :class="getSectionClass(section.id)"
+                <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
                     x-text="`${section.icon} ${section.name}`">
                 </button>
             </template>
@@ -58,14 +56,15 @@
 
         <!-- Diagnostics Content -->
         <div x-show="!loading && !error" class="space-y-6">
-            
+
             <!-- Device Configuration Section -->
             <div x-show="currentSection === 'device-config-section'" class="diag-section purple">
                 <div class="diag-header">
                     <h4 class="diag-title purple"><span class="mr-2">⚙️</span>Device</h4>
                     <button @click="copyGenericSection('Device')" class="diag-copy-btn purple">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -101,7 +100,8 @@
                     <h4 class="diag-title blue"><span class="mr-2">🌐</span>Network</h4>
                     <button @click="copyGenericSection('Network')" class="diag-copy-btn blue">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -147,7 +147,8 @@
                     <h4 class="diag-title green"><span class="mr-2">📡</span>MQTT</h4>
                     <button @click="copyGenericSection('MQTT')" class="diag-copy-btn green">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -181,7 +182,8 @@
                     <h4 class="diag-title orange"><span class="mr-2">🎛️</span>Microcontroller</h4>
                     <button @click="copyGenericSection('Microcontroller')" class="diag-copy-btn orange">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -210,26 +212,26 @@
                         <span class="diag-label">Temperature:</span>
                         <span class="diag-value" x-text="microcontrollerInfo.temperature"></span>
                     </div>
-                    
+
                     <!-- Memory Usage -->
                     <div class="diag-row">
                         <span class="diag-label">Flash Usage:</span>
                         <span class="diag-value" x-text="memoryUsage.flashUsageText"></span>
                     </div>
                     <div class="diag-progress-bar">
-                        <div :class="getProgressBarClass(memoryUsage.flashUsagePercent)" 
-                             :style="`width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%`"
-                             class="h-full rounded-full transition-all duration-300"></div>
+                        <div :class="getProgressBarClass(memoryUsage.flashUsagePercent)"
+                            :style="`width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%`"
+                            class="h-full rounded-full transition-all duration-300"></div>
                     </div>
-                    
+
                     <div class="diag-row">
                         <span class="diag-label">Heap Usage:</span>
                         <span class="diag-value" x-text="memoryUsage.heapUsageText"></span>
                     </div>
                     <div class="diag-progress-bar">
-                        <div :class="getProgressBarClass(memoryUsage.heapUsagePercent)" 
-                             :style="`width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%`"
-                             class="h-full rounded-full transition-all duration-300"></div>
+                        <div :class="getProgressBarClass(memoryUsage.heapUsagePercent)"
+                            :style="`width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%`"
+                            class="h-full rounded-full transition-all duration-300"></div>
                     </div>
                 </div>
             </div>
@@ -240,7 +242,8 @@
                     <h4 class="diag-title yellow"><span class="mr-2">🎲</span>Unbidden Ink</h4>
                     <button @click="copyGenericSection('Unbidden Ink')" class="diag-copy-btn yellow">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -274,7 +277,8 @@
                     <h4 class="diag-title indigo"><span class="mr-2">📋</span>Logging</h4>
                     <button @click="copyGenericSection('Logging')" class="diag-copy-btn indigo">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -308,7 +312,8 @@
                     <h4 class="diag-title pink"><span class="mr-2">🎛️</span>Hardware Buttons</h4>
                     <button @click="copyGenericSection('Hardware Buttons')" class="diag-copy-btn pink">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -338,11 +343,11 @@
                         <span class="diag-label">Max Per Minute:</span>
                         <span class="diag-value" x-text="hardwareButtonsInfo.maxPerMinute"></span>
                     </div>
-                    
+
                     <!-- Individual Buttons -->
                     <template x-for="button in hardwareButtonsInfo.buttons" :key="button.num">
                         <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2" 
+                            <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2"
                                 x-text="`Button ${button.num} (GPIO ${button.gpio})`"></h5>
                             <div class="space-y-1 text-sm">
                                 <div class="diag-row">
@@ -373,7 +378,8 @@
                     <h4 class="diag-title teal"><span class="mr-2">🔗</span>Pages & Endpoints</h4>
                     <button @click="copyGenericSection('Pages & Endpoints')" class="diag-copy-btn teal">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -394,7 +400,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- API Endpoints -->
                     <div>
                         <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">API Endpoints</h5>
@@ -402,10 +408,10 @@
                             <template x-for="(endpoints, method) in apiEndpoints" :key="method">
                                 <div>
                                     <div class="diag-row method-header">
-                                        <span class="diag-label font-semibold text-gray-700 dark:text-gray-300" 
-                                              x-text="`${method} Endpoints`"></span>
-                                        <span class="diag-value font-semibold text-gray-700 dark:text-gray-300" 
-                                              x-text="`(${endpoints.length})`"></span>
+                                        <span class="diag-label font-semibold text-gray-700 dark:text-gray-300"
+                                            x-text="`${method} Endpoints`"></span>
+                                        <span class="diag-value font-semibold text-gray-700 dark:text-gray-300"
+                                            x-text="`(${endpoints.length})`"></span>
                                     </div>
                                     <template x-for="endpoint in endpoints" :key="endpoint.path">
                                         <div class="diag-row ml-4">
@@ -430,7 +436,8 @@
                     <h4 class="diag-title red"><span class="mr-2">⚙️</span>Runtime Configuration</h4>
                     <button @click="copyConfigFile()" class="diag-copy-btn red">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
@@ -443,7 +450,8 @@
                     <h4 class="diag-title cyan"><span class="mr-2">💾</span>NVS Storage</h4>
                     <button @click="copyNVSData()" class="diag-copy-btn cyan">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                         </svg>
                     </button>
                 </div>
