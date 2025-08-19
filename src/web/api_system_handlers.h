@@ -18,13 +18,8 @@
  * @param request The HTTP request
  *
  * Endpoint: GET /api/diagnostics
- * Returns comprehensive system status including:
- * - Device information (owner, hostname, timezone)
- * - Hardware status (chip model, CPU frequency, memory)
- * - Network status (WiFi, MQTT connectivity)
- * - Feature status (unbidden ink, buttons, logging)
- * - Available endpoints and configuration limits
- * - Flash storage breakdown (app partition, filesystem)
+ * Returns comprehensive system diagnostics including device info,
+ * hardware status, memory usage, network status, and feature configuration.
  */
 void handleDiagnostics(AsyncWebServerRequest *request);
 
