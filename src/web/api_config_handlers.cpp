@@ -576,8 +576,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    LOG_NOTICE("WEB", "Configuration saved successfully to NVS");
-
     // Update global runtime configuration
     setRuntimeConfig(newConfig);
 

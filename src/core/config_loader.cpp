@@ -334,19 +334,21 @@ void setRuntimeConfig(const RuntimeConfig &config)
 
 bool initializeNVSConfig()
 {
-    // Initialize NVS partition 
+    // Initialize NVS partition
     esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
         // NVS partition was truncated or has different version, erase it and reinitialize
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
-    
-    if (err != ESP_OK) {
+
+    if (err != ESP_OK)
+    {
         LOG_ERROR("CONFIG", "Failed to initialize NVS: %s", esp_err_to_name(err));
         return false;
     }
-    
+
     LOG_NOTICE("CONFIG", "NVS initialized successfully");
     return true;
 }

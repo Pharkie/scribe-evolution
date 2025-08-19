@@ -178,7 +178,7 @@ function copyConfigFile(button) {
     if (!configElement) throw new Error('Config content not found');
 
     // Get plain text content for copying (strip HTML if present)
-    const content = `=== Configuration File (config.json) ===\n\n${configElement.textContent.trim()}`;
+    const content = `=== Runtime Configuration (NVS) ===\n\n${configElement.textContent.trim()}`;
     
     // Use modern clipboard API if available, otherwise fallback
     if (navigator.clipboard && window.isSecureContext) {
@@ -626,6 +626,7 @@ async function loadDiagnostics() {
  */
 async function handleQuickAction(action) {
   try {
+    // Step 1: Generate content from the action endpoint
     let endpoint = `/api/${action}`;
     
     const response = await fetch(endpoint, {
@@ -635,11 +636,33 @@ async function handleQuickAction(action) {
       }
     });
 
-    if (response.ok) {
-      showToast(`${action} sent successfully!`, 'success');
-    } else {
+    if (!response.ok) {
       const errorData = await response.text();
-      showToast(`Error: ${errorData}`, 'error');
+      showToast(`Error generating content: ${errorData}`, 'error');
+      return;
+    }
+
+    const contentResult = await response.json();
+    
+    if (!contentResult.content) {
+      showToast('No content received from server', 'error');
+      return;
+    }
+
+    // Step 2: Print the content locally using /api/print-local
+    const printResponse = await fetch('/api/print-local', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: contentResult.content })
+    });
+
+    if (printResponse.ok) {
+      showToast(`${action} sent to printer successfully!`, 'success');
+    } else {
+      const errorData = await printResponse.text();
+      showToast(`Print error: ${errorData}`, 'error');
     }
   } catch (error) {
     console.error('Error sending quick action:', error);

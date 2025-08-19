@@ -18,6 +18,9 @@ async function initializeSettings() {
         // Set up UI event handlers FIRST (before form population)
         setupEventHandlers();
         
+        // Set up prompt preset handlers with data attributes
+        setupPromptPresetHandlers();
+        
         // Populate the form with loaded configuration
         window.SettingsUI.populateForm(config);
         
@@ -198,28 +201,19 @@ function setupFrequencyHandlers() {
  * Setup prompt preset button handlers
  */
 function setupPromptPresetHandlers() {
-    const presetPrompts = [
-        'Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.',
-        'Generate a fun fact under 200 characters about BBC Doctor Who - the characters, episodes, behind-the-scenes trivia, or the show\'s history that is esoteric and only 5% of fans might know.',
-        'Write a short, humorous observation about everyday life or a witty one-liner. Keep it light and under 200 characters.',
-        'Generate a short creative writing prompt, mini-story, or poetic thought. Be imaginative and keep under 250 characters.'
-    ];
-    
     // Find all prompt preset buttons by class and set up event listeners
     const buttons = document.querySelectorAll('.prompt-preset');
     
-    buttons.forEach((button, index) => {
-        if (index < presetPrompts.length) {
-            const promptText = presetPrompts[index];
-            
+    buttons.forEach(button => {
+        // Get the prompt text from the data attribute (already set in HTML)
+        const promptText = button.getAttribute('data-prompt-text');
+        
+        if (promptText) {
             // Set up event listener
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 window.SettingsUI.setPrompt(promptText);
             });
-            
-            // Store the prompt text as a data attribute for later use in highlighting
-            button.setAttribute('data-prompt-text', promptText);
         }
     });
 }
