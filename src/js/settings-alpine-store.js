@@ -13,6 +13,7 @@ function initializeSettingsStore() {
         // Loading states
         loading: false,
         saving: false,
+        error: null, // Error state for the UI
         initialized: false, // Flag to prevent duplicate initialization
         
         // Configuration data (reactive)
