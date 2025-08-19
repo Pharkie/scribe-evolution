@@ -16,7 +16,7 @@ The Scribe MQTT integration enables:
 ### Multi-Printer Support
 - Configure multiple remote Scribe printers in `config.h`
 - Single web interface controls all configured printers
-- Printer selection dropdown in web UI
+- Printer selection in web UI
 - Automatic printer discovery and status monitoring
 
 ### Secure Communication
@@ -281,6 +281,6 @@ Create flows that trigger printing based on:
 
 See the dedicated guides for specific integrations:
 - [Apple Shortcuts Integration](apple-shortcuts.md)
-- [n8n Webhook Integration](n8n-integration.md)
+- [Pipedream Integration](pipedream-integration.md) (Recommended HTTP-to-MQTT bridge)
 
 These bridges convert HTTP webhooks to MQTT messages, enabling integration with services that don't natively support MQTT.

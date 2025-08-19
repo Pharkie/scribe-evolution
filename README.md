@@ -11,8 +11,8 @@ Your networked ESP32-C3 for thermal printing delights.
 - **CSN-A4L thermal printer** - Commercial-grade printer with reliable performance
 
 ### Network & Remote Capabilities  
-- **MQTT remote printing** - Network multiple Scribe printers, print from anywhere
-- **mDNS integration** - Access via http://scribe.local or IP address
+- **MQTT remote printing** - Network multiple Scribe printers, print from anywhere with an HTTP-to-MQTT bridge
+- **mDNS integration** - Local access via http://scribe-[devicename].local as well as local IP address
 
 ### Content & Automation
 - **Quick fun buttons** - Jokes, quotes, riddles, quiz questions etc
@@ -68,9 +68,8 @@ pio run --target upload_all
 
 ### Integration & Automation  
 - **[MQTT Integration](docs/mqtt-integration.md)** - Multi-printer networking and remote control
-- **[Apple Shortcuts](docs/apple-shortcuts.md)** - Print from iOS using HTTP-to-MQTT bridges
-- **[n8n Integration](docs/n8n-integration.md)** - Workflow automation and webhook processing
 - **[Pipedream Integration](docs/pipedream-integration.md)** - Serverless HTTP-to-MQTT bridge
+- **[Apple Shortcuts](docs/apple-shortcuts.md)** - Print from iOS using HTTP-to-MQTT bridges
 
 ### System Administration
 - **[Logging System](docs/logging-system.md)** - Multi-destination logging and monitoring  
