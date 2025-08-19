@@ -194,7 +194,7 @@ function initializeIndexStore() {
           this.message = ''; // Clear form
           
           // Show "Scribed" text for 2 seconds instead of toast
-          this.buttonTextOverride = '✅ Scribed';
+          this.buttonTextOverride = 'Scribed';
           setTimeout(() => {
             this.buttonTextOverride = null;
           }, 2000);

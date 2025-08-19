@@ -49,36 +49,30 @@ function initializeDiagnosticsStore() {
       this.error = null;
       
       try {
-        // Load diagnostics, config, and NVS data in parallel with individual error handling
-        const responses = await Promise.allSettled([
+        // Load diagnostics, config, and NVS data in parallel - must all succeed
+        const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.all([
           fetch('/api/diagnostics'),
           fetch('/api/config'),
           fetch('/api/nvs-dump')
         ]);
         
-        // Handle diagnostics response
-        if (responses[0].status === 'fulfilled' && responses[0].value.ok) {
-          this.diagnosticsData = await responses[0].value.json();
-        } else {
-          console.warn('Failed to load diagnostics data:', responses[0].reason || responses[0].value.statusText);
-          this.diagnosticsData = {};
+        // All endpoints must succeed - no fallbacks
+        if (!diagnosticsResponse.ok) {
+          throw new Error(`Diagnostics API failed: ${diagnosticsResponse.status} ${diagnosticsResponse.statusText}`);
         }
         
-        // Handle config response
-        if (responses[1].status === 'fulfilled' && responses[1].value.ok) {
-          this.configData = await responses[1].value.json();
-        } else {
-          console.warn('Failed to load config data:', responses[1].reason || responses[1].value.statusText);
-          this.configData = {};
+        if (!configResponse.ok) {
+          throw new Error(`Config API failed: ${configResponse.status} ${configResponse.statusText}`);
         }
         
-        // Handle NVS dump response
-        if (responses[2].status === 'fulfilled' && responses[2].value.ok) {
-          this.nvsData = await responses[2].value.json();
-        } else {
-          console.warn('Failed to load NVS data:', responses[2].reason || responses[2].value.statusText);
-          this.nvsData = {};
+        if (!nvsResponse.ok) {
+          throw new Error(`NVS dump API failed: ${nvsResponse.status} ${nvsResponse.statusText}`);
         }
+        
+        // Parse all responses
+        this.diagnosticsData = await diagnosticsResponse.json();
+        this.configData = await configResponse.json();
+        this.nvsData = await nvsResponse.json();
         
         this.loading = false;
       } catch (error) {

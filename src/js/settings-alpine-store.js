@@ -446,42 +446,48 @@ function initializeSettingsStore() {
                     duration: 10 // 10 seconds for testing
                 };
                 
-                // Add effect-specific parameters
+                // Add effect-specific parameters based on HTML form fields
                 switch(effectName) {
                     case 'simple_chase':
                         const simpleChaseSpeed = document.getElementById('simple-chase-speed');
                         const simpleChaseColor = document.getElementById('simple-chase-color');
-                        if (simpleChaseSpeed) effectParams.speed = parseInt(simpleChaseSpeed.value) || 10;
-                        if (simpleChaseColor) effectParams.color = simpleChaseColor.value || '#0062ff';
+                        if (simpleChaseSpeed) effectParams.speed = parseInt(simpleChaseSpeed.value);
+                        if (simpleChaseColor) effectParams.color = simpleChaseColor.value;
                         break;
                     case 'rainbow':
                         const rainbowSpeed = document.getElementById('rainbow-speed');
-                        if (rainbowSpeed) effectParams.speed = parseInt(rainbowSpeed.value) || 10;
+                        const rainbowDensity = document.getElementById('rainbow-density');
+                        if (rainbowSpeed) effectParams.speed = parseFloat(rainbowSpeed.value);
+                        if (rainbowDensity) effectParams.density = parseInt(rainbowDensity.value);
                         break;
                     case 'twinkle':
+                        const twinkleSpeed = document.getElementById('twinkle-speed');
+                        const twinkleDensity = document.getElementById('twinkle-density');
                         const twinkleColor = document.getElementById('twinkle-color');
-                        const twinkleChance = document.getElementById('twinkle-chance');
-                        if (twinkleColor) effectParams.color = twinkleColor.value || '#ffff00';
-                        if (twinkleChance) effectParams.chance = parseInt(twinkleChance.value) || 10;
+                        if (twinkleSpeed) effectParams.speed = parseInt(twinkleSpeed.value);
+                        if (twinkleDensity) effectParams.density = parseInt(twinkleDensity.value);
+                        if (twinkleColor) effectParams.color = twinkleColor.value;
                         break;
                     case 'chase':
                         const chaseSpeed = document.getElementById('chase-speed');
+                        const chaseTrailLength = document.getElementById('chase-trail-length');
                         const chaseColor = document.getElementById('chase-color');
-                        if (chaseSpeed) effectParams.speed = parseInt(chaseSpeed.value) || 15;
-                        if (chaseColor) effectParams.color = chaseColor.value || '#00ff00';
+                        if (chaseSpeed) effectParams.speed = parseInt(chaseSpeed.value);
+                        if (chaseTrailLength) effectParams.trail_length = parseInt(chaseTrailLength.value);
+                        if (chaseColor) effectParams.color = chaseColor.value;
                         break;
                     case 'pulse':
+                        const pulseSpeed = document.getElementById('pulse-speed');
                         const pulseColor = document.getElementById('pulse-color');
-                        const pulseDuration = document.getElementById('pulse-duration');
-                        if (pulseColor) effectParams.color = pulseColor.value || '#800080';
-                        if (pulseDuration) effectParams.pulse_duration = parseInt(pulseDuration.value) || 1000;
+                        if (pulseSpeed) effectParams.speed = parseInt(pulseSpeed.value);
+                        if (pulseColor) effectParams.color = pulseColor.value;
                         break;
                     case 'matrix':
                         const matrixSpeed = document.getElementById('matrix-speed');
-                        if (matrixSpeed) effectParams.speed = parseInt(matrixSpeed.value) || 20;
+                        const matrixColor = document.getElementById('matrix-color');
+                        if (matrixSpeed) effectParams.speed = parseInt(matrixSpeed.value);
+                        if (matrixColor) effectParams.color = matrixColor.value;
                         break;
-                    default:
-                        effectParams.color = 'blue'; // Default color
                 }
                 
                 const response = await fetch('/api/led-test', {
