@@ -1,9 +1,16 @@
-# Scribe Evolution
+# Scribe ESP32-C3 Thermal Printer
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ScribeEvolution-FullHoriz-light.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/ScribeEvolution-FullHoriz.svg">
+  <img alt="Scribe Logo" src="docs/assets/ScribeEvolution-FullHoriz.svg">
+</picture>
 
 Your networked ESP32-C3 for thermal printing delights.
 
 ![Scribe Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
 
+# Scribe Evolution
 ## Key Features
 
 ### Hardware Platform
