@@ -96,13 +96,12 @@ function initializeSharedUI() {
  * Initialize tooltips and help text
  */
 function initializeTooltips() {
-  // Add hover effects for info icons
+  // Add hover effects for info icons if needed
   const infoIcons = document.querySelectorAll('.info-icon');
-  infoIcons.forEach(icon => {
-    icon.addEventListener('mouseenter', function() {
-      // Show tooltip logic here if needed
-    });
-  });
+  if (infoIcons.length > 0) {
+    // Currently no tooltip implementation needed
+    // This function remains for future tooltip functionality
+  }
 }
 
 /**

@@ -24,7 +24,6 @@ function initializePrinterDiscovery() {
         console.log('🖨️ Real-time printer update received');
         const data = JSON.parse(event.data);
         updatePrintersFromData(data);
-        refreshPrinterUI();
       } catch (error) {
         console.error('Error parsing printer update:', error);
       }
@@ -73,15 +72,6 @@ function updatePrintersFromData(printerData) {
     });
     document.dispatchEvent(event);
   }
-}
-
-/**
- * Refresh UI elements that show printer information
- * This is now handled by Alpine.js reactive stores
- */
-function refreshPrinterUI() {
-  // This is now automatically handled by Alpine.js reactivity
-  // The updatePrintersFromData function dispatches events that stores listen to
 }
 
 /**
