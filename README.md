@@ -1,28 +1,43 @@
-# Scribe Evolution
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ScribeEvolution-FullHoriz-light.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/ScribeEvolution-FullHoriz.svg">
+  <img alt="Scribe Logo" src="docs/assets/ScribeEvolution-FullHoriz.svg">
+</picture>
 
-Your networked ESP32-C3 for thermal printing delights.
+**An AI-powered, network-connected thermal printer to bring you joy**
+
+Scribe transforms a simple thermal printer into an intelligent, delightful device that can surprise you with jokes, help you with daily tasks, create ambient lighting effects, and integrate seamlessly into your smart home ecosystem.
 
 ![Scribe Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
 
-## Key Features
 
-### Hardware Platform
-- **ESP32-C3 support** - Changed from the original project ESP8266 to a more capable ESP32-C3 with hardware serial communication
-- **CSN-A4L thermal printer** - Commercial-grade printer with reliable performance
+### 🔑 **Features**
+- **Physical Buttons**: Dedicated hardware controls for instant content generation
+- **Content Library**: Curated collections of jokes, riddles, quotes, and trivia
+- **LED Effects**: Add an LED strip for lighting awesomeness.
+- **Apple Shortcuts Ready**: Print anything from your iPhone with a tap
 
-### Network & Remote Capabilities  
-- **MQTT remote printing** - Network multiple Scribe printers, print from anywhere with an HTTP-to-MQTT bridge
-- **mDNS integration** - Local access via http://scribe-[devicename].local as well as local IP address
+### 🕸️ **Network-First Design**
+- **MQTT Integration**: Network multiple printers, print from anywhere in the world
+- **mDNS Discovery**: Access via `http://scribe-[devicename].local` - no IP hunting
+- **Remote Control**: Print from iOS shortcuts, web services, or custom applications
+- **Multi-Device Orchestration**: Coordinate content across multiple Scribe Evolution printers
 
-### Content & Automation
-- **Quick fun buttons** - Jokes, quotes, riddles, quiz questions etc
-- **Apple Shortcuts support** - Print from anywhere via a HTTP-to-MQTT bridge
+### 🤖 **AI-Powered Content Generation**
+- **Quick Fun Actions**: Instant jokes, quotes, riddles, weather reports, and daily news briefings
+- **Unbidden Ink**: Scheduled AI-generated content that appears automatically throughout your day
 
-### Developer Experience
-- **Comprehensive logging** - Multiple output destinations (Serial, file, MQTT, BetterStack)
-- **Modular codebase** - Well-organized, documented, and testable architecture  
-- **Configuration centralization** - Settings centralised to `src/config.h` then stored to NVS which survive firmware updates, with many user configurable on the front-end.
-- **Modern tooling** - PlatformIO, npm build system, automated testing. Not a monolithic Arduino .ino.
+### 🎛️ **Solid Build**
+- **Web-Based Interface**: Responsive design works on phones, tablets, and desktops
+- **Persistent Settings**: NVS storage preserves all configurations across firmware updates
+- **Real-Time Diagnostics**: Monitor system health, memory usage, network status, and hardware
+- **Comprehensive Logging**: Multiple output destinations including BetterStack integration
+
+### 🛠️ **Developer Experience**
+- **Modern Architecture**: Modular C++ codebase with proper separation of concerns
+- **Build Automation**: Integrated npm and PlatformIO workflows
+- **Configuration Management**: Centralized settings with environment-specific overrides
+- **Documentation**: Extensive guides covering aspects of the system
 
 ## Quick Start
 
