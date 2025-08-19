@@ -16,6 +16,7 @@ window.IndexStore = function() {
     message: '',
     selectedPrinter: 'local-direct',
     submitting: false,
+    buttonTextOverride: null,
     
     // Printer state
     printers: [],
@@ -190,8 +191,13 @@ window.IndexStore = function() {
         
         if (response.ok) {
           const result = await response.json();
-          this.showToast(result.message || 'Message sent successfully!', 'success');
           this.message = ''; // Clear form
+          
+          // Show "Scribed" text for 2 seconds instead of toast
+          this.buttonTextOverride = '✅ Scribed';
+          setTimeout(() => {
+            this.buttonTextOverride = null;
+          }, 2000);
         } else {
           const errorData = await response.text();
           this.showToast(`Error: ${errorData}`, 'error');

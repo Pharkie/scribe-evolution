@@ -276,6 +276,19 @@
                                 Frequency:
                             </label>
 
+                            <!-- Frequency markers -->
+                            <div class="mx-2">
+                                <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2">
+                                    <span>15min</span>
+                                    <span>30min</span>
+                                    <span>1hr</span>
+                                    <span>2hr</span>
+                                    <span>4hr</span>
+                                    <span>6hr</span>
+                                    <span>8hr</span>
+                                </div>
+                            </div>
+
                             <div class="space-y-3">
                                 <input type="range" min="0" max="6" step="1"
                                     class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple"
@@ -298,22 +311,30 @@
                             </label>
                             <div class="grid grid-cols-2 gap-3">
                                 <button type="button" @click="setQuickPrompt('creative')"
-                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    :class="isPromptActive('creative') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
                                     <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🎨 Creative</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Artistic & imaginative content</div>
                                 </button>
                                 <button type="button" @click="setQuickPrompt('doctorwho')"
-                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    :class="isPromptActive('doctorwho') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
                                     <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🚀 Doctor Who</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Sci-fi themed content</div>
                                 </button>
                                 <button type="button" @click="setQuickPrompt('wisdom')"
-                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    :class="isPromptActive('wisdom') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
                                     <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🧙 Wisdom</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Philosophical insights</div>
                                 </button>
                                 <button type="button" @click="setQuickPrompt('humor')"
-                                    class="p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                    :class="isPromptActive('humor') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
                                     <div class="font-medium text-sm text-gray-800 dark:text-gray-100">😄 Humor</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Jokes & funny content</div>
                                 </button>

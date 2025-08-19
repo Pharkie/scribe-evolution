@@ -122,35 +122,30 @@
                 <div class="vertical-stack">
                     <label class="form-label">Quick Actions:</label>
                     <div class="quick-actions-grid">
-                        <button type="button" @click="sendQuickAction('haiku')" class="quick-action-btn"
-                            data-action="haiku">
-                            <span class="text-2xl">🎋</span>
-                            <span class="font-medium">Haiku</span>
-                        </button>
-                        <button type="button" @click="sendQuickAction('fact')" class="quick-action-btn"
-                            data-action="fact">
-                            <span class="text-2xl">💡</span>
-                            <span class="font-medium">Fact</span>
-                        </button>
                         <button type="button" @click="sendQuickAction('joke')" class="quick-action-btn"
                             data-action="joke">
                             <span class="text-2xl">😄</span>
                             <span class="font-medium">Joke</span>
                         </button>
+                        <button type="button" @click="sendQuickAction('riddle')" class="quick-action-btn"
+                            data-action="riddle">
+                            <span class="text-2xl">🧩</span>
+                            <span class="font-medium">Riddle</span>
+                        </button>
                         <button type="button" @click="sendQuickAction('quote')" class="quick-action-btn"
                             data-action="quote">
-                            <span class="text-2xl">💬</span>
+                            <span class="text-2xl">💭</span>
                             <span class="font-medium">Quote</span>
                         </button>
-                        <button type="button" @click="sendQuickAction('story')" class="quick-action-btn"
-                            data-action="story">
-                            <span class="text-2xl">📖</span>
-                            <span class="font-medium">Story</span>
+                        <button type="button" @click="sendQuickAction('quiz')" class="quick-action-btn"
+                            data-action="quiz">
+                            <span class="text-2xl">🧠</span>
+                            <span class="font-medium">Quiz</span>
                         </button>
-                        <button type="button" @click="sendQuickAction('weather')" class="quick-action-btn"
-                            data-action="weather">
-                            <span class="text-2xl">🌤️</span>
-                            <span class="font-medium">Weather</span>
+                        <button type="button" @click="sendQuickAction('news')" class="quick-action-btn"
+                            data-action="news">
+                            <span class="text-2xl">📰</span>
+                            <span class="font-medium">News</span>
                         </button>
                     </div>
                 </div>
@@ -158,9 +153,10 @@
                 <!-- Submit Button -->
                 <button type="submit" :disabled="!canSubmit" :class="{
                         'opacity-50 cursor-not-allowed': !canSubmit,
-                        'hover:bg-orange-700': canSubmit
-                    }" class="btn-primary btn-lg transition-all duration-200">
-                    <span x-show="!submitting">🖨️ Print Message</span>
+                        'hover:bg-blue-600 dark:hover:bg-blue-500': canSubmit
+                    }" class="w-full px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                    <span x-show="!submitting && !buttonTextOverride">🖨️ Print Message</span>
+                    <span x-show="!submitting && buttonTextOverride" x-text="buttonTextOverride"></span>
                     <span x-show="submitting" class="flex items-center justify-center">
                         <span class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
                         Printing...

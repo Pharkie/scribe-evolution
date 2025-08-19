@@ -166,8 +166,8 @@ function initializeSettingsStore() {
         async saveConfiguration() {
             // Validate form before saving
             if (!this.validateForm()) {
-                this.ui.showValidationFeedback = true;
-                this.showMessage('Please fix the errors in the form before saving', 'error');
+                this.showValidationFeedback = true;
+                showMessage('Please fix the errors in the form before saving', 'error');
                 return;
             }
             
@@ -176,8 +176,8 @@ function initializeSettingsStore() {
                 // Use existing SettingsAPI with reactive config
                 const message = await window.SettingsAPI.saveConfiguration(this.config);
                 
-                this.showMessage(message, 'success');
-                this.ui.showValidationFeedback = false;
+                showMessage(message, 'success');
+                this.showValidationFeedback = false;
                 
                 // Trigger LED confirmation effect if available
                 if (window.SettingsLED && window.SettingsLED.triggerEffect) {
@@ -187,7 +187,7 @@ function initializeSettingsStore() {
                 console.log('Alpine Store: Configuration saved successfully');
             } catch (error) {
                 console.error('Alpine Store: Failed to save configuration:', error);
-                this.showMessage('Failed to save configuration: ' + error.message, 'error');
+                showMessage('Failed to save configuration: ' + error.message, 'error');
             } finally {
                 this.saving = false;
             }
@@ -195,8 +195,8 @@ function initializeSettingsStore() {
         
         // Helper methods
         formatHour(hour) {
-            if (hour === 0) return '00:00 (All Day)';
-            if (hour === 24) return '24:00 (All Day)';
+            if (hour === 0) return '00:00';
+            if (hour === 24) return '24:00';
             return hour.toString().padStart(2, '0') + ':00';
         },
         
@@ -484,7 +484,7 @@ function initializeSettingsStore() {
                         effectParams.color = 'blue'; // Default color
                 }
                 
-                const response = await fetch('/api/led-effect', {
+                const response = await fetch('/api/led-test', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(effectParams)
@@ -496,13 +496,13 @@ function initializeSettingsStore() {
                 
                 const result = await response.json();
                 if (result.success) {
-                    window.showMessage(`Testing ${effectName} effect for 10 seconds`, 'info');
+                    showMessage(`Testing ${effectName} effect for 10 seconds`, 'info');
                 } else {
                     throw new Error(result.message);
                 }
             } catch (error) {
                 console.error('LED effect test failed:', error);
-                window.showMessage(`Failed to test LED effect: ${error.message}`, 'error');
+                showMessage(`Failed to test LED effect: ${error.message}`, 'error');
             }
         },
         
@@ -523,13 +523,13 @@ function initializeSettingsStore() {
                 
                 const result = await response.json();
                 if (result.success) {
-                    window.showMessage('LEDs turned off', 'success');
+                    showMessage('LEDs turned off', 'success');
                 } else {
                     throw new Error(result.message);
                 }
             } catch (error) {
                 console.error('Turn off LEDs failed:', error);
-                window.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
+                showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
             }
         },
         
@@ -558,6 +558,18 @@ function initializeSettingsStore() {
             if (prompts[type]) {
                 this.config.unbiddenInk.prompt = prompts[type];
             }
+        },
+        
+        // Check if a prompt preset is currently active
+        isPromptActive(type) {
+            const prompts = {
+                creative: "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+                doctorwho: "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone.",
+                wisdom: "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
+                humor: "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining."
+            };
+            
+            return this.config.unbiddenInk.prompt === prompts[type];
         },
         
         // Frequency slider specific values
