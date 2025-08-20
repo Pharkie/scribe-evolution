@@ -115,24 +115,23 @@ function initializeDiagnosticsStore() {
     
     // Microcontroller computed properties
     get microcontrollerInfo() {
-      const hardware = this.diagnosticsData.hardware || {};
-      const system = this.diagnosticsData.system || {};
+      const microcontroller = this.diagnosticsData.microcontroller || {};
       
       return {
-        chipModel: hardware.chip_model || 'Unknown',
-        cpuFrequency: hardware.cpu_frequency_mhz ? `${hardware.cpu_frequency_mhz} MHz` : '-',
-        flashSize: this.formatBytes(system.flash?.total_chip_size),
-        firmwareVersion: hardware.sdk_version || '-',
-        uptime: this.formatUptime(system.uptime_ms / 1000),
-        temperature: this.formatTemperature(hardware.temperature)
+        chipModel: microcontroller.chip_model || 'Unknown',
+        cpuFrequency: microcontroller.cpu_frequency_mhz ? `${microcontroller.cpu_frequency_mhz} MHz` : '-',
+        flashSize: this.formatBytes(microcontroller.flash?.total_chip_size),
+        firmwareVersion: microcontroller.sdk_version || '-',
+        uptime: this.formatUptime(microcontroller.uptime_ms / 1000),
+        temperature: this.formatTemperature(microcontroller.temperature)
       };
     },
     
     // Memory usage computed properties
     get memoryUsage() {
-      const system = this.diagnosticsData.system || {};
-      const flash = system.flash?.app_partition || {};
-      const memory = system.memory || {};
+      const microcontroller = this.diagnosticsData.microcontroller || {};
+      const flash = microcontroller.flash?.app_partition || {};
+      const memory = microcontroller.memory || {};
       
       const flashUsed = flash.total ? ((flash.used || 0) / flash.total) * 100 : 0;
       const heapUsed = memory.total_heap ? ((memory.used_heap || 0) / memory.total_heap) * 100 : 0;
@@ -147,7 +146,7 @@ function initializeDiagnosticsStore() {
     
     // Logging computed properties
     get loggingInfo() {
-      const logging = this.diagnosticsData.features?.logging || {};
+      const logging = this.diagnosticsData.logging || {};
       return {
         level: logging.level_name || 'Unknown',
         serialLogging: logging.serial_enabled ? 'Enabled' : 'Disabled',
@@ -159,7 +158,7 @@ function initializeDiagnosticsStore() {
     
     // Web pages computed properties (renamed to sortedRoutes)
     get sortedRoutes() {
-      const routes = this.diagnosticsData.endpoints?.web_pages || [];
+      const routes = this.diagnosticsData.pages_and_endpoints?.web_pages || [];
       
       // Separate HTML pages from other routes
       const htmlPages = [];
@@ -210,7 +209,7 @@ function initializeDiagnosticsStore() {
     
     // API endpoints computed properties
     get apiEndpoints() {
-      const endpoints = this.diagnosticsData.endpoints?.api_endpoints || [];
+      const endpoints = this.diagnosticsData.pages_and_endpoints?.api_endpoints || [];
       const grouped = {};
       
       endpoints.forEach(endpoint => {
@@ -218,6 +217,11 @@ function initializeDiagnosticsStore() {
           grouped[endpoint.method] = [];
         }
         grouped[endpoint.method].push(endpoint);
+      });
+      
+      // Sort endpoints alphabetically within each method group
+      Object.keys(grouped).forEach(method => {
+        grouped[method].sort((a, b) => a.path.localeCompare(b.path));
       });
       
       return grouped;

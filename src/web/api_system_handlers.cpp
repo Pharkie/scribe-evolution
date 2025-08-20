@@ -41,12 +41,14 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     DynamicJsonDocument doc(4096);
 
-    // === HARDWARE INFORMATION ===
-    JsonObject hardware = doc.createNestedObject("hardware");
-    hardware["chip_model"] = ESP.getChipModel();
-    hardware["chip_revision"] = ESP.getChipRevision();
-    hardware["cpu_frequency_mhz"] = ESP.getCpuFreqMHz();
-    hardware["sdk_version"] = ESP.getSdkVersion();
+    // === MICROCONTROLLER SECTION ===
+    JsonObject microcontroller = doc.createNestedObject("microcontroller");
+
+    // Hardware information
+    microcontroller["chip_model"] = ESP.getChipModel();
+    microcontroller["chip_revision"] = ESP.getChipRevision();
+    microcontroller["cpu_frequency_mhz"] = ESP.getCpuFreqMHz();
+    microcontroller["sdk_version"] = ESP.getSdkVersion();
 
     // Reset reason
     esp_reset_reason_t resetReason = esp_reset_reason();
@@ -87,7 +89,7 @@ void handleDiagnostics(AsyncWebServerRequest *request)
         resetReasonStr = "Unknown";
         break;
     }
-    hardware["reset_reason"] = resetReasonStr;
+    microcontroller["reset_reason"] = resetReasonStr;
 
     // Temperature (ESP32-C3 internal sensor)
     float temp = temperatureRead();
@@ -96,28 +98,27 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     if (isfinite(temp) && temp > -100 && temp < 200) // Very lenient range for debugging
     {
-        hardware["temperature"] = temp;
+        microcontroller["temperature"] = temp;
         LOG_VERBOSE("WEB", "Temperature added to JSON: %.2f°C", temp);
     }
     else
     {
-        hardware["temperature"] = nullptr; // Explicitly set to null for JSON
+        microcontroller["temperature"] = nullptr; // Explicitly set to null for JSON
         LOG_WARNING("WEB", "Invalid temperature reading filtered out: %.2f°C (isnan: %s, isfinite: %s)",
                     temp, isnan(temp) ? "true" : "false", isfinite(temp) ? "true" : "false");
     }
 
-    // === SYSTEM STATUS ===
-    JsonObject system = doc.createNestedObject("system");
-    system["uptime_ms"] = millis();
+    // System status
+    microcontroller["uptime_ms"] = millis();
 
     // Memory information
-    JsonObject memory = system.createNestedObject("memory");
+    JsonObject memory = microcontroller.createNestedObject("memory");
     memory["free_heap"] = ESP.getFreeHeap();
     memory["total_heap"] = ESP.getHeapSize();
     memory["used_heap"] = ESP.getHeapSize() - ESP.getFreeHeap();
 
     // Flash storage breakdown
-    JsonObject flash = system.createNestedObject("flash");
+    JsonObject flash = microcontroller.createNestedObject("flash");
 
     // Total flash chip size (4MB on ESP32-C3)
     uint32_t totalFlashSize = ESP.getFlashChipSize();
@@ -154,11 +155,8 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     filesystem["total"] = totalBytes;
     filesystem["percent_of_total_flash"] = (totalBytes * 100) / totalFlashSize;
 
-    // === FEATURES STATUS ===
-    JsonObject features = doc.createNestedObject("features");
-
-    // Logging configuration
-    JsonObject logging = features.createNestedObject("logging");
+    // === LOGGING CONFIGURATION ===
+    JsonObject logging = doc.createNestedObject("logging");
     logging["level"] = logLevel;
     logging["level_name"] = getLogLevelString(logLevel);
     logging["serial_enabled"] = enableSerialLogging;
@@ -166,14 +164,9 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     logging["mqtt_enabled"] = enableMQTTLogging;
     logging["betterstack_enabled"] = enableBetterStackLogging;
 
-    // === AVAILABLE ENDPOINTS ===
-    JsonObject endpoints = doc.createNestedObject("endpoints");
-    addRegisteredRoutesToJson(endpoints);
-
-    // === CONFIGURATION LIMITS ===
-    JsonObject config = doc.createNestedObject("configuration");
-    config["max_message_chars"] = runtimeConfig.maxCharacters;
-    config["max_prompt_chars"] = maxPromptCharacters;
+    // === PAGES AND ENDPOINTS ===
+    JsonObject pages_and_endpoints = doc.createNestedObject("pages_and_endpoints");
+    addRegisteredRoutesToJson(pages_and_endpoints);
 
     // Serialize and send
     String response;

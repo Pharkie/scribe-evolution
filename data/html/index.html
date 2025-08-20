@@ -7,11 +7,11 @@
     <title>Scribe</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/index.min.css">
-    <script src="/js/vendor.min.js" defer></script>
     <script src="/js/page-index.min.js"></script>
+    <script src="/js/vendor.min.js" defer></script>
 </head>
 
-<body class="page-body" x-data="initializeIndexStore()">
+<body class="page-body" x-data="initializeIndexStore()" x-init="init()">
     <main class="page-main">
         <!-- Header with title and dark mode toggle -->
         <header class="page-header">
@@ -28,7 +28,8 @@
 
             <!-- Right spacer with settings button -->
             <div class="header-spacer flex justify-end">
-                <button @click="goToSettings()" class="status-indicator">
+                <button @click="goToSettings()"
+                    :class="settingsStashed ? 'status-indicator-stashed' : 'status-indicator'">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
@@ -36,7 +37,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    <span class="text-xs sm:text-sm font-medium">Settings</span>
+                    <span class="text-xs sm:text-sm font-medium"
+                        x-text="settingsStashed ? 'Stashed' : 'Settings'"></span>
                 </button>
             </div>
         </header>
@@ -135,29 +137,44 @@
                 <div class="vertical-stack-md mt-8">
                     <div class="quick-actions-grid">
                         <button type="button" @click="sendQuickAction('riddle')"
-                            class="action-button action-button-yellow quick-action-btn" data-action="riddle">
+                            class="action-button action-button-yellow quick-action-btn"
+                            :class="{ 'opacity-75': activeQuickAction === 'riddle' }"
+                            :disabled="activeQuickAction !== null" data-action="riddle">
                             <span class="action-button-icon">🧩</span>
-                            <span class="action-button-label">Riddle</span>
+                            <span class="action-button-label"
+                                x-text="activeQuickAction === 'riddle' ? 'Scribing' : 'Riddle'"></span>
                         </button>
                         <button type="button" @click="sendQuickAction('joke')"
-                            class="action-button action-button-emerald quick-action-btn" data-action="joke">
+                            class="action-button action-button-emerald quick-action-btn"
+                            :class="{ 'opacity-75': activeQuickAction === 'joke' }"
+                            :disabled="activeQuickAction !== null" data-action="joke">
                             <span class="action-button-icon">😄</span>
-                            <span class="action-button-label">Joke</span>
+                            <span class="action-button-label"
+                                x-text="activeQuickAction === 'joke' ? 'Scribing' : 'Joke'"></span>
                         </button>
                         <button type="button" @click="sendQuickAction('quote')"
-                            class="action-button action-button-purple quick-action-btn" data-action="quote">
+                            class="action-button action-button-purple quick-action-btn"
+                            :class="{ 'opacity-75': activeQuickAction === 'quote' }"
+                            :disabled="activeQuickAction !== null" data-action="quote">
                             <span class="action-button-icon">💭</span>
-                            <span class="action-button-label">Quote</span>
+                            <span class="action-button-label"
+                                x-text="activeQuickAction === 'quote' ? 'Scribing' : 'Quote'"></span>
                         </button>
                         <button type="button" @click="sendQuickAction('quiz')"
-                            class="action-button action-button-cyan quick-action-btn" data-action="quiz">
+                            class="action-button action-button-cyan quick-action-btn"
+                            :class="{ 'opacity-75': activeQuickAction === 'quiz' }"
+                            :disabled="activeQuickAction !== null" data-action="quiz">
                             <span class="action-button-icon">🧠</span>
-                            <span class="action-button-label">Quiz</span>
+                            <span class="action-button-label"
+                                x-text="activeQuickAction === 'quiz' ? 'Scribing' : 'Quiz'"></span>
                         </button>
                         <button type="button" @click="sendQuickAction('news')"
-                            class="action-button action-button-orange quick-action-btn" data-action="news">
+                            class="action-button action-button-orange quick-action-btn"
+                            :class="{ 'opacity-75': activeQuickAction === 'news' }"
+                            :disabled="activeQuickAction !== null" data-action="news">
                             <span class="action-button-icon">📰</span>
-                            <span class="action-button-label">News</span>
+                            <span class="action-button-label"
+                                x-text="activeQuickAction === 'news' ? 'Scribing' : 'News'"></span>
                         </button>
                     </div>
                 </div>

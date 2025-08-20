@@ -16,8 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Setup back button event listeners
   setupBackButtonListeners();
   
-  // Alpine.js now auto-starts, no need to start it manually
-  console.log('🏔️ Shared functionality initialized, Alpine.js will auto-start');
+  console.log('🏔️ Shared functionality initialized');
 });
 
 /**

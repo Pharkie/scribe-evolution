@@ -28,8 +28,14 @@ function initializeIndexStore() {
     overlayPrinterName: '',
     overlayPrinterType: 'mqtt',
     
+    // Settings stashed indicator
+    settingsStashed: false,
+    
     // Toast state
     toasts: [],
+    
+    // Active quick action (only one can be active at a time)
+    activeQuickAction: null,
     
     // Character limits
     get maxChars() {
@@ -192,13 +198,23 @@ function initializeIndexStore() {
       this.submitting = true;
       
       try {
-        const formData = {
-          message: this.message.trim(),
-          'printer-target': this.selectedPrinter
-        };
+        let formData;
+        let endpoint;
         
-        // Determine endpoint based on printer target
-        const endpoint = this.selectedPrinter === 'local-direct' ? '/api/print-local' : '/api/print-mqtt';
+        // Build payload based on printer target
+        if (this.selectedPrinter === 'local-direct') {
+          formData = {
+            message: this.message.trim()
+          };
+          endpoint = '/api/print-local';
+        } else {
+          // For MQTT printing, use "topic" instead of "printer-target"
+          formData = {
+            message: this.message.trim(),
+            topic: this.selectedPrinter
+          };
+          endpoint = '/api/print-mqtt';
+        }
         
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -223,7 +239,15 @@ function initializeIndexStore() {
     
     // Quick actions
     async sendQuickAction(action) {
+      // Prevent double-clicking while any action is in progress
+      if (this.activeQuickAction) {
+        return;
+      }
+      
       try {
+        // Set active action - Alpine.js will reactively update the UI
+        this.activeQuickAction = action;
+        
         const endpoint = `/api/${action}`;
         
         const response = await fetch(endpoint, {
@@ -244,22 +268,42 @@ function initializeIndexStore() {
           return;
         }
 
-        // Print the content locally
-        const printResponse = await fetch('/api/print-local', {
+        // Print the content using the selected printer
+        let printData;
+        let printEndpoint;
+        
+        if (this.selectedPrinter === 'local-direct') {
+          printData = { message: contentResult.content };
+          printEndpoint = '/api/print-local';
+        } else {
+          // For MQTT printing, use "topic" field
+          printData = { 
+            message: contentResult.content,
+            topic: this.selectedPrinter
+          };
+          printEndpoint = '/api/print-mqtt';
+        }
+
+        const printResponse = await fetch(printEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: contentResult.content })
+          body: JSON.stringify(printData)
         });
 
-        if (printResponse.ok) {
-          this.showToast(`${action} sent to printer successfully!`, 'success');
-        } else {
+        if (!printResponse.ok) {
           const errorData = await printResponse.text();
           this.showToast(`Print error: ${errorData}`, 'error');
         }
+        // Note: No success toast - button state change provides feedback
+        
       } catch (error) {
         console.error('Error sending quick action:', error);
         this.showToast(`Network error: ${error.message}`, 'error');
+      } finally {
+        // Reset active action after 2 seconds - Alpine.js will reactively update UI
+        setTimeout(() => {
+          this.activeQuickAction = null;
+        }, 2000);
       }
     },
     
@@ -431,7 +475,19 @@ function initializeIndexStore() {
     // Check for settings success
     checkForSettingsSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('settings_saved') === 'true') {
+      if (urlParams.get('settings') === 'stashed') {
+        // Show "Stashed" indicator on settings button for 3 seconds with orange fade animation
+        this.settingsStashed = true;
+        setTimeout(() => {
+          this.settingsStashed = false;
+        }, 3000);
+        
+        // Clean up URL
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+      // Legacy support for old parameter
+      else if (urlParams.get('settings_saved') === 'true') {
         this.showToast('💾 Settings saved', 'success');
         
         // Clean up URL

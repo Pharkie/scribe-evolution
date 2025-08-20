@@ -252,8 +252,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
     // Validate required top-level sections exist
-    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "validation", "unbiddenInk", "buttons", "leds"};
-    for (int i = 0; i < 8; i++)
+    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "unbiddenInk", "buttons", "leds"};
+    for (int i = 0; i < 7; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -343,21 +343,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.betterStackEndpoint = betterStackEndpoint;
     newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
-    // Validate validation configuration (only maxCharacters)
-    JsonObject validation = doc["validation"];
-    if (!validation.containsKey("maxCharacters"))
-    {
-        sendValidationError(request, ValidationResult(false, "Missing required maxCharacters field"));
-        return;
-    }
-
-    int maxChars = validation["maxCharacters"];
-    if (maxChars < 100 || maxChars > 5000)
-    {
-        sendValidationError(request, ValidationResult(false, "Max characters must be between 100 and 5000"));
-        return;
-    }
-    newConfig.maxCharacters = maxChars;
+    // Validation configuration is hardcoded from config.h
+    newConfig.maxCharacters = maxCharacters;
 
     // Validate unbidden ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];

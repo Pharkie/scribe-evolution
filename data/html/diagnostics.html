@@ -7,11 +7,11 @@
     <title>Scribe - Diagnostics</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/diagnostics.min.css">
+    <script src="/js/page-diagnostics.min.js"></script>
     <script src="/js/vendor.min.js" defer></script>
-    <script src="/js/page-diagnostics.min.js" defer></script>
 </head>
 
-<body class="page-body" x-data="initializeDiagnosticsStore()">
+<body class="page-body" x-data="initializeDiagnosticsStore()" x-init="init()">
     <main class="page-main">
         <header class="page-header">
             <div class="header-spacer">

@@ -7,10 +7,12 @@
     <title>Settings - Scribe</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/settings.min.css">
+    <script src="/js/page-settings.min.js"></script>
+    <script src="/js/vendor.min.js" defer></script>
 </head>
 
 <body class="page-body">
-    <main class="page-main" x-data="initializeSettingsStore()">
+    <main class="page-main" x-data="initializeSettingsStore()" x-init="init()">
         <!-- Header with title and back button -->
         <header class="page-header">
             <!-- Back button -->
@@ -56,97 +58,6 @@
         <!-- Settings Content -->
         <div x-show="!loading && !error" class="space-y-6">
 
-            <!-- WiFi Section -->
-            <div x-show="activeSection === 'wifi'" class="settings-section">
-                <div class="settings-card settings-card-blue">
-                    <h2 class="settings-card-header settings-card-header-blue">
-                        <span class="text-3xl">📶</span>
-                        <span>WiFi</span>
-                    </h2>
-
-                    <!-- WiFi Warning -->
-                    <div class="warning-box">
-                        <div class="flex items-start space-x-3">
-                            <span class="text-2xl">⚠️</span>
-                            <div>
-                                <h3 class="warning-title">WiFi Change Warning
-                                </h3>
-                                <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
-                                    Changing WiFi settings will cause the device to restart and connect to the new
-                                    network. Make sure the SSID and password are correct, or you may lose connection to
-                                    the
-                                    device.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label for="wifi-ssid" class="form-label">WiFi SSID:</label>
-                            <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
-                                class="input-standard" x-model="config.wifi.ssid">
-                            <p x-show="validation.errors['wifi.ssid']" class="text-xs text-red-600 dark:text-red-400"
-                                x-text="validation.errors['wifi.ssid']"></p>
-                        </div>
-                        <div class="space-y-2">
-                            <label for="wifi-password" class="form-label">WiFi Password:</label>
-                            <input type="password" id="wifi-password" class="input-standard"
-                                x-model="config.wifi.password">
-                        </div>
-                        <div class="space-y-2">
-                            <label for="wifi-timeout" class="form-label">Connection Timeout (seconds):</label>
-                            <input type="number" id="wifi-timeout" min="5" max="60" class="input-standard"
-                                :value="Math.floor(config.wifi.connect_timeout / 1000)"
-                                @input="config.wifi.connect_timeout = parseInt($el.value) * 1000">
-                            <p x-show="validation.errors['wifi.connect_timeout']"
-                                class="text-xs text-red-600 dark:text-red-400"
-                                x-text="validation.errors['wifi.connect_timeout']"></p>
-                            <p x-show="!validation.errors['wifi.connect_timeout']"
-                                class="text-xs text-gray-500 dark:text-gray-400">
-                                Time to wait before falling back to AP mode (5-60 seconds)
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Current WiFi Status (Read-only) -->
-                    <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                        <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-4">Current WiFi Status</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <div class="text-sm">
-                                    <span class="font-medium text-gray-700 dark:text-gray-300">IP Address:</span>
-                                    <span class="text-gray-800 dark:text-gray-200"
-                                        x-text="config.wifi.status?.ip_address || '-'"></span>
-                                </div>
-                                <div class="text-sm">
-                                    <span class="font-medium text-gray-700 dark:text-gray-300">Signal Strength:</span>
-                                    <span class="text-gray-800 dark:text-gray-200"
-                                        x-text="config.wifi.status?.signal_strength || '-'"></span>
-                                </div>
-                                <div class="text-sm">
-                                    <span class="font-medium text-gray-700 dark:text-gray-300">MAC Address:</span>
-                                    <span class="text-gray-800 dark:text-gray-200"
-                                        x-text="config.wifi.status?.mac_address || '-'"></span>
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                <div class="text-sm">
-                                    <span class="font-medium text-gray-700 dark:text-gray-300">Gateway:</span>
-                                    <span class="text-gray-800 dark:text-gray-200"
-                                        x-text="config.wifi.status?.gateway || '-'"></span>
-                                </div>
-                                <div class="text-sm">
-                                    <span class="font-medium text-gray-700 dark:text-gray-300">DNS:</span>
-                                    <span class="text-gray-800 dark:text-gray-200"
-                                        x-text="config.wifi.status?.dns || '-'"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Device Section -->
             <div x-show="activeSection === 'device'" class="settings-section">
                 <div class="settings-card settings-card-purple">
@@ -155,7 +66,8 @@
                         <span>Device</span>
                     </h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Device Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="space-y-2">
                             <label for="device-owner" class="form-label">Device Owner:</label>
                             <input id="device-owner" type="text" placeholder="Enter device owner name"
@@ -176,13 +88,108 @@
                                 Asia/Tokyo, Australia/Sydney
                             </p>
                         </div>
-                        <div class="space-y-2">
-                            <label for="max-characters" class="form-label">Max Characters per Message:</label>
-                            <input type="number" id="max-characters" min="100" max="5000" class="input-standard"
-                                x-model.number="config.validation.maxCharacters">
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Maximum number of characters allowed per message (100-5000)
-                            </p>
+                    </div>
+
+                    <!-- WiFi Configuration -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-purple-800 dark:text-purple-100 mb-4 flex items-center">
+                            <span class="text-2xl mr-2">📶</span>
+                            <span>WiFi Configuration</span>
+                        </h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label for="wifi-ssid" class="form-label">WiFi SSID:</label>
+                                <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
+                                    class="input-standard" x-model="config.wifi.ssid">
+                                <p x-show="validation.errors['wifi.ssid']"
+                                    class="text-xs text-red-600 dark:text-red-400"
+                                    x-text="validation.errors['wifi.ssid']"></p>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="wifi-password" class="form-label">WiFi Password:</label>
+                                <input type="password" id="wifi-password" class="input-standard"
+                                    x-model="config.wifi.password">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="wifi-timeout" class="form-label">Connection Timeout (seconds):</label>
+                                <input type="number" id="wifi-timeout" min="5" max="60" class="input-standard"
+                                    :value="Math.floor(config.wifi.connect_timeout / 1000)"
+                                    @input="config.wifi.connect_timeout = parseInt($el.value) * 1000">
+                                <p x-show="validation.errors['wifi.connect_timeout']"
+                                    class="text-xs text-red-600 dark:text-red-400"
+                                    x-text="validation.errors['wifi.connect_timeout']"></p>
+                                <p x-show="!validation.errors['wifi.connect_timeout']"
+                                    class="text-xs text-gray-500 dark:text-gray-400">
+                                    Time to wait before falling back to AP mode (5-60 seconds)
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- WiFi Warning -->
+                        <div class="warning-box mt-4">
+                            <div class="flex items-start space-x-3">
+                                <span class="text-2xl">⚠️</span>
+                                <div>
+                                    <h4 class="warning-title">WiFi Change Warning</h4>
+                                    <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                                        Changing WiFi settings will cause the device to restart and connect to the new
+                                        network. Make sure the SSID and password are correct, or you may lose connection
+                                        to
+                                        the device.
+                                    </p>
+                                    <div class="mt-3 p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                                        <p class="text-xs font-semibold text-orange-800 dark:text-orange-200 mb-1">
+                                            Fallback Access Point:
+                                        </p>
+                                        <p class="text-xs text-orange-700 dark:text-orange-300">
+                                            If connection fails, the device will create an AP with SSID: <span
+                                                class="font-mono font-bold">Scribe-setup</span>
+                                            and password: <span class="font-mono font-bold">scribe123</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current WiFi Status (Read-only) -->
+                        <div class="status-info-box">
+                            <div class="status-info-header">
+                                <span class="text-2xl mr-2">📊</span>
+                                <span>Current WiFi Status</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">IP Address:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.wifi.status?.ip_address || '-'"></span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Signal
+                                            Strength:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.wifi.status?.signal_strength || '-'"></span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">MAC Address:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.wifi.status?.mac_address || '-'"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Gateway:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.wifi.status?.gateway || '-'"></span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">DNS:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.wifi.status?.dns || '-'"></span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -220,9 +227,11 @@
                     </div>
 
                     <!-- Current MQTT Status (Read-only) -->
-                    <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
-                        <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-4">Current MQTT Status
-                        </h3>
+                    <div class="status-info-box">
+                        <div class="status-info-header">
+                            <span class="text-2xl mr-2">📊</span>
+                            <span>Current MQTT Status</span>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-2">
                                 <div class="text-sm">
@@ -344,30 +353,13 @@
                                 Frequency:
                             </label>
 
-                            <!-- Frequency markers -->
-                            <div class="mx-2">
-                                <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2">
-                                    <span>15min</span>
-                                    <span>30min</span>
-                                    <span>1hr</span>
-                                    <span>2hr</span>
-                                    <span>4hr</span>
-                                    <span>6hr</span>
-                                    <span>8hr</span>
-                                </div>
-                            </div>
-
                             <div class="space-y-3">
                                 <!-- Frequency slider markers -->
                                 <div class="mx-2">
                                     <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2">
-                                        <span>15min</span>
-                                        <span>30min</span>
-                                        <span>1hr</span>
-                                        <span>2hr</span>
-                                        <span>4hr</span>
-                                        <span>6hr</span>
-                                        <span>8hr</span>
+                                        <template x-for="label in frequencyLabels" :key="label">
+                                            <span x-text="label"></span>
+                                        </template>
                                     </div>
                                 </div>
 
@@ -513,10 +505,12 @@
                             </div>
                         </template>
 
-                        <!-- Hardware Button Status (Read-only) -->
-                        <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
-                            <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-4">Hardware Button
-                                Configuration</h3>
+                        <!-- Hardware Button Configuration (Read-only) -->
+                        <div class="status-info-box">
+                            <div class="status-info-header">
+                                <span class="text-2xl mr-2">📊</span>
+                                <span>Hardware Button Configuration</span>
+                            </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                 <div class="space-y-2">
                                     <div>
@@ -714,7 +708,7 @@
                                             Color
                                         </label>
                                         <div x-ref="color1Pickr"
-                                            class="w-20 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
                                         </div>
                                     </div>
 
@@ -725,7 +719,7 @@
                                             Color 2
                                         </label>
                                         <div x-ref="color2Pickr"
-                                            class="w-20 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
                                         </div>
                                     </div>
 
@@ -735,7 +729,7 @@
                                             Color 3
                                         </label>
                                         <div x-ref="color3Pickr"
-                                            class="w-20 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
                                         </div>
                                     </div>
                                 </div>

@@ -20,21 +20,28 @@ function initializeSettingsStore() {
         config: {
             device: {
                 owner: '',
-                timezone: ''
+                timezone: '',
+                mqtt_topic: ''
             },
             wifi: {
                 ssid: '',
                 password: '',
-                connect_timeout: 15000
+                connect_timeout: 15000,
+                status: {
+                    connected: false,
+                    ip_address: '',
+                    mac_address: '',
+                    gateway: '',
+                    dns: '',
+                    signal_strength: ''
+                }
             },
             mqtt: {
                 server: '',
                 port: 1883,
                 username: '',
-                password: ''
-            },
-            validation: {
-                maxCharacters: 1000
+                password: '',
+                connected: false
             },
             apis: {
                 chatgptApiToken: ''
@@ -47,6 +54,14 @@ function initializeSettingsStore() {
                 prompt: ''
             },
             buttons: {
+                // Hardware configuration
+                count: null,
+                debounce_time: null,
+                long_press_time: null,
+                active_low: null,
+                min_interval: null,
+                max_per_minute: null,
+                // Individual button configurations
                 button1: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
                 button2: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
                 button3: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
@@ -68,7 +83,7 @@ function initializeSettingsStore() {
         },
         
         // UI state management
-        activeSection: 'wifi',
+        activeSection: 'device',
         showValidationFeedback: false,
         
         // LED Effect Parameters (WLED-style unified interface)
@@ -93,7 +108,6 @@ function initializeSettingsStore() {
         
         // Section definitions for navigation
         sections: [
-            { id: 'wifi', name: 'WiFi', icon: '📶', color: 'blue' },
             { id: 'device', name: 'Device', icon: '⚙️', color: 'purple' },
             { id: 'mqtt', name: 'MQTT', icon: '📡', color: 'yellow' },
             { id: 'unbidden', name: 'Unbidden Ink', icon: '🎲', color: 'green' },
@@ -187,6 +201,57 @@ function initializeSettingsStore() {
             }
         },
         
+        // Create a clean config object without read-only fields for server submission
+        createCleanConfig() {
+            const cleanConfig = {
+                device: {
+                    owner: this.config.device.owner,
+                    timezone: this.config.device.timezone
+                    // Exclude mqtt_topic as it's read-only
+                },
+                wifi: {
+                    ssid: this.config.wifi.ssid,
+                    password: this.config.wifi.password,
+                    connect_timeout: this.config.wifi.connect_timeout
+                    // Exclude status as it's read-only
+                },
+                mqtt: {
+                    server: this.config.mqtt.server,
+                    port: this.config.mqtt.port,
+                    username: this.config.mqtt.username,
+                    password: this.config.mqtt.password
+                    // Exclude connected as it's read-only
+                },
+                apis: {
+                    chatgptApiToken: this.config.apis.chatgptApiToken
+                },
+                unbiddenInk: {
+                    enabled: this.config.unbiddenInk.enabled,
+                    startHour: this.config.unbiddenInk.startHour,
+                    endHour: this.config.unbiddenInk.endHour,
+                    frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
+                    prompt: this.config.unbiddenInk.prompt
+                },
+                buttons: {
+                    // Include individual button configurations
+                    button1: this.config.buttons.button1,
+                    button2: this.config.buttons.button2,
+                    button3: this.config.buttons.button3,
+                    button4: this.config.buttons.button4
+                    // Exclude hardware config as it's read-only
+                },
+                leds: {
+                    pin: this.config.leds.pin,
+                    count: this.config.leds.count,
+                    brightness: this.config.leds.brightness,
+                    refreshRate: this.config.leds.refreshRate
+                }
+            };
+            
+            console.log('Alpine Store: Created clean config for server:', cleanConfig);
+            return cleanConfig;
+        },
+        
         // Save configuration to server
         async saveConfiguration() {
             // Validate form before saving
@@ -206,16 +271,16 @@ function initializeSettingsStore() {
             
             this.saving = true;
             try {
-                // Use existing SettingsAPI with reactive config
-                const message = await window.SettingsAPI.saveConfiguration(this.config);
+                // Create a clean copy of config without read-only fields
+                const cleanConfig = this.createCleanConfig();
                 
-                window.showMessage(message, 'success');
+                // Use existing SettingsAPI with cleaned config
+                const message = await window.SettingsAPI.saveConfiguration(cleanConfig);
+                
                 this.showValidationFeedback = false;
                 
-                // Trigger LED confirmation effect if available
-                if (window.SettingsLED && window.SettingsLED.triggerEffect) {
-                    window.SettingsLED.triggerEffect('chase_single', 'green', 3000);
-                }
+                // Redirect to index page with stashed indicator
+                window.location.href = '/?settings=stashed';
                 
                 console.log('Alpine Store: Configuration saved successfully');
             } catch (error) {
@@ -251,6 +316,7 @@ function initializeSettingsStore() {
             if (serverConfig.device) {
                 this.config.device.owner = serverConfig.device.owner ?? '';
                 this.config.device.timezone = serverConfig.device.timezone ?? 'America/New_York';
+                this.config.device.mqtt_topic = serverConfig.device.mqtt_topic ?? '';
             }
             
             // WiFi - provide fallbacks for missing values  
@@ -258,6 +324,16 @@ function initializeSettingsStore() {
                 this.config.wifi.ssid = serverConfig.wifi.ssid ?? '';
                 this.config.wifi.password = serverConfig.wifi.password ?? '';
                 this.config.wifi.connect_timeout = serverConfig.wifi.connect_timeout ?? 15000;
+                
+                // Load WiFi status data if available
+                if (serverConfig.wifi.status) {
+                    this.config.wifi.status.connected = serverConfig.wifi.status.connected ?? false;
+                    this.config.wifi.status.ip_address = serverConfig.wifi.status.ip_address ?? '';
+                    this.config.wifi.status.mac_address = serverConfig.wifi.status.mac_address ?? '';
+                    this.config.wifi.status.gateway = serverConfig.wifi.status.gateway ?? '';
+                    this.config.wifi.status.dns = serverConfig.wifi.status.dns ?? '';
+                    this.config.wifi.status.signal_strength = serverConfig.wifi.status.signal_strength ?? '';
+                }
             }
             
             // MQTT - provide fallbacks for missing values
@@ -266,11 +342,7 @@ function initializeSettingsStore() {
                 this.config.mqtt.port = serverConfig.mqtt.port ?? 1883;
                 this.config.mqtt.username = serverConfig.mqtt.username ?? '';
                 this.config.mqtt.password = serverConfig.mqtt.password ?? '';
-            }
-            
-            // Validation - provide fallbacks for missing values
-            if (serverConfig.validation) {
-                this.config.validation.maxCharacters = serverConfig.validation.maxCharacters ?? 1000;
+                this.config.mqtt.connected = serverConfig.mqtt.connected ?? false;
             }
             
             // APIs - provide fallbacks for missing values
@@ -289,6 +361,15 @@ function initializeSettingsStore() {
             
             // Buttons - provide fallbacks for missing values
             if (serverConfig.buttons) {
+                // Copy hardware configuration properties
+                this.config.buttons.count = serverConfig.buttons.count ?? null;
+                this.config.buttons.debounce_time = serverConfig.buttons.debounce_time ?? null;
+                this.config.buttons.long_press_time = serverConfig.buttons.long_press_time ?? null;
+                this.config.buttons.active_low = serverConfig.buttons.active_low ?? null;
+                this.config.buttons.min_interval = serverConfig.buttons.min_interval ?? null;
+                this.config.buttons.max_per_minute = serverConfig.buttons.max_per_minute ?? null;
+
+                // Copy individual button configurations
                 for (let i = 1; i <= 4; i++) {
                     const buttonKey = `button${i}`;
                     if (serverConfig.buttons[buttonKey]) {
@@ -312,12 +393,6 @@ function initializeSettingsStore() {
         },
         
         // Message display (delegates to existing system)
-        showMessage(message, type) {
-            if (window.SettingsUI && window.SettingsUI.showMessage) {
-                window.SettingsUI.showMessage(message, type);
-            }
-        },
-        
         // Form validation
         validateField(fieldName, value) {
             this.validation.touched[fieldName] = true;
@@ -361,15 +436,6 @@ function initializeSettingsStore() {
                         return false;
                     }
                     break;
-                    
-                case 'validation.maxCharacters':
-                    const maxChars = parseInt(value);
-                    if (isNaN(maxChars) || maxChars < 100 || maxChars > 5000) {
-                        this.validation.errors[fieldName] = 'Max characters must be between 100 and 5000';
-                        this.validation.isValid = false;
-                        return false;
-                    }
-                    break;
             }
             
             return true;
@@ -385,8 +451,7 @@ function initializeSettingsStore() {
                 'device.owner',
                 'wifi.ssid', 
                 'wifi.connect_timeout',
-                'mqtt.port',
-                'validation.maxCharacters'
+                'mqtt.port'
             ];
             
             if (this.config.unbiddenInk.enabled) {
@@ -542,12 +607,12 @@ function initializeSettingsStore() {
         // Initialize effect parameters based on selected effect  
         initEffectParams() {
             const defaults = {
-                'chase_single': { speed: 10, intensity: 50, palette: '#0062ff', color2: '#0062ff', color3: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
-                'rainbow': { speed: 20, intensity: 5, palette: '#ff0000', color2: '#ff0000', color3: '#ff0000', custom1: 5, custom2: 3, custom3: 1 },
-                'twinkle': { speed: 5, intensity: 10, palette: '#ffff00', color2: '#ffff00', color3: '#ffff00', custom1: 3, custom2: 2, custom3: 1 },
-                'chase_multi': { speed: 15, intensity: 10, palette: '#ff0000', color2: '#00ff00', color3: '#0000ff', custom1: 3, custom2: 5, custom3: 1 },
-                'pulse': { speed: 4, intensity: 50, palette: '#800080', color2: '#800080', color3: '#800080', custom1: 5, custom2: 3, custom3: 1 },
-                'matrix': { speed: 25, intensity: 20, palette: '#008000', color2: '#008000', color3: '#008000', custom1: 8, custom2: 10, custom3: 1 }
+                'chase_single': { speed: 10, intensity: 50, color1: '#0062ff', color2: '#0062ff', color3: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
+                'rainbow': { speed: 20, intensity: 5, color1: '#ff0000', color2: '#ff0000', color3: '#ff0000', custom1: 5, custom2: 3, custom3: 1 },
+                'twinkle': { speed: 5, intensity: 10, color1: '#ffff00', color2: '#ffff00', color3: '#ffff00', custom1: 3, custom2: 2, custom3: 1 },
+                'chase_multi': { speed: 15, intensity: 10, color1: '#ff0000', color2: '#00ff00', color3: '#0000ff', custom1: 3, custom2: 5, custom3: 1 },
+                'pulse': { speed: 4, intensity: 50, color1: '#800080', color2: '#800080', color3: '#800080', custom1: 5, custom2: 3, custom3: 1 },
+                'matrix': { speed: 25, intensity: 20, color1: '#008000', color2: '#008000', color3: '#008000', custom1: 8, custom2: 10, custom3: 1 }
             };
             
             if (defaults[this.selectedEffect]) {
@@ -635,6 +700,17 @@ function initializeSettingsStore() {
             return [15, 30, 60, 120, 240, 360, 480]; // 15min, 30min, 1hr, 2hr, 4hr, 6hr, 8hr
         },
         
+        get frequencyLabels() {
+            return this.frequencyOptions.map(minutes => {
+                if (minutes < 60) {
+                    return `${minutes}min`;
+                } else {
+                    const hours = minutes / 60;
+                    return `${hours}hr`;
+                }
+            });
+        },
+        
         get frequencySliderValue() {
             const options = this.frequencyOptions;
             const current = this.config?.unbiddenInk?.frequencyMinutes ?? 120;
@@ -656,12 +732,19 @@ function initializeSettingsStore() {
         initColorPickers() {
             console.log('🎨 Initializing Pickr color pickers...');
             
+            // Ensure we have valid color values with fallbacks
+            const safeColor1 = this.effectParams.color1 && typeof this.effectParams.color1 === 'string' ? this.effectParams.color1 : '#0062ff';
+            const safeColor2 = this.effectParams.color2 && typeof this.effectParams.color2 === 'string' ? this.effectParams.color2 : '#00ff00';
+            const safeColor3 = this.effectParams.color3 && typeof this.effectParams.color3 === 'string' ? this.effectParams.color3 : '#ff0000';
+            
+            console.log('🎨 Color picker values:', { safeColor1, safeColor2, safeColor3 });
+            
             // Common Pickr configuration
             const commonConfig = {
                 theme: 'nano',
                 default: '#0062ff',
                 swatches: [
-                    '#FF69B4', // Hot Pink
+                    '#FF0000', // Red
                     '#1E90FF', // Electric Blue  
                     '#32CD32', // Lime Green
                     '#FFFF00', // Bright Yellow
@@ -684,7 +767,7 @@ function initializeSettingsStore() {
                 this.colorPickers.color1 = Pickr.create({
                     ...commonConfig,
                     el: this.$refs.color1Pickr,
-                    default: this.effectParams.color1
+                    default: safeColor1
                 });
                 
                 this.colorPickers.color1.on('save', (color) => {
@@ -699,7 +782,7 @@ function initializeSettingsStore() {
                 this.colorPickers.color2 = Pickr.create({
                     ...commonConfig,
                     el: this.$refs.color2Pickr,
-                    default: this.effectParams.color2
+                    default: safeColor2
                 });
                 
                 this.colorPickers.color2.on('save', (color) => {
@@ -714,7 +797,7 @@ function initializeSettingsStore() {
                 this.colorPickers.color3 = Pickr.create({
                     ...commonConfig,
                     el: this.$refs.color3Pickr,
-                    default: this.effectParams.color3
+                    default: safeColor3
                 });
                 
                 this.colorPickers.color3.on('save', (color) => {

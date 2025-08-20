@@ -60,7 +60,6 @@ void handleNVSDump(AsyncWebServerRequest *request)
         // Device Configuration
         {NVS_DEVICE_OWNER, "string", "Device owner name", false, 0, 0},
         {NVS_DEVICE_TIMEZONE, "string", "Device timezone", false, 0, 0},
-        {NVS_MAX_CHARACTERS, "int", "Maximum message characters", false, 50, 2000},
 
         // WiFi Configuration
         {NVS_WIFI_SSID, "string", "WiFi network SSID", false, 0, 0},

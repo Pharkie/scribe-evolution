@@ -147,8 +147,8 @@ bool loadNVSConfig()
     g_runtimeConfig.chatgptApiToken = getNVSString(prefs, NVS_CHATGPT_TOKEN, defaultChatgptApiToken, 300);
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
-    // Load validation configuration
-    g_runtimeConfig.maxCharacters = getNVSInt(prefs, NVS_MAX_CHARACTERS, maxCharacters, 100, 5000);
+    // Load validation configuration (hardcoded from config.h)
+    g_runtimeConfig.maxCharacters = maxCharacters;
 
     // Load Unbidden Ink settings
     LOG_VERBOSE("CONFIG", "DEBUG: Default values - startHour=%d, endHour=%d, frequency=%d",
