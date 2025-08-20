@@ -275,9 +275,6 @@ bool saveNVSConfig(const RuntimeConfig &config)
     // Save ChatGPT API token (other APIs are constants)
     prefs.putString(NVS_CHATGPT_TOKEN, config.chatgptApiToken);
 
-    // Save validation configuration
-    prefs.putInt(NVS_MAX_CHARACTERS, config.maxCharacters);
-
     // Save Unbidden Ink configuration
     prefs.putBool("unbid_enabled", config.unbiddenInkEnabled);
     prefs.putInt("unbid_start_hr", config.unbiddenInkStartHour);
