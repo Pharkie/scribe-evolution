@@ -271,10 +271,12 @@ function initializeIndexStore() {
     
     // Handle textarea keydown
     handleTextareaKeydown(event) {
-      // Ctrl+Enter or Cmd+Enter to submit
-      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      // Enter to submit (unless Shift is held for newline)
+      if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        this.handleSubmit();
+        if (this.canSubmit) {
+          this.handleSubmit(event);
+        }
       }
     },
     

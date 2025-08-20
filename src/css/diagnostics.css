@@ -71,11 +71,7 @@
 @layer utilities {
 /* Section base styles */
 .diag-section {
-    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hidden;
-}
-
-.diag-section.show {
-    @apply block;
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4;
 }
 
 /* Section variants - direct implementation */
