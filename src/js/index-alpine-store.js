@@ -86,8 +86,8 @@ function initializeIndexStore() {
       try {
         await this.loadConfig();
       } catch (error) {
-        console.error('📋 Index: Config loading failed but continuing with defaults:', error);
-        // Config loading failed, but we can still show the interface
+        console.error('📋 Index: Config loading failed:', error);
+        // Set error state - Alpine.js standard pattern
         this.error = error.message;
         this.loading = false;
       }
@@ -124,6 +124,9 @@ function initializeIndexStore() {
         
         this.localPrinterName = this.config.device.printer_name;
         console.log('📋 Index: Config loaded successfully, printer name:', this.localPrinterName);
+        
+        // Clear any previous error and set loading to false on success
+        this.error = null;
         this.loading = false;
         
         return this.config;

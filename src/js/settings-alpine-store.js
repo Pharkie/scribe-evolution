@@ -10,10 +10,10 @@
  */
 function initializeSettingsStore() {
     return {
-        // Loading states
-        loading: true, // Start as loading to prevent flicker
+                // Core state management
+        loading: true,
+        error: null,
         saving: false,
-        error: null, // Error state for the UI
         initialized: false, // Flag to prevent duplicate initialization
         
         // Configuration data (reactive)
@@ -195,7 +195,7 @@ function initializeSettingsStore() {
             } catch (error) {
                 console.error('Alpine Store: Failed to load configuration:', error);
                 this.error = error.message;
-                window.showMessage('Failed to load configuration: ' + error.message, 'error');
+                // Don't show message here - let the UI handle the error display
             } finally {
                 this.loading = false;
             }

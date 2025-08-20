@@ -61,6 +61,16 @@ function initializeDiagnosticsStore() {
           nvs: nvsResponse?.ok || false
         });
         
+        // Check if at least one API succeeded
+        const anyApiSuccess = diagnosticsResponse?.ok || configResponse?.ok || nvsResponse?.ok;
+        
+        if (!anyApiSuccess) {
+          // All APIs failed - this is an error state
+          this.error = 'All diagnostic APIs are unavailable. Please check the system.';
+          this.loading = false;
+          return;
+        }
+        
         // Parse responses with fallbacks for failed APIs
         if (diagnosticsResponse?.ok) {
           this.diagnosticsData = await diagnosticsResponse.json();
@@ -89,13 +99,12 @@ function initializeDiagnosticsStore() {
           nvsKeys: this.nvsData.keys ? Object.keys(this.nvsData.keys).length : 0
         });
         
+        this.error = null;
         this.loading = false;
       } catch (error) {
         console.error('🛠️ Diagnostics: Unexpected error loading diagnostics:', error);
-        // Even if there's an unexpected error, show sections with fallback data
-        this.diagnosticsData = {};
-        this.configData = {};
-        this.nvsData = {};
+        // Unexpected error - show error state
+        this.error = `Unexpected error loading diagnostics: ${error.message}`;
         this.loading = false;
       }
     },
