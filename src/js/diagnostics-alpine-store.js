@@ -40,7 +40,7 @@ function initializeDiagnosticsStore() {
       console.log('🛠️ Diagnostics: Initialization complete, loading:', this.loading, 'error:', this.error);
     },
     
-        // Load all diagnostics data with fallbacks for failed APIs
+    // Load all diagnostics data with proper error logging instead of silent fallbacks
     async loadDiagnostics() {
       this.loading = true;
       this.error = null;
@@ -71,29 +71,32 @@ function initializeDiagnosticsStore() {
           return;
         }
         
-        // Parse responses with fallbacks for failed APIs
+        // Parse responses with error logging for failed APIs
         if (diagnosticsResponse?.ok) {
           this.diagnosticsData = await diagnosticsResponse.json();
+          console.log('✅ Diagnostics API data loaded:', Object.keys(this.diagnosticsData));
         } else {
-          console.warn('🛠️ Diagnostics: Diagnostics API failed, using fallback data');
-          this.diagnosticsData = {}; // Empty object - computed properties provide fallbacks
+          console.error('❌ Diagnostics API failed - diagnostics data will be incomplete');
+          this.diagnosticsData = {}; // Empty object will trigger "data missing" displays
         }
         
         if (configResponse?.ok) {
           this.configData = await configResponse.json();
+          console.log('✅ Config API data loaded:', Object.keys(this.configData));
         } else {
-          console.warn('🛠️ Diagnostics: Config API failed, using fallback data');
-          this.configData = {}; // Empty object - computed properties provide fallbacks  
+          console.error('❌ Config API failed - configuration data will be incomplete');
+          this.configData = {}; // Empty object will trigger "data missing" displays  
         }
         
         if (nvsResponse?.ok) {
           this.nvsData = await nvsResponse.json();
+          console.log('✅ NVS API data loaded:', Object.keys(this.nvsData));
         } else {
-          console.warn('🛠️ Diagnostics: NVS API failed, using fallback data');
-          this.nvsData = {}; // Empty object - computed properties provide fallbacks
+          console.error('❌ NVS API failed - NVS storage data will be incomplete');
+          this.nvsData = {}; // Empty object will trigger "data missing" displays
         }
         
-        console.log('🛠️ Diagnostics: Data loaded with fallbacks:', {
+        console.log('✅ Diagnostics loading complete:', {
           diagnosticsKeys: Object.keys(this.diagnosticsData).length,
           configKeys: Object.keys(this.configData).length,
           nvsKeys: this.nvsData.keys ? Object.keys(this.nvsData.keys).length : 0
@@ -122,17 +125,29 @@ function initializeDiagnosticsStore() {
       return `${baseClass} ${colorClass} ${activeClass}`.trim();
     },
     
-    // Microcontroller computed properties
+    // Microcontroller computed properties - show errors instead of silent fallbacks
     get microcontrollerInfo() {
-      const microcontroller = this.diagnosticsData.microcontroller || {};
+      const microcontroller = this.diagnosticsData.microcontroller;
+      
+      if (!microcontroller) {
+        console.error('❌ Missing microcontroller data from diagnostics API');
+        return {
+          chipModel: 'ERROR: Missing Data',
+          cpuFrequency: 'ERROR: Missing Data',
+          flashSize: 'ERROR: Missing Data',
+          firmwareVersion: 'ERROR: Missing Data',
+          uptime: 'ERROR: Missing Data',
+          temperature: 'ERROR: Missing Data'
+        };
+      }
       
       return {
-        chipModel: microcontroller.chip_model || 'Unknown',
-        cpuFrequency: microcontroller.cpu_frequency_mhz ? `${microcontroller.cpu_frequency_mhz} MHz` : '-',
-        flashSize: this.formatBytes(microcontroller.flash?.total_chip_size),
-        firmwareVersion: microcontroller.sdk_version || '-',
-        uptime: this.formatUptime(microcontroller.uptime_ms / 1000),
-        temperature: this.formatTemperature(microcontroller.temperature)
+        chipModel: microcontroller.chip_model || 'ERROR: Missing chip_model',
+        cpuFrequency: microcontroller.cpu_frequency_mhz ? `${microcontroller.cpu_frequency_mhz} MHz` : 'ERROR: Missing frequency',
+        flashSize: this.formatBytes(microcontroller.flash?.total_chip_size) || 'ERROR: Missing flash size',
+        firmwareVersion: microcontroller.sdk_version || 'ERROR: Missing SDK version',
+        uptime: microcontroller.uptime_ms ? this.formatUptime(microcontroller.uptime_ms / 1000) : 'ERROR: Missing uptime',
+        temperature: this.formatTemperature(microcontroller.temperature) || 'ERROR: Missing temperature'
       };
     },
     

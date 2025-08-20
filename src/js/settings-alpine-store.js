@@ -16,24 +16,27 @@ function initializeSettingsStore() {
         saving: false,
         initialized: false, // Flag to prevent duplicate initialization
         
-        // Configuration data (reactive)
+        // Configuration data (reactive) - matching backend API structure
         config: {
             device: {
                 owner: '',
                 timezone: '',
-                mqtt_topic: ''
-            },
-            wifi: {
-                ssid: '',
-                password: '',
-                connect_timeout: 15000,
-                status: {
-                    connected: false,
-                    ip_address: '',
-                    mac_address: '',
-                    gateway: '',
-                    dns: '',
-                    signal_strength: ''
+                maxCharacters: 1000,
+                mqtt_topic: '',
+                mdns: '',
+                // WiFi nested under device
+                wifi: {
+                    ssid: '',
+                    password: '',
+                    connect_timeout: 15000,
+                    status: {
+                        connected: false,
+                        ip_address: '',
+                        mac_address: '',
+                        gateway: '',
+                        dns: '',
+                        signal_strength: ''
+                    }
                 }
             },
             mqtt: {
@@ -43,15 +46,13 @@ function initializeSettingsStore() {
                 password: '',
                 connected: false
             },
-            apis: {
-                chatgptApiToken: ''
-            },
             unbiddenInk: {
                 enabled: false,
-                startHour: 8,
-                endHour: 22,
-                frequencyMinutes: 120,
-                prompt: ''
+                startHour: 9,
+                endHour: 21,
+                frequencyMinutes: 180,
+                prompt: 'Generate something creative and interesting',
+                chatgptApiToken: ''
             },
             buttons: {
                 // Hardware configuration
@@ -206,14 +207,15 @@ function initializeSettingsStore() {
             const cleanConfig = {
                 device: {
                     owner: this.config.device.owner,
-                    timezone: this.config.device.timezone
+                    timezone: this.config.device.timezone,
+                    // Include WiFi nested under device
+                    wifi: {
+                        ssid: this.config.device.wifi.ssid,
+                        password: this.config.device.wifi.password,
+                        connect_timeout: this.config.device.wifi.connect_timeout
+                        // Exclude status as it's read-only
+                    }
                     // Exclude mqtt_topic as it's read-only
-                },
-                wifi: {
-                    ssid: this.config.wifi.ssid,
-                    password: this.config.wifi.password,
-                    connect_timeout: this.config.wifi.connect_timeout
-                    // Exclude status as it's read-only
                 },
                 mqtt: {
                     server: this.config.mqtt.server,
@@ -222,15 +224,13 @@ function initializeSettingsStore() {
                     password: this.config.mqtt.password
                     // Exclude connected as it's read-only
                 },
-                apis: {
-                    chatgptApiToken: this.config.apis.chatgptApiToken
-                },
                 unbiddenInk: {
                     enabled: this.config.unbiddenInk.enabled,
                     startHour: this.config.unbiddenInk.startHour,
                     endHour: this.config.unbiddenInk.endHour,
                     frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
-                    prompt: this.config.unbiddenInk.prompt
+                    prompt: this.config.unbiddenInk.prompt,
+                    chatgptApiToken: this.config.unbiddenInk.chatgptApiToken
                 },
                 buttons: {
                     // Include individual button configurations
@@ -310,86 +310,119 @@ function initializeSettingsStore() {
             return `${hour - 12} pm`;
         },
         
-        // Deep merge server config into reactive state with fallbacks
+        // Deep merge server config into reactive state with error logging
         mergeConfig(serverConfig) {
-            // Device - provide fallbacks for missing values
+            console.log('🔧 Merging server config:', serverConfig);
+            
+            // Device - log errors for missing critical values
             if (serverConfig.device) {
-                this.config.device.owner = serverConfig.device.owner ?? '';
-                this.config.device.timezone = serverConfig.device.timezone ?? 'America/New_York';
-                this.config.device.mqtt_topic = serverConfig.device.mqtt_topic ?? '';
+                this.config.device.owner = serverConfig.device.owner || '';
+                this.config.device.timezone = serverConfig.device.timezone || '';
+                this.config.device.mqtt_topic = serverConfig.device.mqtt_topic || '';
+                this.config.device.mdns = serverConfig.device.mdns || '';
+                this.config.device.maxCharacters = serverConfig.device.maxCharacters || 1000;
+                
+                if (!serverConfig.device.owner) {
+                    console.warn('⚠️ Missing device.owner in config');
+                }
+                if (!serverConfig.device.timezone) {
+                    console.warn('⚠️ Missing device.timezone in config');
+                }
+            } else {
+                console.error('❌ Missing device section in config');
             }
             
-            // WiFi - provide fallbacks for missing values  
-            if (serverConfig.wifi) {
-                this.config.wifi.ssid = serverConfig.wifi.ssid ?? '';
-                this.config.wifi.password = serverConfig.wifi.password ?? '';
-                this.config.wifi.connect_timeout = serverConfig.wifi.connect_timeout ?? 15000;
+            // WiFi - log errors for missing values  
+            if (serverConfig.device?.wifi) {
+                this.config.device.wifi.ssid = serverConfig.device.wifi.ssid || '';
+                this.config.device.wifi.password = serverConfig.device.wifi.password || '';
+                this.config.device.wifi.connect_timeout = serverConfig.device.wifi.connect_timeout || 15000;
+                
+                if (!serverConfig.device.wifi.ssid) {
+                    console.warn('⚠️ Missing device.wifi.ssid in config');
+                }
                 
                 // Load WiFi status data if available
-                if (serverConfig.wifi.status) {
-                    this.config.wifi.status.connected = serverConfig.wifi.status.connected ?? false;
-                    this.config.wifi.status.ip_address = serverConfig.wifi.status.ip_address ?? '';
-                    this.config.wifi.status.mac_address = serverConfig.wifi.status.mac_address ?? '';
-                    this.config.wifi.status.gateway = serverConfig.wifi.status.gateway ?? '';
-                    this.config.wifi.status.dns = serverConfig.wifi.status.dns ?? '';
-                    this.config.wifi.status.signal_strength = serverConfig.wifi.status.signal_strength ?? '';
+                if (serverConfig.device.wifi.status) {
+                    this.config.device.wifi.status.connected = serverConfig.device.wifi.status.connected || false;
+                    this.config.device.wifi.status.ip_address = serverConfig.device.wifi.status.ip_address || '';
+                    this.config.device.wifi.status.mac_address = serverConfig.device.wifi.status.mac_address || '';
+                    this.config.device.wifi.status.gateway = serverConfig.device.wifi.status.gateway || '';
+                    this.config.device.wifi.status.dns = serverConfig.device.wifi.status.dns || '';
+                    this.config.device.wifi.status.signal_strength = serverConfig.device.wifi.status.signal_strength || '';
+                } else {
+                    console.warn('⚠️ Missing device.wifi.status in config');
                 }
+            } else {
+                console.error('❌ Missing device.wifi section in config');
             }
             
-            // MQTT - provide fallbacks for missing values
+            // MQTT - log errors for missing values
             if (serverConfig.mqtt) {
-                this.config.mqtt.server = serverConfig.mqtt.server ?? '';
-                this.config.mqtt.port = serverConfig.mqtt.port ?? 1883;
-                this.config.mqtt.username = serverConfig.mqtt.username ?? '';
-                this.config.mqtt.password = serverConfig.mqtt.password ?? '';
-                this.config.mqtt.connected = serverConfig.mqtt.connected ?? false;
+                this.config.mqtt.server = serverConfig.mqtt.server || '';
+                this.config.mqtt.port = serverConfig.mqtt.port || 1883;
+                this.config.mqtt.username = serverConfig.mqtt.username || '';
+                this.config.mqtt.password = serverConfig.mqtt.password || '';
+                this.config.mqtt.connected = serverConfig.mqtt.connected || false;
+                
+                if (!serverConfig.mqtt.server) {
+                    console.warn('⚠️ Missing mqtt.server in config');
+                }
+            } else {
+                console.warn('⚠️ Missing mqtt section in config');
             }
             
-            // APIs - provide fallbacks for missing values
-            if (serverConfig.apis) {
-                this.config.apis.chatgptApiToken = serverConfig.apis.chatgptApiToken ?? '';
-            }
-            
-            // Unbidden Ink - provide fallbacks for missing values
+            // Unbidden Ink - log errors for missing values
             if (serverConfig.unbiddenInk) {
-                this.config.unbiddenInk.enabled = serverConfig.unbiddenInk.enabled ?? false;
-                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour ?? 8;
-                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour ?? 22;
-                this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes ?? 120;
-                this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt ?? '';
+                this.config.unbiddenInk.enabled = serverConfig.unbiddenInk.enabled || false;
+                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour || 8;
+                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour || 22;
+                this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes || 120;
+                this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt || '';
+                this.config.unbiddenInk.chatgptApiToken = serverConfig.unbiddenInk.chatgptApiToken || '';
+            } else {
+                console.warn('⚠️ Missing unbiddenInk section in config');
             }
             
-            // Buttons - provide fallbacks for missing values
+            // Buttons - log errors for missing values
             if (serverConfig.buttons) {
                 // Copy hardware configuration properties
-                this.config.buttons.count = serverConfig.buttons.count ?? null;
-                this.config.buttons.debounce_time = serverConfig.buttons.debounce_time ?? null;
-                this.config.buttons.long_press_time = serverConfig.buttons.long_press_time ?? null;
-                this.config.buttons.active_low = serverConfig.buttons.active_low ?? null;
-                this.config.buttons.min_interval = serverConfig.buttons.min_interval ?? null;
-                this.config.buttons.max_per_minute = serverConfig.buttons.max_per_minute ?? null;
+                this.config.buttons.count = serverConfig.buttons.count || null;
+                this.config.buttons.debounce_time = serverConfig.buttons.debounce_time || null;
+                this.config.buttons.long_press_time = serverConfig.buttons.long_press_time || null;
+                this.config.buttons.active_low = serverConfig.buttons.active_low || null;
+                this.config.buttons.min_interval = serverConfig.buttons.min_interval || null;
+                this.config.buttons.max_per_minute = serverConfig.buttons.max_per_minute || null;
 
                 // Copy individual button configurations
                 for (let i = 1; i <= 4; i++) {
                     const buttonKey = `button${i}`;
                     if (serverConfig.buttons[buttonKey]) {
                         this.config.buttons[buttonKey] = {
-                            shortAction: serverConfig.buttons[buttonKey].shortAction ?? '',
-                            longAction: serverConfig.buttons[buttonKey].longAction ?? '',
-                            shortMqttTopic: serverConfig.buttons[buttonKey].shortMqttTopic ?? '',
-                            longMqttTopic: serverConfig.buttons[buttonKey].longMqttTopic ?? ''
+                            shortAction: serverConfig.buttons[buttonKey].shortAction || '',
+                            longAction: serverConfig.buttons[buttonKey].longAction || '',
+                            shortMqttTopic: serverConfig.buttons[buttonKey].shortMqttTopic || '',
+                            longMqttTopic: serverConfig.buttons[buttonKey].longMqttTopic || ''
                         };
+                    } else {
+                        console.warn(`⚠️ Missing buttons.${buttonKey} config`);
                     }
                 }
+            } else {
+                console.warn('⚠️ Missing buttons section in config');
             }
             
-            // LEDs - provide fallbacks for missing values
+            // LEDs - log errors for missing values
             if (serverConfig.leds) {
-                this.config.leds.pin = serverConfig.leds.pin ?? 4;
-                this.config.leds.count = serverConfig.leds.count ?? 60;
-                this.config.leds.brightness = serverConfig.leds.brightness ?? 128;
-                this.config.leds.refreshRate = serverConfig.leds.refreshRate ?? 60;
+                this.config.leds.pin = serverConfig.leds.pin || 4;
+                this.config.leds.count = serverConfig.leds.count || 60;
+                this.config.leds.brightness = serverConfig.leds.brightness || 128;
+                this.config.leds.refreshRate = serverConfig.leds.refreshRate || 60;
+            } else {
+                console.warn('⚠️ Missing leds section in config');
             }
+            
+            console.log('✅ Config merge complete, final config:', this.config);
         },
         
         // Message display (delegates to existing system)
@@ -403,9 +436,9 @@ function initializeSettingsStore() {
             }
             
             // Required field validation
-            const requiredFields = ['device.owner', 'wifi.ssid'];
+            const requiredFields = ['device.owner', 'device.wifi.ssid'];
             if (this.config.unbiddenInk.enabled) {
-                requiredFields.push('apis.chatgptApiToken');
+                requiredFields.push('unbiddenInk.chatgptApiToken');
             }
             
             if (requiredFields.includes(fieldName)) {
@@ -419,7 +452,7 @@ function initializeSettingsStore() {
             
             // Field-specific validation
             switch (fieldName) {
-                case 'wifi.connect_timeout':
+                case 'device.wifi.connect_timeout':
                     const timeout = typeof value === 'number' ? Math.floor(value / 1000) : parseInt(value);
                     if (isNaN(timeout) || timeout < 5 || timeout > 60) {
                         this.validation.errors[fieldName] = 'Timeout must be between 5 and 60 seconds';
@@ -449,13 +482,13 @@ function initializeSettingsStore() {
             // Validate all required and visible fields
             const fieldsToValidate = [
                 'device.owner',
-                'wifi.ssid', 
-                'wifi.connect_timeout',
+                'device.wifi.ssid', 
+                'device.wifi.connect_timeout',
                 'mqtt.port'
             ];
             
             if (this.config.unbiddenInk.enabled) {
-                fieldsToValidate.push('apis.chatgptApiToken');
+                fieldsToValidate.push('unbiddenInk.chatgptApiToken');
             }
             
             fieldsToValidate.forEach(fieldName => {

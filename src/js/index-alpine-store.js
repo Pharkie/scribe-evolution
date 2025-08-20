@@ -37,12 +37,12 @@ function initializeIndexStore() {
     // Active quick action (only one can be active at a time)
     activeQuickAction: null,
     
-    // Character limits
+    // Character limits - updated path for new structure
     get maxChars() {
-      if (!this.config?.validation?.maxCharacters) {
+      if (!this.config?.device?.maxCharacters) {
         throw new Error('Maximum characters configuration is missing from server');
       }
-      return this.config.validation.maxCharacters;
+      return this.config.device.maxCharacters;
     },
     
     get charCount() {
@@ -68,7 +68,7 @@ function initializeIndexStore() {
     },
     
     get isConfigReady() {
-      return !this.loading && !this.error && this.config && this.config.validation && this.config.validation.maxCharacters;
+      return !this.loading && !this.error && this.config && this.config.device && this.config.device.maxCharacters;
     },
     
     // Initialize store
@@ -115,7 +115,7 @@ function initializeIndexStore() {
         if (this.config?.device?.printer_name === undefined) {
           throw new Error('Printer name configuration is missing from server');
         }
-        if (this.config?.validation?.maxCharacters === undefined) {
+        if (this.config?.device?.maxCharacters === undefined) {
           throw new Error('Maximum characters validation configuration is missing from server');
         }
         if (this.config?.device === undefined) {

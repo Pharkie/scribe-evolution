@@ -75,10 +75,13 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // Create response with runtime configuration data
     DynamicJsonDocument configDoc(largeJsonDocumentSize);
 
-    // Device configuration
+    // Device configuration - main section matching settings.html
     JsonObject device = configDoc.createNestedObject("device");
     device["owner"] = config.deviceOwner;
     device["timezone"] = config.timezone;
+
+    // Move maxCharacters from validation to device section
+    device["maxCharacters"] = config.maxCharacters;
 
     // Add runtime device information
     device["firmware_version"] = getFirmwareVersion();
@@ -89,8 +92,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
     device["mqtt_topic"] = getLocalPrinterTopic();
     device["type"] = "local";
 
-    // WiFi configuration
-    JsonObject wifi = configDoc.createNestedObject("wifi");
+    // WiFi configuration - nested under device to match settings structure
+    JsonObject wifi = device.createNestedObject("wifi");
     wifi["ssid"] = config.wifiSSID;
     wifi["password"] = config.wifiPassword;
     wifi["connect_timeout"] = config.wifiConnectTimeoutMs;
@@ -128,7 +131,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     }
     wifiStatus["signal_strength"] = signalStrength;
 
-    // MQTT configuration
+    // MQTT configuration - top-level section matching settings.html
     JsonObject mqtt = configDoc.createNestedObject("mqtt");
     mqtt["server"] = config.mqttServer;
     mqtt["port"] = config.mqttPort;
@@ -136,23 +139,44 @@ void handleConfigGet(AsyncWebServerRequest *request)
     mqtt["password"] = config.mqttPassword;
     mqtt["connected"] = mqttClient.connected();
 
-    // API configuration (only expose chatgptApiToken, not endpoints)
-    JsonObject apis = configDoc.createNestedObject("apis");
-    apis["chatgptApiToken"] = config.chatgptApiToken;
-
-    // Validation configuration (only maxCharacters)
-    JsonObject validation = configDoc.createNestedObject("validation");
-    validation["maxCharacters"] = config.maxCharacters;
-
-    // Unbidden Ink configuration
+    // Unbidden Ink configuration - top-level section matching settings.html
     JsonObject unbiddenInk = configDoc.createNestedObject("unbiddenInk");
     unbiddenInk["enabled"] = config.unbiddenInkEnabled;
     unbiddenInk["startHour"] = config.unbiddenInkStartHour;
     unbiddenInk["endHour"] = config.unbiddenInkEndHour;
     unbiddenInk["frequencyMinutes"] = config.unbiddenInkFrequencyMinutes;
     unbiddenInk["prompt"] = config.unbiddenInkPrompt;
+    unbiddenInk["chatgptApiToken"] = config.chatgptApiToken;
 
-    // Button configuration (exactly 4 buttons)
+    // Add runtime status for Unbidden Ink
+    if (config.unbiddenInkEnabled)
+    {
+        unsigned long nextTime = getNextUnbiddenInkTime();
+        unsigned long currentTime = millis();
+
+        if (nextTime > currentTime)
+        {
+            unsigned long minutesUntil = (nextTime - currentTime) / (60 * 1000);
+            if (minutesUntil == 0)
+            {
+                unbiddenInk["nextScheduled"] = "< 1 min";
+            }
+            else
+            {
+                unbiddenInk["nextScheduled"] = String(minutesUntil) + (minutesUntil == 1 ? " min" : " mins");
+            }
+        }
+        else
+        {
+            unbiddenInk["nextScheduled"] = "-";
+        }
+    }
+    else
+    {
+        unbiddenInk["nextScheduled"] = "-";
+    }
+
+    // Buttons configuration - top-level section matching settings.html
     JsonObject buttons = configDoc.createNestedObject("buttons");
 
     // Hardware button status information
@@ -175,7 +199,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     }
 
 #if ENABLE_LEDS
-    // LED configuration
+    // LEDs configuration - top-level section matching settings.html
     JsonObject leds = configDoc.createNestedObject("leds");
     leds["pin"] = config.ledPin;
     leds["count"] = config.ledCount;
@@ -185,39 +209,6 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // Add per-effect autonomous configurations
     saveLedEffectsToJson(leds, config.ledEffects);
 #endif
-    // Add runtime status information for Unbidden Ink
-    JsonObject status = configDoc.createNestedObject("status");
-    JsonObject unbiddenInkStatus = status.createNestedObject("unbiddenInk");
-
-    // Get current unbidden ink settings and next scheduled time
-    // Settings are already loaded from NVS into RuntimeConfig
-    if (config.unbiddenInkEnabled)
-    {
-        unsigned long nextTime = getNextUnbiddenInkTime();
-        unsigned long currentTime = millis();
-
-        if (nextTime > currentTime)
-        {
-            unsigned long minutesUntil = (nextTime - currentTime) / (60 * 1000);
-            if (minutesUntil == 0)
-            {
-                unbiddenInkStatus["nextScheduled"] = "< 1 min";
-            }
-            else
-            {
-                unbiddenInkStatus["nextScheduled"] = String(minutesUntil) + (minutesUntil == 1 ? " min" : " mins");
-            }
-        }
-        else
-        {
-            unbiddenInkStatus["nextScheduled"] = "-";
-        }
-    }
-    else
-    {
-        unbiddenInkStatus["nextScheduled"] = "-";
-    }
-
     String configString;
     serializeJson(configDoc, configString);
 
@@ -251,9 +242,9 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Validate required top-level sections exist
-    const char *requiredSections[] = {"device", "wifi", "mqtt", "apis", "unbiddenInk", "buttons", "leds"};
-    for (int i = 0; i < 7; i++)
+    // Validate required top-level sections exist (matching new structure)
+    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "buttons", "leds"};
+    for (int i = 0; i < 5; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -283,8 +274,11 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.deviceOwner = owner;
     newConfig.timezone = timezone;
 
-    // Validate WiFi configuration
-    JsonObject wifi = doc["wifi"];
+    // maxCharacters is now in device section, but remains hardcoded from config.h
+    newConfig.maxCharacters = maxCharacters;
+
+    // Validate WiFi configuration (nested under device)
+    JsonObject wifi = device["wifi"];
     if (!wifi.containsKey("ssid") || !wifi.containsKey("password"))
     {
         sendValidationError(request, ValidationResult(false, "Missing required WiFi configuration fields"));
@@ -306,7 +300,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.wifiSSID = ssid;
     newConfig.wifiPassword = password;
     newConfig.wifiConnectTimeoutMs = wifi["connect_timeout"] | wifiConnectTimeoutMs;
-    // Validate MQTT configuration
+
+    // MQTT configuration (top-level section)
     JsonObject mqtt = doc["mqtt"];
     if (!mqtt.containsKey("server") || !mqtt.containsKey("port") ||
         !mqtt.containsKey("username") || !mqtt.containsKey("password"))
@@ -325,26 +320,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.mqttPort = port;
     newConfig.mqttUsername = mqtt["username"].as<const char *>();
     newConfig.mqttPassword = mqtt["password"].as<const char *>();
-
-    // Validate APIs configuration (only user-configurable fields)
-    JsonObject apis = doc["apis"];
-    if (!apis.containsKey("chatgptApiToken"))
-    {
-        sendValidationError(request, ValidationResult(false, "Missing required ChatGPT API token"));
-        return;
-    }
-    newConfig.chatgptApiToken = apis["chatgptApiToken"].as<const char *>();
-
-    // Non-user configurable APIs remain as constants
-    newConfig.jokeAPI = jokeAPI;
-    newConfig.quoteAPI = quoteAPI;
-    newConfig.triviaAPI = triviaAPI;
-    newConfig.betterStackToken = betterStackToken;
-    newConfig.betterStackEndpoint = betterStackEndpoint;
-    newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
-
-    // Validation configuration is hardcoded from config.h
-    newConfig.maxCharacters = maxCharacters;
 
     // Validate unbidden ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];
@@ -414,6 +389,22 @@ void handleConfigPost(AsyncWebServerRequest *request)
         newConfig.unbiddenInkFrequencyMinutes = currentConfig.unbiddenInkFrequencyMinutes;
         newConfig.unbiddenInkPrompt = currentConfig.unbiddenInkPrompt;
     }
+
+    // Validate ChatGPT API token (directly in unbiddenInk section)
+    if (!unbiddenInk.containsKey("chatgptApiToken"))
+    {
+        sendValidationError(request, ValidationResult(false, "Missing required ChatGPT API token"));
+        return;
+    }
+    newConfig.chatgptApiToken = unbiddenInk["chatgptApiToken"].as<const char *>();
+
+    // Non-user configurable APIs remain as constants
+    newConfig.jokeAPI = jokeAPI;
+    newConfig.quoteAPI = quoteAPI;
+    newConfig.triviaAPI = triviaAPI;
+    newConfig.betterStackToken = betterStackToken;
+    newConfig.betterStackEndpoint = betterStackEndpoint;
+    newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     // Validate button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];

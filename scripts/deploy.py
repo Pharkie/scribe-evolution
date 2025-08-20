@@ -35,6 +35,17 @@ def deploy_all(source, target, env):  # pylint: disable=unused-argument
         return fw_result
     print("✅ Firmware upload completed")
 
+    # Play success sound notification
+    print("🔊 Playing success notification...")
+    try:
+        # Play macOS "Glass" system sound
+        subprocess.run(
+            ["/usr/bin/afplay", "/System/Library/Sounds/Glass.aiff"], check=False
+        )
+        print("🎵 Success sound played")
+    except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
+        print(f"⚠️ Could not play sound: {e}")
+
     # Step 4: Start monitoring
     print("📺 Starting serial monitor...")
     env.Execute("pio run -e main -t monitor")
