@@ -76,10 +76,19 @@ function initializeSettingsStore() {
         effectParams: {
             speed: 10,
             intensity: 50,
-            palette: '#0062ff',
+            color1: '#0062ff',
+            color2: '#00ff00',
+            color3: '#ff0000',
             custom1: 10,
             custom2: 5,
             custom3: 1
+        },
+        
+        // Color picker instances
+        colorPickers: {
+            color1: null,
+            color2: null,
+            color3: null
         },
         
         // Section definitions for navigation
@@ -168,6 +177,7 @@ function initializeSettingsStore() {
                 this.mergeConfig(serverConfig);
                 
                 console.log('Alpine Store: Configuration loaded successfully');
+                
             } catch (error) {
                 console.error('Alpine Store: Failed to load configuration:', error);
                 this.error = error.message;
@@ -408,13 +418,13 @@ function initializeSettingsStore() {
                 if (effectName === 'chase') {
                     // Multicolour chase uses 3 colors
                     colors = [
-                        this.effectParams.palette,
+                        this.effectParams.color1,
                         this.effectParams.color2,
                         this.effectParams.color3
                     ];
                 } else {
                     // All other effects use single color
-                    colors = [this.effectParams.palette];
+                    colors = [this.effectParams.color1];
                 }
 
                 // Build unified payload - no more single color fields
@@ -640,6 +650,79 @@ function initializeSettingsStore() {
         cancelConfiguration() {
             // Navigate back to index instead of reloading
             window.location.href = '/';
+        },
+        
+        // Initialize Pickr color pickers
+        initColorPickers() {
+            console.log('🎨 Initializing Pickr color pickers...');
+            
+            // Common Pickr configuration
+            const commonConfig = {
+                theme: 'nano',
+                default: '#0062ff',
+                swatches: [
+                    '#FF69B4', // Hot Pink
+                    '#1E90FF', // Electric Blue  
+                    '#32CD32', // Lime Green
+                    '#FFFF00', // Bright Yellow
+                    '#FFA500', // Orange
+                    '#800080'  // Purple
+                ],
+                components: {
+                    preview: true,
+                    hue: true,
+                    interaction: {
+                        hex: true,
+                        input: true,
+                        save: true
+                    }
+                }
+            };
+            
+            // Initialize color1 picker
+            if (this.$refs.color1Pickr) {
+                this.colorPickers.color1 = Pickr.create({
+                    ...commonConfig,
+                    el: this.$refs.color1Pickr,
+                    default: this.effectParams.color1
+                });
+                
+                this.colorPickers.color1.on('save', (color) => {
+                    if (color) {
+                        this.effectParams.color1 = color.toHEXA().toString();
+                    }
+                });
+            }
+            
+            // Initialize color2 picker (for multicolor chase)
+            if (this.$refs.color2Pickr) {
+                this.colorPickers.color2 = Pickr.create({
+                    ...commonConfig,
+                    el: this.$refs.color2Pickr,
+                    default: this.effectParams.color2
+                });
+                
+                this.colorPickers.color2.on('save', (color) => {
+                    if (color) {
+                        this.effectParams.color2 = color.toHEXA().toString();
+                    }
+                });
+            }
+            
+            // Initialize color3 picker (for multicolor chase)
+            if (this.$refs.color3Pickr) {
+                this.colorPickers.color3 = Pickr.create({
+                    ...commonConfig,
+                    el: this.$refs.color3Pickr,
+                    default: this.effectParams.color3
+                });
+                
+                this.colorPickers.color3.on('save', (color) => {
+                    if (color) {
+                        this.effectParams.color3 = color.toHEXA().toString();
+                    }
+                });
+            }
         },
     };
 }

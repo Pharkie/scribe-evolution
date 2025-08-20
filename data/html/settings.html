@@ -563,7 +563,7 @@
             </div>
 
             <!-- LEDs Section -->
-            <div x-show="activeSection === 'leds'" class="settings-section">
+            <div x-show="activeSection === 'leds'" class="settings-section" x-init="initColorPickers()">
                 <div
                     class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
                     <h2
@@ -707,15 +707,15 @@
                                         </div>
                                     </div>
 
-                                    <!-- Palette/Color -->
+                                    <!-- Color 1 -->
                                     <div class="space-y-2">
-                                        <label for="led-palette"
+                                        <label for="led-color1"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color
                                         </label>
-                                        <input type="color" id="led-palette"
-                                            class="w-20 h-12 rounded-lg border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                            x-model="effectParams.palette">
+                                        <div x-ref="color1Pickr"
+                                            class="w-20 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
                                     </div>
 
                                     <!-- Additional Colors for Multicolour Chase -->
@@ -724,9 +724,9 @@
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color 2
                                         </label>
-                                        <input type="color" id="led-color2"
-                                            class="w-20 h-12 rounded-lg border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                            x-model="effectParams.color2">
+                                        <div x-ref="color2Pickr"
+                                            class="w-20 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
                                     </div>
 
                                     <div class="space-y-2" x-show="selectedEffect === 'chase'">
@@ -734,9 +734,9 @@
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color 3
                                         </label>
-                                        <input type="color" id="led-color3"
-                                            class="w-20 h-12 rounded-lg border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
-                                            x-model="effectParams.color3">
+                                        <div x-ref="color3Pickr"
+                                            class="w-20 h-12 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
                                     </div>
                                 </div>
 
