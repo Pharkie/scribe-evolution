@@ -371,6 +371,19 @@
     @apply text-red-600 dark:text-red-400;
 }
 
+.diag-config-warning.cyan {
+    @apply text-cyan-600 dark:text-cyan-400;
+}
+
+/* JSON content display for runtime config and NVS */
+.diag-json-content {
+    @apply bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-sm font-mono;
+    @apply max-h-96 overflow-auto border border-gray-700;
+    @apply whitespace-pre-wrap break-words;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
 /* Button sections */
 .button-section {
     @apply bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 mb-3;

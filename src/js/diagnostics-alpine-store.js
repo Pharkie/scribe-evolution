@@ -20,9 +20,7 @@ function initializeDiagnosticsStore() {
     // Section definitions
     sections: [
       { id: 'microcontroller-section', name: 'Microcontroller', icon: '🎛️', color: 'orange' },
-      { id: 'unbidden-ink-section', name: 'Unbidden Ink', icon: '🎲', color: 'yellow' },
       { id: 'logging-section', name: 'Logging', icon: '📋', color: 'indigo' },
-      { id: 'hardware-buttons-section', name: 'Buttons', icon: '🎛️', color: 'pink' },
       { id: 'pages-endpoints-section', name: 'Pages & Endpoints', icon: '🔗', color: 'teal' },
       { id: 'config-file-section', name: 'Runtime Configuration', icon: '⚙️', color: 'red' },
       { id: 'nvs-storage-section', name: 'NVS', icon: '💾', color: 'cyan' }
@@ -147,51 +145,6 @@ function initializeDiagnosticsStore() {
       };
     },
     
-    // Unbidden Ink computed properties
-    get unbiddenInkInfo() {
-      const unbiddenInk = this.diagnosticsData.features?.unbidden_ink || {};
-      
-      let nextMessageText = 'Unknown';
-      if (unbiddenInk.next_message_time && unbiddenInk.next_message_time > 0) {
-        const uptimeMs = this.diagnosticsData.microcontroller?.uptime_ms || 0;
-        const timeRemainingMs = unbiddenInk.next_message_time - uptimeMs;
-        
-        if (timeRemainingMs <= 0) {
-          nextMessageText = 'Overdue';
-        } else {
-          const seconds = Math.floor(timeRemainingMs / 1000);
-          const minutes = Math.floor(seconds / 60);
-          const hours = Math.floor(minutes / 60);
-          
-          if (seconds <= 30) {
-            nextMessageText = 'Imminently';
-          } else if (minutes < 1) {
-            nextMessageText = '1 min';
-          } else if (minutes < 60) {
-            nextMessageText = `${minutes} mins`;
-          } else if (hours === 1) {
-            nextMessageText = 'About an hour';
-          } else if (hours < 3) {
-            const halfHours = Math.round(hours * 2) / 2;
-            nextMessageText = `About ${halfHours} hours`;
-          } else {
-            const roundedHours = Math.round(hours * 2) / 2;
-            nextMessageText = `About ${roundedHours} hours`;
-          }
-        }
-      } else {
-        nextMessageText = unbiddenInk.enabled ? 'Unknown' : 'Disabled';
-      }
-      
-      return {
-        enabled: unbiddenInk.enabled ? 'Yes' : 'No',
-        startHour: unbiddenInk.start_hour !== undefined ? `${String(unbiddenInk.start_hour).padStart(2, '0')}:00` : 'Unknown',
-        endHour: unbiddenInk.end_hour !== undefined ? `${String(unbiddenInk.end_hour).padStart(2, '0')}:00` : 'Unknown',
-        frequency: unbiddenInk.frequency_minutes !== undefined ? `${unbiddenInk.frequency_minutes} minutes` : 'Unknown',
-        nextMessage: nextMessageText
-      };
-    },
-    
     // Logging computed properties
     get loggingInfo() {
       const logging = this.diagnosticsData.features?.logging || {};
@@ -204,39 +157,55 @@ function initializeDiagnosticsStore() {
       };
     },
     
-    // Hardware buttons computed properties
-    get hardwareButtonsInfo() {
-      const buttonsData = this.diagnosticsData.features?.hardware_buttons || {};
+    // Web pages computed properties (renamed to sortedRoutes)
+    get sortedRoutes() {
+      const routes = this.diagnosticsData.endpoints?.web_pages || [];
       
-      const baseInfo = {
-        count: buttonsData.num_buttons || 'Unknown',
-        debounce: `${buttonsData.debounce_ms || 'Unknown'} ms`,
-        longPress: `${buttonsData.long_press_ms || 'Unknown'} ms`,
-        activeLow: buttonsData.active_low !== undefined ? (buttonsData.active_low ? 'Yes' : 'No') : 'Unknown',
-        minInterval: `${buttonsData.min_interval_ms || 'Unknown'} ms`,
-        maxPerMinute: buttonsData.max_per_minute || 'Unknown'
-      };
+      // Separate HTML pages from other routes
+      const htmlPages = [];
+      const otherRoutes = [];
       
-      const buttons = [];
-      if (buttonsData.buttons && buttonsData.buttons.length > 0) {
-        buttonsData.buttons.forEach((button, index) => {
-          buttons.push({
-            num: index + 1,
-            gpio: button.gpio || 'Unknown',
-            shortPress: button.short_endpoint || 'Not configured',
-            longPress: button.long_endpoint || 'Not configured',
-            shortMqtt: button.short_mqtt_topic || null,
-            longMqtt: button.long_mqtt_topic || null
+      routes.forEach(route => {
+        if (route.path.endsWith('.html') || route.path === '/') {
+          htmlPages.push({
+            ...route,
+            isHtmlPage: true,
+            linkPath: route.path === '/' ? '/' : route.path
           });
-        });
-      }
+        } else if (route.path === '(unmatched routes)') {
+          otherRoutes.push({
+            ...route,
+            isUnmatched: true,
+            linkPath: '/404',
+            path: '*',
+            description: '404 handler'
+          });
+        } else {
+          otherRoutes.push({
+            ...route,
+            isHtmlPage: false
+          });
+        }
+      });
       
-      return { ...baseInfo, buttons };
-    },
-    
-    // Web pages computed properties
-    get webPages() {
-      return this.diagnosticsData.endpoints?.web_pages || [];
+      // Sort HTML pages alphabetically by path
+      htmlPages.sort((a, b) => {
+        // Put '/' first
+        if (a.path === '/') return -1;
+        if (b.path === '/') return 1;
+        return a.path.localeCompare(b.path);
+      });
+      
+      // Sort other routes alphabetically by path  
+      otherRoutes.sort((a, b) => {
+        // Put unmatched route (*) last
+        if (a.isUnmatched) return 1;
+        if (b.isUnmatched) return -1;
+        return a.path.localeCompare(b.path);
+      });
+      
+      // Combine: HTML pages first, then other routes
+      return [...htmlPages, ...otherRoutes];
     },
     
     // API endpoints computed properties

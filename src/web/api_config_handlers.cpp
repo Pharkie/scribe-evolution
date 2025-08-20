@@ -20,6 +20,7 @@
 #include "../core/network.h"
 #include "../core/mqtt_handler.h"
 #include "../content/unbidden_ink.h"
+#include "../hardware/hardware_buttons.h"
 #if ENABLE_LEDS
 #include "../leds/LedEffects.h"
 #include <FastLED.h>
@@ -151,9 +152,18 @@ void handleConfigGet(AsyncWebServerRequest *request)
     unbiddenInk["frequencyMinutes"] = config.unbiddenInkFrequencyMinutes;
     unbiddenInk["prompt"] = config.unbiddenInkPrompt;
 
-    LOG_VERBOSE("API", "DEBUG: API response - prompt length=%d, first 50 chars='%s'",
-                config.unbiddenInkPrompt.length(), config.unbiddenInkPrompt.substring(0, 50).c_str()); // Button configuration (exactly 4 buttons)
+    // Button configuration (exactly 4 buttons)
     JsonObject buttons = configDoc.createNestedObject("buttons");
+
+    // Hardware button status information
+    buttons["count"] = numHardwareButtons;
+    buttons["debounce_time"] = buttonDebounceMs;
+    buttons["long_press_time"] = buttonLongPressMs;
+    buttons["active_low"] = buttonActiveLow;
+    buttons["min_interval"] = buttonMinInterval;
+    buttons["max_per_minute"] = buttonMaxPerMinute;
+
+    // Button action configuration
     for (int i = 0; i < 4; i++)
     {
         String buttonKey = "button" + String(i + 1);

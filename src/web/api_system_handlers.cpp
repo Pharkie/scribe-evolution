@@ -17,8 +17,6 @@
 #include "../core/logging.h"
 #include "../core/network.h"
 #include "../core/mqtt_handler.h"
-#include "../content/unbidden_ink.h"
-#include "../hardware/hardware_buttons.h"
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <WiFi.h>
@@ -158,42 +156,6 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     // === FEATURES STATUS ===
     JsonObject features = doc.createNestedObject("features");
-
-    // Unbidden Ink status
-    JsonObject unbiddenInk = features.createNestedObject("unbidden_ink");
-    // Reload settings from file to ensure we have the latest values
-    loadUnbiddenInkSettings();
-    UnbiddenInkSettings settings = getCurrentUnbiddenInkSettings();
-    unbiddenInk["enabled"] = settings.enabled;
-    // Always include configuration values regardless of enabled state
-    unbiddenInk["start_hour"] = settings.startHour;
-    unbiddenInk["end_hour"] = settings.endHour;
-    unbiddenInk["frequency_minutes"] = settings.frequencyMinutes;
-    // Only include runtime data when enabled
-    if (settings.enabled)
-    {
-        unbiddenInk["next_message_time"] = getNextUnbiddenInkTime();
-    }
-
-    // Hardware buttons configuration
-    JsonObject buttons = features.createNestedObject("hardware_buttons");
-    buttons["num_buttons"] = numHardwareButtons;
-    buttons["debounce_ms"] = buttonDebounceMs;
-    buttons["long_press_ms"] = buttonLongPressMs;
-    buttons["active_low"] = buttonActiveLow;
-    buttons["min_interval_ms"] = buttonMinInterval;
-    buttons["max_per_minute"] = buttonMaxPerMinute;
-    JsonArray buttonArray = buttons.createNestedArray("buttons");
-    // Use existing runtime configuration for button actions
-    for (int i = 0; i < numHardwareButtons; i++)
-    {
-        JsonObject button = buttonArray.createNestedObject();
-        button["gpio"] = defaultButtons[i].gpio;
-        button["short_endpoint"] = runtimeConfig.buttonShortActions[i];
-        button["long_endpoint"] = runtimeConfig.buttonLongActions[i];
-        button["short_mqtt_topic"] = runtimeConfig.buttonShortMqttTopics[i];
-        button["long_mqtt_topic"] = runtimeConfig.buttonLongMqttTopics[i];
-    }
 
     // Logging configuration
     JsonObject logging = features.createNestedObject("logging");

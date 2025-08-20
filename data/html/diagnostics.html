@@ -116,41 +116,6 @@
                 </div>
             </div>
 
-            <!-- Unbidden Ink Section -->
-            <div x-show="currentSection === 'unbidden-ink-section'" class="diag-section yellow">
-                <div class="diag-header">
-                    <h4 class="diag-title yellow"><span class="mr-2">🎲</span>Unbidden Ink</h4>
-                    <button @click="copyGenericSection('Unbidden Ink')" class="diag-copy-btn yellow">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="space-y-2">
-                    <div class="diag-row">
-                        <span class="diag-label">Enabled:</span>
-                        <span class="diag-value" x-text="unbiddenInkInfo.enabled"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Start Hour:</span>
-                        <span class="diag-value" x-text="unbiddenInkInfo.startHour"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">End Hour:</span>
-                        <span class="diag-value" x-text="unbiddenInkInfo.endHour"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Frequency:</span>
-                        <span class="diag-value" x-text="unbiddenInkInfo.frequency"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Next Message:</span>
-                        <span class="diag-value" x-text="unbiddenInkInfo.nextMessage"></span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Logging Section -->
             <div x-show="currentSection === 'logging-section'" class="diag-section indigo">
                 <div class="diag-header">
@@ -186,72 +151,6 @@
                 </div>
             </div>
 
-            <!-- Hardware Buttons Section -->
-            <div x-show="currentSection === 'hardware-buttons-section'" class="diag-section pink">
-                <div class="diag-header">
-                    <h4 class="diag-title pink"><span class="mr-2">🎛️</span>Hardware Buttons</h4>
-                    <button @click="copyGenericSection('Hardware Buttons')" class="diag-copy-btn pink">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="space-y-2">
-                    <!-- Configuration -->
-                    <div class="diag-row">
-                        <span class="diag-label">Button Count:</span>
-                        <span class="diag-value" x-text="hardwareButtonsInfo.count"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Debounce Time:</span>
-                        <span class="diag-value" x-text="hardwareButtonsInfo.debounce"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Long Press Time:</span>
-                        <span class="diag-value" x-text="hardwareButtonsInfo.longPress"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Active Low:</span>
-                        <span class="diag-value" x-text="hardwareButtonsInfo.activeLow"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Min Interval:</span>
-                        <span class="diag-value" x-text="hardwareButtonsInfo.minInterval"></span>
-                    </div>
-                    <div class="diag-row">
-                        <span class="diag-label">Max Per Minute:</span>
-                        <span class="diag-value" x-text="hardwareButtonsInfo.maxPerMinute"></span>
-                    </div>
-
-                    <!-- Individual Buttons -->
-                    <template x-for="button in hardwareButtonsInfo.buttons" :key="button.num">
-                        <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2"
-                                x-text="`Button ${button.num} (GPIO ${button.gpio})`"></h5>
-                            <div class="space-y-1 text-sm">
-                                <div class="diag-row">
-                                    <span class="diag-label">Short Press:</span>
-                                    <span class="diag-value" x-text="button.shortPress"></span>
-                                </div>
-                                <div class="diag-row">
-                                    <span class="diag-label">Long Press:</span>
-                                    <span class="diag-value" x-text="button.longPress"></span>
-                                </div>
-                                <div x-show="button.shortMqtt" class="diag-row">
-                                    <span class="diag-label">Short Press MQTT:</span>
-                                    <span class="diag-value" x-text="button.shortMqtt"></span>
-                                </div>
-                                <div x-show="button.longMqtt" class="diag-row">
-                                    <span class="diag-label">Long Press MQTT:</span>
-                                    <span class="diag-value" x-text="button.longMqtt"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
             <!-- Pages & Endpoints Section -->
             <div x-show="currentSection === 'pages-endpoints-section'" class="diag-section teal">
                 <div class="diag-header">
@@ -264,18 +163,33 @@
                     </button>
                 </div>
                 <div class="space-y-4">
-                    <!-- Web Pages -->
+                    <!-- Routes -->
                     <div>
-                        <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Web Pages</h5>
+                        <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Routes</h5>
                         <div class="space-y-1">
-                            <template x-for="page in webPages" :key="page.path">
+                            <template x-for="route in sortedRoutes" :key="route.path">
                                 <div class="diag-row">
-                                    <span class="diag-label" x-text="page.path"></span>
-                                    <span class="diag-value" x-text="page.description"></span>
+                                    <!-- Route path - make HTML pages clickable -->
+                                    <span class="diag-label">
+                                        <template x-if="route.isHtmlPage">
+                                            <a :href="route.linkPath"
+                                                class="text-teal-600 dark:text-teal-400 hover:underline"
+                                                x-text="route.path"></a>
+                                        </template>
+                                        <template x-if="route.isUnmatched">
+                                            <a :href="route.linkPath"
+                                                class="text-teal-600 dark:text-teal-400 hover:underline"
+                                                x-text="route.path"></a>
+                                        </template>
+                                        <template x-if="!route.isHtmlPage && !route.isUnmatched">
+                                            <span x-text="route.path"></span>
+                                        </template>
+                                    </span>
+                                    <span class="diag-value" x-text="route.description"></span>
                                 </div>
                             </template>
-                            <div x-show="webPages.length === 0" class="diag-row">
-                                <span class="diag-label">Loading web pages...</span>
+                            <div x-show="sortedRoutes.length === 0" class="diag-row">
+                                <span class="diag-label">Loading routes...</span>
                                 <span class="diag-value">-</span>
                             </div>
                         </div>
@@ -283,22 +197,20 @@
 
                     <!-- API Endpoints -->
                     <div>
-                        <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">API Endpoints</h5>
-                        <div class="space-y-2">
+                        <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-3">API Endpoints</h5>
+                        <div class="space-y-3">
                             <template x-for="(endpoints, method) in apiEndpoints" :key="method">
-                                <div>
-                                    <div class="diag-row method-header">
-                                        <span class="diag-label font-semibold text-gray-700 dark:text-gray-300"
-                                            x-text="`${method} Endpoints`"></span>
-                                        <span class="diag-value font-semibold text-gray-700 dark:text-gray-300"
-                                            x-text="`(${endpoints.length})`"></span>
+                                <div class="border-l-2 border-teal-300 dark:border-teal-600 pl-3">
+                                    <h6 class="font-semibold text-sm text-teal-700 dark:text-teal-300 mb-2 uppercase tracking-wide"
+                                        x-text="`${method} (${endpoints.length})`"></h6>
+                                    <div class="space-y-1">
+                                        <template x-for="endpoint in endpoints" :key="endpoint.path">
+                                            <div class="diag-row text-sm">
+                                                <span class="diag-label font-mono" x-text="endpoint.path"></span>
+                                                <span class="diag-value" x-text="endpoint.description"></span>
+                                            </div>
+                                        </template>
                                     </div>
-                                    <template x-for="endpoint in endpoints" :key="endpoint.path">
-                                        <div class="diag-row ml-4">
-                                            <span class="diag-label font-mono text-sm" x-text="endpoint.path"></span>
-                                            <span class="diag-value text-sm" x-text="endpoint.description"></span>
-                                        </div>
-                                    </template>
                                 </div>
                             </template>
                             <div x-show="Object.keys(apiEndpoints).length === 0" class="diag-row">

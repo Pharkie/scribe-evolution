@@ -512,6 +512,52 @@
                                 </div>
                             </div>
                         </template>
+
+                        <!-- Hardware Button Status (Read-only) -->
+                        <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+                            <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-4">Hardware Button
+                                Configuration</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Button Count:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.buttons?.count || '-'"></span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Debounce Time:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="(config.buttons?.debounce_time || '-') + (config.buttons?.debounce_time ? ' ms' : '')"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Long Press
+                                            Time:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="(config.buttons?.long_press_time || '-') + (config.buttons?.long_press_time ? ' ms' : '')"></span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Active Low:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.buttons?.active_low ? 'Yes' : (config.buttons?.active_low === false ? 'No' : '-')"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Min Interval:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="(config.buttons?.min_interval || '-') + (config.buttons?.min_interval ? ' ms' : '')"></span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Max Per
+                                            Minute:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.buttons?.max_per_minute || '-'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -525,20 +571,6 @@
                         <span class="text-3xl">🌈</span>
                         <span>LEDs</span>
                     </h2>
-
-                    <!-- LED Configuration Notice -->
-                    <div class="warning-box mb-6">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-2xl">⚡</span>
-                            <div class="flex-1">
-                                <p class="font-semibold text-amber-800 dark:text-amber-200">LED Configuration</p>
-                                <p class="text-sm text-amber-700 dark:text-amber-300">
-                                    Changes to LED settings will reinitialize the LED strip. Make sure your LED strip is
-                                    properly connected before saving.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="space-y-6">
                         <!-- Hardware Configuration -->
