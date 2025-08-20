@@ -1,5 +1,6 @@
 /* Shared base styles and components */
 @import "tailwindcss";
+@import "../../node_modules/@simonwep/pickr/dist/themes/nano.min.css";
 
 @layer base {
   /* Root HTML styling */
@@ -146,7 +147,7 @@
   .slider {
     -webkit-appearance: none;
     appearance: none;
-    background: #e5e7eb;
+    @apply bg-gray-300 dark:bg-gray-600;
     outline: none;
   }
 
@@ -156,13 +157,13 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #10b981;
+    @apply bg-emerald-500;
     cursor: pointer;
     transition: all 0.2s ease;
   }
 
   .slider::-webkit-slider-thumb:hover {
-    background: #059669;
+    @apply bg-emerald-600;
     transform: scale(1.1);
   }
 
@@ -170,14 +171,14 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #10b981;
+    @apply bg-emerald-500;
     cursor: pointer;
     border: none;
     transition: all 0.2s ease;
   }
 
   .slider::-moz-range-thumb:hover {
-    background: #059669;
+    @apply bg-emerald-600;
     transform: scale(1.1);
   }
 

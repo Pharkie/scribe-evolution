@@ -16,11 +16,7 @@
             <!-- Back button -->
             <div class="header-spacer">
                 <button @click="window.location.href = '/'" class="back-button">
-                    <svg cla <option value="chase_single">Single Colour Chase</option>
-                        <option value="rainbow">Rainbow</option>
-                        <option value="twinkle">Twinkle</option>
-                        <option value="chase_multi">Multicolour Chase</option>w-3 h-3 sm:w-4 sm:h-4" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                         </path>
                     </svg>
@@ -723,7 +719,7 @@
                                     </div>
 
                                     <!-- Additional Colors for Multicolour Chase -->
-                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">>
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
                                         <label for="led-color2"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color 2
@@ -733,7 +729,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">>
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
                                         <label for="led-color3"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color 3

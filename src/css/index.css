@@ -1,7 +1,4 @@
 /* Index page specific styles */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 @import "./shared.css";
 
 @layer components {

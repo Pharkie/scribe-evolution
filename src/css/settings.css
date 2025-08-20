@@ -1,11 +1,5 @@
 /* Settings page specific styles */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 @import "./shared.css";
-
-/* Import Pickr CSS */
-@import "../../node_modules/@simonwep/pickr/dist/themes/nano.min.css";
 
 @layer components {
   /* Pickr Integration Styles */
@@ -183,7 +177,7 @@
     -webkit-appearance: none;
     pointer-events: auto;
     position: relative;
-    background: #8b5cf6;
+    @apply bg-purple-500;
     border: 2px solid white;
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
