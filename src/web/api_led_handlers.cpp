@@ -99,9 +99,9 @@ void handleLedEffect(AsyncWebServerRequest *request)
     }
     // Other effects (rainbow, twinkle, pulse, matrix) use same names
 
-    // Parse optional parameters from JSON body
-    int duration = doc["duration"] | 5; // Default 5 seconds (for duration-based effects)
-    int cycles = doc["cycles"] | 1;     // Default 1 cycle (for cycle-based effects)
+    // Parse required parameters
+    int duration = doc["duration"] | 5; // Default 5 seconds
+    int cycles = doc["cycles"] | 1;     // Default 1 cycle
 
     // For duration-based effects from web UI, convert milliseconds to seconds
     if (duration > 100)
@@ -109,132 +109,48 @@ void handleLedEffect(AsyncWebServerRequest *request)
         duration = duration / 1000;
     }
 
-    // Convert color names to CRGB values
-    auto parseColor = [](const String &colorName) -> CRGB
+    // Parse colors array (required)
+    if (!doc.containsKey("colors") || !doc["colors"].is<JsonArray>())
     {
-        String lower = colorName;
-        lower.toLowerCase();
+        sendErrorResponse(request, 400, "Colors array is required");
+        return;
+    }
 
-        if (lower == "red")
-            return CRGB::Red;
-        if (lower == "green")
-            return CRGB::Green;
-        if (lower == "blue")
-            return CRGB::Blue;
-        if (lower == "yellow")
-            return CRGB::Yellow;
-        if (lower == "purple")
-            return CRGB::Purple;
-        if (lower == "cyan")
-            return CRGB::Cyan;
-        if (lower == "white")
-            return CRGB::White;
-        if (lower == "orange")
-            return CRGB::Orange;
-        if (lower == "pink")
-            return CRGB::Pink;
-        return CRGB::Black; // Default to off
-    };
+    JsonArray colorsArray = doc["colors"];
+    if (colorsArray.size() == 0)
+    {
+        sendErrorResponse(request, 400, "Colors array cannot be empty");
+        return;
+    }
 
-    // Function to parse hex color strings (#RRGGBB or #RRGGBBAA)
+    // Add colors array to settings
+    settings["colors"] = doc["colors"];
+
+    // Parse colors from the colors array into CRGB values
     auto parseHexColor = [](const String &hexColor) -> CRGB
     {
         if (hexColor.length() < 7 || hexColor[0] != '#')
         {
             return CRGB::Black; // Invalid hex format
         }
-
-        // Parse RGB values from hex string
         unsigned long colorValue = strtoul(hexColor.substring(1, 7).c_str(), NULL, 16);
         uint8_t r = (colorValue >> 16) & 0xFF;
         uint8_t g = (colorValue >> 8) & 0xFF;
         uint8_t b = colorValue & 0xFF;
-
         return CRGB(r, g, b);
     };
 
-    // Parse colors - handle both old settings object format and new unified format
+    // Parse colors into CRGB values
     CRGB c1 = CRGB::Blue, c2 = CRGB::Black, c3 = CRGB::Black;
-    std::vector<CRGB> colors;
+    if (colorsArray.size() > 0)
+        c1 = parseHexColor(colorsArray[0].as<String>());
+    if (colorsArray.size() > 1)
+        c2 = parseHexColor(colorsArray[1].as<String>());
+    if (colorsArray.size() > 2)
+        c3 = parseHexColor(colorsArray[2].as<String>());
+    LOG_VERBOSE("LEDS", "Parsed %d colors from array", colorsArray.size());
 
-    JsonObject settings;
-    bool hasSettingsObject = doc.containsKey("settings") && doc["settings"].is<JsonObject>();
-
-    if (hasSettingsObject)
-    {
-        // Old format with settings object
-        settings = doc["settings"];
-        LOG_VERBOSE("LEDS", "Processing old settings object format");
-    }
-    else
-    {
-        // New unified format - create settings object from root level parameters
-        LOG_VERBOSE("LEDS", "Processing new unified parameter format");
-        DynamicJsonDocument settingsDoc(256);
-        JsonObject newSettings = settingsDoc.to<JsonObject>();
-
-        // Map unified parameters to effect-specific settings
-        if (doc.containsKey("speed"))
-            newSettings["speed"] = doc["speed"];
-        if (doc.containsKey("intensity"))
-        {
-            // Map intensity to effect-specific parameter based on effect type
-            int intensity = doc["intensity"];
-            if (effectName.equalsIgnoreCase("twinkle") || effectName.equalsIgnoreCase("rainbow"))
-            {
-                newSettings["density"] = intensity;
-            }
-            else if (effectName.equalsIgnoreCase("chase") || effectName.equalsIgnoreCase("chase_single"))
-            {
-                newSettings["trailLength"] = intensity / 8; // Map 0-255 to reasonable trail length
-            }
-            // For other effects, intensity might be unused or mapped differently
-        }
-        if (doc.containsKey("color"))
-            newSettings["color"] = doc["color"];
-        if (doc.containsKey("palette"))
-            newSettings["palette"] = doc["palette"];
-
-        settings = newSettings;
-    }
-
-    if (settings.isNull())
-    {
-        LOG_ERROR("LEDS", "No settings found - neither old settings object nor new unified parameters");
-        sendErrorResponse(request, 400, "Settings object or unified parameters required");
-        return;
-    }
-
-    // Check for hex color array or single color in settings
-    if (settings.containsKey("colors") && settings["colors"].is<JsonArray>())
-    {
-        JsonArray colorArray = settings["colors"];
-        for (JsonVariant colorVar : colorArray)
-        {
-            if (colorVar.is<const char *>())
-            {
-                String colorStr = colorVar.as<String>();
-                CRGB color = parseHexColor(colorStr);
-                colors.push_back(color);
-                LOG_VERBOSE("LEDS", "Parsed hex color: %s -> RGB(%d,%d,%d)",
-                            colorStr.c_str(), color.r, color.g, color.b);
-            }
-        }
-    }
-    else if (settings.containsKey("color"))
-    {
-        // Single color for effects like pulse, twinkle, matrix
-        String colorStr = settings["color"].as<String>();
-        CRGB color = parseHexColor(colorStr);
-        colors.push_back(color);
-        LOG_VERBOSE("LEDS", "Parsed single color: %s -> RGB(%d,%d,%d)",
-                    colorStr.c_str(), color.r, color.g, color.b);
-    }
-
-    // Set primary colors
-    c1 = colors.size() > 0 ? colors[0] : CRGB::Blue;
-    c2 = colors.size() > 1 ? colors[1] : CRGB::Black;
-    c3 = colors.size() > 2 ? colors[2] : CRGB::Black;
+    // Parse ALL settings based on effect type and apply them
 
     // Parse ALL settings based on effect type and apply them
     // Create a temporary effects configuration with frontend settings

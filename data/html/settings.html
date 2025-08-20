@@ -664,10 +664,10 @@
                                     </label>
                                     <select id="led-effect-selector" class="input-standard" x-model="selectedEffect"
                                         @change="initEffectParams()">
-                                        <option value="simple_chase">Simple Chase</option>
+                                        <option value="simple_chase">Single Colour Chase</option>
                                         <option value="rainbow">Rainbow Wave</option>
                                         <option value="twinkle">Twinkle</option>
-                                        <option value="chase">Chase</option>
+                                        <option value="chase">Multicolour Chase</option>
                                         <option value="pulse">Pulse</option>
                                         <option value="matrix">Matrix</option>
                                     </select>
@@ -716,6 +716,27 @@
                                         <input type="color" id="led-palette"
                                             class="w-20 h-12 rounded-lg border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
                                             x-model="effectParams.palette">
+                                    </div>
+
+                                    <!-- Additional Colors for Multicolour Chase -->
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase'">
+                                        <label for="led-color2"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color 2
+                                        </label>
+                                        <input type="color" id="led-color2"
+                                            class="w-20 h-12 rounded-lg border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                            x-model="effectParams.color2">
+                                    </div>
+
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase'">
+                                        <label for="led-color3"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color 3
+                                        </label>
+                                        <input type="color" id="led-color3"
+                                            class="w-20 h-12 rounded-lg border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                            x-model="effectParams.color3">
                                     </div>
                                 </div>
 
