@@ -46,6 +46,8 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 - Use constants for strings used in multiple files
 - Extract common functionality to utilities
 - Maintain single source of truth for configuration, errors, defaults
+- Do NOT hardcode fallbacks into the front-end (other than e.g. "Awaiting data") for things that should be provided by the backend. If the front-end needs a value from the back-end and doesn't get it, it should visibly and clearly error and present that error to the user, either using JS/CSS or console.error or warning. Be careful not to mask errors.
+- No "backwards compatibility". There must only be one and exactly one way of doing things, consistent across the whole app.
 
 ### Code Standards
 - **Files**: Keep under 800 lines, use modular architecture

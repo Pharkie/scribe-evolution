@@ -151,38 +151,77 @@ function initializeDiagnosticsStore() {
       };
     },
     
-    // Memory usage computed properties
+    // Memory usage computed properties - show errors instead of silent fallbacks
     get memoryUsage() {
-      const microcontroller = this.diagnosticsData.microcontroller || {};
-      const flash = microcontroller.flash?.app_partition || {};
-      const memory = microcontroller.memory || {};
+      const microcontroller = this.diagnosticsData.microcontroller;
       
-      const flashUsed = flash.total ? ((flash.used || 0) / flash.total) * 100 : 0;
-      const heapUsed = memory.total_heap ? ((memory.used_heap || 0) / memory.total_heap) * 100 : 0;
+      if (!microcontroller) {
+        console.error('❌ Missing microcontroller data for memory usage');
+        return {
+          flashUsageText: 'ERROR: Missing Data',
+          heapUsageText: 'ERROR: Missing Data',
+          flashUsagePercent: 0,
+          heapUsagePercent: 0
+        };
+      }
+      
+      const flash = microcontroller.flash?.app_partition;
+      const memory = microcontroller.memory;
+      
+      if (!flash) {
+        console.error('❌ Missing flash data in microcontroller diagnostics');
+      }
+      if (!memory) {
+        console.error('❌ Missing memory data in microcontroller diagnostics');
+      }
+      
+      const flashUsed = flash?.total ? ((flash.used || 0) / flash.total) * 100 : 0;
+      const heapUsed = memory?.total_heap ? ((memory.used_heap || 0) / memory.total_heap) * 100 : 0;
       
       return {
-        flashUsageText: `${this.formatBytes(flash.used || 0)} / ${this.formatBytes(flash.total || 0)} (${flashUsed.toFixed(0)}%)`,
-        heapUsageText: `${this.formatBytes(memory.used_heap || 0)} / ${this.formatBytes(memory.total_heap || 0)} (${heapUsed.toFixed(0)}%)`,
+        flashUsageText: flash ? `${this.formatBytes(flash.used || 0)} / ${this.formatBytes(flash.total || 0)} (${flashUsed.toFixed(0)}%)` : 'ERROR: Missing flash data',
+        heapUsageText: memory ? `${this.formatBytes(memory.used_heap || 0)} / ${this.formatBytes(memory.total_heap || 0)} (${heapUsed.toFixed(0)}%)` : 'ERROR: Missing memory data',
         flashUsagePercent: flashUsed,
         heapUsagePercent: heapUsed
       };
     },
     
-    // Logging computed properties
+    // Logging computed properties - show errors instead of silent fallbacks
     get loggingInfo() {
-      const logging = this.diagnosticsData.logging || {};
+      const logging = this.diagnosticsData.logging;
+      
+      if (!logging) {
+        console.error('❌ Missing logging data from diagnostics API');
+        return {
+          level: 'ERROR: Missing Data',
+          serialLogging: 'ERROR: Missing Data',
+          webLogging: 'ERROR: Missing Data', 
+          fileLogging: 'ERROR: Missing Data',
+          mqttLogging: 'ERROR: Missing Data'
+        };
+      }
+      
       return {
-        level: logging.level_name || 'Unknown',
-        serialLogging: logging.serial_enabled ? 'Enabled' : 'Disabled',
-        webLogging: logging.betterstack_enabled ? 'Enabled' : 'Disabled',
-        fileLogging: logging.file_enabled ? 'Enabled' : 'Disabled',
-        mqttLogging: logging.mqtt_enabled ? 'Enabled' : 'Disabled'
+        level: logging.level_name || 'ERROR: Missing level_name',
+        serialLogging: logging.serial_enabled !== undefined ? (logging.serial_enabled ? 'Enabled' : 'Disabled') : 'ERROR: Missing serial_enabled',
+        webLogging: logging.betterstack_enabled !== undefined ? (logging.betterstack_enabled ? 'Enabled' : 'Disabled') : 'ERROR: Missing betterstack_enabled',
+        fileLogging: logging.file_enabled !== undefined ? (logging.file_enabled ? 'Enabled' : 'Disabled') : 'ERROR: Missing file_enabled',
+        mqttLogging: logging.mqtt_enabled !== undefined ? (logging.mqtt_enabled ? 'Enabled' : 'Disabled') : 'ERROR: Missing mqtt_enabled'
       };
     },
     
-    // Web pages computed properties (renamed to sortedRoutes)
+    // Web pages computed properties - show errors instead of silent fallbacks
     get sortedRoutes() {
-      const routes = this.diagnosticsData.pages_and_endpoints?.web_pages || [];
+      const routes = this.diagnosticsData.pages_and_endpoints?.web_pages;
+      
+      if (!routes) {
+        console.error('❌ Missing pages_and_endpoints.web_pages data from diagnostics API');
+        return [{
+          path: 'ERROR: Missing Data',
+          description: 'Web pages data not available from diagnostics API',
+          isError: true
+        }];
+      }
       
       // Separate HTML pages from other routes
       const htmlPages = [];
@@ -231,9 +270,20 @@ function initializeDiagnosticsStore() {
       return [...htmlPages, ...otherRoutes];
     },
     
-    // API endpoints computed properties
+    // API endpoints computed properties - show errors instead of silent fallbacks
     get apiEndpoints() {
-      const endpoints = this.diagnosticsData.pages_and_endpoints?.api_endpoints || [];
+      const endpoints = this.diagnosticsData.pages_and_endpoints?.api_endpoints;
+      
+      if (!endpoints) {
+        console.error('❌ Missing pages_and_endpoints.api_endpoints data from diagnostics API');
+        return {
+          ERROR: [{
+            path: 'ERROR: Missing Data',
+            description: 'API endpoints data not available from diagnostics API'
+          }]
+        };
+      }
+      
       const grouped = {};
       
       endpoints.forEach(endpoint => {
@@ -264,18 +314,33 @@ function initializeDiagnosticsStore() {
     // NVS data formatted
     get nvsDataFormatted() {
       if (!this.nvsData || Object.keys(this.nvsData).length === 0) {
-        return 'NVS data not available';
+        console.error('❌ Missing NVS data from nvs-dump API');
+        return 'ERROR: NVS data not available - API failed or returned empty data';
+      }
+      
+      // Check for missing required fields
+      const missingFields = [];
+      if (!this.nvsData.namespace) missingFields.push('namespace');
+      if (!this.nvsData.timestamp) missingFields.push('timestamp');
+      if (!this.nvsData.status) missingFields.push('status');
+      if (this.nvsData.totalKeys === undefined) missingFields.push('totalKeys');
+      if (this.nvsData.validKeys === undefined) missingFields.push('validKeys');
+      if (this.nvsData.correctedKeys === undefined) missingFields.push('correctedKeys');
+      if (this.nvsData.invalidKeys === undefined) missingFields.push('invalidKeys');
+      
+      if (missingFields.length > 0) {
+        console.error('❌ Missing NVS fields:', missingFields);
       }
       
       const formattedData = {
-        namespace: this.nvsData.namespace,
-        timestamp: this.nvsData.timestamp,
-        status: this.nvsData.status,
+        namespace: this.nvsData.namespace || 'ERROR: Missing namespace',
+        timestamp: this.nvsData.timestamp || 'ERROR: Missing timestamp',
+        status: this.nvsData.status || 'ERROR: Missing status',
         summary: {
-          totalKeys: this.nvsData.totalKeys || 0,
-          validKeys: this.nvsData.validKeys || 0,
-          correctedKeys: this.nvsData.correctedKeys || 0,
-          invalidKeys: this.nvsData.invalidKeys || 0
+          totalKeys: this.nvsData.totalKeys !== undefined ? this.nvsData.totalKeys : 'ERROR: Missing totalKeys',
+          validKeys: this.nvsData.validKeys !== undefined ? this.nvsData.validKeys : 'ERROR: Missing validKeys',
+          correctedKeys: this.nvsData.correctedKeys !== undefined ? this.nvsData.correctedKeys : 'ERROR: Missing correctedKeys',
+          invalidKeys: this.nvsData.invalidKeys !== undefined ? this.nvsData.invalidKeys : 'ERROR: Missing invalidKeys'
         },
         keys: {}
       };
