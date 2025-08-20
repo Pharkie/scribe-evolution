@@ -57,7 +57,7 @@ public:
     /**
      * @brief Check if this effect supports cycle-based operation
      */
-    bool isCycleBased() const override { return false; } // Duration-based
+    bool isCycleBased() const override { return true; } // Cycle-based: 1 cycle = complete twinkle sequence
 
     /**
      * @brief Set twinkle density

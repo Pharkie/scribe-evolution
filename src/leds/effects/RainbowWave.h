@@ -47,7 +47,7 @@ public:
     /**
      * @brief Check if this effect supports cycle-based operation
      */
-    bool isCycleBased() const override { return false; } // Duration-based
+    bool isCycleBased() const override { return true; } // Cycle-based: 1 cycle = 1 complete rainbow rotation
 
 private:
     RainbowConfig config; // Store the autonomous configuration

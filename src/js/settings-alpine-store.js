@@ -525,10 +525,10 @@ function initializeSettingsStore() {
                     colors = [this.effectParams.color1];
                 }
 
-                // Build unified payload - no more single color fields
+                // Build unified payload - use cycles instead of duration
                 let effectParams = {
                     effect: effectName,
-                    duration: 10, // 10 seconds for testing
+                    cycles: 3, // 3 cycles for testing (1 cycle = one complete pattern/wave/pulse)
                     speed: this.effectParams.speed,
                     intensity: this.effectParams.intensity,
                     colors: colors
@@ -550,7 +550,7 @@ function initializeSettingsStore() {
                 
                 const result = await response.json();
                 if (result.success) {
-                    window.showMessage(`Testing ${effectName} effect for 10 seconds`, 'info');
+                    window.showMessage(`Testing ${effectName} effect for 3 cycles`, 'info');
                 } else {
                     throw new Error(result.message);
                 }
