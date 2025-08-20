@@ -45,9 +45,8 @@ public:
     String getName() const override { return "pulse"; }
 
     /**
-     * @brief Check if this effect supports cycle-based operation
+     * @brief Get effect name
      */
-    bool isCycleBased() const override { return true; } // Now cycle-based: 1 cycle = 1 complete pulse (0 -> max -> 0)
 
 private:
     PulseConfig config; // Store the autonomous configuration

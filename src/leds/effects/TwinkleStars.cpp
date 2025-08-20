@@ -79,6 +79,8 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
                 {
                     twinkleStars[i].brightness = 0;
                     twinkleStars[i].active = false;
+                    // Count completed twinkle as a cycle
+                    completedCycles++;
                 }
             }
         }

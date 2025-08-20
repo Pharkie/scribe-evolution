@@ -249,8 +249,8 @@ void handleLedEffect(AsyncWebServerRequest *request)
     }
     else
     {
-        // Run effect continuously (duration=0 means indefinite)
-        success = ledEffects.startEffectDuration(effectName, 0, c1, c2, c3);
+        // Run effect continuously (cycles=0 means indefinite)
+        success = ledEffects.startEffectCycles(effectName, 0, c1, c2, c3);
         LOG_VERBOSE("LEDS", "Started LED effect: %s continuously", effectName.c_str());
     }
 

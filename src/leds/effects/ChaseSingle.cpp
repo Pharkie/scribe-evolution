@@ -16,7 +16,7 @@
 #include "../../core/led_config.h"
 
 ChaseSingle::ChaseSingle(const ChaseSingleConfig &config)
-    : config(config), isCycleBasedMode(true), targetCycles(1), frameCounter(0)
+    : config(config), targetCycles(1), frameCounter(0)
 {
 }
 
@@ -26,11 +26,9 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
 {
     clearAllLEDs(leds, ledCount);
 
-    if (isCycleBasedMode)
-    {
-        // Cycle-based: run from start to end, then wait for trail to completely exit
-        int totalSteps = ledCount + config.trailLength; // Include trail length for complete exit
-        int currentPosition = effectStep;
+    // Cycle-based: run from start to end, then wait for trail to completely exit
+    int totalSteps = ledCount + config.trailLength; // Include trail length for complete exit
+    int currentPosition = effectStep;
 
         if (currentPosition < ledCount)
         {
@@ -69,31 +67,6 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
             // Return false if we've completed all requested cycles
             return completedCycles < targetCycles;
         }
-    }
-    else
-    {
-        // Duration-based: continuous chase with trail
-        int position = effectStep % ledCount;
-
-        leds[position] = color1;
-
-        // Add trailing dots with fading - always show full trail
-        for (int i = 1; i <= config.trailLength; i++)
-        {
-            int trailPos = (position - i + ledCount) % ledCount;
-            CRGB trailColor = color1;
-            trailColor.fadeToBlackBy(i * config.trailFade); // Fade each trailing dot
-            leds[trailPos] = trailColor;
-        }
-
-        // Use frame counter for speed control (higher speed = slower movement)
-        frameCounter++;
-        if (frameCounter >= config.speed)
-        {
-            frameCounter = 0;
-            effectStep++; // Only advance position when frame counter reaches speed threshold
-        }
-    }
 
     return true; // Continue running
 }
