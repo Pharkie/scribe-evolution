@@ -182,7 +182,15 @@ function initializeSettingsStore() {
             // Validate form before saving
             if (!this.validateForm()) {
                 this.showValidationFeedback = true;
-                window.showMessage('Please fix the errors in the form before saving', 'error');
+                
+                // Show specific validation errors
+                const errorFields = Object.keys(this.validation.errors);
+                if (errorFields.length > 0) {
+                    const firstError = this.validation.errors[errorFields[0]];
+                    window.showMessage(`Validation error: ${firstError}`, 'error');
+                } else {
+                    window.showMessage('Please check all required fields before saving', 'error');
+                }
                 return;
             }
             
@@ -376,8 +384,10 @@ function initializeSettingsStore() {
         validateField(fieldName, value) {
             this.validation.touched[fieldName] = true;
             
-            // Clear previous errors
-            delete this.validation.errors[fieldName];
+            // Clear previous errors for this field
+            if (this.validation.errors[fieldName]) {
+                delete this.validation.errors[fieldName];
+            }
             
             // Required field validation
             const requiredFields = ['device.owner', 'wifi.ssid'];
@@ -385,16 +395,19 @@ function initializeSettingsStore() {
                 requiredFields.push('apis.chatgptApiToken');
             }
             
-            if (requiredFields.includes(fieldName) && (!value || value.trim() === '')) {
-                this.validation.errors[fieldName] = 'This field is required';
-                this.validation.isValid = false;
-                return false;
+            if (requiredFields.includes(fieldName)) {
+                if (!value || (typeof value === 'string' && value.trim() === '')) {
+                    this.validation.errors[fieldName] = 'This field is required';
+                    this.validation.isValid = false;
+                    console.log(`Required field validation failed for ${fieldName}:`, value);
+                    return false;
+                }
             }
             
             // Field-specific validation
             switch (fieldName) {
                 case 'wifi.connect_timeout':
-                    const timeout = parseInt(value);
+                    const timeout = typeof value === 'number' ? Math.floor(value / 1000) : parseInt(value);
                     if (isNaN(timeout) || timeout < 5 || timeout > 60) {
                         this.validation.errors[fieldName] = 'Timeout must be between 5 and 60 seconds';
                         this.validation.isValid = false;
@@ -421,8 +434,6 @@ function initializeSettingsStore() {
                     break;
             }
             
-            // Check overall form validity
-            this.validation.isValid = Object.keys(this.validation.errors).length === 0;
             return true;
         },
         
@@ -446,8 +457,12 @@ function initializeSettingsStore() {
             
             fieldsToValidate.forEach(fieldName => {
                 const value = this.getNestedValue(fieldName);
+                console.log(`Validating ${fieldName}:`, value);
                 this.validateField(fieldName, value);
             });
+            
+            console.log('Validation errors:', this.validation.errors);
+            console.log('Form is valid:', this.validation.isValid);
             
             return this.validation.isValid;
         },
