@@ -1,10 +1,10 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ScribeLogoMain-white.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/ScribeLogoMain.svg">
-  <img alt="Scribe Logo" src="docs/assets/ScribeLogoMain.svg">
-</picture>
-
-<br>
+<div style="margin: 30px 0;">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ScribeLogoMain-white.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/ScribeLogoMain.svg">
+    <img alt="Scribe Logo" src="docs/assets/ScribeLogoMain.svg">
+  </picture>
+</div>
 
 **An AI-powered, network-connected thermal printer to bring you joy**
 
