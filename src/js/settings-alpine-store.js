@@ -72,7 +72,7 @@ function initializeSettingsStore() {
         showValidationFeedback: false,
         
         // LED Effect Parameters (WLED-style unified interface)
-        selectedEffect: 'simple_chase',
+        selectedEffect: 'chase_single',
         effectParams: {
             speed: 10,
             intensity: 50,
@@ -214,7 +214,7 @@ function initializeSettingsStore() {
                 
                 // Trigger LED confirmation effect if available
                 if (window.SettingsLED && window.SettingsLED.triggerEffect) {
-                    window.SettingsLED.triggerEffect('simple_chase', 'green', 3000);
+                    window.SettingsLED.triggerEffect('chase_single', 'green', 3000);
                 }
                 
                 console.log('Alpine Store: Configuration saved successfully');
@@ -415,7 +415,7 @@ function initializeSettingsStore() {
             try {
                 // Build colors array based on effect - always use colors array
                 let colors = [];
-                if (effectName === 'chase') {
+                if (effectName === 'chase_multi') {
                     // Multicolour chase uses 3 colors
                     colors = [
                         this.effectParams.color1,
@@ -467,7 +467,7 @@ function initializeSettingsStore() {
             const params = {};
             
             switch(effectName) {
-                case 'simple_chase':
+                case 'chase_single':
                     // intensity = unused, custom1-3 = unused
                     break;
                 case 'rainbow':
@@ -480,7 +480,7 @@ function initializeSettingsStore() {
                     params.density = this.effectParams.intensity;
                     params.fadeSpeed = this.effectParams.custom1;
                     break;
-                case 'chase':
+                case 'chase_multi':
                     // intensity = trail_length, custom1 = dot size (color spacing)
                     params.trailLength = this.effectParams.intensity;
                     params.colorSpacing = this.effectParams.custom1;
@@ -502,7 +502,7 @@ function initializeSettingsStore() {
             switch(this.selectedEffect) {
                 case 'rainbow': return 'Wave Length';
                 case 'twinkle': return 'Fade Speed';
-                case 'chase': return 'Dot Size';
+                case 'chase_multi': return 'Dot Size';
                 default: return null;
             }
         },
@@ -511,7 +511,7 @@ function initializeSettingsStore() {
             switch(this.selectedEffect) {
                 case 'rainbow': return { min: 1, max: 20, step: 1 };
                 case 'twinkle': return { min: 1, max: 10, step: 1 };
-                case 'chase': return { min: 1, max: 10, step: 1 };
+                case 'chase_multi': return { min: 1, max: 10, step: 1 };
                 default: return { min: 1, max: 100, step: 1 };
             }
         },
@@ -542,10 +542,10 @@ function initializeSettingsStore() {
         // Initialize effect parameters based on selected effect  
         initEffectParams() {
             const defaults = {
-                'simple_chase': { speed: 10, intensity: 50, palette: '#0062ff', color2: '#0062ff', color3: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
+                'chase_single': { speed: 10, intensity: 50, palette: '#0062ff', color2: '#0062ff', color3: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
                 'rainbow': { speed: 20, intensity: 5, palette: '#ff0000', color2: '#ff0000', color3: '#ff0000', custom1: 5, custom2: 3, custom3: 1 },
                 'twinkle': { speed: 5, intensity: 10, palette: '#ffff00', color2: '#ffff00', color3: '#ffff00', custom1: 3, custom2: 2, custom3: 1 },
-                'chase': { speed: 15, intensity: 10, palette: '#ff0000', color2: '#00ff00', color3: '#0000ff', custom1: 3, custom2: 5, custom3: 1 },
+                'chase_multi': { speed: 15, intensity: 10, palette: '#ff0000', color2: '#00ff00', color3: '#0000ff', custom1: 3, custom2: 5, custom3: 1 },
                 'pulse': { speed: 4, intensity: 50, palette: '#800080', color2: '#800080', color3: '#800080', custom1: 5, custom2: 3, custom3: 1 },
                 'matrix': { speed: 25, intensity: 20, palette: '#008000', color2: '#008000', color3: '#008000', custom1: 8, custom2: 10, custom3: 1 }
             };
@@ -558,10 +558,10 @@ function initializeSettingsStore() {
         // Get effect description
         getEffectDescription() {
             const descriptions = {
-                'simple_chase': 'Single colour dot chasing around the strip. Speed controls movement rate, Intensity controls brightness.',
+                'chase_single': 'Single colour dot chasing around the strip. Speed controls movement rate, Intensity controls brightness.',
                 'rainbow': 'Smooth rainbow wave moving across the strip. Speed controls wave movement, Intensity controls density of colors, Wave Length controls how many colors appear simultaneously.',
                 'twinkle': 'Random twinkling stars effect. Speed controls twinkle rate, Intensity controls number of active twinkles, Fade Speed controls how quickly stars fade out.',
-                'chase': 'Multiple coloured dots chasing with trails using three settable colors. Speed controls movement, Intensity controls trail length, Dot Size controls the size of each colour dot.',
+                'chase_multi': 'Multiple coloured dots chasing with trails using three settable colors. Speed controls movement, Intensity controls trail length, Dot Size controls the size of each colour dot.',
                 'pulse': 'Entire strip pulsing in selected color. Speed controls pulse rate, Intensity controls brightness variation.',
                 'matrix': 'Matrix-style digital rain effect. Speed controls falling rate, Intensity affects brightness variations, Drop Rate controls frequency of new drops.'
             };

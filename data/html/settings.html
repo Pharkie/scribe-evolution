@@ -16,7 +16,11 @@
             <!-- Back button -->
             <div class="header-spacer">
                 <button @click="window.location.href = '/'" class="back-button">
-                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg cla <option value="chase_single">Single Colour Chase</option>
+                        <option value="rainbow">Rainbow</option>
+                        <option value="twinkle">Twinkle</option>
+                        <option value="chase_multi">Multicolour Chase</option>w-3 h-3 sm:w-4 sm:h-4" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                         </path>
                     </svg>
@@ -664,10 +668,10 @@
                                     </label>
                                     <select id="led-effect-selector" class="input-standard" x-model="selectedEffect"
                                         @change="initEffectParams()">
-                                        <option value="simple_chase">Single Colour Chase</option>
+                                        <option value="chase_single">Single Colour Chase</option>
                                         <option value="rainbow">Rainbow Wave</option>
                                         <option value="twinkle">Twinkle</option>
-                                        <option value="chase">Multicolour Chase</option>
+                                        <option value="chase_multi">Multicolour Chase</option>
                                         <option value="pulse">Pulse</option>
                                         <option value="matrix">Matrix</option>
                                     </select>
@@ -719,7 +723,7 @@
                                     </div>
 
                                     <!-- Additional Colors for Multicolour Chase -->
-                                    <div class="space-y-2" x-show="selectedEffect === 'chase'">
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">>
                                         <label for="led-color2"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color 2
@@ -729,7 +733,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="space-y-2" x-show="selectedEffect === 'chase'">
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">>
                                         <label for="led-color3"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color 3

@@ -87,27 +87,10 @@ void handleLedEffect(AsyncWebServerRequest *request)
     LOG_VERBOSE("LEDS", "LED effect request: %s", effectName.c_str());
     LOG_VERBOSE("LEDS", "Full request body: %s", body.c_str());
 
-    // Map frontend effect names to backend effect names for compatibility
-    String backendEffectName = effectName;
-    if (effectName.equalsIgnoreCase("simple_chase"))
-    {
-        backendEffectName = "chase_single";
-    }
-    else if (effectName.equalsIgnoreCase("chase"))
-    {
-        backendEffectName = "chase_multi";
-    }
-    // Other effects (rainbow, twinkle, pulse, matrix) use same names
-
     // Parse required parameters
-    int duration = doc["duration"] | 5; // Default 5 seconds
-    int cycles = doc["cycles"] | 1;     // Default 1 cycle
+    int cycles = doc["cycles"] | 1; // Default 1 cycle (0 = continuous)
 
-    // For duration-based effects from web UI, convert milliseconds to seconds
-    if (duration > 100)
-    { // Likely milliseconds from web UI
-        duration = duration / 1000;
-    }
+    // Note: No duration concept - effects run for cycles or continuously
 
     // Parse colors array (required)
     if (!doc.containsKey("colors") || !doc["colors"].is<JsonArray>())
@@ -121,6 +104,41 @@ void handleLedEffect(AsyncWebServerRequest *request)
     {
         sendErrorResponse(request, 400, "Colors array cannot be empty");
         return;
+    }
+
+    // Create settings object from unified parameters
+    DynamicJsonDocument settingsDoc(512);
+    JsonObject settings = settingsDoc.to<JsonObject>();
+
+    // Map unified parameters to effect-specific settings
+    if (doc.containsKey("speed"))
+        settings["speed"] = doc["speed"];
+    if (doc.containsKey("intensity"))
+    {
+        // Map intensity to effect-specific parameter based on effect type
+        int intensity = doc["intensity"];
+        if (effectName.equalsIgnoreCase("twinkle") || effectName.equalsIgnoreCase("rainbow"))
+        {
+            settings["density"] = intensity;
+        }
+        else if (effectName.equalsIgnoreCase("chase_multi") || effectName.equalsIgnoreCase("chase_single"))
+        {
+            settings["trailLength"] = intensity / 8; // Map 0-255 to reasonable trail length
+        }
+    }
+
+    // WLED-like unified interface: copy all frontend parameters to settings
+    // This ensures consistent interface for all LED effects
+    for (JsonPair kv : doc.as<JsonObject>())
+    {
+        const char *key = kv.key().c_str();
+        // Skip core parameters that are handled separately
+        if (strcmp(key, "effect") != 0 &&
+            strcmp(key, "cycles") != 0 &&
+            strcmp(key, "colors") != 0)
+        {
+            settings[key] = kv.value();
+        }
     }
 
     // Add colors array to settings
@@ -153,34 +171,34 @@ void handleLedEffect(AsyncWebServerRequest *request)
     // Parse ALL settings based on effect type and apply them
 
     // Parse ALL settings based on effect type and apply them
-    // Create a temporary effects configuration with frontend settings
+    // Create a temporary effects configuration with settings
     // This will be used for the playground without saving to permanent config
 #ifdef ENABLE_LEDS
     {
         LedEffectsConfig playgroundConfig = {}; // Start with empty config
 
-        if (backendEffectName.equalsIgnoreCase("chase_single"))
+        if (effectName.equalsIgnoreCase("chase_single"))
         {
             playgroundConfig.chaseSingle.speed = settings["speed"] | 5;
             playgroundConfig.chaseSingle.trailLength = settings["trailLength"] | 15;
             playgroundConfig.chaseSingle.trailFade = settings["trailFade"] | 15;
             playgroundConfig.chaseSingle.defaultColor = settings["color"] | "#0062ffff";
         }
-        else if (backendEffectName.equalsIgnoreCase("chase_multi"))
+        else if (effectName.equalsIgnoreCase("chase_multi"))
         {
             playgroundConfig.chaseMulti.speed = settings["speed"] | 2;
             playgroundConfig.chaseMulti.trailLength = settings["trailLength"] | 20;
             playgroundConfig.chaseMulti.trailFade = settings["trailFade"] | 20;
             playgroundConfig.chaseMulti.colorSpacing = settings["colorSpacing"] | 12;
-            if (settings.containsKey("colors") && settings["colors"].is<JsonArray>())
+            if (settings.containsKey("colors") && settings["colors"].as<JsonArray>().size() > 0)
             {
-                JsonArray colorsArray = settings["colors"];
-                playgroundConfig.chaseMulti.color1 = colorsArray.size() > 0 ? colorsArray[0].as<String>() : "#ff9900ff";
-                playgroundConfig.chaseMulti.color2 = colorsArray.size() > 1 ? colorsArray[1].as<String>() : "#008f00ff";
-                playgroundConfig.chaseMulti.color3 = colorsArray.size() > 2 ? colorsArray[2].as<String>() : "#78cffeff";
+                JsonArray settingsColors = settings["colors"];
+                playgroundConfig.chaseMulti.color1 = settingsColors.size() > 0 ? settingsColors[0].as<String>() : "#ff9900ff";
+                playgroundConfig.chaseMulti.color2 = settingsColors.size() > 1 ? settingsColors[1].as<String>() : "#008f00ff";
+                playgroundConfig.chaseMulti.color3 = settingsColors.size() > 2 ? settingsColors[2].as<String>() : "#78cffeff";
             }
         }
-        else if (backendEffectName.equalsIgnoreCase("matrix"))
+        else if (effectName.equalsIgnoreCase("matrix"))
         {
             playgroundConfig.matrix.speed = settings["speed"] | 3;
             playgroundConfig.matrix.drops = settings["drops"] | 5;
@@ -189,7 +207,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
             playgroundConfig.matrix.brightnessFade = settings["brightnessFade"] | 40;
             playgroundConfig.matrix.defaultColor = settings["color"] | "#009100ff";
         }
-        else if (backendEffectName.equalsIgnoreCase("twinkle"))
+        else if (effectName.equalsIgnoreCase("twinkle"))
         {
             playgroundConfig.twinkle.density = settings["density"] | 8;
             playgroundConfig.twinkle.fadeSpeed = settings["fadeSpeed"] | 5;
@@ -197,7 +215,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
             playgroundConfig.twinkle.maxBrightness = settings["maxBrightness"] | 255;
             playgroundConfig.twinkle.defaultColor = settings["color"] | "#ffffffff";
         }
-        else if (backendEffectName.equalsIgnoreCase("pulse"))
+        else if (effectName.equalsIgnoreCase("pulse"))
         {
             playgroundConfig.pulse.speed = settings["speed"] | 4;
             playgroundConfig.pulse.minBrightness = settings["minBrightness"] | 0;
@@ -205,7 +223,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
             playgroundConfig.pulse.waveFrequency = settings["waveFrequency"] | 0.05f;
             playgroundConfig.pulse.defaultColor = settings["color"] | "#ff00f2ff";
         }
-        else if (backendEffectName.equalsIgnoreCase("rainbow"))
+        else if (effectName.equalsIgnoreCase("rainbow"))
         {
             playgroundConfig.rainbow.speed = settings["speed"] | 3.0f;
             playgroundConfig.rainbow.saturation = settings["saturation"] | 255;
@@ -218,24 +236,22 @@ void handleLedEffect(AsyncWebServerRequest *request)
     }
 #endif
 
-    LOG_VERBOSE("LEDS", "Applied all frontend settings for effect: %s (backend: %s)", effectName.c_str(), backendEffectName.c_str());
-    LOG_VERBOSE("LEDS", "Using colors from frontend settings: %d colors parsed", (int)colors.size());
+    LOG_VERBOSE("LEDS", "Applied settings for LED effect: %s", effectName.c_str());
+    LOG_VERBOSE("LEDS", "Parsed %d colors from settings", (int)colorsArray.size());
 
-    // Determine if this effect should be cycle-based or duration-based
-    bool useCycles = backendEffectName.equalsIgnoreCase("chase_single") || backendEffectName.equalsIgnoreCase("chase_multi");
+    // Unified cycle-based system: all effects run for cycles (0 = continuous)
     bool success;
-
-    if (useCycles)
+    if (cycles > 0)
     {
-        // Cycle-based effects (chase_single, chase_multi)
-        success = ledEffects.startEffectCycles(backendEffectName, cycles, c1, c2, c3);
-        LOG_VERBOSE("LEDS", "Started LED effect: %s for %d cycles", backendEffectName.c_str(), cycles);
+        // Run effect for specific number of cycles
+        success = ledEffects.startEffectCycles(effectName, cycles, c1, c2, c3);
+        LOG_VERBOSE("LEDS", "Started LED effect: %s for %d cycles", effectName.c_str(), cycles);
     }
     else
     {
-        // Duration-based effects (rainbow, twinkle, pulse, matrix)
-        success = ledEffects.startEffectDuration(backendEffectName, duration, c1, c2, c3);
-        LOG_VERBOSE("LEDS", "Started LED effect: %s for %d seconds", backendEffectName.c_str(), duration);
+        // Run effect continuously (duration=0 means indefinite)
+        success = ledEffects.startEffectDuration(effectName, 0, c1, c2, c3);
+        LOG_VERBOSE("LEDS", "Started LED effect: %s continuously", effectName.c_str());
     }
 
     if (success)
@@ -244,14 +260,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
         response["success"] = true;
         response["message"] = "LED effect started";
         response["effect"] = effectName;
-        if (useCycles)
-        {
-            response["cycles"] = cycles;
-        }
-        else
-        {
-            response["duration"] = duration;
-        }
+        response["cycles"] = cycles;
 
         // Include the original settings object in the response
         if (doc.containsKey("settings"))
