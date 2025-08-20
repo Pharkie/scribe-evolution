@@ -45,7 +45,7 @@ function initializeDiagnosticsStore() {
       console.log('🛠️ Diagnostics: Initialization complete, loading:', this.loading, 'error:', this.error);
     },
     
-        // Load all diagnostics data
+        // Load all diagnostics data with fallbacks for failed APIs
     async loadDiagnostics() {
       this.loading = true;
       this.error = null;
@@ -53,39 +53,42 @@ function initializeDiagnosticsStore() {
       
       try {
         console.log('🛠️ Diagnostics: Making parallel API calls...');
-        // Load diagnostics, config, and NVS data in parallel - must all succeed
+        // Load diagnostics, config, and NVS data in parallel with individual error handling
         const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.all([
-          fetch('/api/diagnostics'),
-          fetch('/api/config'),
-          fetch('/api/nvs-dump')
+          fetch('/api/diagnostics').catch(() => null),
+          fetch('/api/config').catch(() => null),
+          fetch('/api/nvs-dump').catch(() => null)
         ]);
         
         console.log('🛠️ Diagnostics: API responses received:', {
-          diagnostics: diagnosticsResponse.ok,
-          config: configResponse.ok,
-          nvs: nvsResponse.ok
+          diagnostics: diagnosticsResponse?.ok || false,
+          config: configResponse?.ok || false,
+          nvs: nvsResponse?.ok || false
         });
         
-        // All endpoints must succeed - no fallbacks
-        if (!diagnosticsResponse.ok) {
-          throw new Error(`Diagnostics API failed: ${diagnosticsResponse.status} ${diagnosticsResponse.statusText}`);
+        // Parse responses with fallbacks for failed APIs
+        if (diagnosticsResponse?.ok) {
+          this.diagnosticsData = await diagnosticsResponse.json();
+        } else {
+          console.warn('🛠️ Diagnostics: Diagnostics API failed, using fallback data');
+          this.diagnosticsData = {}; // Empty object - computed properties provide fallbacks
         }
         
-        if (!configResponse.ok) {
-          throw new Error(`Config API failed: ${configResponse.status} ${configResponse.statusText}`);
+        if (configResponse?.ok) {
+          this.configData = await configResponse.json();
+        } else {
+          console.warn('🛠️ Diagnostics: Config API failed, using fallback data');
+          this.configData = {}; // Empty object - computed properties provide fallbacks  
         }
         
-        if (!nvsResponse.ok) {
-          throw new Error(`NVS dump API failed: ${nvsResponse.status} ${nvsResponse.statusText}`);
+        if (nvsResponse?.ok) {
+          this.nvsData = await nvsResponse.json();
+        } else {
+          console.warn('🛠️ Diagnostics: NVS API failed, using fallback data');
+          this.nvsData = {}; // Empty object - computed properties provide fallbacks
         }
         
-        console.log('🛠️ Diagnostics: Parsing JSON responses...');
-        // Parse all responses
-        this.diagnosticsData = await diagnosticsResponse.json();
-        this.configData = await configResponse.json();
-        this.nvsData = await nvsResponse.json();
-        
-        console.log('🛠️ Diagnostics: Data loaded successfully:', {
+        console.log('🛠️ Diagnostics: Data loaded with fallbacks:', {
           diagnosticsKeys: Object.keys(this.diagnosticsData).length,
           configKeys: Object.keys(this.configData).length,
           nvsKeys: this.nvsData.keys ? Object.keys(this.nvsData.keys).length : 0
@@ -93,8 +96,11 @@ function initializeDiagnosticsStore() {
         
         this.loading = false;
       } catch (error) {
-        console.error('🛠️ Diagnostics: Error loading diagnostics:', error);
-        this.error = error.message;
+        console.error('🛠️ Diagnostics: Unexpected error loading diagnostics:', error);
+        // Even if there's an unexpected error, show sections with fallback data
+        this.diagnosticsData = {};
+        this.configData = {};
+        this.nvsData = {};
         this.loading = false;
       }
     },
