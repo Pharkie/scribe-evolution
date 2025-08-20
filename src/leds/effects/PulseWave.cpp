@@ -26,10 +26,10 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
     // Create a sine wave pulse across the entire strip
     float phaseRadians = effectPhase * 3.14159f / 180.0f;
     float sineValue = sin(phaseRadians);
-    
+
     // Convert sine wave (-1 to 1) to brightness (0 to 1)
     float brightness = (sineValue + 1.0f) / 2.0f;
-    
+
     // Apply brightness to all LEDs with the same color
     for (int i = 0; i < ledCount; i++)
     {
@@ -44,7 +44,7 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
     {
         frameCounter = 0;
         effectPhase += 8.0f; // Increment phase
-        
+
         // Check if we completed a full cycle (0 -> 360 degrees)
         if (effectPhase >= 360.0f)
         {

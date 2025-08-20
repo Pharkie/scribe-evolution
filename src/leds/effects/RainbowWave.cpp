@@ -35,7 +35,7 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
     {
         frameCounter = 0;
         effectPhase += 4.0f; // Speed of wave movement
-        
+
         // Check if we completed a full rainbow cycle (0 -> 256 hue values)
         if (effectPhase >= 256.0f)
         {
