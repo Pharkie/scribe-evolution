@@ -15,13 +15,10 @@ function initializeDiagnosticsStore() {
     nvsData: {},
     
     // UI state
-    currentSection: 'device-config-section',
+    currentSection: 'microcontroller-section',
     
     // Section definitions
     sections: [
-      { id: 'device-config-section', name: 'Device', icon: '⚙️', color: 'purple' },
-      { id: 'network-section', name: 'Network', icon: '🌐', color: 'blue' },
-      { id: 'mqtt-section', name: 'MQTT', icon: '📡', color: 'green' },
       { id: 'microcontroller-section', name: 'Microcontroller', icon: '🎛️', color: 'orange' },
       { id: 'unbidden-ink-section', name: 'Unbidden Ink', icon: '🎲', color: 'yellow' },
       { id: 'logging-section', name: 'Logging', icon: '📋', color: 'indigo' },
@@ -116,43 +113,6 @@ function initializeDiagnosticsStore() {
       const colorClass = `section-nav-btn-${section?.color || 'purple'}`;
       const activeClass = this.currentSection === sectionId ? 'active' : '';
       return `${baseClass} ${colorClass} ${activeClass}`.trim();
-    },
-    
-    // Device Configuration computed properties
-    get deviceConfig() {
-      return {
-        owner: this.diagnosticsData.device?.owner || '-',
-        timezone: this.diagnosticsData.device?.timezone || '-',
-        mdnsHostname: this.diagnosticsData.device?.hostname || '-',
-        maxMessageChars: this.configData?.validation?.maxCharacters || '-'
-      };
-    },
-    
-    // Network computed properties
-    get networkInfo() {
-      const wifi = this.diagnosticsData.network?.wifi || {};
-      return {
-        wifiStatus: wifi.connected ? 'Connected' : 'Disconnected',
-        ssid: wifi.ssid || '-',
-        ipAddress: wifi.ip_address || '-',
-        signalStrength: this.formatSignalStrength(wifi.signal_strength_dbm),
-        macAddress: wifi.mac_address || '-',
-        gateway: wifi.gateway || '-',
-        dns: wifi.dns || '-',
-        connectTimeout: wifi.connect_timeout_ms ? `${wifi.connect_timeout_ms / 1000} seconds` : '-'
-      };
-    },
-    
-    // MQTT computed properties
-    get mqttInfo() {
-      const mqtt = this.diagnosticsData.network?.mqtt || {};
-      return {
-        enabled: mqtt.server ? 'Yes' : 'No',
-        status: mqtt.connected ? 'Connected' : 'Disconnected',
-        broker: mqtt.server || '-',
-        port: mqtt.port || '-',
-        topic: mqtt.topic || '-'
-      };
     },
     
     // Microcontroller computed properties
@@ -358,34 +318,6 @@ function initializeDiagnosticsStore() {
         
         // Build content based on current section
         switch (this.currentSection) {
-          case 'device-config-section':
-            content += `Owner: ${this.deviceConfig.owner}\n`;
-            content += `Timezone: ${this.deviceConfig.timezone}\n`;
-            content += `mDNS Hostname: ${this.deviceConfig.mdnsHostname}\n`;
-            content += `Max Message Chars: ${this.deviceConfig.maxMessageChars}\n`;
-            break;
-            
-          case 'network-section':
-            const network = this.networkInfo;
-            content += `Wi-Fi Status: ${network.wifiStatus}\n`;
-            content += `SSID: ${network.ssid}\n`;
-            content += `IP Address: ${network.ipAddress}\n`;
-            content += `Signal Strength: ${network.signalStrength}\n`;
-            content += `MAC Address: ${network.macAddress}\n`;
-            content += `Gateway: ${network.gateway}\n`;
-            content += `DNS: ${network.dns}\n`;
-            content += `Connect Timeout: ${network.connectTimeout}\n`;
-            break;
-            
-          case 'mqtt-section':
-            const mqtt = this.mqttInfo;
-            content += `Enabled: ${mqtt.enabled}\n`;
-            content += `Status: ${mqtt.status}\n`;
-            content += `Broker: ${mqtt.broker}\n`;
-            content += `Port: ${mqtt.port}\n`;
-            content += `Topic: ${mqtt.topic}\n`;
-            break;
-            
           case 'microcontroller-section':
             const micro = this.microcontrollerInfo;
             const memory = this.memoryUsage;
@@ -500,34 +432,6 @@ function initializeDiagnosticsStore() {
       if (days > 0) return `${days}d ${hours}h ${minutes}m`;
       if (hours > 0) return `${hours}h ${minutes}m`;
       return `${minutes}m`;
-    },
-    
-    formatSignalStrength(dbm) {
-      if (!dbm) return 'Unknown';
-      
-      let quality, color;
-      
-      if (dbm >= -30) {
-        quality = 'Excellent';
-        color = '#10b981';
-      } else if (dbm >= -50) {
-        quality = 'Very Good';
-        color = '#10b981';
-      } else if (dbm >= -60) {
-        quality = 'Good';
-        color = '#059669';
-      } else if (dbm >= -70) {
-        quality = 'Fair';
-        color = '#f59e0b';
-      } else if (dbm >= -80) {
-        quality = 'Weak';
-        color = '#ef4444';
-      } else {
-        quality = 'Very Weak';
-        color = '#dc2626';
-      }
-      
-      return `${dbm} dBm (${quality})`;
     },
     
     formatTemperature(tempC) {

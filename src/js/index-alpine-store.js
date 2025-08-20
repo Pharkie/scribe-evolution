@@ -209,12 +209,6 @@ function initializeIndexStore() {
         if (response.ok) {
           const result = await response.json();
           this.message = ''; // Clear form
-          
-          // Show "Scribed" text for 2 seconds instead of toast
-          this.buttonTextOverride = 'Scribed';
-          setTimeout(() => {
-            this.buttonTextOverride = null;
-          }, 2000);
         } else {
           const errorData = await response.text();
           this.showToast(`Error: ${errorData}`, 'error');

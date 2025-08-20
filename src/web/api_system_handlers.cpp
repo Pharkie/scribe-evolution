@@ -43,12 +43,6 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     DynamicJsonDocument doc(4096);
 
-    // === DEVICE INFORMATION ===
-    JsonObject device = doc.createNestedObject("device");
-    device["owner"] = String(getDeviceOwnerKey());
-    device["hostname"] = String(getMdnsHostname());
-    device["timezone"] = String(getTimezone());
-
     // === HARDWARE INFORMATION ===
     JsonObject hardware = doc.createNestedObject("hardware");
     hardware["chip_model"] = ESP.getChipModel();
@@ -161,27 +155,6 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     filesystem["free"] = totalBytes - usedBytes;
     filesystem["total"] = totalBytes;
     filesystem["percent_of_total_flash"] = (totalBytes * 100) / totalFlashSize;
-
-    // === NETWORK STATUS ===
-    JsonObject network = doc.createNestedObject("network");
-
-    // WiFi information
-    JsonObject wifi = network.createNestedObject("wifi");
-    wifi["connected"] = (WiFi.status() == WL_CONNECTED);
-    wifi["ssid"] = WiFi.SSID();
-    wifi["ip_address"] = WiFi.localIP().toString();
-    wifi["mac_address"] = WiFi.macAddress();
-    wifi["signal_strength_dbm"] = WiFi.RSSI();
-    wifi["gateway"] = WiFi.gatewayIP().toString();
-    wifi["dns"] = WiFi.dnsIP().toString();
-    wifi["connect_timeout_ms"] = runtimeConfig.wifiConnectTimeoutMs;
-
-    // MQTT information
-    JsonObject mqtt = network.createNestedObject("mqtt");
-    mqtt["connected"] = mqttClient.connected();
-    mqtt["server"] = runtimeConfig.mqttServer;
-    mqtt["port"] = runtimeConfig.mqttPort;
-    mqtt["topic"] = String(getLocalPrinterTopic());
 
     // === FEATURES STATUS ===
     JsonObject features = doc.createNestedObject("features");

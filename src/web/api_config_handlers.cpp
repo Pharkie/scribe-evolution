@@ -27,6 +27,9 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
+// External references
+extern PubSubClient mqttClient;
+
 #if ENABLE_LEDS
 #include "../leds/LedEffects.h"
 extern LedEffects ledEffects;
@@ -91,12 +94,46 @@ void handleConfigGet(AsyncWebServerRequest *request)
     wifi["password"] = config.wifiPassword;
     wifi["connect_timeout"] = config.wifiConnectTimeoutMs;
 
+    // WiFi status information
+    JsonObject wifiStatus = wifi.createNestedObject("status");
+    wifiStatus["connected"] = (WiFi.status() == WL_CONNECTED);
+    wifiStatus["ip_address"] = WiFi.localIP().toString();
+    wifiStatus["mac_address"] = WiFi.macAddress();
+    wifiStatus["gateway"] = WiFi.gatewayIP().toString();
+    wifiStatus["dns"] = WiFi.dnsIP().toString();
+
+    // Format signal strength
+    int rssi = WiFi.RSSI();
+    String signalStrength = String(rssi) + " dBm";
+    if (rssi >= -50)
+    {
+        signalStrength += " (Excellent)";
+    }
+    else if (rssi >= -60)
+    {
+        signalStrength += " (Good)";
+    }
+    else if (rssi >= -70)
+    {
+        signalStrength += " (Fair)";
+    }
+    else if (rssi >= -80)
+    {
+        signalStrength += " (Weak)";
+    }
+    else
+    {
+        signalStrength += " (Very Weak)";
+    }
+    wifiStatus["signal_strength"] = signalStrength;
+
     // MQTT configuration
     JsonObject mqtt = configDoc.createNestedObject("mqtt");
     mqtt["server"] = config.mqttServer;
     mqtt["port"] = config.mqttPort;
     mqtt["username"] = config.mqttUsername;
     mqtt["password"] = config.mqttPassword;
+    mqtt["connected"] = mqttClient.connected();
 
     // API configuration (only expose chatgptApiToken, not endpoints)
     JsonObject apis = configDoc.createNestedObject("apis");

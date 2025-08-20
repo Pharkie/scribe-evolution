@@ -86,8 +86,8 @@
                             <label for="wifi-ssid" class="form-label">WiFi SSID:</label>
                             <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
                                 class="input-standard" x-model="config.wifi.ssid">
-                            <p x-show="validation.errors['wifi.ssid']" class="text-xs text-red-600 dark:text-red-400" 
-                               x-text="validation.errors['wifi.ssid']"></p>
+                            <p x-show="validation.errors['wifi.ssid']" class="text-xs text-red-600 dark:text-red-400"
+                                x-text="validation.errors['wifi.ssid']"></p>
                         </div>
                         <div class="space-y-2">
                             <label for="wifi-password" class="form-label">WiFi Password:</label>
@@ -99,11 +99,49 @@
                             <input type="number" id="wifi-timeout" min="5" max="60" class="input-standard"
                                 :value="Math.floor(config.wifi.connect_timeout / 1000)"
                                 @input="config.wifi.connect_timeout = parseInt($el.value) * 1000">
-                            <p x-show="validation.errors['wifi.connect_timeout']" class="text-xs text-red-600 dark:text-red-400" 
-                               x-text="validation.errors['wifi.connect_timeout']"></p>
-                            <p x-show="!validation.errors['wifi.connect_timeout']" class="text-xs text-gray-500 dark:text-gray-400">
+                            <p x-show="validation.errors['wifi.connect_timeout']"
+                                class="text-xs text-red-600 dark:text-red-400"
+                                x-text="validation.errors['wifi.connect_timeout']"></p>
+                            <p x-show="!validation.errors['wifi.connect_timeout']"
+                                class="text-xs text-gray-500 dark:text-gray-400">
                                 Time to wait before falling back to AP mode (5-60 seconds)
                             </p>
+                        </div>
+                    </div>
+
+                    <!-- Current WiFi Status (Read-only) -->
+                    <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                        <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-4">Current WiFi Status</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">IP Address:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.wifi.status?.ip_address || '-'"></span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">Signal Strength:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.wifi.status?.signal_strength || '-'"></span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">MAC Address:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.wifi.status?.mac_address || '-'"></span>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">Gateway:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.wifi.status?.gateway || '-'"></span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">DNS:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.wifi.status?.dns || '-'"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -122,8 +160,12 @@
                             <label for="device-owner" class="form-label">Device Owner:</label>
                             <input id="device-owner" type="text" placeholder="Enter device owner name"
                                 class="input-standard" x-model="config.device.owner">
-                            <p x-show="validation.errors['device.owner']" class="text-xs text-red-600 dark:text-red-400" 
-                               x-text="validation.errors['device.owner']"></p>
+                            <p x-show="validation.errors['device.owner']" class="text-xs text-red-600 dark:text-red-400"
+                                x-text="validation.errors['device.owner']"></p>
+                            <p x-show="!validation.errors['device.owner'] && config.device.mdns"
+                                class="text-xs text-gray-500 dark:text-gray-400">
+                                mDNS Hostname: <span x-text="config.device.mdns"></span>
+                            </p>
                         </div>
                         <div class="space-y-2">
                             <label for="timezone" class="form-label">Timezone:</label>
@@ -176,9 +218,29 @@
                                 class="input-standard" x-model="config.mqtt.password">
                         </div>
                     </div>
+
+                    <!-- Current MQTT Status (Read-only) -->
+                    <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+                        <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-4">Current MQTT Status
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.mqtt?.connected ? 'Connected' : 'Disconnected'"></span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">Topic:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.device?.mqtt_topic || '-'"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
+
             <!-- Unbidden Ink Section -->
             <div x-show="activeSection === 'unbidden'" class="settings-section">
                 <div class="settings-card settings-card-green">
@@ -308,7 +370,7 @@
                                         <span>8hr</span>
                                     </div>
                                 </div>
-                                
+
                                 <input type="range" min="0" max="6" step="1"
                                     class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple"
                                     x-model.number="frequencySliderValue">
@@ -334,13 +396,15 @@
                                         'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
                                         'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
                                     <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🎨 Creative</div>
-                                    <div class="text-xs text-gray-600 dark:text-gray-400">Artistic & imaginative content</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Artistic & imaginative content
+                                    </div>
                                 </button>
                                 <button type="button" @click="setQuickPrompt('doctorwho')"
                                     :class="isPromptActive('doctorwho') ? 
                                         'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
                                         'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
-                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🚀 Doctor Who</div>
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🚀 Doctor Who
+                                    </div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Sci-fi themed content</div>
                                 </button>
                                 <button type="button" @click="setQuickPrompt('wisdom')"
@@ -556,17 +620,18 @@
                         <!-- LED Effect Playground -->
                         <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                             <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Playground</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Test different LED effects using WLED-style unified controls</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Test different LED effects using
+                                WLED-style unified controls</p>
 
                             <!-- Effect Selection -->
                             <div class="space-y-4">
                                 <div class="space-y-2">
-                                    <label for="led-effect-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <label for="led-effect-selector"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Effect
                                     </label>
-                                    <select id="led-effect-selector" class="input-standard" 
-                                            x-model="selectedEffect" 
-                                            @change="initEffectParams()">
+                                    <select id="led-effect-selector" class="input-standard" x-model="selectedEffect"
+                                        @change="initEffectParams()">
                                         <option value="simple_chase">Simple Chase</option>
                                         <option value="rainbow">Rainbow Wave</option>
                                         <option value="twinkle">Twinkle</option>
@@ -578,41 +643,47 @@
 
                                 <!-- Effect Description -->
                                 <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
-                                    <p class="text-sm text-gray-600 dark:text-gray-300" x-text="getEffectDescription()"></p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300" x-text="getEffectDescription()">
+                                    </p>
                                 </div>
 
                                 <!-- Generic Parameters -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <!-- Speed -->
                                     <div class="space-y-2">
-                                        <label for="led-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <label for="led-speed"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Speed (1-100)
                                         </label>
-                                        <input type="range" id="led-speed" min="1" max="100" step="1" 
-                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
-                                               x-model="effectParams.speed">
-                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.speed"></div>
+                                        <input type="range" id="led-speed" min="1" max="100" step="1"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.speed">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.speed">
+                                        </div>
                                     </div>
 
                                     <!-- Intensity -->
                                     <div class="space-y-2">
-                                        <label for="led-intensity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <label for="led-intensity"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Intensity (1-100)
                                         </label>
-                                        <input type="range" id="led-intensity" min="1" max="100" step="1" 
-                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
-                                               x-model="effectParams.intensity">
-                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.intensity"></div>
+                                        <input type="range" id="led-intensity" min="1" max="100" step="1"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.intensity">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.intensity">
+                                        </div>
                                     </div>
 
                                     <!-- Palette/Color -->
                                     <div class="space-y-2">
-                                        <label for="led-palette" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <label for="led-palette"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Color
                                         </label>
-                                        <input type="color" id="led-palette" 
-                                               class="w-20 h-12 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                               x-model="effectParams.palette">
+                                        <input type="color" id="led-palette"
+                                            class="w-20 h-12 rounded-lg border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                            x-model="effectParams.palette">
                                     </div>
                                 </div>
 
@@ -620,44 +691,44 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <!-- Custom Slider 1 -->
                                     <div class="space-y-2" x-show="getCustomSlider1Label()">
-                                        <label for="led-custom1" class="block text-sm font-medium text-gray-700 dark:text-gray-300" 
-                                               x-text="getCustomSlider1Label()">
+                                        <label for="led-custom1"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            x-text="getCustomSlider1Label()">
                                         </label>
-                                        <input type="range" id="led-custom1" 
-                                               :min="getCustomSlider1Range().min" 
-                                               :max="getCustomSlider1Range().max" 
-                                               :step="getCustomSlider1Range().step" 
-                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
-                                               x-model="effectParams.custom1">
-                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom1"></div>
+                                        <input type="range" id="led-custom1" :min="getCustomSlider1Range().min"
+                                            :max="getCustomSlider1Range().max" :step="getCustomSlider1Range().step"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.custom1">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom1">
+                                        </div>
                                     </div>
 
                                     <!-- Custom Slider 2 -->
                                     <div class="space-y-2" x-show="getCustomSlider2Label()">
-                                        <label for="led-custom2" class="block text-sm font-medium text-gray-700 dark:text-gray-300" 
-                                               x-text="getCustomSlider2Label()">
+                                        <label for="led-custom2"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            x-text="getCustomSlider2Label()">
                                         </label>
-                                        <input type="range" id="led-custom2" 
-                                               :min="getCustomSlider2Range().min" 
-                                               :max="getCustomSlider2Range().max" 
-                                               :step="getCustomSlider2Range().step" 
-                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
-                                               x-model="effectParams.custom2">
-                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom2"></div>
+                                        <input type="range" id="led-custom2" :min="getCustomSlider2Range().min"
+                                            :max="getCustomSlider2Range().max" :step="getCustomSlider2Range().step"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.custom2">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom2">
+                                        </div>
                                     </div>
 
                                     <!-- Custom Slider 3 -->
                                     <div class="space-y-2" x-show="getCustomSlider3Label()">
-                                        <label for="led-custom3" class="block text-sm font-medium text-gray-700 dark:text-gray-300" 
-                                               x-text="getCustomSlider3Label()">
+                                        <label for="led-custom3"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            x-text="getCustomSlider3Label()">
                                         </label>
-                                        <input type="range" id="led-custom3" 
-                                               :min="getCustomSlider3Range().min" 
-                                               :max="getCustomSlider3Range().max" 
-                                               :step="getCustomSlider3Range().step" 
-                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
-                                               x-model="effectParams.custom3">
-                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom3"></div>
+                                        <input type="range" id="led-custom3" :min="getCustomSlider3Range().min"
+                                            :max="getCustomSlider3Range().max" :step="getCustomSlider3Range().step"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.custom3">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom3">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -684,9 +755,9 @@
         <form @submit.prevent="saveConfiguration()" x-show="!loading && !error" x-transition>
             <!-- Action Buttons -->
             <div class="flex justify-center gap-4 pt-6">
-                <button type="button" @click="cancelConfiguration()" 
+                <button type="button" @click="cancelConfiguration()"
                     class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-xl transition-colors duration-200">
-                    🚫 Cancel
+                    Cancel
                 </button>
                 <button type="submit" :disabled="saving" class="btn-primary btn-primary-large"
                     :class="{ 'opacity-50 cursor-not-allowed': saving }">
