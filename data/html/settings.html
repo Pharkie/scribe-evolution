@@ -713,49 +713,14 @@
                                         </label>
                                         <input type="range" id="led-cycles" min="1" max="10" step="1"
                                             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                            x-model="effectParams.cycles">
+                                            x-model.number="effectParams.cycles">
                                         <div class="text-xs text-gray-500 text-center" x-text="effectParams.cycles">
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Color Parameters -->
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <!-- Color 1 -->
-                                    <div class="space-y-2">
-                                        <label for="led-color1"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            Color
-                                        </label>
-                                        <div x-ref="color1Pickr"
-                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
-                                        </div>
-                                    </div>
-
-                                    <!-- Additional Colors for Multicolour Chase -->
-                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
-                                        <label for="led-color2"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            Color 2
-                                        </label>
-                                        <div x-ref="color2Pickr"
-                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
-                                        </div>
-                                    </div>
-
-                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
-                                        <label for="led-color3"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            Color 3
-                                        </label>
-                                        <div x-ref="color3Pickr"
-                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Effect-Specific Sliders -->
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Effect-Specific Parameters -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                     <!-- Custom Slider 1 -->
                                     <div class="space-y-2" x-show="getCustomSlider1Label()">
                                         <label for="led-custom1"
@@ -795,6 +760,41 @@
                                             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                             x-model="effectParams.custom3">
                                         <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom3">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Color Parameters -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <!-- Color 1 -->
+                                    <div class="space-y-2">
+                                        <label for="led-color1"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color
+                                        </label>
+                                        <div x-ref="color1Pickr"
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
+                                    </div>
+
+                                    <!-- Additional Colors for Multicolour Chase -->
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
+                                        <label for="led-color2"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color 2
+                                        </label>
+                                        <div x-ref="color2Pickr"
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
+                                        <label for="led-color3"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color 3
+                                        </label>
+                                        <div x-ref="color3Pickr"
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
                                         </div>
                                     </div>
                                 </div>

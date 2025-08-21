@@ -88,7 +88,22 @@ void handleLedEffect(AsyncWebServerRequest *request)
     LOG_VERBOSE("LEDS", "Full request body: %s", body.c_str());
 
     // Parse required parameters
-    int cycles = doc["cycles"] | 1; // Default 1 cycle (0 = continuous)
+    int cycles = 1; // Default value
+    if (doc.containsKey("cycles"))
+    {
+        if (doc["cycles"].is<int>())
+        {
+            cycles = doc["cycles"].as<int>();
+        }
+        else if (doc["cycles"].is<const char *>() || doc["cycles"].is<String>())
+        {
+            // Handle string values from frontend
+            String cyclesStr = doc["cycles"].as<String>();
+            cycles = cyclesStr.toInt();
+            if (cycles <= 0)
+                cycles = 1; // Ensure valid value
+        }
+    }
 
     // Note: No duration concept - effects run for cycles or continuously
 
