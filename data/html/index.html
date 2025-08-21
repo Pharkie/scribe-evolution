@@ -23,14 +23,12 @@
                 <h1 class="page-title flex items-center justify-center">
                     <!-- Dark mode logo (white) -->
                     <img src="/images/ScribeLogoMain-white.svg" alt="Scribe"
-                        class="h-20 sm:h-24 md:h-28 w-auto dark:block hidden" />
+                        class="h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:block hidden" />
                     <!-- Light mode logo (dark) -->
                     <img src="/images/ScribeLogoMain.svg" alt="Scribe"
-                        class="h-20 sm:h-24 md:h-28 w-auto dark:hidden block" />
+                        class="h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:hidden block" />
                 </h1>
-            </div>
-
-            <!-- Right spacer with settings button -->
+            </div> <!-- Right spacer with settings button -->
             <div class="header-spacer flex justify-end">
                 <button @click="goToSettings()"
                     :class="settingsStashed ? 'status-indicator-stashed' : 'status-indicator'">

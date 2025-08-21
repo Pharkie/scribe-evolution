@@ -210,17 +210,15 @@
                         <span>MQTT</span>
                     </h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label for="mqtt-server" class="form-label">MQTT Server:</label>
-                            <input id="mqtt-server" type="text" placeholder="Enter MQTT broker address"
-                                class="input-standard" x-model="config.mqtt.server">
-                        </div>
-                        <div class="space-y-2">
-                            <label for="mqtt-port" class="form-label">MQTT Port:</label>
-                            <input type="number" id="mqtt-port" min="1" max="65535" class="input-standard"
-                                x-model.number="config.mqtt.port">
-                        </div>
+                    <!-- MQTT Server - Full width row -->
+                    <div class="space-y-2">
+                        <label for="mqtt-server" class="form-label">MQTT Server:</label>
+                        <input id="mqtt-server" type="text" placeholder="Enter MQTT broker address"
+                            class="input-standard" x-model="config.mqtt.server">
+                    </div>
+
+                    <!-- Username, Password, Port - Three columns on desktop -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="space-y-2">
                             <label for="mqtt-username" class="form-label">MQTT Username:</label>
                             <input id="mqtt-username" type="text" placeholder="Optional MQTT username"
@@ -230,6 +228,11 @@
                             <label for="mqtt-password" class="form-label">MQTT Password:</label>
                             <input type="password" id="mqtt-password" placeholder="Optional MQTT password"
                                 class="input-standard" x-model="config.mqtt.password">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-port" class="form-label">MQTT Port:</label>
+                            <input type="number" id="mqtt-port" min="1" max="65535" class="input-standard"
+                                x-model.number="config.mqtt.port">
                         </div>
                     </div>
 

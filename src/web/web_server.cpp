@@ -66,6 +66,7 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         uri.startsWith("/config") ||
         uri.startsWith("/css/") ||
         uri.startsWith("/js/") ||
+        uri.startsWith("/images/") ||
         uri == "/favicon.ico")
     {
         // Let these requests proceed normally
@@ -118,6 +119,7 @@ bool shouldRedirectToSettings(AsyncWebServerRequest *request)
              uri.startsWith("/config") ||
              uri.startsWith("/css/") ||
              uri.startsWith("/js/") ||
+             uri.startsWith("/images/") ||
              uri == "/favicon.ico");
 }
 
@@ -256,6 +258,7 @@ void setupWebServerRoutes(int maxChars)
         // CSS and JS files (always needed) - serve entire directories from LittleFS
         server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+        server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
 
         // Catch all other requests and redirect to settings
@@ -278,11 +281,13 @@ void setupWebServerRoutes(int maxChars)
         // Static files - serve entire directories from LittleFS
         server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+        server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
 
         // Manually track static routes (since serveStatic can't be wrapped)
         registeredRoutes.push_back({"GET", "/css/*", "CSS static files", false});
         registeredRoutes.push_back({"GET", "/js/*", "JavaScript static files", false});
+        registeredRoutes.push_back({"GET", "/images/*", "Image static files", false});
         registeredRoutes.push_back({"GET", "/favicon.ico", "Site favicon", false});
 
         // Register web pages
