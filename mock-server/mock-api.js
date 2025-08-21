@@ -11,7 +11,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 
 const PORT = 3001;
 const startTime = Date.now();
@@ -279,9 +279,8 @@ server.listen(PORT, () => {
   console.log('   • Static file serving (HTML, CSS, JS, images)');
   console.log('   • CORS enabled for local development');
   console.log('   • Live data updates (uptime, memory)');
-  console.log('\n💡 Perfect for testing your logo animation!');
   console.log('⏹️  Press Ctrl+C to stop');
-  console.log('🔄 Press "r" + Enter to reload server');
+  console.log('🔄 Press "r" + Enter to restart (picks up HTML/CSS/JS changes)');
   console.log('📄 Press "d" + Enter to reload JSON data files\n');
 });
 
@@ -294,21 +293,45 @@ process.stdin.on('data', (key) => {
   const input = key.toString().trim().toLowerCase();
   
   if (input === 'r') {
-    console.log('\n🔄 Reloading server...');
+    console.log('\n🔄 Restarting server...');
+    console.log('📝 This will pick up HTML/CSS/JS changes');
+    
+    // Force close all connections immediately
+    if (server.closeAllConnections) {
+      server.closeAllConnections();
+    }
+    
+    // Set a timeout to force the restart if server.close() hangs
+    const forceRestartTimer = setTimeout(() => {
+      console.log('⚠️  Force restarting...');
+      
+      // Spawn new process - keep it attached to terminal
+      const newProcess = spawn(process.argv[0], [path.basename(__filename)], {
+        cwd: __dirname,
+        stdio: 'inherit',
+        detached: false  // Keep attached to terminal
+      });
+      
+      // Don't unref - we want to keep the process attached
+      process.exit(0);
+    }, 2000);
+    
+    // Try graceful close first
     server.close(() => {
-      console.log('✅ Server stopped, restarting...\n');
-      // Clear module cache to reload changes
-      Object.keys(require.cache).forEach(key => {
-        if (key.includes('mock-api.js')) {
-          delete require.cache[key];
-        }
+      clearTimeout(forceRestartTimer);
+      console.log('✅ Port freed, starting new server...');
+      
+      // Now spawn the new process - keep it attached to terminal
+      const newProcess = spawn(process.argv[0], [path.basename(__filename)], {
+        cwd: __dirname,
+        stdio: 'inherit',
+        detached: false  // Keep attached to terminal
       });
-      // Restart by spawning new process
-      const child = spawn(process.argv[0], process.argv.slice(1), {
-        stdio: 'inherit'
-      });
+      
+      // Don't unref - we want to keep the process attached
       process.exit(0);
     });
+    
   } else if (input === 'd') {
     console.log('\n📄 Reloading JSON data files...');
     try {
@@ -329,8 +352,26 @@ process.stdin.on('data', (key) => {
 // Handle graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n👋 Shutting down mock server...');
-  server.close(() => {
-    console.log('✅ Server stopped');
-    process.exit(0);
+  
+  // Force close all connections immediately
+  if (server.closeAllConnections) {
+    server.closeAllConnections();
+  }
+  
+  // Set a timeout to force exit if graceful shutdown takes too long
+  const forceExitTimer = setTimeout(() => {
+    console.log('⚠️  Force exiting...');
+    process.exit(1);
+  }, 2000);
+  
+  server.close((err) => {
+    clearTimeout(forceExitTimer);
+    if (err) {
+      console.error('❌ Error during shutdown:', err.message);
+      process.exit(1);
+    } else {
+      console.log('✅ Server stopped gracefully');
+      process.exit(0);
+    }
   });
 });
