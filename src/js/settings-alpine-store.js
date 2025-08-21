@@ -133,7 +133,7 @@ function initializeSettingsStore() {
             },
             
             get scanLabel() {
-                return this.hasScanned ? 'Rescan networks' : 'Scan for other networks';
+                return this.hasScanned ? '👀 Rescan networks' : '👀 Scan for other networks';
             },
             
             // Reactive options
