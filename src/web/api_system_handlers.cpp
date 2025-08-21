@@ -254,15 +254,17 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "WiFi scan requested");
 
     // Only allow GET method
-    if (request->method() != HTTP_GET) {
+    if (request->method() != HTTP_GET)
+    {
         sendErrorResponse(request, 405, "Method not allowed");
         return;
     }
 
     // Start scanning for networks
     int networkCount = WiFi.scanNetworks();
-    
-    if (networkCount == WIFI_SCAN_FAILED) {
+
+    if (networkCount == WIFI_SCAN_FAILED)
+    {
         LOG_ERROR("WEB", "WiFi scan failed");
         sendErrorResponse(request, 500, "WiFi scan failed");
         return;
@@ -272,53 +274,83 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     DynamicJsonDocument doc(2048);
     doc["success"] = true;
     doc["count"] = networkCount;
-    
+
     JsonArray networks = doc.createNestedArray("networks");
-    
-    for (int i = 0; i < networkCount; i++) {
+
+    for (int i = 0; i < networkCount; i++)
+    {
         JsonObject network = networks.createNestedObject();
         network["ssid"] = WiFi.SSID(i);
         network["rssi"] = WiFi.RSSI(i);
         network["channel"] = WiFi.channel(i);
         network["secure"] = (WiFi.encryptionType(i) != WIFI_AUTH_OPEN);
-        
+
         // Convert encryption type to readable string
         String encType = "Unknown";
-        switch(WiFi.encryptionType(i)) {
-            case WIFI_AUTH_OPEN:            encType = "Open"; break;
-            case WIFI_AUTH_WEP:             encType = "WEP"; break;
-            case WIFI_AUTH_WPA_PSK:         encType = "WPA"; break;
-            case WIFI_AUTH_WPA2_PSK:        encType = "WPA2"; break;
-            case WIFI_AUTH_WPA_WPA2_PSK:    encType = "WPA/WPA2"; break;
-            case WIFI_AUTH_WPA2_ENTERPRISE: encType = "WPA2 Enterprise"; break;
-            case WIFI_AUTH_WPA3_PSK:        encType = "WPA3"; break;
-            default:                        encType = "Unknown"; break;
+        switch (WiFi.encryptionType(i))
+        {
+        case WIFI_AUTH_OPEN:
+            encType = "Open";
+            break;
+        case WIFI_AUTH_WEP:
+            encType = "WEP";
+            break;
+        case WIFI_AUTH_WPA_PSK:
+            encType = "WPA";
+            break;
+        case WIFI_AUTH_WPA2_PSK:
+            encType = "WPA2";
+            break;
+        case WIFI_AUTH_WPA_WPA2_PSK:
+            encType = "WPA/WPA2";
+            break;
+        case WIFI_AUTH_WPA2_ENTERPRISE:
+            encType = "WPA2 Enterprise";
+            break;
+        case WIFI_AUTH_WPA3_PSK:
+            encType = "WPA3";
+            break;
+        default:
+            encType = "Unknown";
+            break;
         }
         network["encryption"] = encType;
     }
 
-    // Convert signal strength to percentage for UI display
-    for (int i = 0; i < networkCount; i++) {
+    // Convert signal strength to descriptive labels for UI display
+    for (int i = 0; i < networkCount; i++)
+    {
         JsonObject network = networks[i];
         int rssi = network["rssi"];
-        int signalPercent;
-        
-        // Convert RSSI to percentage (approximately)
-        if (rssi >= -30) signalPercent = 100;
-        else if (rssi >= -67) signalPercent = 75;
-        else if (rssi >= -70) signalPercent = 50;
-        else if (rssi >= -80) signalPercent = 25;
-        else signalPercent = 0;
-        
-        network["signal_percent"] = signalPercent;
+
+        // Convert RSSI to descriptive strength labels
+        String signalStrength;
+        if (rssi >= -50)
+        {
+            signalStrength = "Strong";
+        }
+        else if (rssi >= -60)
+        {
+            signalStrength = "Good";
+        }
+        else if (rssi >= -70)
+        {
+            signalStrength = "Fair";
+        }
+        else
+        {
+            signalStrength = "Weak";
+        }
+
+        network["signal_strength"] = signalStrength;
     }
 
     String response;
     serializeJson(doc, response);
-    
+
     LOG_VERBOSE("WEB", "WiFi scan completed - found %d networks", networkCount);
     request->send(200, "application/json", response);
-    
+
     // Clean up scan results to free memory
     WiFi.scanDelete();
 }

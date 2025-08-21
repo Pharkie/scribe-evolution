@@ -193,7 +193,7 @@ async function scanWiFiNetworks() {
     try {
         console.log('API: Scanning for WiFi networks...');
         
-        const response = await fetch('/api/wifi/scan');
+        const response = await fetch('/api/scan-wifi');
         if (!response.ok) {
             throw new Error(`WiFi scan failed: ${response.status} - ${response.statusText}`);
         }
