@@ -7,9 +7,13 @@
 <br>
 <br>
 
-**An AI-powered, network-connected thermal printer to bring you joy**
+**Quick Notes, Instant Sharing, Endless Fun**
 
-Scribe transforms a simple thermal printer into an intelligent, delightful device that can surprise you with jokes, help you with daily tasks, create ambient lighting effects, and integrate seamlessly into your smart home ecosystem.
+Scribe is a small, AI-powered thermal printer that delights you with ink-free, super-fast, tear-and-go printing of quick notes, to-do lists, recipes, news summaries, or trivia. Share any of these instantly with those in your private network.
+
+It’s ready when you are: print from your phone, poke your friends like it’s 1997, or manage your day. It’s your helpful, compact desk assistant.
+
+It has pressable buttons to save your favourite actions for quick access, and lights up as a beautiful object in your home or office.
 
 ![Scribe Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
 

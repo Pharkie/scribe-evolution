@@ -431,7 +431,7 @@ function initializeIndexStore() {
           document.execCommand('copy');
           document.body.removeChild(textarea);
         }
-        this.showToast('Topic copied to clipboard', 'success');
+        // Alpine will handle the visual feedback via $dispatch
       } catch (error) {
         console.error('Failed to copy:', error);
         this.showToast('Failed to copy topic', 'error');

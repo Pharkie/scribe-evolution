@@ -42,18 +42,6 @@
             <div class="header-spacer"></div>
         </header>
 
-        <!-- Content fades in once loaded -->
-        <div x-show="!error" x-transition.opacity.duration.300ms>
-            <!-- Navigation -->
-            <nav class="flex flex-wrap justify-center gap-2 mb-6">
-                <template x-for="section in sections" :key="section.id">
-                    <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
-                        x-text="`${section.icon} ${section.name}`">
-                    </button>
-                </template>
-            </nav>
-        </div>
-
         <!-- Error State -->
         <div x-show="error" x-transition.opacity.duration.300ms class="text-center text-red-600 dark:text-red-400 mb-6">
             <span class="text-4xl mb-4 block">⚠️</span>
@@ -66,9 +54,18 @@
             </button>
         </div>
 
-        <!-- Settings Content -->
-        <div x-show="!error" x-transition.opacity.duration.300ms>
-            <!-- Sections -->
+        <!-- Main Content fades in once all data is loaded -->
+        <div x-show="!loading && !error" x-transition.opacity.duration.300ms>
+            <!-- Navigation -->
+            <nav class="flex flex-wrap justify-center gap-2 mb-6">
+                <template x-for="section in sections" :key="section.id">
+                    <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
+                        x-text="`${section.icon} ${section.name}`">
+                    </button>
+                </template>
+            </nav>
+
+            <!-- Settings Content -->
             <div class="space-y-6">
 
                 <!-- Device Section -->
@@ -855,7 +852,7 @@
         </div>
 
         <!-- Form Actions (shown when not loading and no error) -->
-        <form @submit.prevent="saveConfiguration()" x-show="!error" x-transition.opacity.duration.300ms>
+        <form @submit.prevent="saveConfiguration()" x-show="!loading && !error" x-transition.opacity.duration.300ms>
             <!-- Action Buttons -->
             <div class="flex justify-center gap-4 pt-6">
                 <button type="button" @click="cancelConfiguration()"

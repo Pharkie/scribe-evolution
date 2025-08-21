@@ -49,8 +49,18 @@
             </div>
         </header>
 
-        <!-- Content fades in once loaded -->
-        <div x-show="!error" x-transition.opacity.duration.300ms>
+        <!-- Error State -->
+        <div x-show="error" x-transition.opacity.duration.300ms class="text-center text-red-600 dark:text-red-400 mb-6">
+            <span class="text-4xl mb-4 block">⚠️</span>
+            <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Loading Error</h3>
+            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+            <button @click="init()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                Retry
+            </button>
+        </div>
+
+        <!-- Main Content fades in once all data is loaded -->
+        <div x-show="!loading && !error" x-transition.opacity.duration.300ms>
             <!-- Main Printer Interface -->
             <div class="card-primary">
                 <form @submit="handleSubmit($event)" class="vertical-stack-lg">
@@ -226,15 +236,21 @@
                         <div
                             class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
                             <span>MQTT Topic</span>
-                            <button @click="copyTopic(overlayData?.topic)"
-                                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200"
-                                title="Copy to clipboard">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
-                                    class="text-gray-500 dark:text-gray-400">
-                                    <path
-                                        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                                </svg>
-                            </button>
+                            <div x-data="{ copied: false }">
+                                <button
+                                    @click="copyTopic(overlayData?.topic); copied = true; setTimeout(() => copied = false, 2000)"
+                                    class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                                    :title="copied ? 'Copied!' : 'Copy to clipboard'">
+                                    <span x-show="!copied">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                                            class="text-gray-500 dark:text-gray-400">
+                                            <path
+                                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                                        </svg>
+                                    </span>
+                                    <span x-show="copied" class="text-green-600 dark:text-green-400 text-sm">✓</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg font-mono text-gray-800 dark:text-gray-200 break-all"
                             x-text="overlayData?.topic"></div>
