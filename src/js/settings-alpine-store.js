@@ -92,7 +92,7 @@ function initializeSettingsStore() {
         effectParams: {
             speed: 10,
             intensity: 50,
-            cycles: 1,
+            cycles: 5,
             color1: '#0062ff',
             color2: '#00ff00',
             color3: '#ff0000',
@@ -529,7 +529,7 @@ function initializeSettingsStore() {
                 // Build unified payload - use cycles instead of duration
                 let effectParams = {
                     effect: effectName,
-                    cycles: this.effectParams.cycles, // Use cycles from the slider
+                    cycles: parseInt(this.effectParams.cycles), // Ensure it's a number
                     speed: this.effectParams.speed,
                     intensity: this.effectParams.intensity,
                     colors: colors
@@ -538,6 +538,10 @@ function initializeSettingsStore() {
                 // Add effect-specific custom parameters
                 const customParams = this.getEffectCustomParams(effectName);
                 Object.assign(effectParams, customParams);
+                
+                // Debug logging
+                console.log('LED Effect Payload:', effectParams);
+                console.log('Cycles value:', this.effectParams.cycles, typeof this.effectParams.cycles);
                 
                 const response = await fetch('/api/led-effect', {
                     method: 'POST',
@@ -642,12 +646,12 @@ function initializeSettingsStore() {
         // Initialize effect parameters based on selected effect  
         initEffectParams() {
             const defaults = {
-                'chase_single': { speed: 10, intensity: 50, color1: '#0062ff', color2: '#0062ff', color3: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
-                'rainbow': { speed: 20, intensity: 5, color1: '#ff0000', color2: '#ff0000', color3: '#ff0000', custom1: 5, custom2: 3, custom3: 1 },
-                'twinkle': { speed: 5, intensity: 10, color1: '#ffff00', color2: '#ffff00', color3: '#ffff00', custom1: 3, custom2: 2, custom3: 1 },
-                'chase_multi': { speed: 15, intensity: 10, color1: '#ff0000', color2: '#00ff00', color3: '#0000ff', custom1: 3, custom2: 5, custom3: 1 },
-                'pulse': { speed: 4, intensity: 50, color1: '#800080', color2: '#800080', color3: '#800080', custom1: 5, custom2: 3, custom3: 1 },
-                'matrix': { speed: 25, intensity: 20, color1: '#008000', color2: '#008000', color3: '#008000', custom1: 8, custom2: 10, custom3: 1 }
+                'chase_single': { speed: 10, intensity: 50, cycles: 5, color1: '#0062ff', color2: '#0062ff', color3: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
+                'rainbow': { speed: 20, intensity: 5, cycles: 5, color1: '#ff0000', color2: '#ff0000', color3: '#ff0000', custom1: 5, custom2: 3, custom3: 1 },
+                'twinkle': { speed: 5, intensity: 10, cycles: 5, color1: '#ffff00', color2: '#ffff00', color3: '#ffff00', custom1: 3, custom2: 2, custom3: 1 },
+                'chase_multi': { speed: 15, intensity: 10, cycles: 5, color1: '#ff0000', color2: '#00ff00', color3: '#0000ff', custom1: 3, custom2: 5, custom3: 1 },
+                'pulse': { speed: 4, intensity: 50, cycles: 5, color1: '#800080', color2: '#800080', color3: '#800080', custom1: 5, custom2: 3, custom3: 1 },
+                'matrix': { speed: 25, intensity: 20, cycles: 5, color1: '#008000', color2: '#008000', color3: '#008000', custom1: 8, custom2: 10, custom3: 1 }
             };
             
             if (defaults[this.selectedEffect]) {
