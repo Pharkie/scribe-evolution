@@ -27,7 +27,7 @@ void handleDiagnostics(AsyncWebServerRequest *request);
  * @brief Handle MQTT message sending request
  * @param request The HTTP request containing MQTT topic and message
  *
- * Endpoint: POST /api/mqtt-send
+ * Endpoint: POST /api/print-mqtt
  * Body: JSON with "topic" and "message" fields
  *
  * Validates MQTT connectivity, topic format, and message content

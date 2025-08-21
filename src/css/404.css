@@ -1,6 +1,5 @@
 /* 404 page specific styles */
-@import "tailwindcss";
-@import "./shared.css" layer(components);
+@import "./shared.css";
 
 @layer components {
   /* 404 Page specific styles */

@@ -45,9 +45,8 @@ public:
     String getName() const override { return "rainbow"; }
 
     /**
-     * @brief Check if this effect supports cycle-based operation
+     * @brief Get effect name
      */
-    bool isCycleBased() const override { return false; } // Duration-based
 
 private:
     RainbowConfig config; // Store the autonomous configuration

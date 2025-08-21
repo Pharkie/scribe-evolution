@@ -23,13 +23,16 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
                        float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
                        int &completedCycles)
 {
-    // Create a sine wave pulse across the strip
+    // Create a sine wave pulse across the entire strip
+    float phaseRadians = effectPhase * 3.14159f / 180.0f;
+    float sineValue = sin(phaseRadians);
+
+    // Convert sine wave (-1 to 1) to brightness (0 to 1)
+    float brightness = (sineValue + 1.0f) / 2.0f;
+
+    // Apply brightness to all LEDs with the same color
     for (int i = 0; i < ledCount; i++)
     {
-        float brightness = sin((effectPhase + i * 0.3f) * 3.14159f / 180.0f);
-        brightness = (brightness + 1.0f) / 2.0f; // Normalize to 0-1
-
-        // Use color1 parameter (should be hot pink from web interface)
         CRGB color = color1;
         color.fadeToBlackBy(255 - (int)(brightness * 255));
         leds[i] = color;
@@ -37,17 +40,20 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
 
     // Use frame counter for speed control - update phase only every few frames
     frameCounter++;
-    if (frameCounter >= 2) // Update every 2 frames for smoother but controlled speed
+    if (frameCounter >= (10 - config.speed)) // Faster speed = fewer frames to wait
     {
         frameCounter = 0;
-        effectPhase += 8.0f; // Speed of pulse wave
+        effectPhase += 8.0f; // Increment phase
+
+        // Check if we completed a full cycle (0 -> 360 degrees)
         if (effectPhase >= 360.0f)
         {
             effectPhase = 0.0f;
+            completedCycles++;
         }
     }
 
-    return true; // Continue running (duration-based effect)
+    return true; // Continue running (cycle tracking handled by LedEffects manager)
 }
 
 void PulseWave::reset()

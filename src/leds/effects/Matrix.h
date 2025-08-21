@@ -55,9 +55,8 @@ public:
     String getName() const override { return "matrix"; }
 
     /**
-     * @brief Check if this effect supports cycle-based operation
+     * @brief Get effect name
      */
-    bool isCycleBased() const override { return false; } // Duration-based
 
     /**
      * @brief Set number of drops
@@ -73,6 +72,7 @@ private:
         int length;
         int speed;
         bool active;
+        bool completedCycle; // Track if this drop has completed a full cycle
     };
 
     MatrixDrop *matrixDrops;

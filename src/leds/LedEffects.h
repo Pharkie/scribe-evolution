@@ -3,7 +3,15 @@
  * @brief Refactored LED effects manager using modular effect system
  * @author Adam Knowles
  * @date 2025
- * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
+     // Effect state
+    bool effectActive;
+    String currentEffectName;
+    unsigned long effectStartTime;
+    unsigned long lastUpdate;
+
+    // Cycle tracking
+    int targetCycles;    // Number of cycles to complete (0 = infinite)
+    int completedCycles; // Number of cycles completed so fart Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
 
@@ -67,27 +75,15 @@ public:
     void update();
 
     /**
-     * @brief Start a new LED effect (duration-based)
-     * @param effectName Name of the effect (case-insensitive)
-     * @param durationSeconds Duration to run the effect (0 = infinite)
-     * @param color1 Primary color for the effect (default: blue)
-     * @param color2 Secondary color for the effect (default: black/off)
-     * @param color3 Tertiary color for the effect (default: black/off)
-     * @return true if effect started successfully, false if unknown effect
-     */
-    bool startEffectDuration(const String &effectName, unsigned long durationSeconds = 0,
-                             CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
-
-    /**
      * @brief Start a new LED effect (cycle-based)
      * @param effectName Name of the effect (case-insensitive)
-     * @param cycles Number of cycles/sequences to run (1 = single sequence)
+     * @param cycles Number of cycles/sequences to run (0 = infinite)
      * @param color1 Primary color for the effect (default: blue)
      * @param color2 Secondary color for the effect (default: black/off)
      * @param color3 Tertiary color for the effect (default: black/off)
      * @return true if effect started successfully, false if unknown effect
      */
-    bool startEffectCycles(const String &effectName, int cycles = 1,
+    bool startEffectCycles(const String &effectName, int cycles = 0,
                            CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
 
     /**

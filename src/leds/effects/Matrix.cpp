@@ -36,6 +36,7 @@ void Matrix::initialize(int ledCount)
             matrixDrops[i].position = 0;
             matrixDrops[i].length = 0;
             matrixDrops[i].speed = 1;
+            matrixDrops[i].completedCycle = false;
         }
         initialized = true;
     }
@@ -84,6 +85,12 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                 if (matrixDrops[i].position >= ledCount + matrixDrops[i].length)
                 {
                     matrixDrops[i].active = false;
+                    // Mark as completed cycle when drop finishes its journey
+                    if (!matrixDrops[i].completedCycle)
+                    {
+                        matrixDrops[i].completedCycle = true;
+                        completedCycles++;
+                    }
                 }
             }
         }
@@ -99,6 +106,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                     matrixDrops[i].position = 0;
                     matrixDrops[i].length = random16(8) + 3; // 3-10 LEDs long
                     matrixDrops[i].speed = random16(3) + 1;  // 1-3 pixels per update
+                    matrixDrops[i].completedCycle = false;   // Reset cycle flag
                     break;
                 }
             }
@@ -143,6 +151,7 @@ void Matrix::reset()
             matrixDrops[i].position = 0;
             matrixDrops[i].length = 0;
             matrixDrops[i].speed = 1;
+            matrixDrops[i].completedCycle = false;
         }
     }
 }

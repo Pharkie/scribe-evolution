@@ -1,6 +1,7 @@
 # PlatformIO files
 .pio/
 .vscode/
+compile_commands.json
 
 # Configuration with sensitive data
 src/core/config.h

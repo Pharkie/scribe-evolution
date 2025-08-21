@@ -87,104 +87,94 @@ void handleLedEffect(AsyncWebServerRequest *request)
     LOG_VERBOSE("LEDS", "LED effect request: %s", effectName.c_str());
     LOG_VERBOSE("LEDS", "Full request body: %s", body.c_str());
 
-    // Parse optional parameters from JSON body
-    int duration = doc["duration"] | 5; // Default 5 seconds (for duration-based effects)
-    int cycles = doc["cycles"] | 1;     // Default 1 cycle (for cycle-based effects)
+    // Parse required parameters
+    int cycles = doc["cycles"] | 1; // Default 1 cycle (0 = continuous)
 
-    // For duration-based effects from web UI, convert milliseconds to seconds
-    if (duration > 100)
-    { // Likely milliseconds from web UI
-        duration = duration / 1000;
+    // Note: No duration concept - effects run for cycles or continuously
+
+    // Parse colors array (required)
+    if (!doc.containsKey("colors") || !doc["colors"].is<JsonArray>())
+    {
+        sendErrorResponse(request, 400, "Colors array is required");
+        return;
     }
 
-    // Convert color names to CRGB values
-    auto parseColor = [](const String &colorName) -> CRGB
+    JsonArray colorsArray = doc["colors"];
+    if (colorsArray.size() == 0)
     {
-        String lower = colorName;
-        lower.toLowerCase();
+        sendErrorResponse(request, 400, "Colors array cannot be empty");
+        return;
+    }
 
-        if (lower == "red")
-            return CRGB::Red;
-        if (lower == "green")
-            return CRGB::Green;
-        if (lower == "blue")
-            return CRGB::Blue;
-        if (lower == "yellow")
-            return CRGB::Yellow;
-        if (lower == "purple")
-            return CRGB::Purple;
-        if (lower == "cyan")
-            return CRGB::Cyan;
-        if (lower == "white")
-            return CRGB::White;
-        if (lower == "orange")
-            return CRGB::Orange;
-        if (lower == "pink")
-            return CRGB::Pink;
-        return CRGB::Black; // Default to off
-    };
+    // Create settings object from unified parameters
+    DynamicJsonDocument settingsDoc(512);
+    JsonObject settings = settingsDoc.to<JsonObject>();
 
-    // Function to parse hex color strings (#RRGGBB or #RRGGBBAA)
+    // Map unified parameters to effect-specific settings
+    if (doc.containsKey("speed"))
+        settings["speed"] = doc["speed"];
+    if (doc.containsKey("intensity"))
+    {
+        // Map intensity to effect-specific parameter based on effect type
+        int intensity = doc["intensity"];
+        if (effectName.equalsIgnoreCase("twinkle") || effectName.equalsIgnoreCase("rainbow"))
+        {
+            settings["density"] = intensity;
+        }
+        else if (effectName.equalsIgnoreCase("chase_multi") || effectName.equalsIgnoreCase("chase_single"))
+        {
+            settings["trailLength"] = intensity / 8; // Map 0-255 to reasonable trail length
+        }
+    }
+
+    // WLED-like unified interface: copy all frontend parameters to settings
+    // This ensures consistent interface for all LED effects
+    for (JsonPair kv : doc.as<JsonObject>())
+    {
+        const char *key = kv.key().c_str();
+        // Skip core parameters that are handled separately
+        if (strcmp(key, "effect") != 0 &&
+            strcmp(key, "cycles") != 0 &&
+            strcmp(key, "colors") != 0)
+        {
+            settings[key] = kv.value();
+        }
+    }
+
+    // Add colors array to settings
+    settings["colors"] = doc["colors"];
+
+    // Parse colors from the colors array into CRGB values
     auto parseHexColor = [](const String &hexColor) -> CRGB
     {
         if (hexColor.length() < 7 || hexColor[0] != '#')
         {
             return CRGB::Black; // Invalid hex format
         }
-
-        // Parse RGB values from hex string
         unsigned long colorValue = strtoul(hexColor.substring(1, 7).c_str(), NULL, 16);
         uint8_t r = (colorValue >> 16) & 0xFF;
         uint8_t g = (colorValue >> 8) & 0xFF;
         uint8_t b = colorValue & 0xFF;
-
         return CRGB(r, g, b);
     };
 
-    // Parse colors - only handle new settings object format
+    // Parse colors into CRGB values
     CRGB c1 = CRGB::Blue, c2 = CRGB::Black, c3 = CRGB::Black;
-    std::vector<CRGB> colors;
+    if (colorsArray.size() > 0)
+        c1 = parseHexColor(colorsArray[0].as<String>());
+    if (colorsArray.size() > 1)
+        c2 = parseHexColor(colorsArray[1].as<String>());
+    if (colorsArray.size() > 2)
+        c3 = parseHexColor(colorsArray[2].as<String>());
+    LOG_VERBOSE("LEDS", "Parsed %d colors from array", colorsArray.size());
 
-    if (doc.containsKey("settings") && doc["settings"].is<JsonObject>())
-    {
-        JsonObject settings = doc["settings"];
-        LOG_VERBOSE("LEDS", "Processing settings object");
+    // Parse ALL settings based on effect type and apply them
 
-        // Check for hex color array or single color in settings
-        if (settings.containsKey("colors") && settings["colors"].is<JsonArray>())
-        {
-            JsonArray colorArray = settings["colors"];
-            for (JsonVariant colorVar : colorArray)
-            {
-                if (colorVar.is<const char *>())
-                {
-                    String colorStr = colorVar.as<String>();
-                    CRGB color = parseHexColor(colorStr);
-                    colors.push_back(color);
-                    LOG_VERBOSE("LEDS", "Parsed hex color: %s -> RGB(%d,%d,%d)",
-                                colorStr.c_str(), color.r, color.g, color.b);
-                }
-            }
-        }
-        else if (settings.containsKey("color"))
-        {
-            // Single color for effects like pulse, twinkle, matrix
-            String colorStr = settings["color"].as<String>();
-            CRGB color = parseHexColor(colorStr);
-            colors.push_back(color);
-            LOG_VERBOSE("LEDS", "Parsed single color: %s -> RGB(%d,%d,%d)",
-                        colorStr.c_str(), color.r, color.g, color.b);
-        }
-
-        // Set primary colors
-        c1 = colors.size() > 0 ? colors[0] : CRGB::Blue;
-        c2 = colors.size() > 1 ? colors[1] : CRGB::Black;
-        c3 = colors.size() > 2 ? colors[2] : CRGB::Black;
-
-// Parse ALL settings based on effect type and apply them
-// Create a temporary effects configuration with frontend settings
-// This will be used for the playground without saving to permanent config
+    // Parse ALL settings based on effect type and apply them
+    // Create a temporary effects configuration with settings
+    // This will be used for the playground without saving to permanent config
 #ifdef ENABLE_LEDS
+    {
         LedEffectsConfig playgroundConfig = {}; // Start with empty config
 
         if (effectName.equalsIgnoreCase("chase_single"))
@@ -200,12 +190,12 @@ void handleLedEffect(AsyncWebServerRequest *request)
             playgroundConfig.chaseMulti.trailLength = settings["trailLength"] | 20;
             playgroundConfig.chaseMulti.trailFade = settings["trailFade"] | 20;
             playgroundConfig.chaseMulti.colorSpacing = settings["colorSpacing"] | 12;
-            if (settings.containsKey("colors") && settings["colors"].is<JsonArray>())
+            if (settings.containsKey("colors") && settings["colors"].as<JsonArray>().size() > 0)
             {
-                JsonArray colorsArray = settings["colors"];
-                playgroundConfig.chaseMulti.color1 = colorsArray.size() > 0 ? colorsArray[0].as<String>() : "#ff9900ff";
-                playgroundConfig.chaseMulti.color2 = colorsArray.size() > 1 ? colorsArray[1].as<String>() : "#008f00ff";
-                playgroundConfig.chaseMulti.color3 = colorsArray.size() > 2 ? colorsArray[2].as<String>() : "#78cffeff";
+                JsonArray settingsColors = settings["colors"];
+                playgroundConfig.chaseMulti.color1 = settingsColors.size() > 0 ? settingsColors[0].as<String>() : "#ff9900ff";
+                playgroundConfig.chaseMulti.color2 = settingsColors.size() > 1 ? settingsColors[1].as<String>() : "#008f00ff";
+                playgroundConfig.chaseMulti.color3 = settingsColors.size() > 2 ? settingsColors[2].as<String>() : "#78cffeff";
             }
         }
         else if (effectName.equalsIgnoreCase("matrix"))
@@ -243,33 +233,25 @@ void handleLedEffect(AsyncWebServerRequest *request)
 
         // Apply the playground configuration temporarily
         ledEffects.updateEffectConfig(playgroundConfig);
+    }
 #endif
 
-        LOG_VERBOSE("LEDS", "Applied all frontend settings for effect: %s", effectName.c_str());
-        LOG_VERBOSE("LEDS", "Using colors from frontend settings: %d colors parsed", (int)colors.size());
-    }
-    else
-    {
-        LOG_ERROR("LEDS", "No settings object found - only new format supported");
-        request->send(400, "application/json", "{\"success\":false,\"message\":\"Settings object required\"}");
-        return;
-    }
+    LOG_VERBOSE("LEDS", "Applied settings for LED effect: %s", effectName.c_str());
+    LOG_VERBOSE("LEDS", "Parsed %d colors from settings", (int)colorsArray.size());
 
-    // Determine if this effect should be cycle-based or duration-based
-    bool useCycles = effectName.equalsIgnoreCase("chase_single") || effectName.equalsIgnoreCase("chase_multi");
+    // Unified cycle-based system: all effects run for cycles (0 = continuous)
     bool success;
-
-    if (useCycles)
+    if (cycles > 0)
     {
-        // Cycle-based effects (chase_single, chase_multi)
+        // Run effect for specific number of cycles
         success = ledEffects.startEffectCycles(effectName, cycles, c1, c2, c3);
         LOG_VERBOSE("LEDS", "Started LED effect: %s for %d cycles", effectName.c_str(), cycles);
     }
     else
     {
-        // Duration-based effects (rainbow, twinkle, pulse, matrix)
-        success = ledEffects.startEffectDuration(effectName, duration, c1, c2, c3);
-        LOG_VERBOSE("LEDS", "Started LED effect: %s for %d seconds", effectName.c_str(), duration);
+        // Run effect continuously (cycles=0 means indefinite)
+        success = ledEffects.startEffectCycles(effectName, 0, c1, c2, c3);
+        LOG_VERBOSE("LEDS", "Started LED effect: %s continuously", effectName.c_str());
     }
 
     if (success)
@@ -278,14 +260,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
         response["success"] = true;
         response["message"] = "LED effect started";
         response["effect"] = effectName;
-        if (useCycles)
-        {
-            response["cycles"] = cycles;
-        }
-        else
-        {
-            response["duration"] = duration;
-        }
+        response["cycles"] = cycles;
 
         // Include the original settings object in the response
         if (doc.containsKey("settings"))

@@ -1,6 +1,12 @@
 /* Index page specific styles */
-@import "tailwindcss";
-@import "./shared.css" layer(components);
+@import "./shared.css";
+
+@layer base {
+  /* Hide error states by default until Alpine.js initializes - prevents flash of error content */
+  [x-show="error"] {
+    display: none !important;
+  }
+}
 
 @layer components {
   /* Quick Actions Grid - 6 buttons: 2 cols mobile, 3 cols tablet, 6 cols desktop, 3 cols (2 rows) at 1200px+ */
@@ -11,6 +17,61 @@
   /* Status indicator button */
   .status-indicator {
     @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200;
+  }
+  
+  /* Status indicator button - stashed state with orange fade animation */
+  .status-indicator-stashed {
+    @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-bold;
+    background-color: #ea580c; /* Orange-600 */
+    color: white;
+    animation: fadeToNormal 3s ease-out forwards;
+  }
+  
+  @keyframes fadeToNormal {
+    0% {
+      background-color: #ea580c; /* Orange-600 */
+      color: white;
+      font-weight: 700; /* Bold */
+      transform: scale(1.05);
+    }
+    50% {
+      background-color: #f97316; /* Orange-500 */
+      color: white;
+      font-weight: 600; /* Semi-bold */
+      transform: scale(1.02);
+    }
+    100% {
+      background-color: #f3f4f6; /* Gray-100 for light mode */
+      color: #374151; /* Gray-700 for light mode */
+      font-weight: 400; /* Normal */
+      transform: scale(1);
+    }
+  }
+  
+  /* Dark mode version of the animation */
+  .dark .status-indicator-stashed {
+    animation: fadeToNormalDark 3s ease-out forwards;
+  }
+  
+  @keyframes fadeToNormalDark {
+    0% {
+      background-color: #ea580c; /* Orange-600 */
+      color: white;
+      font-weight: 700; /* Bold */
+      transform: scale(1.05);
+    }
+    50% {
+      background-color: #f97316; /* Orange-500 */
+      color: white;
+      font-weight: 600; /* Semi-bold */
+      transform: scale(1.02);
+    }
+    100% {
+      background-color: #374151; /* Gray-700 for dark mode */
+      color: #d1d5db; /* Gray-300 for dark mode */
+      font-weight: 400; /* Normal */
+      transform: scale(1);
+    }
   }
 
   /* Printer selection grid */

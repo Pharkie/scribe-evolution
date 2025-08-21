@@ -55,9 +55,8 @@ public:
     String getName() const override { return "twinkle"; }
 
     /**
-     * @brief Check if this effect supports cycle-based operation
+     * @brief Get effect name
      */
-    bool isCycleBased() const override { return false; } // Duration-based
 
     /**
      * @brief Set twinkle density

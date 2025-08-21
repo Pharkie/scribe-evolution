@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Setup back button event listeners
   setupBackButtonListeners();
+  
+  console.log('🏔️ Shared functionality initialized');
 });
 
 /**
@@ -53,23 +55,20 @@ function handleKeyPress(event) {
 
 /**
  * Handle textarea keydown events for Enter/Shift+Enter behavior
+ * This is for backward compatibility with any non-Alpine forms
  */
 function handleTextareaKeydown(event) {
   // Enter to submit form (unless Shift is held)
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    const form = document.getElementById('printer-form');
+    const form = event.target.closest('form');
     if (form) {
-      // Create a proper submit event that won't cause double submission
+      // Trigger form submission through Alpine.js if available
       const submitEvent = new Event('submit', { 
-        bubbles: false,  // Don't bubble to prevent duplicate handlers
+        bubbles: true,
         cancelable: true 
       });
-      Object.defineProperty(submitEvent, 'target', {
-        value: form,
-        enumerable: true
-      });
-      handleSubmit(submitEvent);
+      form.dispatchEvent(submitEvent);
     }
   }
   // Shift+Enter allows normal line break (default behavior)
@@ -94,13 +93,12 @@ function initializeSharedUI() {
  * Initialize tooltips and help text
  */
 function initializeTooltips() {
-  // Add hover effects for info icons
+  // Add hover effects for info icons if needed
   const infoIcons = document.querySelectorAll('.info-icon');
-  infoIcons.forEach(icon => {
-    icon.addEventListener('mouseenter', function() {
-      // Show tooltip logic here if needed
-    });
-  });
+  if (infoIcons.length > 0) {
+    // Currently no tooltip implementation needed
+    // This function remains for future tooltip functionality
+  }
 }
 
 /**
@@ -163,6 +161,50 @@ function showSuccessMessage(message) {
     }
   }, 3000);
 }
+
+/**
+ * Show message to user with specific type
+ */
+function showMessage(message, type = 'info') {
+  const container = document.getElementById('message-container') || document.body;
+  
+  let bgColor, duration;
+  switch(type) {
+    case 'success':
+      bgColor = 'bg-green-500 dark:bg-green-600';
+      duration = 3000;
+      break;
+    case 'error':
+      bgColor = 'bg-red-500 dark:bg-red-600';
+      duration = 5000;
+      break;
+    case 'warning':
+      bgColor = 'bg-yellow-500 dark:bg-yellow-600';
+      duration = 4000;
+      break;
+    case 'info':
+    default:
+      bgColor = 'bg-blue-500 dark:bg-blue-600';
+      duration = 3000;
+      break;
+  }
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `fixed top-4 right-4 ${bgColor} text-white px-4 py-2 rounded-lg shadow-lg dark:shadow-2xl z-50`;
+  messageDiv.textContent = message;
+  
+  container.appendChild(messageDiv);
+  
+  // Auto-remove after duration
+  setTimeout(() => {
+    if (messageDiv.parentNode) {
+      messageDiv.parentNode.removeChild(messageDiv);
+    }
+  }, duration);
+}
+
+// Make showMessage available globally
+window.showMessage = showMessage;
 
 /**
  * Navigate back to previous page or home

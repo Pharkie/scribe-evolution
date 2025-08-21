@@ -61,12 +61,6 @@ public:
      * @return String containing the effect name
      */
     virtual String getName() const = 0;
-
-    /**
-     * @brief Check if this effect supports cycle-based operation
-     * @return true if cycle-based, false if duration-based
-     */
-    virtual bool isCycleBased() const = 0;
 };
 
 #endif // ENABLE_LEDS
