@@ -108,6 +108,15 @@ function initializeSettingsStore() {
             color3: null
         },
         
+        // WiFi network scanning state
+        wifiScan: {
+            loading: false,
+            networks: [],
+            error: null,
+            selectedNetwork: null, // 'manual' for manual entry or network object
+            isManualEntry: false
+        },
+        
         // Section definitions for navigation
         sections: [
             { id: 'device', name: 'Device', icon: '⚙️', color: 'purple' },
@@ -194,6 +203,9 @@ function initializeSettingsStore() {
                 
                 console.log('Alpine Store: Configuration loaded successfully');
                 
+                // Automatically scan WiFi networks on page load
+                await this.scanWiFiNetworks();
+                
             } catch (error) {
                 console.error('Alpine Store: Failed to load configuration:', error);
                 this.error = error.message;
@@ -201,6 +213,61 @@ function initializeSettingsStore() {
             } finally {
                 this.loading = false;
             }
+        },
+        
+        // WiFi network scanning functionality
+        async scanWiFiNetworks() {
+            this.wifiScan.loading = true;
+            this.wifiScan.error = null;
+            this.wifiScan.networks = [];
+            
+            try {
+                const networks = await window.SettingsAPI.scanWiFiNetworks();
+                
+                // Sort networks by signal strength (highest first)
+                this.wifiScan.networks = networks.sort((a, b) => b.signal_percent - a.signal_percent);
+                
+                console.log('WiFi scan completed:', this.wifiScan.networks.length, 'networks found');
+                
+            } catch (error) {
+                console.error('WiFi scan failed:', error);
+                this.wifiScan.error = error.message;
+                window.showMessage(`WiFi scan failed: ${error.message}`, 'error');
+            } finally {
+                this.wifiScan.loading = false;
+            }
+        },
+        
+        // Handle network selection from dropdown
+        selectNetwork(networkOrManual) {
+            if (networkOrManual === 'manual') {
+                // Manual entry selected
+                this.wifiScan.selectedNetwork = 'manual';
+                this.wifiScan.isManualEntry = true;
+                // Clear SSID to allow manual input
+                this.config.device.wifi.ssid = '';
+            } else {
+                // Network from scan selected
+                this.wifiScan.selectedNetwork = networkOrManual;
+                this.wifiScan.isManualEntry = false;
+                // Set SSID from selected network
+                this.config.device.wifi.ssid = networkOrManual.ssid;
+            }
+        },
+        
+        // Get formatted network display string
+        formatNetworkDisplay(network) {
+            const securityIcon = network.secure ? '🔒' : '📡';
+            const signalIcon = this.getSignalIcon(network.signal_percent);
+            return `${securityIcon} ${network.ssid} ${signalIcon} (${network.signal_percent}%)`;
+        },
+        
+        // Get signal strength icon
+        getSignalIcon(signalPercent) {
+            if (signalPercent >= 75) return '📶';
+            if (signalPercent >= 50) return '📶';
+            if (signalPercent >= 25) return '📶';
+            return '📶';
         },
         
         // Create a clean config object without read-only fields for server submission
