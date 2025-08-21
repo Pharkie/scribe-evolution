@@ -2,12 +2,25 @@
 
 A complete mock API server for local development and testing of the Scribe Evolution frontend.
 
+## Why Use the Mock Server?
+
+**Rapid Development**: Test frontend changes without rebuilding and flashing ESP32 firmware (saves 30-60 seconds per iteration)
+
+**Safe Testing**: Experiment with UI/UX without risk of corrupting device settings or requiring hardware reset
+
+**Complete Coverage**: Every API endpoint accurately simulated with realistic response times and data structures
+
+**Live Data**: Dynamic values (uptime, memory, temperature) that change over time for realistic testing
+
+**No Hardware Required**: Develop and test the complete web interface on any machine with Node.js
+
 ## Files
 
 - **`mock-api.js`** - Main server script
 - **`mock-config.json`** - Mock configuration data (matches `/api/config`)
 - **`mock-diagnostics.json`** - Mock diagnostics data (matches `/api/diagnostics`)  
 - **`mock-printer-discovery.json`** - Mock printer discovery data (matches `/events` SSE)
+- **`mock-nvs-dump.json`** - Mock NVS storage dump (matches `/api/nvs-dump`)
 
 ## Usage
 
@@ -22,31 +35,64 @@ node mock-server/mock-api.js
 
 ## Features
 
-- **Root URL**: `http://localhost:3001/` - serves main interface
-- **All API endpoints**: `/api/config`, `/api/diagnostics`, `/api/print`, etc.
-- **Server-Sent Events**: `/events` with proper `printer-update` events
-- **Static file serving**: HTML, CSS, JS, images, favicons
-- **CORS enabled**: for local development
-- **Live keyboard controls**:
+- **Complete API Coverage**: All ESP32 endpoints with realistic response times
+  - `GET /api/config` - Device configuration with live data updates
+  - `POST /api/config` - Configuration updates with validation simulation
+  - `GET /api/diagnostics` - System diagnostics with live memory/temperature
+  - `GET /api/nvs-dump` - Raw NVS storage dump with timestamp updates
+  - `GET /api/status` - System status endpoint
+  - `POST /api/print` - Print job simulation with character counts
+  - `POST /api/led-effect` - LED effect triggering
+- **Server-Sent Events**: `/events` with proper `printer-update` events and discovery data
+- **Static File Serving**: Complete web interface (HTML, CSS, JS, images, favicons)
+- **CORS Enabled**: Cross-origin requests for development tools
+- **Live Keyboard Controls**:
   - Press **"r" + Enter** to reload server (picks up code changes)
   - Press **"d" + Enter** to reload JSON data files (picks up data changes)
-  - Press **Ctrl+C** to stop
+  - Press **Ctrl+C** to stop server
 
 ## Data Structure
 
 All mock data matches the real ESP32 API responses exactly:
 
-- **Config**: Complete device, MQTT, LED effects, buttons, Unbidden Ink settings
-- **Diagnostics**: ESP32-C3 hardware info, memory usage, flash storage, endpoints list
-- **Printer Discovery**: SSE events with printer network discovery data
+- **Config**: Complete device settings, MQTT configuration, LED effects, button mappings, Unbidden Ink parameters
+- **Diagnostics**: ESP32-C3 hardware specifications, live memory usage, flash storage, temperature, endpoint listings  
+- **Printer Discovery**: SSE events with network printer discovery data and connection timestamps
+- **NVS Dump**: Complete non-volatile storage dump with all 35 configuration keys, validation status, and data types
 
 ## Development Workflow
 
-1. Edit JSON files to test different data scenarios
-2. Press **"d" + Enter** to reload data without restarting server
-3. Edit mock-api.js for API behavior changes  
-4. Press **"r" + Enter** to reload server completely
-5. Frontend sees changes immediately
+1. **Start the server**: `cd mock-server && node mock-api.js`
+2. **Access web interface**: http://localhost:3001/
+3. **Edit JSON files** to test different data scenarios
+4. **Press "d" + Enter** to reload data without restarting server
+5. **Edit mock-api.js** for API behavior changes  
+6. **Press "r" + Enter** to reload server completely
+7. **Frontend sees changes immediately** - no ESP32 rebuild required
+
+## Available Endpoints
+
+| Endpoint | Method | Description | Live Data |
+|----------|---------|-------------|-----------|
+| `/` | GET | Main web interface | Static |
+| `/api/config` | GET | Device configuration | ✓ |
+| `/api/config` | POST | Config updates | Simulated |
+| `/api/diagnostics` | GET | System diagnostics | ✓ Memory, temperature |
+| `/api/nvs-dump` | GET | NVS storage dump | ✓ Timestamp |
+| `/api/status` | GET | System status | ✓ |
+| `/api/print` | POST | Print simulation | Random counts |
+| `/api/led-effect` | POST | LED effect trigger | Simulated |
+| `/events` | SSE | Printer discovery | ✓ Periodic updates |
+
+## Testing Scenarios
+
+**Configuration Changes**: Modify `mock-config.json` to test different device setups, MQTT configurations, or LED effects
+
+**System Diagnostics**: Adjust memory values in `mock-diagnostics.json` to test low-memory warnings or system alerts
+
+**Network Discovery**: Update printer discovery data to test multi-printer scenarios or network issues
+
+**NVS Storage**: Modify storage dump to test different configuration states, validation errors, or missing keys
 
 ## Security
 

@@ -120,6 +120,30 @@ This automatically:
 
 ## Development Workflow
 
+### Mock Server for Local Development
+
+For rapid frontend development without flashing the ESP32, use the mock server:
+
+```bash
+# Start mock server (runs on localhost:3001)
+cd mock-server
+node mock-api.js
+```
+
+The mock server provides:
+- **Complete API simulation**: All `/api/*` endpoints with realistic responses
+- **Static file serving**: HTML, CSS, JS, and image assets
+- **Live data updates**: Dynamic uptime, memory usage, and temperature
+- **CORS support**: Cross-origin requests for development tools
+- **Hot reload**: Press `r` to restart server, `d` to reload JSON data
+- **Real ESP32 behavior**: Proper delays, SSE events, and response formats
+
+**Perfect for:**
+- Frontend CSS/JavaScript development
+- UI/UX testing and iteration  
+- API integration testing
+- Logo animation and responsive design work
+
 ### For Code Changes
 
 ```bash
