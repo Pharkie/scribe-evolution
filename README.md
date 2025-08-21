@@ -96,13 +96,8 @@ pio run --target upload_all
 
 ### Development & Customization
 - **[Code Structure](docs/code-structure.md)** - Modular architecture and development guidelines
-- **[LED Configuration](docs/LED_CONFIGURATION.md)** & **[Effects](docs/LED_EFFECTS.md)** - Optional LED system
+- **[LED Effects](docs/led-effects.md)** - Optional LED system with cycle-based effects
 - **[Testing Guide](docs/testing.md)** - Unit testing and validation procedures
-
-### Advanced Topics
-- **[HTML Partials Linting](docs/html-partials-linting.md)** - Web interface development
-- **[Settings Modular Refactoring](docs/settings-modular-refactoring.md)** - Architecture improvements
-- **[Refactoring Summary](docs/refactoring-summary.md)** & **[Release Notes](docs/release.md)** - Project evolution
 
 ## Credits and Acknowledgments
 

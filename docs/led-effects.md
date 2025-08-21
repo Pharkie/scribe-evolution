@@ -90,20 +90,23 @@ ledEffects.begin();
 // Update in loop() - non-blocking
 ledEffects.update();
 
-// Start effects with custom parameters
-ledEffects.startEffectDuration("chase", 10, CRGB::Blue);    // 10s blue chase
-ledEffects.startEffectDuration("rainbow", 30);              // 30s rainbow wave
-ledEffects.startEffectDuration("matrix", 0, CRGB::Green);   // Infinite green matrix
+// Cycle-based effects (recommended - all effects now operate on cycles)
+ledEffects.startEffectCycles("chase_single", 1, CRGB::Blue);  // Single blue chase from start to end
+ledEffects.startEffectCycles("chase_single", 3, CRGB::Red);   // Three red chase sequences
+ledEffects.startEffectCycles("rainbow", 2);                  // Two complete rainbow waves
+ledEffects.startEffectCycles("pulse", 1, CRGB::Green);       // One complete pulse cycle
+ledEffects.startEffectCycles("matrix", 5, CRGB::Green);      // Five matrix drop cycles
 
-// Cycle-based effects (run specific number of sequences)
-ledEffects.startEffectCycles("simple_chase", 1, CRGB::Green); // Single green chase from start to end
-ledEffects.startEffectCycles("simple_chase", 3, CRGB::Red);   // Three red chase sequences
+// Time-based effects (legacy support - internally converted to cycles)
+ledEffects.startEffectDuration("chase_single", 10, CRGB::Blue);  // 10s blue chase
+ledEffects.startEffectDuration("rainbow", 30);                   // 30s rainbow wave
+ledEffects.startEffectDuration("matrix", 0, CRGB::Green);        // Infinite green matrix
 
 // Control and query
 ledEffects.stopEffect();                            // Stop current effect
 bool running = ledEffects.isEffectRunning();        // Check if active
 String current = ledEffects.getCurrentEffectName(); // Get current effect
-unsigned long timeLeft = ledEffects.getRemainingTime(); // Get remaining time
+int remainingCycles = ledEffects.getRemainingCycles(); // Get remaining cycles
 #endif
 ```
 
@@ -165,12 +168,27 @@ if (success) {
 
 ## Available Effects
 
-1. **"simple_chase"**: Color moves start to end with off phase
-2. **"rainbow"**: Configurable palette-based rainbow effect
-3. **"twinkle"**: Random groups of 3 LEDs with fade
-4. **"chase"**: Continuous chase without off phase
-5. **"pulse"**: Brightness pulse across strip
-6. **"matrix"**: Falling Matrix-style effect with configurable colors
+All effects operate on a **cycle-based system** where 1 cycle = one complete pattern execution:
+
+1. **"chase_single"**: Single color chases from start to end (1 cycle = one complete traversal)
+2. **"rainbow"**: Rainbow wave effect with configurable wave length (1 cycle = one complete wave)
+3. **"twinkle"**: Random twinkling stars with fade effect (1 cycle = one complete twinkle sequence)
+4. **"chase_multi"**: Multi-color chase supporting up to 3 colors (1 cycle = one complete traversal)
+5. **"pulse"**: Brightness pulse across the entire strip (1 cycle = one complete pulse)
+6. **"matrix"**: Falling Matrix-style drops with configurable colors (1 cycle = one complete drop sequence)
+
+### Effect Parameters
+
+Each effect supports the following unified parameters:
+- **cycles**: Number of complete patterns to execute (1-10 in playground, unlimited via API)
+- **speed**: Animation speed (1-100, higher = faster)
+- **intensity**: Effect-specific intensity parameter (1-100)
+- **colors**: Array of colors (single color for most effects, 3 colors for chase_multi)
+
+Additional effect-specific parameters:
+- **Twinkle**: fadeSpeed, starCount
+- **Matrix**: trailLength, colorSpacing, drops
+- **Rainbow**: waveLength
 
 ## Integration
 
@@ -220,13 +238,53 @@ The LED Settings section in the web interface (`/settings.html`) provides:
 - **Real-time Validation**: Input validation with helpful error messages
 - **Live Updates**: Changes apply immediately without restart
 
+### Effect Playground
+
+The **Effect Playground** provides an interactive interface for testing LED effects with real-time parameter adjustment:
+
+#### Control Parameters
+- **Effect Selection**: Choose from 6 built-in effects (chase_single, rainbow, twinkle, chase_multi, pulse, matrix)
+- **Speed (1-100)**: Effect animation speed
+- **Intensity (1-100)**: Effect brightness/density parameter
+- **Number of Cycles (1-10)**: How many complete patterns to run during testing
+
+#### Color Controls
+- **Primary Color**: Color picker for single-color effects
+- **Multi-color Support**: Additional color pickers for chase_multi effect (supports 3 colors)
+
+#### Effect-Specific Parameters
+Each effect exposes custom parameters via additional sliders:
+- **Twinkle**: Fade Speed, Number of Stars
+- **Matrix**: Trail Length, Color Spacing, Number of Drops
+- **Rainbow**: Wave Length (affects pattern density)
+
+#### Testing Features
+- **🎨 Test Effect**: Runs the selected effect with current parameters
+- **💡 Turn Off LEDs**: Immediately stops all effects and turns off LEDs
+- **Dynamic Feedback**: Toast notifications show test status (e.g., "Testing chase_single effect for 3 cycles")
+- **Live Updates**: Parameter changes are reflected immediately when testing
+
+#### Cycle-Based Operation
+All effects in the playground operate on a **cycle-based system**:
+- **1 cycle** = One complete pattern execution
+- **Chase effects**: 1 cycle = one complete traversal from start to end
+- **Rainbow effects**: 1 cycle = one complete wave across the strip
+- **Pulse effects**: 1 cycle = one complete brightness pulse
+- **Matrix effects**: 1 cycle = one set of drops falling and completing
+- **Twinkle effects**: 1 cycle = one complete twinkle sequence
+
+This provides predictable, consistent behavior where users can test exactly the number of complete patterns they want to see.
+
 ## Notes
 
-- Default state: LEDs disabled (ENABLE_LEDS commented out)
-- Hardware: Optimized for WS2812B strips with GRB color order
-- Safety: Power limited to 1A at 5V to prevent hardware damage
-- Performance: Configurable refresh rate with dynamic update intervals
-- Compatibility: Works alongside existing status LED system without conflicts
-- Memory: Dynamic allocation based on actual LED count (more efficient)
-- Configuration: All settings runtime-configurable via web interface
-- Boot Effect: Automatic 5-second rainbow effect on successful initialization
+- **Default state**: LEDs disabled (ENABLE_LEDS commented out)
+- **Hardware**: Optimized for WS2812B strips with GRB color order
+- **Safety**: Power limited to 1A at 5V to prevent hardware damage
+- **Performance**: Configurable refresh rate with dynamic update intervals
+- **Compatibility**: Works alongside existing status LED system without conflicts
+- **Memory**: Dynamic allocation based on actual LED count (more efficient)
+- **Configuration**: All settings runtime-configurable via web interface
+- **Boot Effect**: Automatic 5-second rainbow effect on successful initialization
+- **Cycle-based Operation**: All effects use unified cycle counting for predictable behavior
+- **Effect Playground**: Interactive testing interface with real-time parameter adjustment
+- **API Consistency**: Both time-based and cycle-based APIs supported for backward compatibility
