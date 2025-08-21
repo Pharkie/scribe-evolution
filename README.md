@@ -43,6 +43,7 @@ It has pressable buttons to save your favourite actions for quick access, and li
 ### 🛠️ **Developer Experience**
 - **Modern Architecture**: Modular C++ codebase with proper separation of concerns
 - **Build Automation**: Integrated npm and PlatformIO workflows
+- **Mock Server**: Local development server for frontend testing without ESP32 rebuilds
 - **Configuration Management**: Centralized settings with environment-specific overrides
 - **Documentation**: Extensive guides covering aspects of the system
 
@@ -102,6 +103,7 @@ pio run --target upload_all
 - **[Code Structure](docs/code-structure.md)** - Modular architecture and development guidelines
 - **[LED Effects](docs/led-effects.md)** - Optional LED system with cycle-based effects
 - **[Testing Guide](docs/testing.md)** - Unit testing and validation procedures
+- **[Mock Server](mock-server/README.md)** - Local development server for frontend testing
 
 ## Credits and Acknowledgments
 
