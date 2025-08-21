@@ -1,7 +1,7 @@
 /**
- * Scribe Printer - Pipedream MQTT Bridge
- * 
- * A Pipedream component for sending messages to Scribe thermal printers via MQTT.
+ * Scribe Evolution Printer - Pipedream MQTT Bridge
+ *
+ * A Pipedream component for sending messages to Scribe Evolution thermal printers via MQTT.
  * This component receives HTTP requests and forwards them as MQTT messages to
  * specified remote printers.
  * 

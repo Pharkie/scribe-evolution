@@ -1,6 +1,6 @@
 # Build Instructions
 
-This document provides detailed instructions for building and deploying the Scribe ESP32-C3 Thermal Printer firmware.
+This document provides detailed instructions for building and deploying the Scribe Evolution ESP32-C3 Thermal Printer firmware.
 
 ## Build System Overview
 

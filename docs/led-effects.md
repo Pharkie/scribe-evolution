@@ -1,6 +1,6 @@
-# FastLED Library Support for Scribe
+# FastLED Library Support for Scribe Evolution
 
-This implementation adds FastLED library support to the Scribe ESP32-C3 thermal
+This implementation adds FastLED library support to the Scribe Evolution ESP32-C3 thermal
 printer project with a **runtime-configurable LED effects system**.
 
 ## Features

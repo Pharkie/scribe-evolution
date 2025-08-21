@@ -26,10 +26,10 @@
             <div class="header-center">
                 <h1 class="page-title flex items-center justify-center">
                     <!-- Dark mode logo (white) -->
-                    <img src="/images/ScribeLogoMain-white.svg" alt="Scribe"
+                    <img src="/images/ScribeLogoMain-white.svg" alt="Scribe Evolution"
                         class="h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:block hidden slide-in-bck-center" />
                     <!-- Light mode logo (dark) -->
-                    <img src="/images/ScribeLogoMain-black.svg" alt="Scribe"
+                    <img src="/images/ScribeLogoMain-black.svg" alt="Scribe Evolution"
                         class="h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:hidden block slide-in-bck-center" />
                 </h1>
             </div> <!-- Right spacer with settings button -->
@@ -60,7 +60,8 @@
         </div>
 
         <!-- Main Content fades in once all data is loaded -->
-        <div x-show="!loading && !error" x-transition.opacity.duration.300ms>
+        <div x-show="!loading && !error" x-transition.opacity.duration.300ms class="hidden"
+            :class="{ 'hidden': loading || error }" x-cloak>
             <!-- Main Printer Interface -->
             <div class="card-primary">
                 <form @submit="handleSubmit($event)" class="vertical-stack-lg">
@@ -327,7 +328,7 @@
             🛠️ Diagnostics
         </a>
         <div>
-            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
+            Scribe Evolution was invented with love by <a href="https://urbancircles.club" target="_blank"
                 class="footer-link">Peter / Urban Circles</a>
         </div>
         <div>

@@ -55,7 +55,8 @@
         </div>
 
         <!-- Main Content fades in once all data is loaded -->
-        <div x-show="!loading && !error" x-transition.opacity.duration.300ms>
+        <div x-show="!loading && !error" x-transition.opacity.duration.300ms class="hidden"
+            :class="{ 'hidden': loading || error }" x-cloak>
             <!-- Navigation -->
             <nav class="flex flex-wrap justify-center gap-2 mb-6">
                 <template x-for="section in sections" :key="section.id">
@@ -852,7 +853,8 @@
         </div>
 
         <!-- Form Actions (shown when not loading and no error) -->
-        <form @submit.prevent="saveConfiguration()" x-show="!loading && !error" x-transition.opacity.duration.300ms>
+        <form @submit.prevent="saveConfiguration()" x-show="!loading && !error" x-transition.opacity.duration.300ms
+            class="hidden" :class="{ 'hidden': loading || error }" x-cloak>
             <!-- Action Buttons -->
             <div class="flex justify-center gap-4 pt-6">
                 <button type="button" @click="cancelConfiguration()"

@@ -1,11 +1,11 @@
 # MQTT Integration Guide
 
-This document covers MQTT configuration, remote printing setup, and message formats for networked communication between multiple Scribe devices.
+This document covers MQTT configuration, remote printing setup, and message formats for networked communication between multiple Scribe Evolution devices.
 
 ## Overview
 
-The Scribe MQTT integration enables:
-- **Remote printing** between multiple Scribe devices
+The Scribe Evolution MQTT integration enables:
+- **Remote printing** between multiple Scribe Evolution devices
 - **Unified web interface** for local and remote printer control
 - **Secure TLS communication** via cloud MQTT brokers
 - **Quick action buttons** that work with any configured printer
@@ -14,7 +14,7 @@ The Scribe MQTT integration enables:
 ## Features
 
 ### Multi-Printer Support
-- Configure multiple remote Scribe printers in `config.h`
+- Configure multiple remote Scribe Evolution printers in `config.h`
 - Single web interface controls all configured printers
 - Printer selection in web UI
 - Automatic printer discovery and status monitoring
@@ -193,7 +193,7 @@ mosquitto_pub -h your-broker.hivemq.cloud -p 8883 \
 
 ### Diagnostic Information
 
-The Scribe web interface provides MQTT diagnostic information:
+The Scribe Evolution web interface provides MQTT diagnostic information:
 - Connection status
 - Subscribed topics
 - Last message timestamp
@@ -265,7 +265,7 @@ Monitor serial output for detailed MQTT connection and message processing logs.
 **Home Assistant**:
 ```yaml
 mqtt:
-  - name: "Scribe Kitchen Printer"
+  - name: "Scribe Evolution Kitchen Printer"
     command_topic: "scribeprinter/kitchen/inbox"
     payload_on: '{"message": "Good morning! Coffee is ready."}'
 ```

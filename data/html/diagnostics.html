@@ -47,7 +47,8 @@
         </div>
 
         <!-- Main Content fades in once all data is loaded -->
-        <div x-show="!loading && !error" x-transition.opacity.duration.300ms>
+        <div x-show="!loading && !error" x-transition.opacity.duration.300ms class="hidden"
+            :class="{ 'hidden': loading || error }" x-cloak>
             <!-- Navigation -->
             <nav class="flex flex-wrap justify-center gap-2 mb-6">
                 <template x-for="section in sections" :key="section.id">
@@ -273,7 +274,7 @@
             🏠 Home
         </a>
         <div>
-            Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
+            Scribe Evolution was invented with love by <a href="https://urbancircles.club" target="_blank"
                 class="footer-link">Peter
                 / Urban Circles</a>
         </div>

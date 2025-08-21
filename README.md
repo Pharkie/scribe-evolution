@@ -1,21 +1,21 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="data/images/ScribeLogoMain-white.svg">
   <source media="(prefers-color-scheme: light)" srcset="data/images/ScribeLogoMain-black.svg">
-  <img alt="Scribe Logo" src="data/images/ScribeLogoMain-black.svg">
+  <img alt="Scribe Evolution Logo" src="data/images/ScribeLogoMain-black.svg">
 </picture>
 
 <br>
 <br>
 
-**Quick Notes, Instant Sharing, Endless Fun**
+**Print Fast. Share Securely. Poke Friends.**
 
-Scribe is a small, AI-powered thermal printer that delights you with ink-free, super-fast, tear-and-go printing of quick notes, to-do lists, recipes, news summaries, or trivia. Share any of these instantly with those in your private network.
+Scribe Evolution is a small, AI-powered thermal printer that delights you with ink-free, super-fast, tear-and-go printing of quick notes, to-do lists, recipes, news summaries, or trivia. Share any of these instantly with those in your private network.
 
 It’s ready when you are: print from your phone, poke your friends like it’s 1997, or manage your day. It’s your helpful, compact desk assistant.
 
 It has pressable buttons to save your favourite actions for quick access, and lights up as a beautiful object in your home or office.
 
-![Scribe Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
+![Scribe Evolution Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
 
 
 ### 🔑 **Features**
@@ -49,7 +49,7 @@ It has pressable buttons to save your favourite actions for quick access, and li
 ## Quick Start
 
 ### 1. Hardware Setup
-Build your Scribe printer following the [Hardware Guide](docs/hardware.md). You'll need:
+Build your Scribe Evolution printer following the [Hardware Guide](docs/hardware.md). You'll need:
 - ESP32-C3 development board
 - CSN-A4L thermal printer  
 - 3D printed enclosure ([download files](https://makerworld.com/en/models/1577165-project-scribe))

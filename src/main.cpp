@@ -1,12 +1,12 @@
 /**
  * @file main.cpp
- * @brief Main application entry point for Scribe ESP32-C3 Thermal Printer
+ * @brief Main application entry point for Scribe Evolution ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
- * This file is part of the Scribe ESP32-C3 Thermal Printer project.
+ * This file is part of the Scribe Evolution ESP32-C3 Thermal Printer project.
  *
  * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
  * International License. To view a copy of this license, visit
@@ -88,7 +88,7 @@ void setup()
   }
 
   // Note: We can't use Log.notice() yet as logging isn't initialized
-  Serial.println("\n=== Scribe Starting ===");
+  Serial.println("\n=== Scribe Evolution Starting ===");
 
   // Initialize LittleFS early so config loading works
   if (!LittleFS.begin(true)) // true = format if mount fails
@@ -188,7 +188,7 @@ void setup()
   // Initialize Unbidden Ink schedule
   initializeUnbiddenInk();
 
-  LOG_NOTICE("BOOT", "=== Scribe Ready ===");
+  LOG_NOTICE("BOOT", "=== Scribe Evolution Ready ===");
 }
 
 void loop()

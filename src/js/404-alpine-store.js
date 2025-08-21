@@ -207,7 +207,7 @@ window.ErrorStore = function() {
     
     // Copy error details for support
     async copyErrorDetails() {
-      const details = `Scribe Printer 404 Error Report
+      const details = `Scribe Evolution Printer 404 Error Report
 Timestamp: ${this.errorReport.timestamp}
 Method: ${this.errorReport.method}
 Path: ${this.errorReport.path}

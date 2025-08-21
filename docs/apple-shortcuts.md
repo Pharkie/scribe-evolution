@@ -1,10 +1,10 @@
 # Apple Shortcuts Integration
 
-This document explains how to integrate Apple Shortcuts with your Scribe thermal printer using HTTP-to-MQTT bridge services.
+This document explains how to integrate Apple Shortcuts with your Scribe Evolution thermal printer using HTTP-to-MQTT bridge services.
 
 ## Overview
 
-Apple Shortcuts can trigger your Scribe printer remotely by sending HTTP requests to a bridge service that converts them to MQTT messages. This allows you to:
+Apple Shortcuts can trigger your Scribe Evolution printer remotely by sending HTTP requests to a bridge service that converts them to MQTT messages. This allows you to:
 
 - Send messages to your printer from anywhere with internet access
 - Trigger printing from Siri voice commands
@@ -14,12 +14,12 @@ Apple Shortcuts can trigger your Scribe printer remotely by sending HTTP request
 ## Architecture
 
 ```
-Apple Shortcuts → HTTP Request → Bridge Service → MQTT Broker → Scribe Printer
+Apple Shortcuts → HTTP Request → Bridge Service → MQTT Broker → Scribe Evolution Printer
 ```
 
 ### Why a Bridge Service?
 
-Apple Shortcuts can't send MQTT messages directly, and exposing your Scribe printer to the internet creates security risks. A bridge service provides a secure intermediary that:
+Apple Shortcuts can't send MQTT messages directly, and exposing your Scribe Evolution printer to the internet creates security risks. A bridge service provides a secure intermediary that:
 
 - Receives HTTP requests from Apple Shortcuts
 - Converts them to MQTT messages
@@ -153,7 +153,7 @@ All messages to the bridge service must include:
 ### Field Specifications
 
 **remote_printer**:
-- Must match the printer name configured in your Scribe's `config.h`
+- Must match the printer name configured in your Scribe Evolution's `config.h`
 - Case-sensitive
 - Examples: "KitchenPrinter", "OfficeScribe", "BedroomPrinter"
 

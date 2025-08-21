@@ -1,6 +1,6 @@
 # Code Structure Documentation
 
-This document provides a comprehensive overview of the Scribe ESP32-C3 Thermal
+This document provides a comprehensive overview of the Scribe Evolution ESP32-C3 Thermal
 Printer codebase structure after the modular reorganization.
 
 ## Table of Contents
@@ -19,7 +19,7 @@ Printer codebase structure after the modular reorganization.
 
 ## Overview
 
-The Scribe codebase follows a modular architecture with clear separation of
+The Scribe Evolution codebase follows a modular architecture with clear separation of
 concerns. The code is organized into logical directories that group related
 functionality together, making the codebase more maintainable and extensible.
 
@@ -422,4 +422,4 @@ settings:
 ---
 
 This documentation should be updated as the codebase evolves to maintain
-accuracy and usefulness for developers working on the Scribe project.
+accuracy and usefulness for developers working on the Scribe Evolution project.
