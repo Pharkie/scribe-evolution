@@ -101,14 +101,10 @@ function initializeIndexStore() {
     async loadConfig() {
       try {
         console.log('📋 Index: Loading configuration from API...');
-        const response = await fetch('/api/config');
-        console.log('📋 Index: API response received:', response.ok, response.status);
         
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        // Use API layer instead of direct fetch
+        this.config = await window.IndexAPI.loadConfiguration();
         
-        this.config = await response.json();
         console.log('📋 Index: Raw config received:', this.config);
         console.log('📋 Index: Config keys:', Object.keys(this.config));
         
@@ -219,22 +215,21 @@ function initializeIndexStore() {
           endpoint = '/api/print-mqtt';
         }
         
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
+        const message = this.message.trim();
         
-        if (response.ok) {
-          const result = await response.json();
-          this.message = ''; // Clear form
+        // Use API layer based on printer target
+        if (this.selectedPrinter === 'local-direct') {
+          await window.IndexAPI.printLocalContent(message);
         } else {
-          const errorData = await response.text();
-          this.showToast(`Error: ${errorData}`, 'error');
+          await window.IndexAPI.printMQTTContent(message, this.selectedPrinter);
         }
+        
+        // Clear form on success
+        this.message = '';
+        
       } catch (error) {
         console.error('Submit error:', error);
-        this.showToast(`Network error: ${error.message}`, 'error');
+        this.showToast(`Error: ${error.message}`, 'error');
       } finally {
         this.submitting = false;
       }
@@ -251,51 +246,19 @@ function initializeIndexStore() {
         // Set active action - Alpine.js will reactively update the UI
         this.activeQuickAction = action;
         
-        const endpoint = `/api/${action}`;
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) {
-          const errorData = await response.text();
-          this.showToast(`Error generating content: ${errorData}`, 'error');
-          return;
-        }
-
-        const contentResult = await response.json();
+        // Use API layer for executing quick action
+        const contentResult = await window.IndexAPI.executeQuickAction(action);
         
         if (!contentResult.content) {
           this.showToast('No content received from server', 'error');
           return;
         }
 
-        // Print the content using the selected printer
-        let printData;
-        let printEndpoint;
-        
+        // Use API layer for printing content
         if (this.selectedPrinter === 'local-direct') {
-          printData = { message: contentResult.content };
-          printEndpoint = '/api/print-local';
+          await window.IndexAPI.printLocalContent(contentResult.content);
         } else {
-          // For MQTT printing, use "topic" field
-          printData = { 
-            message: contentResult.content,
-            topic: this.selectedPrinter
-          };
-          printEndpoint = '/api/print-mqtt';
-        }
-
-        const printResponse = await fetch(printEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(printData)
-        });
-
-        if (!printResponse.ok) {
-          const errorData = await printResponse.text();
-          this.showToast(`Print error: ${errorData}`, 'error');
+          await window.IndexAPI.printMQTTContent(contentResult.content, this.selectedPrinter);
         }
         // Note: No success toast - button state change provides feedback
         

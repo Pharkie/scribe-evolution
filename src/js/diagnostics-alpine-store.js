@@ -49,20 +49,22 @@ function initializeDiagnosticsStore() {
       try {
         console.log('🛠️ Diagnostics: Making parallel API calls...');
         // Load diagnostics, config, and NVS data in parallel with individual error handling
-        const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.all([
-          fetch('/api/diagnostics').catch(() => null),
-          fetch('/api/config').catch(() => null),
-          fetch('/api/nvs-dump').catch(() => null)
+        const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.allSettled([
+          window.DiagnosticsAPI.loadDiagnostics(),
+          window.DiagnosticsAPI.loadConfiguration(),
+          window.DiagnosticsAPI.loadNVSDump()
         ]);
         
         console.log('🛠️ Diagnostics: API responses received:', {
-          diagnostics: diagnosticsResponse?.ok || false,
-          config: configResponse?.ok || false,
-          nvs: nvsResponse?.ok || false
+          diagnostics: diagnosticsResponse.status === 'fulfilled',
+          config: configResponse.status === 'fulfilled',
+          nvs: nvsResponse.status === 'fulfilled'
         });
         
         // Check if at least one API succeeded
-        const anyApiSuccess = diagnosticsResponse?.ok || configResponse?.ok || nvsResponse?.ok;
+        const anyApiSuccess = diagnosticsResponse.status === 'fulfilled' || 
+                             configResponse.status === 'fulfilled' || 
+                             nvsResponse.status === 'fulfilled';
         
         if (!anyApiSuccess) {
           // All APIs failed - this is an error state
@@ -72,27 +74,27 @@ function initializeDiagnosticsStore() {
         }
         
         // Parse responses with error logging for failed APIs
-        if (diagnosticsResponse?.ok) {
-          this.diagnosticsData = await diagnosticsResponse.json();
+        if (diagnosticsResponse.status === 'fulfilled') {
+          this.diagnosticsData = diagnosticsResponse.value;
           console.log('✅ Diagnostics API data loaded:', Object.keys(this.diagnosticsData));
         } else {
-          console.error('❌ Diagnostics API failed - diagnostics data will be incomplete');
+          console.error('❌ Diagnostics API failed - diagnostics data will be incomplete:', diagnosticsResponse.reason);
           this.diagnosticsData = {}; // Empty object will trigger "data missing" displays
         }
         
-        if (configResponse?.ok) {
-          this.configData = await configResponse.json();
+        if (configResponse.status === 'fulfilled') {
+          this.configData = configResponse.value;
           console.log('✅ Config API data loaded:', Object.keys(this.configData));
         } else {
-          console.error('❌ Config API failed - configuration data will be incomplete');
+          console.error('❌ Config API failed - configuration data will be incomplete:', configResponse.reason);
           this.configData = {}; // Empty object will trigger "data missing" displays  
         }
         
-        if (nvsResponse?.ok) {
-          this.nvsData = await nvsResponse.json();
+        if (nvsResponse.status === 'fulfilled') {
+          this.nvsData = nvsResponse.value;
           console.log('✅ NVS API data loaded:', Object.keys(this.nvsData));
         } else {
-          console.error('❌ NVS API failed - NVS storage data will be incomplete');
+          console.error('❌ NVS API failed - NVS storage data will be incomplete:', nvsResponse.reason);
           this.nvsData = {}; // Empty object will trigger "data missing" displays
         }
         
@@ -440,39 +442,18 @@ function initializeDiagnosticsStore() {
     // Quick actions
     async handleQuickAction(action) {
       try {
-        const endpoint = `/api/${action}`;
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error(`Error generating content: ${errorData}`);
-          return;
-        }
-
-        const contentResult = await response.json();
+        // Use API layer for executing quick action
+        const contentResult = await window.DiagnosticsAPI.executeQuickAction(action);
         
         if (!contentResult.content) {
           console.error('No content received from server');
           return;
         }
 
-        // Print the content locally
-        const printResponse = await fetch('/api/print-local', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: contentResult.content })
-        });
-
-        if (printResponse.ok) {
-          console.log(`${action} sent to printer successfully!`);
-        } else {
-          const errorData = await printResponse.text();
-          console.error(`Print error: ${errorData}`);
-        }
+        // Use API layer for printing content
+        await window.DiagnosticsAPI.printLocalContent(contentResult.content);
+        console.log(`${action} sent to printer successfully!`);
+        
       } catch (error) {
         console.error('Error sending quick action:', error);
       }

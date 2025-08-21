@@ -133,7 +133,7 @@ function initializeSettingsStore() {
             },
             
             get scanLabel() {
-                return this.hasScanned ? '👀 Rescan networks' : '👀 Scan for other networks';
+                return this.hasScanned ? '👀 Rescan networks' : '👀 Scan networks for more';
             },
             
             // Reactive options
@@ -814,22 +814,14 @@ ${urlLine}`;
                 console.log('LED Effect Payload:', effectParams);
                 console.log('Cycles value:', this.effectParams.cycles, typeof this.effectParams.cycles);
                 
-                const response = await fetch('/api/led-effect', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(effectParams)
-                });
+                // Use API layer with the full effectParams object
+                const result = await window.SettingsAPI.triggerLedEffect(effectParams);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const result = await response.json();
                 if (result.success) {
                     const cycleText = this.effectParams.cycles === 1 ? '1 cycle' : `${this.effectParams.cycles} cycles`;
                     window.showMessage(`Testing ${effectName} effect for ${cycleText}`, 'info');
                 } else {
-                    throw new Error(result.message);
+                    throw new Error(result.message || 'LED effect failed');
                 }
             } catch (error) {
                 console.error('LED effect test failed:', error);
@@ -945,20 +937,13 @@ ${urlLine}`;
         
         async turnOffLeds() {
             try {
-                const response = await fetch('/api/leds-off', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                // Use API layer instead of direct fetch
+                const result = await window.SettingsAPI.turnOffLeds();
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const result = await response.json();
                 if (result.success) {
                     window.showMessage('LEDs turned off', 'success');
                 } else {
-                    throw new Error(result.message);
+                    throw new Error(result.message || 'Failed to turn off LEDs');
                 }
             } catch (error) {
                 console.error('Turn off LEDs failed:', error);
