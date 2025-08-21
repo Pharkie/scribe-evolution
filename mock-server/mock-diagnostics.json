@@ -1,0 +1,193 @@
+{
+    "microcontroller": {
+        "chip_model": "ESP32-C3",
+        "chip_revision": 4,
+        "cpu_frequency_mhz": 160,
+        "sdk_version": "v4.4.7-dirty",
+        "reset_reason": "Power-on Reset",
+        "temperature": 42.3,
+        "uptime_ms": 0,
+        "memory": {
+            "free_heap": 114024,
+            "total_heap": 282740,
+            "used_heap": 168716
+        },
+        "flash": {
+            "total_chip_size": 4194304,
+            "app_partition": {
+                "used": 1320368,
+                "free": 1432144,
+                "total": 2752512,
+                "percent_of_total_flash": 65
+            },
+            "filesystem": {
+                "used": 913408,
+                "free": 462848,
+                "total": 1376256,
+                "percent_of_total_flash": 32
+            }
+        }
+    },
+    "logging": {
+        "level": 4,
+        "level_name": "NOTICE",
+        "serial_enabled": true,
+        "file_enabled": false,
+        "mqtt_enabled": false,
+        "betterstack_enabled": false
+    },
+    "pages_and_endpoints": {
+        "web_pages": [
+            {
+                "path": "/css/*",
+                "description": "CSS static files"
+            },
+            {
+                "path": "/js/*",
+                "description": "JavaScript static files"
+            },
+            {
+                "path": "/images/*",
+                "description": "Image static files"
+            },
+            {
+                "path": "/favicon.ico",
+                "description": "Site favicon (ICO)"
+            },
+            {
+                "path": "/favicon.svg",
+                "description": "Site favicon (SVG)"
+            },
+            {
+                "path": "/favicon-96x96.png",
+                "description": "Site favicon (PNG 96x96)"
+            },
+            {
+                "path": "/apple-touch-icon.png",
+                "description": "Apple touch icon"
+            },
+            {
+                "path": "/site.webmanifest",
+                "description": "Web app manifest"
+            },
+            {
+                "path": "/",
+                "description": "Main printer interface"
+            },
+            {
+                "path": "/settings.html",
+                "description": "Configuration settings"
+            },
+            {
+                "path": "/diagnostics.html",
+                "description": "System diagnostics"
+            },
+            {
+                "path": "(unmatched routes)",
+                "description": "404 Not Found handler (serves /html/404.html)"
+            }
+        ],
+        "api_endpoints": [
+            {
+                "method": "GET",
+                "path": "/events",
+                "description": "Server-sent events"
+            },
+            {
+                "method": "POST",
+                "path": "/api/print-local",
+                "description": "Print custom message"
+            },
+            {
+                "method": "GET",
+                "path": "/api/print-local",
+                "description": "Print custom message"
+            },
+            {
+                "method": "POST",
+                "path": "/api/character-test",
+                "description": "Print character test pattern"
+            },
+            {
+                "method": "POST",
+                "path": "/api/riddle",
+                "description": "Print random riddle"
+            },
+            {
+                "method": "POST",
+                "path": "/api/joke",
+                "description": "Print random joke"
+            },
+            {
+                "method": "POST",
+                "path": "/api/quote",
+                "description": "Print random quote"
+            },
+            {
+                "method": "POST",
+                "path": "/api/quiz",
+                "description": "Print random quiz"
+            },
+            {
+                "method": "POST",
+                "path": "/api/news",
+                "description": "Print BBC news headlines"
+            },
+            {
+                "method": "POST",
+                "path": "/api/poke",
+                "description": "Send poke message"
+            },
+            {
+                "method": "POST",
+                "path": "/api/unbidden-ink",
+                "description": "Trigger unbidden ink"
+            },
+            {
+                "method": "POST",
+                "path": "/api/user-message",
+                "description": "Send user message"
+            },
+            {
+                "method": "GET",
+                "path": "/api/diagnostics",
+                "description": "System diagnostics"
+            },
+            {
+                "method": "GET",
+                "path": "/api/nvs-dump",
+                "description": "Raw NVS storage dump"
+            },
+            {
+                "method": "POST",
+                "path": "/api/print-mqtt",
+                "description": "Send MQTT message"
+            },
+            {
+                "method": "GET",
+                "path": "/api/config",
+                "description": "Get configuration"
+            },
+            {
+                "method": "POST",
+                "path": "/api/config",
+                "description": "Update configuration"
+            },
+            {
+                "method": "POST",
+                "path": "/api/led-effect",
+                "description": "Trigger LED Effect"
+            },
+            {
+                "method": "POST",
+                "path": "/api/leds-off",
+                "description": "Turn LEDs Off"
+            },
+            {
+                "method": "GET",
+                "path": "/debug/filesystem",
+                "description": "LittleFS debug info"
+            }
+        ]
+    }
+}

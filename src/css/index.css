@@ -9,7 +9,13 @@
 }
 
 @layer components {
-  /* Scribe Evolution logo slide-in animation */
+  /* Logo hidden state to prevent FOUC */
+  .logo-hidden {
+    opacity: 0;
+    transform: translateZ(-400px) scale(0.5);
+  }
+
+  /* Scribe Evolution logo slide-in animation - event driven via Alpine.js */
   .slide-in-bck-center {
     animation: slide-in-bck-center 0.7s cubic-bezier(0.250, 0.460, 0.450, 0.940) both !important;
   }

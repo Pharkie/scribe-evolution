@@ -1,0 +1,126 @@
+{
+    "device": {
+        "owner": "MockUser",
+        "timezone": "America/New_York",
+        "maxCharacters": 1000,
+        "firmware_version": "1.0.0-dev",
+        "boot_time": "2025-08-21T12:50:47Z",
+        "mdns": "scribe-mockuser.local",
+        "ip_address": "192.168.1.100",
+        "printer_name": "Mock Scribe Printer",
+        "mqtt_topic": "scribe/MockUser/print",
+        "type": "local",
+        "wifi": {
+            "ssid": "MockWiFi-Network",
+            "password": "mock-password-hidden",
+            "connect_timeout": 15000,
+            "status": {
+                "connected": true,
+                "ip_address": "192.168.1.100",
+                "mac_address": "AA:BB:CC:DD:EE:FF",
+                "gateway": "192.168.1.1",
+                "dns": "192.168.1.1",
+                "signal_strength": "-45 dBm (Good)"
+            }
+        }
+    },
+    "mqtt": {
+        "server": "mock-mqtt.example.com",
+        "port": 1883,
+        "username": "mock_user",
+        "password": "mock-password-hidden",
+        "connected": true
+    },
+    "unbiddenInk": {
+        "enabled": true,
+        "startHour": 0,
+        "endHour": 16,
+        "frequencyMinutes": 60,
+        "prompt": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+        "chatgptApiToken": "sk-mock-api-key-hidden-for-security",
+        "nextScheduled": "< 1 min"
+    },
+    "buttons": {
+        "count": 4,
+        "debounce_time": 50,
+        "long_press_time": 2000,
+        "active_low": true,
+        "min_interval": 3000,
+        "max_per_minute": 20,
+        "button1": {
+            "shortAction": "/api/joke",
+            "shortMqttTopic": "",
+            "longAction": "/api/joke",
+            "longMqttTopic": ""
+        },
+        "button2": {
+            "shortAction": "/api/riddle",
+            "shortMqttTopic": "",
+            "longAction": "/api/riddle",
+            "longMqttTopic": ""
+        },
+        "button3": {
+            "shortAction": "/api/quote",
+            "shortMqttTopic": "",
+            "longAction": "",
+            "longMqttTopic": ""
+        },
+        "button4": {
+            "shortAction": "/api/quiz",
+            "shortMqttTopic": "",
+            "longAction": "",
+            "longMqttTopic": ""
+        }
+    },
+    "leds": {
+        "pin": 4,
+        "count": 30,
+        "brightness": 64,
+        "refreshRate": 60,
+        "effects": {
+            "chaseSingle": {
+                "speed": 5,
+                "trailLength": 15,
+                "trailFade": 15,
+                "defaultColor": "#0062ffff"
+            },
+            "chaseMulti": {
+                "speed": 2,
+                "trailLength": 20,
+                "trailFade": 20,
+                "colorSpacing": 12,
+                "color1": "#ff9900ff",
+                "color2": "#008f00ff",
+                "color3": "#78cffeff"
+            },
+            "matrix": {
+                "speed": 3,
+                "drops": 5,
+                "backgroundFade": 64,
+                "trailFade": 32,
+                "brightnessFade": 40,
+                "defaultColor": "#009100ff"
+            },
+            "twinkle": {
+                "density": 8,
+                "fadeSpeed": 5,
+                "minBrightness": 50,
+                "maxBrightness": 255,
+                "defaultColor": "#FFFFFF"
+            },
+            "pulse": {
+                "speed": 4,
+                "minBrightness": 0,
+                "maxBrightness": 255,
+                "waveFrequency": 0.050000001,
+                "defaultColor": "#ff00f2ff"
+            },
+            "rainbow": {
+                "speed": 2,
+                "saturation": 255,
+                "brightness": 255,
+                "hueStep": 2.5
+            }
+        }
+    }
+}
