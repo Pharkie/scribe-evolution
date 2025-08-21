@@ -37,28 +37,28 @@
         </header>
 
         <!-- Navigation -->
-        <nav class="flex flex-wrap justify-center gap-2 mb-6">
-            <template x-for="section in sections" :key="section.id">
-                <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
-                    x-text="`${section.icon} ${section.name}`">
-                </button>
-            </template>
-        </nav>
-
-        <!-- Loading State -->
-        <div x-show="loading" class="text-center py-8">
-            <span class="text-2xl">⏳</span><br>Loading diagnostics...
+        <div x-show="!error" x-transition.opacity.duration.300ms>
+            <nav class="flex flex-wrap justify-center gap-2 mb-6">
+                <template x-for="section in sections" :key="section.id">
+                    <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
+                        x-text="`${section.icon} ${section.name}`">
+                    </button>
+                </template>
+            </nav>
         </div>
 
         <!-- Error State -->
-        <div x-show="error" class="diag-error">
-            <span class="text-2xl">❌</span>
+        <div x-show="error" x-transition.opacity.duration.300ms class="text-center text-red-600 dark:text-red-400 mb-6">
+            <span class="text-2xl mb-4 block">❌</span>
             <h3 class="text-lg font-semibold mb-2">Error Loading Diagnostics</h3>
-            <p class="text-red-600 dark:text-red-400" x-text="error"></p>
+            <p class="text-red-600 dark:text-red-400 mb-4" x-text="error"></p>
+            <button @click="loadDiagnostics()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                Retry
+            </button>
         </div>
 
         <!-- Diagnostics Content -->
-        <div x-show="!loading && !error" class="space-y-6">
+        <div x-show="!error" x-transition.opacity.duration.300ms class="space-y-6">
 
             <!-- Microcontroller Section -->
             <div x-show="currentSection === 'microcontroller-section'" class="diag-section orange">
