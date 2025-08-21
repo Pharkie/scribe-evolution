@@ -88,7 +88,7 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
 
     // Note: Content generation endpoints are exempt from rate limiting
     // since they only generate content and don't perform actions.
-    // Rate limiting is applied to the actual delivery endpoints (/print-local, /mqtt-send)
+    // Rate limiting is applied to the actual delivery endpoints (/print-local, /print-mqtt)
 
     // Get target parameter to determine if sender info should be included
     String body = getRequestBody(request);

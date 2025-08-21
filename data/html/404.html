@@ -7,15 +7,17 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="icon" href="/favicon.ico">
         <link rel="stylesheet" href="/css/404.min.css">
+        <script src="/js/page-404.min.js"></script>
+        <script src="/js/vendor.min.js" defer></script>
 </head>
 
-<body class="page-body">
+<body class="page-body" x-data="ErrorStore()" x-init="init()">
         <main class="page-main">
                 <!-- Header with title and back button -->
                 <header class="page-header">
                         <!-- Back button -->
                         <div class="header-spacer">
-                                <button id="back-button" class="back-button">
+                                <button @click="goBack()" class="back-button">
                                         <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -28,7 +30,7 @@
                         <!-- Centered title -->
                         <div class="header-center">
                                 <h1 class="page-title">
-                                        <span class="text-4xl sm:text-5xl">🗑️</span>
+                                        <span class="text-4xl sm:text-5xl" :class="errorIconClass">🗑️</span>
                                         <span>Paper Jam</span>
                                 </h1>
                         </div>
@@ -36,57 +38,87 @@
                         <!-- Right spacer -->
                         <div class="header-spacer"></div>
                 </header>
-                <div class="error-container">
+
+                <!-- Main Error Content -->
+                <div x-show="showContent" x-transition:enter="transition ease-out duration-600 transform"
+                        x-transition:enter-start="translate-y-8 opacity-0"
+                        x-transition:enter-end="translate-y-0 opacity-100" class="error-container">
+
                         <div class="error-card">
                                 <div class="error-code">404 Not Found</div>
-                                <p class="error-message">
-                                        Looks like that page got tangled up in the rollers.
-                                </p>
+                                <p class="error-message" x-text="errorMessage"></p>
 
+                                <!-- Request Details -->
                                 <div class="error-details">
                                         <strong class="error-details-title">Request Details:</strong><br>
                                         <div class="error-details-content">
-                                                <div>Method: <span class="error-details-item">{{METHOD}}</span></div>
-                                                <div>Path: <span class="error-details-item">{{URI}}</span></div>
-                                                <div>Device: <span class="error-details-item">{{HOSTNAME}}.local</span>
+                                                <div>
+                                                        Method:
+                                                        <span class="error-details-item" x-text="method"
+                                                                data-error-method="{{METHOD}}"></span>
+                                                </div>
+                                                <div>
+                                                        Path:
+                                                        <span class="error-details-item" x-text="path"
+                                                                data-error-path="{{URI}}"></span>
+                                                </div>
+                                                <div>
+                                                        Time:
+                                                        <span class="error-details-item"
+                                                                x-text="new Date().toLocaleString()"></span>
                                                 </div>
                                         </div>
                                 </div>
 
-                                <div class="error-actions">
-                                        <p class="error-help-text">
-                                                Maybe check the
-                                                <a href="/diagnostics.html" class="error-help-link">
-                                                        diagnostics
-                                                </a>
-                                        </p>
 
-                                        <a href="/" class="error-home-button">
-                                                🏠 Home
-                                        </a>
-                                </div>
+
+                                <!-- Advanced Options -->
+                                <details class="error-advanced">
+                                        <summary class="error-advanced-summary">
+                                                📋 Advanced Options
+                                        </summary>
+                                        <div class="error-advanced-content">
+                                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                                        Need to report this error? Copy the details below:
+                                                </p>
+                                                <button @click="copyErrorDetails()" class="error-btn error-btn-small">
+                                                        📋 Copy Error Details
+                                                </button>
+
+                                                <!-- Debug Information -->
+                                                <div
+                                                        class="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">
+                                                        <div>Timestamp: <span x-text="timestamp"></span></div>
+                                                        <div>User Agent: <span
+                                                                        x-text="navigator.userAgent.substring(0, 50) + '...'"></span>
+                                                        </div>
+                                                        <div>Referrer: <span
+                                                                        x-text="document.referrer || 'Direct access'"></span>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </details>
+
+
                         </div>
                 </div>
+
+
         </main>
 
-        <footer class="page-footer vertical-stack">
-                <div>
-                        Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
-                                class="footer-link">Peter
-                                / Urban Circles</a>
-                </div>
-                <div>
-                        Extended and upgraded with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
-                                class="footer-link">Pharkie</a>
-                </div>
-                <div>
-                        Quotes from <a href="https://zenquotes.io/" target="_blank" class="footer-link">ZenQuotes
-                                API</a>
-                </div>
-        </footer>
-
-        <!-- Load JavaScript -->
-        <script src="/js/app.min.js"></script>
+        <!-- Easter Egg: Hidden Konami Code -->
+        <div x-data="{ konamiCode: '', konamiSequence: 'ArrowUpArrowUpArrowDownArrowDownArrowLeftArrowRightArrowLeftArrowRightKeyBKeyA' }"
+                @keydown.window="
+            konamiCode += $event.code;
+            if (konamiCode.length > konamiSequence.length) {
+                konamiCode = konamiCode.slice(-konamiSequence.length);
+            }
+            if (konamiCode === konamiSequence) {
+                alert('🎉 Konami Code activated! The printer has gained sentience...');
+                konamiCode = '';
+            }
+         ">
+        </div>
 </body>
 
 </html>

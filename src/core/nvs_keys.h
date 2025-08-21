@@ -15,7 +15,6 @@
 // Device Configuration Keys
 constexpr const char *NVS_DEVICE_OWNER = "device_owner";
 constexpr const char *NVS_DEVICE_TIMEZONE = "device_timezone"; // Note: stored as device_timezone, not device_tz
-constexpr const char *NVS_MAX_CHARACTERS = "max_characters";   // Note: stored as max_characters, not max_chars
 
 // WiFi Configuration Keys
 constexpr const char *NVS_WIFI_SSID = "wifi_ssid";

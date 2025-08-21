@@ -46,9 +46,8 @@ public:
     String getName() const override { return "chase_single"; }
 
     /**
-     * @brief Check if this effect supports cycle-based operation
+     * @brief Get effect name
      */
-    bool isCycleBased() const override { return true; }
 
     /**
      * @brief Set chase speed
@@ -57,10 +56,10 @@ public:
     void setChaseSpeed(int speed) { config.speed = speed; }
 
 private:
-    ChaseSingleConfig config; // Store the autonomous configuration
-    bool isCycleBasedMode;
+    ChaseSingleConfig config;
+
     int targetCycles;
-    int frameCounter; // Frame counter for speed delay
+    int frameCounter;
 
     void clearAllLEDs(CRGB *leds, int ledCount);
 };

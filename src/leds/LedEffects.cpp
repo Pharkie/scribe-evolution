@@ -32,9 +32,7 @@ LedEffects::LedEffects() : leds(nullptr),
                            effectActive(false),
                            currentEffectName(""),
                            effectStartTime(0),
-                           effectDuration(0),
                            lastUpdate(0),
-                           isCycleBased(false),
                            targetCycles(1),
                            completedCycles(0),
                            effectColor1(CRGB::Blue),
@@ -183,16 +181,6 @@ void LedEffects::update()
 
     unsigned long now = millis();
 
-    // Check if effect should stop (duration-based)
-    if (!isCycleBased && effectDuration > 0)
-    {
-        if (now - effectStartTime >= effectDuration)
-        {
-            stopEffect();
-            return;
-        }
-    }
-
     // Check if it's time to update
     if (now - lastUpdate < ledUpdateInterval)
     {
@@ -206,8 +194,8 @@ void LedEffects::update()
                                                 effectPhase, effectColor1, effectColor2, effectColor3,
                                                 completedCycles);
 
-    // Check if cycle-based effect is complete
-    if (isCycleBased && !shouldContinue)
+    // Check if cycle-based effect is complete (when target cycles > 0)
+    if (targetCycles > 0 && completedCycles >= targetCycles)
     {
         stopEffect();
         return;
@@ -215,51 +203,6 @@ void LedEffects::update()
 
     // Show the updated LEDs
     FastLED.show();
-}
-
-bool LedEffects::startEffectDuration(const String &effectName, unsigned long durationSeconds,
-                                     CRGB color1, CRGB color2, CRGB color3)
-{
-    if (!effectRegistry || !effectRegistry->isValidEffect(effectName))
-    {
-        LOG_WARNING("LEDS", "Unknown effect name: %s", effectName.c_str());
-        return false;
-    }
-
-    // Stop current effect
-    stopEffect();
-
-    // Create new effect
-    currentEffect = effectRegistry->createEffect(effectName);
-    if (!currentEffect)
-    {
-        return false;
-    }
-
-    // Initialize effect if needed
-    currentEffect->initialize(ledCount);
-
-    // Set effect parameters
-    currentEffectName = effectName;
-    effectColor1 = color1;
-    effectColor2 = color2;
-    effectColor3 = color3;
-    effectStartTime = millis();
-    effectDuration = durationSeconds * 1000; // Convert to milliseconds
-    effectActive = true;
-    isCycleBased = false;
-    targetCycles = 0;
-    completedCycles = 0;
-
-    // Reset effect state
-    effectStep = 0;
-    effectDirection = 1;
-    effectPhase = 0.0f;
-
-    LOG_VERBOSE("LEDS", "Started duration-based effect: %s (duration: %lu seconds)",
-                effectName.c_str(), durationSeconds);
-
-    return true;
 }
 
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,
@@ -281,15 +224,6 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
         return false;
     }
 
-    // Check if effect supports cycle-based operation
-    if (!currentEffect->isCycleBased())
-    {
-        LOG_WARNING("LEDS", "Effect %s does not support cycle-based operation", effectName.c_str());
-        delete currentEffect;
-        currentEffect = nullptr;
-        return false;
-    }
-
     // Initialize effect if needed
     currentEffect->initialize(ledCount);
 
@@ -299,9 +233,7 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
     effectColor2 = color2;
     effectColor3 = color3;
     effectStartTime = millis();
-    effectDuration = 0; // Not used in cycle mode
     effectActive = true;
-    isCycleBased = true;
     targetCycles = cycles;
     completedCycles = 0;
 
@@ -310,7 +242,7 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
     effectDirection = 1;
     effectPhase = 0.0f;
 
-    LOG_VERBOSE("LEDS", "Started cycle-based effect: %s (cycles: %d)",
+    LOG_VERBOSE("LEDS", "Started LED effect: %s (cycles: %d)",
                 effectName.c_str(), cycles);
 
     return true;

@@ -1,10 +1,6 @@
 /**
  * @file config.h.example
- * @brief Configuration setstatic const bool defaultEnableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
-static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token
-constexpr int defaultUnbiddenInkStartHour = 10;                                                 // Working hours start (24-hour format)
-constexpr int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
-constexpr int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute windowor Scribe ESP32-C3 Thermal Printer
+ * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -56,9 +52,9 @@ static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
 // Unbidden Ink (ChatGPT) API configuration
 static const bool defaultEnableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
 static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token
-inline const int defaultUnbiddenInkStartHour = 10;                                                 // Working hours start (24-hour format)
-inline const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
-inline const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
+static const int defaultUnbiddenInkStartHour = 10;                                                 // Working hours start (24-hour format)
+static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
+static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
 // Default button configuration (GPIO pins, actions, and MQTT topics together)
 struct ButtonConfig
