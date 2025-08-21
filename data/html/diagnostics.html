@@ -48,7 +48,7 @@
 
         <!-- Main Content fades in once all data is loaded -->
         <div x-show="!loading && !error" x-transition.opacity.duration.300ms class="hidden"
-            :class="{ 'hidden': loading || error }" x-cloak>
+            :class="{ 'hidden': loading || error }" x-cloak @transitionend="$dispatch('content-loaded')">
             <!-- Navigation -->
             <nav class="flex flex-wrap justify-center gap-2 mb-6">
                 <template x-for="section in sections" :key="section.id">
@@ -106,7 +106,9 @@
                         <div class="diag-progress-bar">
                             <div :class="getProgressBarClass(memoryUsage.flashUsagePercent)"
                                 :style="`width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%`"
-                                class="h-full rounded-full transition-all duration-300"></div>
+                                class="h-full rounded-full w-0 transition-all duration-500 ease-out"
+                                @content-loaded.window="setTimeout(() => $el.style.width = `${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%`, 50)">
+                            </div>
                         </div>
 
                         <div class="diag-row">
@@ -116,7 +118,9 @@
                         <div class="diag-progress-bar">
                             <div :class="getProgressBarClass(memoryUsage.heapUsagePercent)"
                                 :style="`width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%`"
-                                class="h-full rounded-full transition-all duration-300"></div>
+                                class="h-full rounded-full w-0 transition-all duration-500 ease-out"
+                                @content-loaded.window="setTimeout(() => $el.style.width = `${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%`, 100)">
+                            </div>
                         </div>
                     </div>
                 </div>
