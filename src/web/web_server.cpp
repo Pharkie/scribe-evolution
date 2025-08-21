@@ -67,7 +67,11 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         uri.startsWith("/css/") ||
         uri.startsWith("/js/") ||
         uri.startsWith("/images/") ||
-        uri == "/favicon.ico")
+        uri == "/favicon.ico" ||
+        uri == "/favicon.svg" ||
+        uri == "/favicon-96x96.png" ||
+        uri == "/apple-touch-icon.png" ||
+        uri == "/site.webmanifest")
     {
         // Let these requests proceed normally
         // DEBUG: Allowing request to proceed normally
@@ -120,7 +124,11 @@ bool shouldRedirectToSettings(AsyncWebServerRequest *request)
              uri.startsWith("/css/") ||
              uri.startsWith("/js/") ||
              uri.startsWith("/images/") ||
-             uri == "/favicon.ico");
+             uri == "/favicon.ico" ||
+             uri == "/favicon.svg" ||
+             uri == "/favicon-96x96.png" ||
+             uri == "/apple-touch-icon.png" ||
+             uri == "/site.webmanifest");
 }
 
 // Helper functions for POST body handling using request's built-in storage
@@ -259,7 +267,13 @@ void setupWebServerRoutes(int maxChars)
         server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-        server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
+
+        // Favicon files
+        server.serveStatic("/favicon.ico", LittleFS, "/favicon/favicon.ico", "image/x-icon").setTryGzipFirst(false);
+        server.serveStatic("/favicon.svg", LittleFS, "/favicon/favicon.svg", "image/svg+xml").setTryGzipFirst(false);
+        server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon/favicon-96x96.png", "image/png").setTryGzipFirst(false);
+        server.serveStatic("/apple-touch-icon.png", LittleFS, "/favicon/apple-touch-icon.png", "image/png").setTryGzipFirst(false);
+        server.serveStatic("/site.webmanifest", LittleFS, "/favicon/site.webmanifest", "application/manifest+json").setTryGzipFirst(false);
 
         // Catch all other requests and redirect to settings
         server.onNotFound(handleCaptivePortal);
@@ -282,13 +296,23 @@ void setupWebServerRoutes(int maxChars)
         server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
         server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-        server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setTryGzipFirst(false);
+
+        // Favicon files
+        server.serveStatic("/favicon.ico", LittleFS, "/favicon/favicon.ico", "image/x-icon").setTryGzipFirst(false);
+        server.serveStatic("/favicon.svg", LittleFS, "/favicon/favicon.svg", "image/svg+xml").setTryGzipFirst(false);
+        server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon/favicon-96x96.png", "image/png").setTryGzipFirst(false);
+        server.serveStatic("/apple-touch-icon.png", LittleFS, "/favicon/apple-touch-icon.png", "image/png").setTryGzipFirst(false);
+        server.serveStatic("/site.webmanifest", LittleFS, "/favicon/site.webmanifest", "application/manifest+json").setTryGzipFirst(false);
 
         // Manually track static routes (since serveStatic can't be wrapped)
         registeredRoutes.push_back({"GET", "/css/*", "CSS static files", false});
         registeredRoutes.push_back({"GET", "/js/*", "JavaScript static files", false});
         registeredRoutes.push_back({"GET", "/images/*", "Image static files", false});
-        registeredRoutes.push_back({"GET", "/favicon.ico", "Site favicon", false});
+        registeredRoutes.push_back({"GET", "/favicon.ico", "Site favicon (ICO)", false});
+        registeredRoutes.push_back({"GET", "/favicon.svg", "Site favicon (SVG)", false});
+        registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Site favicon (PNG 96x96)", false});
+        registeredRoutes.push_back({"GET", "/apple-touch-icon.png", "Apple touch icon", false});
+        registeredRoutes.push_back({"GET", "/site.webmanifest", "Web app manifest", false});
 
         // Register web pages
         registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
