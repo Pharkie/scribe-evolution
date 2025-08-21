@@ -8,9 +8,11 @@
         "watch-css": "npx @tailwindcss/cli --input ./src/css/index.css --output ./data/css/index.css --watch & npx @tailwindcss/cli --input ./src/css/diagnostics.css --output ./data/css/diagnostics.css --watch & npx @tailwindcss/cli --input ./src/css/settings.css --output ./data/css/settings.css --watch & npx @tailwindcss/cli --input ./src/css/404.css --output ./data/css/404.css --watch"
     },
     "dependencies": {
-        "@tailwindcss/cli": "^4.1.12",
         "@simonwep/pickr": "^1.9.1",
+        "@tailwindcss/cli": "^4.1.12",
         "alpinejs": "^3.14.9",
+        "cors": "^2.8.5",
+        "express": "^5.1.0",
         "tailwindcss": "^4.1.12"
     },
     "devDependencies": {

@@ -1,0 +1,16 @@
+{
+    "discovered_printers": [
+        {
+            "printer_id": "mock123456",
+            "name": "Mock Scribe Printer",
+            "firmware_version": "1.0.0-dev",
+            "mdns": "scribe-mockuser.local",
+            "ip_address": "192.168.1.100",
+            "status": "online",
+            "last_power_on": "2025-08-21T12:50:47Z",
+            "timezone": "America/New_York"
+        }
+    ],
+    "count": 1,
+    "our_printer_id": "mock123456"
+}
