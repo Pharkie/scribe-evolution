@@ -185,6 +185,34 @@ async function turnOffLeds() {
     }
 }
 
+/**
+ * Scan for nearby WiFi networks
+ * @returns {Promise<Array>} Array of WiFi networks with SSID, signal strength, and security info
+ */
+async function scanWiFiNetworks() {
+    try {
+        console.log('API: Scanning for WiFi networks...');
+        
+        const response = await fetch('/api/wifi/scan');
+        if (!response.ok) {
+            throw new Error(`WiFi scan failed: ${response.status} - ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('API: WiFi scan completed:', result);
+        
+        if (!result.success) {
+            throw new Error('WiFi scan failed');
+        }
+        
+        return result.networks || [];
+        
+    } catch (error) {
+        console.error('API: Failed to scan WiFi networks:', error);
+        throw error;
+    }
+}
+
 // Export API module
 window.SettingsAPI = {
     loadConfiguration,
@@ -192,5 +220,6 @@ window.SettingsAPI = {
     testUnbiddenInkGeneration,
     printLocalContent,
     triggerLedEffect,
-    turnOffLeds
+    turnOffLeds,
+    scanWiFiNetworks
 };

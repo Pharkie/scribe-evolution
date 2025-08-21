@@ -110,13 +110,60 @@
                         </h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- WiFi Network Selection -->
                             <div class="space-y-2">
-                                <label for="wifi-ssid" class="form-label">WiFi SSID:</label>
-                                <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
-                                    class="input-standard" x-model="config.device.wifi.ssid">
+                                <div class="flex items-center justify-between">
+                                    <label class="form-label">WiFi Network:</label>
+                                    <button type="button" @click="scanWiFiNetworks()" 
+                                            :disabled="wifiScan.loading"
+                                            class="btn-secondary text-sm py-1 px-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 disabled:opacity-50">
+                                        <span x-show="!wifiScan.loading">🔄 Refresh</span>
+                                        <span x-show="wifiScan.loading" class="flex items-center">
+                                            <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-1"></div>
+                                            Scanning...
+                                        </span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Network Selection Dropdown -->
+                                <select id="wifi-network-select" @change="selectNetwork($event.target.value === 'manual' ? 'manual' : wifiScan.networks.find(n => n.ssid === $event.target.value))"
+                                        class="input-standard">
+                                    <option value="">Choose a network...</option>
+                                    <template x-for="network in wifiScan.networks" :key="network.ssid">
+                                        <option :value="network.ssid" 
+                                                :selected="wifiScan.selectedNetwork && wifiScan.selectedNetwork.ssid === network.ssid"
+                                                x-text="formatNetworkDisplay(network)"></option>
+                                    </template>
+                                    <option value="manual" :selected="wifiScan.isManualEntry">📝 Manual Entry (Hidden Network)</option>
+                                </select>
+                                
+                                <!-- Manual SSID Input (shown when manual entry selected or no networks available) -->
+                                <div x-show="wifiScan.isManualEntry || wifiScan.networks.length === 0" 
+                                     class="mt-2" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 transform scale-95"
+                                     x-transition:enter-end="opacity-100 transform scale-100">
+                                    <label for="wifi-ssid" class="form-label text-sm">Network Name (SSID):</label>
+                                    <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
+                                           class="input-standard" x-model="config.device.wifi.ssid"
+                                           :disabled="!wifiScan.isManualEntry && wifiScan.selectedNetwork && wifiScan.selectedNetwork !== 'manual'">
+                                </div>
+                                
+                                <!-- WiFi Scan Status/Error Messages -->
+                                <div x-show="wifiScan.loading" class="text-xs text-blue-600 dark:text-blue-400 flex items-center">
+                                    <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
+                                    Scanning for networks...
+                                </div>
+                                <div x-show="wifiScan.error" class="text-xs text-red-600 dark:text-red-400" x-text="wifiScan.error"></div>
+                                <div x-show="!wifiScan.loading && !wifiScan.error && wifiScan.networks.length === 0" 
+                                     class="text-xs text-gray-500 dark:text-gray-400">
+                                    No networks found. Use manual entry below.
+                                </div>
+                                
+                                <!-- Validation Error Display -->
                                 <p x-show="validation.errors['wifi.ssid']"
-                                    class="text-xs text-red-600 dark:text-red-400"
-                                    x-text="validation.errors['wifi.ssid']"></p>
+                                   class="text-xs text-red-600 dark:text-red-400"
+                                   x-text="validation.errors['wifi.ssid']"></p>
                             </div>
                             <div class="space-y-2">
                                 <label for="wifi-password" class="form-label">WiFi Password:</label>
