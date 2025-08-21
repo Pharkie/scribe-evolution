@@ -15,6 +15,7 @@ function initializeSettingsStore() {
         error: null,
         saving: false,
         initialized: false, // Flag to prevent duplicate initialization
+        apPrintStatus: 'normal', // 'normal', 'scribing'
         
         // Configuration data (reactive) - matching backend API structure
         config: {
@@ -29,6 +30,10 @@ function initializeSettingsStore() {
                     ssid: '',
                     password: '',
                     connect_timeout: 15000,
+                    fallback_ap_ssid: '',
+                    fallback_ap_password: '',
+                    fallback_ap_mdns: '',
+                    fallback_ap_ip: '',
                     status: {
                         connected: false,
                         ip_address: '',
@@ -209,6 +214,10 @@ function initializeSettingsStore() {
         ],
         
         // Computed properties for complex UI states
+        get apPrintButtonText() {
+            return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Print AP Details';
+        },
+        
         get timeRangeDisplay() {
             const start = this.config?.unbiddenInk?.startHour ?? 0;
             const end = this.config?.unbiddenInk?.endHour ?? 24;
@@ -318,19 +327,32 @@ function initializeSettingsStore() {
             try {
                 const networks = await window.SettingsAPI.scanWiFiNetworks();
                 
+                // Deduplicate networks by SSID, keeping the strongest signal for each
+                const uniqueNetworks = [];
+                const seenSSIDs = new Set();
+                
+                networks
+                    .sort((a, b) => b.rssi - a.rssi) // Sort by strongest signal first
+                    .forEach(network => {
+                        if (!seenSSIDs.has(network.ssid)) {
+                            seenSSIDs.add(network.ssid);
+                            uniqueNetworks.push(network);
+                        }
+                    });
+                
                 // Update state - Alpine reactivity handles UI updates
-                this.wifiScan.networks = networks.sort((a, b) => b.rssi - a.rssi);
+                this.wifiScan.networks = uniqueNetworks;
                 this.wifiScan.hasScanned = true;
                 
                 // Auto-select current SSID if found and nothing else selected
                 if (this.wifiScan.currentSSID && !this.wifiScan.selectedNetwork) {
-                    const currentNetwork = networks.find(n => n.ssid === this.wifiScan.currentSSID);
+                    const currentNetwork = uniqueNetworks.find(n => n.ssid === this.wifiScan.currentSSID);
                     if (currentNetwork) {
                         this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
                     }
                 }
                 
-                console.log('WiFi scan completed:', networks.length, 'networks found');
+                console.log('WiFi scan completed:', uniqueNetworks.length, 'unique networks found from', networks.length, 'total scanned');
                 
             } catch (error) {
                 console.error('WiFi scan failed:', error);
@@ -483,37 +505,60 @@ function initializeSettingsStore() {
         // Print AP details to thermal printer
         async printAPDetails() {
             try {
-                // Get fallback AP details from configuration
-                const fallbackSSID = this.config?.device?.wifi?.fallback_ap_ssid || 'Scribe-setup';
-                const fallbackPassword = this.config?.device?.wifi?.fallback_ap_password || 'scribe123';
+                // Set scribing state
+                this.apPrintStatus = 'scribing';
                 
-                const apDetails = `
-╔═══════════════════════════════════════╗
-║           SCRIBE FALLBACK AP          ║
-╠═══════════════════════════════════════╣
-║                                       ║
-║  Network Name (SSID):                 ║
-║  ${fallbackSSID.padEnd(35)}║
-║                                       ║
-║  Password:                            ║
-║  ${fallbackPassword.padEnd(35)}║
-║                                       ║
-║  Connect to this network if the       ║
-║  device fails to connect to your      ║
-║  configured WiFi network.             ║
-║                                       ║
-║  Then navigate to:                    ║
-║  http://192.168.4.1/settings.html    ║
-║                                       ║
-╚═══════════════════════════════════════╝
-                `.trim();
+                // Get fallback AP details from configuration - error if not available
+                const fallbackSSID = this.config?.device?.wifi?.fallback_ap_ssid;
+                const fallbackPassword = this.config?.device?.wifi?.fallback_ap_password;
+                const fallbackMDNS = this.config?.device?.wifi?.fallback_ap_mdns;
+                const fallbackIP = this.config?.device?.wifi?.fallback_ap_ip;
+                
+                // Error if we don't have the essential values
+                if (!fallbackSSID || !fallbackPassword) {
+                    throw new Error('Fallback AP credentials not available from backend');
+                }
+                
+                // Always have mDNS, optionally have IP as fallback
+                let urlLine = '';
+                if (fallbackMDNS && fallbackIP) {
+                    urlLine = `http://${fallbackMDNS}\n(or http://${fallbackIP})`;
+                } else if (fallbackMDNS) {
+                    // mDNS only (normal case when not in AP mode)
+                    urlLine = `http://${fallbackMDNS}`;
+                } else {
+                    throw new Error('No AP access URL available from backend');
+                }
+                
+                const apDetails = `Scribe Evolution Setup (Fallback) Network
+================================
+
+Network: ${fallbackSSID}
+Password: ${fallbackPassword}
+
+If WiFi connection fails, connect to the above network, then visit:
+
+${urlLine}`;
                 
                 await window.SettingsAPI.printLocalContent(apDetails);
-                window.showMessage('AP details sent to printer!', 'success');
+                
+                // Show "Scribing" for 2 seconds then revert to normal
+                setTimeout(() => {
+                    this.apPrintStatus = 'normal';
+                }, 2000);
                 
             } catch (error) {
                 console.error('Failed to print AP details:', error);
-                window.showMessage(`Failed to print AP details: ${error.message}`, 'error');
+                // Reset to normal state and show error to user
+                this.apPrintStatus = 'normal';
+                
+                // Use fallback if showMessage is not available
+                if (typeof window.showMessage === 'function') {
+                    window.showMessage(`Failed to print AP details: ${error.message}`, 'error');
+                } else {
+                    console.error('❌ Failed to print AP details:', error.message);
+                    alert(`Failed to print AP details: ${error.message}`);
+                }
             }
         },
         
@@ -558,6 +603,12 @@ function initializeSettingsStore() {
                 this.config.device.wifi.ssid = serverConfig.device.wifi.ssid || '';
                 this.config.device.wifi.password = serverConfig.device.wifi.password || '';
                 this.config.device.wifi.connect_timeout = serverConfig.device.wifi.connect_timeout || 15000;
+                
+                // Load fallback AP details
+                this.config.device.wifi.fallback_ap_ssid = serverConfig.device.wifi.fallback_ap_ssid || '';
+                this.config.device.wifi.fallback_ap_password = serverConfig.device.wifi.fallback_ap_password || '';
+                this.config.device.wifi.fallback_ap_mdns = serverConfig.device.wifi.fallback_ap_mdns || '';
+                this.config.device.wifi.fallback_ap_ip = serverConfig.device.wifi.fallback_ap_ip || '';
                 
                 if (!serverConfig.device.wifi.ssid) {
                     console.warn('⚠️ Missing device.wifi.ssid in config');
