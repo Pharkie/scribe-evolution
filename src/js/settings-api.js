@@ -122,22 +122,33 @@ async function printLocalContent(content) {
 }
 
 /**
- * Trigger LED effect via API with optional settings
- * @param {string} effectName - Name of the LED effect
- * @param {number} duration - Duration in milliseconds (default 10000)
- * @param {Object} settings - Effect-specific settings (optional)
+ * Trigger LED effect via API with WLED-style parameters
+ * @param {string|Object} effectName - Name of the LED effect, or full effect parameters object
+ * @param {number} duration - Duration in milliseconds (default 10000) - ignored if effectName is object
+ * @param {Object} settings - Effect-specific settings (optional) - ignored if effectName is object
  * @returns {Promise<Object>} API response
  */
 async function triggerLedEffect(effectName, duration = 10000, settings = null) {
     try {
-        const payload = {
-            effect: effectName,
-            duration: duration
-        };
+        let payload;
         
-        // Add settings to payload if provided
-        if (settings && Object.keys(settings).length > 0) {
-            payload.settings = settings;
+        // Handle new WLED-style unified parameters (from Alpine store)
+        if (typeof effectName === 'object' && effectName.effect) {
+            payload = effectName; // Use the full parameters object
+        } else if (typeof effectName === 'string' && typeof duration === 'object') {
+            // Handle case where second parameter is the full effect params
+            payload = { effect: effectName, ...duration };
+        } else {
+            // Handle legacy simple parameters
+            payload = {
+                effect: effectName,
+                duration: duration
+            };
+            
+            // Add settings to payload if provided
+            if (settings && Object.keys(settings).length > 0) {
+                payload.settings = settings;
+            }
         }
         
         const response = await fetch('/api/led-effect', {
