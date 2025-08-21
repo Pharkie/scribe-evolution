@@ -4,12 +4,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Settings - Scribe Evolution</title>
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <title>Settings - Scribe</title>
+    <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/settings.min.css">
     <script src="/js/page-settings.min.js"></script>
     <script src="/js/vendor.min.js" defer></script>
@@ -42,819 +38,831 @@
             <div class="header-spacer"></div>
         </header>
 
-        <!-- Error State -->
-        <div x-show="error" x-transition.opacity.duration.300ms class="text-center text-red-600 dark:text-red-400 mb-6">
-            <span class="text-4xl mb-4 block">⚠️</span>
-            <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Loading Error</h3>
-            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
-            <p class="text-sm text-red-500 dark:text-red-400 mb-4">Please check the system and try refreshing the page.
-            </p>
-            <button @click="loadConfigStores()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-                Retry
-            </button>
+        <!-- Navigation -->
+        <nav class="flex flex-wrap justify-center gap-2 mb-6" x-show="!loading">
+            <template x-for="section in sections" :key="section.id">
+                <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
+                    x-text="`${section.icon} ${section.name}`">
+                </button>
+            </template>
+        </nav>
+
+        <!-- Loading State -->
+        <div x-show="loading" class="loading-card" x-transition>
+            <div class="flex items-center justify-center space-x-3">
+                <div class="loading-spinner"></div>
+                <span class="text-gray-600 dark:text-gray-400">Loading configuration...</span>
+            </div>
         </div>
 
-        <!-- Main Content fades in once all data is loaded -->
-        <div x-show="!loading && !error" x-transition.opacity.duration.300ms class="hidden"
-            :class="{ 'hidden': loading || error }" x-cloak>
-            <!-- Navigation -->
-            <nav class="flex flex-wrap justify-center gap-2 mb-6">
-                <template x-for="section in sections" :key="section.id">
-                    <button @click="showSection(section.id)" :class="getSectionClass(section.id)"
-                        x-text="`${section.icon} ${section.name}`">
-                    </button>
-                </template>
-            </nav>
+        <!-- Error State -->
+        <div x-show="error" class="settings-card bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+            x-transition>
+            <div class="text-center">
+                <span class="text-4xl mb-4 block">⚠️</span>
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Loading Error</h3>
+                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                <p class="text-sm text-red-500 dark:text-red-400">Please check the system and try refreshing the page.
+                </p>
+            </div>
+        </div>
 
-            <!-- Settings Content -->
-            <div class="space-y-6">
+        <!-- Settings Content -->
+        <div x-show="!loading && !error" class="space-y-6">
 
-                <!-- Device Section -->
-                <div x-show="activeSection === 'device'" class="settings-section">
-                    <div class="settings-card settings-card-purple">
-                        <h2 class="settings-card-header settings-card-header-purple">
-                            <span class="text-3xl">⚙️</span>
-                            <span>Device</span>
-                        </h2>
+            <!-- Device Section -->
+            <div x-show="activeSection === 'device'" class="settings-section">
+                <div class="settings-card settings-card-purple">
+                    <h2 class="settings-card-header settings-card-header-purple">
+                        <span class="text-3xl">⚙️</span>
+                        <span>Device</span>
+                    </h2>
 
-                        <!-- Device Info -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div class="space-y-2">
-                                <label for="device-owner" class="form-label">Device Owner:</label>
-                                <input id="device-owner" type="text" placeholder="Enter device owner name"
-                                    class="input-standard" x-model="config.device.owner">
-                                <p x-show="validation.errors['device.owner']"
-                                    class="text-xs text-red-600 dark:text-red-400"
-                                    x-text="validation.errors['device.owner']"></p>
-                                <p x-show="!validation.errors['device.owner'] && config.device.mdns"
-                                    class="text-xs text-gray-500 dark:text-gray-400">
-                                    mDNS Hostname: <span x-text="config.device.mdns"></span>
-                                </p>
-                            </div>
-                            <div class="space-y-2">
-                                <label for="timezone" class="form-label">Timezone:</label>
-                                <input id="timezone" type="text"
-                                    placeholder="Enter IANA timezone (e.g., America/New_York)" class="input-standard"
-                                    x-model="config.device.timezone">
-                                <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    Enter a valid IANA timezone identifier. Examples: America/New_York, Europe/London,
-                                    Asia/Tokyo, Australia/Sydney
-                                </p>
-                            </div>
+                    <!-- Device Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="space-y-2">
+                            <label for="device-owner" class="form-label">Device Owner:</label>
+                            <input id="device-owner" type="text" placeholder="Enter device owner name"
+                                class="input-standard" x-model="config.device.owner">
+                            <p x-show="validation.errors['device.owner']" class="text-xs text-red-600 dark:text-red-400"
+                                x-text="validation.errors['device.owner']"></p>
+                            <p x-show="!validation.errors['device.owner'] && config.device.mdns"
+                                class="text-xs text-gray-500 dark:text-gray-400">
+                                mDNS Hostname: <span x-text="config.device.mdns"></span>
+                            </p>
                         </div>
-
-                        <!-- WiFi Configuration -->
-                        <div class="mb-8">
-                            <h3
-                                class="text-lg font-semibold text-purple-800 dark:text-purple-100 mb-4 flex items-center">
-                                <span class="text-2xl mr-2">📶</span>
-                                <span>WiFi Configuration</span>
-                            </h3>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="space-y-2">
-                                    <label for="wifi-ssid" class="form-label">WiFi SSID:</label>
-                                    <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
-                                        class="input-standard" x-model="config.device.wifi.ssid">
-                                    <p x-show="validation.errors['wifi.ssid']"
-                                        class="text-xs text-red-600 dark:text-red-400"
-                                        x-text="validation.errors['wifi.ssid']"></p>
-                                </div>
-                                <div class="space-y-2">
-                                    <label for="wifi-password" class="form-label">WiFi Password:</label>
-                                    <input type="password" id="wifi-password" class="input-standard"
-                                        x-model="config.device.wifi.password">
-                                </div>
-                                <div class="space-y-2">
-                                    <label for="wifi-timeout" class="form-label">Connection Timeout (seconds):</label>
-                                    <input type="number" id="wifi-timeout" min="5" max="60" class="input-standard"
-                                        :value="Math.floor(config.device.wifi.connect_timeout / 1000)"
-                                        @input="config.device.wifi.connect_timeout = parseInt($el.value) * 1000">
-                                    <p x-show="validation.errors['wifi.connect_timeout']"
-                                        class="text-xs text-red-600 dark:text-red-400"
-                                        x-text="validation.errors['wifi.connect_timeout']"></p>
-                                    <p x-show="!validation.errors['wifi.connect_timeout']"
-                                        class="text-xs text-gray-500 dark:text-gray-400">
-                                        Time to wait before falling back to AP mode (5-60 seconds)
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- WiFi Warning -->
-                            <div class="warning-box mt-4">
-                                <div class="flex items-start space-x-3">
-                                    <span class="text-2xl">⚠️</span>
-                                    <div>
-                                        <h4 class="warning-title">WiFi Change Warning</h4>
-                                        <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
-                                            Changing WiFi settings will cause the device to restart and connect to the
-                                            new
-                                            network. If connection fails, the device will create an AP with SSID: <span
-                                                class="font-mono font-bold">Scribe-setup</span>
-                                            and password: <span class="font-mono font-bold">scribe123</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Current WiFi Status (Read-only) -->
-                            <div class="status-info-box">
-                                <div class="status-info-header">
-                                    <span class="text-2xl mr-2">📊</span>
-                                    <span>Current WiFi Status</span>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <div class="text-sm">
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">IP
-                                                Address:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.device.wifi.status?.ip_address || '-'"></span>
-                                        </div>
-                                        <div class="text-sm">
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Signal
-                                                Strength:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.device.wifi.status?.signal_strength || '-'"></span>
-                                        </div>
-                                        <div class="text-sm">
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">MAC
-                                                Address:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.device.wifi.status?.mac_address || '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <div class="text-sm">
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Gateway:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.device.wifi.status?.gateway || '-'"></span>
-                                        </div>
-                                        <div class="text-sm">
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">DNS:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.device.wifi.status?.dns || '-'"></span>
-                                        </div>
-                                        <div class="text-sm">
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">mDNS
-                                                Hostname:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.device?.mdns || '-'"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="space-y-2">
+                            <label for="timezone" class="form-label">Timezone:</label>
+                            <input id="timezone" type="text" placeholder="Enter IANA timezone (e.g., America/New_York)"
+                                class="input-standard" x-model="config.device.timezone">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Enter a valid IANA timezone identifier. Examples: America/New_York, Europe/London,
+                                Asia/Tokyo, Australia/Sydney
+                            </p>
                         </div>
                     </div>
-                </div>
 
-                <!-- MQTT Section -->
-                <div x-show="activeSection === 'mqtt'" class="settings-section">
-                    <div class="settings-card settings-card-yellow">
-                        <h2 class="settings-card-header settings-card-header-yellow">
-                            <span class="text-3xl">📡</span>
-                            <span>MQTT</span>
-                        </h2>
+                    <!-- WiFi -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-purple-800 dark:text-purple-100 mb-4 flex items-center">
+                            <span>WiFi</span>
+                        </h3>
 
-                        <!-- MQTT Server - Full width row -->
-                        <div class="space-y-2">
-                            <label for="mqtt-server" class="form-label">MQTT Server:</label>
-                            <input id="mqtt-server" type="text" placeholder="Enter MQTT broker address"
-                                class="input-standard" x-model="config.mqtt.server">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- WiFi Network Selection -->
+                            <div class="space-y-2">
+                                <label class="form-label">WiFi Network (Signal Strength):</label>
+
+                                <!-- Network Selection Dropdown -->
+                                <select id="wifi-network-select" @change="selectNetwork($event.target.value)"
+                                    :disabled="wifiScan.dropdownDisabled" :class="{
+                                        'input-standard': true,
+                                        'opacity-60 cursor-not-allowed': wifiScan.dropdownDisabled,
+                                        'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700': wifiScan.isScanning
+                                    }" x-model="wifiScan.selectedNetwork">
+
+                                    <template x-for="option in wifiScan.options" :key="option.value">
+                                        <option :value="option.value" :disabled="option.disabled" x-text="option.label">
+                                        </option>
+                                    </template>
+                                </select>
+
+                                <!-- Manual SSID Input (reactive display) -->
+                                <div x-show="wifiScan.showManualEntry" class="mt-2"
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 transform scale-95"
+                                    x-transition:enter-end="opacity-100 transform scale-100">
+                                    <label for="wifi-ssid" class="form-label text-sm">Network Name (SSID):</label>
+                                    <input id="wifi-ssid" type="text" placeholder="Enter WiFi network name"
+                                        class="input-standard" x-model="config.device.wifi.ssid">
+                                </div>
+
+                                <!-- WiFi Scan Status/Error Messages -->
+                                <div x-show="wifiScan.isScanning"
+                                    class="text-xs text-blue-600 dark:text-blue-400 flex items-center">
+                                    <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2">
+                                    </div>
+                                    Sniffing the Air…
+                                </div>
+                                <div x-show="wifiScan.error" class="text-xs text-red-600 dark:text-red-400"
+                                    x-text="wifiScan.error"></div>
+
+                                <!-- Validation Error Display -->
+                                <p x-show="validation.errors['wifi.ssid']"
+                                    class="text-xs text-red-600 dark:text-red-400"
+                                    x-text="validation.errors['wifi.ssid']"></p>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="wifi-password" class="form-label">WiFi Password:</label>
+                                <input type="password" id="wifi-password" class="input-standard"
+                                    x-model="config.device.wifi.password">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="wifi-timeout" class="form-label">Connection Timeout (seconds):</label>
+                                <input type="number" id="wifi-timeout" min="5" max="60" class="input-standard"
+                                    :value="Math.floor(config.device.wifi.connect_timeout / 1000)"
+                                    @input="config.device.wifi.connect_timeout = parseInt($el.value) * 1000">
+                                <p x-show="validation.errors['wifi.connect_timeout']"
+                                    class="text-xs text-red-600 dark:text-red-400"
+                                    x-text="validation.errors['wifi.connect_timeout']"></p>
+                                <p x-show="!validation.errors['wifi.connect_timeout']"
+                                    class="text-xs text-gray-500 dark:text-gray-400">
+                                    Time to wait before falling back to AP mode (5-60 seconds)
+                                </p>
+                            </div>
                         </div>
 
-                        <!-- Username, Password, Port - Three columns on desktop -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="space-y-2">
-                                <label for="mqtt-username" class="form-label">MQTT Username:</label>
-                                <input id="mqtt-username" type="text" placeholder="Optional MQTT username"
-                                    class="input-standard" x-model="config.mqtt.username">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="mqtt-password" class="form-label">MQTT Password:</label>
-                                <input type="password" id="mqtt-password" placeholder="Optional MQTT password"
-                                    class="input-standard" x-model="config.mqtt.password">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="mqtt-port" class="form-label">MQTT Port:</label>
-                                <input type="number" id="mqtt-port" min="1" max="65535" class="input-standard"
-                                    x-model.number="config.mqtt.port">
+                        <!-- WiFi Warning -->
+                        <div class="warning-box mt-4">
+                            <div class="flex items-start space-x-3">
+                                <span class="text-2xl">⚠️</span>
+                                <div class="flex-1">
+                                    <h4 class="warning-title">WiFi Change Warning</h4>
+                                    <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                                        Changing WiFi settings will cause the device to restart and connect to the new
+                                        network. If connection fails, the device will create an AP with SSID: <span
+                                            class="font-mono font-bold"
+                                            x-text="config?.device?.wifi?.fallback_ap_ssid || 'Scribe-setup'"></span>
+                                        and password: <span class="font-mono font-bold"
+                                            x-text="config?.device?.wifi?.fallback_ap_password || 'scribe123'"></span>
+                                    </p>
+                                    <button @click="printAPDetails()" :disabled="apPrintStatus === 'scribing'"
+                                        class="mt-3 px-2 py-1 text-xs bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 text-white rounded transition-colors duration-200 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        🖨️ <span x-text="apPrintButtonText"></span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Current MQTT Status (Read-only) -->
+                        <!-- Current WiFi Status (Read-only) -->
                         <div class="status-info-box">
                             <div class="status-info-header">
                                 <span class="text-2xl mr-2">📊</span>
-                                <span>Current MQTT Status</span>
+                                <span>Current WiFi Status</span>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <div class="text-sm">
-                                        <span class="font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">IP Address:</span>
                                         <span class="text-gray-800 dark:text-gray-200"
-                                            x-text="config.mqtt?.connected ? 'Connected' : 'Disconnected'"></span>
+                                            x-text="config.device.wifi.status?.ip_address || '-'"></span>
                                     </div>
                                     <div class="text-sm">
-                                        <span class="font-medium text-gray-700 dark:text-gray-300">Topic:</span>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Signal
+                                            Strength:</span>
                                         <span class="text-gray-800 dark:text-gray-200"
-                                            x-text="config.device?.mqtt_topic || '-'"></span>
+                                            x-text="config.device.wifi.status?.signal_strength || '-'"></span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">MAC Address:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.device.wifi.status?.mac_address || '-'"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Gateway:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.device.wifi.status?.gateway || '-'"></span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">DNS:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.device.wifi.status?.dns || '-'"></span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">mDNS Hostname:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.device?.mdns || '-'"></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Unbidden Ink Section -->
-                <div x-show="activeSection === 'unbidden'" class="settings-section">
-                    <div class="settings-card settings-card-green">
-                        <h2 class="settings-card-header settings-card-header-green">
-                            <span class="text-3xl">🎲</span>
-                            <span>Unbidden Ink</span>
-                        </h2>
+            <!-- MQTT Section -->
+            <div x-show="activeSection === 'mqtt'" class="settings-section">
+                <div class="settings-card settings-card-yellow">
+                    <h2 class="settings-card-header settings-card-header-yellow">
+                        <span class="text-3xl">📡</span>
+                        <span>MQTT</span>
+                    </h2>
 
-                        <!-- Enable/Disable Toggle -->
-                        <div
-                            class="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-3xl">🎲</span>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                        Unbidden Ink
-                                    </h3>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Automatically generate and print creative content
-                                    </p>
+                    <!-- MQTT Server - Full width row -->
+                    <div class="space-y-2">
+                        <label for="mqtt-server" class="form-label">MQTT Server:</label>
+                        <input id="mqtt-server" type="text" placeholder="Enter MQTT broker address"
+                            class="input-standard" x-model="config.mqtt.server">
+                    </div>
+
+                    <!-- Username, Password, Port - Three columns on desktop -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label for="mqtt-username" class="form-label">MQTT Username:</label>
+                            <input id="mqtt-username" type="text" placeholder="Optional MQTT username"
+                                class="input-standard" x-model="config.mqtt.username">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-password" class="form-label">MQTT Password:</label>
+                            <input type="password" id="mqtt-password" placeholder="Optional MQTT password"
+                                class="input-standard" x-model="config.mqtt.password">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="mqtt-port" class="form-label">MQTT Port:</label>
+                            <input type="number" id="mqtt-port" min="1" max="65535" class="input-standard"
+                                x-model.number="config.mqtt.port">
+                        </div>
+                    </div>
+
+                    <!-- Current MQTT Status (Read-only) -->
+                    <div class="status-info-box">
+                        <div class="status-info-header">
+                            <span class="text-2xl mr-2">📊</span>
+                            <span>Current MQTT Status</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">Status:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.mqtt?.connected ? 'Connected' : 'Disconnected'"></span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300">Topic:</span>
+                                    <span class="text-gray-800 dark:text-gray-200"
+                                        x-text="config.device?.mqtt_topic || '-'"></span>
                                 </div>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" x-model="config.unbiddenInk.enabled">
-                                <div
-                                    class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white dark:after:bg-gray-200 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500">
-                                </div>
-                            </label>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Settings panel (shown when enabled) -->
-                        <div x-show="config.unbiddenInk.enabled" x-transition class="space-y-6">
+            <!-- Unbidden Ink Section -->
+            <div x-show="activeSection === 'unbidden'" class="settings-section">
+                <div class="settings-card settings-card-green">
+                    <h2 class="settings-card-header settings-card-header-green">
+                        <span class="text-3xl">🎲</span>
+                        <span>Unbidden Ink</span>
+                    </h2>
 
-                            <!-- ChatGPT API Token -->
-                            <div class="space-y-2">
-                                <label for="chatgpt-api-token"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    ChatGPT API Token:
-                                </label>
-                                <input type="password" id="chatgpt-api-token" required
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
-                                    x-model="config.unbiddenInk.chatgptApiToken">
+                    <!-- Enable/Disable Toggle -->
+                    <div class="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-3xl">🎲</span>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                    Unbidden Ink
+                                </h3>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Your OpenAI API key for GPT access.
-                                    <a href="https://platform.openai.com/api-keys" target="_blank"
-                                        class="text-purple-600 dark:text-purple-400 hover:underline">
-                                        Get your API key here
-                                    </a>.
+                                    Automatically generate and print creative content
                                 </p>
                             </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" x-model="config.unbiddenInk.enabled">
+                            <div
+                                class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white dark:after:bg-gray-200 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500">
+                            </div>
+                        </label>
+                    </div>
 
-                            <!-- Time Range Slider (Alpine Implementation) -->
-                            <div class="space-y-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Active Time Range:
-                                </label>
+                    <!-- Settings panel (shown when enabled) -->
+                    <div x-show="config.unbiddenInk.enabled" x-transition class="space-y-6">
 
-                                <!-- Hour markers -->
+                        <!-- ChatGPT API Token -->
+                        <div class="space-y-2">
+                            <label for="chatgpt-api-token"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                ChatGPT API Token:
+                            </label>
+                            <input type="password" id="chatgpt-api-token" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                x-model="config.unbiddenInk.chatgptApiToken">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Your OpenAI API key for GPT access.
+                                <a href="https://platform.openai.com/api-keys" target="_blank"
+                                    class="text-purple-600 dark:text-purple-400 hover:underline">
+                                    Get your API key here
+                                </a>.
+                            </p>
+                        </div>
+
+                        <!-- Time Range Slider (Alpine Implementation) -->
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Active Time Range:
+                            </label>
+
+                            <!-- Hour markers -->
+                            <div class="mx-2">
+                                <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2">
+                                    <span>0</span>
+                                    <span class="hidden sm:inline">4</span>
+                                    <span>8</span>
+                                    <span class="hidden sm:inline">12</span>
+                                    <span>16</span>
+                                    <span class="hidden sm:inline">20</span>
+                                    <span>24</span>
+                                </div>
+                            </div>
+
+                            <div class="dual-range-slider">
+                                <!-- Background track -->
+                                <div class="dual-range-track"></div>
+
+                                <!-- Active time track (reactive) -->
+                                <div class="dual-range-active"
+                                    :style="`left: ${timeRangeStyle.left}; width: ${timeRangeStyle.width};`">
+                                </div>
+
+                                <!-- Start time handle -->
+                                <input type="range" min="0" max="24" step="1" class="dual-range-input dual-range-start"
+                                    x-model.number="config.unbiddenInk.startHour">
+
+                                <!-- End time handle -->
+                                <input type="range" min="0" max="24" step="1" class="dual-range-input dual-range-end"
+                                    x-model.number="config.unbiddenInk.endHour">
+                            </div>
+
+                            <!-- Time display (reactive) -->
+                            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
+                                <span x-text="formatHour(config.unbiddenInk.startHour)"></span>
+                                <span class="text-purple-600 dark:text-purple-400 font-medium">
+                                    <span x-text="timeRangeDisplay"></span>
+                                </span>
+                                <span x-text="formatHour(config.unbiddenInk.endHour)"></span>
+                            </div>
+                        </div>
+
+                        <!-- Frequency Slider -->
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Frequency:
+                            </label>
+
+                            <div class="space-y-3">
+                                <!-- Frequency slider markers -->
                                 <div class="mx-2">
                                     <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2">
-                                        <span>0</span>
-                                        <span class="hidden sm:inline">4</span>
-                                        <span>8</span>
-                                        <span class="hidden sm:inline">12</span>
-                                        <span>16</span>
-                                        <span class="hidden sm:inline">20</span>
-                                        <span>24</span>
+                                        <template x-for="label in frequencyLabels" :key="label">
+                                            <span x-text="label"></span>
+                                        </template>
                                     </div>
                                 </div>
 
-                                <div class="dual-range-slider">
-                                    <!-- Background track -->
-                                    <div class="dual-range-track"></div>
+                                <input type="range" min="0" max="6" step="1"
+                                    class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple"
+                                    x-model.number="frequencySliderValue">
 
-                                    <!-- Active time track (reactive) -->
-                                    <div class="dual-range-active"
-                                        :style="`left: ${timeRangeStyle.left}; width: ${timeRangeStyle.width};`">
-                                    </div>
-
-                                    <!-- Start time handle -->
-                                    <input type="range" min="0" max="24" step="1"
-                                        class="dual-range-input dual-range-start"
-                                        x-model.number="config.unbiddenInk.startHour">
-
-                                    <!-- End time handle -->
-                                    <input type="range" min="0" max="24" step="1"
-                                        class="dual-range-input dual-range-end"
-                                        x-model.number="config.unbiddenInk.endHour">
-                                </div>
-
-                                <!-- Time display (reactive) -->
-                                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
-                                    <span x-text="formatHour(config.unbiddenInk.startHour)"></span>
-                                    <span class="text-purple-600 dark:text-purple-400 font-medium">
-                                        <span x-text="timeRangeDisplay"></span>
-                                    </span>
-                                    <span x-text="formatHour(config.unbiddenInk.endHour)"></span>
-                                </div>
-                            </div>
-
-                            <!-- Frequency Slider -->
-                            <div class="space-y-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Frequency:
-                                </label>
-
-                                <div class="space-y-3">
-                                    <!-- Frequency slider markers -->
-                                    <div class="mx-2">
-                                        <div class="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-2">
-                                            <template x-for="label in frequencyLabels" :key="label">
-                                                <span x-text="label"></span>
-                                            </template>
-                                        </div>
-                                    </div>
-
-                                    <input type="range" min="0" max="6" step="1"
-                                        class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple"
-                                        x-model.number="frequencySliderValue">
-
-                                    <!-- Frequency display (reactive) -->
-                                    <div class="text-center">
-                                        <div
-                                            class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
-                                            <span x-text="frequencyDisplay"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Quick Prompts -->
-                            <div class="space-y-3">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Quick Prompts:
-                                </label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <button type="button" @click="setQuickPrompt('creative')"
-                                        :class="isPromptActive('creative') ? 
-                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
-                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
-                                        <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🎨 Creative
-                                        </div>
-                                        <div class="text-xs text-gray-600 dark:text-gray-400">Artistic & imaginative
-                                            content
-                                        </div>
-                                    </button>
-                                    <button type="button" @click="setQuickPrompt('doctorwho')"
-                                        :class="isPromptActive('doctorwho') ? 
-                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
-                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
-                                        <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🚀 Doctor Who
-                                        </div>
-                                        <div class="text-xs text-gray-600 dark:text-gray-400">Sci-fi themed content
-                                        </div>
-                                    </button>
-                                    <button type="button" @click="setQuickPrompt('wisdom')"
-                                        :class="isPromptActive('wisdom') ? 
-                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
-                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
-                                        <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🧙 Wisdom
-                                        </div>
-                                        <div class="text-xs text-gray-600 dark:text-gray-400">Philosophical insights
-                                        </div>
-                                    </button>
-                                    <button type="button" @click="setQuickPrompt('humor')"
-                                        :class="isPromptActive('humor') ? 
-                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
-                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
-                                        <div class="font-medium text-sm text-gray-800 dark:text-gray-100">😄 Humor</div>
-                                        <div class="text-xs text-gray-600 dark:text-gray-400">Jokes & funny content
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Prompt -->
-                            <div class="space-y-2">
-                                <label for="unbidden-ink-prompt"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Custom Prompt:
-                                </label>
-                                <textarea id="unbidden-ink-prompt" rows="4"
-                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
-                                    placeholder="Enter a custom prompt for content generation..."
-                                    x-model="config.unbiddenInk.prompt"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Buttons Section -->
-                <div x-show="activeSection === 'buttons'" class="settings-section">
-                    <div class="settings-card settings-card-orange">
-                        <h2 class="settings-card-header settings-card-header-orange">
-                            <span class="text-3xl">🎛️</span>
-                            <span>Button Actions</span>
-                        </h2>
-
-                        <div class="space-y-6">
-                            <template x-for="buttonNum in [1, 2, 3, 4]" :key="buttonNum">
-                                <div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4"
-                                        x-text="`Button ${buttonNum} Configuration (GPIO ${buttonNum + 4})`"></h3>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <!-- Short Press Action -->
-                                        <div class="space-y-2">
-                                            <label :for="`button${buttonNum}-short`" class="form-label">
-                                                Short Press Action:
-                                            </label>
-                                            <select :id="`button${buttonNum}-short`" class="input-standard"
-                                                x-model="config.buttons[`button${buttonNum}`].shortAction">
-                                                <option value="">None</option>
-                                                <option value="/api/joke">Joke</option>
-                                                <option value="/api/riddle">Riddle</option>
-                                                <option value="/api/quote">Quote</option>
-                                                <option value="/api/quiz">Quiz</option>
-                                                <option value="/api/news">News</option>
-                                                <option value="/api/character-test">Character Test</option>
-                                                <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                            </select>
-                                        </div>
-
-                                        <!-- Long Press Action -->
-                                        <div class="space-y-2">
-                                            <label :for="`button${buttonNum}-long`" class="form-label">
-                                                Long Press Action:
-                                            </label>
-                                            <select :id="`button${buttonNum}-long`" class="input-standard"
-                                                x-model="config.buttons[`button${buttonNum}`].longAction">
-                                                <option value="">None</option>
-                                                <option value="/api/joke">Joke</option>
-                                                <option value="/api/riddle">Riddle</option>
-                                                <option value="/api/quote">Quote</option>
-                                                <option value="/api/quiz">Quiz</option>
-                                                <option value="/api/news">News</option>
-                                                <option value="/api/character-test">Character Test</option>
-                                                <option value="/api/unbidden-ink">Unbidden Ink</option>
-                                            </select>
-                                        </div>
-
-                                        <!-- Short Press MQTT Topic -->
-                                        <div class="space-y-2">
-                                            <label :for="`button${buttonNum}-short-mqtt`" class="form-label">
-                                                Short Press MQTT Topic:
-                                            </label>
-                                            <input :id="`button${buttonNum}-short-mqtt`" type="text"
-                                                placeholder="Optional MQTT topic" class="input-standard"
-                                                x-model="config.buttons[`button${buttonNum}`].shortMqttTopic">
-                                        </div>
-
-                                        <!-- Long Press MQTT Topic -->
-                                        <div class="space-y-2">
-                                            <label :for="`button${buttonNum}-long-mqtt`" class="form-label">
-                                                Long Press MQTT Topic:
-                                            </label>
-                                            <input :id="`button${buttonNum}-long-mqtt`" type="text"
-                                                placeholder="Optional MQTT topic" class="input-standard"
-                                                x-model="config.buttons[`button${buttonNum}`].longMqttTopic">
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <!-- Hardware Button Configuration (Read-only) -->
-                            <div class="status-info-box">
-                                <div class="status-info-header">
-                                    <span class="text-2xl mr-2">📊</span>
-                                    <span>Hardware Button Configuration</span>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                    <div class="space-y-2">
-                                        <div>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Button
-                                                Count:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.buttons?.count || '-'"></span>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Debounce
-                                                Time:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="(config.buttons?.debounce_time || '-') + (config.buttons?.debounce_time ? ' ms' : '')"></span>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <div>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Long Press
-                                                Time:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="(config.buttons?.long_press_time || '-') + (config.buttons?.long_press_time ? ' ms' : '')"></span>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Active
-                                                Low:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.buttons?.active_low ? 'Yes' : (config.buttons?.active_low === false ? 'No' : '-')"></span>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <div>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Min
-                                                Interval:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="(config.buttons?.min_interval || '-') + (config.buttons?.min_interval ? ' ms' : '')"></span>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Max Per
-                                                Minute:</span>
-                                            <span class="text-gray-800 dark:text-gray-200"
-                                                x-text="config.buttons?.max_per_minute || '-'"></span>
-                                        </div>
+                                <!-- Frequency display (reactive) -->
+                                <div class="text-center">
+                                    <div
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                                        <span x-text="frequencyDisplay"></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- LEDs Section -->
-                <div x-show="activeSection === 'leds'" class="settings-section" x-init="initColorPickers()">
-                    <div
-                        class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
-                        <h2
-                            class="text-2xl font-bold text-purple-800 dark:text-purple-100 mb-6 flex items-center space-x-2">
-                            <span class="text-3xl">🌈</span>
-                            <span>LEDs</span>
-                        </h2>
-
-                        <div class="space-y-6">
-                            <!-- Hardware Configuration -->
-                            <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                                <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hardware
-                                    Configuration
-                                </h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label for="led-pin"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">GPIO
-                                            Pin</label>
-                                        <select id="led-pin" class="input-standard" x-model="config.leds.pin">
-                                            <option value="0">GPIO0 (boot mode, avoid)</option>
-                                            <option value="1">GPIO1 (usable)</option>
-                                            <option value="2">GPIO2 (usable)</option>
-                                            <option value="3">GPIO3 (usable)</option>
-                                            <option value="4" selected>GPIO4 (usable)</option>
-                                            <option value="5">GPIO5 (usable)</option>
-                                            <option value="6">GPIO6 (usable)</option>
-                                            <option value="7">GPIO7 (usable)</option>
-                                            <option value="8">GPIO8 (flash, avoid)</option>
-                                            <option value="9">GPIO9 (flash, avoid)</option>
-                                            <option value="10">GPIO10 (flash, avoid)</option>
-                                            <option value="11">GPIO11 (not broken out)</option>
-                                            <option value="12">GPIO12 (not broken out)</option>
-                                            <option value="13">GPIO13 (usable, often SCL)</option>
-                                            <option value="14">GPIO14 (usable, often SDA)</option>
-                                            <option value="15">GPIO15 (not broken out)</option>
-                                            <option value="16">GPIO16 (not broken out)</option>
-                                            <option value="17">GPIO17 (not broken out)</option>
-                                            <option value="18">GPIO18 (USB/JTAG, avoid unless advanced)</option>
-                                            <option value="19">GPIO19 (USB/JTAG, avoid unless advanced)</option>
-                                            <option value="20">GPIO20 (usable, often RX)</option>
-                                            <option value="21">GPIO21 (usable, often TX)</option>
-                                        </select>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                                            ⚠️ Not all boards expose every pin. On boards like the ESP32-C3 SuperMini,
-                                            usually ~15–16 of these are available. Pins marked avoid are connected to
-                                            flash
-                                            or USB and should not be reassigned.
-                                        </p>
+                        <!-- Quick Prompts -->
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Quick Prompts:
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="setQuickPrompt('creative')"
+                                    :class="isPromptActive('creative') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🎨 Creative</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Artistic & imaginative content
                                     </div>
-                                    <div class="space-y-2">
-                                        <label for="led-count"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">LED
-                                            Count</label>
-                                        <input type="number" id="led-count" min="1" max="300" class="input-standard"
-                                            x-model="config.leds.count" placeholder="60">
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Number of LEDs in your strip
-                                            (typically 30, 60, or 144 per meter)</p>
+                                </button>
+                                <button type="button" @click="setQuickPrompt('doctorwho')"
+                                    :class="isPromptActive('doctorwho') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🚀 Doctor Who
                                     </div>
-                                </div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Sci-fi themed content</div>
+                                </button>
+                                <button type="button" @click="setQuickPrompt('wisdom')"
+                                    :class="isPromptActive('wisdom') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">🧙 Wisdom</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Philosophical insights</div>
+                                </button>
+                                <button type="button" @click="setQuickPrompt('humor')"
+                                    :class="isPromptActive('humor') ? 
+                                        'p-3 text-left rounded-xl border border-purple-400 bg-purple-100 dark:bg-purple-900/40 ring-2 ring-purple-400 transition-colors' : 
+                                        'p-3 text-left rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'">
+                                    <div class="font-medium text-sm text-gray-800 dark:text-gray-100">😄 Humor</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Jokes & funny content</div>
+                                </button>
                             </div>
+                        </div>
 
-                            <!-- System Settings -->
-                            <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                                <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">System Settings
-                                </h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label for="led-brightness"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness
-                                            (0-255)</label>
-                                        <input type="number" id="led-brightness" min="0" max="255"
-                                            class="input-standard" x-model="config.leds.brightness" placeholder="128">
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Lower values save power and
-                                            reduce heat</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label for="led-refresh-rate"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh
-                                            Rate
-                                            (Hz)</label>
-                                        <input type="number" id="led-refresh-rate" min="10" max="120"
-                                            class="input-standard" x-model="config.leds.refreshRate" placeholder="30">
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Higher values make
-                                            animations
-                                            smoother but use more CPU</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- LED Effect Playground -->
-                            <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
-                                <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Playground
-                                </h3>
-                                <!-- Effect Selection -->
-                                <div class="space-y-4">
-                                    <div class="space-y-2">
-                                        <label for="led-effect-selector"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            Effect
-                                        </label>
-                                        <select id="led-effect-selector" class="input-standard" x-model="selectedEffect"
-                                            @change="initEffectParams()">
-                                            <option value="chase_single">Single Colour Chase</option>
-                                            <option value="rainbow">Rainbow Wave</option>
-                                            <option value="twinkle">Twinkle</option>
-                                            <option value="chase_multi">Multicolour Chase</option>
-                                            <option value="pulse">Pulse</option>
-                                            <option value="matrix">Matrix</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Effect Description -->
-                                    <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
-                                        <p class="text-sm text-gray-600 dark:text-gray-300"
-                                            x-text="getEffectDescription()">
-                                        </p>
-                                    </div>
-
-                                    <!-- Generic Parameters -->
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <!-- Speed -->
-                                        <div class="space-y-2">
-                                            <label for="led-speed"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Speed (1-100)
-                                            </label>
-                                            <input type="range" id="led-speed" min="1" max="100" step="1"
-                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                x-model="effectParams.speed">
-                                            <div class="text-xs text-gray-500 text-center" x-text="effectParams.speed">
-                                            </div>
-                                        </div>
-
-                                        <!-- Intensity -->
-                                        <div class="space-y-2">
-                                            <label for="led-intensity"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Intensity (1-100)
-                                            </label>
-                                            <input type="range" id="led-intensity" min="1" max="100" step="1"
-                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                x-model="effectParams.intensity">
-                                            <div class="text-xs text-gray-500 text-center"
-                                                x-text="effectParams.intensity">
-                                            </div>
-                                        </div>
-
-                                        <!-- Number of Cycles -->
-                                        <div class="space-y-2">
-                                            <label for="led-cycles"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Number of Cycles (1-10)
-                                            </label>
-                                            <input type="range" id="led-cycles" min="1" max="10" step="1"
-                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                x-model.number="effectParams.cycles">
-                                            <div class="text-xs text-gray-500 text-center" x-text="effectParams.cycles">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Effect-Specific Parameters -->
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <!-- Custom Slider 1 -->
-                                        <div class="space-y-2" x-show="getCustomSlider1Label()">
-                                            <label for="led-custom1"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                                x-text="getCustomSlider1Label()">
-                                            </label>
-                                            <input type="range" id="led-custom1" :min="getCustomSlider1Range().min"
-                                                :max="getCustomSlider1Range().max" :step="getCustomSlider1Range().step"
-                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                x-model="effectParams.custom1">
-                                            <div class="text-xs text-gray-500 text-center"
-                                                x-text="effectParams.custom1">
-                                            </div>
-                                        </div>
-
-                                        <!-- Custom Slider 2 -->
-                                        <div class="space-y-2" x-show="getCustomSlider2Label()">
-                                            <label for="led-custom2"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                                x-text="getCustomSlider2Label()">
-                                            </label>
-                                            <input type="range" id="led-custom2" :min="getCustomSlider2Range().min"
-                                                :max="getCustomSlider2Range().max" :step="getCustomSlider2Range().step"
-                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                x-model="effectParams.custom2">
-                                            <div class="text-xs text-gray-500 text-center"
-                                                x-text="effectParams.custom2">
-                                            </div>
-                                        </div>
-
-                                        <!-- Custom Slider 3 -->
-                                        <div class="space-y-2" x-show="getCustomSlider3Label()">
-                                            <label for="led-custom3"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                                x-text="getCustomSlider3Label()">
-                                            </label>
-                                            <input type="range" id="led-custom3" :min="getCustomSlider3Range().min"
-                                                :max="getCustomSlider3Range().max" :step="getCustomSlider3Range().step"
-                                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                x-model="effectParams.custom3">
-                                            <div class="text-xs text-gray-500 text-center"
-                                                x-text="effectParams.custom3">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Color Parameters -->
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <!-- Color 1 -->
-                                        <div class="space-y-2">
-                                            <label for="led-color1"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Color
-                                            </label>
-                                            <div x-ref="color1Pickr"
-                                                class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
-                                            </div>
-                                        </div>
-
-                                        <!-- Additional Colors for Multicolour Chase -->
-                                        <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
-                                            <label for="led-color2"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Color 2
-                                            </label>
-                                            <div x-ref="color2Pickr"
-                                                class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
-                                            </div>
-                                        </div>
-
-                                        <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
-                                            <label for="led-color3"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Color 3
-                                            </label>
-                                            <div x-ref="color3Pickr"
-                                                class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Control Buttons -->
-                                    <div class="flex gap-3 pt-4">
-                                        <button type="button" @click="testLedEffect(selectedEffect)"
-                                            class="py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors text-sm">
-                                            🎨 Test Effect
-                                        </button>
-                                        <button type="button" @click="turnOffLeds()"
-                                            class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
-                                            💡 Turn Off LEDs
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Prompt -->
+                        <div class="space-y-2">
+                            <label for="unbidden-ink-prompt"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Custom Prompt:
+                            </label>
+                            <textarea id="unbidden-ink-prompt" rows="4"
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
+                                placeholder="Enter a custom prompt for content generation..."
+                                x-model="config.unbiddenInk.prompt"></textarea>
                         </div>
                     </div>
                 </div>
-
             </div>
+
+            <!-- Buttons Section -->
+            <div x-show="activeSection === 'buttons'" class="settings-section">
+                <div class="settings-card settings-card-orange">
+                    <h2 class="settings-card-header settings-card-header-orange">
+                        <span class="text-3xl">🎛️</span>
+                        <span>Button Actions</span>
+                    </h2>
+
+                    <div class="space-y-6">
+                        <template x-for="buttonNum in [1, 2, 3, 4]" :key="buttonNum">
+                            <div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4"
+                                    x-text="`Button ${buttonNum} Configuration (GPIO ${buttonNum + 4})`"></h3>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Short Press Action -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-short`" class="form-label">
+                                            Short Press Action:
+                                        </label>
+                                        <select :id="`button${buttonNum}-short`" class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].shortAction">
+                                            <option value="">None</option>
+                                            <option value="/api/joke">Joke</option>
+                                            <option value="/api/riddle">Riddle</option>
+                                            <option value="/api/quote">Quote</option>
+                                            <option value="/api/quiz">Quiz</option>
+                                            <option value="/api/news">News</option>
+                                            <option value="/api/character-test">Character Test</option>
+                                            <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Long Press Action -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-long`" class="form-label">
+                                            Long Press Action:
+                                        </label>
+                                        <select :id="`button${buttonNum}-long`" class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].longAction">
+                                            <option value="">None</option>
+                                            <option value="/api/joke">Joke</option>
+                                            <option value="/api/riddle">Riddle</option>
+                                            <option value="/api/quote">Quote</option>
+                                            <option value="/api/quiz">Quiz</option>
+                                            <option value="/api/news">News</option>
+                                            <option value="/api/character-test">Character Test</option>
+                                            <option value="/api/unbidden-ink">Unbidden Ink</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Short Press MQTT Topic -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-short-mqtt`" class="form-label">
+                                            Short Press MQTT Topic:
+                                        </label>
+                                        <input :id="`button${buttonNum}-short-mqtt`" type="text"
+                                            placeholder="Optional MQTT topic" class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].shortMqttTopic">
+                                    </div>
+
+                                    <!-- Long Press MQTT Topic -->
+                                    <div class="space-y-2">
+                                        <label :for="`button${buttonNum}-long-mqtt`" class="form-label">
+                                            Long Press MQTT Topic:
+                                        </label>
+                                        <input :id="`button${buttonNum}-long-mqtt`" type="text"
+                                            placeholder="Optional MQTT topic" class="input-standard"
+                                            x-model="config.buttons[`button${buttonNum}`].longMqttTopic">
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Hardware Button Configuration (Read-only) -->
+                        <div class="status-info-box">
+                            <div class="status-info-header">
+                                <span class="text-2xl mr-2">📊</span>
+                                <span>Hardware Button Configuration</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Button Count:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.buttons?.count || '-'"></span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Debounce Time:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="(config.buttons?.debounce_time || '-') + (config.buttons?.debounce_time ? ' ms' : '')"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Long Press
+                                            Time:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="(config.buttons?.long_press_time || '-') + (config.buttons?.long_press_time ? ' ms' : '')"></span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Active Low:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.buttons?.active_low ? 'Yes' : (config.buttons?.active_low === false ? 'No' : '-')"></span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Min Interval:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="(config.buttons?.min_interval || '-') + (config.buttons?.min_interval ? ' ms' : '')"></span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Max Per
+                                            Minute:</span>
+                                        <span class="text-gray-800 dark:text-gray-200"
+                                            x-text="config.buttons?.max_per_minute || '-'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEDs Section -->
+            <div x-show="activeSection === 'leds'" class="settings-section" x-init="initColorPickers()">
+                <div
+                    class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 shadow-2xl rounded-3xl p-8">
+                    <h2
+                        class="text-2xl font-bold text-purple-800 dark:text-purple-100 mb-6 flex items-center space-x-2">
+                        <span class="text-3xl">🌈</span>
+                        <span>LEDs</span>
+                    </h2>
+
+                    <div class="space-y-6">
+                        <!-- Hardware Configuration -->
+                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Hardware Configuration
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="led-pin"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">GPIO
+                                        Pin</label>
+                                    <select id="led-pin" class="input-standard" x-model="config.leds.pin">
+                                        <option value="0">GPIO0 (boot mode, avoid)</option>
+                                        <option value="1">GPIO1 (usable)</option>
+                                        <option value="2">GPIO2 (usable)</option>
+                                        <option value="3">GPIO3 (usable)</option>
+                                        <option value="4" selected>GPIO4 (usable)</option>
+                                        <option value="5">GPIO5 (usable)</option>
+                                        <option value="6">GPIO6 (usable)</option>
+                                        <option value="7">GPIO7 (usable)</option>
+                                        <option value="8">GPIO8 (flash, avoid)</option>
+                                        <option value="9">GPIO9 (flash, avoid)</option>
+                                        <option value="10">GPIO10 (flash, avoid)</option>
+                                        <option value="11">GPIO11 (not broken out)</option>
+                                        <option value="12">GPIO12 (not broken out)</option>
+                                        <option value="13">GPIO13 (usable, often SCL)</option>
+                                        <option value="14">GPIO14 (usable, often SDA)</option>
+                                        <option value="15">GPIO15 (not broken out)</option>
+                                        <option value="16">GPIO16 (not broken out)</option>
+                                        <option value="17">GPIO17 (not broken out)</option>
+                                        <option value="18">GPIO18 (USB/JTAG, avoid unless advanced)</option>
+                                        <option value="19">GPIO19 (USB/JTAG, avoid unless advanced)</option>
+                                        <option value="20">GPIO20 (usable, often RX)</option>
+                                        <option value="21">GPIO21 (usable, often TX)</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        ⚠️ Not all boards expose every pin. On boards like the ESP32-C3 SuperMini,
+                                        usually ~15–16 of these are available. Pins marked avoid are connected to flash
+                                        or USB and should not be reassigned.
+                                    </p>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="led-count"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">LED
+                                        Count</label>
+                                    <input type="number" id="led-count" min="1" max="300" class="input-standard"
+                                        x-model="config.leds.count" placeholder="60">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Number of LEDs in your strip
+                                        (typically 30, 60, or 144 per meter)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Settings -->
+                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">System Settings</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="led-brightness"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Brightness
+                                        (0-255)</label>
+                                    <input type="number" id="led-brightness" min="0" max="255" class="input-standard"
+                                        x-model="config.leds.brightness" placeholder="128">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Lower values save power and
+                                        reduce heat</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="led-refresh-rate"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh Rate
+                                        (Hz)</label>
+                                    <input type="number" id="led-refresh-rate" min="10" max="120" class="input-standard"
+                                        x-model="config.leds.refreshRate" placeholder="30">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Higher values make animations
+                                        smoother but use more CPU</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LED Effect Playground -->
+                        <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Effect Playground</h3>
+                            <!-- Effect Selection -->
+                            <div class="space-y-4">
+                                <div class="space-y-2">
+                                    <label for="led-effect-selector"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Effect
+                                    </label>
+                                    <select id="led-effect-selector" class="input-standard" x-model="selectedEffect"
+                                        @change="initEffectParams()">
+                                        <option value="chase_single">Single Colour Chase</option>
+                                        <option value="rainbow">Rainbow Wave</option>
+                                        <option value="twinkle">Twinkle</option>
+                                        <option value="chase_multi">Multicolour Chase</option>
+                                        <option value="pulse">Pulse</option>
+                                        <option value="matrix">Matrix</option>
+                                    </select>
+                                </div>
+
+                                <!-- Effect Description -->
+                                <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300" x-text="getEffectDescription()">
+                                    </p>
+                                </div>
+
+                                <!-- Generic Parameters -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <!-- Speed -->
+                                    <div class="space-y-2">
+                                        <label for="led-speed"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Speed (1-100)
+                                        </label>
+                                        <input type="range" id="led-speed" min="1" max="100" step="1"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.speed">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.speed">
+                                        </div>
+                                    </div>
+
+                                    <!-- Intensity -->
+                                    <div class="space-y-2">
+                                        <label for="led-intensity"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Intensity (1-100)
+                                        </label>
+                                        <input type="range" id="led-intensity" min="1" max="100" step="1"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.intensity">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.intensity">
+                                        </div>
+                                    </div>
+
+                                    <!-- Number of Cycles -->
+                                    <div class="space-y-2">
+                                        <label for="led-cycles"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Number of Cycles (1-10)
+                                        </label>
+                                        <input type="range" id="led-cycles" min="1" max="10" step="1"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model.number="effectParams.cycles">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.cycles">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Effect-Specific Parameters -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <!-- Custom Slider 1 -->
+                                    <div class="space-y-2" x-show="getCustomSlider1Label()">
+                                        <label for="led-custom1"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            x-text="getCustomSlider1Label()">
+                                        </label>
+                                        <input type="range" id="led-custom1" :min="getCustomSlider1Range().min"
+                                            :max="getCustomSlider1Range().max" :step="getCustomSlider1Range().step"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.custom1">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom1">
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom Slider 2 -->
+                                    <div class="space-y-2" x-show="getCustomSlider2Label()">
+                                        <label for="led-custom2"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            x-text="getCustomSlider2Label()">
+                                        </label>
+                                        <input type="range" id="led-custom2" :min="getCustomSlider2Range().min"
+                                            :max="getCustomSlider2Range().max" :step="getCustomSlider2Range().step"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.custom2">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom2">
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom Slider 3 -->
+                                    <div class="space-y-2" x-show="getCustomSlider3Label()">
+                                        <label for="led-custom3"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            x-text="getCustomSlider3Label()">
+                                        </label>
+                                        <input type="range" id="led-custom3" :min="getCustomSlider3Range().min"
+                                            :max="getCustomSlider3Range().max" :step="getCustomSlider3Range().step"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.custom3">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.custom3">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Color Parameters -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <!-- Color 1 -->
+                                    <div class="space-y-2">
+                                        <label for="led-color1"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color
+                                        </label>
+                                        <div x-ref="color1Pickr"
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
+                                    </div>
+
+                                    <!-- Additional Colors for Multicolour Chase -->
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
+                                        <label for="led-color2"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color 2
+                                        </label>
+                                        <div x-ref="color2Pickr"
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-2" x-show="selectedEffect === 'chase_multi'">
+                                        <label for="led-color3"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Color 3
+                                        </label>
+                                        <div x-ref="color3Pickr"
+                                            class="w-20 h-12 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Control Buttons -->
+                                <div class="flex gap-3 pt-4">
+                                    <button type="button" @click="testLedEffect(selectedEffect)"
+                                        class="py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors text-sm">
+                                        🎨 Test Effect
+                                    </button>
+                                    <button type="button" @click="turnOffLeds()"
+                                        class="py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors text-sm">
+                                        💡 Turn Off LEDs
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Form Actions (shown when not loading and no error) -->
-        <form @submit.prevent="saveConfiguration()" x-show="!loading && !error" x-transition.opacity.duration.300ms
-            class="hidden" :class="{ 'hidden': loading || error }" x-cloak>
+        <form @submit.prevent="saveConfiguration()" x-show="!loading && !error" x-transition>
             <!-- Action Buttons -->
             <div class="flex justify-center gap-4 pt-6">
                 <button type="button" @click="cancelConfiguration()"

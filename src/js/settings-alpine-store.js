@@ -15,6 +15,7 @@ function initializeSettingsStore() {
         error: null,
         saving: false,
         initialized: false, // Flag to prevent duplicate initialization
+        apPrintStatus: 'normal', // 'normal', 'scribing'
         
         // Configuration data (reactive) - matching backend API structure
         config: {
@@ -29,6 +30,10 @@ function initializeSettingsStore() {
                     ssid: '',
                     password: '',
                     connect_timeout: 15000,
+                    fallback_ap_ssid: '',
+                    fallback_ap_password: '',
+                    fallback_ap_mdns: '',
+                    fallback_ap_ip: '',
                     status: {
                         connected: false,
                         ip_address: '',
@@ -108,6 +113,97 @@ function initializeSettingsStore() {
             color3: null
         },
         
+        // WiFi network scanning state using Alpine reactive patterns
+        wifiScan: {
+            // Core state
+            networks: [],
+            currentSSID: null,
+            selectedNetwork: null,
+            isScanning: false,
+            error: null,
+            hasScanned: false,
+            
+            // Computed properties (Alpine getters)
+            get dropdownDisabled() {
+                return this.isScanning;
+            },
+            
+            get showManualEntry() {
+                return this.selectedNetwork === 'manual';
+            },
+            
+            get scanLabel() {
+                return this.hasScanned ? 'Rescan networks' : 'Scan for other networks';
+            },
+            
+            // Reactive options
+            get options() {
+                const options = [];
+                
+                // Helper function to get signal strength for a network
+                const getNetworkSignalStrength = (ssid) => {
+                    const network = this.networks.find(n => n.ssid === ssid);
+                    return network ? network.signal_strength : null;
+                };
+                
+                // Always show current SSID first (if available)
+                if (this.currentSSID) {
+                    const currentSignalStrength = getNetworkSignalStrength(this.currentSSID);
+                    const currentLabel = currentSignalStrength 
+                        ? `${this.currentSSID} (${currentSignalStrength}) 👈 active`
+                        : `${this.currentSSID} 👈 active`;
+                    
+                    options.push({
+                        value: this.currentSSID,
+                        label: currentLabel,
+                        disabled: false
+                    });
+                }
+                
+                // Add scanned networks (excluding current to avoid duplicates)
+                if (this.hasScanned) {
+                    // Store reference to formatNetworkDisplay to avoid this context issues
+                    const formatNetworkDisplay = (network) => {
+                        return `${network.ssid} (${network.signal_strength})`;
+                    };
+                    
+                    this.networks
+                        .filter(network => network.ssid !== this.currentSSID)
+                        .forEach(network => {
+                            options.push({
+                                value: network.ssid,
+                                label: formatNetworkDisplay(network),
+                                disabled: false
+                            });
+                        });
+                }
+                
+                // Always show manual entry
+                options.push({
+                    value: 'manual',
+                    label: 'Type It Out (Manual entry)',
+                    disabled: false
+                });
+                
+                // Show scan/rescan option (or scanning status)
+                if (this.isScanning) {
+                    options.push({
+                        value: '_scanning',
+                        label: "Scanning the airwaves...",
+                        disabled: true
+                    });
+                } else {
+                    options.push({
+                        value: '_scan',
+                        label: `${this.scanLabel}`,
+                        disabled: false
+                    });
+                }
+                
+                return options;
+            }
+        },
+        
         // Section definitions for navigation
         sections: [
             { id: 'device', name: 'Device', icon: '⚙️', color: 'purple' },
@@ -118,6 +214,10 @@ function initializeSettingsStore() {
         ],
         
         // Computed properties for complex UI states
+        get apPrintButtonText() {
+            return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Print AP Details';
+        },
+        
         get timeRangeDisplay() {
             const start = this.config?.unbiddenInk?.startHour ?? 0;
             const end = this.config?.unbiddenInk?.endHour ?? 24;
@@ -192,7 +292,13 @@ function initializeSettingsStore() {
                 // Deep merge server config into reactive state
                 this.mergeConfig(serverConfig);
                 
+                // Initialize WiFi state machine with current SSID
+                this.initializeWiFiState();
+                
                 console.log('Alpine Store: Configuration loaded successfully');
+                
+                // Don't automatically scan WiFi networks - user must initiate
+                // await this.scanWiFiNetworks();
                 
             } catch (error) {
                 console.error('Alpine Store: Failed to load configuration:', error);
@@ -201,6 +307,105 @@ function initializeSettingsStore() {
             } finally {
                 this.loading = false;
             }
+        },
+        
+        // Initialize WiFi state - simplified
+        initializeWiFiState() {
+            this.wifiScan.currentSSID = this.config?.device?.wifi?.ssid || null;
+            this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
+            this.wifiScan.networks = [];
+            this.wifiScan.isScanning = false;
+            this.wifiScan.hasScanned = false;
+            this.wifiScan.error = null;
+        },
+
+        // WiFi scanning - simplified with reactive updates
+        async scanWiFiNetworks() {
+            this.wifiScan.isScanning = true;
+            this.wifiScan.error = null;
+            
+            try {
+                const networks = await window.SettingsAPI.scanWiFiNetworks();
+                
+                // Deduplicate networks by SSID, keeping the strongest signal for each
+                const uniqueNetworks = [];
+                const seenSSIDs = new Set();
+                
+                networks
+                    .sort((a, b) => b.rssi - a.rssi) // Sort by strongest signal first
+                    .forEach(network => {
+                        if (!seenSSIDs.has(network.ssid)) {
+                            seenSSIDs.add(network.ssid);
+                            uniqueNetworks.push(network);
+                        }
+                    });
+                
+                // Update state - Alpine reactivity handles UI updates
+                this.wifiScan.networks = uniqueNetworks;
+                this.wifiScan.hasScanned = true;
+                
+                // Auto-select current SSID if found and nothing else selected
+                if (this.wifiScan.currentSSID && !this.wifiScan.selectedNetwork) {
+                    const currentNetwork = uniqueNetworks.find(n => n.ssid === this.wifiScan.currentSSID);
+                    if (currentNetwork) {
+                        this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
+                    }
+                }
+                
+                console.log('WiFi scan completed:', uniqueNetworks.length, 'unique networks found from', networks.length, 'total scanned');
+                
+            } catch (error) {
+                console.error('WiFi scan failed:', error);
+                this.wifiScan.error = error.message;
+                window.showMessage(`WiFi scan failed: ${error.message}`, 'error');
+            } finally {
+                this.wifiScan.isScanning = false;
+            }
+        },
+        
+        // Handle network selection from dropdown - State machine transitions
+        // Simplified network selection - let Alpine reactivity handle state
+        selectNetwork(value) {
+            if (value === '_scan') {
+                // Trigger scan but don't change selection
+                this.scanWiFiNetworks();
+                return;
+            }
+            
+            if (value === '_scanning') {
+                // Ignore scanning placeholder selection
+                return;
+            }
+            
+            // Update selected network - Alpine reactivity handles the rest
+            this.wifiScan.selectedNetwork = value;
+            
+            // Update config based on selection
+            if (value === 'manual') {
+                this.config.device.wifi.ssid = ''; // Clear for manual input
+            } else if (value && value !== '') {
+                this.config.device.wifi.ssid = value;
+            }
+            
+            // Clear validation errors
+            if (this.validation.errors['wifi.ssid']) {
+                delete this.validation.errors['wifi.ssid'];
+            }
+        },
+        
+        // Get formatted network display string
+        formatNetworkDisplay(network) {
+            const securityIcon = network.secure ? '🔒' : '📡';
+            const signalIcon = this.getSignalIcon(network.signal_percent);
+            return `${securityIcon} ${network.ssid} ${signalIcon} (${network.signal_percent}%)`;
+        },
+        
+        // Get signal strength icon
+        getSignalIcon(signalPercent) {
+            if (signalPercent >= 75) return '🔴';
+            if (signalPercent >= 50) return '🟡';
+            if (signalPercent >= 25) return '🟢';
+            return '⚪';
         },
         
         // Create a clean config object without read-only fields for server submission
@@ -297,6 +502,66 @@ function initializeSettingsStore() {
             window.location.href = '/';
         },
         
+        // Print AP details to thermal printer
+        async printAPDetails() {
+            try {
+                // Set scribing state
+                this.apPrintStatus = 'scribing';
+                
+                // Get fallback AP details from configuration - error if not available
+                const fallbackSSID = this.config?.device?.wifi?.fallback_ap_ssid;
+                const fallbackPassword = this.config?.device?.wifi?.fallback_ap_password;
+                const fallbackMDNS = this.config?.device?.wifi?.fallback_ap_mdns;
+                const fallbackIP = this.config?.device?.wifi?.fallback_ap_ip;
+                
+                // Error if we don't have the essential values
+                if (!fallbackSSID || !fallbackPassword) {
+                    throw new Error('Fallback AP credentials not available from backend');
+                }
+                
+                // Always have mDNS, optionally have IP as fallback
+                let urlLine = '';
+                if (fallbackMDNS && fallbackIP) {
+                    urlLine = `http://${fallbackMDNS}\n(or http://${fallbackIP})`;
+                } else if (fallbackMDNS) {
+                    // mDNS only (normal case when not in AP mode)
+                    urlLine = `http://${fallbackMDNS}`;
+                } else {
+                    throw new Error('No AP access URL available from backend');
+                }
+                
+                const apDetails = `Scribe Evolution Setup (Fallback) Network
+================================
+
+Network: ${fallbackSSID}
+Password: ${fallbackPassword}
+
+If WiFi connection fails, connect to the above network, then visit:
+
+${urlLine}`;
+                
+                await window.SettingsAPI.printLocalContent(apDetails);
+                
+                // Show "Scribing" for 2 seconds then revert to normal
+                setTimeout(() => {
+                    this.apPrintStatus = 'normal';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Failed to print AP details:', error);
+                // Reset to normal state and show error to user
+                this.apPrintStatus = 'normal';
+                
+                // Use fallback if showMessage is not available
+                if (typeof window.showMessage === 'function') {
+                    window.showMessage(`Failed to print AP details: ${error.message}`, 'error');
+                } else {
+                    console.error('❌ Failed to print AP details:', error.message);
+                    alert(`Failed to print AP details: ${error.message}`);
+                }
+            }
+        },
+        
         // Helper methods
         formatHour(hour) {
             if (hour === 0) return '00:00';
@@ -338,6 +603,12 @@ function initializeSettingsStore() {
                 this.config.device.wifi.ssid = serverConfig.device.wifi.ssid || '';
                 this.config.device.wifi.password = serverConfig.device.wifi.password || '';
                 this.config.device.wifi.connect_timeout = serverConfig.device.wifi.connect_timeout || 15000;
+                
+                // Load fallback AP details
+                this.config.device.wifi.fallback_ap_ssid = serverConfig.device.wifi.fallback_ap_ssid || '';
+                this.config.device.wifi.fallback_ap_password = serverConfig.device.wifi.fallback_ap_password || '';
+                this.config.device.wifi.fallback_ap_mdns = serverConfig.device.wifi.fallback_ap_mdns || '';
+                this.config.device.wifi.fallback_ap_ip = serverConfig.device.wifi.fallback_ap_ip || '';
                 
                 if (!serverConfig.device.wifi.ssid) {
                     console.warn('⚠️ Missing device.wifi.ssid in config');

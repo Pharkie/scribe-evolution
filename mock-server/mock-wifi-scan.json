@@ -1,0 +1,118 @@
+{
+    "success": true,
+    "count": 14,
+    "networks": [
+        {
+            "ssid": "MakerSpace_Workshop",
+            "rssi": -42,
+            "channel": 6,
+            "secure": true,
+            "encryption": "WPA3",
+            "signal_percent": 95
+        },
+        {
+            "ssid": "Coffee_Shop_Free_WiFi",
+            "rssi": -55,
+            "channel": 1,
+            "secure": false,
+            "encryption": "None",
+            "signal_percent": 85
+        },
+        {
+            "ssid": "",
+            "rssi": -58,
+            "channel": 11,
+            "secure": true,
+            "encryption": "WPA2",
+            "signal_percent": 80
+        },
+        {
+            "ssid": "Adam's iPhone 15 Pro",
+            "rssi": -61,
+            "channel": 6,
+            "secure": true,
+            "encryption": "WPA2",
+            "signal_percent": 75
+        },
+        {
+            "ssid": "NETGEAR_5G",
+            "rssi": -64,
+            "channel": 36,
+            "secure": true,
+            "encryption": "WPA2/WPA3",
+            "signal_percent": 70
+        },
+        {
+            "ssid": "FBI_Surveillance_Van_4",
+            "rssi": -67,
+            "channel": 3,
+            "secure": true,
+            "encryption": "WPA2",
+            "signal_percent": 65
+        },
+        {
+            "ssid": "TP-Link_Guest_Network",
+            "rssi": -72,
+            "channel": 8,
+            "secure": false,
+            "encryption": "None",
+            "signal_percent": 55
+        },
+        {
+            "ssid": "xfinitywifi",
+            "rssi": -75,
+            "channel": 1,
+            "secure": false,
+            "encryption": "None",
+            "signal_percent": 45
+        },
+        {
+            "ssid": "SmartHome_IoT",
+            "rssi": -78,
+            "channel": 149,
+            "secure": true,
+            "encryption": "WPA2",
+            "signal_percent": 40
+        },
+        {
+            "ssid": "VM7205911_5GHz",
+            "rssi": -81,
+            "channel": 44,
+            "secure": true,
+            "encryption": "WPA2",
+            "signal_percent": 30
+        },
+        {
+            "ssid": "Printer_Setup_AP",
+            "rssi": -84,
+            "channel": 6,
+            "secure": false,
+            "encryption": "None",
+            "signal_percent": 25
+        },
+        {
+            "ssid": "DIRECT-72-HP OfficeJet",
+            "rssi": -87,
+            "channel": 1,
+            "secure": true,
+            "encryption": "WPA2",
+            "signal_percent": 15
+        },
+        {
+            "ssid": "🏠 Home Sweet Home 🏠",
+            "rssi": -89,
+            "channel": 11,
+            "secure": true,
+            "encryption": "WPA3",
+            "signal_percent": 10
+        },
+        {
+            "ssid": "WeakSignalNetwork",
+            "rssi": -92,
+            "channel": 157,
+            "secure": true,
+            "encryption": "WEP",
+            "signal_percent": 5
+        }
+    ]
+}

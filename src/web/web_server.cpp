@@ -357,6 +357,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/print-mqtt", "Send MQTT message", handleMQTTSend, true);
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
+        registerRoute("GET", "/api/scan-wifi", "Scan WiFi networks", handleWiFiScan, true);
 
 #if ENABLE_LEDS
         // Consolidated LED effect endpoints
