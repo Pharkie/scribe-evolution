@@ -2,7 +2,7 @@
 <html lang="en" class="app-root">
 
 <head>
-        <title>404 - Paper Jam | Scribe Printer</title>
+        <title>404 - Paper Jam - Scribe Evolution</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -74,36 +74,12 @@
                                         </div>
                                 </div>
 
-
-
-                                <!-- Advanced Options -->
-                                <details class="error-advanced">
-                                        <summary class="error-advanced-summary">
-                                                📋 Advanced Options
-                                        </summary>
-                                        <div class="error-advanced-content">
-                                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                                        Need to report this error? Copy the details below:
-                                                </p>
-                                                <button @click="copyErrorDetails()" class="error-btn error-btn-small">
-                                                        📋 Copy Error Details
-                                                </button>
-
-                                                <!-- Debug Information -->
-                                                <div
-                                                        class="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">
-                                                        <div>Timestamp: <span x-text="timestamp"></span></div>
-                                                        <div>User Agent: <span
-                                                                        x-text="navigator.userAgent.substring(0, 50) + '...'"></span>
-                                                        </div>
-                                                        <div>Referrer: <span
-                                                                        x-text="document.referrer || 'Direct access'"></span>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                </details>
-
-
+                                <!-- Action Buttons -->
+                                <div class="error-actions">
+                                        <button @click="goHome()" class="error-btn error-btn-primary">
+                                                🏠 Home
+                                        </button>
+                                </div>
                         </div>
                 </div>
 
