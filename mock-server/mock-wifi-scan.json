@@ -1,118 +1,70 @@
 {
     "success": true,
-    "count": 14,
+    "count": 8,
     "networks": [
         {
-            "ssid": "MakerSpace_Workshop",
-            "rssi": -42,
-            "channel": 6,
+            "ssid": "MooseCave",
+            "rssi": -60,
+            "channel": 5,
             "secure": true,
-            "encryption": "WPA3",
-            "signal_percent": 95
+            "encryption": "Unknown",
+            "signal_strength": "Good"
         },
         {
-            "ssid": "Coffee_Shop_Free_WiFi",
-            "rssi": -55,
-            "channel": 1,
-            "secure": false,
-            "encryption": "None",
-            "signal_percent": 85
-        },
-        {
-            "ssid": "",
-            "rssi": -58,
-            "channel": 11,
-            "secure": true,
-            "encryption": "WPA2",
-            "signal_percent": 80
-        },
-        {
-            "ssid": "Adam's iPhone 15 Pro",
-            "rssi": -61,
+            "ssid": "VM7279940",
+            "rssi": -70,
             "channel": 6,
             "secure": true,
             "encryption": "WPA2",
-            "signal_percent": 75
+            "signal_strength": "Fair"
         },
         {
-            "ssid": "NETGEAR_5G",
-            "rssi": -64,
-            "channel": 36,
+            "ssid": "Hyperoptic Fibre 42E3 2.4G",
+            "rssi": -71,
+            "channel": 10,
             "secure": true,
-            "encryption": "WPA2/WPA3",
-            "signal_percent": 70
+            "encryption": "Unknown",
+            "signal_strength": "Weak"
         },
         {
-            "ssid": "FBI_Surveillance_Van_4",
-            "rssi": -67,
-            "channel": 3,
-            "secure": true,
-            "encryption": "WPA2",
-            "signal_percent": 65
-        },
-        {
-            "ssid": "TP-Link_Guest_Network",
+            "ssid": "MooseCave",
             "rssi": -72,
-            "channel": 8,
-            "secure": false,
-            "encryption": "None",
-            "signal_percent": 55
+            "channel": 5,
+            "secure": true,
+            "encryption": "Unknown",
+            "signal_strength": "Weak"
         },
         {
-            "ssid": "xfinitywifi",
-            "rssi": -75,
+            "ssid": "VM7205911",
+            "rssi": -74,
             "channel": 1,
-            "secure": false,
-            "encryption": "None",
-            "signal_percent": 45
-        },
-        {
-            "ssid": "SmartHome_IoT",
-            "rssi": -78,
-            "channel": 149,
             "secure": true,
             "encryption": "WPA2",
-            "signal_percent": 40
+            "signal_strength": "Weak"
         },
         {
-            "ssid": "VM7205911_5GHz",
+            "ssid": "Hyperoptic Fibre 6BE3",
             "rssi": -81,
-            "channel": 44,
+            "channel": 10,
             "secure": true,
-            "encryption": "WPA2",
-            "signal_percent": 30
+            "encryption": "Unknown",
+            "signal_strength": "Weak"
         },
         {
-            "ssid": "Printer_Setup_AP",
-            "rssi": -84,
+            "ssid": "Vodafone 2",
+            "rssi": -82,
             "channel": 6,
-            "secure": false,
-            "encryption": "None",
-            "signal_percent": 25
-        },
-        {
-            "ssid": "DIRECT-72-HP OfficeJet",
-            "rssi": -87,
-            "channel": 1,
             "secure": true,
             "encryption": "WPA2",
-            "signal_percent": 15
+            "signal_strength": "Weak"
         },
         {
-            "ssid": "🏠 Home Sweet Home 🏠",
-            "rssi": -89,
-            "channel": 11,
+            "ssid": "VM8550338",
+            "rssi": -91,
+            "channel": 6,
             "secure": true,
-            "encryption": "WPA3",
-            "signal_percent": 10
-        },
-        {
-            "ssid": "WeakSignalNetwork",
-            "rssi": -92,
-            "channel": 157,
-            "secure": true,
-            "encryption": "WEP",
-            "signal_percent": 5
+            "encryption": "WPA2",
+            "signal_strength": "Weak"
         }
     ]
 }
