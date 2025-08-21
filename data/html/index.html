@@ -18,11 +18,15 @@
             <!-- Left spacer -->
             <div class="header-spacer"></div>
 
-            <!-- Centered title with printer icon -->
+            <!-- Centered title with logo -->
             <div class="header-center">
-                <h1 class="page-title">
-                    <span class="text-4xl sm:text-5xl">🖨️</span>
-                    <span>Scribe</span>
+                <h1 class="page-title flex items-center justify-center">
+                    <!-- Dark mode logo (white) -->
+                    <img src="/images/ScribeLogoMain-white.svg" alt="Scribe"
+                        class="h-20 sm:h-24 md:h-28 w-auto dark:block hidden" />
+                    <!-- Light mode logo (dark) -->
+                    <img src="/images/ScribeLogoMain.svg" alt="Scribe"
+                        class="h-20 sm:h-24 md:h-28 w-auto dark:hidden block" />
                 </h1>
             </div>
 

@@ -376,8 +376,8 @@ function initializeSettingsStore() {
             // Unbidden Ink - log errors for missing values
             if (serverConfig.unbiddenInk) {
                 this.config.unbiddenInk.enabled = serverConfig.unbiddenInk.enabled || false;
-                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour || 8;
-                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour || 22;
+                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour ?? 8;
+                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour ?? 22;
                 this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes || 120;
                 this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt || '';
                 this.config.unbiddenInk.chatgptApiToken = serverConfig.unbiddenInk.chatgptApiToken || '';
@@ -662,7 +662,7 @@ function initializeSettingsStore() {
         // Get effect description
         getEffectDescription() {
             const descriptions = {
-                'chase_single': 'Single colour dot chasing around the strip. Speed controls movement rate, Intensity controls brightness.',
+                'chase_single': 'Single colour dot chasing around the strip. Speed controls movement rate, Intensity controls trail length.',
                 'rainbow': 'Smooth rainbow wave moving across the strip. Speed controls wave movement, Intensity controls density of colors, Wave Length controls how many colors appear simultaneously.',
                 'twinkle': 'Random twinkling stars effect. Speed controls twinkle rate, Intensity controls number of active twinkles, Fade Speed controls how quickly stars fade out.',
                 'chase_multi': 'Multiple coloured dots chasing with trails using three settable colors. Speed controls movement, Intensity controls trail length, Dot Size controls the size of each colour dot.',
