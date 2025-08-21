@@ -23,15 +23,16 @@ function loadMockData() {
     const mockDiagnostics = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-diagnostics.json'), 'utf8'));
     const mockPrinterDiscovery = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-printer-discovery.json'), 'utf8'));
     const mockNvsDump = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-nvs-dump.json'), 'utf8'));
+    const mockWifiScan = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-wifi-scan.json'), 'utf8'));
     
-    return { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump };
+    return { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan };
   } catch (error) {
     console.error('❌ Error loading mock data files:', error.message);
     process.exit(1);
   }
 }
 
-let { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump } = loadMockData();
+let { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan } = loadMockData();
 
 // MIME types
 const mimeTypes = {
@@ -228,6 +229,10 @@ const server = http.createServer((req, res) => {
         }, 300);
       });
       
+    } else if (pathname === '/api/scan-wifi') {
+      console.log('📶 WiFi scan requested');
+      setTimeout(() => sendJSON(res, mockWifiScan), 800);
+      
     } else {
       sendJSON(res, { error: 'API endpoint not found' }, 404);
     }
@@ -340,6 +345,7 @@ process.stdin.on('data', (key) => {
       mockDiagnostics = reloaded.mockDiagnostics;
       mockPrinterDiscovery = reloaded.mockPrinterDiscovery;
       mockNvsDump = reloaded.mockNvsDump;
+      mockWifiScan = reloaded.mockWifiScan;
       console.log('✅ JSON data reloaded successfully\n');
     } catch (error) {
       console.error('❌ Error reloading JSON data:', error.message);

@@ -7,9 +7,9 @@ import subprocess
 Import("env")  # pylint: disable=undefined-variable  # type: ignore
 
 
-def deploy_all(source, target, env):  # pylint: disable=unused-argument
-    """Deploy complete workflow: build + upload fs + upload firmware + monitor"""
-    print("🚀 Starting deploy_all workflow...")
+def build_upload_monitor(source, target, env):  # pylint: disable=unused-argument
+    """Build, Upload FS & Firmware, Monitor - complete workflow"""
+    print("🚀 Starting build_upload_monitor workflow...")
 
     # Step 1: Build frontend
     print("📦 Building frontend...")
@@ -54,9 +54,9 @@ def deploy_all(source, target, env):  # pylint: disable=unused-argument
 
 
 env.AddCustomTarget(  # pylint: disable=undefined-variable  # type: ignore
-    "deploy_all",
+    "build_upload_monitor",
     None,
-    deploy_all,
-    "Deploy All",
-    "Build + Upload FS + Upload Firmware + Monitor",
+    build_upload_monitor,
+    "Build, Upload FS & Firmware, Monitor",
+    "Build frontend + Upload filesystem + Upload firmware + Start monitor",
 )

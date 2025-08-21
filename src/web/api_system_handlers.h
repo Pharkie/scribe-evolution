@@ -35,4 +35,12 @@ void handleDiagnostics(AsyncWebServerRequest *request);
  */
 void handleMQTTSend(AsyncWebServerRequest *request);
 
+/**
+ * @brief Handle WiFi network scanning request
+ * @details Scans for available WiFi networks and returns them with signal strength
+ *
+ * Endpoint: GET /api/scan-wifi
+ */
+void handleWiFiScan(AsyncWebServerRequest *request);
+
 #endif // API_SYSTEM_HANDLERS_H

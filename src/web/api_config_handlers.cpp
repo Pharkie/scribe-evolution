@@ -98,6 +98,12 @@ void handleConfigGet(AsyncWebServerRequest *request)
     wifi["password"] = config.wifiPassword;
     wifi["connect_timeout"] = config.wifiConnectTimeoutMs;
 
+    // Include fallback AP details for client use - always available regardless of current mode
+    wifi["fallback_ap_ssid"] = fallbackAPSSID;
+    wifi["fallback_ap_password"] = fallbackAPPassword;
+    // Always provide mDNS hostname as it's consistent and preferred
+    wifi["fallback_ap_mdns"] = String(getMdnsHostname()) + ".local";
+
     // WiFi status information
     JsonObject wifiStatus = wifi.createNestedObject("status");
     wifiStatus["connected"] = (WiFi.status() == WL_CONNECTED);
@@ -111,7 +117,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     String signalStrength = String(rssi) + " dBm";
     if (rssi >= -50)
     {
-        signalStrength += " (Excellent)";
+        signalStrength += " (Strong)";
     }
     else if (rssi >= -60)
     {
@@ -121,13 +127,9 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         signalStrength += " (Fair)";
     }
-    else if (rssi >= -80)
-    {
-        signalStrength += " (Weak)";
-    }
     else
     {
-        signalStrength += " (Very Weak)";
+        signalStrength += " (Weak)";
     }
     wifiStatus["signal_strength"] = signalStrength;
 
