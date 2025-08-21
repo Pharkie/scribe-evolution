@@ -37,11 +37,9 @@ void handleMQTTSend(AsyncWebServerRequest *request);
 
 /**
  * @brief Handle WiFi network scanning request
- * @param request The HTTP request
+ * @details Scans for available WiFi networks and returns them with signal strength
  *
- * Endpoint: GET /api/wifi/scan
- * Returns array of nearby WiFi networks with SSID, signal strength,
- * encryption type, and channel information for network selection
+ * Endpoint: GET /api/scan-wifi
  */
 void handleWiFiScan(AsyncWebServerRequest *request);
 
