@@ -681,7 +681,7 @@
                                 </div>
 
                                 <!-- Generic Parameters -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                     <!-- Speed -->
                                     <div class="space-y-2">
                                         <label for="led-speed"
@@ -708,6 +708,22 @@
                                         </div>
                                     </div>
 
+                                    <!-- Number of Cycles -->
+                                    <div class="space-y-2">
+                                        <label for="led-cycles"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Number of Cycles (1-10)
+                                        </label>
+                                        <input type="range" id="led-cycles" min="1" max="10" step="1"
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            x-model="effectParams.cycles">
+                                        <div class="text-xs text-gray-500 text-center" x-text="effectParams.cycles">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Color Parameters -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <!-- Color 1 -->
                                     <div class="space-y-2">
                                         <label for="led-color1"

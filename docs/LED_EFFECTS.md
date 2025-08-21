@@ -12,8 +12,10 @@ printer project with a **runtime-configurable LED effects system**.
   without restart
 - **Dynamic memory allocation**: Only allocates LED buffer when enabled, sized
   for actual LED count
-- **Web interface integration**: Full LED settings panel with validation
+- **Web interface integration**: Full LED settings panel with validation and Effect Playground
 - **6 built-in effects**: Complete set of visual effects for various use cases
+- **Cycle-based control**: All effects operate on cycle counting (1 cycle = one complete pattern)
+- **Effect Playground**: Interactive testing interface with real-time parameter adjustment
 - **Boot effect**: Automatic LED effect on system startup
 
 ## Configuration
