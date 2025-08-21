@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Scribe project uses a dual-layer configuration system designed to separate
+The Scribe Evolution project uses a dual-layer configuration system designed to separate
 compile-time constants from runtime user settings. This document outlines the
 rules and architecture to ensure proper usage.
 

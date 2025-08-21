@@ -1,12 +1,12 @@
 /**
  * @file web_server.h
- * @brief Core web server setup and routing for Scribe ESP32-C3 Thermal Printer
+ * @brief Core web server setup and routing for Scribe Evolution ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
- * This file is part of the Scribe ESP32-C3 Thermal Printer project.
+ * This file is part of the Scribe Evolution ESP32-C3 Thermal Printer project.
  *
  * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
  * International License. To view a copy of this license, visit
