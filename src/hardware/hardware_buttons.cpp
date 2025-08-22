@@ -185,7 +185,9 @@ void handleButtonPress(int buttonIndex)
     const String &shortMqttTopic = config.buttonShortMqttTopics[buttonIndex];
 
     LOG_VERBOSE("BUTTONS", "Triggering short press endpoint: %s", shortAction.c_str());
-    triggerEndpointFromButton(shortAction.c_str(), shortMqttTopic.c_str());
+
+    // Generate content and print locally - same as web endpoints but direct
+    handleButtonAction(shortAction.c_str(), shortMqttTopic.c_str());
 }
 
 void handleButtonLongPress(int buttonIndex)
@@ -209,60 +211,60 @@ void handleButtonLongPress(int buttonIndex)
     const String &longMqttTopic = config.buttonLongMqttTopics[buttonIndex];
 
     LOG_VERBOSE("BUTTONS", "Triggering long press endpoint: %s", longAction.c_str());
-    triggerEndpointFromButton(longAction.c_str(), longMqttTopic.c_str());
+
+    // Generate content and print locally - same as web endpoints but direct
+    handleButtonAction(longAction.c_str(), longMqttTopic.c_str());
 }
 
-void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
+// Handle button action - generate content and print locally
+void handleButtonAction(const char *endpoint, const char *mqttTopic)
 {
-    // Map endpoint strings to handler functions
-    LOG_VERBOSE("BUTTONS", "Hardware button triggered: %s", endpoint);
+    if (strlen(endpoint) == 0)
+    {
+        LOG_VERBOSE("BUTTONS", "Empty endpoint - no action");
+        return;
+    }
 
-    // Generate content based on endpoint
-    bool contentGenerated = false;
+    LOG_VERBOSE("BUTTONS", "Hardware button action: %s", endpoint);
 
+    String content;
+    String actionHeader;
+
+    // Generate content directly using the same generators as web endpoints
     if (strcmp(endpoint, "/api/riddle") == 0)
     {
-        contentGenerated = generateAndQueueRiddle();
+        content = generateRiddleContent();
+        actionHeader = "RIDDLE";
     }
     else if (strcmp(endpoint, "/api/joke") == 0)
     {
-        contentGenerated = generateAndQueueJoke();
+        content = generateJokeContent();
+        actionHeader = "JOKE";
     }
     else if (strcmp(endpoint, "/api/quote") == 0)
     {
-        contentGenerated = generateAndQueueQuote();
+        content = generateQuoteContent();
+        actionHeader = "QUOTE";
     }
     else if (strcmp(endpoint, "/api/quiz") == 0)
     {
-        contentGenerated = generateAndQueueQuiz();
+        content = generateQuizContent();
+        actionHeader = "QUIZ";
     }
     else if (strcmp(endpoint, "/api/news") == 0)
     {
-        contentGenerated = generateAndQueueNews();
+        content = generateNewsContent();
+        actionHeader = "NEWS";
     }
-    else if (strcmp(endpoint, "/api/character-test") == 0)
+    else if (strcmp(endpoint, "/api/character-test") == 0 || strcmp(endpoint, "/api/test-print") == 0)
     {
-        contentGenerated = generateAndQueuePrintTest();
-    }
-    else if (strcmp(endpoint, "/api/test-print") == 0)
-    {
-        contentGenerated = generateAndQueuePrintTest(); // Same handler for both endpoint variations
+        content = loadPrintTestContent();
+        actionHeader = "TEST PRINT";
     }
     else if (strcmp(endpoint, "/api/unbidden-ink") == 0)
     {
-        contentGenerated = generateAndQueueUnbiddenInk();
-    }
-    else if (strcmp(endpoint, "/api/keep-going") == 0)
-    {
-        // Keep-going endpoint - generate random content
-        // For now, let's default to joke
-        contentGenerated = generateAndQueueJoke();
-    }
-    else if (strlen(endpoint) == 0)
-    {
-        // Empty endpoint - do nothing
-        LOG_VERBOSE("BUTTONS", "Empty endpoint - no action");
-        return;
+        content = generateUnbiddenInkContent();
+        actionHeader = "UNBIDDEN INK";
     }
     else
     {
@@ -270,126 +272,25 @@ void triggerEndpointFromButton(const char *endpoint, const char *mqttTopic)
         return;
     }
 
-    if (!contentGenerated)
-    {
-        LOG_ERROR("BUTTONS", "Failed to generate content for endpoint: %s", endpoint);
-        return;
-    }
-
-    // For hardware buttons, the generateAndQueue functions handle both content generation
-    // and queuing for local printing. MQTT functionality is handled separately.
-    if (strlen(mqttTopic) > 0)
-    {
-        // For MQTT, we need to generate content separately since the queue functions
-        // are designed for local printing
-        LOG_WARNING("BUTTONS", "MQTT functionality for hardware buttons not fully implemented for endpoint: %s", endpoint);
-    }
-    else
-    {
-        // Content was already queued for local printing by the generateAndQueue function
-        LOG_VERBOSE("BUTTONS", "Content queued for local printing via hardware button");
-    }
-}
-
-// ========================================
-// BUTTON CONTENT GENERATION FUNCTIONS
-// ========================================
-
-String generateRiddleButtonContent()
-{
-    String content = generateRiddleContent();              // Use existing content generator
-    return formatContentWithHeader("RIDDLE", content, ""); // Add header for local printing
-}
-
-String generateJokeButtonContent()
-{
-    String content = generateJokeContent();              // Use existing content generator
-    return formatContentWithHeader("JOKE", content, ""); // Add header for local printing
-}
-
-String generateQuoteButtonContent()
-{
-    String content = generateQuoteContent();              // Use existing content generator
-    return formatContentWithHeader("QUOTE", content, ""); // Add header for local printing
-}
-
-String generateQuizButtonContent()
-{
-    String content = generateQuizContent();              // Use existing content generator
-    return formatContentWithHeader("QUIZ", content, ""); // Add header for local printing
-}
-
-String generatePrintTestButtonContent()
-{
-    String testContent = loadPrintTestContent();
-    return formatContentWithHeader("TEST PRINT", testContent, ""); // Add header for local printing
-}
-
-String generateUnbiddenInkButtonContent()
-{
-    String content = generateUnbiddenInkContent();               // Use existing content generator
-    return formatContentWithHeader("UNBIDDEN INK", content, ""); // Add header for local printing
-}
-
-// ========================================
-// BUTTON CONTENT DELIVERY FUNCTIONS
-// ========================================
-
-void handlePrintContentFromButton(const String &content)
-{
-    // Print the content directly to the local printer
+    // If content generation failed, log and return
     if (content.length() == 0)
     {
-        LOG_WARNING("BUTTONS", "Cannot print empty content");
+        LOG_ERROR("BUTTONS", "Failed to generate content for: %s", endpoint);
         return;
     }
 
-    LOG_VERBOSE("BUTTONS", "Printing content locally from button press");
-
-    // Use the existing print system directly
+    // Format with header and send to local printer (same as /api/print-local)
+    String formattedContent = formatContentWithHeader(actionHeader, content, "");
     String timestamp = getFormattedDateTime();
-    printWithHeader(timestamp, content);
 
-    LOG_NOTICE("BUTTONS", "Button action printed successfully");
-}
+    // Print directly to local printer
+    printWithHeader(timestamp, formattedContent);
 
-void handleMQTTSendFromButton(const String &content, const char *mqttTopic)
-{
-    if (content.length() == 0 || strlen(mqttTopic) == 0)
+    LOG_NOTICE("BUTTONS", "Button action completed: %s", endpoint);
+
+    // Handle MQTT if topic is specified (future enhancement)
+    if (strlen(mqttTopic) > 0)
     {
-        LOG_WARNING("BUTTONS", "Cannot send empty content or to empty topic");
-        return;
-    }
-
-    // Get device owner for MQTT message sender info
-    const RuntimeConfig &config = getRuntimeConfig();
-    String deviceOwner = config.deviceOwner;
-
-    LOG_VERBOSE("BUTTONS", "Sending via MQTT to topic '%s' from device owner: %s", mqttTopic, deviceOwner.c_str());
-
-    // Use the existing MQTT client to publish the message
-    if (mqttClient.connected())
-    {
-        // Create JSON payload similar to web interface
-        DynamicJsonDocument doc(1024);
-        doc["message"] = content;
-        doc["from"] = deviceOwner;
-        doc["timestamp"] = getFormattedDateTime();
-
-        String payload;
-        serializeJson(doc, payload);
-
-        if (mqttClient.publish(mqttTopic, payload.c_str()))
-        {
-            LOG_NOTICE("BUTTONS", "Button action sent via MQTT successfully");
-        }
-        else
-        {
-            LOG_ERROR("BUTTONS", "Failed to publish MQTT message for button action");
-        }
-    }
-    else
-    {
-        LOG_ERROR("BUTTONS", "MQTT client not connected, cannot send button action");
+        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", mqttTopic);
     }
 }
