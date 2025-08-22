@@ -263,11 +263,10 @@ function initializeSettingsStore() {
                 return { left: '0%', width: '100%' };
             }
             
-            // Calculate percentages based on actual slider ranges
-            // Start slider: min=0, max=23, so position = start/23 * 100
-            // End slider: min=1, max=24, so position = (end-1)/(24-1) * 100
-            const startPercent = (start / 23) * 100;
-            const endPercent = ((end - 1) / 23) * 100;
+            // Calculate percentages based on unified 0-24 slider scale
+            // Both sliders: min=0, max=24
+            const startPercent = (start / 24) * 100;
+            const endPercent = (end / 24) * 100;
             
             return {
                 left: `${Math.min(startPercent, endPercent)}%`,
@@ -1027,7 +1026,7 @@ ${urlLine}`;
 
         set startHourSafe(value) {
             // Direct setter - collision handled by event handlers
-            this.config.unbiddenInk.startHour = Math.max(0, Math.min(23, parseInt(value)));
+            this.config.unbiddenInk.startHour = Math.max(0, Math.min(24, parseInt(value)));
         },
 
         get endHourSafe() {
@@ -1036,7 +1035,7 @@ ${urlLine}`;
 
         set endHourSafe(value) {
             // Direct setter - collision handled by event handlers
-            this.config.unbiddenInk.endHour = Math.max(1, Math.min(24, parseInt(value)));
+            this.config.unbiddenInk.endHour = Math.max(0, Math.min(24, parseInt(value)));
         },
 
         // Handle collision-aware start hour changes
@@ -1045,7 +1044,8 @@ ${urlLine}`;
             const currentEnd = this.config.unbiddenInk.endHour;
             
             // Check if this would cause collision (need at least 1 hour gap)
-            if (newValue >= currentEnd - 1) {
+            // Both values are now on 0-24 scale
+            if (newValue >= currentEnd) {
                 // Collision detected - revert the input to its current value
                 event.target.value = this.config.unbiddenInk.startHour;
                 return;
@@ -1061,7 +1061,8 @@ ${urlLine}`;
             const currentStart = this.config.unbiddenInk.startHour;
             
             // Check if this would cause collision (need at least 1 hour gap)
-            if (newValue <= currentStart + 1) {
+            // Both values are now on 0-24 scale
+            if (newValue <= currentStart) {
                 // Collision detected - revert the input to its current value
                 event.target.value = this.config.unbiddenInk.endHour;
                 return;

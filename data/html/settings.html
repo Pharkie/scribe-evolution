@@ -425,12 +425,12 @@
                                     </div>
 
                                     <!-- Start time handle -->
-                                    <input type="range" min="0" max="23" step="1"
+                                    <input type="range" min="0" max="24" step="1"
                                         class="dual-range-input dual-range-start" :value="startHourSafe"
                                         @input="handleStartHourChange($event)">
 
                                     <!-- End time handle -->
-                                    <input type="range" min="1" max="24" step="1"
+                                    <input type="range" min="0" max="24" step="1"
                                         class="dual-range-input dual-range-end" :value="endHourSafe"
                                         @input="handleEndHourChange($event)">
                                 </div>
