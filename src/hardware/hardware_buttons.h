@@ -80,9 +80,9 @@ void queueButtonAction(const String &endpoint, const String &mqttTopic, int butt
 void triggerButtonLedEffect(int buttonIndex, bool isLongPress);
 
 /**
- * @brief Make async local HTTP request to web endpoint (DEPRECATED - use queue system)
- * @param endpoint The API endpoint path to request
+ * @brief Execute button endpoint directly without HTTP calls
+ * @param endpoint The API endpoint path to execute
  */
-void makeAsyncLocalRequest(const char *endpoint);
+void executeButtonEndpoint(const char *endpoint);
 
 #endif

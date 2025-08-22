@@ -1,5 +1,5 @@
 /**
- * @file config.h.example.example
+ * @file config.h.example
  * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
@@ -73,6 +73,21 @@ static const ButtonConfig defaultButtons[] = {
     {6, "/api/riddle", "", "", ""},                  // Button 2: GPIO 6 - local printing for short action, no long action
     {7, "/api/quote", "", "", ""},                   // Button 3: GPIO 7 - local printing for short action, no long action
     {8, "/api/quiz", "", "", ""}                     // Button 4: GPIO 8 - local printing for short action, no long action
+};
+
+// Default button LED effects configuration (used with ENABLE_LEDS)
+static const char *defaultButtonShortLedEffects[] = {
+    "simple_chase", // Button 1 short press - green simple chase
+    "simple_chase", // Button 2 short press - green simple chase
+    "simple_chase", // Button 3 short press - green simple chase
+    "simple_chase"  // Button 4 short press - green simple chase
+};
+
+static const char *defaultButtonLongLedEffects[] = {
+    "pulse", // Button 1 long press - blue pulse
+    "pulse", // Button 2 long press - blue pulse
+    "pulse", // Button 3 long press - blue pulse
+    "pulse"  // Button 4 long press - blue pulse
 };
 
 // LEDs: Optional FastLED support

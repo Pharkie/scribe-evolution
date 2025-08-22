@@ -8,7 +8,6 @@
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
 #include <PubSubClient.h>
-#include <HTTPClient.h>
 #include <WiFi.h>
 #include <vector>
 
@@ -243,11 +242,10 @@ void processButtonActionQueue()
     LOG_VERBOSE("BUTTONS", "Processing queued button action: %s (queue size: %d)", 
                action.endpoint.c_str(), buttonActionQueue.size());
     
-    // Execute the action via the existing blocking function
-    // This is now safe because it's not in the main loop's critical path
+    // Execute the action directly without HTTP calls
     if (action.endpoint.length() > 0)
     {
-        makeAsyncLocalRequest(action.endpoint.c_str());
+        executeButtonEndpoint(action.endpoint.c_str());
     }
     
     // Handle MQTT if topic is specified (future enhancement)
@@ -402,61 +400,51 @@ void handleButtonLongPress(int buttonIndex)
     queueButtonAction(longAction, longMqttTopic, buttonIndex, true);
 }
 
-// Make async local HTTP request to web endpoint (DEPRECATED - kept for compatibility)
-// This function is still synchronous/blocking but now only called from action queue
-void makeAsyncLocalRequest(const char *endpoint)
+// Execute button endpoint directly without HTTP calls
+void executeButtonEndpoint(const char *endpoint)
 {
-    if (WiFi.status() != WL_CONNECTED)
+    LOG_NOTICE("BUTTONS", "Executing button endpoint: %s", endpoint);
+    
+    bool success = false;
+    
+    if (strcmp(endpoint, "/api/joke") == 0)
     {
-        LOG_ERROR("BUTTONS", "Cannot make local request - WiFi not connected");
-        return;
+        success = generateAndQueueJoke();
     }
-
-    // Use local IP address for the request
-    String localIP = WiFi.localIP().toString();
-    String url = "http://" + localIP + endpoint;
-
-    LOG_NOTICE("BUTTONS", "Making local HTTP request to: %s", url.c_str());
-
-    // Create HTTPClient for quick local request
-    HTTPClient http;
-
-    if (!http.begin(url))
+    else if (strcmp(endpoint, "/api/riddle") == 0)
     {
-        LOG_ERROR("BUTTONS", "Failed to initialize HTTP client for: %s", url.c_str());
-        return;
+        success = generateAndQueueRiddle();
     }
-
-    // Set shorter timeout for local requests to reduce blocking time
-    http.setTimeout(3000); // Reduced from 5000 to 3000ms
-    http.addHeader("User-Agent", "ScribeHardwareButton/1.0");
-
-    LOG_VERBOSE("BUTTONS", "HTTP client configured, making GET request...");
-
-    // Make the request - this is still blocking but now called from queue
-    int httpResponseCode = http.GET();
-
-    if (httpResponseCode > 0)
+    else if (strcmp(endpoint, "/api/quote") == 0)
     {
-        LOG_NOTICE("BUTTONS", "Local request SUCCESS: HTTP %d for %s", httpResponseCode, endpoint);
-
-        // Log response for debugging (but don't process it)
-        if (httpResponseCode == 200)
-        {
-            String response = http.getString();
-            LOG_VERBOSE("BUTTONS", "Response length: %d bytes", response.length());
-        }
+        success = generateAndQueueQuote();
+    }
+    else if (strcmp(endpoint, "/api/quiz") == 0)
+    {
+        success = generateAndQueueQuiz();
+    }
+    else if (strcmp(endpoint, "/api/character-test") == 0)
+    {
+        success = generateAndQueuePrintTest();
+    }
+    else if (strcmp(endpoint, "/api/news") == 0)
+    {
+        success = generateAndQueueNews();
     }
     else
     {
-        LOG_ERROR("BUTTONS", "Local request FAILED: HTTP %d for %s", httpResponseCode, endpoint);
+        LOG_WARNING("BUTTONS", "Unknown button endpoint: %s", endpoint);
+        return;
     }
-
-    // Cleanup immediately
-    http.end();
-
-    // Feed watchdog after HTTP operation
-    esp_task_wdt_reset();
-
-    LOG_VERBOSE("BUTTONS", "HTTP request completed and cleaned up");
+    
+    if (success)
+    {
+        // Directly print the queued content
+        printMessage();
+        LOG_NOTICE("BUTTONS", "Button action executed successfully: %s", endpoint);
+    }
+    else
+    {
+        LOG_ERROR("BUTTONS", "Failed to generate content for button endpoint: %s", endpoint);
+    }
 }
