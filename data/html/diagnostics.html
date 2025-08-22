@@ -46,9 +46,9 @@
             </button>
         </div>
 
-        <!-- Main Content fades in once all data is loaded -->
-        <div x-show="!loading && !error" x-transition.opacity.duration.300ms class="hidden"
-            :class="{ 'hidden': loading || error }" x-cloak @transitionend="$dispatch('content-loaded')">
+        <!-- Main Content - use x-if to prevent evaluation when loading -->
+        <template x-if="!loading && !error">
+            <div x-transition.opacity.duration.300ms>
             <!-- Navigation -->
             <nav class="flex flex-wrap justify-center gap-2 mb-6">
                 <template x-for="section in sections" :key="section.id">
@@ -105,9 +105,8 @@
                         </div>
                         <div class="diag-progress-bar">
                             <div :class="getProgressBarClass(memoryUsage.flashUsagePercent)"
-                                :style="`width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%`"
-                                class="h-full rounded-full w-0 transition-all duration-500 ease-out"
-                                @content-loaded.window="setTimeout(() => $el.style.width = `${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%`, 50)">
+                                class="h-full rounded-full transition-all duration-500 ease-out"
+                                :style="!loading && !error && currentSection === 'microcontroller-section' ? `width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%` : 'width: 0%'">
                             </div>
                         </div>
 
@@ -117,9 +116,8 @@
                         </div>
                         <div class="diag-progress-bar">
                             <div :class="getProgressBarClass(memoryUsage.heapUsagePercent)"
-                                :style="`width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%`"
-                                class="h-full rounded-full w-0 transition-all duration-500 ease-out"
-                                @content-loaded.window="setTimeout(() => $el.style.width = `${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%`, 100)">
+                                class="h-full rounded-full transition-all duration-500 ease-out"
+                                :style="!loading && !error && currentSection === 'microcontroller-section' ? `width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%` : 'width: 0%'">
                             </div>
                         </div>
                     </div>
@@ -270,7 +268,8 @@
                 </div>
 
             </div>
-        </div>
+            </div>
+        </template>
     </main>
 
     <footer class="page-footer vertical-stack">
