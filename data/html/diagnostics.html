@@ -48,8 +48,21 @@
 
         <!-- Main Content - use x-if to prevent evaluation when loading -->
         <template x-if="!loading && !error">
-            <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" x-show="show"
-                x-transition.opacity.duration.300ms>
+            <div x-data="{ 
+                ready: false, 
+                progressReady: false,
+                init() {
+                    this.$nextTick(() => {
+                        this.ready = true;
+                        // Use requestAnimationFrame for smooth animation timing
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                this.progressReady = true;
+                            });
+                        });
+                    });
+                }
+            }" x-show="ready" x-transition.opacity.duration.300ms>
                 <!-- Navigation -->
                 <nav class="flex flex-wrap justify-center gap-2 mb-6">
                     <template x-for="section in sections" :key="section.id">
@@ -106,8 +119,8 @@
                             </div>
                             <div class="diag-progress-bar">
                                 <div :class="getProgressBarClass(memoryUsage.flashUsagePercent)"
-                                    class="h-full rounded-full transition-all duration-500 ease-out"
-                                    :style="!loading && !error && currentSection === 'microcontroller-section' ? `width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%` : 'width: 0%'">
+                                    class="h-full rounded-full transition-all duration-1000 ease-out"
+                                    :style="progressReady ? `width: ${Math.min(Math.max(memoryUsage.flashUsagePercent, 0), 100)}%` : 'width: 0%'">
                                 </div>
                             </div>
 
@@ -117,8 +130,8 @@
                             </div>
                             <div class="diag-progress-bar">
                                 <div :class="getProgressBarClass(memoryUsage.heapUsagePercent)"
-                                    class="h-full rounded-full transition-all duration-500 ease-out"
-                                    :style="!loading && !error && currentSection === 'microcontroller-section' ? `width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%` : 'width: 0%'">
+                                    class="h-full rounded-full transition-all duration-1000 ease-out"
+                                    :style="progressReady ? `width: ${Math.min(Math.max(memoryUsage.heapUsagePercent, 0), 100)}%` : 'width: 0%'">
                                 </div>
                             </div>
                         </div>
