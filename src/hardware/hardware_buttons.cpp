@@ -8,6 +8,8 @@
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
 #include <PubSubClient.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
 
 // External declarations
 extern PubSubClient mqttClient;
@@ -19,7 +21,11 @@ extern Message currentMessage;
 
 void initializeHardwareButtons()
 {
-    LOG_VERBOSE("BUTTONS", "Initializing %d hardware buttons", numHardwareButtons);
+    LOG_NOTICE("BUTTONS", "=== INITIALIZING HARDWARE BUTTONS ===");
+    LOG_VERBOSE("BUTTONS", "Button count: %d", numHardwareButtons);
+    LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
+    LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
+    LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
@@ -39,19 +45,24 @@ void initializeHardwareButtons()
 
         // Get runtime configuration for logging
         const RuntimeConfig &config = getRuntimeConfig();
-        LOG_VERBOSE("BUTTONS", "Button %d: GPIO %d -> %s (short), %s (long)",
-                    i, defaultButtons[i].gpio, config.buttonShortActions[i].c_str(), config.buttonLongActions[i].c_str());
+        LOG_NOTICE("BUTTONS", "Button %d: GPIO %d -> Short: '%s', Long: '%s'",
+                   i, defaultButtons[i].gpio,
+                   config.buttonShortActions[i].c_str(),
+                   config.buttonLongActions[i].c_str());
     }
 
     // Feed watchdog after hardware button initialization
     esp_task_wdt_reset();
 
-    LOG_NOTICE("BUTTONS", "Hardware buttons initialized");
+    LOG_NOTICE("BUTTONS", "Hardware buttons initialized successfully");
 }
 
 void checkHardwareButtons()
 {
     unsigned long currentTime = millis();
+
+    // Feed watchdog at start of button check
+    esp_task_wdt_reset();
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
@@ -84,7 +95,8 @@ void checkHardwareButtons()
 
                     // Get runtime configuration for logging
                     const RuntimeConfig &config = getRuntimeConfig();
-                    LOG_VERBOSE("BUTTONS", "Button %d pressed: %s", i, config.buttonShortActions[i].c_str());
+                    LOG_NOTICE("BUTTONS", "*** BUTTON %d PRESSED *** GPIO %d -> '%s'",
+                               i, defaultButtons[i].gpio, config.buttonShortActions[i].c_str());
                 }
                 else if (!isPressed && buttonStates[i].pressed)
                 {
@@ -99,7 +111,8 @@ void checkHardwareButtons()
                         {
                             // Get runtime configuration for logging
                             const RuntimeConfig &config = getRuntimeConfig();
-                            LOG_NOTICE("BUTTONS", "Button %d short press: %s", i, config.buttonShortActions[i].c_str());
+                            LOG_NOTICE("BUTTONS", "*** BUTTON %d SHORT PRESS *** %lu ms -> '%s'",
+                                       i, pressDuration, config.buttonShortActions[i].c_str());
                             handleButtonPress(i);
                         }
                     }
@@ -118,13 +131,17 @@ void checkHardwareButtons()
                 buttonStates[i].longPressTriggered = true;
                 // Get runtime configuration for logging
                 const RuntimeConfig &config = getRuntimeConfig();
-                LOG_NOTICE("BUTTONS", "Button %d long press: %s", i, config.buttonLongActions[i].c_str());
+                LOG_NOTICE("BUTTONS", "*** BUTTON %d LONG PRESS *** %lu ms -> '%s'",
+                           i, pressDuration, config.buttonLongActions[i].c_str());
                 handleButtonLongPress(i);
             }
         }
 
         buttonStates[i].lastState = reading;
     }
+
+    // Feed watchdog at end of button check
+    esp_task_wdt_reset();
 }
 
 // Rate limiting check for hardware buttons
@@ -172,10 +189,13 @@ void handleButtonPress(int buttonIndex)
         return;
     }
 
+    LOG_VERBOSE("BUTTONS", "=== HANDLING BUTTON %d SHORT PRESS ===", buttonIndex);
+
     // Check rate limiting
     unsigned long currentTime = millis();
     if (isButtonRateLimited(buttonIndex, currentTime))
     {
+        LOG_WARNING("BUTTONS", "Button %d short press RATE LIMITED", buttonIndex);
         return; // Rate limited, ignore this press
     }
 
@@ -184,9 +204,9 @@ void handleButtonPress(int buttonIndex)
     const String &shortAction = config.buttonShortActions[buttonIndex];
     const String &shortMqttTopic = config.buttonShortMqttTopics[buttonIndex];
 
-    LOG_VERBOSE("BUTTONS", "Triggering short press endpoint: %s", shortAction.c_str());
+    LOG_NOTICE("BUTTONS", "Button %d triggering SHORT action: '%s'", buttonIndex, shortAction.c_str());
 
-    // Generate content and print locally - same as web endpoints but direct
+    // Trigger local web endpoint (same as web interface)
     handleButtonAction(shortAction.c_str(), shortMqttTopic.c_str());
 }
 
@@ -198,10 +218,13 @@ void handleButtonLongPress(int buttonIndex)
         return;
     }
 
+    LOG_VERBOSE("BUTTONS", "=== HANDLING BUTTON %d LONG PRESS ===", buttonIndex);
+
     // Check rate limiting
     unsigned long currentTime = millis();
     if (isButtonRateLimited(buttonIndex, currentTime))
     {
+        LOG_WARNING("BUTTONS", "Button %d long press RATE LIMITED", buttonIndex);
         return; // Rate limited, ignore this press
     }
 
@@ -210,13 +233,71 @@ void handleButtonLongPress(int buttonIndex)
     const String &longAction = config.buttonLongActions[buttonIndex];
     const String &longMqttTopic = config.buttonLongMqttTopics[buttonIndex];
 
-    LOG_VERBOSE("BUTTONS", "Triggering long press endpoint: %s", longAction.c_str());
+    LOG_NOTICE("BUTTONS", "Button %d triggering LONG action: '%s'", buttonIndex, longAction.c_str());
 
-    // Generate content and print locally - same as web endpoints but direct
+    // Trigger local web endpoint (same as web interface)
     handleButtonAction(longAction.c_str(), longMqttTopic.c_str());
 }
 
-// Handle button action - generate content and print locally
+// Make async local HTTP request to web endpoint (non-blocking)
+void makeAsyncLocalRequest(const char *endpoint)
+{
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        LOG_ERROR("BUTTONS", "Cannot make local request - WiFi not connected");
+        return;
+    }
+
+    // Use local IP address for the request
+    String localIP = WiFi.localIP().toString();
+    String url = "http://" + localIP + endpoint;
+
+    LOG_NOTICE("BUTTONS", "Making local HTTP request to: %s", url.c_str());
+
+    // Create HTTPClient for quick local request
+    HTTPClient http;
+
+    if (!http.begin(url))
+    {
+        LOG_ERROR("BUTTONS", "Failed to initialize HTTP client for: %s", url.c_str());
+        return;
+    }
+
+    // Set short timeout for local requests
+    http.setTimeout(5000); // 5 second timeout for local requests
+    http.addHeader("User-Agent", "ScribeHardwareButton/1.0");
+
+    LOG_VERBOSE("BUTTONS", "HTTP client configured, making GET request...");
+
+    // Make the request - this should be quick for local requests
+    int httpResponseCode = http.GET();
+
+    if (httpResponseCode > 0)
+    {
+        LOG_NOTICE("BUTTONS", "Local request SUCCESS: HTTP %d for %s", httpResponseCode, endpoint);
+
+        // Log response for debugging (but don't process it)
+        if (httpResponseCode == 200)
+        {
+            String response = http.getString();
+            LOG_VERBOSE("BUTTONS", "Response length: %d bytes", response.length());
+        }
+    }
+    else
+    {
+        LOG_ERROR("BUTTONS", "Local request FAILED: HTTP %d for %s", httpResponseCode, endpoint);
+    }
+
+    // Cleanup immediately
+    http.end();
+
+    // Feed watchdog after HTTP operation
+    esp_task_wdt_reset();
+
+    LOG_VERBOSE("BUTTONS", "HTTP request completed and cleaned up");
+}
+
+// Handle button action - trigger local web endpoint (same as web interface)
 void handleButtonAction(const char *endpoint, const char *mqttTopic)
 {
     if (strlen(endpoint) == 0)
@@ -225,68 +306,12 @@ void handleButtonAction(const char *endpoint, const char *mqttTopic)
         return;
     }
 
-    LOG_VERBOSE("BUTTONS", "Hardware button action: %s", endpoint);
+    LOG_NOTICE("BUTTONS", "=== TRIGGERING WEB ENDPOINT: %s ===", endpoint);
 
-    String content;
-    String actionHeader;
+    // Make async HTTP request to local web server (same as web interface)
+    makeAsyncLocalRequest(endpoint);
 
-    // Generate content directly using the same generators as web endpoints
-    if (strcmp(endpoint, "/api/riddle") == 0)
-    {
-        content = generateRiddleContent();
-        actionHeader = "RIDDLE";
-    }
-    else if (strcmp(endpoint, "/api/joke") == 0)
-    {
-        content = generateJokeContent();
-        actionHeader = "JOKE";
-    }
-    else if (strcmp(endpoint, "/api/quote") == 0)
-    {
-        content = generateQuoteContent();
-        actionHeader = "QUOTE";
-    }
-    else if (strcmp(endpoint, "/api/quiz") == 0)
-    {
-        content = generateQuizContent();
-        actionHeader = "QUIZ";
-    }
-    else if (strcmp(endpoint, "/api/news") == 0)
-    {
-        content = generateNewsContent();
-        actionHeader = "NEWS";
-    }
-    else if (strcmp(endpoint, "/api/character-test") == 0 || strcmp(endpoint, "/api/test-print") == 0)
-    {
-        content = loadPrintTestContent();
-        actionHeader = "TEST PRINT";
-    }
-    else if (strcmp(endpoint, "/api/unbidden-ink") == 0)
-    {
-        content = generateUnbiddenInkContent();
-        actionHeader = "UNBIDDEN INK";
-    }
-    else
-    {
-        LOG_ERROR("BUTTONS", "Unknown endpoint: %s", endpoint);
-        return;
-    }
-
-    // If content generation failed, log and return
-    if (content.length() == 0)
-    {
-        LOG_ERROR("BUTTONS", "Failed to generate content for: %s", endpoint);
-        return;
-    }
-
-    // Format with header and send to local printer (same as /api/print-local)
-    String formattedContent = formatContentWithHeader(actionHeader, content, "");
-    String timestamp = getFormattedDateTime();
-
-    // Print directly to local printer
-    printWithHeader(timestamp, formattedContent);
-
-    LOG_NOTICE("BUTTONS", "Button action completed: %s", endpoint);
+    LOG_NOTICE("BUTTONS", "Button web request initiated for: %s", endpoint);
 
     // Handle MQTT if topic is specified (future enhancement)
     if (strlen(mqttTopic) > 0)

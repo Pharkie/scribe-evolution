@@ -263,12 +263,15 @@ function initializeSettingsStore() {
                 return { left: '0%', width: '100%' };
             }
             
-            const startPercent = (start / 24) * 100;
-            const endPercent = (end / 24) * 100;
+            // Calculate percentages based on actual slider ranges
+            // Start slider: min=0, max=23, so position = start/23 * 100
+            // End slider: min=1, max=24, so position = (end-1)/(24-1) * 100
+            const startPercent = (start / 23) * 100;
+            const endPercent = ((end - 1) / 23) * 100;
             
             return {
-                left: `${startPercent}%`,
-                width: `${endPercent - startPercent}%`
+                left: `${Math.min(startPercent, endPercent)}%`,
+                width: `${Math.abs(endPercent - startPercent)}%`
             };
         },
         
@@ -1023,8 +1026,8 @@ ${urlLine}`;
         },
 
         set startHourSafe(value) {
-            const endHour = this.config.unbiddenInk.endHour;
-            this.config.unbiddenInk.startHour = Math.min(value, endHour - 1);
+            // Direct setter - collision handled by event handlers
+            this.config.unbiddenInk.startHour = Math.max(0, Math.min(23, parseInt(value)));
         },
 
         get endHourSafe() {
@@ -1032,8 +1035,52 @@ ${urlLine}`;
         },
 
         set endHourSafe(value) {
-            const startHour = this.config.unbiddenInk.startHour;
-            this.config.unbiddenInk.endHour = Math.max(value, startHour + 1);
+            // Direct setter - collision handled by event handlers
+            this.config.unbiddenInk.endHour = Math.max(1, Math.min(24, parseInt(value)));
+        },
+
+        // Handle collision-aware start hour changes
+        handleStartHourChange(event) {
+            const newValue = parseInt(event.target.value);
+            const currentEnd = this.config.unbiddenInk.endHour;
+            
+            // Check if this would cause collision (need at least 1 hour gap)
+            if (newValue >= currentEnd - 1) {
+                // Collision detected - revert the input to its current value
+                event.target.value = this.config.unbiddenInk.startHour;
+                return;
+            }
+            
+            // Safe to update
+            this.config.unbiddenInk.startHour = newValue;
+        },
+
+        // Handle collision-aware end hour changes  
+        handleEndHourChange(event) {
+            const newValue = parseInt(event.target.value);
+            const currentStart = this.config.unbiddenInk.startHour;
+            
+            // Check if this would cause collision (need at least 1 hour gap)
+            if (newValue <= currentStart + 1) {
+                // Collision detected - revert the input to its current value
+                event.target.value = this.config.unbiddenInk.endHour;
+                return;
+            }
+            
+            // Safe to update
+            this.config.unbiddenInk.endHour = newValue;
+        },
+
+        // Time range display helper
+        get timeRangeDisplay() {
+            const start = this.config?.unbiddenInk?.startHour ?? 0;
+            const end = this.config?.unbiddenInk?.endHour ?? 24;
+            
+            if (start === 0 && (end === 0 || end === 24)) {
+                return 'All Day';
+            }
+            
+            return `${this.formatHour(start)} - ${this.formatHour(end)}`;
         },
         
         // Cancel configuration changes

@@ -43,8 +43,14 @@ void handleButtonPress(int buttonIndex);
 void handleButtonLongPress(int buttonIndex);
 
 /**
- * @brief Handle button action - generate content and print locally
- * @param endpoint The API endpoint to emulate
+ * @brief Make async local HTTP request to web endpoint (non-blocking)
+ * @param endpoint The API endpoint path to request
+ */
+void makeAsyncLocalRequest(const char *endpoint);
+
+/**
+ * @brief Handle button action - trigger local web endpoint (same as web interface)
+ * @param endpoint The API endpoint to trigger
  * @param mqttTopic The MQTT topic to send to (empty string for local print only)
  */
 void handleButtonAction(const char *endpoint, const char *mqttTopic = "");
