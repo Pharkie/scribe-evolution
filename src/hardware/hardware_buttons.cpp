@@ -10,14 +10,39 @@
 #include <PubSubClient.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <vector>
+
+#ifdef ENABLE_LEDS
+#include "../leds/LedEffects.h"
+extern LedEffects ledEffects;
+#endif
 
 // External declarations
 extern PubSubClient mqttClient;
 extern Message currentMessage;
 
 // ========================================
+// BUTTON ACTION QUEUE SYSTEM
+// ========================================
+
+// Action queue for async processing
+static std::vector<ButtonAction> buttonActionQueue;
+static unsigned long lastActionProcessTime = 0;
+static const unsigned long ACTION_PROCESS_INTERVAL = 100; // Process actions every 100ms
+static const unsigned long ACTION_TIMEOUT_MS = 30000; // 30 second timeout for queued actions
+static const size_t MAX_QUEUE_SIZE = 20; // Prevent memory issues
+
+// ========================================
 // HARDWARE BUTTON IMPLEMENTATION
 // ========================================
+
+void initializeButtonActionQueue()
+{
+    buttonActionQueue.clear();
+    buttonActionQueue.reserve(MAX_QUEUE_SIZE);
+    lastActionProcessTime = millis();
+    LOG_VERBOSE("BUTTONS", "Button action queue initialized (max size: %d)", MAX_QUEUE_SIZE);
+}
 
 void initializeHardwareButtons()
 {
@@ -26,6 +51,9 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
+
+    // Initialize action queue system
+    initializeButtonActionQueue();
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
@@ -181,6 +209,104 @@ bool isButtonRateLimited(int buttonIndex, unsigned long currentTime)
     return false;
 }
 
+void processButtonActionQueue()
+{
+    unsigned long currentTime = millis();
+    
+    // Throttle processing to avoid overwhelming the system
+    if (currentTime - lastActionProcessTime < ACTION_PROCESS_INTERVAL)
+    {
+        return;
+    }
+    lastActionProcessTime = currentTime;
+    
+    // Feed watchdog
+    esp_task_wdt_reset();
+    
+    if (buttonActionQueue.empty())
+    {
+        return;
+    }
+    
+    // Process one action at a time to keep it non-blocking
+    ButtonAction action = buttonActionQueue.front();
+    buttonActionQueue.erase(buttonActionQueue.begin());
+    
+    // Check if action has timed out
+    if (currentTime - action.timestamp > ACTION_TIMEOUT_MS)
+    {
+        LOG_WARNING("BUTTONS", "Button action timed out: %s (queued for %lu ms)", 
+                   action.endpoint.c_str(), currentTime - action.timestamp);
+        return;
+    }
+    
+    LOG_VERBOSE("BUTTONS", "Processing queued button action: %s (queue size: %d)", 
+               action.endpoint.c_str(), buttonActionQueue.size());
+    
+    // Execute the action via the existing blocking function
+    // This is now safe because it's not in the main loop's critical path
+    if (action.endpoint.length() > 0)
+    {
+        makeAsyncLocalRequest(action.endpoint.c_str());
+    }
+    
+    // Handle MQTT if topic is specified (future enhancement)
+    if (action.mqttTopic.length() > 0)
+    {
+        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", action.mqttTopic.c_str());
+    }
+}
+
+void queueButtonAction(const String &endpoint, const String &mqttTopic, int buttonIndex, bool isLongPress)
+{
+    if (endpoint.length() == 0)
+    {
+        LOG_VERBOSE("BUTTONS", "Empty endpoint - no action queued");
+        return;
+    }
+    
+    // Check queue size limit
+    if (buttonActionQueue.size() >= MAX_QUEUE_SIZE)
+    {
+        LOG_ERROR("BUTTONS", "Button action queue full (%d items) - dropping action: %s", 
+                 buttonActionQueue.size(), endpoint.c_str());
+        return;
+    }
+    
+    // Create action
+    ButtonAction action;
+    action.endpoint = endpoint;
+    action.mqttTopic = mqttTopic;
+    action.timestamp = millis();
+    action.buttonIndex = buttonIndex;
+    action.isLongPress = isLongPress;
+    
+    // Add to queue
+    buttonActionQueue.push_back(action);
+    
+    LOG_NOTICE("BUTTONS", "=== QUEUED BUTTON ACTION: %s === (button %d, %s, queue size: %d)",
+               endpoint.c_str(), buttonIndex, isLongPress ? "LONG" : "SHORT", buttonActionQueue.size());
+}
+
+void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
+{
+#ifdef ENABLE_LEDS
+    // Trigger green simple chase effect for 1 cycle on button press
+    // This is immediate and non-blocking
+    if (ledEffects.startEffectCycles("simple_chase", 1, CRGB::Green))
+    {
+        LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): green simple_chase, 1 cycle",
+                   buttonIndex, isLongPress ? "long" : "short");
+    }
+    else
+    {
+        LOG_WARNING("BUTTONS", "Failed to trigger LED effect for button %d", buttonIndex);
+    }
+#else
+    LOG_VERBOSE("BUTTONS", "LED effects disabled - no effect for button %d", buttonIndex);
+#endif
+}
+
 void handleButtonPress(int buttonIndex)
 {
     if (buttonIndex < 0 || buttonIndex >= numHardwareButtons)
@@ -206,8 +332,11 @@ void handleButtonPress(int buttonIndex)
 
     LOG_NOTICE("BUTTONS", "Button %d triggering SHORT action: '%s'", buttonIndex, shortAction.c_str());
 
-    // Trigger local web endpoint (same as web interface)
-    handleButtonAction(shortAction.c_str(), shortMqttTopic.c_str());
+    // Trigger immediate LED effect (non-blocking)
+    triggerButtonLedEffect(buttonIndex, false);
+
+    // Queue action for async processing (non-blocking)
+    queueButtonAction(shortAction, shortMqttTopic, buttonIndex, false);
 }
 
 void handleButtonLongPress(int buttonIndex)
@@ -235,11 +364,15 @@ void handleButtonLongPress(int buttonIndex)
 
     LOG_NOTICE("BUTTONS", "Button %d triggering LONG action: '%s'", buttonIndex, longAction.c_str());
 
-    // Trigger local web endpoint (same as web interface)
-    handleButtonAction(longAction.c_str(), longMqttTopic.c_str());
+    // Trigger immediate LED effect (non-blocking)
+    triggerButtonLedEffect(buttonIndex, true);
+
+    // Queue action for async processing (non-blocking)
+    queueButtonAction(longAction, longMqttTopic, buttonIndex, true);
 }
 
-// Make async local HTTP request to web endpoint (non-blocking)
+// Make async local HTTP request to web endpoint (DEPRECATED - kept for compatibility)
+// This function is still synchronous/blocking but now only called from action queue
 void makeAsyncLocalRequest(const char *endpoint)
 {
     if (WiFi.status() != WL_CONNECTED)
@@ -263,13 +396,13 @@ void makeAsyncLocalRequest(const char *endpoint)
         return;
     }
 
-    // Set short timeout for local requests
-    http.setTimeout(5000); // 5 second timeout for local requests
+    // Set shorter timeout for local requests to reduce blocking time
+    http.setTimeout(3000); // Reduced from 5000 to 3000ms
     http.addHeader("User-Agent", "ScribeHardwareButton/1.0");
 
     LOG_VERBOSE("BUTTONS", "HTTP client configured, making GET request...");
 
-    // Make the request - this should be quick for local requests
+    // Make the request - this is still blocking but now called from queue
     int httpResponseCode = http.GET();
 
     if (httpResponseCode > 0)
@@ -295,27 +428,4 @@ void makeAsyncLocalRequest(const char *endpoint)
     esp_task_wdt_reset();
 
     LOG_VERBOSE("BUTTONS", "HTTP request completed and cleaned up");
-}
-
-// Handle button action - trigger local web endpoint (same as web interface)
-void handleButtonAction(const char *endpoint, const char *mqttTopic)
-{
-    if (strlen(endpoint) == 0)
-    {
-        LOG_VERBOSE("BUTTONS", "Empty endpoint - no action");
-        return;
-    }
-
-    LOG_NOTICE("BUTTONS", "=== TRIGGERING WEB ENDPOINT: %s ===", endpoint);
-
-    // Make async HTTP request to local web server (same as web interface)
-    makeAsyncLocalRequest(endpoint);
-
-    LOG_NOTICE("BUTTONS", "Button web request initiated for: %s", endpoint);
-
-    // Handle MQTT if topic is specified (future enhancement)
-    if (strlen(mqttTopic) > 0)
-    {
-        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", mqttTopic);
-    }
 }

@@ -208,6 +208,9 @@ void loop()
   // Check hardware buttons (work without WiFi)
   checkHardwareButtons();
 
+  // Process button action queue (async HTTP requests)
+  processButtonActionQueue();
+
 #if ENABLE_LEDS
   // Update LED effects (non-blocking)
   ledEffects.update();
