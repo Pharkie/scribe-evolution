@@ -215,7 +215,7 @@ function initializeSettingsStore() {
         
         // Computed properties for complex UI states
         get apPrintButtonText() {
-            return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Print AP Details';
+            return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Scribe a note of the Wifi Fallback (AP)';
         },
         
         get timeRangeDisplay() {
