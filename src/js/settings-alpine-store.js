@@ -1016,6 +1016,25 @@ ${urlLine}`;
         set frequencySliderValue(index) {
             this.config.unbiddenInk.frequencyMinutes = this.frequencyOptions[index] || 120;
         },
+
+        // Alpine-native collision detection via computed properties
+        get startHourSafe() {
+            return this.config?.unbiddenInk?.startHour ?? 8;
+        },
+
+        set startHourSafe(value) {
+            const endHour = this.config.unbiddenInk.endHour;
+            this.config.unbiddenInk.startHour = Math.min(value, endHour - 1);
+        },
+
+        get endHourSafe() {
+            return this.config?.unbiddenInk?.endHour ?? 22;
+        },
+
+        set endHourSafe(value) {
+            const startHour = this.config.unbiddenInk.startHour;
+            this.config.unbiddenInk.endHour = Math.max(value, startHour + 1);
+        },
         
         // Cancel configuration changes
         cancelConfiguration() {
