@@ -291,16 +291,47 @@ void queueButtonAction(const String &endpoint, const String &mqttTopic, int butt
 void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
 {
 #ifdef ENABLE_LEDS
-    // Trigger green simple chase effect for 1 cycle on button press
-    // This is immediate and non-blocking
-    if (ledEffects.startEffectCycles("simple_chase", 1, CRGB::Green))
+    // Get runtime configuration to access configured LED effects
+    const RuntimeConfig &config = getRuntimeConfig();
+    
+    String effectName;
+    if (isLongPress)
     {
-        LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): green simple_chase, 1 cycle",
-                   buttonIndex, isLongPress ? "long" : "short");
+        effectName = config.buttonLongLedEffects[buttonIndex];
     }
     else
     {
-        LOG_WARNING("BUTTONS", "Failed to trigger LED effect for button %d", buttonIndex);
+        effectName = config.buttonShortLedEffects[buttonIndex];
+    }
+    
+    // Skip if effect is disabled
+    if (effectName == "none" || effectName.length() == 0)
+    {
+        LOG_VERBOSE("BUTTONS", "LED effect disabled for button %d (%s press)", 
+                   buttonIndex, isLongPress ? "long" : "short");
+        return;
+    }
+    
+    // Trigger configured LED effect for 1 cycle with appropriate colors
+    CRGB color = CRGB::Green; // Default to green for most effects
+    if (effectName == "rainbow")
+        color = CRGB::White; // Rainbow uses its own colors
+    else if (effectName == "pulse")
+        color = CRGB::Blue;
+    else if (effectName == "matrix")
+        color = CRGB::Green;
+    else if (effectName == "twinkle")
+        color = CRGB::Yellow;
+    
+    if (ledEffects.startEffectCycles(effectName, 1, color))
+    {
+        LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): %s, 1 cycle",
+                   buttonIndex, isLongPress ? "long" : "short", effectName.c_str());
+    }
+    else
+    {
+        LOG_WARNING("BUTTONS", "Failed to trigger LED effect '%s' for button %d", 
+                   effectName.c_str(), buttonIndex);
     }
 #else
     LOG_VERBOSE("BUTTONS", "LED effects disabled - no effect for button %d", buttonIndex);

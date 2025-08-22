@@ -198,6 +198,10 @@ void handleConfigGet(AsyncWebServerRequest *request)
         button["shortMqttTopic"] = config.buttonShortMqttTopics[i];
         button["longAction"] = config.buttonLongActions[i];
         button["longMqttTopic"] = config.buttonLongMqttTopics[i];
+        
+        // Add LED effect configuration
+        button["shortLedEffect"] = config.buttonShortLedEffects[i];
+        button["longLedEffect"] = config.buttonLongLedEffects[i];
     }
 
 #if ENABLE_LEDS
@@ -430,6 +434,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         String shortAction = button["shortAction"];
         String longAction = button["longAction"];
+        String shortLedEffect = button["shortLedEffect"] | "simple_chase";  // Default to simple_chase
+        String longLedEffect = button["longLedEffect"] | "simple_chase";    // Default to simple_chase
 
         // MQTT topics are optional - if present, they should be strings
         if (button.containsKey("shortMqttTopic") && !button["shortMqttTopic"].is<String>())
@@ -476,11 +482,40 @@ void handleConfigPost(AsyncWebServerRequest *request)
             return;
         }
 
+        // Validate LED effects (must be valid effect names or "none")
+        const char *validLedEffects[] = {"simple_chase", "chase", "rainbow", "twinkle", "pulse", "matrix", "none"};
+        bool validShortLedEffect = false;
+        bool validLongLedEffect = false;
+        
+        for (int j = 0; j < 7; j++)
+        {
+            if (shortLedEffect == validLedEffects[j])
+                validShortLedEffect = true;
+            if (longLedEffect == validLedEffects[j])
+                validLongLedEffect = true;
+        }
+        
+        if (!validShortLedEffect)
+        {
+            sendValidationError(request, ValidationResult(false, "Invalid short LED effect for " + String(buttonKeys[i]) + ": " + shortLedEffect));
+            return;
+        }
+        
+        if (!validLongLedEffect)
+        {
+            sendValidationError(request, ValidationResult(false, "Invalid long LED effect for " + String(buttonKeys[i]) + ": " + longLedEffect));
+            return;
+        }
+
         // Store validated button configuration
         newConfig.buttonShortActions[i] = shortAction;
         newConfig.buttonLongActions[i] = longAction;
         newConfig.buttonShortMqttTopics[i] = button["shortMqttTopic"] | "";
         newConfig.buttonLongMqttTopics[i] = button["longMqttTopic"] | "";
+        
+        // Store validated LED effects
+        newConfig.buttonShortLedEffects[i] = shortLedEffect;
+        newConfig.buttonLongLedEffects[i] = longLedEffect;
     }
 
 #if ENABLE_LEDS

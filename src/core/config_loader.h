@@ -57,6 +57,10 @@ struct RuntimeConfig
     String buttonLongActions[4];     // Long press actions for buttons 1-4 (empty string = no action)
     String buttonShortMqttTopics[4]; // MQTT topics for short press actions (empty string = use local print)
     String buttonLongMqttTopics[4];  // MQTT topics for long press actions (empty string = use local print)
+    
+    // Button LED Effects Configuration (exactly 4 buttons)
+    String buttonShortLedEffects[4]; // LED effects for short press actions (default: simple_chase)
+    String buttonLongLedEffects[4];  // LED effects for long press actions (default: simple_chase)
 
 #if ENABLE_LEDS
     // LED Configuration (runtime configurable)

@@ -68,10 +68,38 @@ function initializeSettingsStore() {
                 min_interval: null,
                 max_per_minute: null,
                 // Individual button configurations
-                button1: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
-                button2: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
-                button3: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' },
-                button4: { shortAction: '', longAction: '', shortMqttTopic: '', longMqttTopic: '' }
+                button1: { 
+                    shortAction: '', 
+                    longAction: '', 
+                    shortMqttTopic: '', 
+                    longMqttTopic: '',
+                    shortLedEffect: 'simple_chase',
+                    longLedEffect: 'simple_chase'
+                },
+                button2: { 
+                    shortAction: '', 
+                    longAction: '', 
+                    shortMqttTopic: '', 
+                    longMqttTopic: '',
+                    shortLedEffect: 'simple_chase',
+                    longLedEffect: 'simple_chase'
+                },
+                button3: { 
+                    shortAction: '', 
+                    longAction: '', 
+                    shortMqttTopic: '', 
+                    longMqttTopic: '',
+                    shortLedEffect: 'simple_chase',
+                    longLedEffect: 'simple_chase'
+                },
+                button4: { 
+                    shortAction: '', 
+                    longAction: '', 
+                    shortMqttTopic: '', 
+                    longMqttTopic: '',
+                    shortLedEffect: 'simple_chase',
+                    longLedEffect: 'simple_chase'
+                }
             },
             leds: {
                 pin: 4,

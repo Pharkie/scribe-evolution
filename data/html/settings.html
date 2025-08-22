@@ -618,6 +618,40 @@
                                                     placeholder="Optional MQTT topic" class="input-standard"
                                                     x-model="config.buttons[`button${buttonNum}`].longMqttTopic">
                                             </div>
+
+                                            <!-- Short Press LED Effect -->
+                                            <div class="space-y-2">
+                                                <label :for="`button${buttonNum}-short-led`" class="form-label">
+                                                    Short Press LED Effect:
+                                                </label>
+                                                <select :id="`button${buttonNum}-short-led`" class="input-standard"
+                                                    x-model="config.buttons[`button${buttonNum}`].shortLedEffect">
+                                                    <option value="simple_chase">Simple Chase (Green)</option>
+                                                    <option value="chase">Chase (Multiple Colors)</option>
+                                                    <option value="rainbow">Rainbow</option>
+                                                    <option value="twinkle">Twinkle</option>
+                                                    <option value="pulse">Pulse</option>
+                                                    <option value="matrix">Matrix</option>
+                                                    <option value="none">No Effect</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Long Press LED Effect -->
+                                            <div class="space-y-2">
+                                                <label :for="`button${buttonNum}-long-led`" class="form-label">
+                                                    Long Press LED Effect:
+                                                </label>
+                                                <select :id="`button${buttonNum}-long-led`" class="input-standard"
+                                                    x-model="config.buttons[`button${buttonNum}`].longLedEffect">
+                                                    <option value="simple_chase">Simple Chase (Green)</option>
+                                                    <option value="chase">Chase (Multiple Colors)</option>
+                                                    <option value="rainbow">Rainbow</option>
+                                                    <option value="twinkle">Twinkle</option>
+                                                    <option value="pulse">Pulse</option>
+                                                    <option value="matrix">Matrix</option>
+                                                    <option value="none">No Effect</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>

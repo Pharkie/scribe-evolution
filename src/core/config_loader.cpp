@@ -165,7 +165,7 @@ bool loadNVSConfig()
     LOG_VERBOSE("CONFIG", "DEBUG: Loaded prompt length=%d, first 50 chars='%s'",
                 g_runtimeConfig.unbiddenInkPrompt.length(), g_runtimeConfig.unbiddenInkPrompt.substring(0, 50).c_str());
 
-    // Load button configuration (4 buttons, 4 fields each = 16 keys)
+    // Load button configuration (4 buttons, 6 fields each = 24 keys)
     for (int i = 0; i < 4; i++)
     {
         String buttonPrefix = "btn" + String(i + 1) + "_";
@@ -173,6 +173,10 @@ bool loadNVSConfig()
         g_runtimeConfig.buttonShortMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "short_mq").c_str(), defaultButtons[i].shortMqttTopic, 128);
         g_runtimeConfig.buttonLongActions[i] = getNVSString(prefs, (buttonPrefix + "long_act").c_str(), defaultButtons[i].longAction, 50);
         g_runtimeConfig.buttonLongMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "long_mq").c_str(), defaultButtons[i].longMqttTopic, 128);
+        
+        // Load LED effect configuration with defaults
+        g_runtimeConfig.buttonShortLedEffects[i] = getNVSString(prefs, (buttonPrefix + "short_led").c_str(), "simple_chase", 20);
+        g_runtimeConfig.buttonLongLedEffects[i] = getNVSString(prefs, (buttonPrefix + "long_led").c_str(), "simple_chase", 20);
     }
 
 #if ENABLE_LEDS
@@ -290,6 +294,10 @@ bool saveNVSConfig(const RuntimeConfig &config)
         prefs.putString((buttonPrefix + "short_mq").c_str(), config.buttonShortMqttTopics[i]);
         prefs.putString((buttonPrefix + "long_act").c_str(), config.buttonLongActions[i]);
         prefs.putString((buttonPrefix + "long_mq").c_str(), config.buttonLongMqttTopics[i]);
+        
+        // Save LED effect configuration
+        prefs.putString((buttonPrefix + "short_led").c_str(), config.buttonShortLedEffects[i]);
+        prefs.putString((buttonPrefix + "long_led").c_str(), config.buttonLongLedEffects[i]);
     }
 
 #if ENABLE_LEDS
