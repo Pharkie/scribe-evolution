@@ -108,9 +108,8 @@
                         <template x-if="isConfigReady">
                             <div class="w-full">
                                 <textarea id="message-textarea" x-model="message"
-                                    @keydown="handleTextareaKeydown($event)" :maxlength="maxChars"
-                                    class="form-textarea w-full" rows="8" placeholder="Enter your message here..."
-                                    required></textarea>
+                                    @keydown="handleTextareaKeydown($event)" class="form-textarea w-full" rows="8"
+                                    placeholder="Enter your message here..." required></textarea>
                                 <div :class="charCountClass" class="text-xs text-right">
                                     <span x-text="charCountText"></span>
                                 </div>

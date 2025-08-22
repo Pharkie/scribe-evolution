@@ -50,21 +50,36 @@ function initializeIndexStore() {
     },
     
     get charCountText() {
-      return `${this.charCount}/${this.maxChars} characters`;
+      const count = this.charCount;
+      const max = this.maxChars;
+      if (count > max) {
+        const over = count - max;
+        return `${count}/${max} characters (${over} over limit)`;
+      }
+      return `${count}/${max} characters`;
     },
     
     get charCountClass() {
-      if (this.charCount > this.maxChars) {
-        return 'text-red-600 dark:text-red-400';
-      } else if (this.charCount >= this.maxChars * 0.8) {
-        return 'text-yellow-700 dark:text-yellow-300';
+      const count = this.charCount;
+      const max = this.maxChars;
+      const percentage = count / max;
+      
+      if (count > max) {
+        // Over 100% - red and bold
+        return 'text-red-600 dark:text-red-400 font-semibold';
+      } else if (percentage >= 0.9) {
+        // 90-100% - yellow warning  
+        return 'text-yellow-700 dark:text-yellow-300 font-medium';
       } else {
+        // Under 90% - normal gray
         return 'text-gray-500 dark:text-gray-400';
       }
     },
     
     get canSubmit() {
-      return this.isConfigReady && this.message.trim() && !this.submitting && this.charCount <= this.maxChars;
+      return this.message.trim().length > 0 && 
+             this.charCount <= this.maxChars && 
+             !this.isLoading;
     },
     
     get isConfigReady() {
