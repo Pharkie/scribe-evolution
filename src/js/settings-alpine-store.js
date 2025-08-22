@@ -704,7 +704,9 @@ ${urlLine}`;
                             shortAction: serverConfig.buttons[buttonKey].shortAction || '',
                             longAction: serverConfig.buttons[buttonKey].longAction || '',
                             shortMqttTopic: serverConfig.buttons[buttonKey].shortMqttTopic || '',
-                            longMqttTopic: serverConfig.buttons[buttonKey].longMqttTopic || ''
+                            longMqttTopic: serverConfig.buttons[buttonKey].longMqttTopic || '',
+                            shortLedEffect: serverConfig.buttons[buttonKey].shortLedEffect || 'simple_chase',
+                            longLedEffect: serverConfig.buttons[buttonKey].longLedEffect || 'simple_chase'
                         };
                     } else {
                         console.warn(`⚠️ Missing buttons.${buttonKey} config`);

@@ -174,9 +174,9 @@ bool loadNVSConfig()
         g_runtimeConfig.buttonLongActions[i] = getNVSString(prefs, (buttonPrefix + "long_act").c_str(), defaultButtons[i].longAction, 50);
         g_runtimeConfig.buttonLongMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "long_mq").c_str(), defaultButtons[i].longMqttTopic, 128);
         
-        // Load LED effect configuration with defaults from config.h
-        g_runtimeConfig.buttonShortLedEffects[i] = getNVSString(prefs, (buttonPrefix + "short_led").c_str(), defaultButtonShortLedEffects[i], 20);
-        g_runtimeConfig.buttonLongLedEffects[i] = getNVSString(prefs, (buttonPrefix + "long_led").c_str(), defaultButtonLongLedEffects[i], 20);
+        // Load LED effect configuration with defaults from ButtonConfig struct
+        g_runtimeConfig.buttonShortLedEffects[i] = getNVSString(prefs, (buttonPrefix + "short_led").c_str(), defaultButtons[i].shortLedEffect, 20);
+        g_runtimeConfig.buttonLongLedEffects[i] = getNVSString(prefs, (buttonPrefix + "long_led").c_str(), defaultButtons[i].longLedEffect, 20);
     }
 
 #if ENABLE_LEDS
@@ -238,9 +238,9 @@ void loadDefaultConfig()
         g_runtimeConfig.buttonLongActions[i] = defaultButtons[i].longAction;
         g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtons[i].longMqttTopic;
         
-        // Load default LED effect configuration from config.h
-        g_runtimeConfig.buttonShortLedEffects[i] = defaultButtonShortLedEffects[i];
-        g_runtimeConfig.buttonLongLedEffects[i] = defaultButtonLongLedEffects[i];
+        // Load default LED effect configuration from ButtonConfig struct
+        g_runtimeConfig.buttonShortLedEffects[i] = defaultButtons[i].shortLedEffect;
+        g_runtimeConfig.buttonLongLedEffects[i] = defaultButtons[i].longLedEffect;
     }
 
 #if ENABLE_LEDS

@@ -1,5 +1,5 @@
 /**
- * @file config.h.example
+ * @file config.h.example.example
  * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
@@ -56,38 +56,24 @@ static const int defaultUnbiddenInkStartHour = 10;                              
 static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
 static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
-// Default button configuration (GPIO pins, actions, and MQTT topics together)
-struct ButtonConfig
-{
+// Default button configuration (GPIO, actions, MQTT topics, LED effects)
+struct ButtonConfig {
     int gpio;
     const char *shortAction;
     const char *shortMqttTopic;
+    const char *shortLedEffect;
     const char *longAction;
     const char *longMqttTopic;
+    const char *longLedEffect;
 };
 
-// Note GPIO are fixed in config.h, but endpoints can be changed in config.json
+// Note: GPIO are fixed in config.h, endpoints can be changed in config.json
 // Empty MQTT topic means use local printing (/print-local equivalent)
 static const ButtonConfig defaultButtons[] = {
-    {5, "/api/joke", "", "/api/character-test", ""}, // Button 1: GPIO 5 - local printing for both actions
-    {6, "/api/riddle", "", "", ""},                  // Button 2: GPIO 6 - local printing for short action, no long action
-    {7, "/api/quote", "", "", ""},                   // Button 3: GPIO 7 - local printing for short action, no long action
-    {8, "/api/quiz", "", "", ""}                     // Button 4: GPIO 8 - local printing for short action, no long action
-};
-
-// Default button LED effects configuration (used with ENABLE_LEDS)
-static const char *defaultButtonShortLedEffects[] = {
-    "simple_chase", // Button 1 short press - green simple chase
-    "simple_chase", // Button 2 short press - green simple chase
-    "simple_chase", // Button 3 short press - green simple chase
-    "simple_chase"  // Button 4 short press - green simple chase
-};
-
-static const char *defaultButtonLongLedEffects[] = {
-    "pulse", // Button 1 long press - blue pulse
-    "pulse", // Button 2 long press - blue pulse
-    "pulse", // Button 3 long press - blue pulse
-    "pulse"  // Button 4 long press - blue pulse
+    {5, "/api/joke",   "", "simple_chase", "/api/character-test", "", "pulse"}, // Button 1
+    {6, "/api/riddle", "", "simple_chase", "",                    "", "pulse"}, // Button 2
+    {7, "/api/quote",  "", "simple_chase", "",                    "", "pulse"}, // Button 3
+    {8, "/api/quiz",   "", "simple_chase", "",                    "", "pulse"}  // Button 4
 };
 
 // LEDs: Optional FastLED support
