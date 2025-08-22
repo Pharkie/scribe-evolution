@@ -220,18 +220,7 @@ function createRequestHandler() {
         
         setTimeout(() => sendJSON(res, nvsDumpResponse), 200);
         
-      } else if (pathname === '/api/status') {
-        setTimeout(() => {
-          sendJSON(res, {
-            status: "ready",
-            message: "Mock server running",
-            timestamp: new Date().toISOString(),
-            loading: false,
-            error: null
-          });
-        }, 50);
-        
-      } else if (pathname === '/api/print' && req.method === 'POST') {
+      } else if (pathname === '/api/print-local' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
@@ -239,10 +228,22 @@ function createRequestHandler() {
           setTimeout(() => {
             sendJSON(res, {
               success: true,
-              message: "Print job completed successfully",
-              characterCount: Math.floor(Math.random() * 200) + 50
+              message: "Message processed successfully"
             });
           }, 800);
+        });
+        
+      } else if (pathname === '/api/print-mqtt' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+          console.log('📡 MQTT print request received');
+          setTimeout(() => {
+            sendJSON(res, {
+              status: "success",
+              message: "Message scribed via MQTT"
+            });
+          }, 500);
         });
         
       } else if (pathname === '/api/led-effect' && req.method === 'POST') {
@@ -261,6 +262,46 @@ function createRequestHandler() {
       } else if (pathname === '/api/scan-wifi') {
         console.log('📶 WiFi scan requested');
         setTimeout(() => sendJSON(res, mockWifiScan), 800);
+        
+      } else if (pathname === '/api/joke') {
+        console.log('😄 Joke requested');
+        setTimeout(() => {
+          sendJSON(res, {
+            content: "JOKE\n\nWhy don't scientists trust atoms? Because they make up everything!"
+          });
+        }, 300);
+        
+      } else if (pathname === '/api/riddle') {
+        console.log('🧩 Riddle requested');
+        setTimeout(() => {
+          sendJSON(res, {
+            content: "RIDDLE\n\nI speak without a mouth and hear without ears. I have no body, but come alive with the wind. What am I?\n\nAn echo!"
+          });
+        }, 400);
+        
+      } else if (pathname === '/api/quote') {
+        console.log('💭 Quote requested');
+        setTimeout(() => {
+          sendJSON(res, {
+            content: "QUOTE\n\n\"The only way to do great work is to love what you do.\" - Steve Jobs"
+          });
+        }, 350);
+        
+      } else if (pathname === '/api/quiz') {
+        console.log('❓ Quiz requested');
+        setTimeout(() => {
+          sendJSON(res, {
+            content: "QUIZ\n\nWhat is the largest planet in our solar system?\n\nA) Mars\nB) Jupiter\nC) Saturn\nD) Neptune\n\nAnswer: B) Jupiter"
+          });
+        }, 450);
+        
+      } else if (pathname === '/api/news') {
+        console.log('📰 News requested');
+        setTimeout(() => {
+          sendJSON(res, {
+            content: "NEWS\n\nBreaking: Local thermal printer achieves sentience, demands better paper quality and regular maintenance breaks."
+          });
+        }, 500);
         
       } else {
         sendJSON(res, { error: 'API endpoint not found' }, 404);
