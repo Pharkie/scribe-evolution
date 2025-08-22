@@ -378,7 +378,7 @@
                                     </div>
                                 </div>
 
-                                <div class="dual-range-slider">
+                                <div class="dual-range-slider mx-2">
                                     <!-- Background track -->
                                     <div class="dual-range-track"></div>
 
@@ -389,13 +389,11 @@
 
                                     <!-- Start time handle -->
                                     <input type="range" min="0" max="24" step="1"
-                                        class="dual-range-input dual-range-start"
-                                        x-model.number="config.unbiddenInk.startHour">
+                                        class="dual-range-input dual-range-start" x-model.number="startHourSafe">
 
                                     <!-- End time handle -->
                                     <input type="range" min="0" max="24" step="1"
-                                        class="dual-range-input dual-range-end"
-                                        x-model.number="config.unbiddenInk.endHour">
+                                        class="dual-range-input dual-range-end" x-model.number="endHourSafe">
                                 </div>
 
                                 <!-- Time display (reactive) -->
@@ -425,7 +423,7 @@
                                     </div>
 
                                     <input type="range" min="0" max="6" step="1"
-                                        class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple"
+                                        class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple mx-2"
                                         x-model.number="frequencySliderValue">
 
                                     <!-- Frequency display (reactive) -->
