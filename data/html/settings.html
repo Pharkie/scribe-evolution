@@ -388,11 +388,11 @@
                                     </div>
 
                                     <!-- Start time handle -->
-                                    <input type="range" min="0" max="24" step="1"
+                                    <input type="range" min="0" :max="endHourSafe - 1" step="1"
                                         class="dual-range-input dual-range-start" x-model.number="startHourSafe">
 
                                     <!-- End time handle -->
-                                    <input type="range" min="0" max="24" step="1"
+                                    <input type="range" :min="startHourSafe + 1" max="24" step="1"
                                         class="dual-range-input dual-range-end" x-model.number="endHourSafe">
                                 </div>
 
