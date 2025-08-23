@@ -88,8 +88,8 @@ function initializeSettingsStore() {
                     longAction: '', 
                     shortMqttTopic: '', 
                     longMqttTopic: '',
-                    shortLedEffect: 'simple_chase',
-                    longLedEffect: 'simple_chase'
+                    shortLedEffect: 'chase_single',
+                    longLedEffect: 'chase_single'
                 },
                 button2: { 
                     gpio: null, // Will be populated from API
@@ -97,8 +97,8 @@ function initializeSettingsStore() {
                     longAction: '', 
                     shortMqttTopic: '', 
                     longMqttTopic: '',
-                    shortLedEffect: 'simple_chase',
-                    longLedEffect: 'simple_chase'
+                    shortLedEffect: 'chase_single',
+                    longLedEffect: 'chase_single'
                 },
                 button3: { 
                     gpio: null, // Will be populated from API
@@ -106,8 +106,8 @@ function initializeSettingsStore() {
                     longAction: '', 
                     shortMqttTopic: '', 
                     longMqttTopic: '',
-                    shortLedEffect: 'simple_chase',
-                    longLedEffect: 'simple_chase'
+                    shortLedEffect: 'chase_single',
+                    longLedEffect: 'chase_single'
                 },
                 button4: { 
                     gpio: null, // Will be populated from API
@@ -115,8 +115,8 @@ function initializeSettingsStore() {
                     longAction: '', 
                     shortMqttTopic: '', 
                     longMqttTopic: '',
-                    shortLedEffect: 'simple_chase',
-                    longLedEffect: 'simple_chase'
+                    shortLedEffect: 'chase_single',
+                    longLedEffect: 'chase_single'
                 }
             },
             leds: {
@@ -780,8 +780,8 @@ ${urlLine}`;
                             longAction: serverConfig.buttons[buttonKey].longAction || '',
                             shortMqttTopic: serverConfig.buttons[buttonKey].shortMqttTopic || '',
                             longMqttTopic: serverConfig.buttons[buttonKey].longMqttTopic || '',
-                            shortLedEffect: serverConfig.buttons[buttonKey].shortLedEffect || 'simple_chase',
-                            longLedEffect: serverConfig.buttons[buttonKey].longLedEffect || 'simple_chase'
+                            shortLedEffect: serverConfig.buttons[buttonKey].shortLedEffect || 'chase_single',
+                            longLedEffect: serverConfig.buttons[buttonKey].longLedEffect || 'chase_single'
                         };
                     } else {
                         console.warn(`⚠️ Missing buttons.${buttonKey} config`);

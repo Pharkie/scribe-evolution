@@ -170,17 +170,11 @@ bool loadNVSConfig()
     {
         String buttonPrefix = "btn" + String(i + 1) + "_";
 
-        // TEMPORARY: Force use of new action types from config.h, ignore NVS values
-        // This forces the use of direct action types (JOKE, RIDDLE, etc.) instead of HTTP endpoints
-        LOG_NOTICE("CONFIG", "TEMP: Forcing button %d to use config.h defaults instead of NVS", i + 1);
-        g_runtimeConfig.buttonShortActions[i] = String(defaultButtons[i].shortAction);
-        g_runtimeConfig.buttonLongActions[i] = String(defaultButtons[i].longAction);
+        // Load button actions from NVS (use defaults if missing)
+        g_runtimeConfig.buttonShortActions[i] = getNVSString(prefs, (buttonPrefix + "short_act").c_str(), defaultButtons[i].shortAction, 20);
+        g_runtimeConfig.buttonLongActions[i] = getNVSString(prefs, (buttonPrefix + "long_act").c_str(), defaultButtons[i].longAction, 20);
 
-        // Save the new values to NVS to persist them
-        prefs.putString((buttonPrefix + "short_act").c_str(), g_runtimeConfig.buttonShortActions[i]);
-        prefs.putString((buttonPrefix + "long_act").c_str(), g_runtimeConfig.buttonLongActions[i]);
-
-        // Load other settings normally (MQTT topics, LED effects)
+        // Load MQTT topics and LED effects
         g_runtimeConfig.buttonShortMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "short_mq").c_str(), defaultButtons[i].shortMqttTopic, 128);
         g_runtimeConfig.buttonLongMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "long_mq").c_str(), defaultButtons[i].longMqttTopic, 128);
 

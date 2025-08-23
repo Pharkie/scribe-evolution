@@ -27,6 +27,100 @@
 #include <esp_log.h>
 
 // ============================================================================
+// ESP32-C3 GPIO CONFIGURATION AND VALIDATION
+// ============================================================================
+
+// ESP32-C3 GPIO pin characteristics and availability
+enum GPIOType
+{
+    GPIO_TYPE_SAFE = 0,
+    GPIO_TYPE_STRAPPING = 1,
+    GPIO_TYPE_UART = 2,
+    GPIO_TYPE_LED_ONBOARD = 3
+};
+
+struct GPIOInfo
+{
+    int pin;
+    GPIOType type;
+    const char *description;
+    bool canUseForButtons;
+    bool canUseForLEDs;
+    bool canUseForOutput;
+};
+
+// ESP32-C3 GPIO configuration (compile-time, not user-configurable)
+// Based on ESP32-C3 datasheet and hardware constraints
+static const GPIOInfo ESP32C3_GPIO_MAP[] = {
+    {0, GPIO_TYPE_STRAPPING, "Strapping pin at boot, avoid input at boot", false, true, true},
+    {1, GPIO_TYPE_UART, "TX for UART0 (USB-Serial), avoid for input", false, true, true},
+    {2, GPIO_TYPE_SAFE, "Safe, general I/O", true, true, true},
+    {3, GPIO_TYPE_UART, "RX for UART0 (USB-Serial), avoid for input", false, true, true},
+    {4, GPIO_TYPE_SAFE, "Safe for buttons, LED, digital I/O", true, true, true},
+    {5, GPIO_TYPE_SAFE, "Safe for buttons, LED, digital I/O", true, true, true},
+    {6, GPIO_TYPE_SAFE, "Safe for buttons, LED, digital I/O", true, true, true},
+    {7, GPIO_TYPE_SAFE, "Safe for buttons, LED, digital I/O", true, true, true},
+    {8, GPIO_TYPE_LED_ONBOARD, "Onboard LED; can still be used, but affects LED", true, true, true},
+    {9, GPIO_TYPE_SAFE, "Safe for buttons or outputs", true, true, true},
+    {10, GPIO_TYPE_SAFE, "Safe for buttons or outputs", true, true, true},
+    {20, GPIO_TYPE_SAFE, "UART1 TX - Safe for digital output (LED strip, etc.)", false, true, true},
+    {21, GPIO_TYPE_SAFE, "UART1 RX - Safe for digital output (LED strip, etc.)", false, true, true}};
+
+static const int ESP32C3_GPIO_COUNT = sizeof(ESP32C3_GPIO_MAP) / sizeof(ESP32C3_GPIO_MAP[0]);
+
+// Helper functions for GPIO validation
+static bool isValidGPIO(int pin)
+{
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    {
+        if (ESP32C3_GPIO_MAP[i].pin == pin)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool canUseGPIOForButtons(int pin)
+{
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    {
+        if (ESP32C3_GPIO_MAP[i].pin == pin)
+        {
+            return ESP32C3_GPIO_MAP[i].canUseForButtons;
+        }
+    }
+    return false;
+}
+
+static bool canUseGPIOForLEDs(int pin)
+{
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    {
+        if (ESP32C3_GPIO_MAP[i].pin == pin)
+        {
+            return ESP32C3_GPIO_MAP[i].canUseForLEDs;
+        }
+    }
+    return false;
+}
+
+static const char *getGPIODescription(int pin)
+{
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    {
+        if (ESP32C3_GPIO_MAP[i].pin == pin)
+        {
+            return ESP32C3_GPIO_MAP[i].description;
+        }
+    }
+    return "Unknown GPIO";
+}
+
+// Display current GPIO usage summary (call after boot validation)
+// Implementation in config_utils.cpp
+
+// ============================================================================
 // RUNTIME DEFAULTS - Can be overridden by config.json
 // ============================================================================
 // WARNING: These are INITIAL DEFAULTS ONLY used to populate config.json on first setup
@@ -78,12 +172,12 @@ struct ButtonConfig
 // - GPIO 0,2,3,9: Strapping pins - can cause boot issues (GPIO 9 used for buttons anyway)
 // - GPIO 1: UART0 TX (Serial) - can cause programming issues
 // - GPIO 18,19: Used for USB, not available for general use
-// - GPIO 5,6,7,9: Chosen for button inputs (avoiding most problematic pins)
+// - GPIO 5,6,7,4: Chosen for button inputs (avoiding strapping and problematic pins)
 static const ButtonConfig defaultButtons[] = {
     {5, "JOKE", "", "chase_single", "PRINT_TEST", "", "pulse"}, // Button 1: Joke → Test Print
     {6, "RIDDLE", "", "chase_single", "", "", "pulse"},         // Button 2: Riddle → (no long action)
     {7, "QUOTE", "", "chase_single", "", "", "pulse"},          // Button 3: Quote → (no long action)
-    {9, "QUIZ", "", "chase_single", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 9 (strapping pin)
+    {4, "QUIZ", "", "chase_single", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 4 (safe pin)
 };
 
 // LEDs: Optional FastLED support
