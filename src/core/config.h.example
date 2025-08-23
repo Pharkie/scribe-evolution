@@ -60,21 +60,25 @@ static const int defaultUnbiddenInkFrequencyMinutes = 60;                       
 struct ButtonConfig
 {
     int gpio;
-    const char *shortAction;
+    const char *shortAction; // Direct content action type (JOKE, RIDDLE, etc.) - NOT HTTP endpoints
     const char *shortMqttTopic;
     const char *shortLedEffect;
-    const char *longAction;
+    const char *longAction; // Direct content action type (JOKE, RIDDLE, etc.) - NOT HTTP endpoints
     const char *longMqttTopic;
     const char *longLedEffect;
 };
 
-// Note: GPIO are fixed in config.h, endpoints can be changed in config.json
-// Empty MQTT topic means use local printing (/print-local equivalent)
+// IMPORTANT: Hardware buttons call internal functions directly, NOT HTTP endpoints
+// Actions are content types (JOKE, RIDDLE, QUOTE, etc.) that map to generateXXXContent() functions
+// HTTP endpoints (/api/joke, etc.) are for web interface and MQTT only
+//
+// Note: GPIO are fixed in config.h, actions can be changed in config.json
+// Empty MQTT topic means use local printing (no network calls)
 static const ButtonConfig defaultButtons[] = {
-    {5, "/api/joke", "", "simple_chase", "/api/character-test", "", "pulse"}, // Button 1
-    {6, "/api/riddle", "", "simple_chase", "", "", "pulse"},                  // Button 2
-    {7, "/api/quote", "", "simple_chase", "", "", "pulse"},                   // Button 3
-    {18, "/api/quiz", "", "simple_chase", "", "", "pulse"}                    // Button 4 - GPIO 8 conflicts with status LED
+    {5, "JOKE", "", "simple_chase", "PRINT_TEST", "", "pulse"}, // Button 1: Joke → Test Print
+    {6, "RIDDLE", "", "simple_chase", "", "", "pulse"},         // Button 2: Riddle → (no long action)
+    {7, "QUOTE", "", "simple_chase", "", "", "pulse"},          // Button 3: Quote → (no long action)
+    {18, "QUIZ", "", "simple_chase", "", "", "pulse"}           // Button 4: Quiz → (no long action)
 };
 
 // LEDs: Optional FastLED support
@@ -98,10 +102,16 @@ static const unsigned long buttonDebounceMs = 50;                               
 static const unsigned long buttonLongPressMs = 2000;                                      // Long press threshold in milliseconds
 static const bool buttonActiveLow = true;                                                 // true = button pulls to ground, false = button pulls to VCC
 
-// Button rate limiting (separate from debouncing)
-static const unsigned long buttonMinInterval = 3000;      // 3 seconds minimum between button presses
-static const unsigned long buttonMaxPerMinute = 20;       // 20 button presses per minute max
+// Button rate limiting (separate from debouncing) - made more aggressive for ESP32-C3 stability
+static const unsigned long buttonMinInterval = 5000;      // 5 seconds minimum between button presses (increased from 3s)
+static const unsigned long buttonMaxPerMinute = 10;       // 10 button presses per minute max (reduced from 20)
 static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
+
+// Button task safety settings (ESP32-C3 specific)
+static const int buttonTaskStackSize = 8192;   // 8KB stack for HTTP operations
+static const int buttonTaskPriority = 1;       // Lower than main loop (priority 1)
+static const int buttonQueueSize = 10;         // Max queued button actions
+static const int buttonActionTimeoutMs = 3000; // 3s timeout for button-triggered HTTP calls (reduced from 5s)
 
 // Network & Time Configuration
 static const char *ntpServers[] = {
