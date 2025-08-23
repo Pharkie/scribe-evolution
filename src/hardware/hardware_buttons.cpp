@@ -62,6 +62,8 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
+
+    // Initialize GPIO pins first (basic hardware setup)
     for (int i = 0; i < numHardwareButtons; i++)
     {
         // Configure GPIO pin using defaultButtons array
@@ -78,16 +80,26 @@ void initializeHardwareButtons()
         buttonStates[i].pressCount = 0;
         buttonStates[i].windowStartTime = 0;
 
-        // Get runtime configuration for logging
-        const RuntimeConfig &config = getRuntimeConfig();
+        // Feed watchdog after each button to prevent timeout
+        esp_task_wdt_reset();
+
+        LOG_VERBOSE("BUTTONS", "Button %d GPIO %d initialized", i, defaultButtons[i].gpio);
+    }
+
+    // Get runtime configuration ONCE after GPIO setup
+    const RuntimeConfig &config = getRuntimeConfig();
+
+    // Log button configuration
+    for (int i = 0; i < numHardwareButtons; i++)
+    {
         LOG_NOTICE("BUTTONS", "Button %d: GPIO %d -> Short: '%s', Long: '%s'",
                    i, defaultButtons[i].gpio,
                    config.buttonShortActions[i].c_str(),
                    config.buttonLongActions[i].c_str());
-    }
 
-    // Feed watchdog after hardware button initialization
-    esp_task_wdt_reset();
+        // Feed watchdog after each log to prevent timeout
+        esp_task_wdt_reset();
+    }
 
     LOG_NOTICE("BUTTONS", "Hardware buttons initialized successfully");
 }
@@ -98,6 +110,9 @@ void checkHardwareButtons()
 
     // Feed watchdog at start of button check
     esp_task_wdt_reset();
+
+    // Get runtime configuration ONCE to avoid repeated calls
+    const RuntimeConfig &config = getRuntimeConfig();
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
@@ -128,8 +143,6 @@ void checkHardwareButtons()
                     buttonStates[i].longPressTriggered = false;
                     buttonStates[i].pressStartTime = currentTime;
 
-                    // Get runtime configuration for logging
-                    const RuntimeConfig &config = getRuntimeConfig();
                     LOG_NOTICE("BUTTONS", "*** BUTTON %d PRESSED *** GPIO %d -> '%s'",
                                i, defaultButtons[i].gpio, config.buttonShortActions[i].c_str());
                 }
@@ -144,8 +157,6 @@ void checkHardwareButtons()
                     {
                         if (pressDuration < buttonLongPressMs)
                         {
-                            // Get runtime configuration for logging
-                            const RuntimeConfig &config = getRuntimeConfig();
                             LOG_NOTICE("BUTTONS", "*** BUTTON %d SHORT PRESS *** %lu ms -> '%s'",
                                        i, pressDuration, config.buttonShortActions[i].c_str());
                             handleButtonPress(i);
@@ -164,8 +175,6 @@ void checkHardwareButtons()
             if (pressDuration >= buttonLongPressMs)
             {
                 buttonStates[i].longPressTriggered = true;
-                // Get runtime configuration for logging
-                const RuntimeConfig &config = getRuntimeConfig();
                 LOG_NOTICE("BUTTONS", "*** BUTTON %d LONG PRESS *** %lu ms -> '%s'",
                            i, pressDuration, config.buttonLongActions[i].c_str());
                 handleButtonLongPress(i);
@@ -223,7 +232,7 @@ bool isButtonRateLimited(int buttonIndex, unsigned long currentTime)
 void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
 {
 #ifdef ENABLE_LEDS
-    // Get runtime configuration to access configured LED effects
+    // Get runtime configuration to access configured LED effects (avoid repeated calls)
     const RuntimeConfig &config = getRuntimeConfig();
 
     String effectName;
@@ -291,6 +300,10 @@ void handleButtonPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
+    // **DEBUGGING**: Disable async task creation to test if button press detection works
+    LOG_WARNING("BUTTONS", "Button action DISABLED for debugging - button %d pressed but not executing action", buttonIndex);
+    return;
+
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations
     bool started = createButtonActionTask(buttonIndex, false);
@@ -328,6 +341,10 @@ void handleButtonLongPress(int buttonIndex)
         LOG_WARNING("BUTTONS", "Button %d long press RATE LIMITED", buttonIndex);
         return; // Rate limited, ignore this press
     }
+
+    // **DEBUGGING**: Disable async task creation to test if button press detection works
+    LOG_WARNING("BUTTONS", "Button LONG press DISABLED for debugging - button %d long pressed but not executing action", buttonIndex);
+    return;
 
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations
