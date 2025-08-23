@@ -169,11 +169,21 @@ bool loadNVSConfig()
     for (int i = 0; i < 4; i++)
     {
         String buttonPrefix = "btn" + String(i + 1) + "_";
-        g_runtimeConfig.buttonShortActions[i] = getNVSString(prefs, (buttonPrefix + "short_act").c_str(), defaultButtons[i].shortAction, 50);
+
+        // TEMPORARY: Force use of new action types from config.h, ignore NVS values
+        // This forces the use of direct action types (JOKE, RIDDLE, etc.) instead of HTTP endpoints
+        LOG_NOTICE("CONFIG", "TEMP: Forcing button %d to use config.h defaults instead of NVS", i + 1);
+        g_runtimeConfig.buttonShortActions[i] = String(defaultButtons[i].shortAction);
+        g_runtimeConfig.buttonLongActions[i] = String(defaultButtons[i].longAction);
+
+        // Save the new values to NVS to persist them
+        prefs.putString((buttonPrefix + "short_act").c_str(), g_runtimeConfig.buttonShortActions[i]);
+        prefs.putString((buttonPrefix + "long_act").c_str(), g_runtimeConfig.buttonLongActions[i]);
+
+        // Load other settings normally (MQTT topics, LED effects)
         g_runtimeConfig.buttonShortMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "short_mq").c_str(), defaultButtons[i].shortMqttTopic, 128);
-        g_runtimeConfig.buttonLongActions[i] = getNVSString(prefs, (buttonPrefix + "long_act").c_str(), defaultButtons[i].longAction, 50);
         g_runtimeConfig.buttonLongMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "long_mq").c_str(), defaultButtons[i].longMqttTopic, 128);
-        
+
         // Load LED effect configuration with defaults from ButtonConfig struct
         g_runtimeConfig.buttonShortLedEffects[i] = getNVSString(prefs, (buttonPrefix + "short_led").c_str(), defaultButtons[i].shortLedEffect, 20);
         g_runtimeConfig.buttonLongLedEffects[i] = getNVSString(prefs, (buttonPrefix + "long_led").c_str(), defaultButtons[i].longLedEffect, 20);
@@ -237,7 +247,7 @@ void loadDefaultConfig()
         g_runtimeConfig.buttonShortMqttTopics[i] = defaultButtons[i].shortMqttTopic;
         g_runtimeConfig.buttonLongActions[i] = defaultButtons[i].longAction;
         g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtons[i].longMqttTopic;
-        
+
         // Load default LED effect configuration from ButtonConfig struct
         g_runtimeConfig.buttonShortLedEffects[i] = defaultButtons[i].shortLedEffect;
         g_runtimeConfig.buttonLongLedEffects[i] = defaultButtons[i].longLedEffect;
@@ -298,7 +308,7 @@ bool saveNVSConfig(const RuntimeConfig &config)
         prefs.putString((buttonPrefix + "short_mq").c_str(), config.buttonShortMqttTopics[i]);
         prefs.putString((buttonPrefix + "long_act").c_str(), config.buttonLongActions[i]);
         prefs.putString((buttonPrefix + "long_mq").c_str(), config.buttonLongMqttTopics[i]);
-        
+
         // Save LED effect configuration
         prefs.putString((buttonPrefix + "short_led").c_str(), config.buttonShortLedEffects[i]);
         prefs.putString((buttonPrefix + "long_led").c_str(), config.buttonLongLedEffects[i]);
@@ -368,5 +378,36 @@ bool checkAndMigrateNVSSchema()
     // For now, just return true - migration logic would go here if needed
     // This could check version numbers, migrate old key names, etc.
     LOG_NOTICE("CONFIG", "NVS schema check complete (no migration needed)");
+    return true;
+}
+
+bool factoryResetNVS()
+{
+    LOG_NOTICE("CONFIG", "Performing factory reset - erasing all NVS data");
+
+    // Erase entire NVS partition
+    esp_err_t err = nvs_flash_erase();
+    if (err != ESP_OK)
+    {
+        LOG_ERROR("CONFIG", "Failed to erase NVS: %s", esp_err_to_name(err));
+        return false;
+    }
+
+    // Reinitialize NVS
+    err = nvs_flash_init();
+    if (err != ESP_OK)
+    {
+        LOG_ERROR("CONFIG", "Failed to reinitialize NVS after erase: %s", esp_err_to_name(err));
+        return false;
+    }
+
+    // Load defaults from config.h
+    if (!loadNVSConfig())
+    {
+        LOG_ERROR("CONFIG", "Failed to load default configuration after factory reset");
+        return false;
+    }
+
+    LOG_NOTICE("CONFIG", "Factory reset completed - using defaults from config.h");
     return true;
 }
