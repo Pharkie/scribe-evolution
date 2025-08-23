@@ -373,6 +373,7 @@ function createRequestHandler() {
 }
 
 const server = http.createServer(createRequestHandler());
+global.server = server; // Make server globally accessible for restarts
 
 server.listen(PORT, () => {
   logServerStartup();
@@ -389,31 +390,58 @@ process.stdin.on('data', (key) => {
   if (input === 'r') {
     console.log('===================================================');
     console.log('🔄 Restarting server >>>');
-    console.log('This will pick up HTML/CSS/JS changes');
+    console.log('This will pick up HTML/CSS/JS changes and reload JSON data');
     console.log('===================================================\n');
 
+    // Force close all connections immediately
+    if (server.closeAllConnections) {
+      server.closeAllConnections();
+    }
     
-    // Close the existing server and create a new one
+    // Close the existing server and create a new one with timeout
+    const closeTimeout = setTimeout(() => {
+      logError('Server close timeout - forcing restart...');
+      restartServer();
+    }, 1000);
+    
     server.close((err) => {
+      clearTimeout(closeTimeout);
       if (err) {
         logError('Error during server close:', err.message);
         return;
       }
+      restartServer();
+    });
+    
+    function restartServer() {
+      logSuccess('Server closed, reloading JSON data...');
       
-      logSuccess('Server closed, starting new server...');
+      // Reload JSON data files
+      try {
+        const reloaded = loadMockData();
+        mockConfig = reloaded.mockConfig;
+        mockDiagnostics = reloaded.mockDiagnostics;
+        mockPrinterDiscovery = reloaded.mockPrinterDiscovery;
+        mockNvsDump = reloaded.mockNvsDump;
+        mockWifiScan = reloaded.mockWifiScan;
+        logSuccess('JSON data reloaded successfully');
+      } catch (error) {
+        logError('Error reloading JSON data:', error.message);
+        return;
+      }
       
-      // Create new server with same configuration (DRY - reuses createRequestHandler)
+      logSuccess('Starting new server...');
+      
+      // Create and start new server
       const newServer = http.createServer(createRequestHandler());
       
-      // Replace the global server reference
-      Object.setPrototypeOf(newServer, server.constructor.prototype);
-      Object.assign(server, newServer);
-      
-      // Start listening on the same port
-      server.listen(PORT, () => {
+      newServer.listen(PORT, () => {
         logServerStartup();
       });
-    });
+      
+      // Replace the global server reference after successful startup
+      global.server = newServer;
+    }
     
   } else if (input === 'd') {
     console.log('===================================================');
@@ -442,9 +470,11 @@ process.stdin.on('data', (key) => {
 process.on('SIGINT', () => {
   console.log('\nShutting down mock server...');
   
+  const currentServer = global.server || server;
+  
   // Force close all connections immediately
-  if (server.closeAllConnections) {
-    server.closeAllConnections();
+  if (currentServer.closeAllConnections) {
+    currentServer.closeAllConnections();
   }
   
   // Set a timeout to force exit if graceful shutdown takes too long
@@ -453,7 +483,7 @@ process.on('SIGINT', () => {
     process.exit(1);
   }, 2000);
   
-  server.close((err) => {
+  currentServer.close((err) => {
     clearTimeout(forceExitTimer);
     if (err) {
       logError('Error during shutdown:', err.message);
