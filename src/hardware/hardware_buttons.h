@@ -23,8 +23,8 @@ struct ButtonState
     unsigned long windowStartTime;  // Start of current rate limit window
 };
 
-// Global button state array
-static ButtonState buttonStates[4]; // Exactly 4 buttons
+// Global button state array - size matches numHardwareButtons from config.h
+extern ButtonState buttonStates[];
 
 /**
  * @brief Initialize hardware buttons

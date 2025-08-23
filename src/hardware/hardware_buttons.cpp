@@ -23,6 +23,9 @@ extern Message currentMessage;
 // HARDWARE BUTTON IMPLEMENTATION
 // ========================================
 
+// Button state array - dynamically sized based on numHardwareButtons from config.h
+ButtonState buttonStates[sizeof(defaultButtons) / sizeof(defaultButtons[0])];
+
 void initializeHardwareButtons()
 {
     LOG_NOTICE("BUTTONS", "=== INITIALIZING HARDWARE BUTTONS ===");
@@ -190,7 +193,7 @@ void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
 #ifdef ENABLE_LEDS
     // Get runtime configuration to access configured LED effects
     const RuntimeConfig &config = getRuntimeConfig();
-    
+
     String effectName;
     if (isLongPress)
     {
@@ -200,15 +203,15 @@ void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
     {
         effectName = config.buttonShortLedEffects[buttonIndex];
     }
-    
+
     // Skip if effect is disabled
     if (effectName == "none" || effectName.length() == 0)
     {
-        LOG_VERBOSE("BUTTONS", "LED effect disabled for button %d (%s press)", 
-                   buttonIndex, isLongPress ? "long" : "short");
+        LOG_VERBOSE("BUTTONS", "LED effect disabled for button %d (%s press)",
+                    buttonIndex, isLongPress ? "long" : "short");
         return;
     }
-    
+
     // Trigger configured LED effect for 1 cycle with appropriate colors
     CRGB color = CRGB::Green; // Default to green for most effects
     if (effectName == "rainbow")
@@ -219,16 +222,16 @@ void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
         color = CRGB::Green;
     else if (effectName == "twinkle")
         color = CRGB::Yellow;
-    
+
     if (ledEffects.startEffectCycles(effectName, 1, color))
     {
         LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): %s, 1 cycle",
-                   buttonIndex, isLongPress ? "long" : "short", effectName.c_str());
+                    buttonIndex, isLongPress ? "long" : "short", effectName.c_str());
     }
     else
     {
-        LOG_WARNING("BUTTONS", "Failed to trigger LED effect '%s' for button %d", 
-                   effectName.c_str(), buttonIndex);
+        LOG_WARNING("BUTTONS", "Failed to trigger LED effect '%s' for button %d",
+                    effectName.c_str(), buttonIndex);
     }
 #else
     LOG_VERBOSE("BUTTONS", "LED effects disabled - no effect for button %d", buttonIndex);
@@ -245,6 +248,9 @@ void handleButtonPress(int buttonIndex)
 
     LOG_VERBOSE("BUTTONS", "=== HANDLING BUTTON %d SHORT PRESS ===", buttonIndex);
 
+    // Feed watchdog at start of button handling
+    esp_task_wdt_reset();
+
     // Check rate limiting
     unsigned long currentTime = millis();
     if (isButtonRateLimited(buttonIndex, currentTime))
@@ -253,8 +259,14 @@ void handleButtonPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // Get runtime configuration
+    // Get runtime configuration with safety check
     const RuntimeConfig &config = getRuntimeConfig();
+    if (buttonIndex >= numHardwareButtons)
+    {
+        LOG_ERROR("BUTTONS", "Button index %d exceeds maximum buttons (%d)", buttonIndex, numHardwareButtons);
+        return;
+    }
+
     const String &shortAction = config.buttonShortActions[buttonIndex];
     const String &shortMqttTopic = config.buttonShortMqttTopics[buttonIndex];
 
@@ -262,6 +274,9 @@ void handleButtonPress(int buttonIndex)
 
     // Trigger immediate LED effect (non-blocking)
     triggerButtonLedEffect(buttonIndex, false);
+
+    // Feed watchdog before action execution
+    esp_task_wdt_reset();
 
     // Execute action immediately if endpoint is specified
     if (shortAction.length() > 0)
@@ -274,6 +289,9 @@ void handleButtonPress(int buttonIndex)
     {
         LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", shortMqttTopic.c_str());
     }
+
+    // Feed watchdog at end of button handling
+    esp_task_wdt_reset();
 }
 
 void handleButtonLongPress(int buttonIndex)
@@ -286,6 +304,9 @@ void handleButtonLongPress(int buttonIndex)
 
     LOG_VERBOSE("BUTTONS", "=== HANDLING BUTTON %d LONG PRESS ===", buttonIndex);
 
+    // Feed watchdog at start of button handling
+    esp_task_wdt_reset();
+
     // Check rate limiting
     unsigned long currentTime = millis();
     if (isButtonRateLimited(buttonIndex, currentTime))
@@ -294,8 +315,14 @@ void handleButtonLongPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // Get runtime configuration
+    // Get runtime configuration with safety check
     const RuntimeConfig &config = getRuntimeConfig();
+    if (buttonIndex >= numHardwareButtons)
+    {
+        LOG_ERROR("BUTTONS", "Button index %d exceeds maximum buttons (%d)", buttonIndex, numHardwareButtons);
+        return;
+    }
+
     const String &longAction = config.buttonLongActions[buttonIndex];
     const String &longMqttTopic = config.buttonLongMqttTopics[buttonIndex];
 
@@ -303,6 +330,9 @@ void handleButtonLongPress(int buttonIndex)
 
     // Trigger immediate LED effect (non-blocking)
     triggerButtonLedEffect(buttonIndex, true);
+
+    // Feed watchdog before action execution
+    esp_task_wdt_reset();
 
     // Execute action immediately if endpoint is specified
     if (longAction.length() > 0)
@@ -315,26 +345,45 @@ void handleButtonLongPress(int buttonIndex)
     {
         LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", longMqttTopic.c_str());
     }
+
+    // Feed watchdog at end of button handling
+    esp_task_wdt_reset();
 }
 
 // Execute button endpoint using shared content action utilities
 void executeButtonEndpoint(const char *endpoint)
 {
+    if (!endpoint || strlen(endpoint) == 0)
+    {
+        LOG_ERROR("BUTTONS", "Invalid endpoint: null or empty");
+        return;
+    }
+
     LOG_NOTICE("BUTTONS", "Executing button endpoint: %s", endpoint);
-    
+
+    // Feed watchdog before starting content generation
+    esp_task_wdt_reset();
+
     // Convert endpoint to content action type
     String endpointStr = String(endpoint);
     ContentActionType actionType = endpointToActionType(endpointStr);
-    
+
     // Validate known endpoint
-    if (actionTypeToString(actionType) == "UNKNOWN" && endpointStr != "/api/joke") {
+    if (actionTypeToString(actionType) == "UNKNOWN" && endpointStr != "/api/joke")
+    {
         LOG_WARNING("BUTTONS", "Unknown button endpoint: %s", endpoint);
         return;
     }
-    
+
+    // Feed watchdog before content generation
+    esp_task_wdt_reset();
+
     // Execute content action and queue for printing
     bool success = executeAndQueueContent(actionType);
-    
+
+    // Feed watchdog after content generation
+    esp_task_wdt_reset();
+
     if (success)
     {
         // Directly print the queued content
@@ -345,4 +394,7 @@ void executeButtonEndpoint(const char *endpoint)
     {
         LOG_ERROR("BUTTONS", "Failed to generate content for button endpoint: %s", endpoint);
     }
+
+    // Feed watchdog after printing
+    esp_task_wdt_reset();
 }

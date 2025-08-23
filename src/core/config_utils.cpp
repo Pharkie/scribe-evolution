@@ -21,6 +21,89 @@
 
 #include "config_utils.h"
 #include "config.h"
+#include "config_loader.h"
+#include <Arduino.h>
 
 // This file contains implementations that cannot be inlined
 // Most functions are inline in the header file
+
+void validateConfig()
+{
+    if (!loadRuntimeConfig())
+    {
+        // First-time startup: Loading default configuration from config.h
+    }
+
+    ValidationResult result = validateDeviceConfig();
+
+    if (!result.isValid)
+    {
+        Serial.println("❌ Configuration validation FAILED:");
+        Serial.print("  ERROR: ");
+        Serial.println(result.errorMessage);
+        // Critical configuration error - must be visible
+    }
+
+    // GPIO validation - check for conflicts between buttons, status LED, and LED strip
+    int usedGpios[32]; // ESP32-C3 has GPIOs 0-21, but use larger array for safety
+    int usedCount = 0;
+    bool gpioConflict = false;
+
+    // Add button GPIOs
+    for (int i = 0; i < numHardwareButtons; i++)
+    {
+        usedGpios[usedCount++] = defaultButtons[i].gpio;
+    }
+
+    // Add status LED GPIO
+    usedGpios[usedCount++] = statusLEDPin;
+
+#if ENABLE_LEDS
+    // Add LED strip GPIO (GPIO 4 is the default)
+    usedGpios[usedCount++] = 4; // DEFAULT_LED_PIN from led_config.h
+#endif
+
+    // Check for duplicate GPIOs
+    for (int i = 0; i < usedCount && !gpioConflict; i++)
+    {
+        for (int j = i + 1; j < usedCount; j++)
+        {
+            if (usedGpios[i] == usedGpios[j])
+            {
+                Serial.printf("❌ GPIO CONFLICT: GPIO %d is used multiple times!\n", usedGpios[i]);
+                Serial.println("  Check button configurations, status LED, and LED strip GPIO assignments");
+                gpioConflict = true;
+                break;
+            }
+        }
+    }
+
+    // Validate GPIO ranges for ESP32-C3 (GPIO 0-21)
+    for (int i = 0; i < usedCount && !gpioConflict; i++)
+    {
+        if (usedGpios[i] < 0 || usedGpios[i] > 21)
+        {
+            Serial.printf("❌ Invalid GPIO %d: ESP32-C3 only supports GPIO 0-21\n", usedGpios[i]);
+            gpioConflict = true;
+        }
+
+        // Warn about potentially problematic GPIOs
+        if (usedGpios[i] == 0 || usedGpios[i] == 1)
+        {
+            Serial.printf("⚠️  GPIO %d warning: Used for UART0 (Serial) - may cause boot/programming issues\n", usedGpios[i]);
+        }
+        if (usedGpios[i] == 2 || usedGpios[i] == 3)
+        {
+            Serial.printf("⚠️  GPIO %d warning: Strapping pin - may cause boot issues if pulled wrong way\n", usedGpios[i]);
+        }
+    }
+
+    if (gpioConflict)
+    {
+        Serial.println("⚠️  Continuing with degraded functionality due to GPIO conflicts...");
+    }
+    else
+    {
+        Serial.printf("✅ GPIO validation passed - %d GPIOs configured correctly\n", usedCount);
+    }
+}

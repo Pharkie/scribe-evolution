@@ -23,7 +23,6 @@ extern WiFiConnectionMode currentWiFiMode;
 extern DNSServer dnsServer;
 
 // Function declarations
-void validateConfig();
 WiFiConnectionMode connectToWiFi();
 void startFallbackAP();
 void setupmDNS();

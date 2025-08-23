@@ -100,8 +100,11 @@ inline const char *getDeviceOwnerKey()
 }
 
 // ========================================
-// SIMPLIFIED CONFIGURATION VALIDATION
+// CONFIGURATION VALIDATION
 // ========================================
+
+// Main configuration validation function (includes GPIO validation)
+void validateConfig();
 
 // Simple validation functions
 inline ValidationResult validateDeviceConfig()

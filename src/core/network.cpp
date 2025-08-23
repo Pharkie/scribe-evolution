@@ -61,23 +61,7 @@ void updateStatusLED()
 }
 
 // === Configuration Validation ===
-void validateConfig()
-{
-    if (!loadRuntimeConfig())
-    {
-        // First-time startup: Loading default configuration from config.h
-    }
-
-    ValidationResult result = validateDeviceConfig();
-
-    if (!result.isValid)
-    {
-        Serial.println("❌ Configuration validation FAILED:");
-        Serial.print("  ERROR: ");
-        Serial.println(result.errorMessage);
-        // Critical configuration error - must be visible
-    }
-} // === WiFi Connection with Fallback AP Mode ===
+// === WiFi Connection with Fallback AP Mode ===
 WiFiConnectionMode connectToWiFi()
 {
     const RuntimeConfig &config = getRuntimeConfig();
