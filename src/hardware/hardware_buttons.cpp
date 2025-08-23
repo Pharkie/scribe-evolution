@@ -9,7 +9,6 @@
 #include <esp_task_wdt.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
-#include <vector>
 
 #ifdef ENABLE_LEDS
 #include "../leds/LedEffects.h"
@@ -21,27 +20,8 @@ extern PubSubClient mqttClient;
 extern Message currentMessage;
 
 // ========================================
-// BUTTON ACTION QUEUE SYSTEM
-// ========================================
-
-// Action queue for async processing
-static std::vector<ButtonAction> buttonActionQueue;
-static unsigned long lastActionProcessTime = 0;
-static const unsigned long ACTION_PROCESS_INTERVAL = 100; // Process actions every 100ms
-static const unsigned long ACTION_TIMEOUT_MS = 30000; // 30 second timeout for queued actions
-static const size_t MAX_QUEUE_SIZE = 20; // Prevent memory issues
-
-// ========================================
 // HARDWARE BUTTON IMPLEMENTATION
 // ========================================
-
-void initializeButtonActionQueue()
-{
-    buttonActionQueue.clear();
-    buttonActionQueue.reserve(MAX_QUEUE_SIZE);
-    lastActionProcessTime = millis();
-    LOG_VERBOSE("BUTTONS", "Button action queue initialized (max size: %d)", MAX_QUEUE_SIZE);
-}
 
 void initializeHardwareButtons()
 {
@@ -50,9 +30,6 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
-
-    // Initialize action queue system
-    initializeButtonActionQueue();
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
@@ -208,84 +185,6 @@ bool isButtonRateLimited(int buttonIndex, unsigned long currentTime)
     return false;
 }
 
-void processButtonActionQueue()
-{
-    unsigned long currentTime = millis();
-    
-    // Throttle processing to avoid overwhelming the system
-    if (currentTime - lastActionProcessTime < ACTION_PROCESS_INTERVAL)
-    {
-        return;
-    }
-    lastActionProcessTime = currentTime;
-    
-    // Feed watchdog
-    esp_task_wdt_reset();
-    
-    if (buttonActionQueue.empty())
-    {
-        return;
-    }
-    
-    // Process one action at a time to keep it non-blocking
-    ButtonAction action = buttonActionQueue.front();
-    buttonActionQueue.erase(buttonActionQueue.begin());
-    
-    // Check if action has timed out
-    if (currentTime - action.timestamp > ACTION_TIMEOUT_MS)
-    {
-        LOG_WARNING("BUTTONS", "Button action timed out: %s (queued for %lu ms)", 
-                   action.endpoint.c_str(), currentTime - action.timestamp);
-        return;
-    }
-    
-    LOG_VERBOSE("BUTTONS", "Processing queued button action: %s (queue size: %d)", 
-               action.endpoint.c_str(), buttonActionQueue.size());
-    
-    // Execute the action directly without HTTP calls
-    if (action.endpoint.length() > 0)
-    {
-        executeButtonEndpoint(action.endpoint.c_str());
-    }
-    
-    // Handle MQTT if topic is specified (future enhancement)
-    if (action.mqttTopic.length() > 0)
-    {
-        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", action.mqttTopic.c_str());
-    }
-}
-
-void queueButtonAction(const String &endpoint, const String &mqttTopic, int buttonIndex, bool isLongPress)
-{
-    if (endpoint.length() == 0)
-    {
-        LOG_VERBOSE("BUTTONS", "Empty endpoint - no action queued");
-        return;
-    }
-    
-    // Check queue size limit
-    if (buttonActionQueue.size() >= MAX_QUEUE_SIZE)
-    {
-        LOG_ERROR("BUTTONS", "Button action queue full (%d items) - dropping action: %s", 
-                 buttonActionQueue.size(), endpoint.c_str());
-        return;
-    }
-    
-    // Create action
-    ButtonAction action;
-    action.endpoint = endpoint;
-    action.mqttTopic = mqttTopic;
-    action.timestamp = millis();
-    action.buttonIndex = buttonIndex;
-    action.isLongPress = isLongPress;
-    
-    // Add to queue
-    buttonActionQueue.push_back(action);
-    
-    LOG_NOTICE("BUTTONS", "=== QUEUED BUTTON ACTION: %s === (button %d, %s, queue size: %d)",
-               endpoint.c_str(), buttonIndex, isLongPress ? "LONG" : "SHORT", buttonActionQueue.size());
-}
-
 void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
 {
 #ifdef ENABLE_LEDS
@@ -359,13 +258,22 @@ void handleButtonPress(int buttonIndex)
     const String &shortAction = config.buttonShortActions[buttonIndex];
     const String &shortMqttTopic = config.buttonShortMqttTopics[buttonIndex];
 
-    LOG_NOTICE("BUTTONS", "Button %d triggering SHORT action: '%s'", buttonIndex, shortAction.c_str());
+    LOG_NOTICE("BUTTONS", "Button %d executing SHORT action: '%s'", buttonIndex, shortAction.c_str());
 
     // Trigger immediate LED effect (non-blocking)
     triggerButtonLedEffect(buttonIndex, false);
 
-    // Queue action for async processing (non-blocking)
-    queueButtonAction(shortAction, shortMqttTopic, buttonIndex, false);
+    // Execute action immediately if endpoint is specified
+    if (shortAction.length() > 0)
+    {
+        executeButtonEndpoint(shortAction.c_str());
+    }
+
+    // Handle MQTT if topic is specified (future enhancement)
+    if (shortMqttTopic.length() > 0)
+    {
+        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", shortMqttTopic.c_str());
+    }
 }
 
 void handleButtonLongPress(int buttonIndex)
@@ -391,13 +299,22 @@ void handleButtonLongPress(int buttonIndex)
     const String &longAction = config.buttonLongActions[buttonIndex];
     const String &longMqttTopic = config.buttonLongMqttTopics[buttonIndex];
 
-    LOG_NOTICE("BUTTONS", "Button %d triggering LONG action: '%s'", buttonIndex, longAction.c_str());
+    LOG_NOTICE("BUTTONS", "Button %d executing LONG action: '%s'", buttonIndex, longAction.c_str());
 
     // Trigger immediate LED effect (non-blocking)
     triggerButtonLedEffect(buttonIndex, true);
 
-    // Queue action for async processing (non-blocking)
-    queueButtonAction(longAction, longMqttTopic, buttonIndex, true);
+    // Execute action immediately if endpoint is specified
+    if (longAction.length() > 0)
+    {
+        executeButtonEndpoint(longAction.c_str());
+    }
+
+    // Handle MQTT if topic is specified (future enhancement)
+    if (longMqttTopic.length() > 0)
+    {
+        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", longMqttTopic.c_str());
+    }
 }
 
 // Execute button endpoint directly without HTTP calls
