@@ -57,7 +57,7 @@ struct RuntimeConfig
     String buttonLongActions[4];     // Long press actions for buttons 1-4 (empty string = no action)
     String buttonShortMqttTopics[4]; // MQTT topics for short press actions (empty string = use local print)
     String buttonLongMqttTopics[4];  // MQTT topics for long press actions (empty string = use local print)
-    
+
     // Button LED Effects Configuration (exactly 4 buttons)
     String buttonShortLedEffects[4]; // LED effects for short press actions (default: simple_chase)
     String buttonLongLedEffects[4];  // LED effects for long press actions (default: simple_chase)
@@ -128,6 +128,12 @@ bool checkAndMigrateNVSSchema();
  * @param config New configuration to set
  */
 void setRuntimeConfig(const RuntimeConfig &config);
+
+/**
+ * @brief Factory reset - erase all NVS data and reload defaults
+ * @return true if factory reset was successful
+ */
+bool factoryResetNVS();
 
 #if ENABLE_LEDS
 #include "led_config.h"
