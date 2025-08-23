@@ -15,6 +15,7 @@
 #include "../core/logging.h"
 #include "../utils/time_utils.h"
 #include "../utils/json_helpers.h"
+#include "../utils/content_actions.h"
 #include "content_generators.h"
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
@@ -46,42 +47,51 @@ enum ContentType
 };
 
 /**
- * @brief Unified content generation handler
+ * @brief Unified content generation handler using shared business logic
  * @param contentType The type of content to generate
  */
 void handleContentGeneration(AsyncWebServerRequest *request, ContentType contentType)
 {
-    // Determine content type name for logging
+    // Convert ContentType to ContentActionType
+    ContentActionType actionType;
     const char *typeName;
     switch (contentType)
     {
     case RIDDLE:
+        actionType = ContentActionType::RIDDLE;
         typeName = "riddle";
         break;
     case JOKE:
+        actionType = ContentActionType::JOKE;
         typeName = "joke";
         break;
     case QUOTE:
+        actionType = ContentActionType::QUOTE;
         typeName = "quote";
         break;
     case QUIZ:
+        actionType = ContentActionType::QUIZ;
         typeName = "quiz";
         break;
     case PRINT_TEST:
+        actionType = ContentActionType::PRINT_TEST;
         typeName = "print test";
         break;
     case POKE:
+        actionType = ContentActionType::POKE;
         typeName = "poke";
         break;
     case USER_MESSAGE:
+        actionType = ContentActionType::USER_MESSAGE;
         typeName = "user message";
         break;
     case NEWS:
+        actionType = ContentActionType::NEWS;
         typeName = "news";
         break;
     default:
-        typeName = "unknown";
-        break;
+        sendValidationError(request, ValidationResult(false, "Unknown content type"));
+        return;
     }
 
     LOG_VERBOSE("WEB", "handle%s() called", typeName);
@@ -90,111 +100,67 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     // since they only generate content and don't perform actions.
     // Rate limiting is applied to the actual delivery endpoints (/print-local, /print-mqtt)
 
-    // Get target parameter to determine if sender info should be included
+    // Get target parameter and custom data from request body
     String body = getRequestBody(request);
     String target = "local-direct"; // Default
+    String customData = "";
 
     if (body.length() > 0)
     {
         DynamicJsonDocument doc(1024);
         DeserializationError error = deserializeJson(doc, body);
-        if (!error && doc.containsKey("target"))
+        if (!error)
         {
-            target = doc["target"].as<String>();
+            if (doc.containsKey("target"))
+            {
+                target = doc["target"].as<String>();
+            }
+            
+            // Handle user message custom data
+            if (contentType == USER_MESSAGE)
+            {
+                if (!doc.containsKey("message"))
+                {
+                    sendValidationError(request, ValidationResult(false, "Missing required field 'message' in JSON"));
+                    return;
+                }
+                
+                customData = doc["message"].as<String>();
+                
+                // Validate message content
+                ValidationResult messageValidation = validateMessage(customData);
+                if (!messageValidation.isValid)
+                {
+                    LOG_WARNING("WEB", "User message validation failed: %s", messageValidation.errorMessage.c_str());
+                    sendValidationError(request, messageValidation);
+                    return;
+                }
+            }
         }
+        else if (contentType == USER_MESSAGE)
+        {
+            sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
+            return;
+        }
+    }
+    else if (contentType == USER_MESSAGE)
+    {
+        sendValidationError(request, ValidationResult(false, "No JSON body provided"));
+        return;
     }
 
     // Determine if this is for MQTT (needs sender info) or local (no sender)
     bool isForMQTT = (target != "local-direct");
     String sender = isForMQTT ? String(getDeviceOwnerKey()) : "";
 
-    // Generate content based on type
-    String content;
-    String actionName;
-    switch (contentType)
+    // Execute content action using shared business logic
+    ContentActionResult result = executeContentAction(actionType, customData, sender);
+
+    if (result.success)
     {
-    case RIDDLE:
-        content = generateRiddleContent();
-        actionName = "RIDDLE";
-        break;
-    case JOKE:
-        content = generateJokeContent();
-        actionName = "JOKE";
-        break;
-    case QUOTE:
-        content = generateQuoteContent();
-        actionName = "QUOTE";
-        break;
-    case QUIZ:
-        content = generateQuizContent();
-        actionName = "QUIZ";
-        break;
-    case PRINT_TEST:
-    {
-        String testContent = loadPrintTestContent();
-        content = testContent + "\n\n";
-        actionName = "TEST PRINT";
-    }
-    break;
-    case POKE:
-        content = generatePokeContent();
-        actionName = "POKE";
-        break;
-    case USER_MESSAGE:
-    {
-        // Get and validate JSON body for user message input
-        if (body.length() == 0)
-        {
-            sendValidationError(request, ValidationResult(false, "No JSON body provided"));
-            return;
-        }
-
-        // Parse JSON (already parsed above, but parse again for user message field)
-        DynamicJsonDocument doc(1024);
-        DeserializationError error = deserializeJson(doc, body);
-        if (error)
-        {
-            sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
-            return;
-        }
-
-        // Validate required message field
-        if (!doc.containsKey("message"))
-        {
-            sendValidationError(request, ValidationResult(false, "Missing required field 'message' in JSON"));
-            return;
-        }
-
-        String userMessage = doc["message"].as<String>();
-
-        // Validate message content
-        ValidationResult messageValidation = validateMessage(userMessage);
-        if (!messageValidation.isValid)
-        {
-            LOG_WARNING("WEB", "User message validation failed: %s", messageValidation.errorMessage.c_str());
-            sendValidationError(request, messageValidation);
-            return;
-        }
-
-        // Use the raw user message directly
-        content = userMessage;
-        actionName = "MESSAGE";
-    }
-    break;
-    case NEWS:
-        content = generateNewsContent();
-        actionName = "NEWS";
-        break;
-    }
-
-    if (content.length() > 0 || actionName == "POKE")
-    {
-        // Format content with header and appropriate sender info
-        String formattedContent = formatContentWithHeader(actionName, content, sender);
-
         // Return JSON with formatted content
         DynamicJsonDocument doc(2048);
-        doc["content"] = formattedContent;
+        doc["content"] = result.content;
 
         String response;
         serializeJson(doc, response);
@@ -205,12 +171,13 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     else
     {
         DynamicJsonDocument errorResponse(256);
-        errorResponse["error"] = String("Failed to generate ") + typeName + " content";
+        errorResponse["error"] = result.errorMessage.length() > 0 ? result.errorMessage : 
+                                 String("Failed to generate ") + typeName + " content";
 
         String errorString;
         serializeJson(errorResponse, errorString);
         request->send(500, "application/json", errorString);
-        LOG_ERROR("WEB", "Failed to generate %s content", typeName);
+        LOG_ERROR("WEB", "Failed to generate %s content: %s", typeName, result.errorMessage.c_str());
     }
 }
 
@@ -230,7 +197,6 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
 
     // Check if there's a custom prompt in the request body
     String customPrompt = "";
-    extern String getRequestBody(AsyncWebServerRequest * request);
     String body = getRequestBody(request);
     if (body.length() > 0)
     {
@@ -245,17 +211,14 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
         }
     }
 
-    // Generate unbidden ink content (with optional custom prompt)
-    String content = generateUnbiddenInkContent(customPrompt);
+    // Execute content action using shared business logic
+    ContentActionResult result = executeContentAction(ContentActionType::UNBIDDEN_INK, customPrompt, "");
 
-    if (content.length() > 0)
+    if (result.success)
     {
-        // Format content with header to match other endpoints
-        String formattedContent = formatContentWithHeader("UNBIDDEN INK", content, "");
-
         // Return JSON response in the same format as other content endpoints
         DynamicJsonDocument responseDoc(2048);
-        responseDoc["content"] = formattedContent;
+        responseDoc["content"] = result.content;
 
         String response;
         serializeJson(responseDoc, response);
@@ -267,40 +230,20 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     {
         // Return JSON error response in the same format as other content endpoints
         DynamicJsonDocument errorDoc(256);
-        errorDoc["error"] = "Failed to generate Unbidden Ink content";
+        errorDoc["error"] = result.errorMessage.length() > 0 ? result.errorMessage : 
+                           "Failed to generate Unbidden Ink content";
 
         String errorResponse;
         serializeJson(errorDoc, errorResponse);
         request->send(500, "application/json", errorResponse);
-        LOG_ERROR("WEB", "Failed to generate Unbidden Ink content");
+        LOG_ERROR("WEB", "Failed to generate Unbidden Ink content: %s", result.errorMessage.c_str());
     }
 }
 
 bool generateAndQueueUnbiddenInk()
 {
     LOG_VERBOSE("UNBIDDENINK", "generateAndQueueUnbiddenInk() called");
-
-    // Generate unbidden ink content (no custom prompt for timer-based calls)
-    String content = generateUnbiddenInkContent("");
-
-    if (content.length() > 0)
-    {
-        // Format with header (always local, so no sender info)
-        String formattedContent = formatContentWithHeader("UNBIDDEN INK", content, "");
-
-        // Set up message for local printing (Unbidden Ink is always local-direct)
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-
-        LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink content queued for local direct printing");
-        return true;
-    }
-    else
-    {
-        LOG_ERROR("UNBIDDENINK", "Failed to generate Unbidden Ink content");
-        return false;
-    }
+    return executeAndQueueContent(ContentActionType::UNBIDDEN_INK);
 }
 
 // ========================================
@@ -309,92 +252,32 @@ bool generateAndQueueUnbiddenInk()
 
 bool generateAndQueueRiddle()
 {
-    String content = generateRiddleContent();
-    if (content.length() > 0)
-    {
-        String formattedContent = formatContentWithHeader("RIDDLE", content, "");
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-        LOG_VERBOSE("BUTTON", "Riddle content queued for local printing");
-        return true;
-    }
-    return false;
+    return executeAndQueueContent(ContentActionType::RIDDLE);
 }
 
 bool generateAndQueueJoke()
 {
-    String content = generateJokeContent();
-    if (content.length() > 0)
-    {
-        String formattedContent = formatContentWithHeader("JOKE", content, "");
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-        LOG_VERBOSE("BUTTON", "Joke content queued for local printing");
-        return true;
-    }
-    return false;
+    return executeAndQueueContent(ContentActionType::JOKE);
 }
 
 bool generateAndQueueQuote()
 {
-    String content = generateQuoteContent();
-    if (content.length() > 0)
-    {
-        String formattedContent = formatContentWithHeader("QUOTE", content, "");
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-        LOG_VERBOSE("BUTTON", "Quote content queued for local printing");
-        return true;
-    }
-    return false;
+    return executeAndQueueContent(ContentActionType::QUOTE);
 }
 
 bool generateAndQueueQuiz()
 {
-    String content = generateQuizContent();
-    if (content.length() > 0)
-    {
-        String formattedContent = formatContentWithHeader("QUIZ", content, "");
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-        LOG_VERBOSE("BUTTON", "Quiz content queued for local printing");
-        return true;
-    }
-    return false;
+    return executeAndQueueContent(ContentActionType::QUIZ);
 }
 
 bool generateAndQueuePrintTest()
 {
-    String content = loadPrintTestContent();
-    if (content.length() > 0)
-    {
-        String formattedContent = formatContentWithHeader("PRINT TEST", content, "");
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-        LOG_VERBOSE("BUTTON", "Print test content queued for local printing");
-        return true;
-    }
-    return false;
+    return executeAndQueueContent(ContentActionType::PRINT_TEST);
 }
 
 bool generateAndQueueNews()
 {
-    String content = generateNewsContent();
-    if (content.length() > 0)
-    {
-        String formattedContent = formatContentWithHeader("NEWS", content, "");
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
-        LOG_VERBOSE("BUTTON", "News content queued for local printing");
-        return true;
-    }
-    return false;
+    return executeAndQueueContent(ContentActionType::NEWS);
 }
 
 void handlePrintContent(AsyncWebServerRequest *request)

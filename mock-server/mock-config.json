@@ -51,25 +51,33 @@
             "shortAction": "/api/joke",
             "shortMqttTopic": "",
             "longAction": "/api/joke",
-            "longMqttTopic": ""
+            "longMqttTopic": "",
+            "shortLedEffect": "simple_chase",
+            "longLedEffect": "pulse"
         },
         "button2": {
             "shortAction": "/api/riddle",
             "shortMqttTopic": "",
             "longAction": "/api/riddle",
-            "longMqttTopic": ""
+            "longMqttTopic": "",
+            "shortLedEffect": "rainbow",
+            "longLedEffect": "twinkle"
         },
         "button3": {
             "shortAction": "/api/quote",
             "shortMqttTopic": "",
             "longAction": "",
-            "longMqttTopic": ""
+            "longMqttTopic": "",
+            "shortLedEffect": "chase",
+            "longLedEffect": "matrix"
         },
         "button4": {
             "shortAction": "/api/quiz",
             "shortMqttTopic": "",
             "longAction": "",
-            "longMqttTopic": ""
+            "longMqttTopic": "",
+            "shortLedEffect": "pulse",
+            "longLedEffect": "none"
         }
     },
     "leds": {

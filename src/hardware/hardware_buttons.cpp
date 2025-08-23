@@ -1,15 +1,19 @@
 #include "hardware_buttons.h"
 #include "../web/web_server.h"
 #include "printer.h"
-#include "../content/content_handlers.h"
-#include "../content/content_generators.h"
+#include "../utils/content_actions.h"
 #include "../core/config_loader.h"
+#include "../core/shared_types.h"
 #include "../utils/time_utils.h"
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
 #include <PubSubClient.h>
-#include <HTTPClient.h>
 #include <WiFi.h>
+
+#ifdef ENABLE_LEDS
+#include "../leds/LedEffects.h"
+extern LedEffects ledEffects;
+#endif
 
 // External declarations
 extern PubSubClient mqttClient;
@@ -181,6 +185,56 @@ bool isButtonRateLimited(int buttonIndex, unsigned long currentTime)
     return false;
 }
 
+void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
+{
+#ifdef ENABLE_LEDS
+    // Get runtime configuration to access configured LED effects
+    const RuntimeConfig &config = getRuntimeConfig();
+    
+    String effectName;
+    if (isLongPress)
+    {
+        effectName = config.buttonLongLedEffects[buttonIndex];
+    }
+    else
+    {
+        effectName = config.buttonShortLedEffects[buttonIndex];
+    }
+    
+    // Skip if effect is disabled
+    if (effectName == "none" || effectName.length() == 0)
+    {
+        LOG_VERBOSE("BUTTONS", "LED effect disabled for button %d (%s press)", 
+                   buttonIndex, isLongPress ? "long" : "short");
+        return;
+    }
+    
+    // Trigger configured LED effect for 1 cycle with appropriate colors
+    CRGB color = CRGB::Green; // Default to green for most effects
+    if (effectName == "rainbow")
+        color = CRGB::White; // Rainbow uses its own colors
+    else if (effectName == "pulse")
+        color = CRGB::Blue;
+    else if (effectName == "matrix")
+        color = CRGB::Green;
+    else if (effectName == "twinkle")
+        color = CRGB::Yellow;
+    
+    if (ledEffects.startEffectCycles(effectName, 1, color))
+    {
+        LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): %s, 1 cycle",
+                   buttonIndex, isLongPress ? "long" : "short", effectName.c_str());
+    }
+    else
+    {
+        LOG_WARNING("BUTTONS", "Failed to trigger LED effect '%s' for button %d", 
+                   effectName.c_str(), buttonIndex);
+    }
+#else
+    LOG_VERBOSE("BUTTONS", "LED effects disabled - no effect for button %d", buttonIndex);
+#endif
+}
+
 void handleButtonPress(int buttonIndex)
 {
     if (buttonIndex < 0 || buttonIndex >= numHardwareButtons)
@@ -204,10 +258,22 @@ void handleButtonPress(int buttonIndex)
     const String &shortAction = config.buttonShortActions[buttonIndex];
     const String &shortMqttTopic = config.buttonShortMqttTopics[buttonIndex];
 
-    LOG_NOTICE("BUTTONS", "Button %d triggering SHORT action: '%s'", buttonIndex, shortAction.c_str());
+    LOG_NOTICE("BUTTONS", "Button %d executing SHORT action: '%s'", buttonIndex, shortAction.c_str());
 
-    // Trigger local web endpoint (same as web interface)
-    handleButtonAction(shortAction.c_str(), shortMqttTopic.c_str());
+    // Trigger immediate LED effect (non-blocking)
+    triggerButtonLedEffect(buttonIndex, false);
+
+    // Execute action immediately if endpoint is specified
+    if (shortAction.length() > 0)
+    {
+        executeButtonEndpoint(shortAction.c_str());
+    }
+
+    // Handle MQTT if topic is specified (future enhancement)
+    if (shortMqttTopic.length() > 0)
+    {
+        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", shortMqttTopic.c_str());
+    }
 }
 
 void handleButtonLongPress(int buttonIndex)
@@ -233,89 +299,50 @@ void handleButtonLongPress(int buttonIndex)
     const String &longAction = config.buttonLongActions[buttonIndex];
     const String &longMqttTopic = config.buttonLongMqttTopics[buttonIndex];
 
-    LOG_NOTICE("BUTTONS", "Button %d triggering LONG action: '%s'", buttonIndex, longAction.c_str());
+    LOG_NOTICE("BUTTONS", "Button %d executing LONG action: '%s'", buttonIndex, longAction.c_str());
 
-    // Trigger local web endpoint (same as web interface)
-    handleButtonAction(longAction.c_str(), longMqttTopic.c_str());
+    // Trigger immediate LED effect (non-blocking)
+    triggerButtonLedEffect(buttonIndex, true);
+
+    // Execute action immediately if endpoint is specified
+    if (longAction.length() > 0)
+    {
+        executeButtonEndpoint(longAction.c_str());
+    }
+
+    // Handle MQTT if topic is specified (future enhancement)
+    if (longMqttTopic.length() > 0)
+    {
+        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", longMqttTopic.c_str());
+    }
 }
 
-// Make async local HTTP request to web endpoint (non-blocking)
-void makeAsyncLocalRequest(const char *endpoint)
+// Execute button endpoint using shared content action utilities
+void executeButtonEndpoint(const char *endpoint)
 {
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        LOG_ERROR("BUTTONS", "Cannot make local request - WiFi not connected");
+    LOG_NOTICE("BUTTONS", "Executing button endpoint: %s", endpoint);
+    
+    // Convert endpoint to content action type
+    String endpointStr = String(endpoint);
+    ContentActionType actionType = endpointToActionType(endpointStr);
+    
+    // Validate known endpoint
+    if (actionTypeToString(actionType) == "UNKNOWN" && endpointStr != "/api/joke") {
+        LOG_WARNING("BUTTONS", "Unknown button endpoint: %s", endpoint);
         return;
     }
-
-    // Use local IP address for the request
-    String localIP = WiFi.localIP().toString();
-    String url = "http://" + localIP + endpoint;
-
-    LOG_NOTICE("BUTTONS", "Making local HTTP request to: %s", url.c_str());
-
-    // Create HTTPClient for quick local request
-    HTTPClient http;
-
-    if (!http.begin(url))
+    
+    // Execute content action and queue for printing
+    bool success = executeAndQueueContent(actionType);
+    
+    if (success)
     {
-        LOG_ERROR("BUTTONS", "Failed to initialize HTTP client for: %s", url.c_str());
-        return;
-    }
-
-    // Set short timeout for local requests
-    http.setTimeout(5000); // 5 second timeout for local requests
-    http.addHeader("User-Agent", "ScribeHardwareButton/1.0");
-
-    LOG_VERBOSE("BUTTONS", "HTTP client configured, making GET request...");
-
-    // Make the request - this should be quick for local requests
-    int httpResponseCode = http.GET();
-
-    if (httpResponseCode > 0)
-    {
-        LOG_NOTICE("BUTTONS", "Local request SUCCESS: HTTP %d for %s", httpResponseCode, endpoint);
-
-        // Log response for debugging (but don't process it)
-        if (httpResponseCode == 200)
-        {
-            String response = http.getString();
-            LOG_VERBOSE("BUTTONS", "Response length: %d bytes", response.length());
-        }
+        // Directly print the queued content
+        printMessage();
+        LOG_NOTICE("BUTTONS", "Button action executed successfully: %s", endpoint);
     }
     else
     {
-        LOG_ERROR("BUTTONS", "Local request FAILED: HTTP %d for %s", httpResponseCode, endpoint);
-    }
-
-    // Cleanup immediately
-    http.end();
-
-    // Feed watchdog after HTTP operation
-    esp_task_wdt_reset();
-
-    LOG_VERBOSE("BUTTONS", "HTTP request completed and cleaned up");
-}
-
-// Handle button action - trigger local web endpoint (same as web interface)
-void handleButtonAction(const char *endpoint, const char *mqttTopic)
-{
-    if (strlen(endpoint) == 0)
-    {
-        LOG_VERBOSE("BUTTONS", "Empty endpoint - no action");
-        return;
-    }
-
-    LOG_NOTICE("BUTTONS", "=== TRIGGERING WEB ENDPOINT: %s ===", endpoint);
-
-    // Make async HTTP request to local web server (same as web interface)
-    makeAsyncLocalRequest(endpoint);
-
-    LOG_NOTICE("BUTTONS", "Button web request initiated for: %s", endpoint);
-
-    // Handle MQTT if topic is specified (future enhancement)
-    if (strlen(mqttTopic) > 0)
-    {
-        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", mqttTopic);
+        LOG_ERROR("BUTTONS", "Failed to generate content for button endpoint: %s", endpoint);
     }
 }
