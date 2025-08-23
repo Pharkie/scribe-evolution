@@ -63,14 +63,69 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
 
-    // Initialize GPIO pins first (basic hardware setup)
+    // ESP32-C3 GPIO safety validation before initialization
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        // Configure GPIO pin using defaultButtons array
-        pinMode(defaultButtons[i].gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
+        int gpio = defaultButtons[i].gpio;
+        
+        // ESP32-C3 GPIO range check (0-21)
+        if (gpio < 0 || gpio > 21)
+        {
+            LOG_ERROR("BUTTONS", "Button %d GPIO %d: Invalid GPIO (ESP32-C3 range: 0-21)", i, gpio);
+            continue;
+        }
+        
+        // Warn about potentially problematic GPIOs
+        if (gpio == 0 || gpio == 2 || gpio == 3)
+        {
+            LOG_WARNING("BUTTONS", "Button %d GPIO %d: Strapping pin - may cause boot issues", i, gpio);
+        }
+        if (gpio == 1)
+        {
+            LOG_WARNING("BUTTONS", "Button %d GPIO %d: UART0 TX - may cause programming issues", i, gpio);
+        }
+        if (gpio >= 8 && gpio <= 10)
+        {
+            LOG_WARNING("BUTTONS", "Button %d GPIO %d: Flash connection - may cause stability issues", i, gpio);
+        }
+        if (gpio == 18 || gpio == 19)
+        {
+            LOG_ERROR("BUTTONS", "Button %d GPIO %d: USB pins not available for general use", i, gpio);
+            continue;
+        }
+    }
 
-        // Initialize button state
-        buttonStates[i].currentState = digitalRead(defaultButtons[i].gpio);
+    // Initialize GPIO pins with error handling
+    for (int i = 0; i < numHardwareButtons; i++)
+    {
+        int gpio = defaultButtons[i].gpio;
+        
+        // Skip invalid GPIOs identified above
+        if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
+        {
+            LOG_ERROR("BUTTONS", "Skipping button %d initialization (invalid GPIO %d)", i, gpio);
+            // Initialize state as inactive
+            buttonStates[i].currentState = buttonActiveLow ? HIGH : LOW;
+            buttonStates[i].lastState = buttonStates[i].currentState;
+            buttonStates[i].pressed = false;
+            buttonStates[i].longPressTriggered = false;
+            buttonStates[i].lastDebounceTime = 0;
+            buttonStates[i].pressStartTime = 0;
+            buttonStates[i].lastPressTime = 0;
+            buttonStates[i].pressCount = 0;
+            buttonStates[i].windowStartTime = 0;
+            continue;
+        }
+        
+        // Configure GPIO pin with error protection
+        LOG_VERBOSE("BUTTONS", "Configuring button %d GPIO %d...", i, gpio);
+        pinMode(gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
+        
+        // Small delay for GPIO stabilization on ESP32-C3
+        delay(10);
+
+        // Initialize button state with safe reading
+        buttonStates[i].currentState = digitalRead(gpio);
         buttonStates[i].lastState = buttonStates[i].currentState;
         buttonStates[i].pressed = false;
         buttonStates[i].longPressTriggered = false;
@@ -116,8 +171,17 @@ void checkHardwareButtons()
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        // Read current state using defaultButtons array
-        bool reading = digitalRead(defaultButtons[i].gpio);
+        int gpio = defaultButtons[i].gpio;
+        
+        // Skip buttons with invalid GPIOs (safety check)
+        if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
+        {
+            // Skip this button entirely - GPIO not safe for ESP32-C3
+            continue;
+        }
+        
+        // Safe GPIO reading with bounds checking
+        bool reading = digitalRead(gpio);
 
         // Check if state changed (for debouncing)
         if (reading != buttonStates[i].lastState)
@@ -144,7 +208,7 @@ void checkHardwareButtons()
                     buttonStates[i].pressStartTime = currentTime;
 
                     LOG_NOTICE("BUTTONS", "*** BUTTON %d PRESSED *** GPIO %d -> '%s'",
-                               i, defaultButtons[i].gpio, config.buttonShortActions[i].c_str());
+                               i, gpio, config.buttonShortActions[i].c_str());
                 }
                 else if (!isPressed && buttonStates[i].pressed)
                 {

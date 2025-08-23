@@ -75,15 +75,15 @@ struct ButtonConfig
 //
 // ESP32-C3 GPIO Notes:
 // - Available GPIOs: 0-21 (some have restrictions)
-// - GPIO 0,2,3,9: Strapping pins - can cause boot issues (GPIO 9 used for buttons anyway)
+// - GPIO 0,2,3,9: Strapping pins - can cause boot issues if not handled properly
 // - GPIO 1: UART0 TX (Serial) - can cause programming issues
 // - GPIO 18,19: Used for USB, not available for general use
-// - GPIO 5,6,7,9: Chosen for button inputs (avoiding most problematic pins)
+// - GPIO 5,6,7,4: Chosen for button inputs (safe, reliable pins)
 static const ButtonConfig defaultButtons[] = {
     {5, "JOKE", "", "simple_chase", "PRINT_TEST", "", "pulse"}, // Button 1: Joke → Test Print
     {6, "RIDDLE", "", "simple_chase", "", "", "pulse"},         // Button 2: Riddle → (no long action)
     {7, "QUOTE", "", "simple_chase", "", "", "pulse"},          // Button 3: Quote → (no long action)
-    {9, "QUIZ", "", "simple_chase", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 9 (strapping pin)
+    {4, "QUIZ", "", "simple_chase", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 4 (safe)
 };
 
 // LEDs: Optional FastLED support
