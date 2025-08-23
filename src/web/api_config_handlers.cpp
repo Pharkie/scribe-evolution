@@ -19,6 +19,25 @@
 #include "../utils/time_utils.h"
 #include "../core/network.h"
 #include "../core/mqtt_handler.h"
+
+// Utility function to mask secrets for API responses
+String maskSecret(const String &secret)
+{
+    if (secret.length() == 0)
+    {
+        return "";
+    }
+    if (secret.length() <= 4)
+    {
+        return "●●●●";
+    }
+    if (secret.length() <= 8)
+    {
+        return "●●●●●●●●";
+    }
+    // For longer secrets, show first 2 and last 2 characters
+    return secret.substring(0, 2) + "●●●●●●●●" + secret.substring(secret.length() - 2);
+}
 #include "../content/unbidden_ink.h"
 #include "../hardware/hardware_buttons.h"
 #if ENABLE_LEDS
@@ -98,7 +117,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // WiFi configuration - nested under device to match settings structure
     JsonObject wifi = device.createNestedObject("wifi");
     wifi["ssid"] = config.wifiSSID;
-    wifi["password"] = config.wifiPassword;
+    wifi["password"] = maskSecret(config.wifiPassword);
     wifi["connect_timeout"] = config.wifiConnectTimeoutMs;
 
     // Include fallback AP details for client use - always available regardless of current mode
@@ -144,7 +163,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     mqtt["server"] = config.mqttServer;
     mqtt["port"] = config.mqttPort;
     mqtt["username"] = config.mqttUsername;
-    mqtt["password"] = config.mqttPassword;
+    mqtt["password"] = maskSecret(config.mqttPassword);
     // Skip MQTT connection check in AP mode to avoid potential blocking
     mqtt["connected"] = isAPMode() ? false : mqttClient.connected();
 
@@ -155,7 +174,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     unbiddenInk["endHour"] = config.unbiddenInkEndHour;
     unbiddenInk["frequencyMinutes"] = config.unbiddenInkFrequencyMinutes;
     unbiddenInk["prompt"] = config.unbiddenInkPrompt;
-    unbiddenInk["chatgptApiToken"] = config.chatgptApiToken;
+    unbiddenInk["chatgptApiToken"] = maskSecret(config.chatgptApiToken);
 
     // Add runtime status for Unbidden Ink
     if (config.unbiddenInkEnabled)
@@ -312,32 +331,44 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // Validate WiFi configuration (nested under device)
     JsonObject wifi = device["wifi"];
-    if (!wifi.containsKey("ssid") || !wifi.containsKey("password"))
+    if (!wifi.containsKey("ssid"))
     {
-        sendValidationError(request, ValidationResult(false, "Missing required WiFi configuration fields"));
+        sendValidationError(request, ValidationResult(false, "Missing required WiFi SSID"));
         return;
     }
 
     String ssid = wifi["ssid"];
-    String password = wifi["password"];
     if (ssid.length() == 0)
     {
         sendValidationError(request, ValidationResult(false, "WiFi SSID cannot be empty"));
         return;
     }
-    if (password.length() == 0)
-    {
-        sendValidationError(request, ValidationResult(false, "WiFi password cannot be empty"));
-        return;
-    }
     newConfig.wifiSSID = ssid;
-    newConfig.wifiPassword = password;
+
+    // Handle WiFi password - preserve existing if not provided (masked field)
+    if (wifi.containsKey("password"))
+    {
+        String password = wifi["password"];
+        if (password.length() == 0)
+        {
+            sendValidationError(request, ValidationResult(false, "WiFi password cannot be empty when provided"));
+            return;
+        }
+        newConfig.wifiPassword = password;
+    }
+    else
+    {
+        // Preserve existing WiFi password when not provided (masked field not changed)
+        const RuntimeConfig &currentConfig = getRuntimeConfig();
+        newConfig.wifiPassword = currentConfig.wifiPassword;
+        LOG_VERBOSE("WEB", "WiFi password not provided, preserving existing value");
+    }
+
     newConfig.wifiConnectTimeoutMs = wifi["connect_timeout"] | wifiConnectTimeoutMs;
 
     // MQTT configuration (top-level section)
     JsonObject mqtt = doc["mqtt"];
-    if (!mqtt.containsKey("server") || !mqtt.containsKey("port") ||
-        !mqtt.containsKey("username") || !mqtt.containsKey("password"))
+    if (!mqtt.containsKey("server") || !mqtt.containsKey("port") || !mqtt.containsKey("username"))
     {
         sendValidationError(request, ValidationResult(false, "Missing required MQTT configuration fields"));
         return;
@@ -352,7 +383,19 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.mqttServer = mqtt["server"].as<const char *>();
     newConfig.mqttPort = port;
     newConfig.mqttUsername = mqtt["username"].as<const char *>();
-    newConfig.mqttPassword = mqtt["password"].as<const char *>();
+
+    // Handle MQTT password - preserve existing if not provided (masked field)
+    if (mqtt.containsKey("password"))
+    {
+        newConfig.mqttPassword = mqtt["password"].as<const char *>();
+    }
+    else
+    {
+        // Preserve existing MQTT password when not provided (masked field not changed)
+        const RuntimeConfig &currentConfig = getRuntimeConfig();
+        newConfig.mqttPassword = currentConfig.mqttPassword;
+        LOG_VERBOSE("WEB", "MQTT password not provided, preserving existing value");
+    }
 
     // Validate unbidden ink configuration
     JsonObject unbiddenInk = doc["unbiddenInk"];
@@ -423,13 +466,18 @@ void handleConfigPost(AsyncWebServerRequest *request)
         newConfig.unbiddenInkPrompt = currentConfig.unbiddenInkPrompt;
     }
 
-    // Validate ChatGPT API token (directly in unbiddenInk section)
-    if (!unbiddenInk.containsKey("chatgptApiToken"))
+    // Handle ChatGPT API token - preserve existing if not provided (masked field)
+    if (unbiddenInk.containsKey("chatgptApiToken"))
     {
-        sendValidationError(request, ValidationResult(false, "Missing required ChatGPT API token"));
-        return;
+        newConfig.chatgptApiToken = unbiddenInk["chatgptApiToken"].as<const char *>();
     }
-    newConfig.chatgptApiToken = unbiddenInk["chatgptApiToken"].as<const char *>();
+    else
+    {
+        // Preserve existing ChatGPT API token when not provided (masked field not changed)
+        const RuntimeConfig &currentConfig = getRuntimeConfig();
+        newConfig.chatgptApiToken = currentConfig.chatgptApiToken;
+        LOG_VERBOSE("WEB", "ChatGPT API token not provided, preserving existing value");
+    }
 
     // Non-user configurable APIs remain as constants
     newConfig.jokeAPI = jokeAPI;

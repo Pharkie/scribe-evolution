@@ -36,8 +36,8 @@ node mock-server/mock-api.js
 ## Features
 
 - **Complete API Coverage**: All ESP32 endpoints with realistic response times
-  - `GET /api/config` - Device configuration with live data updates
-  - `POST /api/config` - Configuration updates with validation simulation
+  - `GET /api/config` - Device configuration with live data updates and masking secrets
+  - `POST /api/config` - Configuration updates
   - `GET /api/diagnostics` - System diagnostics with live memory/temperature
   - `GET /api/nvs-dump` - Raw NVS storage dump with timestamp updates
   - `GET /api/status` - System status endpoint
@@ -86,6 +86,10 @@ All mock data matches the real ESP32 API responses exactly:
 
 ## Testing Scenarios
 
+**Secret Masking**: Test that WiFi passwords, MQTT passwords, and ChatGPT API tokens display as masked values (`mo●●●●●●●●en`) in the settings interface
+
+**Password Updates**: Test that only modified passwords are submitted to the server, while unchanged masked values are preserved
+
 **Configuration Changes**: Modify `mock-config.json` to test different device setups, MQTT configurations, or LED effects
 
 **System Diagnostics**: Adjust memory values in `mock-diagnostics.json` to test low-memory warnings or system alerts
@@ -96,4 +100,8 @@ All mock data matches the real ESP32 API responses exactly:
 
 ## Security
 
-All sensitive data (passwords, API keys, real network info) has been replaced with safe mock values.
+All sensitive data (passwords, API keys, real network info) has been replaced with safe mock values that demonstrate the new secret masking functionality:
+
+- WiFi passwords: `mo●●●●●●●●en` (shows first 2 and last 2 characters with masking)  
+- MQTT passwords: `mo●●●●●●●●rd` (demonstrates consistent masking pattern)
+- ChatGPT API tokens: `sk●●●●●●●●ty` (masks sensitive API key data)

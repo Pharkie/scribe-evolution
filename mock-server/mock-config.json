@@ -12,8 +12,12 @@
         "type": "local",
         "wifi": {
             "ssid": "MockWiFi-Network",
-            "password": "mock-password-hidden",
+            "password": "mo●●●●●●●●en",
             "connect_timeout": 15000,
+            "fallback_ap_ssid": "Scribe-setup",
+            "fallback_ap_password": "scribe123",
+            "fallback_ap_mdns": "scribe-mockuser.local",
+            "fallback_ap_ip": "192.168.4.1",
             "status": {
                 "connected": true,
                 "ip_address": "192.168.1.100",
@@ -28,7 +32,7 @@
         "server": "mock-mqtt.example.com",
         "port": 1883,
         "username": "mock_user",
-        "password": "mock-password-hidden",
+        "password": "mo●●●●●●●●rd",
         "connected": true
     },
     "unbiddenInk": {
@@ -37,7 +41,7 @@
         "endHour": 16,
         "frequencyMinutes": 60,
         "prompt": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
-        "chatgptApiToken": "sk-mock-api-key-hidden-for-security",
+        "chatgptApiToken": "sk●●●●●●●●ty",
         "nextScheduled": "< 1 min"
     },
     "buttons": {

@@ -183,13 +183,45 @@ function createRequestHandler() {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
-          console.log('📝 Config update:', body.substring(0, 100) + '...');
-          setTimeout(() => {
-            sendJSON(res, { 
-              success: true, 
-              message: "Configuration saved successfully" 
-            });
-          }, 500);
+          try {
+            const configUpdate = JSON.parse(body);
+            console.log('📝 Config update received');
+            
+            // Simulate the new password handling logic - only update if provided
+            if (configUpdate.device?.wifi?.password) {
+              console.log('   ✓ WiFi password updated');
+            } else {
+              console.log('   - WiFi password preserved (masked value not changed)');
+            }
+            
+            if (configUpdate.mqtt?.password) {
+              console.log('   ✓ MQTT password updated');
+            } else {
+              console.log('   - MQTT password preserved (masked value not changed)');
+            }
+            
+            if (configUpdate.unbiddenInk?.chatgptApiToken) {
+              console.log('   ✓ ChatGPT API token updated');
+            } else {
+              console.log('   - ChatGPT API token preserved (masked value not changed)');
+            }
+            
+            setTimeout(() => {
+              sendJSON(res, { 
+                success: true, 
+                message: "Configuration saved successfully" 
+              });
+            }, 500);
+            
+          } catch (error) {
+            console.error('Error parsing config update:', error.message);
+            setTimeout(() => {
+              sendJSON(res, { 
+                success: false, 
+                error: "Invalid JSON format" 
+              }, 400);
+            }, 200);
+          }
         });
         
       } else if (pathname === '/api/diagnostics') {
