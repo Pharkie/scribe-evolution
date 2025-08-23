@@ -1,9 +1,9 @@
 #include "hardware_buttons.h"
 #include "../web/web_server.h"
 #include "printer.h"
-#include "../content/content_handlers.h"
-#include "../content/content_generators.h"
+#include "../utils/content_actions.h"
 #include "../core/config_loader.h"
+#include "../core/shared_types.h"
 #include "../utils/time_utils.h"
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
@@ -317,42 +317,23 @@ void handleButtonLongPress(int buttonIndex)
     }
 }
 
-// Execute button endpoint directly without HTTP calls
+// Execute button endpoint using shared content action utilities
 void executeButtonEndpoint(const char *endpoint)
 {
     LOG_NOTICE("BUTTONS", "Executing button endpoint: %s", endpoint);
     
-    bool success = false;
+    // Convert endpoint to content action type
+    String endpointStr = String(endpoint);
+    ContentActionType actionType = endpointToActionType(endpointStr);
     
-    if (strcmp(endpoint, "/api/joke") == 0)
-    {
-        success = generateAndQueueJoke();
-    }
-    else if (strcmp(endpoint, "/api/riddle") == 0)
-    {
-        success = generateAndQueueRiddle();
-    }
-    else if (strcmp(endpoint, "/api/quote") == 0)
-    {
-        success = generateAndQueueQuote();
-    }
-    else if (strcmp(endpoint, "/api/quiz") == 0)
-    {
-        success = generateAndQueueQuiz();
-    }
-    else if (strcmp(endpoint, "/api/character-test") == 0)
-    {
-        success = generateAndQueuePrintTest();
-    }
-    else if (strcmp(endpoint, "/api/news") == 0)
-    {
-        success = generateAndQueueNews();
-    }
-    else
-    {
+    // Validate known endpoint
+    if (actionTypeToString(actionType) == "UNKNOWN" && endpointStr != "/api/joke") {
         LOG_WARNING("BUTTONS", "Unknown button endpoint: %s", endpoint);
         return;
     }
+    
+    // Execute content action and queue for printing
+    bool success = executeAndQueueContent(actionType);
     
     if (success)
     {
