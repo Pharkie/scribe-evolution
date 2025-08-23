@@ -17,6 +17,20 @@ function initializeSettingsStore() {
         initialized: false, // Flag to prevent duplicate initialization
         apPrintStatus: 'normal', // 'normal', 'scribing'
         
+        // Track which password fields have been modified by user
+        passwordsModified: {
+            wifiPassword: false,
+            mqttPassword: false,
+            chatgptApiToken: false
+        },
+        
+        // Store original masked values to detect changes
+        originalMaskedValues: {
+            wifiPassword: '',
+            mqttPassword: '',
+            chatgptApiToken: ''
+        },
+        
         // Configuration data (reactive) - matching backend API structure
         config: {
             device: {
@@ -329,6 +343,9 @@ function initializeSettingsStore() {
                 // Initialize WiFi state machine with current SSID
                 this.initializeWiFiState();
                 
+                // Set up watchers for password field changes after initial load
+                this.setupPasswordWatchers();
+                
                 console.log('Alpine Store: Configuration loaded successfully');
                 
                 // Don't automatically scan WiFi networks - user must initiate
@@ -341,6 +358,33 @@ function initializeSettingsStore() {
             } finally {
                 this.loading = false;
             }
+        },
+        
+        // Setup watchers for password field changes
+        setupPasswordWatchers() {
+            // Watch for WiFi password changes
+            this.$watch('config.device.wifi.password', (newValue) => {
+                const isMasked = newValue && newValue.includes('●');
+                const hasChanged = newValue !== this.originalMaskedValues.wifiPassword;
+                this.passwordsModified.wifiPassword = hasChanged && !isMasked;
+                console.log('WiFi password modified:', this.passwordsModified.wifiPassword);
+            });
+            
+            // Watch for MQTT password changes
+            this.$watch('config.mqtt.password', (newValue) => {
+                const isMasked = newValue && newValue.includes('●');
+                const hasChanged = newValue !== this.originalMaskedValues.mqttPassword;
+                this.passwordsModified.mqttPassword = hasChanged && !isMasked;
+                console.log('MQTT password modified:', this.passwordsModified.mqttPassword);
+            });
+            
+            // Watch for ChatGPT API token changes
+            this.$watch('config.unbiddenInk.chatgptApiToken', (newValue) => {
+                const isMasked = newValue && newValue.includes('●');
+                const hasChanged = newValue !== this.originalMaskedValues.chatgptApiToken;
+                this.passwordsModified.chatgptApiToken = hasChanged && !isMasked;
+                console.log('ChatGPT API token modified:', this.passwordsModified.chatgptApiToken);
+            });
         },
         
         // Initialize WiFi state - simplified
@@ -451,26 +495,24 @@ function initializeSettingsStore() {
                     // Include WiFi nested under device
                     wifi: {
                         ssid: this.config.device.wifi.ssid,
-                        password: this.config.device.wifi.password,
                         connect_timeout: this.config.device.wifi.connect_timeout
-                        // Exclude status as it's read-only
+                        // Only include password if it was modified by user
                     }
                     // Exclude mqtt_topic as it's read-only
                 },
                 mqtt: {
                     server: this.config.mqtt.server,
                     port: this.config.mqtt.port,
-                    username: this.config.mqtt.username,
-                    password: this.config.mqtt.password
-                    // Exclude connected as it's read-only
+                    username: this.config.mqtt.username
+                    // Only include password if it was modified by user
                 },
                 unbiddenInk: {
                     enabled: this.config.unbiddenInk.enabled,
                     startHour: this.config.unbiddenInk.startHour,
                     endHour: this.config.unbiddenInk.endHour,
                     frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
-                    prompt: this.config.unbiddenInk.prompt,
-                    chatgptApiToken: this.config.unbiddenInk.chatgptApiToken
+                    prompt: this.config.unbiddenInk.prompt
+                    // Only include chatgptApiToken if it was modified by user
                 },
                 buttons: {
                     // Include individual button configurations
@@ -488,7 +530,25 @@ function initializeSettingsStore() {
                 }
             };
             
+            // Only include modified passwords to prevent saving masked values
+            if (this.passwordsModified.wifiPassword) {
+                cleanConfig.device.wifi.password = this.config.device.wifi.password;
+                console.log('Including modified WiFi password in config submission');
+            }
+            
+            if (this.passwordsModified.mqttPassword) {
+                cleanConfig.mqtt.password = this.config.mqtt.password;
+                console.log('Including modified MQTT password in config submission');
+            }
+            
+            if (this.passwordsModified.chatgptApiToken) {
+                cleanConfig.unbiddenInk.chatgptApiToken = this.config.unbiddenInk.chatgptApiToken;
+                console.log('Including modified ChatGPT API token in config submission');
+            }
+            
             console.log('Alpine Store: Created clean config for server:', cleanConfig);
+            console.log('Password modification status:', this.passwordsModified);
+            
             return cleanConfig;
         },
         
@@ -638,6 +698,9 @@ ${urlLine}`;
                 this.config.device.wifi.password = serverConfig.device.wifi.password || '';
                 this.config.device.wifi.connect_timeout = serverConfig.device.wifi.connect_timeout || 15000;
                 
+                // Store original masked password value to detect changes
+                this.originalMaskedValues.wifiPassword = serverConfig.device.wifi.password || '';
+                
                 // Load fallback AP details
                 this.config.device.wifi.fallback_ap_ssid = serverConfig.device.wifi.fallback_ap_ssid || '';
                 this.config.device.wifi.fallback_ap_password = serverConfig.device.wifi.fallback_ap_password || '';
@@ -671,6 +734,9 @@ ${urlLine}`;
                 this.config.mqtt.password = serverConfig.mqtt.password || '';
                 this.config.mqtt.connected = serverConfig.mqtt.connected || false;
                 
+                // Store original masked password value to detect changes
+                this.originalMaskedValues.mqttPassword = serverConfig.mqtt.password || '';
+                
                 if (!serverConfig.mqtt.server) {
                     console.warn('⚠️ Missing mqtt.server in config');
                 }
@@ -686,6 +752,10 @@ ${urlLine}`;
                 this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes || 120;
                 this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt || '';
                 this.config.unbiddenInk.chatgptApiToken = serverConfig.unbiddenInk.chatgptApiToken || '';
+                
+                // Store original masked API token value to detect changes
+                this.originalMaskedValues.chatgptApiToken = serverConfig.unbiddenInk.chatgptApiToken || '';
+                
             } else {
                 console.warn('⚠️ Missing unbiddenInk section in config');
             }
