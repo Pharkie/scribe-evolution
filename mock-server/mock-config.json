@@ -48,6 +48,7 @@
         "min_interval": 3000,
         "max_per_minute": 20,
         "button1": {
+            "gpio": 5,
             "shortAction": "/api/joke",
             "shortMqttTopic": "",
             "longAction": "/api/joke",
@@ -56,6 +57,7 @@
             "longLedEffect": "pulse"
         },
         "button2": {
+            "gpio": 6,
             "shortAction": "/api/riddle",
             "shortMqttTopic": "",
             "longAction": "/api/riddle",
@@ -64,6 +66,7 @@
             "longLedEffect": "twinkle"
         },
         "button3": {
+            "gpio": 7,
             "shortAction": "/api/quote",
             "shortMqttTopic": "",
             "longAction": "",
@@ -72,6 +75,7 @@
             "longLedEffect": "matrix"
         },
         "button4": {
+            "gpio": 18,
             "shortAction": "/api/quiz",
             "shortMqttTopic": "",
             "longAction": "",

@@ -197,10 +197,14 @@ void handleConfigGet(AsyncWebServerRequest *request)
     buttons["max_per_minute"] = buttonMaxPerMinute;
 
     // Button action configuration
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < numHardwareButtons; i++)
     {
         String buttonKey = "button" + String(i + 1);
         JsonObject button = buttons.createNestedObject(buttonKey);
+
+        // Add GPIO pin information for each button
+        button["gpio"] = defaultButtons[i].gpio;
+
         button["shortAction"] = config.buttonShortActions[i];
         button["shortMqttTopic"] = config.buttonShortMqttTopics[i];
         button["longAction"] = config.buttonLongActions[i];

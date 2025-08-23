@@ -69,6 +69,7 @@ function initializeSettingsStore() {
                 max_per_minute: null,
                 // Individual button configurations
                 button1: { 
+                    gpio: null, // Will be populated from API
                     shortAction: '', 
                     longAction: '', 
                     shortMqttTopic: '', 
@@ -77,6 +78,7 @@ function initializeSettingsStore() {
                     longLedEffect: 'simple_chase'
                 },
                 button2: { 
+                    gpio: null, // Will be populated from API
                     shortAction: '', 
                     longAction: '', 
                     shortMqttTopic: '', 
@@ -85,6 +87,7 @@ function initializeSettingsStore() {
                     longLedEffect: 'simple_chase'
                 },
                 button3: { 
+                    gpio: null, // Will be populated from API
                     shortAction: '', 
                     longAction: '', 
                     shortMqttTopic: '', 
@@ -93,6 +96,7 @@ function initializeSettingsStore() {
                     longLedEffect: 'simple_chase'
                 },
                 button4: { 
+                    gpio: null, // Will be populated from API
                     shortAction: '', 
                     longAction: '', 
                     shortMqttTopic: '', 
@@ -701,6 +705,7 @@ ${urlLine}`;
                     const buttonKey = `button${i}`;
                     if (serverConfig.buttons[buttonKey]) {
                         this.config.buttons[buttonKey] = {
+                            gpio: serverConfig.buttons[buttonKey].gpio || null,
                             shortAction: serverConfig.buttons[buttonKey].shortAction || '',
                             longAction: serverConfig.buttons[buttonKey].longAction || '',
                             shortMqttTopic: serverConfig.buttons[buttonKey].shortMqttTopic || '',

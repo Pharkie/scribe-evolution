@@ -155,7 +155,7 @@ static const unsigned long reconnectInterval = 5000;     // 5 seconds (WiFi reco
 static const unsigned long wifiConnectTimeoutMs = 15000; // 15 seconds timeout for WiFi connection
 static const char *fallbackAPSSID = "Scribe-setup";
 static const char *fallbackAPPassword = "scribe123";
-static const int statusLEDPin = 8;    // GPIO8 for status LED (ESP32-C3 has built-in LED on GPIO8)
+static const int statusLEDPin = 8;    // ESP32-C3 has built-in LED on GPIO8
 static const int webServerPort = 80;  // HTTP port for web server
 const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
 
