@@ -560,7 +560,8 @@
                                 <template x-for="buttonNum in [1, 2, 3, 4]" :key="buttonNum">
                                     <div class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                                         <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4"
-                                            x-text="`Button ${buttonNum} Configuration (GPIO ${buttonNum + 4})`"></h3>
+                                            x-text="`Button ${buttonNum} Configuration (GPIO ${config.buttons[`button${buttonNum}`]?.gpio || 'Unknown'})`">
+                                        </h3>
 
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <!-- Short Press Action -->

@@ -79,12 +79,6 @@
                     <div x-show="currentSection === 'microcontroller-section'" class="diag-section orange">
                         <div class="diag-header">
                             <h4 class="diag-title orange"><span class="mr-2">🎛️</span>Microcontroller</h4>
-                            <button @click="copyGenericSection('Microcontroller')" class="diag-copy-btn orange">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path
-                                        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                                </svg>
-                            </button>
                         </div>
                         <div class="space-y-2">
                             <div class="diag-row">
@@ -141,12 +135,6 @@
                     <div x-show="currentSection === 'logging-section'" class="diag-section indigo">
                         <div class="diag-header">
                             <h4 class="diag-title indigo"><span class="mr-2">📋</span>Logging</h4>
-                            <button @click="copyGenericSection('Logging')" class="diag-copy-btn indigo">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path
-                                        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                                </svg>
-                            </button>
                         </div>
                         <div class="space-y-2">
                             <div class="diag-row">
@@ -176,12 +164,6 @@
                     <div x-show="currentSection === 'pages-endpoints-section'" class="diag-section teal">
                         <div class="diag-header">
                             <h4 class="diag-title teal"><span class="mr-2">🔗</span>Pages & Endpoints</h4>
-                            <button @click="copyGenericSection('Pages & Endpoints')" class="diag-copy-btn teal">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path
-                                        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                                </svg>
-                            </button>
                         </div>
                         <div class="space-y-4">
                             <!-- Routes -->
@@ -245,19 +227,16 @@
                     </div>
 
                     <!-- Runtime Configuration Section -->
-                    <div x-show="currentSection === 'config-file-section'" class="diag-section red">
+                    <div x-show="currentSection === 'config-file-section'" class="diag-section green">
                         <div class="diag-header">
-                            <h4 class="diag-title red"><span class="mr-2">⚙️</span>Runtime Configuration</h4>
-                            <button @click="copyConfigFile()" class="diag-copy-btn red">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path
-                                        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                                </svg>
-                            </button>
+                            <h4 class="diag-title green"><span class="mr-2">⚙️</span>Runtime Configuration</h4>
                         </div>
                         <div class="space-y-3">
-                            <pre class="diag-json-content" x-text="configFileFormatted"></pre>
-                            <p class="diag-config-warning red">🔑 Secrets are redacted</p>
+                            <p class="diag-config-warning green mb-3">🔑 Secrets are redacted</p>
+                            <div class="diag-json-wrapper">
+                                <pre class="diag-json-content-fullscreen"
+                                    x-html="highlightJSON(configFileFormatted)"></pre>
+                            </div>
                         </div>
                     </div>
 
@@ -269,16 +248,13 @@
                                 <p class="text-sm text-cyan-600 dark:text-cyan-400 mt-1">NVS key-value pairs from
                                     "scribe-app" namespace</p>
                             </div>
-                            <button @click="copyNVSData()" class="diag-copy-btn cyan">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path
-                                        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
-                                </svg>
-                            </button>
                         </div>
                         <div class="space-y-3">
-                            <pre class="diag-json-content" x-text="nvsDataFormatted"></pre>
-                            <p class="diag-config-warning cyan">🔑 Secrets are redacted</p>
+                            <p class="diag-config-warning cyan mb-3">🔑 Secrets are redacted</p>
+                            <div class="diag-json-wrapper">
+                                <pre class="diag-json-content-fullscreen"
+                                    x-html="highlightJSON(nvsDataFormatted)"></pre>
+                            </div>
                         </div>
                     </div>
 

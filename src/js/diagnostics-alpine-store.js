@@ -22,7 +22,7 @@ function initializeDiagnosticsStore() {
       { id: 'microcontroller-section', name: 'Microcontroller', icon: '🎛️', color: 'orange' },
       { id: 'logging-section', name: 'Logging', icon: '📋', color: 'indigo' },
       { id: 'pages-endpoints-section', name: 'Pages & Endpoints', icon: '🔗', color: 'teal' },
-      { id: 'config-file-section', name: 'Runtime Configuration', icon: '⚙️', color: 'red' },
+      { id: 'config-file-section', name: 'Runtime Configuration', icon: '⚙️', color: 'green' },
       { id: 'nvs-storage-section', name: 'NVS', icon: '💾', color: 'cyan' }
     ],
     
@@ -375,70 +375,6 @@ function initializeDiagnosticsStore() {
       return JSON.stringify(formattedData, null, 2);
     },
     
-    // Copy functionality
-    async copyGenericSection(sectionName) {
-      try {
-        let content = `=== ${sectionName} ===\n\n`;
-        
-        // Build content based on current section
-        switch (this.currentSection) {
-          case 'microcontroller-section':
-            const micro = this.microcontrollerInfo;
-            const memory = this.memoryUsage;
-            content += `Chip Model: ${micro.chipModel}\n`;
-            content += `CPU Frequency: ${micro.cpuFrequency}\n`;
-            content += `Flash Size: ${micro.flashSize}\n`;
-            content += `Firmware Version: ${micro.firmwareVersion}\n`;
-            content += `Uptime: ${micro.uptime}\n`;
-            content += `Temperature: ${micro.temperature}\n`;
-            content += `Flash Usage: ${memory.flashUsageText}\n`;
-            content += `Heap Usage: ${memory.heapUsageText}\n`;
-            break;
-            
-          // Add other sections as needed
-          default:
-            content += 'Section data not available for copying\n';
-        }
-        
-        await this.copyToClipboard(content.trim());
-      } catch (error) {
-        console.error('Error copying section:', error);
-      }
-    },
-    
-    async copyConfigFile() {
-      const content = `=== Runtime Configuration (NVS) ===\n\n${this.configFileFormatted}`;
-      await this.copyToClipboard(content);
-    },
-    
-    async copyNVSData() {
-      const content = `=== NVS Storage Raw Data ===\n\n${this.nvsDataFormatted}`;
-      await this.copyToClipboard(content);
-    },
-    
-    async copyToClipboard(text) {
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          // Fallback
-          const textarea = document.createElement('textarea');
-          textarea.value = text;
-          textarea.style.position = 'fixed';
-          textarea.style.opacity = '0';
-          document.body.appendChild(textarea);
-          textarea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textarea);
-        }
-        
-        // Visual feedback would be handled by button state in template
-        console.log('Copied to clipboard');
-      } catch (error) {
-        console.error('Failed to copy:', error);
-      }
-    },
-    
     // Quick actions
     async handleQuickAction(action) {
       try {
@@ -527,6 +463,31 @@ function initializeDiagnosticsStore() {
       
       redactObject(redacted);
       return redacted;
+    },
+    
+    // JSON syntax highlighting function
+    highlightJSON(jsonString) {
+      if (!jsonString || jsonString === 'Configuration not available' || jsonString.startsWith('ERROR:')) {
+        return `<span class="text-gray-400">${jsonString}</span>`;
+      }
+      
+      // Simple regex-based JSON highlighting
+      return jsonString
+        // Keys (property names in quotes)
+        .replace(/"([^"]+)"(\s*:)/g, '<span class="json-key">"$1"</span><span class="json-punctuation">$2</span>')
+        // String values (not keys)
+        .replace(/:\s*"([^"]*)"/g, ': <span class="json-string">"$1"</span>')
+        // Numbers
+        .replace(/:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g, ': <span class="json-number">$1</span>')
+        // Booleans
+        .replace(/:\s*(true|false)/g, ': <span class="json-boolean">$1</span>')
+        // Null
+        .replace(/:\s*(null)/g, ': <span class="json-null">$1</span>')
+        // Punctuation (brackets, braces, commas)
+        .replace(/([{}[\],])/g, '<span class="json-punctuation">$1</span>')
+        // Fix any double-wrapped punctuation
+        .replace(/<span class="json-punctuation">(<span class="json-punctuation">)/g, '$1')
+        .replace(/(<\/span>)<\/span>/g, '$1');
     },
     
     // Navigation
