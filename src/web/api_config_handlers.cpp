@@ -509,8 +509,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         String shortAction = button["shortAction"];
         String longAction = button["longAction"];
-        String shortLedEffect = button["shortLedEffect"] | "simple_chase"; // Default to simple_chase
-        String longLedEffect = button["longLedEffect"] | "simple_chase";   // Default to simple_chase
+        String shortLedEffect = button["shortLedEffect"] | "chase_single"; // Default to chase_single
+        String longLedEffect = button["longLedEffect"] | "chase_single";   // Default to chase_single
 
         // MQTT topics are optional - if present, they should be strings
         if (button.containsKey("shortMqttTopic") && !button["shortMqttTopic"].is<String>())
@@ -558,7 +558,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         }
 
         // Validate LED effects (must be valid effect names or "none")
-        const char *validLedEffects[] = {"simple_chase", "chase", "rainbow", "twinkle", "pulse", "matrix", "none"};
+        const char *validLedEffects[] = {"chase_single", "chase_multi", "rainbow", "twinkle", "pulse", "matrix", "none"};
         bool validShortLedEffect = false;
         bool validLongLedEffect = false;
 

@@ -67,14 +67,14 @@ void initializeHardwareButtons()
     for (int i = 0; i < numHardwareButtons; i++)
     {
         int gpio = defaultButtons[i].gpio;
-        
+
         // ESP32-C3 GPIO range check (0-21)
         if (gpio < 0 || gpio > 21)
         {
             LOG_ERROR("BUTTONS", "Button %d GPIO %d: Invalid GPIO (ESP32-C3 range: 0-21)", i, gpio);
             continue;
         }
-        
+
         // Warn about potentially problematic GPIOs
         if (gpio == 0 || gpio == 2 || gpio == 3)
         {
@@ -99,7 +99,7 @@ void initializeHardwareButtons()
     for (int i = 0; i < numHardwareButtons; i++)
     {
         int gpio = defaultButtons[i].gpio;
-        
+
         // Skip invalid GPIOs identified above
         if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
         {
@@ -116,11 +116,11 @@ void initializeHardwareButtons()
             buttonStates[i].windowStartTime = 0;
             continue;
         }
-        
+
         // Configure GPIO pin with error protection
         LOG_VERBOSE("BUTTONS", "Configuring button %d GPIO %d...", i, gpio);
         pinMode(gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
-        
+
         // Small delay for GPIO stabilization on ESP32-C3
         delay(10);
 
@@ -172,14 +172,14 @@ void checkHardwareButtons()
     for (int i = 0; i < numHardwareButtons; i++)
     {
         int gpio = defaultButtons[i].gpio;
-        
+
         // Skip buttons with invalid GPIOs (safety check)
         if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
         {
             // Skip this button entirely - GPIO not safe for ESP32-C3
             continue;
         }
-        
+
         // Safe GPIO reading with bounds checking
         bool reading = digitalRead(gpio);
 
@@ -364,10 +364,6 @@ void handleButtonPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // **DEBUGGING**: Disable async task creation to test if button press detection works
-    LOG_WARNING("BUTTONS", "Button action DISABLED for debugging - button %d pressed but not executing action", buttonIndex);
-    return;
-
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations
     bool started = createButtonActionTask(buttonIndex, false);
@@ -405,10 +401,6 @@ void handleButtonLongPress(int buttonIndex)
         LOG_WARNING("BUTTONS", "Button %d long press RATE LIMITED", buttonIndex);
         return; // Rate limited, ignore this press
     }
-
-    // **DEBUGGING**: Disable async task creation to test if button press detection works
-    LOG_WARNING("BUTTONS", "Button LONG press DISABLED for debugging - button %d long pressed but not executing action", buttonIndex);
-    return;
 
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations

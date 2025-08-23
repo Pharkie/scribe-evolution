@@ -1,5 +1,5 @@
 /**
- * @file config.h.example.example
+ * @file config.h.example
  * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
@@ -75,15 +75,15 @@ struct ButtonConfig
 //
 // ESP32-C3 GPIO Notes:
 // - Available GPIOs: 0-21 (some have restrictions)
-// - GPIO 0,2,3,9: Strapping pins - can cause boot issues if not handled properly
+// - GPIO 0,2,3,9: Strapping pins - can cause boot issues (GPIO 9 used for buttons anyway)
 // - GPIO 1: UART0 TX (Serial) - can cause programming issues
 // - GPIO 18,19: Used for USB, not available for general use
-// - GPIO 5,6,7,4: Chosen for button inputs (safe, reliable pins)
+// - GPIO 5,6,7,9: Chosen for button inputs (avoiding most problematic pins)
 static const ButtonConfig defaultButtons[] = {
-    {5, "JOKE", "", "simple_chase", "PRINT_TEST", "", "pulse"}, // Button 1: Joke → Test Print
-    {6, "RIDDLE", "", "simple_chase", "", "", "pulse"},         // Button 2: Riddle → (no long action)
-    {7, "QUOTE", "", "simple_chase", "", "", "pulse"},          // Button 3: Quote → (no long action)
-    {4, "QUIZ", "", "simple_chase", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 4 (safe)
+    {5, "JOKE", "", "chase_single", "PRINT_TEST", "", "pulse"}, // Button 1: Joke → Test Print
+    {6, "RIDDLE", "", "chase_single", "", "", "pulse"},         // Button 2: Riddle → (no long action)
+    {7, "QUOTE", "", "chase_single", "", "", "pulse"},          // Button 3: Quote → (no long action)
+    {9, "QUIZ", "", "chase_single", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 9 (strapping pin)
 };
 
 // LEDs: Optional FastLED support
@@ -131,7 +131,7 @@ static const int ntpSyncIntervalSeconds = 3600; // Re-sync interval (1 hour)
 
 // Logging Configuration
 // Logging levels: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
-static const int logLevel = LOG_LEVEL_VERBOSE;
+static const int logLevel = LOG_LEVEL_NOTICE;
 static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
 static const bool enableSerialLogging = true;       // Serial console
 static const bool enableFileLogging = false;        // LittleFS file (untested)
