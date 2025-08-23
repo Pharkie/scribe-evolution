@@ -50,10 +50,10 @@ void handleButtonLongPress(int buttonIndex);
 void triggerButtonLedEffect(int buttonIndex, bool isLongPress);
 
 /**
- * @brief Execute button endpoint directly without HTTP calls (DEPRECATED - use async task)
+ * @brief Execute button endpoint directly without HTTP calls (DEPRECATED)
  * @param endpoint The API endpoint path to execute
- * @deprecated Use processButtonActionAsync() instead for non-blocking operation
- * @warning This function still uses blocking HTTP operations - DO NOT USE
+ * @deprecated This function uses blocking HTTP operations - DO NOT USE
+ * @warning Use direct button actions (JOKE, RIDDLE, etc.) instead of HTTP endpoints
  */
 void executeButtonEndpoint(const char *endpoint) __attribute__((deprecated));
 

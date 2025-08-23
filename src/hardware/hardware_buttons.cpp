@@ -1,5 +1,4 @@
 #include "hardware_buttons.h"
-#include "button_task_manager.h"
 #include "../web/web_server.h"
 #include "printer.h"
 #include "../utils/content_actions.h"
@@ -10,6 +9,8 @@
 #include <esp_task_wdt.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 #ifdef ENABLE_LEDS
 #include "../leds/LedEffects.h"
@@ -19,6 +20,33 @@ extern LedEffects ledEffects;
 // External declarations
 extern PubSubClient mqttClient;
 extern Message currentMessage;
+
+// ========================================
+// ASYNC BUTTON ACTION MANAGEMENT
+// ========================================
+
+// Simple task tracking
+static volatile bool buttonActionRunning = false;
+
+// Task configuration
+static const int BUTTON_TASK_STACK_SIZE = 8192;   // 8KB stack
+static const int BUTTON_TASK_PRIORITY = 1;        // Lower priority than main loop
+static const int BUTTON_ACTION_TIMEOUT_MS = 3000; // 3s timeout
+
+// Task parameter structure
+struct ButtonActionParams
+{
+    int buttonIndex;
+    bool isLongPress;
+    String actionType;
+    String mqttTopic;
+    String ledEffect;
+};
+
+// Forward declarations
+void buttonActionTask(void *parameter);
+bool executeButtonActionDirect(const char *actionType);
+bool createButtonActionTask(int buttonIndex, bool isLongPress);
 
 // ========================================
 // HARDWARE BUTTON IMPLEMENTATION
@@ -34,10 +62,6 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
-
-    // Initialize async button task manager FIRST
-    initializeButtonTaskManager();
-
     for (int i = 0; i < numHardwareButtons; i++)
     {
         // Configure GPIO pin using defaultButtons array
@@ -269,7 +293,7 @@ void handleButtonPress(int buttonIndex)
 
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations
-    bool started = processButtonActionAsync(buttonIndex, false);
+    bool started = createButtonActionTask(buttonIndex, false);
 
     if (started)
     {
@@ -307,7 +331,7 @@ void handleButtonLongPress(int buttonIndex)
 
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations
-    bool started = processButtonActionAsync(buttonIndex, true);
+    bool started = createButtonActionTask(buttonIndex, true);
 
     if (started)
     {
@@ -321,6 +345,166 @@ void handleButtonLongPress(int buttonIndex)
     // Feed watchdog after quick, non-blocking button handling
     esp_task_wdt_reset();
 }
+
+// ========================================
+// ASYNC BUTTON ACTION IMPLEMENTATION
+// ========================================
+
+/**
+ * @brief Create async task to handle button action (non-blocking)
+ */
+bool createButtonActionTask(int buttonIndex, bool isLongPress)
+{
+    // Rate limiting: reject if another task is running
+    if (buttonActionRunning)
+    {
+        LOG_WARNING("BUTTONS", "Button action in progress - rejecting button %d press", buttonIndex);
+        return false;
+    }
+
+    if (buttonIndex < 0 || buttonIndex >= numHardwareButtons)
+    {
+        LOG_ERROR("BUTTONS", "Invalid button index: %d", buttonIndex);
+        return false;
+    }
+
+    // Get configuration for this button immediately
+    const RuntimeConfig &config = getRuntimeConfig();
+
+    // Create task parameters (will be freed by task)
+    ButtonActionParams *params = new ButtonActionParams();
+    params->buttonIndex = buttonIndex;
+    params->isLongPress = isLongPress;
+
+    if (isLongPress)
+    {
+        params->actionType = config.buttonLongActions[buttonIndex];
+        params->mqttTopic = config.buttonLongMqttTopics[buttonIndex];
+        params->ledEffect = config.buttonLongLedEffects[buttonIndex];
+    }
+    else
+    {
+        params->actionType = config.buttonShortActions[buttonIndex];
+        params->mqttTopic = config.buttonShortMqttTopics[buttonIndex];
+        params->ledEffect = config.buttonShortLedEffects[buttonIndex];
+    }
+
+    // Create one-shot task to handle this action
+    TaskHandle_t taskHandle = NULL;
+    BaseType_t result = xTaskCreate(
+        buttonActionTask,       // Task function
+        "ButtonAction",         // Task name
+        BUTTON_TASK_STACK_SIZE, // Stack size
+        params,                 // Parameters (will be freed by task)
+        BUTTON_TASK_PRIORITY,   // Priority
+        &taskHandle             // Task handle
+    );
+
+    if (result != pdPASS)
+    {
+        LOG_ERROR("BUTTONS", "Failed to create button action task");
+        delete params;
+        return false;
+    }
+
+    LOG_NOTICE("BUTTONS", "Created async task for %s press on button %d: '%s'",
+               isLongPress ? "long" : "short", buttonIndex, params->actionType.c_str());
+
+    return true;
+}
+
+/**
+ * @brief One-shot task function for processing a single button action
+ */
+void buttonActionTask(void *parameter)
+{
+    buttonActionRunning = true;
+
+    // Get parameters
+    ButtonActionParams *params = (ButtonActionParams *)parameter;
+
+    LOG_NOTICE("BUTTONS", "Processing %s press for button %d: '%s'",
+               params->isLongPress ? "long" : "short",
+               params->buttonIndex, params->actionType.c_str());
+
+    // Trigger LED effect immediately (non-blocking)
+    triggerButtonLedEffect(params->buttonIndex, params->isLongPress);
+
+    // Process the action directly (no HTTP calls!)
+    if (params->actionType.length() > 0)
+    {
+        // Execute content action directly with timeout
+        bool success = executeButtonActionDirect(params->actionType.c_str());
+
+        if (success)
+        {
+            LOG_NOTICE("BUTTONS", "Button action completed successfully: %s",
+                       params->actionType.c_str());
+        }
+        else
+        {
+            LOG_WARNING("BUTTONS", "Button action failed or timed out: %s",
+                        params->actionType.c_str());
+        }
+    }
+
+    // Handle MQTT if specified (placeholder)
+    if (params->mqttTopic.length() > 0)
+    {
+        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s",
+                    params->mqttTopic.c_str());
+    }
+
+    // Cleanup and mark complete
+    delete params;
+    buttonActionRunning = false;
+
+    LOG_VERBOSE("BUTTONS", "Button action task completed, deleting task");
+
+    // Delete this task
+    vTaskDelete(NULL);
+}
+
+/**
+ * @brief Direct execution of button actions without HTTP layer
+ */
+bool executeButtonActionDirect(const char *actionType)
+{
+    if (!actionType || strlen(actionType) == 0)
+    {
+        LOG_ERROR("BUTTONS", "Invalid action type: null or empty");
+        return false;
+    }
+
+    LOG_NOTICE("BUTTONS", "Executing button action directly: %s", actionType);
+
+    // Convert action type string to ContentActionType enum using utility function
+    ContentActionType contentAction = stringToActionType(String(actionType));
+
+    // Execute content action directly with button-specific timeout
+    ContentActionResult result = executeContentActionWithTimeout(
+        contentAction, "", "", BUTTON_ACTION_TIMEOUT_MS);
+
+    if (result.success && result.content.length() > 0)
+    {
+        // Queue content for printing (this sets currentMessage)
+        currentMessage.message = result.content;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+
+        LOG_NOTICE("BUTTONS", "Content queued for printing (%d chars)", result.content.length());
+        return true;
+    }
+    else
+    {
+        LOG_ERROR("BUTTONS", "Failed to generate content for action: %s", actionType);
+        return false;
+    }
+}
+
+// ========================================
+// DEPRECATED FUNCTIONS
+// ========================================
 
 // Execute button endpoint using shared content action utilities
 void executeButtonEndpoint(const char *endpoint)
