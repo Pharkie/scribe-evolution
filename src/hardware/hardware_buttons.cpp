@@ -1,4 +1,5 @@
 #include "hardware_buttons.h"
+#include "button_task_manager.h"
 #include "../web/web_server.h"
 #include "printer.h"
 #include "../utils/content_actions.h"
@@ -33,6 +34,9 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
+
+    // Initialize async button task manager FIRST
+    initializeButtonTaskManager();
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
@@ -188,6 +192,10 @@ bool isButtonRateLimited(int buttonIndex, unsigned long currentTime)
     return false;
 }
 
+// ========================================
+// LED EFFECTS (kept for compatibility with async task)
+// ========================================
+
 void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
 {
 #ifdef ENABLE_LEDS
@@ -259,38 +267,20 @@ void handleButtonPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // Get runtime configuration with safety check
-    const RuntimeConfig &config = getRuntimeConfig();
-    if (buttonIndex >= numHardwareButtons)
+    // **KEY CHANGE**: Process action asynchronously instead of immediate execution
+    // This keeps the main loop responsive and prevents blocking operations
+    bool started = processButtonActionAsync(buttonIndex, false);
+
+    if (started)
     {
-        LOG_ERROR("BUTTONS", "Button index %d exceeds maximum buttons (%d)", buttonIndex, numHardwareButtons);
-        return;
+        LOG_NOTICE("BUTTONS", "Button %d SHORT press started async processing", buttonIndex);
+    }
+    else
+    {
+        LOG_WARNING("BUTTONS", "Failed to start async task for button %d SHORT press (task busy?)", buttonIndex);
     }
 
-    const String &shortAction = config.buttonShortActions[buttonIndex];
-    const String &shortMqttTopic = config.buttonShortMqttTopics[buttonIndex];
-
-    LOG_NOTICE("BUTTONS", "Button %d executing SHORT action: '%s'", buttonIndex, shortAction.c_str());
-
-    // Trigger immediate LED effect (non-blocking)
-    triggerButtonLedEffect(buttonIndex, false);
-
-    // Feed watchdog before action execution
-    esp_task_wdt_reset();
-
-    // Execute action immediately if endpoint is specified
-    if (shortAction.length() > 0)
-    {
-        executeButtonEndpoint(shortAction.c_str());
-    }
-
-    // Handle MQTT if topic is specified (future enhancement)
-    if (shortMqttTopic.length() > 0)
-    {
-        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", shortMqttTopic.c_str());
-    }
-
-    // Feed watchdog at end of button handling
+    // Feed watchdog after quick, non-blocking button handling
     esp_task_wdt_reset();
 }
 
@@ -315,38 +305,20 @@ void handleButtonLongPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // Get runtime configuration with safety check
-    const RuntimeConfig &config = getRuntimeConfig();
-    if (buttonIndex >= numHardwareButtons)
+    // **KEY CHANGE**: Process action asynchronously instead of immediate execution
+    // This keeps the main loop responsive and prevents blocking operations
+    bool started = processButtonActionAsync(buttonIndex, true);
+
+    if (started)
     {
-        LOG_ERROR("BUTTONS", "Button index %d exceeds maximum buttons (%d)", buttonIndex, numHardwareButtons);
-        return;
+        LOG_NOTICE("BUTTONS", "Button %d LONG press started async processing", buttonIndex);
+    }
+    else
+    {
+        LOG_WARNING("BUTTONS", "Failed to start async task for button %d LONG press (task busy?)", buttonIndex);
     }
 
-    const String &longAction = config.buttonLongActions[buttonIndex];
-    const String &longMqttTopic = config.buttonLongMqttTopics[buttonIndex];
-
-    LOG_NOTICE("BUTTONS", "Button %d executing LONG action: '%s'", buttonIndex, longAction.c_str());
-
-    // Trigger immediate LED effect (non-blocking)
-    triggerButtonLedEffect(buttonIndex, true);
-
-    // Feed watchdog before action execution
-    esp_task_wdt_reset();
-
-    // Execute action immediately if endpoint is specified
-    if (longAction.length() > 0)
-    {
-        executeButtonEndpoint(longAction.c_str());
-    }
-
-    // Handle MQTT if topic is specified (future enhancement)
-    if (longMqttTopic.length() > 0)
-    {
-        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s", longMqttTopic.c_str());
-    }
-
-    // Feed watchdog at end of button handling
+    // Feed watchdog after quick, non-blocking button handling
     esp_task_wdt_reset();
 }
 
