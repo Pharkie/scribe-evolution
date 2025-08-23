@@ -44,10 +44,10 @@ constexpr const char *NVS_LED_BRIGHTNESS = "led_brightness";
 constexpr const char *NVS_LED_REFRESH_RATE = "led_refresh";
 
 // Note: Button configuration keys are dynamically generated in config_loader.cpp:
-// btn1_short_act, btn1_short_mq, btn1_long_act, btn1_long_mq
-// btn2_short_act, btn2_short_mq, btn2_long_act, btn2_long_mq
-// btn3_short_act, btn3_short_mq, btn3_long_act, btn3_long_mq
-// btn4_short_act, btn4_short_mq, btn4_long_act, btn4_long_mq
-// These 16 keys are created using: String buttonPrefix = "btn" + String(i + 1) + "_";
+// btn1_short_act, btn1_short_mq, btn1_long_act, btn1_long_mq, btn1_short_led, btn1_long_led
+// btn2_short_act, btn2_short_mq, btn2_long_act, btn2_long_mq, btn2_short_led, btn2_long_led
+// btn3_short_act, btn3_short_mq, btn3_long_act, btn3_long_mq, btn3_short_led, btn3_long_led
+// btn4_short_act, btn4_short_mq, btn4_long_act, btn4_long_mq, btn4_short_led, btn4_long_led
+// These 24 keys are created using: String buttonPrefix = "btn" + String(i + 1) + "_";
 
 #endif // NVS_KEYS_H

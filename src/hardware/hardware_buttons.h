@@ -43,16 +43,16 @@ void handleButtonPress(int buttonIndex);
 void handleButtonLongPress(int buttonIndex);
 
 /**
- * @brief Make async local HTTP request to web endpoint (non-blocking)
- * @param endpoint The API endpoint path to request
+ * @brief Trigger LED effect for button press (immediate, non-blocking)
+ * @param buttonIndex Which button was pressed
+ * @param isLongPress Whether this was a long press
  */
-void makeAsyncLocalRequest(const char *endpoint);
+void triggerButtonLedEffect(int buttonIndex, bool isLongPress);
 
 /**
- * @brief Handle button action - trigger local web endpoint (same as web interface)
- * @param endpoint The API endpoint to trigger
- * @param mqttTopic The MQTT topic to send to (empty string for local print only)
+ * @brief Execute button endpoint directly without HTTP calls
+ * @param endpoint The API endpoint path to execute
  */
-void handleButtonAction(const char *endpoint, const char *mqttTopic = "");
+void executeButtonEndpoint(const char *endpoint);
 
 #endif
