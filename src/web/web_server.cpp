@@ -78,22 +78,15 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         return;
     }
 
-    // Handle captive portal detection requests
+    // Handle captive portal detection requests with simple redirect
     if (uri == "/hotspot-detect.html" ||
         uri == "/generate_204" ||
         uri == "/connecttest.txt" ||
         uri == "/redirect" ||
         uri.startsWith("/fwlink"))
     {
-        // DEBUG: Captive portal detection - responding with redirect to settings
-        // Respond with captive portal page
-        AsyncWebServerResponse *response = request->beginResponse(302, "text/html",
-                                                                  "<!DOCTYPE html><html><head><title>WiFi Setup</title></head>"
-                                                                  "<body><h1>Scribe WiFi Setup</h1>"
-                                                                  "<p>Redirecting to configuration page...</p>"
-                                                                  "<script>window.location.href='http://192.168.4.1/settings.html';</script>"
-                                                                  "</body></html>");
-        response->addHeader("Location", "http://192.168.4.1/settings.html");
+        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to WiFi configuration");
+        response->addHeader("Location", "/settings.html");
         request->send(response);
         return;
     }
@@ -247,12 +240,7 @@ void setupWebServerRoutes(int maxChars)
 
         // Always serve settings page and its dependencies (needed for AP mode)
         server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request)
-                  {
-            if (shouldRedirectToSettings(request)) {
-                handleCaptivePortal(request);
-                return;
-            }
-            request->send(LittleFS, "/html/settings.html", "text/html"); });
+                  { request->send(LittleFS, "/html/settings.html", "text/html"); });
 
         // Configuration endpoints (needed for settings page)
         server.on("/config", HTTP_GET, handleConfigGet);

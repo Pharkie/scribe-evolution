@@ -209,8 +209,11 @@
         @keydown.escape.window="closePrinterOverlay()"
         class="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center p-4" style="display: none;">
 
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <!-- Backdrop with separate blur transition -->
+        <div x-show="overlayVisible" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="backdrop-blur-none" x-transition:enter-end="backdrop-blur-sm"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="backdrop-blur-sm"
+            x-transition:leave-end="backdrop-blur-none" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
         <!-- Modal -->
         <div x-show="overlayVisible" x-transition:enter="transition ease-out duration-300 transform"

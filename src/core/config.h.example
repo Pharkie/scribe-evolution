@@ -1,5 +1,5 @@
 /**
- * @file config.h.example.example.example
+ * @file config.h.example
  * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
@@ -57,7 +57,8 @@ static const int defaultUnbiddenInkEndHour = 16;                                
 static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
 // Default button configuration (GPIO, actions, MQTT topics, LED effects)
-struct ButtonConfig {
+struct ButtonConfig
+{
     int gpio;
     const char *shortAction;
     const char *shortMqttTopic;
@@ -70,10 +71,10 @@ struct ButtonConfig {
 // Note: GPIO are fixed in config.h, endpoints can be changed in config.json
 // Empty MQTT topic means use local printing (/print-local equivalent)
 static const ButtonConfig defaultButtons[] = {
-    {5, "/api/joke",   "", "simple_chase", "/api/character-test", "", "pulse"}, // Button 1
-    {6, "/api/riddle", "", "simple_chase", "",                    "", "pulse"}, // Button 2
-    {7, "/api/quote",  "", "simple_chase", "",                    "", "pulse"}, // Button 3
-    {8, "/api/quiz",   "", "simple_chase", "",                    "", "pulse"}  // Button 4
+    {5, "/api/joke", "", "simple_chase", "/api/character-test", "", "pulse"}, // Button 1
+    {6, "/api/riddle", "", "simple_chase", "", "", "pulse"},                  // Button 2
+    {7, "/api/quote", "", "simple_chase", "", "", "pulse"},                   // Button 3
+    {18, "/api/quiz", "", "simple_chase", "", "", "pulse"}                    // Button 4 - GPIO 8 conflicts with status LED
 };
 
 // LEDs: Optional FastLED support
@@ -114,7 +115,8 @@ static const int ntpSyncTimeoutSeconds = 30;    // Maximum wait time for initial
 static const int ntpSyncIntervalSeconds = 3600; // Re-sync interval (1 hour)
 
 // Logging Configuration
-static const int logLevel = LOG_LEVEL_NOTICE;
+// Logging levels: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
+static const int logLevel = LOG_LEVEL_VERBOSE;
 static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
 static const bool enableSerialLogging = true;       // Serial console
 static const bool enableFileLogging = false;        // LittleFS file (untested)

@@ -72,6 +72,9 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // Get current runtime configuration (from NVS or defaults)
     const RuntimeConfig &config = getRuntimeConfig();
 
+    // Feed watchdog to prevent timeout during JSON construction
+    delay(1);
+
     // Create response with runtime configuration data
     DynamicJsonDocument configDoc(largeJsonDocumentSize);
 
@@ -133,13 +136,17 @@ void handleConfigGet(AsyncWebServerRequest *request)
     }
     wifiStatus["signal_strength"] = signalStrength;
 
+    // Feed watchdog after WiFi processing
+    delay(1);
+
     // MQTT configuration - top-level section matching settings.html
     JsonObject mqtt = configDoc.createNestedObject("mqtt");
     mqtt["server"] = config.mqttServer;
     mqtt["port"] = config.mqttPort;
     mqtt["username"] = config.mqttUsername;
     mqtt["password"] = config.mqttPassword;
-    mqtt["connected"] = mqttClient.connected();
+    // Skip MQTT connection check in AP mode to avoid potential blocking
+    mqtt["connected"] = isAPMode() ? false : mqttClient.connected();
 
     // Unbidden Ink configuration - top-level section matching settings.html
     JsonObject unbiddenInk = configDoc.createNestedObject("unbiddenInk");
@@ -198,7 +205,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
         button["shortMqttTopic"] = config.buttonShortMqttTopics[i];
         button["longAction"] = config.buttonLongActions[i];
         button["longMqttTopic"] = config.buttonLongMqttTopics[i];
-        
+
         // Add LED effect configuration
         button["shortLedEffect"] = config.buttonShortLedEffects[i];
         button["longLedEffect"] = config.buttonLongLedEffects[i];
@@ -215,8 +222,24 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // Add per-effect autonomous configurations
     saveLedEffectsToJson(leds, config.ledEffects);
 #endif
+
+    // Feed watchdog before JSON serialization
+    delay(1);
+
     String configString;
-    serializeJson(configDoc, configString);
+    size_t jsonSize = serializeJson(configDoc, configString);
+
+    if (jsonSize == 0)
+    {
+        LOG_ERROR("WEB", "Failed to serialize config JSON");
+        DynamicJsonDocument errorDoc(256);
+        errorDoc["success"] = false;
+        errorDoc["error"] = "JSON serialization failed";
+        String errorString;
+        serializeJson(errorDoc, errorString);
+        request->send(500, "application/json", errorString);
+        return;
+    }
 
     LOG_VERBOSE("WEB", "Configuration from NVS, returning %d bytes", configString.length());
     request->send(200, "application/json", configString);
@@ -434,8 +457,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         String shortAction = button["shortAction"];
         String longAction = button["longAction"];
-        String shortLedEffect = button["shortLedEffect"] | "simple_chase";  // Default to simple_chase
-        String longLedEffect = button["longLedEffect"] | "simple_chase";    // Default to simple_chase
+        String shortLedEffect = button["shortLedEffect"] | "simple_chase"; // Default to simple_chase
+        String longLedEffect = button["longLedEffect"] | "simple_chase";   // Default to simple_chase
 
         // MQTT topics are optional - if present, they should be strings
         if (button.containsKey("shortMqttTopic") && !button["shortMqttTopic"].is<String>())
@@ -486,7 +509,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         const char *validLedEffects[] = {"simple_chase", "chase", "rainbow", "twinkle", "pulse", "matrix", "none"};
         bool validShortLedEffect = false;
         bool validLongLedEffect = false;
-        
+
         for (int j = 0; j < 7; j++)
         {
             if (shortLedEffect == validLedEffects[j])
@@ -494,13 +517,13 @@ void handleConfigPost(AsyncWebServerRequest *request)
             if (longLedEffect == validLedEffects[j])
                 validLongLedEffect = true;
         }
-        
+
         if (!validShortLedEffect)
         {
             sendValidationError(request, ValidationResult(false, "Invalid short LED effect for " + String(buttonKeys[i]) + ": " + shortLedEffect));
             return;
         }
-        
+
         if (!validLongLedEffect)
         {
             sendValidationError(request, ValidationResult(false, "Invalid long LED effect for " + String(buttonKeys[i]) + ": " + longLedEffect));
@@ -512,7 +535,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         newConfig.buttonLongActions[i] = longAction;
         newConfig.buttonShortMqttTopics[i] = button["shortMqttTopic"] | "";
         newConfig.buttonLongMqttTopics[i] = button["longMqttTopic"] | "";
-        
+
         // Store validated LED effects
         newConfig.buttonShortLedEffects[i] = shortLedEffect;
         newConfig.buttonLongLedEffects[i] = longLedEffect;
