@@ -21,7 +21,7 @@
 // ============================================================================
 
 // LED Hardware Configuration - Runtime Configurable Defaults
-static const int DEFAULT_LED_PIN = 4;                                                     // GPIO pin for LED strip data
+static const int DEFAULT_LED_PIN = 20;                                                    // GPIO pin for LED strip data (safe, digital output)
 static const int DEFAULT_LED_COUNT = 30;                                                  // Number of LEDs in the strip
 static const int DEFAULT_LED_BRIGHTNESS = 64;                                             // Default brightness (0-255, 64 = 25% to save power)
 static const int DEFAULT_LED_REFRESH_RATE = 60;                                           // Refresh rate in Hz

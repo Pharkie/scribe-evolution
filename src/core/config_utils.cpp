@@ -59,8 +59,8 @@ void validateConfig()
     usedGpios[usedCount++] = statusLEDPin;
 
 #if ENABLE_LEDS
-    // Add LED strip GPIO (GPIO 4 is the default)
-    usedGpios[usedCount++] = 4; // DEFAULT_LED_PIN from led_config.h
+    // Add LED strip GPIO (uses DEFAULT_LED_PIN from led_config.h)
+    usedGpios[usedCount++] = DEFAULT_LED_PIN; // Now correctly references GPIO 1
 #endif
 
     // Check for duplicate GPIOs

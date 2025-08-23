@@ -17,9 +17,7 @@
  * For commercial licensing inquiries, please contact Adam Knowles.
  *
  * Based on the original Project Scribe by UrbanCircles.
- * 
- * INSTRUCTIONS: Copy this file to config.h and fill in your actual credentials.
- * The config.h file is gitignored to keep your secrets safe.
+
  */
 
 #ifndef CONFIG_H
@@ -74,11 +72,18 @@ struct ButtonConfig
 //
 // Note: GPIO are fixed in config.h, actions can be changed in config.json
 // Empty MQTT topic means use local printing (no network calls)
+//
+// ESP32-C3 GPIO Notes:
+// - Available GPIOs: 0-21 (some have restrictions)
+// - GPIO 0,2,3,9: Strapping pins - can cause boot issues (GPIO 9 used for buttons anyway)
+// - GPIO 1: UART0 TX (Serial) - can cause programming issues
+// - GPIO 18,19: Used for USB, not available for general use
+// - GPIO 5,6,7,9: Chosen for button inputs (avoiding most problematic pins)
 static const ButtonConfig defaultButtons[] = {
     {5, "JOKE", "", "simple_chase", "PRINT_TEST", "", "pulse"}, // Button 1: Joke → Test Print
     {6, "RIDDLE", "", "simple_chase", "", "", "pulse"},         // Button 2: Riddle → (no long action)
     {7, "QUOTE", "", "simple_chase", "", "", "pulse"},          // Button 3: Quote → (no long action)
-    {18, "QUIZ", "", "simple_chase", "", "", "pulse"}           // Button 4: Quiz → (no long action)
+    {9, "QUIZ", "", "simple_chase", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 9 (strapping pin)
 };
 
 // LEDs: Optional FastLED support
