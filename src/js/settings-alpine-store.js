@@ -73,6 +73,12 @@ function initializeSettingsStore() {
                 prompt: 'Generate something creative and interesting',
                 chatgptApiToken: ''
             },
+            memos: {
+                memo1: '',
+                memo2: '',
+                memo3: '',
+                memo4: ''
+            },
             buttons: {
                 // Hardware configuration
                 count: null,
@@ -252,10 +258,11 @@ function initializeSettingsStore() {
         
         // Section definitions for navigation
         sections: [
-            { id: 'device', name: 'Device', icon: '⚙️', color: 'purple' },
+            { id: 'device', name: 'Device', icon: '⚙️', color: 'blue' },
+            { id: 'memos', name: 'Memos', icon: '📝', color: 'pink' },
             { id: 'mqtt', name: 'MQTT', icon: '📡', color: 'yellow' },
             { id: 'unbidden', name: 'Unbidden Ink', icon: '🎲', color: 'green' },
-            { id: 'buttons', name: 'Buttons', icon: '🎛️', color: 'orange' },
+            { id: 'buttons', name: 'Buttons', icon: '🎛️', color: 'teal' },
             { id: 'leds', name: 'LEDs', icon: '🌈', color: 'purple' }
         ],
         
@@ -514,6 +521,12 @@ function initializeSettingsStore() {
                     prompt: this.config.unbiddenInk.prompt
                     // Only include chatgptApiToken if it was modified by user
                 },
+                memos: {
+                    memo1: this.config.memos.memo1,
+                    memo2: this.config.memos.memo2,
+                    memo3: this.config.memos.memo3,
+                    memo4: this.config.memos.memo4
+                },
                 buttons: {
                     // Include individual button configurations
                     button1: this.config.buttons.button1,
@@ -760,6 +773,16 @@ ${urlLine}`;
                 console.warn('⚠️ Missing unbiddenInk section in config');
             }
             
+            // Memos - load memo content
+            if (serverConfig.memos) {
+                this.config.memos.memo1 = serverConfig.memos.memo1 || '';
+                this.config.memos.memo2 = serverConfig.memos.memo2 || '';
+                this.config.memos.memo3 = serverConfig.memos.memo3 || '';
+                this.config.memos.memo4 = serverConfig.memos.memo4 || '';
+            } else {
+                console.warn('⚠️ Missing memos section in config');
+            }
+            
             // Buttons - log errors for missing values
             if (serverConfig.buttons) {
                 // Copy hardware configuration properties
@@ -876,6 +899,13 @@ ${urlLine}`;
                 this.validateField(fieldName, value);
             });
             
+            // Check memo character limits - block saving if any memo is over limit
+            if (!this.canSaveAllMemos) {
+                const overLimitMemos = [1, 2, 3, 4].filter(memoNum => !this.canSaveMemo(memoNum));
+                this.validation.errors['memos'] = `Memo ${overLimitMemos.join(', ')} ${overLimitMemos.length === 1 ? 'is' : 'are'} over the character limit`;
+                this.validation.isValid = false;
+            }
+            
             console.log('Validation errors:', this.validation.errors);
             console.log('Form is valid:', this.validation.isValid);
             
@@ -885,6 +915,49 @@ ${urlLine}`;
         // Helper to get nested object values
         getNestedValue(fieldName) {
             return fieldName.split('.').reduce((obj, key) => obj && obj[key], this.config);
+        },
+        
+        // Memo character counting functions - matches index page behavior
+        getMemoCharacterCount(memoNum) {
+            const memoKey = `memo${memoNum}`;
+            return this.config.memos[memoKey]?.length || 0;
+        },
+        
+        getMemoCharacterText(memoNum) {
+            const count = this.getMemoCharacterCount(memoNum);
+            const limit = 500; // MEMO_MAX_LENGTH from config.h
+            if (count > limit) {
+                const over = count - limit;
+                return `${count}/${limit} (${over} over limit)`;
+            }
+            return `${count}/${limit}`;
+        },
+        
+        getMemoCharacterClass(memoNum) {
+            const count = this.getMemoCharacterCount(memoNum);
+            const limit = 500; // MEMO_MAX_LENGTH from config.h
+            const percentage = count / limit;
+            
+            if (count > limit) {
+                // Over 100% - red and bold (matches index page)
+                return 'text-red-600 dark:text-red-400 font-semibold';
+            } else if (percentage >= 0.9) {
+                // 90-100% - yellow warning (matches index page)
+                return 'text-yellow-700 dark:text-yellow-300 font-medium';
+            } else {
+                // Under 90% - normal gray (matches index page)
+                return 'text-gray-500 dark:text-gray-400';
+            }
+        },
+        
+        canSaveMemo(memoNum) {
+            const count = this.getMemoCharacterCount(memoNum);
+            const limit = 500; // MEMO_MAX_LENGTH from config.h
+            return count <= limit;
+        },
+        
+        get canSaveAllMemos() {
+            return [1, 2, 3, 4].every(memoNum => this.canSaveMemo(memoNum));
         },
         
         // LED effect functions (WLED-style unified interface)

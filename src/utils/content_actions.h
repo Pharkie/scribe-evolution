@@ -42,7 +42,11 @@ enum class ContentActionType
     PRINT_TEST,
     POKE,
     USER_MESSAGE,
-    UNBIDDEN_INK
+    UNBIDDEN_INK,
+    MEMO1,
+    MEMO2,
+    MEMO3,
+    MEMO4
 };
 
 /**

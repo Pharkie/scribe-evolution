@@ -53,6 +53,14 @@ String getRateLimitReason();
 ValidationResult validateMessage(const String &message, int maxLength = -1);
 
 /**
+ * @brief Validate memo content (allows empty memos)
+ * @param memo The memo content to validate
+ * @param maxLength Maximum allowed length (-1 for default)
+ * @return ValidationResult with validation status and error message
+ */
+ValidationResult validateMemo(const String &memo, int maxLength = -1);
+
+/**
  * @brief Validate JSON payload
  * @param jsonString The JSON string to validate
  * @param requiredFields Array of required field names

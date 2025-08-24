@@ -82,6 +82,12 @@ void handleNVSDump(AsyncWebServerRequest *request)
         {NVS_UNBIDDEN_END_HOUR, "int", "Unbidden Ink end hour", false, 0, 23},
         {NVS_UNBIDDEN_PROMPT, "string", "Unbidden Ink prompt template", false, 0, 0},
 
+        // Memo Configuration
+        {NVS_MEMO_1, "string", "Memo 1 content", false, 0, 0},
+        {NVS_MEMO_2, "string", "Memo 2 content", false, 0, 0},
+        {NVS_MEMO_3, "string", "Memo 3 content", false, 0, 0},
+        {NVS_MEMO_4, "string", "Memo 4 content", false, 0, 0},
+
         // Button Configuration (4 buttons × 4 fields = 16 keys)
         {"btn1_short_act", "string", "Button 1 short press action", false, 0, 0},
         {"btn1_short_mq", "string", "Button 1 short press MQTT topic", false, 0, 0},

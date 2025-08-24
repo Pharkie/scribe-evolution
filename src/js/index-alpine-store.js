@@ -37,6 +37,13 @@ function initializeIndexStore() {
     // Active quick action (only one can be active at a time)
     activeQuickAction: null,
     
+    // Memo state
+    memoModalVisible: false,
+    memos: [],
+    memosLoading: false,
+    memosLoaded: false,
+    printing: false,
+    
     // Character limits - updated path for new structure
     get maxChars() {
       if (!this.config?.device?.maxCharacters) {
@@ -136,6 +143,9 @@ function initializeIndexStore() {
         this.localPrinterName = this.config.device.printer_name;
         console.log('📋 Index: Config loaded successfully, printer name:', this.localPrinterName);
         
+        // Load memos from config data (no separate API call needed)
+        this.loadMemosFromConfig();
+        
         // Clear any previous error and set loading to false on success
         this.error = null;
         this.loading = false;
@@ -212,31 +222,20 @@ function initializeIndexStore() {
       this.submitting = true;
       
       try {
-        let formData;
-        let endpoint;
-        
-        // Build payload based on printer target
-        if (this.selectedPrinter === 'local-direct') {
-          formData = {
-            message: this.message.trim()
-          };
-          endpoint = '/api/print-local';
-        } else {
-          // For MQTT printing, use "topic" instead of "printer-target"
-          formData = {
-            message: this.message.trim(),
-            topic: this.selectedPrinter
-          };
-          endpoint = '/api/print-mqtt';
-        }
-        
         const message = this.message.trim();
         
-        // Use API layer based on printer target
+        // Step 1: Generate formatted content with MESSAGE header using user-message endpoint
+        const contentResult = await window.IndexAPI.generateUserMessage(message, this.selectedPrinter);
+        
+        if (!contentResult.content) {
+          throw new Error('Failed to generate message content');
+        }
+        
+        // Step 2: Print the formatted content
         if (this.selectedPrinter === 'local-direct') {
-          await window.IndexAPI.printLocalContent(message);
+          await window.IndexAPI.printLocalContent(contentResult.content);
         } else {
-          await window.IndexAPI.printMQTTContent(message, this.selectedPrinter);
+          await window.IndexAPI.printMQTTContent(contentResult.content, this.selectedPrinter);
         }
         
         // 🎊 Trigger confetti celebration for successful submission!
@@ -551,7 +550,7 @@ function initializeIndexStore() {
             break;
             
           case 'news':
-            // 📰 Newspaper effect - black and white squares/rectangles
+            // 📰 Newspaper effect - gray and white squares/rectangles to match gray button
             confetti({
               particleCount: 120,
               spread: 80,
@@ -559,11 +558,26 @@ function initializeIndexStore() {
                 x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
                 y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
               } : { y: 0.6 },
-              colors: ['#000000', '#ffffff', '#1f2937', '#f9fafb'], // Black and white tones
+              colors: ['#6b7280', '#9ca3af', '#d1d5db', '#f3f4f6'], // Gray tones to match gray button
               shapes: ['square'],
               scalar: 1.1,
               gravity: 0.9,
               drift: 0.05
+            });
+            break;
+            
+          case 'memo':
+            // 📝 Pink sparkles for memos
+            confetti({
+              particleCount: 100,
+              spread: 60,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 },
+              colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
+              scalar: 0.9,
+              startVelocity: 30
             });
             break;
             
@@ -606,6 +620,102 @@ function initializeIndexStore() {
     // Navigation
     goToSettings() {
       window.location.href = '/settings.html';
+    },
+    
+    // === Memo Functions ===
+    
+    loadMemosFromConfig() {
+      // Don't reload if already loaded
+      if (this.memosLoaded) return;
+      
+      console.log('📝 Loading memos from config data...');
+      
+      // Convert config format to modal format
+      const configMemos = this.config.memos || {};
+      this.memos = [
+        { id: 1, content: configMemos.memo1 || '' },
+        { id: 2, content: configMemos.memo2 || '' },
+        { id: 3, content: configMemos.memo3 || '' },
+        { id: 4, content: configMemos.memo4 || '' }
+      ];
+      
+      this.memosLoaded = true;
+      console.log('📝 Memos loaded from config:', this.memos);
+    },
+    
+    async showMemoModal() {
+      console.log('📝 Opening memo modal');
+      this.memoModalVisible = true;
+      
+      // Ensure memos are loaded
+      if (!this.memosLoaded) {
+        this.loadMemosFromConfig();
+      }
+    },
+    
+    closeMemoModal() {
+      console.log('📝 Closing memo modal');
+      this.memoModalVisible = false;
+    },
+    
+    async printMemo(memoId) {
+      if (this.printing) return;
+      
+      try {
+        this.printing = true;
+        console.log(`📝 Printing memo ${memoId}...`);
+        
+        // Step 1: Get processed memo content (clean GET request)
+        const response = await fetch(`/api/memo/${memoId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to get memo: ${response.status}`);
+        }
+        
+        const memoData = await response.json();
+        if (!memoData.content) {
+          throw new Error('No memo content received');
+        }
+        
+        console.log(`📝 Memo ${memoId} retrieved: ${memoData.content}`);
+        
+        // Step 2: Print using the same method as other buttons
+        let printResponse;
+        if (this.selectedPrinter === 'local-direct') {
+          printResponse = await window.IndexAPI.printLocalContent(memoData.content);
+        } else {
+          printResponse = await window.IndexAPI.printMQTTContent(memoData.content, this.selectedPrinter);
+        }
+        
+        if (printResponse.success) {
+          // Set active action to show "Scribed" on memo button
+          this.activeQuickAction = 'memo';
+          this.closeMemoModal();
+          
+          // Pink sparkle confetti celebration (keep the confetti!)
+          if (window.confetti) {
+            confetti({
+              colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
+              startVelocity: 30,
+              spread: 360,
+              ticks: 60,
+              zIndex: 0
+            });
+          }
+          
+          // Reset active action after 2 seconds like other quick actions
+          setTimeout(() => {
+            this.activeQuickAction = null;
+          }, 2000);
+        } else {
+          throw new Error(printResponse.message || 'Failed to print memo');
+        }
+      } catch (error) {
+        console.error(`📝 Failed to print memo ${memoId}:`, error);
+        this.showToast(`Failed to print memo: ${error.message}`, 'error');
+      } finally {
+        this.printing = false;
+      }
     }
   };
   

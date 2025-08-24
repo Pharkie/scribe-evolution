@@ -33,6 +33,7 @@ struct Message
     String message;          ///< The content to print
     String timestamp;        ///< When the message was created
     bool shouldPrintLocally; ///< Whether this message should be printed locally
+    bool hasMessage;         ///< Whether this message contains valid data
 };
 
 /**

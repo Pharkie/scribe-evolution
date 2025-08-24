@@ -2,6 +2,7 @@
 #include "../core/logging.h"
 #include "../core/config_utils.h"
 #include "../core/config.h"
+#include "../core/config_loader.h"
 #include "../core/network.h"
 #include <ezTime.h>
 #include <esp_task_wdt.h>
@@ -9,16 +10,24 @@
 // External reference to boot time from main.cpp
 extern String deviceBootTime;
 
-// Timezone object
-Timezone myTZ;
+// Local timezone object for proper timezone handling
+Timezone localTZ;
+static bool timezoneConfigured = false;
 
 // === Time Utilities ===
 String getFormattedDateTime()
 {
-    // Use ezTime for automatic timezone handling
     // Format: "Tue 22 Jul 2025 14:30"
-    String dateTime = myTZ.dateTime("D d M Y H:i");
-    return dateTime;
+    // Use local timezone object for proper timezone handling
+    if (timezoneConfigured)
+    {
+        return localTZ.dateTime("D d M Y H:i");
+    }
+    else
+    {
+        // Fallback to UTC if timezone not set
+        return dateTime("D d M Y H:i");
+    }
 }
 
 String formatCustomDate(String customDate)
@@ -53,7 +62,7 @@ String formatCustomDate(String customDate)
         time_t parsedTime = makeTime(0, 0, 0, day, month, year);
         if (parsedTime != 0) // makeTime returns 0 for invalid dates
         {
-            String formatted = myTZ.dateTime(parsedTime, "D d M Y H:i");
+            String formatted = dateTime(parsedTime, "D d M Y H:i");
             // Parsed date successfully (from input)
             return formatted;
         }
@@ -64,7 +73,7 @@ String formatCustomDate(String customDate)
             parsedTime = makeTime(0, 0, 0, month, day, year);
             if (parsedTime != 0)
             {
-                String formatted = myTZ.dateTime(parsedTime, "D d M Y H:i");
+                String formatted = dateTime(parsedTime, "D d M Y H:i");
                 // Parsed date successfully (US format)
                 return formatted;
             }
@@ -143,7 +152,7 @@ String formatRFC2822Date(const String &rfc2822Date)
         return "";
 
     // Format to match other quick actions: "Mon 16 Aug 23:00"
-    return myTZ.dateTime(parsedTime, "D d M H:i");
+    return dateTime(parsedTime, "D d M H:i");
 }
 
 String getISOTimestamp()
@@ -209,9 +218,97 @@ void setupTime()
 
     // Set ongoing sync interval
     setInterval(ntpSyncIntervalSeconds);
+    
+    // Configure local timezone after NTP sync
+    if (timeStatus() == timeSet)
+    {
+        const RuntimeConfig &config = getRuntimeConfig();
+        String timezoneStr = config.timezone;
+        if (timezoneStr.length() == 0)
+        {
+            timezoneStr = defaultTimezone; // Fallback to config.h default
+        }
+        
+        LOG_VERBOSE("time_utils", "Setting timezone to: %s", timezoneStr.c_str());
+        bool timezoneSet = localTZ.setLocation(timezoneStr);
+        
+        if (timezoneSet)
+        {
+            timezoneConfigured = true;
+            LOG_VERBOSE("time_utils", "Timezone successfully set to %s", timezoneStr.c_str());
+            LOG_VERBOSE("time_utils", "Current local time: %s", localTZ.dateTime().c_str());
+        }
+        else
+        {
+            timezoneConfigured = false;
+            LOG_WARNING("time_utils", "Failed to set timezone %s, using UTC", timezoneStr.c_str());
+        }
+    }
+    else
+    {
+        timezoneConfigured = false;
+        LOG_WARNING("time_utils", "Cannot set timezone - NTP sync failed");
+    }
 }
 
 String getDeviceBootTime()
 {
     return deviceBootTime;
+}
+
+// === Additional functions for memo placeholder expansion ===
+
+String getMemoDate()
+{
+    // Format: "24Aug25" (ddMmmyy)
+    // Use local timezone object for proper timezone handling
+    if (timezoneConfigured)
+    {
+        return localTZ.dateTime("dMy");
+    }
+    else
+    {
+        // Fallback to UTC if timezone not set
+        return dateTime("dMy");
+    }
+}
+
+String getMemoTime()
+{
+    // Format: "12:30" (HH:MM)
+    // Use local timezone object for proper timezone handling
+    if (timezoneConfigured)
+    {
+        return localTZ.dateTime("H:i");
+    }
+    else
+    {
+        // Fallback to UTC if timezone not set
+        return dateTime("H:i");
+    }
+}
+
+String getMemoWeekday()
+{
+    // Format: "Sunday" (full day name)
+    // Use local timezone object for proper timezone handling
+    if (timezoneConfigured)
+    {
+        return localTZ.dateTime("l");
+    }
+    else
+    {
+        // Fallback to UTC if timezone not set
+        return dateTime("l");
+    }
+}
+
+String getDeviceUptime()
+{
+    // Format: "2h13m" (hours and minutes)
+    unsigned long uptimeMs = millis();
+    unsigned long hours = uptimeMs / 3600000;
+    unsigned long minutes = (uptimeMs % 3600000) / 60000;
+    
+    return String(hours) + "h" + String(minutes) + "m";
 }

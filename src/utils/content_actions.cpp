@@ -86,6 +86,26 @@ ContentActionResult executeContentActionWithTimeout(ContentActionType actionType
         actionName = "UNBIDDEN INK";
         break;
 
+    case ContentActionType::MEMO1:
+        content = generateMemoContent(1);
+        actionName = "MEMO 1";
+        break;
+
+    case ContentActionType::MEMO2:
+        content = generateMemoContent(2);
+        actionName = "MEMO 2";
+        break;
+
+    case ContentActionType::MEMO3:
+        content = generateMemoContent(3);
+        actionName = "MEMO 3";
+        break;
+
+    case ContentActionType::MEMO4:
+        content = generateMemoContent(4);
+        actionName = "MEMO 4";
+        break;
+
     default:
         return ContentActionResult(false, "", "Unknown content action type");
     }
@@ -186,6 +206,14 @@ String actionTypeToString(ContentActionType actionType)
         return "MESSAGE";
     case ContentActionType::UNBIDDEN_INK:
         return "UNBIDDEN INK";
+    case ContentActionType::MEMO1:
+        return "MEMO1";
+    case ContentActionType::MEMO2:
+        return "MEMO2";
+    case ContentActionType::MEMO3:
+        return "MEMO3";
+    case ContentActionType::MEMO4:
+        return "MEMO4";
     default:
         return "UNKNOWN";
     }
@@ -215,6 +243,14 @@ ContentActionType stringToActionType(const String &actionString)
         return ContentActionType::USER_MESSAGE;
     if (action == "UNBIDDEN_INK" || action == "UNBIDDEN INK")
         return ContentActionType::UNBIDDEN_INK;
+    if (action == "MEMO1")
+        return ContentActionType::MEMO1;
+    if (action == "MEMO2")
+        return ContentActionType::MEMO2;
+    if (action == "MEMO3")
+        return ContentActionType::MEMO3;
+    if (action == "MEMO4")
+        return ContentActionType::MEMO4;
 
     // Return default for unknown actions
     return ContentActionType::JOKE;

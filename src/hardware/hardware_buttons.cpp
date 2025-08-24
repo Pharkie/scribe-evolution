@@ -1,6 +1,7 @@
 #include "hardware_buttons.h"
 #include "../web/web_server.h"
 #include "printer.h"
+#include "../content/content_handlers.h"
 #include "../utils/content_actions.h"
 #include "../core/config.h"
 #include "../core/config_loader.h"
@@ -76,7 +77,7 @@ void initializeHardwareButtons()
             continue;
         }
 
-        if (!canUseGPIOForButtons(gpio))
+        if (!isSafeGPIO(gpio))
         {
             LOG_WARNING("BUTTONS", "Button %d GPIO %d: %s", i, gpio, getGPIODescription(gpio));
         }
@@ -547,8 +548,10 @@ bool executeButtonActionDirect(const char *actionType)
 
     LOG_VERBOSE("BUTTONS", "Executing button action directly: %s", actionType);
 
+    String actionString = String(actionType);
+    
     // Convert action type string to ContentActionType enum using utility function
-    ContentActionType contentAction = stringToActionType(String(actionType));
+    ContentActionType contentAction = stringToActionType(actionString);
 
     // Execute content action directly with button-specific timeout
     ContentActionResult result = executeContentActionWithTimeout(
@@ -569,57 +572,4 @@ bool executeButtonActionDirect(const char *actionType)
         LOG_ERROR("BUTTONS", "Failed to generate content for action: %s", actionType);
         return false;
     }
-}
-
-// ========================================
-// DEPRECATED FUNCTIONS
-// ========================================
-
-// Execute button endpoint using shared content action utilities
-void executeButtonEndpoint(const char *endpoint)
-{
-    if (!endpoint || strlen(endpoint) == 0)
-    {
-        LOG_ERROR("BUTTONS", "Invalid endpoint: null or empty");
-        return;
-    }
-
-    LOG_VERBOSE("BUTTONS", "Executing button endpoint: %s", endpoint);
-
-    // Feed watchdog before starting content generation
-    esp_task_wdt_reset();
-
-    // Convert endpoint to content action type
-    String endpointStr = String(endpoint);
-    ContentActionType actionType = endpointToActionType(endpointStr);
-
-    // Validate known endpoint
-    if (actionTypeToString(actionType) == "UNKNOWN" && endpointStr != "/api/joke")
-    {
-        LOG_WARNING("BUTTONS", "Unknown button endpoint: %s", endpoint);
-        return;
-    }
-
-    // Feed watchdog before content generation
-    esp_task_wdt_reset();
-
-    // Execute content action and queue for printing
-    bool success = executeAndQueueContent(actionType);
-
-    // Feed watchdog after content generation
-    esp_task_wdt_reset();
-
-    if (success)
-    {
-        // Directly print the queued content
-        printMessage();
-        LOG_VERBOSE("BUTTONS", "Button action executed successfully: %s", endpoint);
-    }
-    else
-    {
-        LOG_ERROR("BUTTONS", "Failed to generate content for button endpoint: %s", endpoint);
-    }
-
-    // Feed watchdog after printing
-    esp_task_wdt_reset();
 }

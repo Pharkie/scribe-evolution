@@ -11,6 +11,7 @@
 #include "api_handlers.h" // For shared utilities
 #include "validation.h"
 #include "../core/config.h"
+#include "../core/nvs_keys.h"
 #include "../core/config_loader.h"
 #include "../core/config_utils.h"
 #include "../core/led_config_loader.h"
@@ -46,6 +47,7 @@ String maskSecret(const String &secret)
 #endif
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <Preferences.h>
 
 // External references
 extern PubSubClient mqttClient;
@@ -204,6 +206,31 @@ void handleConfigGet(AsyncWebServerRequest *request)
         unbiddenInk["nextScheduled"] = "-";
     }
 
+    // Memos configuration
+    JsonObject memos = configDoc.createNestedObject("memos");
+    
+    // Load memo content from NVS
+    Preferences prefs;
+    if (prefs.begin("scribe-app", true)) // read-only
+    {
+        const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+        
+        memos["memo1"] = prefs.getString(memoKeys[0], defaultMemo1);
+        memos["memo2"] = prefs.getString(memoKeys[1], defaultMemo2);
+        memos["memo3"] = prefs.getString(memoKeys[2], defaultMemo3);
+        memos["memo4"] = prefs.getString(memoKeys[3], defaultMemo4);
+        
+        prefs.end();
+    }
+    else
+    {
+        LOG_ERROR("WEB", "Failed to access memo storage");
+        memos["memo1"] = "";
+        memos["memo2"] = "";
+        memos["memo3"] = "";
+        memos["memo4"] = "";
+    }
+
     // Buttons configuration - top-level section matching settings.html
     JsonObject buttons = configDoc.createNestedObject("buttons");
 
@@ -285,18 +312,24 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Parse JSON to validate structure
-    DynamicJsonDocument doc(largeJsonDocumentSize);
+    // Parse JSON to validate structure - use larger buffer for config POST
+    DynamicJsonDocument doc(8192); // 8KB buffer for large config JSON
+    
+    LOG_VERBOSE("WEB", "Config POST body length: %d", body.length());
+    LOG_VERBOSE("WEB", "Config POST body (first 200 chars): %s", body.substring(0, 200).c_str());
+    
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
+        LOG_ERROR("WEB", "JSON deserialization failed: %s", error.c_str());
+        LOG_ERROR("WEB", "JSON body length: %d", body.length());
         sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
         return;
     }
 
     // Validate required top-level sections exist (matching new structure)
-    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "buttons", "leds"};
-    for (int i = 0; i < 5; i++)
+    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "memos", "buttons", "leds"};
+    for (int i = 0; i < 6; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -487,10 +520,58 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.betterStackEndpoint = betterStackEndpoint;
     newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
+    // Validate and save memo configuration
+    JsonObject memos = doc["memos"];
+    if (memos)
+    {
+        const char* memoFields[] = {"memo1", "memo2", "memo3", "memo4"};
+        
+        // Validate all memo content
+        for (int i = 0; i < MEMO_COUNT; i++)
+        {
+            if (memos.containsKey(memoFields[i]))
+            {
+                String memoContent = memos[memoFields[i]].as<String>();
+                ValidationResult validation = validateMemo(memoContent, MEMO_MAX_LENGTH);
+                if (!validation.isValid)
+                {
+                    sendValidationError(request, validation);
+                    return;
+                }
+            }
+        }
+        
+        // Save memos to NVS
+        Preferences prefs;
+        if (prefs.begin("scribe-app", false)) // read-write
+        {
+            const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+            
+            for (int i = 0; i < MEMO_COUNT; i++)
+            {
+                if (memos.containsKey(memoFields[i]))
+                {
+                    String memoContent = memos[memoFields[i]].as<String>();
+                    prefs.putString(memoKeys[i], memoContent);
+                    LOG_VERBOSE("WEB", "Saved memo %d: %s", i + 1, memoContent.substring(0, 50).c_str());
+                }
+            }
+            
+            prefs.end();
+            LOG_NOTICE("WEB", "Memo configuration saved successfully");
+        }
+        else
+        {
+            LOG_ERROR("WEB", "Failed to open NVS for memo saving");
+            sendErrorResponse(request, 500, "Failed to save memo configuration");
+            return;
+        }
+    }
+
     // Validate button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];
     const char *buttonKeys[] = {"button1", "button2", "button3", "button4"};
-    const char *validActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz", "/api/news", "/api/character-test", "/api/unbidden-ink", ""};
+    const char *validActions[] = {"JOKE", "RIDDLE", "QUOTE", "QUIZ", "NEWS", "CHARACTER_TEST", "UNBIDDEN_INK", "MEMO1", "MEMO2", "MEMO3", "MEMO4", ""};
 
     for (int i = 0; i < 4; i++)
     {
@@ -527,7 +608,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate shortAction (can now be empty or valid action)
         bool validShortAction = false;
-        for (int j = 0; j < 8; j++) // Include empty string for short actions
+        for (int j = 0; j < 12; j++) // 12 elements in validActions array
         {
             if (shortAction == validActions[j])
             {
@@ -543,7 +624,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate longAction (optional, can be empty or valid action)
         bool validLongAction = false;
-        for (int j = 0; j < 8; j++) // Include empty string for long actions
+        for (int j = 0; j < 12; j++) // 12 elements in validActions array
         {
             if (longAction == validActions[j])
             {
@@ -608,10 +689,15 @@ void handleConfigPost(AsyncWebServerRequest *request)
     int ledBrightness = leds["brightness"];
     int ledRefreshRate = leds["refreshRate"];
 
-    // Validate LED pin (ESP32-C3 specific)
-    if (ledPin < 0 || ledPin > 10)
+    // Validate LED pin using GPIO validation from config.h
+    if (!isValidGPIO(ledPin))
     {
-        sendValidationError(request, ValidationResult(false, "LED pin must be between 0 and 10 (ESP32-C3 compatible pins)"));
+        sendValidationError(request, ValidationResult(false, "Invalid GPIO pin " + String(ledPin) + " for LEDs. " + String(getGPIODescription(ledPin))));
+        return;
+    }
+    if (!isSafeGPIO(ledPin))
+    {
+        sendValidationError(request, ValidationResult(false, "GPIO " + String(ledPin) + " is not safe to use: " + String(getGPIODescription(ledPin))));
         return;
     }
 

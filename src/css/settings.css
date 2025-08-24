@@ -83,6 +83,22 @@
     @apply text-green-800 dark:text-green-100;
   }
   
+  .settings-card-pink {
+    @apply bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-700;
+  }
+  
+  .settings-card-header-pink {
+    @apply text-pink-800 dark:text-pink-100;
+  }
+  
+  .settings-card-teal {
+    @apply bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700;
+  }
+  
+  .settings-card-header-teal {
+    @apply text-teal-800 dark:text-teal-100;
+  }
+  
   /* Warning box */
   .warning-box {
     @apply mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg;
@@ -162,6 +178,14 @@
   
   .section-nav-btn-yellow {
     @apply bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300;
+  }
+  
+  .section-nav-btn-pink {
+    @apply bg-pink-100 hover:bg-pink-200 dark:bg-pink-900/30 dark:hover:bg-pink-900/50 text-pink-700 dark:text-pink-300;
+  }
+  
+  .section-nav-btn-teal {
+    @apply bg-teal-100 hover:bg-teal-200 dark:bg-teal-900/30 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300;
   }
   
   .section-nav-btn.active {

@@ -120,10 +120,47 @@ async function executeQuickAction(action) {
     }
 }
 
+/**
+ * Generate formatted user message content with MESSAGE header
+ * @param {string} message - User's message text
+ * @param {string} target - Target printer (local-direct or MQTT topic)
+ * @returns {Promise<Object>} Generated content with appropriate MESSAGE header
+ */
+async function generateUserMessage(message, target = 'local-direct') {
+    try {
+        console.log('API: Generating user message content...');
+        
+        // Build payload with target for proper header formatting
+        const payload = { message: message };
+        if (target !== 'local-direct') {
+            payload.target = target;
+        }
+        
+        const response = await fetch('/api/user-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('API: User message content generated successfully');
+        return result;
+        
+    } catch (error) {
+        console.error('API: Failed to generate user message content:', error);
+        throw error;
+    }
+}
+
 // Export API module
 window.IndexAPI = {
     loadConfiguration,
     printLocalContent,
     printMQTTContent,
-    executeQuickAction
+    executeQuickAction,
+    generateUserMessage
 };

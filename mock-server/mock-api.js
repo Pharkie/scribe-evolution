@@ -78,6 +78,34 @@ function formatUptime(ms) {
   }
 }
 
+function expandPlaceholders(content) {
+  let expanded = content;
+  
+  // Date placeholders
+  const now = new Date();
+  expanded = expanded.replace(/\[date\]/g, now.toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: '2-digit'}).replace(/ /g, ''));
+  expanded = expanded.replace(/\[time\]/g, now.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false}));
+  expanded = expanded.replace(/\[weekday\]/g, now.toLocaleDateString('en-US', {weekday: 'long'}));
+  
+  // Random placeholders  
+  expanded = expanded.replace(/\[coin\]/g, Math.random() > 0.5 ? 'Heads' : 'Tails');
+  expanded = expanded.replace(/\[dice:(\d+)\]/g, (match, sides) => Math.floor(Math.random() * parseInt(sides)) + 1);
+  expanded = expanded.replace(/\[dice\]/g, Math.floor(Math.random() * 6) + 1); // default 6-sided
+  
+  // Pick random option
+  expanded = expanded.replace(/\[pick:([^\]]+)\]/g, (match, options) => {
+    const choices = options.split('|');
+    return choices[Math.floor(Math.random() * choices.length)];
+  });
+  
+  // Device info
+  expanded = expanded.replace(/\[uptime\]/g, `${Math.floor(Math.random() * 12)}h${Math.floor(Math.random() * 60)}m`);
+  expanded = expanded.replace(/\[ip\]/g, '192.168.1.100');
+  expanded = expanded.replace(/\[mdns\]/g, 'scribe.local');
+  
+  return expanded;
+}
+
 function sendJSON(res, data, statusCode = 200) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json',
@@ -334,6 +362,64 @@ function createRequestHandler() {
             content: "NEWS\n\nBreaking: Local thermal printer achieves sentience, demands better paper quality and regular maintenance breaks."
           });
         }, 500);
+        
+      } else if (pathname === '/api/user-message') {
+        console.log('💬 User message requested');
+        
+        // Parse request body to get the message
+        let body = '';
+        req.on('data', chunk => {
+          body += chunk.toString();
+        });
+        
+        req.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const userMessage = data.message || 'Hello from mock server!';
+            const target = data.target || 'local-direct';
+            
+            console.log(`  → Parsed data: message="${userMessage}", target="${target}"`);
+            console.log(`  → mockConfig.device.owner: "${mockConfig.device.owner}"`);
+            
+            // Determine header format based on target (like real server)
+            let content;
+            if (target === 'local-direct') {
+              // Local message: no sender
+              content = `MESSAGE\n\n${userMessage}`;
+              console.log('  → Local message (no sender)');
+            } else {
+              // MQTT message: include sender (use mock device owner)
+              const deviceOwner = mockConfig.device.owner || 'MockDevice';
+              content = `MESSAGE from ${deviceOwner}\n\n${userMessage}`;
+              console.log(`  → MQTT message (sender: ${deviceOwner})`);
+              console.log(`  → Full content: ${JSON.stringify(content)}`);
+            }
+            
+            setTimeout(() => {
+              sendJSON(res, { content });
+            }, 200);
+            
+          } catch (error) {
+            console.error('Error parsing user message:', error);
+            sendJSON(res, {
+              error: 'Invalid JSON format'
+            }, 400);
+          }
+        });
+        return; // Don't fall through to 404
+        
+      } else if (pathname.match(/^\/api\/memo\/([1-4])$/) && req.method === 'GET') {
+        const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])$/)[1]);
+        console.log(`📝 Memo ${memoId} GET requested`);
+        
+        const memoKeys = ['memo1', 'memo2', 'memo3', 'memo4'];
+        const memoContent = mockConfig.memos[memoKeys[memoId - 1]];
+        const expandedContent = expandPlaceholders(memoContent);
+        
+        // Use simple format like other content endpoints (joke, quiz, etc.)
+        sendJSON(res, {
+          content: expandedContent
+        });
         
       } else {
         sendJSON(res, { error: 'API endpoint not found' }, 404);

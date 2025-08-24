@@ -114,7 +114,7 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
 
     // Initialize FastLED
     // Validate GPIO pin using configuration system
-    if (!canUseGPIOForLEDs(ledPin))
+    if (!isSafeGPIO(ledPin))
     {
         LOG_ERROR("LEDS", "GPIO %d cannot be used for LEDs: %s", ledPin, getGPIODescription(ledPin));
         return false;

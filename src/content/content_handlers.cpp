@@ -8,10 +8,12 @@
  */
 
 #include "content_handlers.h"
+#include "memo_handler.h"
 #include "../web/validation.h"
 #include "../web/web_server.h"
 #include "../core/config.h"
 #include "../core/config_utils.h"
+#include "../core/nvs_keys.h"
 #include "../core/logging.h"
 #include "../utils/time_utils.h"
 #include "../utils/json_helpers.h"
@@ -43,7 +45,8 @@ enum ContentType
     PRINT_TEST,
     POKE,
     USER_MESSAGE,
-    NEWS
+    NEWS,
+    MEMO
 };
 
 /**
@@ -151,7 +154,22 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
 
     // Determine if this is for MQTT (needs sender info) or local (no sender)
     bool isForMQTT = (target != "local-direct");
-    String sender = isForMQTT ? String(getDeviceOwnerKey()) : "";
+    String sender = "";
+    
+    if (isForMQTT)
+    {
+        if (actionType == ContentActionType::USER_MESSAGE)
+        {
+            // For MQTT USER_MESSAGE, use device owner name for display
+            const RuntimeConfig &config = getRuntimeConfig();
+            sender = config.deviceOwner;
+        }
+        else
+        {
+            sender = String(getDeviceOwnerKey());  // MQTT routing key for other content types
+        }
+    }
+    // For local messages, sender stays empty (no "from" in header)
 
     // Execute content action using shared business logic
     ContentActionResult result = executeContentAction(actionType, customData, sender);
@@ -409,4 +427,75 @@ String loadPrintTestContent()
     String content = file.readString();
     file.close();
     return content;
+}
+
+String generateMemoContent(int memoId)
+{
+    if (memoId < 1 || memoId > MEMO_COUNT)
+    {
+        LOG_ERROR("CONTENT", "Invalid memo ID: %d", memoId);
+        return "";
+    }
+
+    // Get memo content from NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) // read-only
+    {
+        LOG_ERROR("CONTENT", "Failed to access memo storage");
+        return "";
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    
+    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
+    prefs.end();
+    
+    if (memoContent.isEmpty())
+    {
+        LOG_ERROR("CONTENT", "Memo %d not found in storage", memoId);
+        return "";
+    }
+
+    // Expand placeholders
+    String expandedContent = processMemoPlaceholders(memoContent);
+    return expandedContent;
+}
+
+bool generateAndQueueMemo(int memoId)
+{
+    if (memoId < 1 || memoId > MEMO_COUNT)
+    {
+        LOG_ERROR("CONTENT", "Invalid memo ID: %d", memoId);
+        return false;
+    }
+
+    // Get memo content from NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) // read-only
+    {
+        LOG_ERROR("CONTENT", "Failed to access memo storage");
+        return false;
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    
+    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
+    prefs.end();
+    
+    if (memoContent.isEmpty())
+    {
+        LOG_ERROR("CONTENT", "Memo %d not found in storage", memoId);
+        return false;
+    }
+
+    // Expand placeholders
+    String expandedContent = processMemoPlaceholders(memoContent);
+
+    // Queue for printing
+    currentMessage.message = expandedContent;
+    currentMessage.timestamp = getFormattedDateTime();
+    currentMessage.hasMessage = true;
+
+    LOG_NOTICE("CONTENT", "Memo %d queued for printing: %s", memoId, expandedContent.c_str());
+    return true;
 }
