@@ -215,10 +215,10 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
         
-        memos["memo1"] = prefs.getString(memoKeys[0], "");
-        memos["memo2"] = prefs.getString(memoKeys[1], "");
-        memos["memo3"] = prefs.getString(memoKeys[2], "");
-        memos["memo4"] = prefs.getString(memoKeys[3], "");
+        memos["memo1"] = prefs.getString(memoKeys[0], defaultMemo1);
+        memos["memo2"] = prefs.getString(memoKeys[1], defaultMemo2);
+        memos["memo3"] = prefs.getString(memoKeys[2], defaultMemo3);
+        memos["memo4"] = prefs.getString(memoKeys[3], defaultMemo4);
         
         prefs.end();
     }
@@ -526,7 +526,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
             if (memos.containsKey(memoFields[i]))
             {
                 String memoContent = memos[memoFields[i]].as<String>();
-                ValidationResult validation = validateMessage(memoContent, MEMO_MAX_LENGTH);
+                ValidationResult validation = validateMemo(memoContent, MEMO_MAX_LENGTH);
                 if (!validation.isValid)
                 {
                     sendValidationError(request, validation);

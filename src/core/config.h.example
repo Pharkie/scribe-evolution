@@ -295,4 +295,10 @@ static const int minJokeLength = 10;                  // Minimum joke length to 
 static const int MEMO_COUNT = 4;        // Number of configurable memos
 static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
 
+// Default memo content for first boot
+static const char* defaultMemo1 = "Good morning! Today is [weekday], [date]. Current time: [time]";
+static const char* defaultMemo2 = "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]";
+static const char* defaultMemo3 = "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]";
+static const char* defaultMemo4 = "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]";
+
 #endif

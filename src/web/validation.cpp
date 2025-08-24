@@ -133,6 +133,23 @@ ValidationResult validateMessage(const String &message, int maxLength)
     return ValidationResult(true);
 }
 
+ValidationResult validateMemo(const String &memo, int maxLength)
+{
+    if (maxLength == -1)
+    {
+        maxLength = MEMO_MAX_LENGTH; // Use memo specific max length
+    }
+
+    // Unlike validateMessage(), memos CAN be empty
+    // Only check length if memo is not empty
+    if (memo.length() > 0 && memo.length() > maxLength)
+    {
+        return ValidationResult(false, "Memo too long (max " + String(maxLength) + " characters)");
+    }
+
+    return ValidationResult(true);
+}
+
 ValidationResult validateJSON(const String &jsonString, const char *requiredFields[], int fieldCount)
 {
     if (jsonString.length() == 0)
