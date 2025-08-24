@@ -335,6 +335,57 @@ function createRequestHandler() {
           });
         }, 500);
         
+      } else if (pathname === '/api/memos' && req.method === 'GET') {
+        console.log('📝 Memos GET requested');
+        sendJSON(res, {
+          success: true,
+          message: "Memos retrieved successfully",
+          memos: [
+            { id: 1, content: "Good morning! Today is [weekday], [date]. Current time: [time]" },
+            { id: 2, content: "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]" },
+            { id: 3, content: "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]" },
+            { id: 4, content: "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]" }
+          ]
+        });
+        
+      } else if (pathname.match(/^\/api\/memo\/([1-4])$/) && req.method === 'GET') {
+        const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])$/)[1]);
+        console.log(`📝 Memo ${memoId} GET requested`);
+        
+        const memoContent = [
+          "Good morning! Today is [weekday], [date]. Current time: [time]",
+          "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
+          "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
+          "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
+        ];
+        
+        sendJSON(res, {
+          success: true,
+          message: "Memo retrieved successfully",
+          id: memoId,
+          content: memoContent[memoId - 1]
+        });
+        
+      } else if (pathname.match(/^\/api\/memo\/([1-4])\/print$/) && req.method === 'POST') {
+        const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])\/print$/)[1]);
+        console.log(`📝 Memo ${memoId} PRINT requested`);
+        
+        // Simulate placeholder expansion
+        const expandedContent = [
+          `Good morning! Today is ${new Date().toLocaleDateString('en-US', {weekday: 'long'})}, ${new Date().toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: '2-digit'})}. Current time: ${new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false})}`,
+          `Random task: ${['Call Mum', 'Do Laundry', 'Walk Dog', 'Buy Groceries', 'Clean Kitchen'][Math.floor(Math.random() * 5)]}`,
+          `Lucky numbers: ${Math.floor(Math.random() * 10) + 1}, ${Math.floor(Math.random() * 20) + 1}, ${Math.floor(Math.random() * 6) + 1}. Coin flip: ${Math.random() > 0.5 ? 'Heads' : 'Tails'}`,
+          `Device info - Uptime: ${Math.floor(Math.random() * 12)}h${Math.floor(Math.random() * 60)}m, IP: 192.168.1.100, mDNS: scribe.local`
+        ];
+        
+        setTimeout(() => {
+          sendJSON(res, {
+            success: true,
+            message: "Memo queued for printing",
+            content: expandedContent[memoId - 1]
+          });
+        }, 200);
+        
       } else {
         sendJSON(res, { error: 'API endpoint not found' }, 404);
       }

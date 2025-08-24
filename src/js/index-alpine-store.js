@@ -37,6 +37,11 @@ function initializeIndexStore() {
     // Active quick action (only one can be active at a time)
     activeQuickAction: null,
     
+    // Memo state
+    memoModalVisible: false,
+    memos: [],
+    printing: false,
+    
     // Character limits - updated path for new structure
     get maxChars() {
       if (!this.config?.device?.maxCharacters) {
@@ -135,6 +140,9 @@ function initializeIndexStore() {
         
         this.localPrinterName = this.config.device.printer_name;
         console.log('📋 Index: Config loaded successfully, printer name:', this.localPrinterName);
+        
+        // Load memos for modal
+        await this.loadMemos();
         
         // Clear any previous error and set loading to false on success
         this.error = null;
@@ -606,6 +614,84 @@ function initializeIndexStore() {
     // Navigation
     goToSettings() {
       window.location.href = '/settings.html';
+    },
+    
+    // === Memo Functions ===
+    
+    async loadMemos() {
+      try {
+        console.log('📝 Loading memos...');
+        const response = await fetch('/api/memos');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to load memos: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.success) {
+          this.memos = data.memos;
+          console.log('📝 Memos loaded:', this.memos);
+        } else {
+          throw new Error(data.message || 'Failed to load memos');
+        }
+      } catch (error) {
+        console.error('📝 Failed to load memos:', error);
+        this.showToast('Failed to load memos', 'error');
+      }
+    },
+    
+    showMemoModal() {
+      console.log('📝 Opening memo modal');
+      this.memoModalVisible = true;
+    },
+    
+    closeMemoModal() {
+      console.log('📝 Closing memo modal');
+      this.memoModalVisible = false;
+    },
+    
+    async printMemo(memoId) {
+      if (this.printing) return;
+      
+      try {
+        this.printing = true;
+        console.log(`📝 Printing memo ${memoId}...`);
+        
+        const response = await fetch(`/api/memo/${memoId}/print`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to print memo: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.success) {
+          this.showToast(`Memo ${memoId} sent to printer!`, 'success');
+          this.closeMemoModal();
+          
+          // Purple sparkle confetti celebration
+          if (window.confetti) {
+            confetti({
+              colors: ['#8B5CF6', '#A855F7', '#C084FC'],
+              startVelocity: 30,
+              spread: 360,
+              ticks: 60,
+              zIndex: 0
+            });
+          }
+        } else {
+          throw new Error(data.message || 'Failed to print memo');
+        }
+      } catch (error) {
+        console.error(`📝 Failed to print memo ${memoId}:`, error);
+        this.showToast(`Failed to print memo: ${error.message}`, 'error');
+      } finally {
+        this.printing = false;
+      }
     }
   };
   

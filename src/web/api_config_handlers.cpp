@@ -11,6 +11,7 @@
 #include "api_handlers.h" // For shared utilities
 #include "validation.h"
 #include "../core/config.h"
+#include "../core/nvs_keys.h"
 #include "../core/config_loader.h"
 #include "../core/config_utils.h"
 #include "../core/led_config_loader.h"
@@ -46,6 +47,7 @@ String maskSecret(const String &secret)
 #endif
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <Preferences.h>
 
 // External references
 extern PubSubClient mqttClient;
@@ -204,6 +206,37 @@ void handleConfigGet(AsyncWebServerRequest *request)
         unbiddenInk["nextScheduled"] = "-";
     }
 
+    // Memos configuration
+    JsonObject memos = configDoc.createNestedObject("memos");
+    
+    // Load memo content from NVS
+    Preferences prefs;
+    if (prefs.begin("scribe-app", true)) // read-only
+    {
+        const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+        const char* defaultMemos[] = {
+            "Good morning! Today is [weekday], [date]. Current time: [time]",
+            "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
+            "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
+            "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
+        };
+        
+        memos["memo1"] = prefs.getString(memoKeys[0], defaultMemos[0]);
+        memos["memo2"] = prefs.getString(memoKeys[1], defaultMemos[1]);
+        memos["memo3"] = prefs.getString(memoKeys[2], defaultMemos[2]);
+        memos["memo4"] = prefs.getString(memoKeys[3], defaultMemos[3]);
+        
+        prefs.end();
+    }
+    else
+    {
+        // Fallback to defaults if NVS access fails
+        memos["memo1"] = "Good morning! Today is [weekday], [date]. Current time: [time]";
+        memos["memo2"] = "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]";
+        memos["memo3"] = "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]";
+        memos["memo4"] = "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]";
+    }
+
     // Buttons configuration - top-level section matching settings.html
     JsonObject buttons = configDoc.createNestedObject("buttons");
 
@@ -295,8 +328,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
     // Validate required top-level sections exist (matching new structure)
-    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "buttons", "leds"};
-    for (int i = 0; i < 5; i++)
+    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "memos", "buttons", "leds"};
+    for (int i = 0; i < 6; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -487,10 +520,58 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.betterStackEndpoint = betterStackEndpoint;
     newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
+    // Validate and save memo configuration
+    JsonObject memos = doc["memos"];
+    if (memos)
+    {
+        const char* memoFields[] = {"memo1", "memo2", "memo3", "memo4"};
+        
+        // Validate all memo content
+        for (int i = 0; i < MEMO_COUNT; i++)
+        {
+            if (memos.containsKey(memoFields[i]))
+            {
+                String memoContent = memos[memoFields[i]].as<String>();
+                ValidationResult validation = validateMessage(memoContent, MEMO_MAX_LENGTH);
+                if (!validation.isValid)
+                {
+                    sendValidationError(request, validation);
+                    return;
+                }
+            }
+        }
+        
+        // Save memos to NVS
+        Preferences prefs;
+        if (prefs.begin("scribe-app", false)) // read-write
+        {
+            const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+            
+            for (int i = 0; i < MEMO_COUNT; i++)
+            {
+                if (memos.containsKey(memoFields[i]))
+                {
+                    String memoContent = memos[memoFields[i]].as<String>();
+                    prefs.putString(memoKeys[i], memoContent);
+                    LOG_VERBOSE("WEB", "Saved memo %d: %s", i + 1, memoContent.substring(0, 50).c_str());
+                }
+            }
+            
+            prefs.end();
+            LOG_NOTICE("WEB", "Memo configuration saved successfully");
+        }
+        else
+        {
+            LOG_ERROR("WEB", "Failed to open NVS for memo saving");
+            sendErrorResponse(request, "Failed to save memo configuration", 500);
+            return;
+        }
+    }
+
     // Validate button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];
     const char *buttonKeys[] = {"button1", "button2", "button3", "button4"};
-    const char *validActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz", "/api/news", "/api/character-test", "/api/unbidden-ink", ""};
+    const char *validActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz", "/api/news", "/api/character-test", "/api/unbidden-ink", "MEMO1", "MEMO2", "MEMO3", "MEMO4", ""};
 
     for (int i = 0; i < 4; i++)
     {

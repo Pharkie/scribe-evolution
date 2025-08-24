@@ -73,6 +73,12 @@ function initializeSettingsStore() {
                 prompt: 'Generate something creative and interesting',
                 chatgptApiToken: ''
             },
+            memos: {
+                memo1: '',
+                memo2: '',
+                memo3: '',
+                memo4: ''
+            },
             buttons: {
                 // Hardware configuration
                 count: null,
@@ -255,6 +261,7 @@ function initializeSettingsStore() {
             { id: 'device', name: 'Device', icon: '⚙️', color: 'purple' },
             { id: 'mqtt', name: 'MQTT', icon: '📡', color: 'yellow' },
             { id: 'unbidden', name: 'Unbidden Ink', icon: '🎲', color: 'green' },
+            { id: 'memos', name: 'Memos', icon: '📝', color: 'purple' },
             { id: 'buttons', name: 'Buttons', icon: '🎛️', color: 'orange' },
             { id: 'leds', name: 'LEDs', icon: '🌈', color: 'purple' }
         ],
@@ -760,6 +767,16 @@ ${urlLine}`;
                 console.warn('⚠️ Missing unbiddenInk section in config');
             }
             
+            // Memos - load memo content
+            if (serverConfig.memos) {
+                this.config.memos.memo1 = serverConfig.memos.memo1 || '';
+                this.config.memos.memo2 = serverConfig.memos.memo2 || '';
+                this.config.memos.memo3 = serverConfig.memos.memo3 || '';
+                this.config.memos.memo4 = serverConfig.memos.memo4 || '';
+            } else {
+                console.warn('⚠️ Missing memos section in config');
+            }
+            
             // Buttons - log errors for missing values
             if (serverConfig.buttons) {
                 // Copy hardware configuration properties
@@ -885,6 +902,30 @@ ${urlLine}`;
         // Helper to get nested object values
         getNestedValue(fieldName) {
             return fieldName.split('.').reduce((obj, key) => obj && obj[key], this.config);
+        },
+        
+        // Memo character counting functions
+        getMemoCharacterCount(memoNum) {
+            const memoKey = `memo${memoNum}`;
+            return this.config.memos[memoKey]?.length || 0;
+        },
+        
+        getMemoCharacterStatus(memoNum) {
+            const count = this.getMemoCharacterCount(memoNum);
+            const limit = 500; // MEMO_MAX_LENGTH from config.h
+            
+            if (count === 0) return { class: 'text-gray-500', text: '0' };
+            if (count >= limit * 0.9) return { class: 'text-red-600', text: count };
+            if (count >= limit * 0.8) return { class: 'text-yellow-600', text: count };
+            return { class: 'text-green-600', text: count };
+        },
+        
+        getMemoCharacterClass(memoNum) {
+            return this.getMemoCharacterStatus(memoNum).class;
+        },
+        
+        getMemoCharacterText(memoNum) {
+            return this.getMemoCharacterStatus(memoNum).text;
         },
         
         // LED effect functions (WLED-style unified interface)
