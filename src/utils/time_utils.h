@@ -5,6 +5,9 @@
 #include <ezTime.h>
 #include "../core/config.h"
 
+// Local timezone object for proper timezone handling
+extern Timezone localTZ;
+
 
 // Function declarations
 String getFormattedDateTime();

@@ -602,7 +602,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate shortAction (can now be empty or valid action)
         bool validShortAction = false;
-        for (int j = 0; j < 12; j++) // Include empty string for short actions
+        for (int j = 0; j < 13; j++) // Include empty string for short actions
         {
             if (shortAction == validActions[j])
             {
@@ -618,7 +618,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate longAction (optional, can be empty or valid action)
         bool validLongAction = false;
-        for (int j = 0; j < 12; j++) // Include empty string for long actions
+        for (int j = 0; j < 13; j++) // Include empty string for long actions
         {
             if (longAction == validActions[j])
             {
