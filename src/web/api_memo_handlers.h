@@ -12,6 +12,9 @@
 
 #include <ESPAsyncWebServer.h>
 
+// Number of memos supported by the system
+#define MEMO_COUNT 4
+
 /**
  * @brief Handle memo retrieval request
  * @param request The HTTP request

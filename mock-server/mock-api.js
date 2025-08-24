@@ -78,6 +78,34 @@ function formatUptime(ms) {
   }
 }
 
+function expandPlaceholders(content) {
+  let expanded = content;
+  
+  // Date placeholders
+  const now = new Date();
+  expanded = expanded.replace(/\[date\]/g, now.toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: '2-digit'}).replace(/ /g, ''));
+  expanded = expanded.replace(/\[time\]/g, now.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false}));
+  expanded = expanded.replace(/\[weekday\]/g, now.toLocaleDateString('en-US', {weekday: 'long'}));
+  
+  // Random placeholders  
+  expanded = expanded.replace(/\[coin\]/g, Math.random() > 0.5 ? 'Heads' : 'Tails');
+  expanded = expanded.replace(/\[dice:(\d+)\]/g, (match, sides) => Math.floor(Math.random() * parseInt(sides)) + 1);
+  expanded = expanded.replace(/\[dice\]/g, Math.floor(Math.random() * 6) + 1); // default 6-sided
+  
+  // Pick random option
+  expanded = expanded.replace(/\[pick:([^\]]+)\]/g, (match, options) => {
+    const choices = options.split('|');
+    return choices[Math.floor(Math.random() * choices.length)];
+  });
+  
+  // Device info
+  expanded = expanded.replace(/\[uptime\]/g, `${Math.floor(Math.random() * 12)}h${Math.floor(Math.random() * 60)}m`);
+  expanded = expanded.replace(/\[ip\]/g, '192.168.1.100');
+  expanded = expanded.replace(/\[mdns\]/g, 'scribe.local');
+  
+  return expanded;
+}
+
 function sendJSON(res, data, statusCode = 200) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json',
@@ -341,10 +369,10 @@ function createRequestHandler() {
           success: true,
           message: "Memos retrieved successfully",
           memos: [
-            { id: 1, content: "Good morning! Today is [weekday], [date]. Current time: [time]" },
-            { id: 2, content: "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]" },
-            { id: 3, content: "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]" },
-            { id: 4, content: "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]" }
+            { id: 1, content: mockConfig.memos.memo1 },
+            { id: 2, content: mockConfig.memos.memo2 },
+            { id: 3, content: mockConfig.memos.memo3 },
+            { id: 4, content: mockConfig.memos.memo4 }
           ]
         });
         
@@ -352,37 +380,29 @@ function createRequestHandler() {
         const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])$/)[1]);
         console.log(`📝 Memo ${memoId} GET requested`);
         
-        const memoContent = [
-          "Good morning! Today is [weekday], [date]. Current time: [time]",
-          "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-          "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
-          "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
-        ];
+        const memoKeys = ['memo1', 'memo2', 'memo3', 'memo4'];
+        const memoContent = mockConfig.memos[memoKeys[memoId - 1]];
         
         sendJSON(res, {
           success: true,
           message: "Memo retrieved successfully",
           id: memoId,
-          content: memoContent[memoId - 1]
+          content: memoContent
         });
         
       } else if (pathname.match(/^\/api\/memo\/([1-4])\/print$/) && req.method === 'POST') {
         const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])\/print$/)[1]);
         console.log(`📝 Memo ${memoId} PRINT requested`);
         
-        // Simulate placeholder expansion
-        const expandedContent = [
-          `Good morning! Today is ${new Date().toLocaleDateString('en-US', {weekday: 'long'})}, ${new Date().toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: '2-digit'})}. Current time: ${new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: false})}`,
-          `Random task: ${['Call Mum', 'Do Laundry', 'Walk Dog', 'Buy Groceries', 'Clean Kitchen'][Math.floor(Math.random() * 5)]}`,
-          `Lucky numbers: ${Math.floor(Math.random() * 10) + 1}, ${Math.floor(Math.random() * 20) + 1}, ${Math.floor(Math.random() * 6) + 1}. Coin flip: ${Math.random() > 0.5 ? 'Heads' : 'Tails'}`,
-          `Device info - Uptime: ${Math.floor(Math.random() * 12)}h${Math.floor(Math.random() * 60)}m, IP: 192.168.1.100, mDNS: scribe.local`
-        ];
+        const memoKeys = ['memo1', 'memo2', 'memo3', 'memo4'];
+        const memoContent = mockConfig.memos[memoKeys[memoId - 1]];
+        const expandedContent = expandPlaceholders(memoContent);
         
         setTimeout(() => {
           sendJSON(res, {
             success: true,
             message: "Memo queued for printing",
-            content: expandedContent[memoId - 1]
+            content: expandedContent
           });
         }, 200);
         

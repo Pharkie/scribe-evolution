@@ -430,15 +430,15 @@ bool generateAndQueueMemo(int memoId)
     }
 
     const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-    const char* defaultMemos[] = {
-        "Good morning! Today is [weekday], [date]. Current time: [time]",
-        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
-        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
-    };
-
-    String memoContent = prefs.getString(memoKeys[memoId - 1], defaultMemos[memoId - 1]);
+    
+    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
     prefs.end();
+    
+    if (memoContent.isEmpty())
+    {
+        LOG_ERROR("CONTENT", "Memo %d not found in storage", memoId);
+        return false;
+    }
 
     // Expand placeholders
     String expandedContent = processMemoPlaceholders(memoContent);

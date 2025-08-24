@@ -214,27 +214,21 @@ void handleConfigGet(AsyncWebServerRequest *request)
     if (prefs.begin("scribe-app", true)) // read-only
     {
         const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-        const char* defaultMemos[] = {
-            "Good morning! Today is [weekday], [date]. Current time: [time]",
-            "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-            "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
-            "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
-        };
         
-        memos["memo1"] = prefs.getString(memoKeys[0], defaultMemos[0]);
-        memos["memo2"] = prefs.getString(memoKeys[1], defaultMemos[1]);
-        memos["memo3"] = prefs.getString(memoKeys[2], defaultMemos[2]);
-        memos["memo4"] = prefs.getString(memoKeys[3], defaultMemos[3]);
+        memos["memo1"] = prefs.getString(memoKeys[0], "");
+        memos["memo2"] = prefs.getString(memoKeys[1], "");
+        memos["memo3"] = prefs.getString(memoKeys[2], "");
+        memos["memo4"] = prefs.getString(memoKeys[3], "");
         
         prefs.end();
     }
     else
     {
-        // Fallback to defaults if NVS access fails
-        memos["memo1"] = "Good morning! Today is [weekday], [date]. Current time: [time]";
-        memos["memo2"] = "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]";
-        memos["memo3"] = "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]";
-        memos["memo4"] = "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]";
+        LOG_ERROR("WEB", "Failed to access memo storage");
+        memos["memo1"] = "";
+        memos["memo2"] = "";
+        memos["memo3"] = "";
+        memos["memo4"] = "";
     }
 
     // Buttons configuration - top-level section matching settings.html

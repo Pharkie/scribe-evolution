@@ -44,16 +44,10 @@ void handleMemosGet(AsyncWebServerRequest *request)
 
     // Get all 4 memos
     const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-    const char* defaultMemos[] = {
-        "Good morning! Today is [weekday], [date]. Current time: [time]",
-        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
-        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
-    };
 
     for (int i = 0; i < MEMO_COUNT; i++)
     {
-        String memoContent = prefs.getString(memoKeys[i], defaultMemos[i]);
+        String memoContent = prefs.getString(memoKeys[i], "");
         JsonObject memoObj = memos.createNestedObject();
         memoObj["id"] = i + 1;
         memoObj["content"] = memoContent;
@@ -98,15 +92,15 @@ void handleMemoGet(AsyncWebServerRequest *request)
     }
 
     const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-    const char* defaultMemos[] = {
-        "Good morning! Today is [weekday], [date]. Current time: [time]",
-        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
-        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
-    };
 
-    String memoContent = prefs.getString(memoKeys[memoId - 1], defaultMemos[memoId - 1]);
+    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
     prefs.end();
+    
+    if (memoContent.isEmpty())
+    {
+        sendErrorResponse(request, "Memo not found", 404);
+        return;
+    }
 
     DynamicJsonDocument doc(1024);
     doc["success"] = true;
@@ -239,15 +233,15 @@ void handleMemoPrint(AsyncWebServerRequest *request)
     }
 
     const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-    const char* defaultMemos[] = {
-        "Good morning! Today is [weekday], [date]. Current time: [time]",
-        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
-        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
-    };
 
-    String memoContent = prefs.getString(memoKeys[memoId - 1], defaultMemos[memoId - 1]);
+    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
     prefs.end();
+    
+    if (memoContent.isEmpty())
+    {
+        sendErrorResponse(request, "Memo not found", 404);
+        return;
+    }
 
     // Expand placeholders
     String expandedContent = processMemoPlaceholders(memoContent);
