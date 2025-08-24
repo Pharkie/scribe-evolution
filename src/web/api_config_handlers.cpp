@@ -557,7 +557,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         else
         {
             LOG_ERROR("WEB", "Failed to open NVS for memo saving");
-            sendErrorResponse(request, "Failed to save memo configuration", 500);
+            sendErrorResponse(request, 500, "Failed to save memo configuration");
             return;
         }
     }

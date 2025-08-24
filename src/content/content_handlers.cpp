@@ -13,6 +13,7 @@
 #include "../web/web_server.h"
 #include "../core/config.h"
 #include "../core/config_utils.h"
+#include "../core/nvs_keys.h"
 #include "../core/logging.h"
 #include "../utils/time_utils.h"
 #include "../utils/json_helpers.h"

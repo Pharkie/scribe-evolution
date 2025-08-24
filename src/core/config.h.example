@@ -1,5 +1,5 @@
 /**
- * @file config.h.example.example
+ * @file config.h.example
  * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
@@ -292,7 +292,7 @@ static const int maxTimezoneLength = 64;              // Max timezone string len
 static const int minJokeLength = 10;                  // Minimum joke length to be considered valid
 
 // Memo Configuration
-static const int MEMO_COUNT = 4;                      // Number of configurable memos
-static const int MEMO_MAX_LENGTH = 500;               // Maximum length per memo
+static const int MEMO_COUNT = 4;        // Number of configurable memos
+static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
 
 #endif

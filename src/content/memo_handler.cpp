@@ -11,6 +11,7 @@
 #include "../utils/time_utils.h"
 #include "../core/logging.h"
 #include "../core/network.h"
+#include "../core/config_utils.h"
 #include <WiFi.h>
 #include <ESPmDNS.h>
 

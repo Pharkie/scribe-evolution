@@ -11,8 +11,10 @@
 #include "../content/memo_handler.h"
 #include "../core/nvs_keys.h"
 #include "../core/config.h"
+#include "../core/shared_types.h"
 #include "../core/logging.h"
 #include "../utils/json_helpers.h"
+#include "../utils/time_utils.h"
 #include "validation.h"
 #include "web_server.h"
 #include <Preferences.h>
@@ -38,7 +40,7 @@ void handleMemosGet(AsyncWebServerRequest *request)
     Preferences prefs;
     if (!prefs.begin("scribe-app", true)) // read-only
     {
-        sendErrorResponse(request, "Failed to access memo storage", 500);
+        sendErrorResponse(request, 500, "Failed to access memo storage");
         return;
     }
 
@@ -80,14 +82,14 @@ void handleMemoGet(AsyncWebServerRequest *request)
 
     if (memoId < 1 || memoId > MEMO_COUNT)
     {
-        sendErrorResponse(request, "Invalid memo ID. Must be 1-4", 400);
+        sendErrorResponse(request, 400, "Invalid memo ID. Must be 1-4");
         return;
     }
 
     Preferences prefs;
     if (!prefs.begin("scribe-app", true)) // read-only
     {
-        sendErrorResponse(request, "Failed to access memo storage", 500);
+        sendErrorResponse(request, 500, "Failed to access memo storage");
         return;
     }
 
@@ -98,7 +100,7 @@ void handleMemoGet(AsyncWebServerRequest *request)
     
     if (memoContent.isEmpty())
     {
-        sendErrorResponse(request, "Memo not found", 404);
+        sendErrorResponse(request, 404, "Memo not found");
         return;
     }
 
@@ -120,7 +122,7 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
     // Check request method
     if (request->method() != HTTP_POST)
     {
-        sendErrorResponse(request, "Method not allowed", 405);
+        sendErrorResponse(request, 405, "Method not allowed");
         return;
     }
 
@@ -137,14 +139,14 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
 
     if (memoId < 1 || memoId > MEMO_COUNT)
     {
-        sendErrorResponse(request, "Invalid memo ID. Must be 1-4", 400);
+        sendErrorResponse(request, 400, "Invalid memo ID. Must be 1-4");
         return;
     }
 
     // Parse JSON body
     if (!request->hasParam("body", true))
     {
-        sendErrorResponse(request, "Missing request body", 400);
+        sendErrorResponse(request, 400, "Missing request body");
         return;
     }
 
@@ -154,13 +156,13 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
 
     if (error)
     {
-        sendErrorResponse(request, "Invalid JSON format", 400);
+        sendErrorResponse(request, 400, "Invalid JSON format");
         return;
     }
 
     if (!doc.containsKey("content"))
     {
-        sendErrorResponse(request, "Missing 'content' field", 400);
+        sendErrorResponse(request, 400, "Missing 'content' field");
         return;
     }
 
@@ -178,7 +180,7 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
     Preferences prefs;
     if (!prefs.begin("scribe-app", false)) // read-write
     {
-        sendErrorResponse(request, "Failed to access memo storage", 500);
+        sendErrorResponse(request, 500, "Failed to access memo storage");
         return;
     }
 
@@ -188,7 +190,7 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
 
     if (!success)
     {
-        sendErrorResponse(request, "Failed to save memo", 500);
+        sendErrorResponse(request, 500, "Failed to save memo");
         return;
     }
 
@@ -203,7 +205,7 @@ void handleMemoPrint(AsyncWebServerRequest *request)
     // Check request method
     if (request->method() != HTTP_POST)
     {
-        sendErrorResponse(request, "Method not allowed", 405);
+        sendErrorResponse(request, 405, "Method not allowed");
         return;
     }
 
@@ -220,7 +222,7 @@ void handleMemoPrint(AsyncWebServerRequest *request)
 
     if (memoId < 1 || memoId > MEMO_COUNT)
     {
-        sendErrorResponse(request, "Invalid memo ID. Must be 1-4", 400);
+        sendErrorResponse(request, 400, "Invalid memo ID. Must be 1-4");
         return;
     }
 
@@ -228,7 +230,7 @@ void handleMemoPrint(AsyncWebServerRequest *request)
     Preferences prefs;
     if (!prefs.begin("scribe-app", true)) // read-only
     {
-        sendErrorResponse(request, "Failed to access memo storage", 500);
+        sendErrorResponse(request, 500, "Failed to access memo storage");
         return;
     }
 
@@ -239,7 +241,7 @@ void handleMemoPrint(AsyncWebServerRequest *request)
     
     if (memoContent.isEmpty())
     {
-        sendErrorResponse(request, "Memo not found", 404);
+        sendErrorResponse(request, 404, "Memo not found");
         return;
     }
 
@@ -262,7 +264,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
     // Check request method
     if (request->method() != HTTP_POST)
     {
-        sendErrorResponse(request, "Method not allowed", 405);
+        sendErrorResponse(request, 405, "Method not allowed");
         return;
     }
 
@@ -276,7 +278,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
     // Parse JSON body
     if (!request->hasParam("body", true))
     {
-        sendErrorResponse(request, "Missing request body", 400);
+        sendErrorResponse(request, 400, "Missing request body");
         return;
     }
 
@@ -286,20 +288,20 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
 
     if (error)
     {
-        sendErrorResponse(request, "Invalid JSON format", 400);
+        sendErrorResponse(request, 400, "Invalid JSON format");
         return;
     }
 
     if (!doc.containsKey("memos") || !doc["memos"].is<JsonArray>())
     {
-        sendErrorResponse(request, "Missing or invalid 'memos' array", 400);
+        sendErrorResponse(request, 400, "Missing or invalid 'memos' array");
         return;
     }
 
     JsonArray memosArray = doc["memos"];
     if (memosArray.size() != MEMO_COUNT)
     {
-        sendErrorResponse(request, "Must provide exactly 4 memos", 400);
+        sendErrorResponse(request, 400, "Must provide exactly 4 memos");
         return;
     }
 
@@ -308,7 +310,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
     {
         if (!memosArray[i].containsKey("content"))
         {
-            sendErrorResponse(request, "Missing content for memo " + String(i + 1), 400);
+            sendErrorResponse(request, 400, "Missing content for memo " + String(i + 1));
             return;
         }
 
@@ -325,7 +327,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
     Preferences prefs;
     if (!prefs.begin("scribe-app", false)) // read-write
     {
-        sendErrorResponse(request, "Failed to access memo storage", 500);
+        sendErrorResponse(request, 500, "Failed to access memo storage");
         return;
     }
 
@@ -346,7 +348,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
 
     if (!allSuccess)
     {
-        sendErrorResponse(request, "Failed to save one or more memos", 500);
+        sendErrorResponse(request, 500, "Failed to save one or more memos");
         return;
     }
 

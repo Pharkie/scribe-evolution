@@ -11,9 +11,7 @@
 #define API_MEMO_HANDLERS_H
 
 #include <ESPAsyncWebServer.h>
-
-// Number of memos supported by the system
-#define MEMO_COUNT 4
+#include "../core/config.h"
 
 /**
  * @brief Handle memo retrieval request
