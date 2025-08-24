@@ -106,7 +106,15 @@ function initializeIndexStore() {
         this.error = error.message;
         this.loading = false;
       }
-      
+
+      // Initialize confetti system
+      if (typeof ConfettiSystem !== 'undefined') {
+        window.confettiSystem = new ConfettiSystem();
+        console.log('🎉 Index: Confetti system initialized');
+      } else {
+        console.warn('🎉 Index: ConfettiSystem not available');
+      }
+
       this.initializePrinterDiscovery();
       this.setupEventListeners();
       console.log('📋 Index: Initialization complete');
@@ -239,6 +247,19 @@ function initializeIndexStore() {
           await window.IndexAPI.printMQTTContent(message, this.selectedPrinter);
         }
         
+        // 🎊 Trigger confetti celebration for successful submission!
+        if (window.ConfettiSystem) {
+          const submitButton = document.querySelector('button[type="submit"]') || 
+                               document.querySelector('.print-button') ||
+                               event?.target;
+          if (submitButton) {
+            window.ConfettiSystem.burstFromElement(submitButton);
+          } else {
+            // Fallback to center screen burst
+            window.ConfettiSystem.burst(window.innerWidth / 2, window.innerHeight / 3);
+          }
+        }
+        
         // Clear form on success
         this.message = '';
         
@@ -275,6 +296,18 @@ function initializeIndexStore() {
         } else {
           await window.IndexAPI.printMQTTContent(contentResult.content, this.selectedPrinter);
         }
+        
+        // 🎊 Trigger confetti celebration for successful quick action!
+        if (window.ConfettiSystem) {
+          const buttonElement = document.querySelector(`[data-action="${action}"]`);
+          if (buttonElement) {
+            window.ConfettiSystem.burstFromElement(buttonElement);
+          } else {
+            // Fallback to center screen burst
+            window.ConfettiSystem.burst(window.innerWidth / 2, window.innerHeight / 2);
+          }
+        }
+        
         // Note: No success toast - button state change provides feedback
         
       } catch (error) {
