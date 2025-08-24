@@ -44,27 +44,24 @@ struct GPIOInfo
     int pin;
     GPIOType type;
     const char *description;
-    bool canUseForButtons;
-    bool canUseForLEDs;
-    bool canUseForOutput;
 };
 
 // ESP32-C3 GPIO configuration (compile-time, not user-configurable)
 // Based on ESP32-C3 datasheet and hardware constraints
 static const GPIOInfo ESP32C3_GPIO_MAP[] = {
-    {0, GPIO_TYPE_STRAPPING, "Strapping pin at boot, avoid", false, true, true},
-    {1, GPIO_TYPE_UART, "TX for UART0 (USB-Serial), avoid", false, true, true},
-    {2, GPIO_TYPE_SAFE, "Safe to use", true, true, true},
-    {3, GPIO_TYPE_UART, "RX for UART0 (USB-Serial), avoid", false, true, true},
-    {4, GPIO_TYPE_SAFE, "Safe to use", true, true, true},
-    {5, GPIO_TYPE_SAFE, "Safe to use", true, true, true},
-    {6, GPIO_TYPE_SAFE, "Safe to use", true, true, true},
-    {7, GPIO_TYPE_SAFE, "Safe to use", true, true, true},
-    {8, GPIO_TYPE_LED_ONBOARD, "Onboard LED, avoid", true, true, true},
-    {9, GPIO_TYPE_SAFE, "Safe to use", true, true, true},
-    {10, GPIO_TYPE_SAFE, "Safe to use", true, true, true},
-    {20, GPIO_TYPE_SAFE, "UART1 TX - Safe to use", false, true, true},
-    {21, GPIO_TYPE_SAFE, "UART1 RX - Safe to use", false, true, true}};
+    {0, GPIO_TYPE_STRAPPING, "Strapping pin at boot, avoid"},
+    {1, GPIO_TYPE_UART, "TX for UART0 (USB-Serial), avoid"},
+    {2, GPIO_TYPE_SAFE, "Safe"},
+    {3, GPIO_TYPE_UART, "RX for UART0 (USB-Serial), avoid"},
+    {4, GPIO_TYPE_SAFE, "Safe"},
+    {5, GPIO_TYPE_SAFE, "Safe"},
+    {6, GPIO_TYPE_SAFE, "Safe"},
+    {7, GPIO_TYPE_SAFE, "Safe"},
+    {8, GPIO_TYPE_LED_ONBOARD, "Onboard LED"},
+    {9, GPIO_TYPE_SAFE, "Safe"},
+    {10, GPIO_TYPE_SAFE, "Safe"},
+    {20, GPIO_TYPE_SAFE, "UART1 TX - Safe"},
+    {21, GPIO_TYPE_SAFE, "UART1 RX - Safe"}};
 
 static const int ESP32C3_GPIO_COUNT = sizeof(ESP32C3_GPIO_MAP) / sizeof(ESP32C3_GPIO_MAP[0]);
 
@@ -81,25 +78,13 @@ static bool isValidGPIO(int pin)
     return false;
 }
 
-static bool canUseGPIOForButtons(int pin)
+static bool isSafeGPIO(int pin)
 {
     for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
     {
         if (ESP32C3_GPIO_MAP[i].pin == pin)
         {
-            return ESP32C3_GPIO_MAP[i].canUseForButtons;
-        }
-    }
-    return false;
-}
-
-static bool canUseGPIOForLEDs(int pin)
-{
-    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
-    {
-        if (ESP32C3_GPIO_MAP[i].pin == pin)
-        {
-            return ESP32C3_GPIO_MAP[i].canUseForLEDs;
+            return ESP32C3_GPIO_MAP[i].type == GPIO_TYPE_SAFE || ESP32C3_GPIO_MAP[i].type == GPIO_TYPE_LED_ONBOARD;
         }
     }
     return false;
@@ -174,7 +159,7 @@ struct ButtonConfig
 // - GPIO 18,19: Used for USB, not available for general use
 // - GPIO 5,6,7,4: Chosen for button inputs (avoiding strapping and problematic pins)
 static const ButtonConfig defaultButtons[] = {
-    {5, "JOKE", "", "chase_single", "PRINT_TEST", "", "pulse"}, // Button 1: Joke → Test Print
+    {5, "JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"}, // Button 1: Joke → Character Test
     {6, "RIDDLE", "", "chase_single", "", "", "pulse"},         // Button 2: Riddle → (no long action)
     {7, "QUOTE", "", "chase_single", "", "", "pulse"},          // Button 3: Quote → (no long action)
     {4, "QUIZ", "", "chase_single", "", "", "pulse"}            // Button 4: Quiz → (no long action) - GPIO 4 (safe pin)

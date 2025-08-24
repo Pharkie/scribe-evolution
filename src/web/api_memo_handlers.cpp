@@ -9,6 +9,7 @@
 
 #include "api_memo_handlers.h"
 #include "../content/memo_handler.h"
+#include "../content/content_handlers.h"
 #include "../core/nvs_keys.h"
 #include "../core/config.h"
 #include "../core/shared_types.h"
@@ -61,14 +62,18 @@ void handleMemoGet(AsyncWebServerRequest *request)
     String expandedContent = processMemoPlaceholders(memoContent);
 
     // Use simple format like other content endpoints (joke, quiz, etc.)
+    // Add heading using the standard formatContentWithHeader function for consistency
+    String actionName = "MEMO " + String(memoId);
+    String contentWithHeading = formatContentWithHeader(actionName, expandedContent, "");
+    
     DynamicJsonDocument doc(1024);
-    doc["content"] = expandedContent;
+    doc["content"] = contentWithHeading;
 
     String response;
     serializeJson(doc, response);
     request->send(200, "application/json", response);
 
-    LOG_NOTICE("WEB", "Memo %d retrieved: %s", memoId, expandedContent.c_str());
+    LOG_VERBOSE("WEB", "Memo %d retrieved: %s", memoId, expandedContent.c_str());
 }
 
 void handleMemoUpdate(AsyncWebServerRequest *request)

@@ -77,7 +77,7 @@ void initializeHardwareButtons()
             continue;
         }
 
-        if (!canUseGPIOForButtons(gpio))
+        if (!isSafeGPIO(gpio))
         {
             LOG_WARNING("BUTTONS", "Button %d GPIO %d: %s", i, gpio, getGPIODescription(gpio));
         }

@@ -602,7 +602,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate shortAction (can now be empty or valid action)
         bool validShortAction = false;
-        for (int j = 0; j < 13; j++) // Include empty string for short actions
+        for (int j = 0; j < 12; j++) // 12 elements in validActions array
         {
             if (shortAction == validActions[j])
             {
@@ -618,7 +618,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate longAction (optional, can be empty or valid action)
         bool validLongAction = false;
-        for (int j = 0; j < 13; j++) // Include empty string for long actions
+        for (int j = 0; j < 12; j++) // 12 elements in validActions array
         {
             if (longAction == validActions[j])
             {
@@ -683,10 +683,15 @@ void handleConfigPost(AsyncWebServerRequest *request)
     int ledBrightness = leds["brightness"];
     int ledRefreshRate = leds["refreshRate"];
 
-    // Validate LED pin (ESP32-C3 specific)
-    if (ledPin < 0 || ledPin > 10)
+    // Validate LED pin using GPIO validation from config.h
+    if (!isValidGPIO(ledPin))
     {
-        sendValidationError(request, ValidationResult(false, "LED pin must be between 0 and 10 (ESP32-C3 compatible pins)"));
+        sendValidationError(request, ValidationResult(false, "Invalid GPIO pin " + String(ledPin) + " for LEDs. " + String(getGPIODescription(ledPin))));
+        return;
+    }
+    if (!isSafeGPIO(ledPin))
+    {
+        sendValidationError(request, ValidationResult(false, "GPIO " + String(ledPin) + " is not safe to use: " + String(getGPIODescription(ledPin))));
         return;
     }
 

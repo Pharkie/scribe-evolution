@@ -363,6 +363,51 @@ function createRequestHandler() {
           });
         }, 500);
         
+      } else if (pathname === '/api/user-message') {
+        console.log('💬 User message requested');
+        
+        // Parse request body to get the message
+        let body = '';
+        req.on('data', chunk => {
+          body += chunk.toString();
+        });
+        
+        req.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const userMessage = data.message || 'Hello from mock server!';
+            const target = data.target || 'local-direct';
+            
+            console.log(`  → Parsed data: message="${userMessage}", target="${target}"`);
+            console.log(`  → mockConfig.device.owner: "${mockConfig.device.owner}"`);
+            
+            // Determine header format based on target (like real server)
+            let content;
+            if (target === 'local-direct') {
+              // Local message: no sender
+              content = `MESSAGE\n\n${userMessage}`;
+              console.log('  → Local message (no sender)');
+            } else {
+              // MQTT message: include sender (use mock device owner)
+              const deviceOwner = mockConfig.device.owner || 'MockDevice';
+              content = `MESSAGE from ${deviceOwner}\n\n${userMessage}`;
+              console.log(`  → MQTT message (sender: ${deviceOwner})`);
+              console.log(`  → Full content: ${JSON.stringify(content)}`);
+            }
+            
+            setTimeout(() => {
+              sendJSON(res, { content });
+            }, 200);
+            
+          } catch (error) {
+            console.error('Error parsing user message:', error);
+            sendJSON(res, {
+              error: 'Invalid JSON format'
+            }, 400);
+          }
+        });
+        return; // Don't fall through to 404
+        
       } else if (pathname.match(/^\/api\/memo\/([1-4])$/) && req.method === 'GET') {
         const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])$/)[1]);
         console.log(`📝 Memo ${memoId} GET requested`);

@@ -154,7 +154,22 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
 
     // Determine if this is for MQTT (needs sender info) or local (no sender)
     bool isForMQTT = (target != "local-direct");
-    String sender = isForMQTT ? String(getDeviceOwnerKey()) : "";
+    String sender = "";
+    
+    if (isForMQTT)
+    {
+        if (actionType == ContentActionType::USER_MESSAGE)
+        {
+            // For MQTT USER_MESSAGE, use device owner name for display
+            const RuntimeConfig &config = getRuntimeConfig();
+            sender = config.deviceOwner;
+        }
+        else
+        {
+            sender = String(getDeviceOwnerKey());  // MQTT routing key for other content types
+        }
+    }
+    // For local messages, sender stays empty (no "from" in header)
 
     // Execute content action using shared business logic
     ContentActionResult result = executeContentAction(actionType, customData, sender);

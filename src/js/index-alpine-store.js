@@ -222,31 +222,20 @@ function initializeIndexStore() {
       this.submitting = true;
       
       try {
-        let formData;
-        let endpoint;
-        
-        // Build payload based on printer target
-        if (this.selectedPrinter === 'local-direct') {
-          formData = {
-            message: this.message.trim()
-          };
-          endpoint = '/api/print-local';
-        } else {
-          // For MQTT printing, use "topic" instead of "printer-target"
-          formData = {
-            message: this.message.trim(),
-            topic: this.selectedPrinter
-          };
-          endpoint = '/api/print-mqtt';
-        }
-        
         const message = this.message.trim();
         
-        // Use API layer based on printer target
+        // Step 1: Generate formatted content with MESSAGE header using user-message endpoint
+        const contentResult = await window.IndexAPI.generateUserMessage(message, this.selectedPrinter);
+        
+        if (!contentResult.content) {
+          throw new Error('Failed to generate message content');
+        }
+        
+        // Step 2: Print the formatted content
         if (this.selectedPrinter === 'local-direct') {
-          await window.IndexAPI.printLocalContent(message);
+          await window.IndexAPI.printLocalContent(contentResult.content);
         } else {
-          await window.IndexAPI.printMQTTContent(message, this.selectedPrinter);
+          await window.IndexAPI.printMQTTContent(contentResult.content, this.selectedPrinter);
         }
         
         // 🎊 Trigger confetti celebration for successful submission!
