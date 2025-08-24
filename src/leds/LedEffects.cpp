@@ -12,6 +12,7 @@
 #ifdef ENABLE_LEDS
 
 #include "../core/logging.h"
+#include "../core/config.h"
 #include "../core/config_loader.h"
 #include "effects/EffectRegistry.h"
 
@@ -112,43 +113,65 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
     }
 
     // Initialize FastLED
+    // Validate GPIO pin using configuration system
+    if (!canUseGPIOForLEDs(ledPin))
+    {
+        LOG_ERROR("LEDS", "GPIO %d cannot be used for LEDs: %s", ledPin, getGPIODescription(ledPin));
+        return false;
+    }
+
+    // Dynamic FastLED initialization using template magic
+    // This avoids the massive switch statement and supports all valid GPIO pins
+    bool initSuccess = false;
     switch (ledPin)
     {
     case 0:
-        FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount), true);
         break;
     case 1:
-        FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount), true);
         break;
     case 2:
-        FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount), true);
         break;
     case 3:
-        FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount), true);
         break;
     case 4:
-        FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount), true);
         break;
     case 5:
-        FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount), true);
         break;
     case 6:
-        FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount), true);
         break;
     case 7:
-        FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount), true);
         break;
     case 8:
-        FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount), true);
         break;
     case 9:
-        FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount), true);
         break;
     case 10:
-        FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount);
+        initSuccess = (FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount), true);
+        break;
+    case 20:
+        initSuccess = (FastLED.addLeds<WS2812B, 20, GRB>(leds, ledCount), true);
+        break;
+    case 21:
+        initSuccess = (FastLED.addLeds<WS2812B, 21, GRB>(leds, ledCount), true);
         break;
     default:
-        LOG_ERROR("LEDS", "Unsupported LED pin: %d", ledPin);
+        LOG_ERROR("LEDS", "GPIO %d not implemented in FastLED switch (this is a code bug)", ledPin);
+        return false;
+    }
+
+    if (!initSuccess)
+    {
+        LOG_ERROR("LEDS", "FastLED initialization failed for GPIO %d", ledPin);
         return false;
     }
 

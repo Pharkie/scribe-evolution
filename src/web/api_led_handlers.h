@@ -23,7 +23,7 @@
  * Body: JSON with effect, duration, cycles, color1, color2, color3 parameters
  * Example: {"effect": "chase_single", "duration": 10, "color1": "blue"}
  *
- * Supported effects: simple_chase, rainbow, twinkle, chase, pulse, matrix
+ * Supported effects: chase_single, chase_multi, rainbow, twinkle, pulse, matrix
  * Supported colors: red, green, blue, yellow, purple, cyan, white, orange, pink, black
  */
 void handleLedEffect(AsyncWebServerRequest *request);

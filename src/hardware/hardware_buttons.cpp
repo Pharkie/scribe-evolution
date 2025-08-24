@@ -2,6 +2,7 @@
 #include "../web/web_server.h"
 #include "printer.h"
 #include "../utils/content_actions.h"
+#include "../core/config.h"
 #include "../core/config_loader.h"
 #include "../core/shared_types.h"
 #include "../utils/time_utils.h"
@@ -63,14 +64,64 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
 
-    // Initialize GPIO pins first (basic hardware setup)
+    // ESP32-C3 GPIO safety validation before initialization
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        // Configure GPIO pin using defaultButtons array
-        pinMode(defaultButtons[i].gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
+        int gpio = defaultButtons[i].gpio;
 
-        // Initialize button state
-        buttonStates[i].currentState = digitalRead(defaultButtons[i].gpio);
+        // Validate GPIO using centralized configuration
+        if (!isValidGPIO(gpio))
+        {
+            LOG_ERROR("BUTTONS", "Button %d GPIO %d: Invalid GPIO - not available on ESP32-C3", i, gpio);
+            continue;
+        }
+
+        if (!canUseGPIOForButtons(gpio))
+        {
+            LOG_WARNING("BUTTONS", "Button %d GPIO %d: %s", i, gpio, getGPIODescription(gpio));
+        }
+        if (gpio >= 8 && gpio <= 10)
+        {
+            LOG_WARNING("BUTTONS", "Button %d GPIO %d: Flash connection - may cause stability issues", i, gpio);
+        }
+        if (gpio == 18 || gpio == 19)
+        {
+            LOG_ERROR("BUTTONS", "Button %d GPIO %d: USB pins not available for general use", i, gpio);
+            continue;
+        }
+    }
+
+    // Initialize GPIO pins with error handling
+    for (int i = 0; i < numHardwareButtons; i++)
+    {
+        int gpio = defaultButtons[i].gpio;
+
+        // Skip invalid GPIOs identified above
+        if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
+        {
+            LOG_ERROR("BUTTONS", "Skipping button %d initialization (invalid GPIO %d)", i, gpio);
+            // Initialize state as inactive
+            buttonStates[i].currentState = buttonActiveLow ? HIGH : LOW;
+            buttonStates[i].lastState = buttonStates[i].currentState;
+            buttonStates[i].pressed = false;
+            buttonStates[i].longPressTriggered = false;
+            buttonStates[i].lastDebounceTime = 0;
+            buttonStates[i].pressStartTime = 0;
+            buttonStates[i].lastPressTime = 0;
+            buttonStates[i].pressCount = 0;
+            buttonStates[i].windowStartTime = 0;
+            continue;
+        }
+
+        // Configure GPIO pin with error protection
+        LOG_VERBOSE("BUTTONS", "Configuring button %d GPIO %d...", i, gpio);
+        pinMode(gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
+
+        // Small delay for GPIO stabilization on ESP32-C3
+        delay(10);
+
+        // Initialize button state with safe reading
+        buttonStates[i].currentState = digitalRead(gpio);
         buttonStates[i].lastState = buttonStates[i].currentState;
         buttonStates[i].pressed = false;
         buttonStates[i].longPressTriggered = false;
@@ -116,8 +167,17 @@ void checkHardwareButtons()
 
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        // Read current state using defaultButtons array
-        bool reading = digitalRead(defaultButtons[i].gpio);
+        int gpio = defaultButtons[i].gpio;
+
+        // Skip buttons with invalid GPIOs (safety check)
+        if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
+        {
+            // Skip this button entirely - GPIO not safe for ESP32-C3
+            continue;
+        }
+
+        // Safe GPIO reading with bounds checking
+        bool reading = digitalRead(gpio);
 
         // Check if state changed (for debouncing)
         if (reading != buttonStates[i].lastState)
@@ -143,8 +203,8 @@ void checkHardwareButtons()
                     buttonStates[i].longPressTriggered = false;
                     buttonStates[i].pressStartTime = currentTime;
 
-                    LOG_NOTICE("BUTTONS", "*** BUTTON %d PRESSED *** GPIO %d -> '%s'",
-                               i, defaultButtons[i].gpio, config.buttonShortActions[i].c_str());
+                    LOG_VERBOSE("BUTTONS", "*** BUTTON %d PRESSED *** GPIO %d -> '%s'",
+                                i, gpio, config.buttonShortActions[i].c_str());
                 }
                 else if (!isPressed && buttonStates[i].pressed)
                 {
@@ -157,8 +217,8 @@ void checkHardwareButtons()
                     {
                         if (pressDuration < buttonLongPressMs)
                         {
-                            LOG_NOTICE("BUTTONS", "*** BUTTON %d SHORT PRESS *** %lu ms -> '%s'",
-                                       i, pressDuration, config.buttonShortActions[i].c_str());
+                            LOG_VERBOSE("BUTTONS", "*** BUTTON %d SHORT PRESS *** %lu ms -> '%s'",
+                                        i, pressDuration, config.buttonShortActions[i].c_str());
                             handleButtonPress(i);
                         }
                     }
@@ -175,8 +235,8 @@ void checkHardwareButtons()
             if (pressDuration >= buttonLongPressMs)
             {
                 buttonStates[i].longPressTriggered = true;
-                LOG_NOTICE("BUTTONS", "*** BUTTON %d LONG PRESS *** %lu ms -> '%s'",
-                           i, pressDuration, config.buttonLongActions[i].c_str());
+                LOG_VERBOSE("BUTTONS", "*** BUTTON %d LONG PRESS *** %lu ms -> '%s'",
+                            i, pressDuration, config.buttonLongActions[i].c_str());
                 handleButtonLongPress(i);
             }
         }
@@ -300,17 +360,13 @@ void handleButtonPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // **DEBUGGING**: Disable async task creation to test if button press detection works
-    LOG_WARNING("BUTTONS", "Button action DISABLED for debugging - button %d pressed but not executing action", buttonIndex);
-    return;
-
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations
     bool started = createButtonActionTask(buttonIndex, false);
 
     if (started)
     {
-        LOG_NOTICE("BUTTONS", "Button %d SHORT press started async processing", buttonIndex);
+        LOG_VERBOSE("BUTTONS", "Button %d SHORT press started async processing", buttonIndex);
     }
     else
     {
@@ -342,17 +398,13 @@ void handleButtonLongPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // **DEBUGGING**: Disable async task creation to test if button press detection works
-    LOG_WARNING("BUTTONS", "Button LONG press DISABLED for debugging - button %d long pressed but not executing action", buttonIndex);
-    return;
-
     // **KEY CHANGE**: Process action asynchronously instead of immediate execution
     // This keeps the main loop responsive and prevents blocking operations
     bool started = createButtonActionTask(buttonIndex, true);
 
     if (started)
     {
-        LOG_NOTICE("BUTTONS", "Button %d LONG press started async processing", buttonIndex);
+        LOG_VERBOSE("BUTTONS", "Button %d LONG press started async processing", buttonIndex);
     }
     else
     {
@@ -424,8 +476,8 @@ bool createButtonActionTask(int buttonIndex, bool isLongPress)
         return false;
     }
 
-    LOG_NOTICE("BUTTONS", "Created async task for %s press on button %d: '%s'",
-               isLongPress ? "long" : "short", buttonIndex, params->actionType.c_str());
+    LOG_VERBOSE("BUTTONS", "Created async task for %s press on button %d: '%s'",
+                isLongPress ? "long" : "short", buttonIndex, params->actionType.c_str());
 
     return true;
 }
@@ -440,9 +492,9 @@ void buttonActionTask(void *parameter)
     // Get parameters
     ButtonActionParams *params = (ButtonActionParams *)parameter;
 
-    LOG_NOTICE("BUTTONS", "Processing %s press for button %d: '%s'",
-               params->isLongPress ? "long" : "short",
-               params->buttonIndex, params->actionType.c_str());
+    LOG_VERBOSE("BUTTONS", "Processing %s press for button %d: '%s'",
+                params->isLongPress ? "long" : "short",
+                params->buttonIndex, params->actionType.c_str());
 
     // Trigger LED effect immediately (non-blocking)
     triggerButtonLedEffect(params->buttonIndex, params->isLongPress);
@@ -455,8 +507,8 @@ void buttonActionTask(void *parameter)
 
         if (success)
         {
-            LOG_NOTICE("BUTTONS", "Button action completed successfully: %s",
-                       params->actionType.c_str());
+            LOG_VERBOSE("BUTTONS", "Button action completed successfully: %s",
+                        params->actionType.c_str());
         }
         else
         {
@@ -493,7 +545,7 @@ bool executeButtonActionDirect(const char *actionType)
         return false;
     }
 
-    LOG_NOTICE("BUTTONS", "Executing button action directly: %s", actionType);
+    LOG_VERBOSE("BUTTONS", "Executing button action directly: %s", actionType);
 
     // Convert action type string to ContentActionType enum using utility function
     ContentActionType contentAction = stringToActionType(String(actionType));
@@ -509,7 +561,7 @@ bool executeButtonActionDirect(const char *actionType)
         currentMessage.timestamp = getFormattedDateTime();
         currentMessage.shouldPrintLocally = true;
 
-        LOG_NOTICE("BUTTONS", "Content queued for printing (%d chars)", result.content.length());
+        LOG_VERBOSE("BUTTONS", "Content queued for printing (%d chars)", result.content.length());
         return true;
     }
     else
@@ -532,7 +584,7 @@ void executeButtonEndpoint(const char *endpoint)
         return;
     }
 
-    LOG_NOTICE("BUTTONS", "Executing button endpoint: %s", endpoint);
+    LOG_VERBOSE("BUTTONS", "Executing button endpoint: %s", endpoint);
 
     // Feed watchdog before starting content generation
     esp_task_wdt_reset();
@@ -561,7 +613,7 @@ void executeButtonEndpoint(const char *endpoint)
     {
         // Directly print the queued content
         printMessage();
-        LOG_NOTICE("BUTTONS", "Button action executed successfully: %s", endpoint);
+        LOG_VERBOSE("BUTTONS", "Button action executed successfully: %s", endpoint);
     }
     else
     {

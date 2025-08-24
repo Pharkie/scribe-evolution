@@ -106,4 +106,40 @@ void validateConfig()
     {
         Serial.printf("✅ GPIO validation passed - %d GPIOs configured correctly\n", usedCount);
     }
+
+    // Display GPIO usage summary for easy reference
+    logGPIOUsageSummary();
+}
+
+void logGPIOUsageSummary()
+{
+    Serial.println("\n📍 GPIO Usage Summary:");
+
+    // Get current configuration
+    const RuntimeConfig &config = getRuntimeConfig();
+
+    // Button GPIOs
+    Serial.println("  Buttons:");
+    for (int i = 0; i < numHardwareButtons; i++)
+    {
+        int gpio = defaultButtons[i].gpio;
+        Serial.printf("    GPIO %d: Button %d (%s) - %s\n",
+                      gpio, i + 1, config.buttonShortActions[i].c_str(), getGPIODescription(gpio));
+    }
+
+    // Status LED GPIO
+    Serial.printf("  Status LED:\n    GPIO %d: Status LED - %s\n",
+                  statusLEDPin, getGPIODescription(statusLEDPin));
+
+// LED Strip GPIO (if LEDs enabled)
+#ifdef ENABLE_LEDS
+    Serial.printf("  LED Strip:\n    GPIO %d: LED Strip - %s\n",
+                  config.ledPin, getGPIODescription(config.ledPin));
+#endif
+
+    // Printer GPIO
+    Serial.printf("  Printer:\n    GPIO %d: Printer TX - %s\n",
+                  TX_PIN, getGPIODescription(TX_PIN));
+
+    Serial.println();
 }
