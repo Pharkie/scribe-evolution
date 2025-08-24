@@ -565,7 +565,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     // Validate button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];
     const char *buttonKeys[] = {"button1", "button2", "button3", "button4"};
-    const char *validActions[] = {"/api/joke", "/api/riddle", "/api/quote", "/api/quiz", "/api/news", "/api/character-test", "/api/unbidden-ink", "MEMO1", "MEMO2", "MEMO3", "MEMO4", ""};
+    const char *validActions[] = {"JOKE", "RIDDLE", "QUOTE", "QUIZ", "NEWS", "CHARACTER_TEST", "UNBIDDEN_INK", "MEMO1", "MEMO2", "MEMO3", "MEMO4", ""};
 
     for (int i = 0; i < 4; i++)
     {
@@ -602,7 +602,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate shortAction (can now be empty or valid action)
         bool validShortAction = false;
-        for (int j = 0; j < 8; j++) // Include empty string for short actions
+        for (int j = 0; j < 12; j++) // Include empty string for short actions
         {
             if (shortAction == validActions[j])
             {
@@ -618,7 +618,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Validate longAction (optional, can be empty or valid action)
         bool validLongAction = false;
-        for (int j = 0; j < 8; j++) // Include empty string for long actions
+        for (int j = 0; j < 12; j++) // Include empty string for long actions
         {
             if (longAction == validActions[j])
             {

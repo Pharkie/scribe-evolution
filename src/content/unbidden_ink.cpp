@@ -75,7 +75,7 @@ bool isInWorkingHours()
     }
 
     // Get current time from ezTime
-    int currentHour = myTZ.hour();
+    int currentHour = hour();
 
     // Check if current hour is within working hours
     return (currentHour >= currentSettings.startHour && currentHour < currentSettings.endHour);

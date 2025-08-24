@@ -9,16 +9,12 @@
 // External reference to boot time from main.cpp
 extern String deviceBootTime;
 
-// Timezone object
-Timezone myTZ;
-
 // === Time Utilities ===
 String getFormattedDateTime()
 {
-    // Use ezTime for automatic timezone handling
+    // Use ezTime's automatic timezone handling
     // Format: "Tue 22 Jul 2025 14:30"
-    String dateTime = myTZ.dateTime("D d M Y H:i");
-    return dateTime;
+    return dateTime("D d M Y H:i");
 }
 
 String formatCustomDate(String customDate)
@@ -53,7 +49,7 @@ String formatCustomDate(String customDate)
         time_t parsedTime = makeTime(0, 0, 0, day, month, year);
         if (parsedTime != 0) // makeTime returns 0 for invalid dates
         {
-            String formatted = myTZ.dateTime(parsedTime, "D d M Y H:i");
+            String formatted = dateTime(parsedTime, "D d M Y H:i");
             // Parsed date successfully (from input)
             return formatted;
         }
@@ -64,7 +60,7 @@ String formatCustomDate(String customDate)
             parsedTime = makeTime(0, 0, 0, month, day, year);
             if (parsedTime != 0)
             {
-                String formatted = myTZ.dateTime(parsedTime, "D d M Y H:i");
+                String formatted = dateTime(parsedTime, "D d M Y H:i");
                 // Parsed date successfully (US format)
                 return formatted;
             }
@@ -143,7 +139,7 @@ String formatRFC2822Date(const String &rfc2822Date)
         return "";
 
     // Format to match other quick actions: "Mon 16 Aug 23:00"
-    return myTZ.dateTime(parsedTime, "D d M H:i");
+    return dateTime(parsedTime, "D d M H:i");
 }
 
 String getISOTimestamp()
@@ -221,19 +217,22 @@ String getDeviceBootTime()
 String getMemoDate()
 {
     // Format: "24Aug25" (ddMmmyy)
-    return myTZ.dateTime("dMy");
+    // Use ezTime's automatic local timezone handling
+    return dateTime("dMy");
 }
 
 String getMemoTime()
 {
     // Format: "12:30" (HH:MM)
-    return myTZ.dateTime("H:i");
+    // Use ezTime's automatic local timezone handling
+    return dateTime("H:i");
 }
 
 String getMemoWeekday()
 {
     // Format: "Sunday" (full day name)
-    return myTZ.dateTime("l");
+    // Use ezTime's automatic local timezone handling
+    return dateTime("l");
 }
 
 String getDeviceUptime()

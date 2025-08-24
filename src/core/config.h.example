@@ -60,7 +60,7 @@ static const GPIOInfo ESP32C3_GPIO_MAP[] = {
     {5, GPIO_TYPE_SAFE, "Safe for buttons, LED, digital I/O", true, true, true},
     {6, GPIO_TYPE_SAFE, "Safe for buttons, LED, digital I/O", true, true, true},
     {7, GPIO_TYPE_SAFE, "Safe for buttons, LED, digital I/O", true, true, true},
-    {8, GPIO_TYPE_LED_ONBOARD, "Onboard LED; can still be used, but affects LED", true, true, true},
+    {8, GPIO_TYPE_LED_ONBOARD, "Onboard LED", true, true, true},
     {9, GPIO_TYPE_SAFE, "Safe for buttons or outputs", true, true, true},
     {10, GPIO_TYPE_SAFE, "Safe for buttons or outputs", true, true, true},
     {20, GPIO_TYPE_SAFE, "UART1 TX - Safe for digital output (LED strip, etc.)", false, true, true},
