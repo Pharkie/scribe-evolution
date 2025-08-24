@@ -8,6 +8,7 @@
  */
 
 #include "content_handlers.h"
+#include "memo_handler.h"
 #include "../web/validation.h"
 #include "../web/web_server.h"
 #include "../core/config.h"
@@ -43,7 +44,8 @@ enum ContentType
     PRINT_TEST,
     POKE,
     USER_MESSAGE,
-    NEWS
+    NEWS,
+    MEMO
 };
 
 /**
@@ -409,4 +411,43 @@ String loadPrintTestContent()
     String content = file.readString();
     file.close();
     return content;
+}
+
+bool generateAndQueueMemo(int memoId)
+{
+    if (memoId < 1 || memoId > MEMO_COUNT)
+    {
+        LOG_ERROR("CONTENT", "Invalid memo ID: %d", memoId);
+        return false;
+    }
+
+    // Get memo content from NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) // read-only
+    {
+        LOG_ERROR("CONTENT", "Failed to access memo storage");
+        return false;
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    const char* defaultMemos[] = {
+        "Good morning! Today is [weekday], [date]. Current time: [time]",
+        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
+        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
+        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
+    };
+
+    String memoContent = prefs.getString(memoKeys[memoId - 1], defaultMemos[memoId - 1]);
+    prefs.end();
+
+    // Expand placeholders
+    String expandedContent = processMemoPlaceholders(memoContent);
+
+    // Queue for printing
+    currentMessage.message = expandedContent;
+    currentMessage.timestamp = getFormattedDateTime();
+    currentMessage.hasMessage = true;
+
+    LOG_NOTICE("CONTENT", "Memo %d queued for printing: %s", memoId, expandedContent.c_str());
+    return true;
 }

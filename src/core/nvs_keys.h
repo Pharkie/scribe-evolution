@@ -43,6 +43,12 @@ constexpr const char *NVS_LED_COUNT = "led_count";
 constexpr const char *NVS_LED_BRIGHTNESS = "led_brightness";
 constexpr const char *NVS_LED_REFRESH_RATE = "led_refresh";
 
+// Memo Configuration Keys
+constexpr const char *NVS_MEMO_1 = "memo_1";
+constexpr const char *NVS_MEMO_2 = "memo_2"; 
+constexpr const char *NVS_MEMO_3 = "memo_3";
+constexpr const char *NVS_MEMO_4 = "memo_4";
+
 // Note: Button configuration keys are dynamically generated in config_loader.cpp:
 // btn1_short_act, btn1_short_mq, btn1_long_act, btn1_long_mq, btn1_short_led, btn1_long_led
 // btn2_short_act, btn2_short_mq, btn2_long_act, btn2_long_mq, btn2_short_led, btn2_long_led

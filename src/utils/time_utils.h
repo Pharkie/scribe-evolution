@@ -16,4 +16,10 @@ String getISOTimestamp();
 String getDeviceBootTime();
 void setupTime();
 
+// Additional functions for memo placeholder expansion
+String getMemoDate();          // Format: "24Aug25"
+String getMemoTime();          // Format: "12:30"
+String getMemoWeekday();       // Format: "Sunday"
+String getDeviceUptime();      // Format: "2h13m"
+
 #endif // TIME_UTILS_H

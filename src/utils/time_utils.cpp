@@ -215,3 +215,33 @@ String getDeviceBootTime()
 {
     return deviceBootTime;
 }
+
+// === Additional functions for memo placeholder expansion ===
+
+String getMemoDate()
+{
+    // Format: "24Aug25" (ddMmmyy)
+    return myTZ.dateTime("dMy");
+}
+
+String getMemoTime()
+{
+    // Format: "12:30" (HH:MM)
+    return myTZ.dateTime("H:i");
+}
+
+String getMemoWeekday()
+{
+    // Format: "Sunday" (full day name)
+    return myTZ.dateTime("l");
+}
+
+String getDeviceUptime()
+{
+    // Format: "2h13m" (hours and minutes)
+    unsigned long uptimeMs = millis();
+    unsigned long hours = uptimeMs / 3600000;
+    unsigned long minutes = (uptimeMs % 3600000) / 60000;
+    
+    return String(hours) + "h" + String(minutes) + "m";
+}

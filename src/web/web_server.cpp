@@ -25,6 +25,7 @@
 #include "api_system_handlers.h"
 #include "api_nvs_handlers.h"
 #include "api_config_handlers.h"
+#include "api_memo_handlers.h"
 #if ENABLE_LEDS
 #include "api_led_handlers.h"
 #endif
@@ -340,6 +341,31 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/poke", "Send poke message", handlePoke, true);
         registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
+        
+        // Memo API endpoints
+        registerRoute("GET", "/api/memos", "Get all memos", handleMemosGet, true);
+        registerRoute("POST", "/api/memos", "Update all memos", handleMemosUpdate, true);
+        
+        // Individual memo operations - using path parameters
+        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, [](AsyncWebServerRequest *request) {
+            handleMemoGet(request);
+        });
+        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request) {
+            handleMemoUpdate(request);
+        }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+            String body;
+            for (size_t i = 0; i < len; i++) body += (char)data[i];
+            storeRequestBody(request, body);
+        });
+        server.on("^\\/api\\/memo\\/([1-4])\\/print$", HTTP_POST, [](AsyncWebServerRequest *request) {
+            handleMemoPrint(request);
+        });
+        
+        // Track memo routes for diagnostics  
+        registeredRoutes.push_back({"GET", "/api/memo/{id}", "Get specific memo", true});
+        registeredRoutes.push_back({"POST", "/api/memo/{id}", "Update specific memo", true});
+        registeredRoutes.push_back({"POST", "/api/memo/{id}/print", "Print specific memo", true});
+        
         registerRoute("GET", "/api/diagnostics", "System diagnostics", handleDiagnostics, true);
         registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump", handleNVSDump, true);
         registerRoute("POST", "/api/print-mqtt", "Send MQTT message", handleMQTTSend, true);

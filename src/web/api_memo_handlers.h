@@ -1,0 +1,62 @@
+/**
+ * @file api_memo_handlers.h
+ * @brief Memo API endpoint handlers for Scribe ESP32-C3 Thermal Printer
+ * @author Adam Knowles
+ * @date 2025
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ */
+
+#ifndef API_MEMO_HANDLERS_H
+#define API_MEMO_HANDLERS_H
+
+#include <ESPAsyncWebServer.h>
+
+/**
+ * @brief Handle memo retrieval request
+ * @param request The HTTP request
+ * 
+ * Endpoint: GET /api/memos
+ * Returns all 4 configured memos as JSON array
+ */
+void handleMemosGet(AsyncWebServerRequest *request);
+
+/**
+ * @brief Handle individual memo retrieval request  
+ * @param request The HTTP request
+ * 
+ * Endpoint: GET /api/memo/{id}
+ * Returns specific memo by ID (1-4)
+ */
+void handleMemoGet(AsyncWebServerRequest *request);
+
+/**
+ * @brief Handle memo update request
+ * @param request The HTTP request
+ * 
+ * Endpoint: POST /api/memo/{id}
+ * Body: JSON with "content" field
+ * Updates specific memo content with validation
+ */
+void handleMemoUpdate(AsyncWebServerRequest *request);
+
+/**
+ * @brief Handle memo printing request
+ * @param request The HTTP request
+ * 
+ * Endpoint: POST /api/memo/{id}/print
+ * Expands placeholders and prints specific memo
+ */
+void handleMemoPrint(AsyncWebServerRequest *request);
+
+/**
+ * @brief Handle all memos update request  
+ * @param request The HTTP request
+ * 
+ * Endpoint: POST /api/memos
+ * Body: JSON with "memos" array
+ * Updates all memo content with validation
+ */
+void handleMemosUpdate(AsyncWebServerRequest *request);
+
+#endif // API_MEMO_HANDLERS_H

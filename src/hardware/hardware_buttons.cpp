@@ -1,6 +1,7 @@
 #include "hardware_buttons.h"
 #include "../web/web_server.h"
 #include "printer.h"
+#include "../content/content_handlers.h"
 #include "../utils/content_actions.h"
 #include "../core/config.h"
 #include "../core/config_loader.h"
@@ -547,8 +548,26 @@ bool executeButtonActionDirect(const char *actionType)
 
     LOG_VERBOSE("BUTTONS", "Executing button action directly: %s", actionType);
 
+    String actionString = String(actionType);
+    
+    // Check if this is a memo action (e.g., "MEMO1", "MEMO2", etc.)
+    if (actionString.startsWith("MEMO"))
+    {
+        int memoId = actionString.substring(4).toInt(); // Extract number after "MEMO"
+        if (memoId >= 1 && memoId <= MEMO_COUNT)
+        {
+            LOG_VERBOSE("BUTTONS", "Processing memo action for memo %d", memoId);
+            return generateAndQueueMemo(memoId);
+        }
+        else
+        {
+            LOG_ERROR("BUTTONS", "Invalid memo ID in action: %s", actionType);
+            return false;
+        }
+    }
+
     // Convert action type string to ContentActionType enum using utility function
-    ContentActionType contentAction = stringToActionType(String(actionType));
+    ContentActionType contentAction = stringToActionType(actionString);
 
     // Execute content action directly with button-specific timeout
     ContentActionResult result = executeContentActionWithTimeout(

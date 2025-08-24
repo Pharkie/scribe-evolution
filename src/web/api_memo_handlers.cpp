@@ -1,0 +1,361 @@
+/**
+ * @file api_memo_handlers.cpp
+ * @brief Implementation of memo API endpoint handlers
+ * @author Adam Knowles
+ * @date 2025
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ */
+
+#include "api_memo_handlers.h"
+#include "../content/memo_handler.h"
+#include "../core/nvs_keys.h"
+#include "../core/config.h"
+#include "../core/logging.h"
+#include "../utils/json_helpers.h"
+#include "validation.h"
+#include "web_server.h"
+#include <Preferences.h>
+#include <ArduinoJson.h>
+
+// External message storage for printing
+extern Message currentMessage;
+
+void handleMemosGet(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "Memos GET requested from %s", request->client()->remoteIP().toString().c_str());
+
+    // Rate limiting check
+    if (isRateLimited())
+    {
+        request->send(429, "text/plain", getRateLimitReason());
+        return;
+    }
+
+    DynamicJsonDocument doc(2048);
+    JsonArray memos = doc.createNestedArray("memos");
+
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) // read-only
+    {
+        sendErrorResponse(request, "Failed to access memo storage", 500);
+        return;
+    }
+
+    // Get all 4 memos
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    const char* defaultMemos[] = {
+        "Good morning! Today is [weekday], [date]. Current time: [time]",
+        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
+        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
+        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
+    };
+
+    for (int i = 0; i < MEMO_COUNT; i++)
+    {
+        String memoContent = prefs.getString(memoKeys[i], defaultMemos[i]);
+        JsonObject memoObj = memos.createNestedObject();
+        memoObj["id"] = i + 1;
+        memoObj["content"] = memoContent;
+    }
+
+    prefs.end();
+
+    doc["success"] = true;
+    doc["message"] = "Memos retrieved successfully";
+
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
+
+void handleMemoGet(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "Memo GET requested from %s", request->client()->remoteIP().toString().c_str());
+
+    // Rate limiting check
+    if (isRateLimited())
+    {
+        request->send(429, "text/plain", getRateLimitReason());
+        return;
+    }
+
+    // Get memo ID from path parameter
+    String idParam = request->pathArg(0);
+    int memoId = idParam.toInt();
+
+    if (memoId < 1 || memoId > MEMO_COUNT)
+    {
+        sendErrorResponse(request, "Invalid memo ID. Must be 1-4", 400);
+        return;
+    }
+
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) // read-only
+    {
+        sendErrorResponse(request, "Failed to access memo storage", 500);
+        return;
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    const char* defaultMemos[] = {
+        "Good morning! Today is [weekday], [date]. Current time: [time]",
+        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
+        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
+        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
+    };
+
+    String memoContent = prefs.getString(memoKeys[memoId - 1], defaultMemos[memoId - 1]);
+    prefs.end();
+
+    DynamicJsonDocument doc(1024);
+    doc["success"] = true;
+    doc["message"] = "Memo retrieved successfully";
+    doc["id"] = memoId;
+    doc["content"] = memoContent;
+
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
+
+void handleMemoUpdate(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "Memo UPDATE requested from %s", request->client()->remoteIP().toString().c_str());
+
+    // Check request method
+    if (request->method() != HTTP_POST)
+    {
+        sendErrorResponse(request, "Method not allowed", 405);
+        return;
+    }
+
+    // Rate limiting check
+    if (isRateLimited())
+    {
+        request->send(429, "text/plain", getRateLimitReason());
+        return;
+    }
+
+    // Get memo ID from path parameter
+    String idParam = request->pathArg(0);
+    int memoId = idParam.toInt();
+
+    if (memoId < 1 || memoId > MEMO_COUNT)
+    {
+        sendErrorResponse(request, "Invalid memo ID. Must be 1-4", 400);
+        return;
+    }
+
+    // Parse JSON body
+    if (!request->hasParam("body", true))
+    {
+        sendErrorResponse(request, "Missing request body", 400);
+        return;
+    }
+
+    String jsonBody = request->getParam("body", true)->value();
+    DynamicJsonDocument doc(1024);
+    DeserializationError error = deserializeJson(doc, jsonBody);
+
+    if (error)
+    {
+        sendErrorResponse(request, "Invalid JSON format", 400);
+        return;
+    }
+
+    if (!doc.containsKey("content"))
+    {
+        sendErrorResponse(request, "Missing 'content' field", 400);
+        return;
+    }
+
+    String content = doc["content"].as<String>();
+
+    // Validate memo content
+    ValidationResult validation = validateMessage(content, MEMO_MAX_LENGTH);
+    if (!validation.isValid)
+    {
+        sendValidationError(request, validation, 400);
+        return;
+    }
+
+    // Save to NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", false)) // read-write
+    {
+        sendErrorResponse(request, "Failed to access memo storage", 500);
+        return;
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    bool success = prefs.putString(memoKeys[memoId - 1], content);
+    prefs.end();
+
+    if (!success)
+    {
+        sendErrorResponse(request, "Failed to save memo", 500);
+        return;
+    }
+
+    LOG_NOTICE("WEB", "Memo %d updated successfully", memoId);
+    sendSuccessResponse(request, "Memo updated successfully");
+}
+
+void handleMemoPrint(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "Memo PRINT requested from %s", request->client()->remoteIP().toString().c_str());
+
+    // Check request method
+    if (request->method() != HTTP_POST)
+    {
+        sendErrorResponse(request, "Method not allowed", 405);
+        return;
+    }
+
+    // Rate limiting check
+    if (isRateLimited())
+    {
+        request->send(429, "text/plain", getRateLimitReason());
+        return;
+    }
+
+    // Get memo ID from path parameter
+    String idParam = request->pathArg(0);
+    int memoId = idParam.toInt();
+
+    if (memoId < 1 || memoId > MEMO_COUNT)
+    {
+        sendErrorResponse(request, "Invalid memo ID. Must be 1-4", 400);
+        return;
+    }
+
+    // Get memo content from NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) // read-only
+    {
+        sendErrorResponse(request, "Failed to access memo storage", 500);
+        return;
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    const char* defaultMemos[] = {
+        "Good morning! Today is [weekday], [date]. Current time: [time]",
+        "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
+        "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
+        "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
+    };
+
+    String memoContent = prefs.getString(memoKeys[memoId - 1], defaultMemos[memoId - 1]);
+    prefs.end();
+
+    // Expand placeholders
+    String expandedContent = processMemoPlaceholders(memoContent);
+
+    // Queue for printing
+    currentMessage.message = expandedContent;
+    currentMessage.timestamp = getFormattedDateTime();
+    currentMessage.hasMessage = true;
+
+    LOG_NOTICE("WEB", "Memo %d queued for printing: %s", memoId, expandedContent.c_str());
+    sendSuccessResponse(request, "Memo queued for printing");
+}
+
+void handleMemosUpdate(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "Memos BULK UPDATE requested from %s", request->client()->remoteIP().toString().c_str());
+
+    // Check request method
+    if (request->method() != HTTP_POST)
+    {
+        sendErrorResponse(request, "Method not allowed", 405);
+        return;
+    }
+
+    // Rate limiting check
+    if (isRateLimited())
+    {
+        request->send(429, "text/plain", getRateLimitReason());
+        return;
+    }
+
+    // Parse JSON body
+    if (!request->hasParam("body", true))
+    {
+        sendErrorResponse(request, "Missing request body", 400);
+        return;
+    }
+
+    String jsonBody = request->getParam("body", true)->value();
+    DynamicJsonDocument doc(2048);
+    DeserializationError error = deserializeJson(doc, jsonBody);
+
+    if (error)
+    {
+        sendErrorResponse(request, "Invalid JSON format", 400);
+        return;
+    }
+
+    if (!doc.containsKey("memos") || !doc["memos"].is<JsonArray>())
+    {
+        sendErrorResponse(request, "Missing or invalid 'memos' array", 400);
+        return;
+    }
+
+    JsonArray memosArray = doc["memos"];
+    if (memosArray.size() != MEMO_COUNT)
+    {
+        sendErrorResponse(request, "Must provide exactly 4 memos", 400);
+        return;
+    }
+
+    // Validate all memos first
+    for (int i = 0; i < MEMO_COUNT; i++)
+    {
+        if (!memosArray[i].containsKey("content"))
+        {
+            sendErrorResponse(request, "Missing content for memo " + String(i + 1), 400);
+            return;
+        }
+
+        String content = memosArray[i]["content"].as<String>();
+        ValidationResult validation = validateMessage(content, MEMO_MAX_LENGTH);
+        if (!validation.isValid)
+        {
+            sendValidationError(request, validation, 400);
+            return;
+        }
+    }
+
+    // Save all memos to NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", false)) // read-write
+    {
+        sendErrorResponse(request, "Failed to access memo storage", 500);
+        return;
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    bool allSuccess = true;
+
+    for (int i = 0; i < MEMO_COUNT; i++)
+    {
+        String content = memosArray[i]["content"].as<String>();
+        if (!prefs.putString(memoKeys[i], content))
+        {
+            allSuccess = false;
+            break;
+        }
+    }
+
+    prefs.end();
+
+    if (!allSuccess)
+    {
+        sendErrorResponse(request, "Failed to save one or more memos", 500);
+        return;
+    }
+
+    LOG_NOTICE("WEB", "All memos updated successfully");
+    sendSuccessResponse(request, "All memos updated successfully");
+}

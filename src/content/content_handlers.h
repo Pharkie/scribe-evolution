@@ -77,6 +77,13 @@ bool generateAndQueuePrintTest();
 bool generateAndQueueNews();
 
 /**
+ * @brief Generate and queue memo content for internal calls (hardware buttons)
+ * @param memoId The memo ID (1-4) to generate and queue
+ * @return true if content was generated and queued successfully
+ */
+bool generateAndQueueMemo(int memoId);
+
+/**
  * @brief Handle print test request
  */
 void handlePrintTest(AsyncWebServerRequest* request);
