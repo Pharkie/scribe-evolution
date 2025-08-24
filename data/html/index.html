@@ -168,10 +168,12 @@
                                         x-text="activeQuickAction === 'quote' ? 'Scribing' : 'Quote'"></span>
                                 </button>
                                 <button type="button" @click="showMemoModal()"
-                                    class="action-button action-button-purple quick-action-btn"
+                                    class="action-button action-button-pink quick-action-btn"
+                                    :class="{ 'opacity-75': activeQuickAction === 'memo' }"
                                     :disabled="activeQuickAction !== null" data-action="memo">
                                     <span class="action-button-icon">📝</span>
-                                    <span class="action-button-label">Memo</span>
+                                    <span class="action-button-label"
+                                        x-text="activeQuickAction === 'memo' ? 'Scribed' : 'Memo'"></span>
                                 </button>
                                 <button type="button" @click="sendQuickAction('quiz')"
                                     class="action-button action-button-cyan quick-action-btn"
@@ -182,7 +184,7 @@
                                         x-text="activeQuickAction === 'quiz' ? 'Scribing' : 'Quiz'"></span>
                                 </button>
                                 <button type="button" @click="sendQuickAction('news')"
-                                    class="action-button action-button-orange quick-action-btn"
+                                    class="action-button action-button-gray quick-action-btn"
                                     :class="{ 'opacity-75': activeQuickAction === 'news' }"
                                     :disabled="activeQuickAction !== null" data-action="news">
                                     <span class="action-button-icon">📰</span>
@@ -309,48 +311,74 @@
     </div>
 
     <!-- Memo Selection Modal -->
-    <div x-show="memoModalVisible" x-transition.opacity.duration.300ms @click.self="closeMemoModal()"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        
-        <div x-show="memoModalVisible" x-transition:enter="transition ease-out duration-300 transform"
-            x-transition:enter-start="scale-95 opacity-0" x-transition:enter-end="scale-100 opacity-100"
-            x-transition:leave="transition ease-in duration-200 transform"
-            x-transition:leave-start="scale-100 opacity-100" x-transition:leave-end="scale-95 opacity-0"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+    <div x-show="memoModalVisible" x-transition.opacity.duration.500ms @click.self="closeMemoModal()"
+        @keydown.escape.window="closeMemoModal()"
+        class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center sm:justify-center p-4"
+        style="display: none;">
+        <!-- Modal -->
+        <div x-show="memoModalVisible" x-transition:enter="transition ease-out duration-500 transform"
+            x-transition:enter-start="translate-y-full sm:translate-y-8 sm:scale-95 opacity-0"
+            x-transition:enter-end="translate-y-0 sm:scale-100 opacity-100"
+            x-transition:leave="transition ease-in duration-500 transform"
+            x-transition:leave-start="translate-y-0 sm:scale-100 opacity-100"
+            x-transition:leave-end="translate-y-full sm:translate-y-8 sm:scale-95 opacity-0" @click.stop
+            class="relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl dark:shadow-2xl">
+            <div class="p-6">
             
-            <div class="text-center mb-6">
-                <h2 class="text-xl font-bold text-purple-800 dark:text-purple-200 mb-2">
-                    📝 Select a Memo
-                </h2>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <span class="text-2xl mr-2">📝</span>
+                        <span>Select a Memo</span>
+                    </h3>
+                    <button @click="closeMemoModal()"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
                     Choose which memo to print
                 </p>
-            </div>
             
             <div class="space-y-3 mb-6">
-                <template x-for="memoNum in [1, 2, 3, 4]" :key="memoNum">
-                    <button @click="printMemo(memoNum)"
-                        class="w-full p-3 text-left bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-lg border border-purple-200 dark:border-purple-700 transition-colors"
-                        :disabled="printing">
-                        <div class="flex items-center justify-between">
-                            <span class="font-medium text-purple-800 dark:text-purple-200">
-                                Memo <span x-text="memoNum"></span>
-                            </span>
-                            <span class="text-xs text-purple-600 dark:text-purple-400">
-                                <template x-if="memos && memos[memoNum - 1]">
-                                    <span x-text="memos[memoNum - 1].content.substring(0, 30) + (memos[memoNum - 1].content.length > 30 ? '...' : '')"></span>
-                                </template>
-                            </span>
-                        </div>
-                    </button>
+                <!-- Loading state -->
+                <template x-if="memosLoading">
+                    <div class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading memos...</p>
+                    </div>
+                </template>
+                
+                <!-- Memo buttons (only show when loaded) -->
+                <template x-if="memosLoaded && !memosLoading">
+                    <div class="space-y-3">
+                        <template x-for="memoNum in [1, 2, 3, 4]" :key="memoNum">
+                            <button @click="printMemo(memoNum)"
+                                class="w-full p-3 text-left bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/40 rounded-lg border border-pink-200 dark:border-pink-700 transition-colors"
+                                :disabled="printing">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-pink-800 dark:text-pink-200">
+                                        Memo <span x-text="memoNum"></span>
+                                    </span>
+                                    <span class="text-xs text-pink-600 dark:text-pink-400">
+                                        <template x-if="memos && memos[memoNum - 1]">
+                                            <span x-text="memos[memoNum - 1].content.substring(0, 30) + (memos[memoNum - 1].content.length > 30 ? '...' : '')"></span>
+                                        </template>
+                                        <template x-if="!memos || !memos[memoNum - 1]">
+                                            <span class="text-gray-400">Empty</span>
+                                        </template>
+                                    </span>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
                 </template>
             </div>
-            
-            <div class="flex space-x-3">
-                <button @click="closeMemoModal()"
-                    class="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-                    Cancel
-                </button>
             </div>
         </div>
     </div>

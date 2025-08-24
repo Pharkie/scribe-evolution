@@ -73,8 +73,8 @@
 
                     <!-- Device Section -->
                     <div x-show="activeSection === 'device'" class="settings-section">
-                        <div class="settings-card settings-card-purple">
-                            <h2 class="settings-card-header settings-card-header-purple">
+                        <div class="settings-card settings-card-blue">
+                            <h2 class="settings-card-header settings-card-header-blue">
                                 <span class="text-3xl">⚙️</span>
                                 <span>Device</span>
                             </h2>
@@ -550,8 +550,8 @@
 
                     <!-- Memos Section -->
                     <div x-show="activeSection === 'memos'" class="settings-section">
-                        <div class="settings-card settings-card-purple">
-                            <h2 class="settings-card-header settings-card-header-purple">
+                        <div class="settings-card settings-card-pink">
+                            <h2 class="settings-card-header settings-card-header-pink">
                                 <span class="text-3xl">📝</span>
                                 <span>Memos</span>
                             </h2>
@@ -580,22 +580,18 @@
                             <div class="space-y-6">
                                 <template x-for="memoNum in [1, 2, 3, 4]" :key="memoNum">
                                     <div class="space-y-2">
-                                        <div class="flex justify-between items-center">
-                                            <label :for="`memo-${memoNum}`" class="form-label">
-                                                Memo <span x-text="memoNum"></span>:
-                                            </label>
-                                            <span class="text-xs font-mono"
-                                                :class="getMemoCharacterClass(memoNum)">
-                                                <span x-text="getMemoCharacterText(memoNum)"></span>/500
-                                            </span>
-                                        </div>
+                                        <label :for="`memo-${memoNum}`" class="form-label">
+                                            Memo <span x-text="memoNum"></span>:
+                                        </label>
                                         <textarea 
                                             :id="`memo-${memoNum}`" 
                                             rows="4"
-                                            :maxlength="500"
                                             class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
                                             :placeholder="`Enter memo ${memoNum} content with placeholders...`"
                                             :x-model="`config.memos.memo${memoNum}`"></textarea>
+                                        <div :class="getMemoCharacterClass(memoNum)" class="text-xs text-right font-mono">
+                                            <span x-text="getMemoCharacterText(memoNum)"></span>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -604,8 +600,8 @@
 
                     <!-- Buttons Section -->
                     <div x-show="activeSection === 'buttons'" class="settings-section">
-                        <div class="settings-card settings-card-orange">
-                            <h2 class="settings-card-header settings-card-header-orange">
+                        <div class="settings-card settings-card-teal">
+                            <h2 class="settings-card-header settings-card-header-teal">
                                 <span class="text-3xl">🎛️</span>
                                 <span>Button Actions</span>
                             </h2>

@@ -23,58 +23,10 @@
 // External message storage for printing
 extern Message currentMessage;
 
-void handleMemosGet(AsyncWebServerRequest *request)
-{
-    LOG_VERBOSE("WEB", "Memos GET requested from %s", request->client()->remoteIP().toString().c_str());
-
-    // Rate limiting check
-    if (isRateLimited())
-    {
-        request->send(429, "text/plain", getRateLimitReason());
-        return;
-    }
-
-    DynamicJsonDocument doc(2048);
-    JsonArray memos = doc.createNestedArray("memos");
-
-    Preferences prefs;
-    if (!prefs.begin("scribe-app", true)) // read-only
-    {
-        sendErrorResponse(request, 500, "Failed to access memo storage");
-        return;
-    }
-
-    // Get all 4 memos
-    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-
-    for (int i = 0; i < MEMO_COUNT; i++)
-    {
-        String memoContent = prefs.getString(memoKeys[i], "");
-        JsonObject memoObj = memos.createNestedObject();
-        memoObj["id"] = i + 1;
-        memoObj["content"] = memoContent;
-    }
-
-    prefs.end();
-
-    doc["success"] = true;
-    doc["message"] = "Memos retrieved successfully";
-
-    String response;
-    serializeJson(doc, response);
-    request->send(200, "application/json", response);
-}
 
 void handleMemoGet(AsyncWebServerRequest *request)
 {
     LOG_VERBOSE("WEB", "Memo GET requested from %s", request->client()->remoteIP().toString().c_str());
-
-    // Rate limiting check
-    if (isRateLimited())
-    {
-        request->send(429, "text/plain", getRateLimitReason());
-        return;
-    }
 
     // Get memo ID from path parameter
     String idParam = request->pathArg(0);
@@ -86,6 +38,7 @@ void handleMemoGet(AsyncWebServerRequest *request)
         return;
     }
 
+    // Get memo content from NVS
     Preferences prefs;
     if (!prefs.begin("scribe-app", true)) // read-only
     {
@@ -104,15 +57,18 @@ void handleMemoGet(AsyncWebServerRequest *request)
         return;
     }
 
+    // Expand placeholders (this is the key change - now returns processed content)
+    String expandedContent = processMemoPlaceholders(memoContent);
+
+    // Use simple format like other content endpoints (joke, quiz, etc.)
     DynamicJsonDocument doc(1024);
-    doc["success"] = true;
-    doc["message"] = "Memo retrieved successfully";
-    doc["id"] = memoId;
-    doc["content"] = memoContent;
+    doc["content"] = expandedContent;
 
     String response;
     serializeJson(doc, response);
     request->send(200, "application/json", response);
+
+    LOG_NOTICE("WEB", "Memo %d retrieved: %s", memoId, expandedContent.c_str());
 }
 
 void handleMemoUpdate(AsyncWebServerRequest *request)
@@ -197,6 +153,7 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
     LOG_NOTICE("WEB", "Memo %d updated successfully", memoId);
     sendSuccessResponse(request, "Memo updated successfully");
 }
+
 
 void handleMemoPrint(AsyncWebServerRequest *request)
 {

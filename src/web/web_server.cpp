@@ -343,7 +343,6 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
         
         // Memo API endpoints
-        registerRoute("GET", "/api/memos", "Get all memos", handleMemosGet, true);
         registerRoute("POST", "/api/memos", "Update all memos", handleMemosUpdate, true);
         
         // Individual memo operations - using path parameters
@@ -362,7 +361,7 @@ void setupWebServerRoutes(int maxChars)
         });
         
         // Track memo routes for diagnostics  
-        registeredRoutes.push_back({"GET", "/api/memo/{id}", "Get specific memo", true});
+        registeredRoutes.push_back({"GET", "/api/memo/{id}", "Get processed memo content", true});
         registeredRoutes.push_back({"POST", "/api/memo/{id}", "Update specific memo", true});
         registeredRoutes.push_back({"POST", "/api/memo/{id}/print", "Print specific memo", true});
         

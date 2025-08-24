@@ -40,6 +40,8 @@ function initializeIndexStore() {
     // Memo state
     memoModalVisible: false,
     memos: [],
+    memosLoading: false,
+    memosLoaded: false,
     printing: false,
     
     // Character limits - updated path for new structure
@@ -141,8 +143,8 @@ function initializeIndexStore() {
         this.localPrinterName = this.config.device.printer_name;
         console.log('📋 Index: Config loaded successfully, printer name:', this.localPrinterName);
         
-        // Load memos for modal
-        await this.loadMemos();
+        // Load memos from config data (no separate API call needed)
+        this.loadMemosFromConfig();
         
         // Clear any previous error and set loading to false on success
         this.error = null;
@@ -559,7 +561,7 @@ function initializeIndexStore() {
             break;
             
           case 'news':
-            // 📰 Newspaper effect - black and white squares/rectangles
+            // 📰 Newspaper effect - gray and white squares/rectangles to match gray button
             confetti({
               particleCount: 120,
               spread: 80,
@@ -567,11 +569,26 @@ function initializeIndexStore() {
                 x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
                 y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
               } : { y: 0.6 },
-              colors: ['#000000', '#ffffff', '#1f2937', '#f9fafb'], // Black and white tones
+              colors: ['#6b7280', '#9ca3af', '#d1d5db', '#f3f4f6'], // Gray tones to match gray button
               shapes: ['square'],
               scalar: 1.1,
               gravity: 0.9,
               drift: 0.05
+            });
+            break;
+            
+          case 'memo':
+            // 📝 Pink sparkles for memos
+            confetti({
+              particleCount: 100,
+              spread: 60,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 },
+              colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
+              scalar: 0.9,
+              startVelocity: 30
             });
             break;
             
@@ -618,31 +635,33 @@ function initializeIndexStore() {
     
     // === Memo Functions ===
     
-    async loadMemos() {
-      try {
-        console.log('📝 Loading memos...');
-        const response = await fetch('/api/memos');
-        
-        if (!response.ok) {
-          throw new Error(`Failed to load memos: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (data.success) {
-          this.memos = data.memos;
-          console.log('📝 Memos loaded:', this.memos);
-        } else {
-          throw new Error(data.message || 'Failed to load memos');
-        }
-      } catch (error) {
-        console.error('📝 Failed to load memos:', error);
-        this.showToast('Failed to load memos', 'error');
-      }
+    loadMemosFromConfig() {
+      // Don't reload if already loaded
+      if (this.memosLoaded) return;
+      
+      console.log('📝 Loading memos from config data...');
+      
+      // Convert config format to modal format
+      const configMemos = this.config.memos || {};
+      this.memos = [
+        { id: 1, content: configMemos.memo1 || '' },
+        { id: 2, content: configMemos.memo2 || '' },
+        { id: 3, content: configMemos.memo3 || '' },
+        { id: 4, content: configMemos.memo4 || '' }
+      ];
+      
+      this.memosLoaded = true;
+      console.log('📝 Memos loaded from config:', this.memos);
     },
     
-    showMemoModal() {
+    async showMemoModal() {
       console.log('📝 Opening memo modal');
       this.memoModalVisible = true;
+      
+      // Ensure memos are loaded
+      if (!this.memosLoaded) {
+        this.loadMemosFromConfig();
+      }
     },
     
     closeMemoModal() {
@@ -657,34 +676,50 @@ function initializeIndexStore() {
         this.printing = true;
         console.log(`📝 Printing memo ${memoId}...`);
         
-        const response = await fetch(`/api/memo/${memoId}/print`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+        // Step 1: Get processed memo content (clean GET request)
+        const response = await fetch(`/api/memo/${memoId}`);
         
         if (!response.ok) {
-          throw new Error(`Failed to print memo: ${response.status}`);
+          throw new Error(`Failed to get memo: ${response.status}`);
         }
         
-        const data = await response.json();
-        if (data.success) {
-          this.showToast(`Memo ${memoId} sent to printer!`, 'success');
+        const memoData = await response.json();
+        if (!memoData.content) {
+          throw new Error('No memo content received');
+        }
+        
+        console.log(`📝 Memo ${memoId} retrieved: ${memoData.content}`);
+        
+        // Step 2: Print using the same method as other buttons
+        let printResponse;
+        if (this.selectedPrinter === 'local-direct') {
+          printResponse = await window.IndexAPI.printLocalContent(memoData.content);
+        } else {
+          printResponse = await window.IndexAPI.printMQTTContent(memoData.content, this.selectedPrinter);
+        }
+        
+        if (printResponse.success) {
+          // Set active action to show "Scribed" on memo button
+          this.activeQuickAction = 'memo';
           this.closeMemoModal();
           
-          // Purple sparkle confetti celebration
+          // Pink sparkle confetti celebration (keep the confetti!)
           if (window.confetti) {
             confetti({
-              colors: ['#8B5CF6', '#A855F7', '#C084FC'],
+              colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
               startVelocity: 30,
               spread: 360,
               ticks: 60,
               zIndex: 0
             });
           }
+          
+          // Reset active action after 2 seconds like other quick actions
+          setTimeout(() => {
+            this.activeQuickAction = null;
+          }, 2000);
         } else {
-          throw new Error(data.message || 'Failed to print memo');
+          throw new Error(printResponse.message || 'Failed to print memo');
         }
       } catch (error) {
         console.error(`📝 Failed to print memo ${memoId}:`, error);

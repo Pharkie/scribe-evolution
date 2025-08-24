@@ -258,11 +258,11 @@ function initializeSettingsStore() {
         
         // Section definitions for navigation
         sections: [
-            { id: 'device', name: 'Device', icon: '⚙️', color: 'purple' },
+            { id: 'device', name: 'Device', icon: '⚙️', color: 'blue' },
+            { id: 'memos', name: 'Memos', icon: '📝', color: 'pink' },
             { id: 'mqtt', name: 'MQTT', icon: '📡', color: 'yellow' },
             { id: 'unbidden', name: 'Unbidden Ink', icon: '🎲', color: 'green' },
-            { id: 'memos', name: 'Memos', icon: '📝', color: 'purple' },
-            { id: 'buttons', name: 'Buttons', icon: '🎛️', color: 'orange' },
+            { id: 'buttons', name: 'Buttons', icon: '🎛️', color: 'teal' },
             { id: 'leds', name: 'LEDs', icon: '🌈', color: 'purple' }
         ],
         
@@ -520,6 +520,12 @@ function initializeSettingsStore() {
                     frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
                     prompt: this.config.unbiddenInk.prompt
                     // Only include chatgptApiToken if it was modified by user
+                },
+                memos: {
+                    memo1: this.config.memos.memo1,
+                    memo2: this.config.memos.memo2,
+                    memo3: this.config.memos.memo3,
+                    memo4: this.config.memos.memo4
                 },
                 buttons: {
                     // Include individual button configurations
@@ -893,6 +899,13 @@ ${urlLine}`;
                 this.validateField(fieldName, value);
             });
             
+            // Check memo character limits - block saving if any memo is over limit
+            if (!this.canSaveAllMemos) {
+                const overLimitMemos = [1, 2, 3, 4].filter(memoNum => !this.canSaveMemo(memoNum));
+                this.validation.errors['memos'] = `Memo ${overLimitMemos.join(', ')} ${overLimitMemos.length === 1 ? 'is' : 'are'} over the character limit`;
+                this.validation.isValid = false;
+            }
+            
             console.log('Validation errors:', this.validation.errors);
             console.log('Form is valid:', this.validation.isValid);
             
@@ -904,28 +917,47 @@ ${urlLine}`;
             return fieldName.split('.').reduce((obj, key) => obj && obj[key], this.config);
         },
         
-        // Memo character counting functions
+        // Memo character counting functions - matches index page behavior
         getMemoCharacterCount(memoNum) {
             const memoKey = `memo${memoNum}`;
             return this.config.memos[memoKey]?.length || 0;
         },
         
-        getMemoCharacterStatus(memoNum) {
+        getMemoCharacterText(memoNum) {
             const count = this.getMemoCharacterCount(memoNum);
             const limit = 500; // MEMO_MAX_LENGTH from config.h
-            
-            if (count === 0) return { class: 'text-gray-500', text: '0' };
-            if (count >= limit * 0.9) return { class: 'text-red-600', text: count };
-            if (count >= limit * 0.8) return { class: 'text-yellow-600', text: count };
-            return { class: 'text-green-600', text: count };
+            if (count > limit) {
+                const over = count - limit;
+                return `${count}/${limit} (${over} over limit)`;
+            }
+            return `${count}/${limit}`;
         },
         
         getMemoCharacterClass(memoNum) {
-            return this.getMemoCharacterStatus(memoNum).class;
+            const count = this.getMemoCharacterCount(memoNum);
+            const limit = 500; // MEMO_MAX_LENGTH from config.h
+            const percentage = count / limit;
+            
+            if (count > limit) {
+                // Over 100% - red and bold (matches index page)
+                return 'text-red-600 dark:text-red-400 font-semibold';
+            } else if (percentage >= 0.9) {
+                // 90-100% - yellow warning (matches index page)
+                return 'text-yellow-700 dark:text-yellow-300 font-medium';
+            } else {
+                // Under 90% - normal gray (matches index page)
+                return 'text-gray-500 dark:text-gray-400';
+            }
         },
         
-        getMemoCharacterText(memoNum) {
-            return this.getMemoCharacterStatus(memoNum).text;
+        canSaveMemo(memoNum) {
+            const count = this.getMemoCharacterCount(memoNum);
+            const limit = 500; // MEMO_MAX_LENGTH from config.h
+            return count <= limit;
+        },
+        
+        get canSaveAllMemos() {
+            return [1, 2, 3, 4].every(memoNum => this.canSaveMemo(memoNum));
         },
         
         // LED effect functions (WLED-style unified interface)

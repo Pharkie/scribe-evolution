@@ -13,21 +13,13 @@
 #include <ESPAsyncWebServer.h>
 #include "../core/config.h"
 
-/**
- * @brief Handle memo retrieval request
- * @param request The HTTP request
- * 
- * Endpoint: GET /api/memos
- * Returns all 4 configured memos as JSON array
- */
-void handleMemosGet(AsyncWebServerRequest *request);
 
 /**
  * @brief Handle individual memo retrieval request  
  * @param request The HTTP request
  * 
  * Endpoint: GET /api/memo/{id}
- * Returns specific memo by ID (1-4)
+ * Returns processed memo content with placeholders expanded (ready for printing)
  */
 void handleMemoGet(AsyncWebServerRequest *request);
 

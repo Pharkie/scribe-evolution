@@ -363,46 +363,28 @@ function createRequestHandler() {
           });
         }, 500);
         
-      } else if (pathname === '/api/memos' && req.method === 'GET') {
-        console.log('📝 Memos GET requested');
-        sendJSON(res, {
-          success: true,
-          message: "Memos retrieved successfully",
-          memos: [
-            { id: 1, content: mockConfig.memos.memo1 },
-            { id: 2, content: mockConfig.memos.memo2 },
-            { id: 3, content: mockConfig.memos.memo3 },
-            { id: 4, content: mockConfig.memos.memo4 }
-          ]
-        });
-        
       } else if (pathname.match(/^\/api\/memo\/([1-4])$/) && req.method === 'GET') {
         const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])$/)[1]);
         console.log(`📝 Memo ${memoId} GET requested`);
         
         const memoKeys = ['memo1', 'memo2', 'memo3', 'memo4'];
         const memoContent = mockConfig.memos[memoKeys[memoId - 1]];
+        const expandedContent = expandPlaceholders(memoContent);
         
+        // Use simple format like other content endpoints (joke, quiz, etc.)
         sendJSON(res, {
-          success: true,
-          message: "Memo retrieved successfully",
-          id: memoId,
-          content: memoContent
+          content: expandedContent
         });
         
       } else if (pathname.match(/^\/api\/memo\/([1-4])\/print$/) && req.method === 'POST') {
         const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])\/print$/)[1]);
         console.log(`📝 Memo ${memoId} PRINT requested`);
         
-        const memoKeys = ['memo1', 'memo2', 'memo3', 'memo4'];
-        const memoContent = mockConfig.memos[memoKeys[memoId - 1]];
-        const expandedContent = expandPlaceholders(memoContent);
-        
         setTimeout(() => {
+          // Match sendSuccessResponse format - no content needed for print endpoint
           sendJSON(res, {
             success: true,
-            message: "Memo queued for printing",
-            content: expandedContent
+            message: "Memo queued for printing"
           });
         }, 200);
         
