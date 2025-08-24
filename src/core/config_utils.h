@@ -106,6 +106,9 @@ inline const char *getDeviceOwnerKey()
 // Main configuration validation function (includes GPIO validation)
 void validateConfig();
 
+// GPIO usage summary function
+void logGPIOUsageSummary();
+
 // Simple validation functions
 inline ValidationResult validateDeviceConfig()
 {

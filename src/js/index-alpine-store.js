@@ -106,7 +106,7 @@ function initializeIndexStore() {
         this.error = error.message;
         this.loading = false;
       }
-      
+
       this.initializePrinterDiscovery();
       this.setupEventListeners();
       console.log('📋 Index: Initialization complete');
@@ -239,6 +239,9 @@ function initializeIndexStore() {
           await window.IndexAPI.printMQTTContent(message, this.selectedPrinter);
         }
         
+        // 🎊 Trigger confetti celebration for successful submission!
+        this.triggerSubmitCelebration();
+        
         // Clear form on success
         this.message = '';
         
@@ -275,6 +278,10 @@ function initializeIndexStore() {
         } else {
           await window.IndexAPI.printMQTTContent(contentResult.content, this.selectedPrinter);
         }
+        
+        // 🎊 Trigger confetti celebration for successful quick action!
+        this.triggerQuickActionCelebration(action);
+        
         // Note: No success toast - button state change provides feedback
         
       } catch (error) {
@@ -474,6 +481,125 @@ function initializeIndexStore() {
         // Clean up URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
+      }
+    },
+
+    // Confetti Celebration Methods
+    triggerQuickActionCelebration(action) {
+      if (typeof confetti !== 'undefined') {
+        const buttonElement = document.querySelector(`[data-action="${action}"]`);
+        const buttonRect = buttonElement?.getBoundingClientRect();
+        
+        // Different effects for different actions
+        switch(action) {
+          case 'riddle':
+            // 🧩 Puzzle pieces effect for riddles
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 },
+              colors: ['#f59e0b', '#eab308', '#facc15', '#fde047'], // Yellow tones
+              shapes: ['square']
+            });
+            break;
+            
+          case 'joke':
+            // 😄 Happy burst for jokes
+            confetti({
+              particleCount: 150,
+              spread: 90,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 },
+              colors: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0'], // Emerald tones
+              scalar: 1.2
+            });
+            break;
+            
+          case 'quote':
+            // ✨ Elegant sparkles for quotes
+            confetti({
+              particleCount: 80,
+              spread: 45,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 },
+              colors: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#e0e7ff'], // Purple tones
+              scalar: 0.8,
+              shapes: ['star']
+            });
+            break;
+            
+          case 'quiz':
+            // 🎯 Target burst for quiz
+            confetti({
+              particleCount: 120,
+              spread: 360,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 },
+              colors: ['#06b6d4', '#67e8f9', '#a5f3fc', '#cffafe'], // Cyan tones
+              startVelocity: 45,
+              decay: 0.85
+            });
+            break;
+            
+          case 'news':
+            // 📰 Newspaper effect - black and white squares/rectangles
+            confetti({
+              particleCount: 120,
+              spread: 80,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 },
+              colors: ['#000000', '#ffffff', '#1f2937', '#f9fafb'], // Black and white tones
+              shapes: ['square'],
+              scalar: 1.1,
+              gravity: 0.9,
+              drift: 0.05
+            });
+            break;
+            
+          default:
+            // Default celebration
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: buttonRect ? { 
+                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+              } : { y: 0.6 }
+            });
+        }
+      }
+    },
+
+    triggerSubmitCelebration() {
+      if (typeof confetti !== 'undefined') {
+        const submitButton = document.querySelector('#main-submit-btn');
+        const buttonRect = submitButton?.getBoundingClientRect();
+        
+        // 🖨️ Printer celebration with single blue burst
+        const origin = buttonRect ? { 
+          x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+          y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+        } : { y: 0.6 };
+        
+        // Single blue burst celebration
+        confetti({
+          particleCount: 200,
+          spread: 100,
+          origin,
+          colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'], // Blue tones only
+          scalar: 1.5
+        });
       }
     },
     
