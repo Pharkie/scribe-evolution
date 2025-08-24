@@ -33,14 +33,6 @@ void handleMemoGet(AsyncWebServerRequest *request);
  */
 void handleMemoUpdate(AsyncWebServerRequest *request);
 
-/**
- * @brief Handle memo printing request
- * @param request The HTTP request
- * 
- * Endpoint: POST /api/memo/{id}/print
- * Expands placeholders and prints specific memo
- */
-void handleMemoPrint(AsyncWebServerRequest *request);
 
 /**
  * @brief Handle all memos update request  

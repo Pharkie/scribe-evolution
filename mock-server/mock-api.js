@@ -421,18 +421,6 @@ function createRequestHandler() {
           content: expandedContent
         });
         
-      } else if (pathname.match(/^\/api\/memo\/([1-4])\/print$/) && req.method === 'POST') {
-        const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])\/print$/)[1]);
-        console.log(`📝 Memo ${memoId} PRINT requested`);
-        
-        setTimeout(() => {
-          // Match sendSuccessResponse format - no content needed for print endpoint
-          sendJSON(res, {
-            success: true,
-            message: "Memo queued for printing"
-          });
-        }, 200);
-        
       } else {
         sendJSON(res, { error: 'API endpoint not found' }, 404);
       }

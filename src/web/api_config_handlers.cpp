@@ -312,11 +312,17 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Parse JSON to validate structure
-    DynamicJsonDocument doc(largeJsonDocumentSize);
+    // Parse JSON to validate structure - use larger buffer for config POST
+    DynamicJsonDocument doc(8192); // 8KB buffer for large config JSON
+    
+    LOG_VERBOSE("WEB", "Config POST body length: %d", body.length());
+    LOG_VERBOSE("WEB", "Config POST body (first 200 chars): %s", body.substring(0, 200).c_str());
+    
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
+        LOG_ERROR("WEB", "JSON deserialization failed: %s", error.c_str());
+        LOG_ERROR("WEB", "JSON body length: %d", body.length());
         sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
         return;
     }

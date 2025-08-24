@@ -172,9 +172,20 @@ void registerRoute(const char *method, const char *path, const char *description
         server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
                   { handler(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
                   {
-            String body;
-            for (size_t i = 0; i < len; i++) body += (char)data[i];
-            storeRequestBody(request, body); });
+            // Handle chunked upload properly
+            String *bodyPtr = static_cast<String*>(request->_tempObject);
+            if (index == 0) {
+                // First chunk - create new string
+                if (bodyPtr) delete bodyPtr;
+                bodyPtr = new String();
+                request->_tempObject = bodyPtr;
+                bodyPtr->reserve(total); // Reserve space for entire body
+            }
+            
+            // Append this chunk
+            for (size_t i = 0; i < len; i++) {
+                *bodyPtr += (char)data[i];
+            } });
     }
 
     // Track for diagnostics
@@ -222,9 +233,20 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
     server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
               { handler(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
               {
-            String body;
-            for (size_t i = 0; i < len; i++) body += (char)data[i];
-            storeRequestBody(request, body); });
+            // Handle chunked upload properly
+            String *bodyPtr = static_cast<String*>(request->_tempObject);
+            if (index == 0) {
+                // First chunk - create new string
+                if (bodyPtr) delete bodyPtr;
+                bodyPtr = new String();
+                request->_tempObject = bodyPtr;
+                bodyPtr->reserve(total); // Reserve space for entire body
+            }
+            
+            // Append this chunk
+            for (size_t i = 0; i < len; i++) {
+                *bodyPtr += (char)data[i];
+            } });
 }
 
 void setupWebServerRoutes(int maxChars)
@@ -248,9 +270,20 @@ void setupWebServerRoutes(int maxChars)
         server.on("/config", HTTP_POST, [](AsyncWebServerRequest *request)
                   { handleConfigPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
                   {
-            String body;
-            for (size_t i = 0; i < len; i++) body += (char)data[i];
-            storeRequestBody(request, body); });
+            // Handle chunked upload properly
+            String *bodyPtr = static_cast<String*>(request->_tempObject);
+            if (index == 0) {
+                // First chunk - create new string
+                if (bodyPtr) delete bodyPtr;
+                bodyPtr = new String();
+                request->_tempObject = bodyPtr;
+                bodyPtr->reserve(total); // Reserve space for entire body
+            }
+            
+            // Append this chunk
+            for (size_t i = 0; i < len; i++) {
+                *bodyPtr += (char)data[i];
+            } });
 
         // CSS and JS files (always needed) - serve entire directories from LittleFS
         server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
@@ -352,18 +385,25 @@ void setupWebServerRoutes(int maxChars)
         server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request) {
             handleMemoUpdate(request);
         }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-            String body;
-            for (size_t i = 0; i < len; i++) body += (char)data[i];
-            storeRequestBody(request, body);
-        });
-        server.on("^\\/api\\/memo\\/([1-4])\\/print$", HTTP_POST, [](AsyncWebServerRequest *request) {
-            handleMemoPrint(request);
+            // Handle chunked upload properly
+            String *bodyPtr = static_cast<String*>(request->_tempObject);
+            if (index == 0) {
+                // First chunk - create new string
+                if (bodyPtr) delete bodyPtr;
+                bodyPtr = new String();
+                request->_tempObject = bodyPtr;
+                bodyPtr->reserve(total); // Reserve space for entire body
+            }
+            
+            // Append this chunk
+            for (size_t i = 0; i < len; i++) {
+                *bodyPtr += (char)data[i];
+            }
         });
         
         // Track memo routes for diagnostics  
         registeredRoutes.push_back({"GET", "/api/memo/{id}", "Get processed memo content", true});
         registeredRoutes.push_back({"POST", "/api/memo/{id}", "Update specific memo", true});
-        registeredRoutes.push_back({"POST", "/api/memo/{id}/print", "Print specific memo", true});
         
         registerRoute("GET", "/api/diagnostics", "System diagnostics", handleDiagnostics, true);
         registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump", handleNVSDump, true);

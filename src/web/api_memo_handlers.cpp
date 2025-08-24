@@ -160,64 +160,6 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
 }
 
 
-void handleMemoPrint(AsyncWebServerRequest *request)
-{
-    LOG_VERBOSE("WEB", "Memo PRINT requested from %s", request->client()->remoteIP().toString().c_str());
-
-    // Check request method
-    if (request->method() != HTTP_POST)
-    {
-        sendErrorResponse(request, 405, "Method not allowed");
-        return;
-    }
-
-    // Rate limiting check
-    if (isRateLimited())
-    {
-        request->send(429, "text/plain", getRateLimitReason());
-        return;
-    }
-
-    // Get memo ID from path parameter
-    String idParam = request->pathArg(0);
-    int memoId = idParam.toInt();
-
-    if (memoId < 1 || memoId > MEMO_COUNT)
-    {
-        sendErrorResponse(request, 400, "Invalid memo ID. Must be 1-4");
-        return;
-    }
-
-    // Get memo content from NVS
-    Preferences prefs;
-    if (!prefs.begin("scribe-app", true)) // read-only
-    {
-        sendErrorResponse(request, 500, "Failed to access memo storage");
-        return;
-    }
-
-    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-
-    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
-    prefs.end();
-    
-    if (memoContent.isEmpty())
-    {
-        sendErrorResponse(request, 404, "Memo not found");
-        return;
-    }
-
-    // Expand placeholders
-    String expandedContent = processMemoPlaceholders(memoContent);
-
-    // Queue for printing
-    currentMessage.message = expandedContent;
-    currentMessage.timestamp = getFormattedDateTime();
-    currentMessage.hasMessage = true;
-
-    LOG_NOTICE("WEB", "Memo %d queued for printing: %s", memoId, expandedContent.c_str());
-    sendSuccessResponse(request, "Memo queued for printing");
-}
 
 void handleMemosUpdate(AsyncWebServerRequest *request)
 {
