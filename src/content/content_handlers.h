@@ -14,6 +14,7 @@
 #include <PubSubClient.h>
 #include <ESPAsyncWebServer.h>
 #include "../core/shared_types.h"
+#include "../web/api_memo_handlers.h"  // For MEMO_COUNT definition
 
 // External variable reference
 extern Message currentMessage;
@@ -75,6 +76,13 @@ bool generateAndQueueQuote();
 bool generateAndQueueQuiz();
 bool generateAndQueuePrintTest();
 bool generateAndQueueNews();
+
+/**
+ * @brief Generate memo content without queuing
+ * @param memoId The memo ID (1-4) to generate content for
+ * @return The expanded memo content or empty string if failed
+ */
+String generateMemoContent(int memoId);
 
 /**
  * @brief Generate and queue memo content for internal calls (hardware buttons)

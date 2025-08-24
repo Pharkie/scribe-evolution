@@ -413,6 +413,38 @@ String loadPrintTestContent()
     return content;
 }
 
+String generateMemoContent(int memoId)
+{
+    if (memoId < 1 || memoId > MEMO_COUNT)
+    {
+        LOG_ERROR("CONTENT", "Invalid memo ID: %d", memoId);
+        return "";
+    }
+
+    // Get memo content from NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) // read-only
+    {
+        LOG_ERROR("CONTENT", "Failed to access memo storage");
+        return "";
+    }
+
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    
+    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
+    prefs.end();
+    
+    if (memoContent.isEmpty())
+    {
+        LOG_ERROR("CONTENT", "Memo %d not found in storage", memoId);
+        return "";
+    }
+
+    // Expand placeholders
+    String expandedContent = processMemoPlaceholders(memoContent);
+    return expandedContent;
+}
+
 bool generateAndQueueMemo(int memoId)
 {
     if (memoId < 1 || memoId > MEMO_COUNT)

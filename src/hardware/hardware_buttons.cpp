@@ -550,22 +550,6 @@ bool executeButtonActionDirect(const char *actionType)
 
     String actionString = String(actionType);
     
-    // Check if this is a memo action (e.g., "MEMO1", "MEMO2", etc.)
-    if (actionString.startsWith("MEMO"))
-    {
-        int memoId = actionString.substring(4).toInt(); // Extract number after "MEMO"
-        if (memoId >= 1 && memoId <= MEMO_COUNT)
-        {
-            LOG_VERBOSE("BUTTONS", "Processing memo action for memo %d", memoId);
-            return generateAndQueueMemo(memoId);
-        }
-        else
-        {
-            LOG_ERROR("BUTTONS", "Invalid memo ID in action: %s", actionType);
-            return false;
-        }
-    }
-
     // Convert action type string to ContentActionType enum using utility function
     ContentActionType contentAction = stringToActionType(actionString);
 
