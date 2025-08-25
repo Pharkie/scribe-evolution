@@ -224,6 +224,62 @@ async function scanWiFiNetworks() {
     }
 }
 
+/**
+ * Load memos from server API
+ * @returns {Promise<Object>} Memos object from server
+ */
+async function loadMemos() {
+    try {
+        console.log('API: Loading memos from server...');
+        
+        const response = await fetch('/api/memos');
+        if (!response.ok) {
+            throw new Error(`Memos API returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const memos = await response.json();
+        console.log('API: Memos loaded successfully');
+        return memos;
+        
+    } catch (error) {
+        console.error('API: Failed to load memos:', error);
+        throw error;
+    }
+}
+
+/**
+ * Save memos to server API
+ * @param {Object} memosData - Memos object to save
+ * @returns {Promise<string>} Server response message
+ */
+async function saveMemos(memosData) {
+    try {
+        console.log('API: Sending memos to server...');
+        
+        const response = await fetch('/api/memos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(memosData)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API: Server error response:', errorText);
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.text();
+        console.log('API: Server response:', result);
+        return result;
+        
+    } catch (error) {
+        console.error('API: Failed to save memos:', error);
+        throw error;
+    }
+}
+
 // Export API module
 window.SettingsAPI = {
     loadConfiguration,
@@ -232,5 +288,7 @@ window.SettingsAPI = {
     printLocalContent,
     triggerLedEffect,
     turnOffLeds,
-    scanWiFiNetworks
+    scanWiFiNetworks,
+    loadMemos,
+    saveMemos
 };

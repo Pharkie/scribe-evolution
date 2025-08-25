@@ -850,6 +850,8 @@ void handleMemosGet(AsyncWebServerRequest *request)
 
 void handleMemosPost(AsyncWebServerRequest *request)
 {
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    
     LOG_VERBOSE("WEB", "handleMemosPost() called");
     
     // Get request body
@@ -885,10 +887,10 @@ void handleMemosPost(AsyncWebServerRequest *request)
             String memoContent = memosDoc[memoNames[i]].as<String>();
             
             // Validate memo length
-            if (memoContent.length() > maxMemoLength) {
+            if (memoContent.length() > MEMO_MAX_LENGTH) {
                 prefs.end();
                 sendErrorResponse(request, 400, 
-                    String("Memo ") + String(i+1) + " exceeds maximum length of " + String(maxMemoLength) + " characters");
+                    String("Memo ") + String(i+1) + " exceeds maximum length of " + String(MEMO_MAX_LENGTH) + " characters");
                 return;
             }
             

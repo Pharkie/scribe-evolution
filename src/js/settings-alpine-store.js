@@ -41,45 +41,45 @@ function initializeSettingsStore() {
         // Configuration data (reactive) - matching backend API structure
         config: {
             device: {
-                owner: '',
-                timezone: '',
-                maxCharacters: 1000,
-                mqtt_topic: '',
-                mdns: '',
+                owner: null, // Will be set from backend
+                timezone: null, // Will be set from backend
+                maxCharacters: null, // Will be set from backend
+                mqtt_topic: null, // Will be set from backend
+                mdns: null, // Will be set from backend
                 // WiFi nested under device
                 wifi: {
-                    ssid: '',
-                    password: '',
-                    connect_timeout: 15000,
-                    fallback_ap_ssid: '',
-                    fallback_ap_password: '',
-                    fallback_ap_mdns: '',
-                    fallback_ap_ip: '',
+                    ssid: null, // Will be set from backend
+                    password: null, // Will be set from backend
+                    connect_timeout: null, // Will be set from backend
+                    fallback_ap_ssid: null, // Will be set from backend
+                    fallback_ap_password: null, // Will be set from backend
+                    fallback_ap_mdns: null, // Will be set from backend
+                    fallback_ap_ip: null, // Will be set from backend
                     status: {
-                        connected: false,
-                        ip_address: '',
-                        mac_address: '',
-                        gateway: '',
-                        dns: '',
-                        signal_strength: ''
+                        connected: null, // Will be set from backend
+                        ip_address: null, // Will be set from backend
+                        mac_address: null, // Will be set from backend
+                        gateway: null, // Will be set from backend
+                        dns: null, // Will be set from backend
+                        signal_strength: null // Will be set from backend
                     }
                 }
             },
             mqtt: {
-                server: '',
-                port: 1883,
-                username: '',
-                password: '',
-                connected: false
+                server: null, // Will be set from backend
+                port: null, // Will be set from backend
+                username: null, // Will be set from backend
+                password: null, // Will be set from backend
+                connected: null // Will be set from backend
             },
             unbiddenInk: {
-                enabled: false,
-                startHour: 9,
-                endHour: 21,
-                frequencyMinutes: 180,
-                prompt: 'Generate something creative and interesting',
-                chatgptApiToken: '',
-                promptPresets: {} // Loaded from backend
+                enabled: null, // Will be set from backend
+                startHour: null, // Will be set from backend
+                endHour: null, // Will be set from backend
+                frequencyMinutes: null, // Will be set from backend
+                prompt: null, // Will be set from backend
+                chatgptApiToken: null, // Will be set from backend
+                promptPresets: null // Will be set from backend
             },
             memos: {
                 memo1: '',
@@ -98,46 +98,46 @@ function initializeSettingsStore() {
                 // Individual button configurations
                 button1: { 
                     gpio: null, // Will be populated from API
-                    shortAction: '', 
-                    longAction: '', 
-                    shortMqttTopic: '', 
-                    longMqttTopic: '',
-                    shortLedEffect: 'chase_single',
-                    longLedEffect: 'chase_single'
+                    shortAction: null, // Will be set from backend
+                    longAction: null, // Will be set from backend
+                    shortMqttTopic: null, // Will be set from backend
+                    longMqttTopic: null, // Will be set from backend
+                    shortLedEffect: null, // Will be set from backend
+                    longLedEffect: null // Will be set from backend
                 },
                 button2: { 
                     gpio: null, // Will be populated from API
-                    shortAction: '', 
-                    longAction: '', 
-                    shortMqttTopic: '', 
-                    longMqttTopic: '',
-                    shortLedEffect: 'chase_single',
-                    longLedEffect: 'chase_single'
+                    shortAction: null, // Will be set from backend
+                    longAction: null, // Will be set from backend
+                    shortMqttTopic: null, // Will be set from backend
+                    longMqttTopic: null, // Will be set from backend
+                    shortLedEffect: null, // Will be set from backend
+                    longLedEffect: null // Will be set from backend
                 },
                 button3: { 
                     gpio: null, // Will be populated from API
-                    shortAction: '', 
-                    longAction: '', 
-                    shortMqttTopic: '', 
-                    longMqttTopic: '',
-                    shortLedEffect: 'chase_single',
-                    longLedEffect: 'chase_single'
+                    shortAction: null, // Will be set from backend
+                    longAction: null, // Will be set from backend
+                    shortMqttTopic: null, // Will be set from backend
+                    longMqttTopic: null, // Will be set from backend
+                    shortLedEffect: null, // Will be set from backend
+                    longLedEffect: null // Will be set from backend
                 },
                 button4: { 
                     gpio: null, // Will be populated from API
-                    shortAction: '', 
-                    longAction: '', 
-                    shortMqttTopic: '', 
-                    longMqttTopic: '',
-                    shortLedEffect: 'chase_single',
-                    longLedEffect: 'chase_single'
+                    shortAction: null, // Will be set from backend
+                    longAction: null, // Will be set from backend
+                    shortMqttTopic: null, // Will be set from backend
+                    longMqttTopic: null, // Will be set from backend
+                    shortLedEffect: null, // Will be set from backend
+                    longLedEffect: null // Will be set from backend
                 }
             },
             leds: {
-                pin: 4,
-                count: 60,
-                brightness: 128,
-                refreshRate: 60
+                pin: null, // Will be set from backend
+                count: null,
+                brightness: null,
+                refreshRate: null
             }
         },
         
@@ -349,11 +349,17 @@ function initializeSettingsStore() {
             
             this.loading = true;
             try {
-                // Use existing SettingsAPI
-                const serverConfig = await window.SettingsAPI.loadConfiguration();
+                // Load configuration and memos separately
+                const [serverConfig, memos] = await Promise.all([
+                    window.SettingsAPI.loadConfiguration(),
+                    window.SettingsAPI.loadMemos()
+                ]);
                 
                 // Deep merge server config into reactive state
                 this.mergeConfig(serverConfig);
+                
+                // Load memos separately
+                this.loadMemos(memos);
                 
                 // Initialize WiFi state machine with current SSID
                 this.initializeWiFiState();
@@ -361,7 +367,7 @@ function initializeSettingsStore() {
                 // Set up watchers for password field changes after initial load
                 this.setupPasswordWatchers();
                 
-                console.log('Alpine Store: Configuration loaded successfully');
+                console.log('Alpine Store: Configuration and memos loaded successfully');
                 
                 // Don't automatically scan WiFi networks - user must initiate
                 // await this.scanWiFiNetworks();
@@ -372,6 +378,21 @@ function initializeSettingsStore() {
                 // Don't show message here - let the UI handle the error display
             } finally {
                 this.loading = false;
+            }
+        },
+        
+        // Load memos into reactive state
+        loadMemos(memosData) {
+            console.log('🔧 Loading memos:', memosData);
+            
+            if (memosData) {
+                this.config.memos.memo1 = memosData.memo1 || '';
+                this.config.memos.memo2 = memosData.memo2 || '';
+                this.config.memos.memo3 = memosData.memo3 || '';
+                this.config.memos.memo4 = memosData.memo4 || '';
+                console.log('✅ Memos loaded successfully');
+            } else {
+                console.warn('⚠️ No memos data provided');
             }
         },
         
@@ -399,6 +420,12 @@ function initializeSettingsStore() {
                 const hasChanged = newValue !== this.originalMaskedValues.chatgptApiToken;
                 this.passwordsModified.chatgptApiToken = hasChanged && !isMasked;
                 console.log('ChatGPT API token modified:', this.passwordsModified.chatgptApiToken);
+            });
+            
+            // Watch for LED pin changes to debug dropdown issue
+            this.$watch('config.leds.pin', (newValue, oldValue) => {
+                console.log('🔌 LED pin watcher triggered:', oldValue, '->', newValue, '(type:', typeof newValue, ')');
+                console.log('🔌 Available GPIO options at time of change:', this.gpioOptions.map(opt => opt.value));
             });
         },
         
@@ -529,12 +556,6 @@ function initializeSettingsStore() {
                     prompt: this.config.unbiddenInk.prompt
                     // Only include chatgptApiToken if it was modified by user
                 },
-                memos: {
-                    memo1: this.config.memos.memo1,
-                    memo2: this.config.memos.memo2,
-                    memo3: this.config.memos.memo3,
-                    memo4: this.config.memos.memo4
-                },
                 buttons: {
                     // Include individual button configurations
                     button1: this.config.buttons.button1,
@@ -573,6 +594,19 @@ function initializeSettingsStore() {
             return cleanConfig;
         },
         
+        // Create a clean memos object for server submission
+        createCleanMemos() {
+            const cleanMemos = {
+                memo1: this.config.memos.memo1,
+                memo2: this.config.memos.memo2,
+                memo3: this.config.memos.memo3,
+                memo4: this.config.memos.memo4
+            };
+            
+            console.log('Alpine Store: Created clean memos for server:', cleanMemos);
+            return cleanMemos;
+        },
+        
         // Save configuration to server
         async saveConfiguration() {
             // Validate form before saving
@@ -592,18 +626,23 @@ function initializeSettingsStore() {
             
             this.saving = true;
             try {
-                // Create a clean copy of config without read-only fields
+                // Create clean copies of config and memos
                 const cleanConfig = this.createCleanConfig();
+                const cleanMemos = this.createCleanMemos();
                 
-                // Use existing SettingsAPI with cleaned config
-                const message = await window.SettingsAPI.saveConfiguration(cleanConfig);
+                // Save to both endpoints sequentially to avoid rate limiting
+                console.log('Saving configuration first...');
+                const configMessage = await window.SettingsAPI.saveConfiguration(cleanConfig);
+                
+                console.log('Configuration saved, now saving memos...');
+                const memosMessage = await window.SettingsAPI.saveMemos(cleanMemos);
                 
                 this.showValidationFeedback = false;
                 
                 // Redirect to index page with stashed indicator
                 window.location.href = '/?settings=stashed';
                 
-                console.log('Alpine Store: Configuration saved successfully');
+                console.log('Alpine Store: Configuration and memos saved successfully');
             } catch (error) {
                 console.error('Alpine Store: Failed to save configuration:', error);
                 window.showMessage('Failed to save configuration: ' + error.message, 'error');
@@ -709,11 +748,11 @@ ${urlLine}`;
             
             // Device - log errors for missing critical values
             if (serverConfig.device) {
-                this.config.device.owner = serverConfig.device.owner || '';
-                this.config.device.timezone = serverConfig.device.timezone || '';
-                this.config.device.mqtt_topic = serverConfig.device.mqtt_topic || '';
-                this.config.device.mdns = serverConfig.device.mdns || '';
-                this.config.device.maxCharacters = serverConfig.device.maxCharacters || 1000;
+                this.config.device.owner = serverConfig.device.owner;
+                this.config.device.timezone = serverConfig.device.timezone;
+                this.config.device.mqtt_topic = serverConfig.device.mqtt_topic;
+                this.config.device.mdns = serverConfig.device.mdns;
+                this.config.device.maxCharacters = serverConfig.device.maxCharacters;
                 
                 if (!serverConfig.device.owner) {
                     console.warn('⚠️ Missing device.owner in config');
@@ -729,7 +768,7 @@ ${urlLine}`;
             if (serverConfig.device?.wifi) {
                 this.config.device.wifi.ssid = serverConfig.device.wifi.ssid || '';
                 this.config.device.wifi.password = serverConfig.device.wifi.password || '';
-                this.config.device.wifi.connect_timeout = serverConfig.device.wifi.connect_timeout || 15000;
+                this.config.device.wifi.connect_timeout = serverConfig.device.wifi.connect_timeout;
                 
                 // Store original masked password value to detect changes
                 this.originalMaskedValues.wifiPassword = serverConfig.device.wifi.password || '';
@@ -762,7 +801,7 @@ ${urlLine}`;
             // MQTT - log errors for missing values
             if (serverConfig.mqtt) {
                 this.config.mqtt.server = serverConfig.mqtt.server || '';
-                this.config.mqtt.port = serverConfig.mqtt.port || 1883;
+                this.config.mqtt.port = serverConfig.mqtt.port;
                 this.config.mqtt.username = serverConfig.mqtt.username || '';
                 this.config.mqtt.password = serverConfig.mqtt.password || '';
                 this.config.mqtt.connected = serverConfig.mqtt.connected || false;
@@ -780,9 +819,9 @@ ${urlLine}`;
             // Unbidden Ink - log errors for missing values
             if (serverConfig.unbiddenInk) {
                 this.config.unbiddenInk.enabled = serverConfig.unbiddenInk.enabled || false;
-                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour ?? 8;
-                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour ?? 22;
-                this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes || 120;
+                this.config.unbiddenInk.startHour = serverConfig.unbiddenInk.startHour;
+                this.config.unbiddenInk.endHour = serverConfig.unbiddenInk.endHour;
+                this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes;
                 this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt || '';
                 this.config.unbiddenInk.chatgptApiToken = serverConfig.unbiddenInk.chatgptApiToken || '';
                 this.config.unbiddenInk.promptPresets = serverConfig.unbiddenInk.promptPresets || {};
@@ -794,16 +833,6 @@ ${urlLine}`;
                 
             } else {
                 console.warn('⚠️ Missing unbiddenInk section in config');
-            }
-            
-            // Memos - load memo content
-            if (serverConfig.memos) {
-                this.config.memos.memo1 = serverConfig.memos.memo1 || '';
-                this.config.memos.memo2 = serverConfig.memos.memo2 || '';
-                this.config.memos.memo3 = serverConfig.memos.memo3 || '';
-                this.config.memos.memo4 = serverConfig.memos.memo4 || '';
-            } else {
-                console.warn('⚠️ Missing memos section in config');
             }
             
             // Buttons - log errors for missing values
@@ -839,16 +868,35 @@ ${urlLine}`;
             
             // LEDs - log errors for missing values
             if (serverConfig.leds) {
-                this.config.leds.pin = Number(serverConfig.leds.pin) || 4;
-                this.config.leds.count = serverConfig.leds.count || 60;
-                this.config.leds.brightness = serverConfig.leds.brightness || 128;
-                this.config.leds.refreshRate = serverConfig.leds.refreshRate || 60;
+                this.config.leds.pin = Number(serverConfig.leds.pin);
+                this.config.leds.count = serverConfig.leds.count;
+                this.config.leds.brightness = serverConfig.leds.brightness;
+                this.config.leds.refreshRate = serverConfig.leds.refreshRate;
+                
+                // Validate required LED config values
+                if (!this.config.leds.pin || this.config.leds.pin === 0) {
+                    console.error('❌ Invalid LED pin from backend:', serverConfig.leds.pin);
+                }
+                if (!this.config.leds.count) {
+                    console.error('❌ Missing LED count from backend');
+                }
+                if (this.config.leds.brightness === undefined || this.config.leds.brightness === null) {
+                    console.error('❌ Missing LED brightness from backend');
+                }
+                if (!this.config.leds.refreshRate) {
+                    console.error('❌ Missing LED refresh rate from backend');
+                }
                 console.log('🔌 LED pin set to:', this.config.leds.pin, '(type:', typeof this.config.leds.pin, ') from server config:', serverConfig.leds.pin, '(type:', typeof serverConfig.leds.pin, ')');
-                console.log('🔌 GPIO options available:', this.gpioOptions.map(opt => `${opt.value}:${opt.label}`));
+                console.log('🔌 GPIO availablePins array:', this.gpio.availablePins);
+                console.log('🔌 GPIO safePins array:', this.gpio.safePins);
+                console.log('🔌 GPIO options available:', this.gpioOptions.map(opt => `${opt.value}:${opt.label}:disabled=${opt.disabled}`));
+                console.log('🔌 Looking for pin', this.config.leds.pin, 'in options:', this.gpioOptions.find(opt => opt.value === this.config.leds.pin));
                 
                 // Use Alpine's $nextTick to ensure proper reactivity after both model and options are set
                 this.$nextTick(() => {
                     console.log('🔌 Post-tick LED pin check:', this.config.leds.pin);
+                    console.log('🔌 Post-tick GPIO options:', this.gpioOptions.length, 'options available');
+                    console.log('🔌 Matching option found:', this.gpioOptions.find(opt => opt.value === this.config.leds.pin));
                 });
             } else {
                 console.warn('⚠️ Missing leds section in config');
@@ -1017,7 +1065,7 @@ ${urlLine}`;
                 const safetyLabel = isSafe ? 'Safe' : description;
                 
                 return {
-                    value: pin,
+                    value: Number(pin), // Ensure value is explicitly a number
                     label: `GPIO${pin} (${safetyLabel})`,
                     disabled: !isSafe,
                     isSafe: isSafe
