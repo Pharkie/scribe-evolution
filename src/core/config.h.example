@@ -133,6 +133,15 @@ static const int defaultUnbiddenInkStartHour = 10;                              
 static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
 static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
+// Unbidden Ink prompt presets (autoprompts)
+static const char *defaultUnbiddenInkPromptCreative = "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.";
+static const char *defaultUnbiddenInkPromptWisdom = "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.";
+static const char *defaultUnbiddenInkPromptHumor = "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining.";
+static const char *defaultUnbiddenInkPromptDoctorWho = "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone.";
+
+// Default prompt (use Creative as default)
+static const char *defaultUnbiddenInkPrompt = defaultUnbiddenInkPromptCreative;
+
 // Default button configuration (GPIO, actions, MQTT topics, LED effects)
 struct ButtonConfig
 {

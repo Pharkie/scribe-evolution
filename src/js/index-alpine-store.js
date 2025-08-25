@@ -687,7 +687,7 @@ function initializeIndexStore() {
           printResponse = await window.IndexAPI.printMQTTContent(memoData.content, this.selectedPrinter);
         }
         
-        if (printResponse.success) {
+        if (printResponse.status === 'success') {
           // Set active action to show "Scribed" on memo button
           this.activeQuickAction = 'memo';
           this.closeMemoModal();
