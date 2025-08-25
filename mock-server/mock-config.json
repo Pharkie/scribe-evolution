@@ -42,7 +42,13 @@
         "frequencyMinutes": 60,
         "prompt": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
         "chatgptApiToken": "sk●●●●●●●●ty",
-        "nextScheduled": "< 1 min"
+        "nextScheduled": "< 1 min",
+        "promptPresets": {
+            "creative": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+            "wisdom": "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
+            "humor": "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining.",
+            "doctorwho": "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone."
+        }
     },
     "memos": {
         "memo1": "Good morning! Today is [weekday], [date]. Current time: [time]",
@@ -59,39 +65,39 @@
         "max_per_minute": 20,
         "button1": {
             "gpio": 5,
-            "shortAction": "/api/joke",
+            "shortAction": "JOKE",
             "shortMqttTopic": "",
-            "longAction": "/api/joke",
+            "longAction": "CHARACTER_TEST",
             "longMqttTopic": "",
-            "shortLedEffect": "simple_chase",
+            "shortLedEffect": "chase_single",
             "longLedEffect": "pulse"
         },
         "button2": {
             "gpio": 6,
-            "shortAction": "/api/riddle",
+            "shortAction": "RIDDLE",
             "shortMqttTopic": "",
-            "longAction": "/api/riddle",
+            "longAction": "",
             "longMqttTopic": "",
-            "shortLedEffect": "rainbow",
-            "longLedEffect": "twinkle"
+            "shortLedEffect": "chase_single",
+            "longLedEffect": "pulse"
         },
         "button3": {
             "gpio": 7,
-            "shortAction": "/api/quote",
+            "shortAction": "QUOTE",
             "shortMqttTopic": "",
             "longAction": "",
             "longMqttTopic": "",
-            "shortLedEffect": "chase",
-            "longLedEffect": "matrix"
+            "shortLedEffect": "chase_single",
+            "longLedEffect": "pulse"
         },
         "button4": {
-            "gpio": 18,
-            "shortAction": "/api/quiz",
+            "gpio": 4,
+            "shortAction": "QUIZ",
             "shortMqttTopic": "",
             "longAction": "",
             "longMqttTopic": "",
-            "shortLedEffect": "pulse",
-            "longLedEffect": "none"
+            "shortLedEffect": "chase_single",
+            "longLedEffect": "pulse"
         }
     },
     "leds": {
@@ -143,6 +149,25 @@
                 "brightness": 255,
                 "hueStep": 2.5
             }
+        }
+    },
+    "gpio": {
+        "availablePins": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
+        "safePins": [2, 4, 5, 6, 7, 8, 9, 10, 20, 21],
+        "pinDescriptions": {
+            "0": "Strapping pin at boot, avoid",
+            "1": "TX for UART0 (USB-Serial), avoid",
+            "2": "Safe",
+            "3": "RX for UART0 (USB-Serial), avoid",
+            "4": "Safe",
+            "5": "Safe",
+            "6": "Safe",
+            "7": "Safe",
+            "8": "Onboard LED",
+            "9": "Safe",
+            "10": "Safe",
+            "20": "UART1 TX - Safe",
+            "21": "UART1 RX - Safe"
         }
     }
 }

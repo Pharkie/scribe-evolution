@@ -20,7 +20,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
 {
     LOG_VERBOSE("WEB", "NVS dump requested from %s", request->client()->remoteIP().toString().c_str());
 
-    DynamicJsonDocument doc(6144); // Larger buffer for complete NVS dump
+    DynamicJsonDocument doc(8192); // Larger buffer for complete NVS dump with all descriptions
 
     Preferences prefs;
     if (!prefs.begin("scribe-app", true))
@@ -197,15 +197,30 @@ void handleNVSDump(AsyncWebServerRequest *request)
         }
     }
 
-    doc["totalKeys"] = totalKeys;
-    doc["validKeys"] = validKeys;
-    doc["correctedKeys"] = correctedKeys;
-    doc["invalidKeys"] = invalidKeys;
+    // Add summary object with counts
+    JsonObject summary = doc.createNestedObject("summary");
+    summary["totalKeys"] = totalKeys;
+    summary["validKeys"] = validKeys;  
+    summary["correctedKeys"] = correctedKeys;
+    summary["invalidKeys"] = invalidKeys;
 
     prefs.end();
 
     String response;
-    serializeJson(doc, response);
+    size_t jsonSize = serializeJson(doc, response);
+    
+    LOG_VERBOSE("WEB", "NVS JSON serialization: %d bytes, buffer capacity: %d", jsonSize, doc.capacity());
+    if (jsonSize == 0) {
+        LOG_ERROR("WEB", "NVS JSON serialization failed - response too large or memory issue");
+        doc.clear();
+        doc["error"] = "JSON serialization failed - response too large";
+        doc["namespace"] = "scribe-app";
+        doc["status"] = "error";
+        response = "";
+        serializeJson(doc, response);
+        request->send(500, "application/json", response);
+        return;
+    }
 
     LOG_VERBOSE("WEB", "NVS dump completed - %d total, %d valid, %d corrected, %d invalid",
                 totalKeys, validKeys, correctedKeys, invalidKeys);

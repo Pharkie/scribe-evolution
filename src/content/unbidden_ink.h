@@ -24,8 +24,7 @@
 
 #include <Arduino.h>
 
-// Default prompts for Unbidden Ink
-const char *const DEFAULT_MOTIVATION_PROMPT = "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.";
+// Default prompts are now defined in config.h
 
 // Settings structure for diagnostics and external access
 struct UnbiddenInkSettings

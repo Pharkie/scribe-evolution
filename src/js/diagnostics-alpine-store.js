@@ -325,10 +325,11 @@ function initializeDiagnosticsStore() {
       if (!this.nvsData.namespace) missingFields.push('namespace');
       if (!this.nvsData.timestamp) missingFields.push('timestamp');
       if (!this.nvsData.status) missingFields.push('status');
-      if (this.nvsData.totalKeys === undefined) missingFields.push('totalKeys');
-      if (this.nvsData.validKeys === undefined) missingFields.push('validKeys');
-      if (this.nvsData.correctedKeys === undefined) missingFields.push('correctedKeys');
-      if (this.nvsData.invalidKeys === undefined) missingFields.push('invalidKeys');
+      if (!this.nvsData.summary) missingFields.push('summary');
+      if (this.nvsData.summary && this.nvsData.summary.totalKeys === undefined) missingFields.push('summary.totalKeys');
+      if (this.nvsData.summary && this.nvsData.summary.validKeys === undefined) missingFields.push('summary.validKeys');
+      if (this.nvsData.summary && this.nvsData.summary.correctedKeys === undefined) missingFields.push('summary.correctedKeys');
+      if (this.nvsData.summary && this.nvsData.summary.invalidKeys === undefined) missingFields.push('summary.invalidKeys');
       
       if (missingFields.length > 0) {
         console.error('❌ Missing NVS fields:', missingFields);
@@ -339,10 +340,10 @@ function initializeDiagnosticsStore() {
         timestamp: this.nvsData.timestamp || 'ERROR: Missing timestamp',
         status: this.nvsData.status || 'ERROR: Missing status',
         summary: {
-          totalKeys: this.nvsData.totalKeys !== undefined ? this.nvsData.totalKeys : 'ERROR: Missing totalKeys',
-          validKeys: this.nvsData.validKeys !== undefined ? this.nvsData.validKeys : 'ERROR: Missing validKeys',
-          correctedKeys: this.nvsData.correctedKeys !== undefined ? this.nvsData.correctedKeys : 'ERROR: Missing correctedKeys',
-          invalidKeys: this.nvsData.invalidKeys !== undefined ? this.nvsData.invalidKeys : 'ERROR: Missing invalidKeys'
+          totalKeys: this.nvsData.summary?.totalKeys !== undefined ? this.nvsData.summary.totalKeys : 'ERROR: Missing totalKeys',
+          validKeys: this.nvsData.summary?.validKeys !== undefined ? this.nvsData.summary.validKeys : 'ERROR: Missing validKeys',
+          correctedKeys: this.nvsData.summary?.correctedKeys !== undefined ? this.nvsData.summary.correctedKeys : 'ERROR: Missing correctedKeys',
+          invalidKeys: this.nvsData.summary?.invalidKeys !== undefined ? this.nvsData.summary.invalidKeys : 'ERROR: Missing invalidKeys'
         },
         keys: {}
       };

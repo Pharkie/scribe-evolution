@@ -178,6 +178,13 @@ void handleConfigGet(AsyncWebServerRequest *request)
     unbiddenInk["prompt"] = config.unbiddenInkPrompt;
     unbiddenInk["chatgptApiToken"] = maskSecret(config.chatgptApiToken);
 
+    // Add prompt presets for quick selection
+    JsonObject prompts = unbiddenInk.createNestedObject("promptPresets");
+    prompts["creative"] = defaultUnbiddenInkPromptCreative;
+    prompts["wisdom"] = defaultUnbiddenInkPromptWisdom;
+    prompts["humor"] = defaultUnbiddenInkPromptHumor;
+    prompts["doctorwho"] = defaultUnbiddenInkPromptDoctorWho;
+
     // Add runtime status for Unbidden Ink
     if (config.unbiddenInkEnabled)
     {
@@ -273,6 +280,23 @@ void handleConfigGet(AsyncWebServerRequest *request)
     saveLedEffectsToJson(leds, config.ledEffects);
 #endif
 
+    // GPIO information for frontend validation
+    JsonObject gpio = configDoc.createNestedObject("gpio");
+    JsonArray availablePins = gpio.createNestedArray("availablePins");
+    JsonArray safePins = gpio.createNestedArray("safePins");
+    JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
+    
+    // Add all ESP32-C3 GPIO information
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++) {
+        int pin = ESP32C3_GPIO_MAP[i].pin;
+        availablePins.add(pin);
+        pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
+        
+        if (isSafeGPIO(pin)) {
+            safePins.add(pin);
+        }
+    }
+
     // Feed watchdog before JSON serialization
     delay(1);
 
@@ -312,8 +336,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Parse JSON to validate structure - use larger buffer for config POST
-    DynamicJsonDocument doc(8192); // 8KB buffer for large config JSON
+    // Parse JSON to validate structure
+    DynamicJsonDocument doc(largeJsonDocumentSize);
     
     LOG_VERBOSE("WEB", "Config POST body length: %d", body.length());
     LOG_VERBOSE("WEB", "Config POST body (first 200 chars): %s", body.substring(0, 200).c_str());

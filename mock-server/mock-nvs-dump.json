@@ -136,10 +136,10 @@
             "type": "string",
             "description": "Button 1 short press action",
             "exists": true,
-            "value": "/api/joke",
+            "value": "JOKE",
             "status": "valid",
             "validation": "✅",
-            "length": 9
+            "length": 4
         },
         "btn1_short_mq": {
             "type": "string",
@@ -154,10 +154,10 @@
             "type": "string",
             "description": "Button 1 long press action",
             "exists": true,
-            "value": "/api/joke",
+            "value": "CHARACTER_TEST",
             "status": "valid",
             "validation": "✅",
-            "length": 9
+            "length": 14
         },
         "btn1_long_mq": {
             "type": "string",
@@ -172,10 +172,10 @@
             "type": "string",
             "description": "Button 2 short press action",
             "exists": true,
-            "value": "/api/riddle",
+            "value": "RIDDLE",
             "status": "valid",
             "validation": "✅",
-            "length": 11
+            "length": 6
         },
         "btn2_short_mq": {
             "type": "string",
@@ -190,10 +190,10 @@
             "type": "string",
             "description": "Button 2 long press action",
             "exists": true,
-            "value": "/api/riddle",
+            "value": "",
             "status": "valid",
             "validation": "✅",
-            "length": 11
+            "length": 0
         },
         "btn2_long_mq": {
             "type": "string",
@@ -208,10 +208,10 @@
             "type": "string",
             "description": "Button 3 short press action",
             "exists": true,
-            "value": "/api/quote",
+            "value": "QUOTE",
             "status": "valid",
             "validation": "✅",
-            "length": 10
+            "length": 5
         },
         "btn3_short_mq": {
             "type": "string",
@@ -244,10 +244,10 @@
             "type": "string",
             "description": "Button 4 short press action",
             "exists": true,
-            "value": "/api/quiz",
+            "value": "QUIZ",
             "status": "valid",
             "validation": "✅",
-            "length": 9
+            "length": 4
         },
         "btn4_short_mq": {
             "type": "string",
@@ -309,8 +309,10 @@
             "validation": "✅"
         }
     },
-    "totalKeys": 35,
-    "validKeys": 35,
-    "correctedKeys": 0,
-    "invalidKeys": 0
+    "summary": {
+        "totalKeys": 35,
+        "validKeys": 35,
+        "correctedKeys": 0,
+        "invalidKeys": 0
+    }
 }

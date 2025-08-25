@@ -31,6 +31,13 @@ function initializeSettingsStore() {
             chatgptApiToken: ''
         },
         
+        // GPIO information from backend
+        gpio: {
+            availablePins: [],
+            safePins: [],
+            pinDescriptions: {}
+        },
+        
         // Configuration data (reactive) - matching backend API structure
         config: {
             device: {
@@ -71,7 +78,8 @@ function initializeSettingsStore() {
                 endHour: 21,
                 frequencyMinutes: 180,
                 prompt: 'Generate something creative and interesting',
-                chatgptApiToken: ''
+                chatgptApiToken: '',
+                promptPresets: {} // Loaded from backend
             },
             memos: {
                 memo1: '',
@@ -687,6 +695,16 @@ ${urlLine}`;
         mergeConfig(serverConfig) {
             console.log('🔧 Merging server config:', serverConfig);
             
+            // GPIO information
+            if (serverConfig.gpio) {
+                this.gpio.availablePins = serverConfig.gpio.availablePins || [];
+                this.gpio.safePins = serverConfig.gpio.safePins || [];
+                this.gpio.pinDescriptions = serverConfig.gpio.pinDescriptions || {};
+                console.log('🔌 GPIO info loaded:', this.gpio.availablePins.length, 'pins available');
+            } else {
+                console.warn('⚠️ Missing GPIO section in config');
+            }
+            
             // Device - log errors for missing critical values
             if (serverConfig.device) {
                 this.config.device.owner = serverConfig.device.owner || '';
@@ -765,9 +783,12 @@ ${urlLine}`;
                 this.config.unbiddenInk.frequencyMinutes = serverConfig.unbiddenInk.frequencyMinutes || 120;
                 this.config.unbiddenInk.prompt = serverConfig.unbiddenInk.prompt || '';
                 this.config.unbiddenInk.chatgptApiToken = serverConfig.unbiddenInk.chatgptApiToken || '';
+                this.config.unbiddenInk.promptPresets = serverConfig.unbiddenInk.promptPresets || {};
                 
                 // Store original masked API token value to detect changes
                 this.originalMaskedValues.chatgptApiToken = serverConfig.unbiddenInk.chatgptApiToken || '';
+                
+                console.log('🎭 Unbidden Ink prompts loaded:', Object.keys(this.config.unbiddenInk.promptPresets).length, 'presets');
                 
             } else {
                 console.warn('⚠️ Missing unbiddenInk section in config');
@@ -960,6 +981,41 @@ ${urlLine}`;
             return [1, 2, 3, 4].every(memoNum => this.canSaveMemo(memoNum));
         },
         
+        // Check if form can be saved (all required fields filled)
+        get canSaveForm() {
+            // Check required fields
+            const requiredFields = [
+                this.config?.device?.owner,
+                this.config?.device?.wifi?.ssid
+            ];
+            
+            // All required fields must be non-empty strings
+            const hasRequiredFields = requiredFields.every(field => 
+                field && typeof field === 'string' && field.trim().length > 0
+            );
+            
+            // All memos must be within character limits
+            const memosValid = this.canSaveAllMemos;
+            
+            return hasRequiredFields && memosValid;
+        },
+        
+        // Get GPIO pin options for dropdowns with safety information
+        get gpioOptions() {
+            return this.gpio.availablePins.map(pin => {
+                const isSafe = this.gpio.safePins.includes(pin);
+                const description = this.gpio.pinDescriptions[pin] || 'Unknown';
+                const safetyLabel = isSafe ? 'Safe' : description;
+                
+                return {
+                    value: pin,
+                    label: `GPIO${pin} (${safetyLabel})`,
+                    disabled: !isSafe,
+                    isSafe: isSafe
+                };
+            });
+        },
+        
         // LED effect functions (WLED-style unified interface)
         async testLedEffect(effectName) {
             try {
@@ -1144,30 +1200,18 @@ ${urlLine}`;
             return `${baseClass} ${colorClass} ${activeClass}`.trim();
         },
         
-        // Quick prompt presets
+        // Quick prompt presets - now using backend data
         setQuickPrompt(type) {
-            const prompts = {
-                creative: "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
-                doctorwho: "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone.",
-                wisdom: "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
-                humor: "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining."
-            };
-            
-            if (prompts[type]) {
-                this.config.unbiddenInk.prompt = prompts[type];
+            const presets = this.config.unbiddenInk.promptPresets || {};
+            if (presets[type]) {
+                this.config.unbiddenInk.prompt = presets[type];
             }
         },
         
         // Check if a prompt preset is currently active
         isPromptActive(type) {
-            const prompts = {
-                creative: "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
-                doctorwho: "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone.",
-                wisdom: "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
-                humor: "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining."
-            };
-            
-            return this.config.unbiddenInk.prompt === prompts[type];
+            const presets = this.config.unbiddenInk.promptPresets || {};
+            return this.config.unbiddenInk.prompt === presets[type];
         },
         
         // Frequency slider specific values

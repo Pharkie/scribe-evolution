@@ -161,7 +161,7 @@ bool loadNVSConfig()
 
     LOG_VERBOSE("CONFIG", "DEBUG: Loaded values - startHour=%d, endHour=%d, frequency=%d",
                 g_runtimeConfig.unbiddenInkStartHour, g_runtimeConfig.unbiddenInkEndHour, g_runtimeConfig.unbiddenInkFrequencyMinutes);
-    g_runtimeConfig.unbiddenInkPrompt = getNVSString(prefs, NVS_UNBIDDEN_PROMPT, "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.", 500);
+    g_runtimeConfig.unbiddenInkPrompt = getNVSString(prefs, NVS_UNBIDDEN_PROMPT, defaultUnbiddenInkPrompt, 500);
     LOG_VERBOSE("CONFIG", "DEBUG: Loaded prompt length=%d, first 50 chars='%s'",
                 g_runtimeConfig.unbiddenInkPrompt.length(), g_runtimeConfig.unbiddenInkPrompt.substring(0, 50).c_str());
 
@@ -232,7 +232,7 @@ void loadDefaultConfig()
     g_runtimeConfig.unbiddenInkStartHour = defaultUnbiddenInkStartHour;
     g_runtimeConfig.unbiddenInkEndHour = defaultUnbiddenInkEndHour;
     g_runtimeConfig.unbiddenInkFrequencyMinutes = defaultUnbiddenInkFrequencyMinutes;
-    g_runtimeConfig.unbiddenInkPrompt = "Generate a short, inspiring quote about creativity, technology, or daily life. Keep it under 200 characters.";
+    g_runtimeConfig.unbiddenInkPrompt = defaultUnbiddenInkPrompt;
 
     // Load default button configuration
     for (int i = 0; i < 4; i++)
