@@ -36,7 +36,6 @@ void handleNVSDump(AsyncWebServerRequest *request)
     }
 
     doc["namespace"] = "scribe-app";
-    doc["status"] = "success";
     doc["timestamp"] = getFormattedDateTime();
 
     JsonObject keys = doc.createNestedObject("keys");

@@ -143,8 +143,8 @@ function initializeIndexStore() {
         this.localPrinterName = this.config.device.printer_name;
         console.log('📋 Index: Config loaded successfully, printer name:', this.localPrinterName);
         
-        // Load memos from config data (no separate API call needed)
-        this.loadMemosFromConfig();
+        // Load memos from separate API endpoint
+        await this.loadMemosFromAPI();
         
         // Clear any previous error and set loading to false on success
         this.error = null;
@@ -624,23 +624,36 @@ function initializeIndexStore() {
     
     // === Memo Functions ===
     
-    loadMemosFromConfig() {
+    async loadMemosFromAPI() {
       // Don't reload if already loaded
       if (this.memosLoaded) return;
       
-      console.log('📝 Loading memos from config data...');
+      console.log('📝 Loading memos from API...');
       
-      // Convert config format to modal format
-      const configMemos = this.config.memos || {};
-      this.memos = [
-        { id: 1, content: configMemos.memo1 || '' },
-        { id: 2, content: configMemos.memo2 || '' },
-        { id: 3, content: configMemos.memo3 || '' },
-        { id: 4, content: configMemos.memo4 || '' }
-      ];
-      
-      this.memosLoaded = true;
-      console.log('📝 Memos loaded from config:', this.memos);
+      try {
+        const memosData = await window.IndexAPI.loadMemos();
+        
+        // Convert API format to modal format
+        this.memos = [
+          { id: 1, content: memosData.memo1 || '' },
+          { id: 2, content: memosData.memo2 || '' },
+          { id: 3, content: memosData.memo3 || '' },
+          { id: 4, content: memosData.memo4 || '' }
+        ];
+        
+        this.memosLoaded = true;
+        console.log('📝 Memos loaded from API:', this.memos);
+      } catch (error) {
+        console.error('📝 Failed to load memos:', error);
+        // Fallback to empty memos
+        this.memos = [
+          { id: 1, content: '' },
+          { id: 2, content: '' },
+          { id: 3, content: '' },
+          { id: 4, content: '' }
+        ];
+        this.memosLoaded = true;
+      }
     },
     
     async showMemoModal() {
@@ -649,7 +662,7 @@ function initializeIndexStore() {
       
       // Ensure memos are loaded
       if (!this.memosLoaded) {
-        this.loadMemosFromConfig();
+        await this.loadMemosFromAPI();
       }
     },
     
@@ -687,29 +700,26 @@ function initializeIndexStore() {
           printResponse = await window.IndexAPI.printMQTTContent(memoData.content, this.selectedPrinter);
         }
         
-        if (printResponse.status === 'success') {
-          // Set active action to show "Scribed" on memo button
-          this.activeQuickAction = 'memo';
-          this.closeMemoModal();
-          
-          // Pink sparkle confetti celebration (keep the confetti!)
-          if (window.confetti) {
-            confetti({
-              colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
-              startVelocity: 30,
-              spread: 360,
-              ticks: 60,
-              zIndex: 0
-            });
-          }
-          
-          // Reset active action after 2 seconds like other quick actions
-          setTimeout(() => {
-            this.activeQuickAction = null;
-          }, 2000);
-        } else {
-          throw new Error(printResponse.message || 'Failed to print memo');
+        // HTTP 200 status indicates success - no need to check response body
+        // Set active action to show "Scribed" on memo button
+        this.activeQuickAction = 'memo';
+        this.closeMemoModal();
+        
+        // Pink sparkle confetti celebration (keep the confetti!)
+        if (window.confetti) {
+          confetti({
+            colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
+            startVelocity: 30,
+            spread: 360,
+            ticks: 60,
+            zIndex: 0
+          });
         }
+        
+        // Reset active action after 2 seconds like other quick actions
+        setTimeout(() => {
+          this.activeQuickAction = null;
+        }, 2000);
       } catch (error) {
         console.error(`📝 Failed to print memo ${memoId}:`, error);
         this.showToast(`Failed to print memo: ${error.message}`, 'error');

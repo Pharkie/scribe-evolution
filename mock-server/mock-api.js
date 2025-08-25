@@ -41,15 +41,16 @@ function loadMockData() {
     const mockPrinterDiscovery = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-printer-discovery.json'), 'utf8'));
     const mockNvsDump = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-nvs-dump.json'), 'utf8'));
     const mockWifiScan = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-wifi-scan.json'), 'utf8'));
+    const mockMemos = JSON.parse(fs.readFileSync(path.join(__dirname, 'mock-memos.json'), 'utf8'));
     
-    return { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan };
+    return { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan, mockMemos };
   } catch (error) {
     logError('Error loading mock data files:', error.message);
     process.exit(1);
   }
 }
 
-let { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan } = loadMockData();
+let { mockConfig, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan, mockMemos } = loadMockData();
 
 // MIME types
 const mimeTypes = {
@@ -207,6 +208,34 @@ function createRequestHandler() {
       if (pathname === '/api/config' && req.method === 'GET') {
         setTimeout(() => sendJSON(res, mockConfig), 200);
         
+      } else if (pathname === '/api/memos' && req.method === 'GET') {
+        console.log('📝 Memos GET request');
+        setTimeout(() => sendJSON(res, mockMemos), 150);
+        
+      } else if (pathname === '/api/memos' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+          try {
+            const memoData = JSON.parse(body);
+            // Update mock memos data in memory
+            Object.assign(mockMemos, memoData);
+            console.log('📝 Memos updated');
+            setTimeout(() => {
+              sendJSON(res, { 
+                message: "Memos saved successfully" 
+              });
+            }, 300);
+          } catch (error) {
+            console.error('Error parsing memos JSON:', error.message);
+            setTimeout(() => {
+              sendJSON(res, { 
+                error: "Invalid JSON format" 
+              }, 400);
+            }, 200);
+          }
+        });
+        
       } else if (pathname === '/api/config' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -236,7 +265,6 @@ function createRequestHandler() {
             
             setTimeout(() => {
               sendJSON(res, { 
-                success: true, 
                 message: "Configuration saved successfully" 
               });
             }, 500);
@@ -245,7 +273,6 @@ function createRequestHandler() {
             console.error('Error parsing config update:', error.message);
             setTimeout(() => {
               sendJSON(res, { 
-                success: false, 
                 error: "Invalid JSON format" 
               }, 400);
             }, 200);
@@ -287,7 +314,6 @@ function createRequestHandler() {
           console.log('🖨️  Print request received');
           setTimeout(() => {
             sendJSON(res, {
-              success: true,
               message: "Message processed successfully"
             });
           }, 800);
@@ -300,7 +326,6 @@ function createRequestHandler() {
           console.log('📡 MQTT print request received');
           setTimeout(() => {
             sendJSON(res, {
-              status: "success",
               message: "Message scribed via MQTT"
             });
           }, 500);
@@ -313,7 +338,6 @@ function createRequestHandler() {
           console.log('💡 LED effect triggered');
           setTimeout(() => {
             sendJSON(res, {
-              success: true,
               message: "LED effect started successfully"
             });
           }, 300);

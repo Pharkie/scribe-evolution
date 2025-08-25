@@ -10,7 +10,6 @@
 void sendErrorResponse(AsyncWebServerRequest* request, int httpCode, const String &errorMessage)
 {
     DynamicJsonDocument response(256);
-    response["success"] = false;
     response["error"] = errorMessage;
 
     String responseString;
@@ -21,7 +20,6 @@ void sendErrorResponse(AsyncWebServerRequest* request, int httpCode, const Strin
 void sendSuccessResponse(AsyncWebServerRequest* request, const String &message)
 {
     DynamicJsonDocument response(256);
-    response["success"] = true;
     if (message.length() > 0)
     {
         response["message"] = message;
@@ -40,7 +38,6 @@ void sendRateLimitResponse(AsyncWebServerRequest* request)
 DynamicJsonDocument createErrorResponse(const String &errorMessage)
 {
     DynamicJsonDocument response(256);
-    response["success"] = false;
     response["error"] = errorMessage;
     return response;
 }
@@ -48,7 +45,6 @@ DynamicJsonDocument createErrorResponse(const String &errorMessage)
 DynamicJsonDocument createSuccessResponse(const String &message)
 {
     DynamicJsonDocument response(256);
-    response["success"] = true;
     if (message.length() > 0)
     {
         response["message"] = message;

@@ -240,12 +240,12 @@ void handleMQTTSend(AsyncWebServerRequest *request)
     if (mqttClient.publish(topic.c_str(), payload.c_str()))
     {
         LOG_VERBOSE("WEB", "MQTT message sent to topic: %s (%d characters)", topic.c_str(), message.length());
-        request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Message scribed via MQTT\"}");
+        request->send(200, "application/json", "{\"message\":\"Message scribed via MQTT\"}");
     }
     else
     {
         LOG_ERROR("WEB", "Failed to send MQTT message to topic: %s", topic.c_str());
-        request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to send MQTT message - broker error\"}");
+        sendErrorResponse(request, 500, "Failed to send MQTT message - broker error");
     }
 }
 
@@ -272,7 +272,6 @@ void handleWiFiScan(AsyncWebServerRequest *request)
 
     // Create JSON response with scanned networks
     DynamicJsonDocument doc(2048);
-    doc["success"] = true;
     doc["count"] = networkCount;
 
     JsonArray networks = doc.createNestedArray("networks");

@@ -359,7 +359,7 @@ void handlePrintContent(AsyncWebServerRequest *request)
         currentMessage.shouldPrintLocally = true;
         LOG_VERBOSE("WEB", "Custom message queued for local direct printing");
 
-        request->send(200, "application/json", "{\"success\":true,\"message\":\"Message processed successfully\"}");
+        request->send(200, "application/json", "{\"message\":\"Message processed successfully\"}");
     }
     else
     {
@@ -390,7 +390,7 @@ void handlePrintContent(AsyncWebServerRequest *request)
         else
         {
             LOG_ERROR("WEB", "Failed to send custom message via MQTT");
-            request->send(500, "application/json", "{\"success\":false,\"message\":\"Failed to process message\"}");
+            sendErrorResponse(request, 500, "Failed to process message");
         }
     }
 }

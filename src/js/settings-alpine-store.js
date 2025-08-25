@@ -701,6 +701,8 @@ ${urlLine}`;
                 this.gpio.safePins = serverConfig.gpio.safePins || [];
                 this.gpio.pinDescriptions = serverConfig.gpio.pinDescriptions || {};
                 console.log('🔌 GPIO info loaded:', this.gpio.availablePins.length, 'pins available');
+                console.log('🔌 Available pins:', this.gpio.availablePins);
+                console.log('🔌 Safe pins:', this.gpio.safePins);
             } else {
                 console.warn('⚠️ Missing GPIO section in config');
             }
@@ -837,10 +839,17 @@ ${urlLine}`;
             
             // LEDs - log errors for missing values
             if (serverConfig.leds) {
-                this.config.leds.pin = serverConfig.leds.pin || 4;
+                this.config.leds.pin = Number(serverConfig.leds.pin) || 4;
                 this.config.leds.count = serverConfig.leds.count || 60;
                 this.config.leds.brightness = serverConfig.leds.brightness || 128;
                 this.config.leds.refreshRate = serverConfig.leds.refreshRate || 60;
+                console.log('🔌 LED pin set to:', this.config.leds.pin, '(type:', typeof this.config.leds.pin, ') from server config:', serverConfig.leds.pin, '(type:', typeof serverConfig.leds.pin, ')');
+                console.log('🔌 GPIO options available:', this.gpioOptions.map(opt => `${opt.value}:${opt.label}`));
+                
+                // Use Alpine's $nextTick to ensure proper reactivity after both model and options are set
+                this.$nextTick(() => {
+                    console.log('🔌 Post-tick LED pin check:', this.config.leds.pin);
+                });
             } else {
                 console.warn('⚠️ Missing leds section in config');
             }

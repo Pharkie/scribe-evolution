@@ -285,7 +285,6 @@ void sendValidationError(AsyncWebServerRequest *request, const ValidationResult 
 
     // Return JSON error response
     DynamicJsonDocument errorResponse(512);
-    errorResponse["success"] = false;
     errorResponse["error"] = result.errorMessage;
 
     String errorString;

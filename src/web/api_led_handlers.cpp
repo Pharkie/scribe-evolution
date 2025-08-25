@@ -22,9 +22,9 @@
             responseColors.add(String("#") + String(c3.r, HEX) + String(c3.g, HEX) + String(c3.b, HEX));
         }
 
-        String responseStr;ct found - only new format supported");
-        request->send(400, "application/json", "{\"success\":false,\"message\":\"Settings object required\"}");
-        return;t (c) 2025 Adam Knowles. All rights reserved.
+        LOG_ERROR("LEDS", "No settings object found - only new format supported");
+        sendErrorResponse(request, 400, "Settings object required");
+        return;
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
 
@@ -272,7 +272,6 @@ void handleLedEffect(AsyncWebServerRequest *request)
     if (success)
     {
         DynamicJsonDocument response(1024); // Increased size for full settings object
-        response["success"] = true;
         response["message"] = "LED effect started";
         response["effect"] = effectName;
         response["cycles"] = cycles;

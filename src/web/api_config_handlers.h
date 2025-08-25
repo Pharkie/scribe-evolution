@@ -35,4 +35,20 @@ void handleConfigGet(AsyncWebServerRequest *request);
  */
 void handleConfigPost(AsyncWebServerRequest *request);
 
+/**
+ * @brief Handle memos GET request (read all memos)
+ * @param request The HTTP request
+ *
+ * Endpoint: GET /api/memos
+ */
+void handleMemosGet(AsyncWebServerRequest *request);
+
+/**
+ * @brief Handle memos POST request (save all memos)
+ * @param request The HTTP request
+ *
+ * Endpoint: POST /api/memos
+ */
+void handleMemosPost(AsyncWebServerRequest *request);
+
 #endif // API_CONFIG_HANDLERS_H

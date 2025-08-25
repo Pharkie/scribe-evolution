@@ -156,11 +156,35 @@ async function generateUserMessage(message, target = 'local-direct') {
     }
 }
 
+/**
+ * Load memos from server API
+ * @returns {Promise<Object>} Memos object from server
+ */
+async function loadMemos() {
+    try {
+        console.log('API: Loading memos from server...');
+        
+        const response = await fetch('/api/memos');
+        if (!response.ok) {
+            throw new Error(`Memos API returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const memos = await response.json();
+        console.log('API: Memos loaded successfully');
+        return memos;
+        
+    } catch (error) {
+        console.error('API: Failed to load memos:', error);
+        throw error;
+    }
+}
+
 // Export API module
 window.IndexAPI = {
     loadConfiguration,
     printLocalContent,
     printMQTTContent,
     executeQuickAction,
-    generateUserMessage
+    generateUserMessage,
+    loadMemos
 };

@@ -50,12 +50,6 @@
             "doctorwho": "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone."
         }
     },
-    "memos": {
-        "memo1": "Good morning! Today is [weekday], [date]. Current time: [time]",
-        "memo2": "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-        "memo3": "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
-        "memo4": "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
-    },
     "buttons": {
         "count": 4,
         "debounce_time": 50,

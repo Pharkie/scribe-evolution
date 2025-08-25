@@ -76,7 +76,6 @@ void handleConfigGet(AsyncWebServerRequest *request)
             // DEBUG: handleConfigGet - rate limited
         }
         DynamicJsonDocument errorResponse(256);
-        errorResponse["success"] = false;
         errorResponse["error"] = getRateLimitReason();
 
         String errorString;
@@ -213,30 +212,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
         unbiddenInk["nextScheduled"] = "-";
     }
 
-    // Memos configuration
-    JsonObject memos = configDoc.createNestedObject("memos");
-    
-    // Load memo content from NVS
-    Preferences prefs;
-    if (prefs.begin("scribe-app", true)) // read-only
-    {
-        const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-        
-        memos["memo1"] = prefs.getString(memoKeys[0], defaultMemo1);
-        memos["memo2"] = prefs.getString(memoKeys[1], defaultMemo2);
-        memos["memo3"] = prefs.getString(memoKeys[2], defaultMemo3);
-        memos["memo4"] = prefs.getString(memoKeys[3], defaultMemo4);
-        
-        prefs.end();
-    }
-    else
-    {
-        LOG_ERROR("WEB", "Failed to access memo storage");
-        memos["memo1"] = "";
-        memos["memo2"] = "";
-        memos["memo3"] = "";
-        memos["memo4"] = "";
-    }
+    // Memos are now handled by separate /api/memos endpoint
 
     // Buttons configuration - top-level section matching settings.html
     JsonObject buttons = configDoc.createNestedObject("buttons");
@@ -286,6 +262,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonArray safePins = gpio.createNestedArray("safePins");
     JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
     
+    LOG_VERBOSE("CONFIG", "Adding GPIO info, ESP32C3_GPIO_COUNT: %d", ESP32C3_GPIO_COUNT);
+    
     // Add all ESP32-C3 GPIO information
     for (int i = 0; i < ESP32C3_GPIO_COUNT; i++) {
         int pin = ESP32C3_GPIO_MAP[i].pin;
@@ -294,7 +272,18 @@ void handleConfigGet(AsyncWebServerRequest *request)
         
         if (isSafeGPIO(pin)) {
             safePins.add(pin);
+            LOG_VERBOSE("CONFIG", "Added safe GPIO pin: %d", pin);
         }
+    }
+    
+    LOG_VERBOSE("CONFIG", "GPIO info complete - %d available pins, %d safe pins", availablePins.size(), safePins.size());
+
+    // Check if JSON document has overflowed before serialization
+    if (configDoc.overflowed()) {
+        LOG_ERROR("CONFIG", "JSON document overflow detected! Size: %d bytes, Capacity: %d bytes", 
+                  configDoc.memoryUsage(), configDoc.capacity());
+        sendErrorResponse(request, 500, "Configuration too large for buffer - increase largeJsonDocumentSize");
+        return;
     }
 
     // Feed watchdog before JSON serialization
@@ -302,12 +291,14 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     String configString;
     size_t jsonSize = serializeJson(configDoc, configString);
+    
+    LOG_VERBOSE("CONFIG", "JSON serialized: %d bytes, buffer usage: %d/%d bytes", 
+                jsonSize, configDoc.memoryUsage(), configDoc.capacity());
 
     if (jsonSize == 0)
     {
         LOG_ERROR("WEB", "Failed to serialize config JSON");
         DynamicJsonDocument errorDoc(256);
-        errorDoc["success"] = false;
         errorDoc["error"] = "JSON serialization failed";
         String errorString;
         serializeJson(errorDoc, errorString);
@@ -351,9 +342,9 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Validate required top-level sections exist (matching new structure)
-    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "memos", "buttons", "leds"};
-    for (int i = 0; i < 6; i++)
+    // Validate required top-level sections exist (memos now handled separately)
+    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "buttons", "leds"};
+    for (int i = 0; i < 5; i++)
     {
         if (!doc.containsKey(requiredSections[i]))
         {
@@ -544,53 +535,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.betterStackEndpoint = betterStackEndpoint;
     newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
-    // Validate and save memo configuration
-    JsonObject memos = doc["memos"];
-    if (memos)
-    {
-        const char* memoFields[] = {"memo1", "memo2", "memo3", "memo4"};
-        
-        // Validate all memo content
-        for (int i = 0; i < MEMO_COUNT; i++)
-        {
-            if (memos.containsKey(memoFields[i]))
-            {
-                String memoContent = memos[memoFields[i]].as<String>();
-                ValidationResult validation = validateMemo(memoContent, MEMO_MAX_LENGTH);
-                if (!validation.isValid)
-                {
-                    sendValidationError(request, validation);
-                    return;
-                }
-            }
-        }
-        
-        // Save memos to NVS
-        Preferences prefs;
-        if (prefs.begin("scribe-app", false)) // read-write
-        {
-            const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-            
-            for (int i = 0; i < MEMO_COUNT; i++)
-            {
-                if (memos.containsKey(memoFields[i]))
-                {
-                    String memoContent = memos[memoFields[i]].as<String>();
-                    prefs.putString(memoKeys[i], memoContent);
-                    LOG_VERBOSE("WEB", "Saved memo %d: %s", i + 1, memoContent.substring(0, 50).c_str());
-                }
-            }
-            
-            prefs.end();
-            LOG_NOTICE("WEB", "Memo configuration saved successfully");
-        }
-        else
-        {
-            LOG_ERROR("WEB", "Failed to open NVS for memo saving");
-            sendErrorResponse(request, 500, "Failed to save memo configuration");
-            return;
-        }
-    }
+    // Memos are now handled by separate /api/memos endpoint
 
     // Validate button configuration (exactly 4 buttons)
     JsonObject buttons = doc["buttons"];
@@ -854,4 +799,106 @@ void handleConfigPost(AsyncWebServerRequest *request)
         delay(1000);
         ESP.restart();
     }
+}
+
+// ========================================
+// MEMOS API ENDPOINTS
+// ========================================
+
+void handleMemosGet(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "handleMemosGet() called");
+
+    // Create JSON response with all memos
+    DynamicJsonDocument memosDoc(2048);
+    
+    // Get memo values from NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", true)) { // read-only
+        LOG_ERROR("WEB", "Failed to access NVS for memos");
+        sendErrorResponse(request, 500, "Failed to access memo storage");
+        return;
+    }
+    
+    memosDoc["memo1"] = prefs.getString(NVS_MEMO_1, "");
+    memosDoc["memo2"] = prefs.getString(NVS_MEMO_2, "");
+    memosDoc["memo3"] = prefs.getString(NVS_MEMO_3, "");
+    memosDoc["memo4"] = prefs.getString(NVS_MEMO_4, "");
+    
+    prefs.end();
+    
+    // Check for overflow
+    if (memosDoc.overflowed()) {
+        LOG_ERROR("MEMOS", "Memos JSON document overflow detected!");
+        sendErrorResponse(request, 500, "Memos too large for buffer");
+        return;
+    }
+    
+    // Serialize and send
+    String memosString;
+    size_t jsonSize = serializeJson(memosDoc, memosString);
+    
+    if (jsonSize == 0) {
+        LOG_ERROR("WEB", "Failed to serialize memos JSON");
+        sendErrorResponse(request, 500, "Failed to serialize memos");
+        return;
+    }
+    
+    LOG_VERBOSE("WEB", "Memos sent to client (%zu bytes)", jsonSize);
+    request->send(200, "application/json", memosString);
+}
+
+void handleMemosPost(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "handleMemosPost() called");
+    
+    // Get request body
+    String body = getRequestBody(request);
+    if (body.length() == 0) {
+        sendErrorResponse(request, 400, "No JSON body provided");
+        return;
+    }
+    
+    // Parse JSON
+    DynamicJsonDocument memosDoc(2048);
+    DeserializationError error = deserializeJson(memosDoc, body);
+    if (error) {
+        LOG_ERROR("WEB", "Failed to parse memos JSON: %s", error.c_str());
+        sendErrorResponse(request, 400, "Invalid JSON format");
+        return;
+    }
+    
+    // Validate and save each memo to NVS
+    Preferences prefs;
+    if (!prefs.begin("scribe-app", false)) { // read-write
+        LOG_ERROR("WEB", "Failed to access NVS for memo saving");
+        sendErrorResponse(request, 500, "Failed to access memo storage");
+        return;
+    }
+    
+    // Save each memo with validation
+    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    const char* memoNames[] = {"memo1", "memo2", "memo3", "memo4"};
+    
+    for (int i = 0; i < 4; i++) {
+        if (memosDoc.containsKey(memoNames[i])) {
+            String memoContent = memosDoc[memoNames[i]].as<String>();
+            
+            // Validate memo length
+            if (memoContent.length() > maxMemoLength) {
+                prefs.end();
+                sendErrorResponse(request, 400, 
+                    String("Memo ") + String(i+1) + " exceeds maximum length of " + String(maxMemoLength) + " characters");
+                return;
+            }
+            
+            prefs.putString(memoKeys[i], memoContent);
+            LOG_VERBOSE("WEB", "Saved memo %d (%d characters)", i+1, memoContent.length());
+        }
+    }
+    
+    prefs.end();
+    
+    sendSuccessResponse(request, "Memos saved successfully");
+    LOG_NOTICE("WEB", "All memos saved successfully");
 }
