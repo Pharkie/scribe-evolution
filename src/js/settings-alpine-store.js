@@ -1073,6 +1073,19 @@ ${urlLine}`;
             });
         },
         
+        // Combined GPIO options that handles loading state properly for Alpine reactivity
+        get allGpioOptions() {
+            if (this.loading || this.gpio.availablePins.length === 0) {
+                return [{ 
+                    value: '', 
+                    label: 'Loading GPIO options...', 
+                    disabled: true,
+                    isSafe: false
+                }];
+            }
+            return this.gpioOptions;
+        },
+        
         // LED effect functions (WLED-style unified interface)
         async testLedEffect(effectName) {
             try {
