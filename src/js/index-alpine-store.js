@@ -186,7 +186,7 @@ function initializeIndexStore() {
         const topic = `scribe/${printer.name}/print`;
         this.printers.push({
           value: topic,
-          icon: 'wifi',
+          icon: 'megaphone',
           name: printer.name,
           isLocal: false,
           data: printer,
@@ -348,7 +348,7 @@ function initializeIndexStore() {
       const ipAddress = printerData.ip_address;
       const mdns = printerData.mdns; 
       const firmwareVersion = printerData.firmware_version;
-      const printerIcon = printerType === 'local' ? window.getIcon('home', 'w-6 h-6') : window.getIcon('wifi', 'w-6 h-6');
+      const printerIcon = printerType === 'local' ? window.getIcon('home', 'w-6 h-6') : window.getIcon('megaphone', 'w-6 h-6');
       
       // Format last power on time
       let lastPowerOnText = 'Not available';
