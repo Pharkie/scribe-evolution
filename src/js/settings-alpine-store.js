@@ -988,7 +988,7 @@ ${urlLine}`;
             return fieldName.split('.').reduce((obj, key) => obj && obj[key], this.config);
         },
         
-        // Memo character counting functions - matches index page behavior
+        // Memo character counting functions - Alpine reactive getters
         getMemoCharacterCount(memoNum) {
             const memoKey = `memo${memoNum}`;
             return this.config.memos[memoKey]?.length || 0;
@@ -1017,6 +1017,119 @@ ${urlLine}`;
                 return 'text-yellow-700 dark:text-yellow-300 font-medium';
             } else {
                 // Under 90% - normal gray (matches index page)
+                return 'text-gray-500 dark:text-gray-400';
+            }
+        },
+        
+        // Reactive getters for individual memos to trigger Alpine reactivity
+        get memo1CharacterCount() {
+            return this.config.memos.memo1?.length || 0;
+        },
+        
+        get memo1CharacterText() {
+            const count = this.memo1CharacterCount;
+            const limit = 500;
+            if (count > limit) {
+                const over = count - limit;
+                return `${count}/${limit} (${over} over limit)`;
+            }
+            return `${count}/${limit}`;
+        },
+        
+        get memo1CharacterClass() {
+            const count = this.memo1CharacterCount;
+            const limit = 500;
+            const percentage = count / limit;
+            
+            if (count > limit) {
+                return 'text-red-600 dark:text-red-400 font-semibold';
+            } else if (percentage >= 0.9) {
+                return 'text-yellow-700 dark:text-yellow-300 font-medium';
+            } else {
+                return 'text-gray-500 dark:text-gray-400';
+            }
+        },
+        
+        get memo2CharacterCount() {
+            return this.config.memos.memo2?.length || 0;
+        },
+        
+        get memo2CharacterText() {
+            const count = this.memo2CharacterCount;
+            const limit = 500;
+            if (count > limit) {
+                const over = count - limit;
+                return `${count}/${limit} (${over} over limit)`;
+            }
+            return `${count}/${limit}`;
+        },
+        
+        get memo2CharacterClass() {
+            const count = this.memo2CharacterCount;
+            const limit = 500;
+            const percentage = count / limit;
+            
+            if (count > limit) {
+                return 'text-red-600 dark:text-red-400 font-semibold';
+            } else if (percentage >= 0.9) {
+                return 'text-yellow-700 dark:text-yellow-300 font-medium';
+            } else {
+                return 'text-gray-500 dark:text-gray-400';
+            }
+        },
+        
+        get memo3CharacterCount() {
+            return this.config.memos.memo3?.length || 0;
+        },
+        
+        get memo3CharacterText() {
+            const count = this.memo3CharacterCount;
+            const limit = 500;
+            if (count > limit) {
+                const over = count - limit;
+                return `${count}/${limit} (${over} over limit)`;
+            }
+            return `${count}/${limit}`;
+        },
+        
+        get memo3CharacterClass() {
+            const count = this.memo3CharacterCount;
+            const limit = 500;
+            const percentage = count / limit;
+            
+            if (count > limit) {
+                return 'text-red-600 dark:text-red-400 font-semibold';
+            } else if (percentage >= 0.9) {
+                return 'text-yellow-700 dark:text-yellow-300 font-medium';
+            } else {
+                return 'text-gray-500 dark:text-gray-400';
+            }
+        },
+        
+        get memo4CharacterCount() {
+            return this.config.memos.memo4?.length || 0;
+        },
+        
+        get memo4CharacterText() {
+            const count = this.memo4CharacterCount;
+            const limit = 500;
+            if (count > limit) {
+                const over = count - limit;
+                return `${count}/${limit} (${over} over limit)`;
+            }
+            return `${count}/${limit}`;
+        },
+        
+        get memo4CharacterClass() {
+            const count = this.memo4CharacterCount;
+            const limit = 500;
+            const percentage = count / limit;
+            
+            if (count > limit) {
+                return 'text-red-600 dark:text-red-400 font-semibold';
+            } else if (percentage >= 0.9) {
+                return 'text-yellow-700 dark:text-yellow-300 font-medium';
+            } else {
                 return 'text-gray-500 dark:text-gray-400';
             }
         },
