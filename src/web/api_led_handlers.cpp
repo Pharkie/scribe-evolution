@@ -192,58 +192,100 @@ void handleLedEffect(AsyncWebServerRequest *request)
     {
         LedEffectsConfig playgroundConfig = {}; // Start with empty config
 
+        // Map 1-100 speed/intensity to reasonable effect parameters (50 = ideal)
+        int speed = settings["speed"] | 50;        // Default to 50 if missing
+        int intensity = settings["intensity"] | 50; // Default to 50 if missing
+        
         if (effectName.equalsIgnoreCase("chase_single"))
         {
-            playgroundConfig.chaseSingle.speed = settings["speed"] | 5;
-            playgroundConfig.chaseSingle.trailLength = settings["trailLength"] | 15;
-            playgroundConfig.chaseSingle.trailFade = settings["trailFade"] | 15;
-            playgroundConfig.chaseSingle.defaultColor = settings["color"] | "#0062ffff";
+            // Speed: 1-100 -> frame delay (higher speed = lower delay = faster movement)
+            // Map 50->5 frames, 25->10 frames (50% slower), 100->2.5 frames (2x faster)
+            playgroundConfig.chaseSingle.speed = max(1, (int)(12.5 - (speed * 0.2))); 
+            
+            // Intensity: 1-100 -> trail length (50 = reasonable trail)
+            // Map 50->15 pixels, 25->7 pixels (50% shorter), 100->30 pixels (2x longer)
+            playgroundConfig.chaseSingle.trailLength = max(1, (int)(intensity * 0.3));
+            playgroundConfig.chaseSingle.trailFade = 15; // Fixed fade amount
+            playgroundConfig.chaseSingle.defaultColor = "#0062ff";
         }
         else if (effectName.equalsIgnoreCase("chase_multi"))
         {
-            playgroundConfig.chaseMulti.speed = settings["speed"] | 2;
-            playgroundConfig.chaseMulti.trailLength = settings["trailLength"] | 20;
-            playgroundConfig.chaseMulti.trailFade = settings["trailFade"] | 20;
-            playgroundConfig.chaseMulti.colorSpacing = settings["colorSpacing"] | 12;
+            // Speed: 1-100 -> frame delay (50->3 frames ideal)
+            playgroundConfig.chaseMulti.speed = max(1, (int)(8.0 - (speed * 0.12)));
+            
+            // Intensity: 1-100 -> trail length (50->15 pixels ideal) 
+            playgroundConfig.chaseMulti.trailLength = max(1, (int)(intensity * 0.3));
+            playgroundConfig.chaseMulti.trailFade = 20; // Fixed fade amount
+            
+            // Custom1 (colorSpacing): from frontend or default
+            playgroundConfig.chaseMulti.colorSpacing = settings["custom1"] | 3;
+            
+            // Colors from frontend
             if (settings.containsKey("colors") && settings["colors"].as<JsonArray>().size() > 0)
             {
                 JsonArray settingsColors = settings["colors"];
-                playgroundConfig.chaseMulti.color1 = settingsColors.size() > 0 ? settingsColors[0].as<String>() : "#ff9900ff";
-                playgroundConfig.chaseMulti.color2 = settingsColors.size() > 1 ? settingsColors[1].as<String>() : "#008f00ff";
-                playgroundConfig.chaseMulti.color3 = settingsColors.size() > 2 ? settingsColors[2].as<String>() : "#78cffeff";
+                playgroundConfig.chaseMulti.color1 = settingsColors.size() > 0 ? settingsColors[0].as<String>() : "#ff0000";
+                playgroundConfig.chaseMulti.color2 = settingsColors.size() > 1 ? settingsColors[1].as<String>() : "#00ff00";
+                playgroundConfig.chaseMulti.color3 = settingsColors.size() > 2 ? settingsColors[2].as<String>() : "#0000ff";
             }
         }
         else if (effectName.equalsIgnoreCase("matrix"))
         {
-            playgroundConfig.matrix.speed = settings["speed"] | 3;
-            playgroundConfig.matrix.drops = settings["drops"] | 5;
-            playgroundConfig.matrix.backgroundFade = settings["backgroundFade"] | 64;
-            playgroundConfig.matrix.trailFade = settings["trailFade"] | 32;
-            playgroundConfig.matrix.brightnessFade = settings["brightnessFade"] | 40;
-            playgroundConfig.matrix.defaultColor = settings["color"] | "#009100ff";
+            // Speed: 1-100 -> frame delay (50->4 frames ideal)
+            playgroundConfig.matrix.speed = max(1, (int)(9.0 - (speed * 0.1)));
+            
+            // Intensity: 1-100 -> number of drops (50->10 drops ideal)
+            // Map 50->10 drops, 25->5 drops (50% fewer), 100->20 drops (2x more)
+            playgroundConfig.matrix.drops = max(1, (int)(intensity * 0.2));
+            
+            // Fixed internal parameters
+            playgroundConfig.matrix.backgroundFade = 64;
+            playgroundConfig.matrix.trailFade = 32;
+            playgroundConfig.matrix.brightnessFade = 40;
+            playgroundConfig.matrix.defaultColor = "#00ff00";
         }
         else if (effectName.equalsIgnoreCase("twinkle"))
         {
-            playgroundConfig.twinkle.density = settings["density"] | 8;
-            playgroundConfig.twinkle.fadeSpeed = settings["fadeSpeed"] | 5;
-            playgroundConfig.twinkle.minBrightness = settings["minBrightness"] | 50;
-            playgroundConfig.twinkle.maxBrightness = settings["maxBrightness"] | 255;
-            playgroundConfig.twinkle.defaultColor = settings["color"] | "#ffffffff";
+            // Speed: 1-100 -> both twinkle rate and fade speed (50 ideal)
+            // Faster speed = both faster twinkling AND faster fading
+            int twinkleRate = max(1, (int)(12.5 - (speed * 0.2))); // 50->2.5, 25->7.5, 100->0.5
+            
+            // Intensity: 1-100 -> number of active twinkles (50->10 twinkles ideal)
+            int numTwinkles = max(1, (int)(intensity * 0.2)); // 50->10, 25->5, 100->20
+            
+            playgroundConfig.twinkle.density = numTwinkles;
+            playgroundConfig.twinkle.fadeSpeed = max(1, twinkleRate); // Use speed for fade too
+            playgroundConfig.twinkle.minBrightness = 50;  // Fixed
+            playgroundConfig.twinkle.maxBrightness = 255; // Fixed 
+            playgroundConfig.twinkle.defaultColor = "#ffff00";
         }
         else if (effectName.equalsIgnoreCase("pulse"))
         {
-            playgroundConfig.pulse.speed = settings["speed"] | 4;
-            playgroundConfig.pulse.minBrightness = settings["minBrightness"] | 0;
-            playgroundConfig.pulse.maxBrightness = settings["maxBrightness"] | 255;
-            playgroundConfig.pulse.waveFrequency = settings["waveFrequency"] | 0.05f;
-            playgroundConfig.pulse.defaultColor = settings["color"] | "#ff00f2ff";
+            // Speed: 1-100 -> pulse rate (50->5 frames ideal)
+            playgroundConfig.pulse.speed = max(1, (int)(12.5 - (speed * 0.15)));
+            
+            // Intensity: 1-100 -> brightness variation (50 = moderate variation)
+            // Map intensity to min brightness: 50->64 (moderate), 25->128 (subtle), 100->0 (full range)  
+            int minBrightness = max(0, 255 - (int)(intensity * 2.55));
+            playgroundConfig.pulse.minBrightness = minBrightness;
+            playgroundConfig.pulse.maxBrightness = 255; // Always full bright at peak
+            playgroundConfig.pulse.waveFrequency = 0.05f; // Fixed
+            playgroundConfig.pulse.defaultColor = "#800080";
         }
         else if (effectName.equalsIgnoreCase("rainbow"))
         {
-            playgroundConfig.rainbow.speed = settings["speed"] | 3.0f;
-            playgroundConfig.rainbow.saturation = settings["saturation"] | 255;
-            playgroundConfig.rainbow.brightness = settings["brightness"] | 255;
-            playgroundConfig.rainbow.hueStep = settings["hueStep"] | 2.0f;
+            // Speed: 1-100 -> wave movement speed (50->2.5 ideal)
+            float rainbowSpeed = (float)(speed * 0.05); // 50->2.5, 25->1.25, 100->5.0
+            playgroundConfig.rainbow.speed = max(0.1f, rainbowSpeed);
+            
+            // Intensity: 1-100 -> wave length/density (50->2.5 hue step ideal)
+            // Lower intensity = longer waves (higher hue step), higher intensity = shorter waves
+            float hueStep = max(0.5f, (float)(6.0 - (intensity * 0.08))); // 50->2.0, 25->4.0, 100->1.2
+            playgroundConfig.rainbow.hueStep = hueStep;
+            
+            // Fixed parameters
+            playgroundConfig.rainbow.saturation = 255;
+            playgroundConfig.rainbow.brightness = 255;
         }
 
         // Apply the playground configuration temporarily

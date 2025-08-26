@@ -100,49 +100,47 @@
         "count": 30,
         "brightness": 64,
         "refreshRate": 60,
-        "effects": {
-            "chaseSingle": {
-                "speed": 5,
-                "trailLength": 15,
-                "trailFade": 15,
-                "defaultColor": "#0062ffff"
+        "effectDefaults": {
+            "universal": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3
             },
-            "chaseMulti": {
-                "speed": 2,
-                "trailLength": 20,
-                "trailFade": 20,
-                "colorSpacing": 12,
-                "color1": "#ff9900ff",
-                "color2": "#008f00ff",
-                "color3": "#78cffeff"
+            "chase_single": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#0062ff"]
+            },
+            "chase_multi": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#ff0000", "#00ff00", "#0000ff"]
             },
             "matrix": {
-                "speed": 3,
-                "drops": 5,
-                "backgroundFade": 64,
-                "trailFade": 32,
-                "brightnessFade": 40,
-                "defaultColor": "#009100ff"
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#00ff00"]
             },
             "twinkle": {
-                "density": 8,
-                "fadeSpeed": 5,
-                "minBrightness": 50,
-                "maxBrightness": 255,
-                "defaultColor": "#FFFFFF"
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#ffff00"]
             },
             "pulse": {
-                "speed": 4,
-                "minBrightness": 0,
-                "maxBrightness": 255,
-                "waveFrequency": 0.050000001,
-                "defaultColor": "#ff00f2ff"
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#800080"]
             },
             "rainbow": {
-                "speed": 2,
-                "saturation": 255,
-                "brightness": 255,
-                "hueStep": 2.5
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#ff0000"]
             }
         }
     },

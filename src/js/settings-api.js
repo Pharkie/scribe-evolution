@@ -212,11 +212,12 @@ async function scanWiFiNetworks() {
         const result = await response.json();
         console.log('API: WiFi scan completed:', result);
         
-        if (!result.success) {
-            throw new Error('WiFi scan failed');
+        // Check for networks array instead of success flag
+        if (!result.networks || !Array.isArray(result.networks)) {
+            throw new Error('WiFi scan failed - no networks array in response');
         }
         
-        return result.networks || [];
+        return result.networks;
         
     } catch (error) {
         console.error('API: Failed to scan WiFi networks:', error);

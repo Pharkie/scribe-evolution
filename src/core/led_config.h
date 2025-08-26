@@ -31,48 +31,55 @@ static const unsigned long DEFAULT_LED_UPDATE_INTERVAL = 1000 / DEFAULT_LED_REFR
 // PER-EFFECT AUTONOMOUS SETTINGS
 // ============================================================================
 
-// Chase Single Effect Settings
-static const int DEFAULT_CHASE_SINGLE_SPEED = 5;             // Frame delay (higher = slower)
-static const int DEFAULT_CHASE_SINGLE_TRAIL_LENGTH = 15;     // Length of trailing fade
-static const int DEFAULT_CHASE_SINGLE_TRAIL_FADE = 15;       // Fade amount per trail step (0-255)
-static const char *DEFAULT_CHASE_SINGLE_COLOR = "#0062ffff"; // Blue
+// ============================================================================
+// UNIFIED LED EFFECT DEFAULTS (1-100 Scale, 50 = Ideal)
+// ============================================================================
+// Speed and Intensity use 1-100 scale where:
+// - 50 = ideal setting most people want
+// - 25 = 50% slower/weaker than ideal  
+// - 100 = 200% faster/stronger than ideal (double)
 
-// Chase Multi Effect Settings
-static const int DEFAULT_CHASE_MULTI_SPEED = 2;              // Frame delay (higher = slower)
-static const int DEFAULT_CHASE_MULTI_TRAIL_LENGTH = 20;      // Length of trailing fade
-static const int DEFAULT_CHASE_MULTI_TRAIL_FADE = 20;        // Fade amount per trail step (0-255)
-static const int DEFAULT_CHASE_MULTI_COLOR_SPACING = 12;     // Space between colors
-static const char *DEFAULT_CHASE_MULTI_COLOR1 = "#ff9900ff"; // Orange
-static const char *DEFAULT_CHASE_MULTI_COLOR2 = "#008f00ff"; // Nice green
-static const char *DEFAULT_CHASE_MULTI_COLOR3 = "#78cffeff"; // Cyan
+static const int DEFAULT_LED_EFFECT_SPEED = 50;        // Universal speed default (1-100 scale)
+static const int DEFAULT_LED_EFFECT_INTENSITY = 50;    // Universal intensity default (1-100 scale)  
+static const int DEFAULT_LED_EFFECT_CYCLES = 3;        // Default number of cycles to run
+
+// Chase Single Effect Settings
+static const int DEFAULT_CHASE_SINGLE_SPEED = DEFAULT_LED_EFFECT_SPEED;      // Speed (1-100, 50=ideal)
+static const int DEFAULT_CHASE_SINGLE_INTENSITY = DEFAULT_LED_EFFECT_INTENSITY; // Trail length intensity (1-100, 50=ideal)
+static const int DEFAULT_CHASE_SINGLE_CYCLES = DEFAULT_LED_EFFECT_CYCLES;    // Number of cycles
+static const char *DEFAULT_CHASE_SINGLE_COLOR = "#0062ff"; // Blue
+
+// Chase Multi Effect Settings  
+static const int DEFAULT_CHASE_MULTI_SPEED = DEFAULT_LED_EFFECT_SPEED;       // Speed (1-100, 50=ideal)
+static const int DEFAULT_CHASE_MULTI_INTENSITY = DEFAULT_LED_EFFECT_INTENSITY; // Trail length intensity (1-100, 50=ideal)
+static const int DEFAULT_CHASE_MULTI_CYCLES = DEFAULT_LED_EFFECT_CYCLES;     // Number of cycles
+static const int DEFAULT_CHASE_MULTI_COLOR_SPACING = 3;                      // Space between colors
+static const char *DEFAULT_CHASE_MULTI_COLOR1 = "#ff0000"; // Red
+static const char *DEFAULT_CHASE_MULTI_COLOR2 = "#00ff00"; // Green  
+static const char *DEFAULT_CHASE_MULTI_COLOR3 = "#0000ff"; // Blue
 
 // Matrix Effect Settings
-static const int DEFAULT_MATRIX_SPEED = 3;             // Frame delay (higher = slower)
-static const int DEFAULT_MATRIX_DROPS = 5;             // Number of simultaneous drops
-static const int DEFAULT_MATRIX_BACKGROUND_FADE = 64;  // Background fade amount
-static const int DEFAULT_MATRIX_TRAIL_FADE = 32;       // Trail fade amount
-static const int DEFAULT_MATRIX_BRIGHTNESS_FADE = 40;  // Brightness fade per position
-static const char *DEFAULT_MATRIX_COLOR = "#009100ff"; // Default green
+static const int DEFAULT_MATRIX_SPEED = DEFAULT_LED_EFFECT_SPEED;            // Speed (1-100, 50=ideal)
+static const int DEFAULT_MATRIX_INTENSITY = DEFAULT_LED_EFFECT_INTENSITY;    // Number of drops (1-100, 50=ideal)  
+static const int DEFAULT_MATRIX_CYCLES = DEFAULT_LED_EFFECT_CYCLES;          // Number of cycles
+static const char *DEFAULT_MATRIX_COLOR = "#00ff00"; // Green
 
 // Twinkle Effect Settings
-static const int DEFAULT_TWINKLE_DENSITY = 8;          // Number of simultaneous stars
-static const int DEFAULT_TWINKLE_FADE_SPEED = 5;       // Fade transition speed
-static const int DEFAULT_TWINKLE_MIN_BRIGHTNESS = 50;  // Minimum star brightness
-static const int DEFAULT_TWINKLE_MAX_BRIGHTNESS = 255; // Maximum star brightness
-static const char *DEFAULT_TWINKLE_COLOR = "#FFFFFF";  // Default white
+static const int DEFAULT_TWINKLE_SPEED = DEFAULT_LED_EFFECT_SPEED;           // Twinkle rate & fade speed (1-100, 50=ideal)
+static const int DEFAULT_TWINKLE_INTENSITY = DEFAULT_LED_EFFECT_INTENSITY;   // Number of active twinkles (1-100, 50=ideal)
+static const int DEFAULT_TWINKLE_CYCLES = DEFAULT_LED_EFFECT_CYCLES;         // Number of cycles
+static const char *DEFAULT_TWINKLE_COLOR = "#ffff00"; // Yellow
 
 // Pulse Effect Settings
-static const int DEFAULT_PULSE_SPEED = 4;                // Frame delay (higher = slower)
-static const int DEFAULT_PULSE_MIN_BRIGHTNESS = 0;       // Minimum brightness in pulse cycle
-static const int DEFAULT_PULSE_MAX_BRIGHTNESS = 255;     // Maximum brightness in pulse cycle
-static const float DEFAULT_PULSE_WAVE_FREQUENCY = 0.05f; // Wave frequency multiplier
-static const char *DEFAULT_PULSE_COLOR = "#ff00f2ff";    // Hot pink
+static const int DEFAULT_PULSE_SPEED = DEFAULT_LED_EFFECT_SPEED;             // Pulse rate (1-100, 50=ideal)
+static const int DEFAULT_PULSE_INTENSITY = DEFAULT_LED_EFFECT_INTENSITY;     // Brightness variation (1-100, 50=ideal)
+static const int DEFAULT_PULSE_CYCLES = DEFAULT_LED_EFFECT_CYCLES;           // Number of cycles  
+static const char *DEFAULT_PULSE_COLOR = "#800080"; // Purple
 
 // Rainbow Effect Settings
-static const float DEFAULT_RAINBOW_SPEED = 2.0f;    // Animation speed multiplier
-static const int DEFAULT_RAINBOW_SATURATION = 255;  // Color saturation (0-255)
-static const int DEFAULT_RAINBOW_BRIGHTNESS = 255;  // Overall brightness (0-255)
-static const float DEFAULT_RAINBOW_HUE_STEP = 2.5f; // Hue step between LEDs
+static const int DEFAULT_RAINBOW_SPEED = DEFAULT_LED_EFFECT_SPEED;           // Wave movement speed (1-100, 50=ideal)
+static const int DEFAULT_RAINBOW_INTENSITY = DEFAULT_LED_EFFECT_INTENSITY;   // Wave length/density (1-100, 50=ideal)
+static const int DEFAULT_RAINBOW_CYCLES = DEFAULT_LED_EFFECT_CYCLES;         // Number of cycles
 
 // ============================================================================
 // PER-EFFECT CONFIGURATION STRUCTURES

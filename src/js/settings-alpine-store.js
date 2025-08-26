@@ -155,10 +155,11 @@ function initializeSettingsStore() {
         
         // LED Effect Parameters (WLED-style unified interface)
         selectedEffect: 'chase_single',
+        testingEffect: false,
         effectParams: {
-            speed: 10,
+            speed: 50,
             intensity: 50,
-            cycles: 5,
+            cycles: 3,
             colors: ['#0066FF', '#00FF00', '#FF0000'], // Array of colors
             custom1: 10,
             custom2: 5,
@@ -639,15 +640,16 @@ function initializeSettingsStore() {
                 
                 this.showValidationFeedback = false;
                 
-                // Redirect to index page with stashed indicator
+                // Keep saving state until redirect completes - don't reset saving flag on success
+                console.log('Alpine Store: Configuration and memos saved successfully');
+                
+                // Redirect to index page with saved indicator
                 window.location.href = '/?settings=stashed';
                 
-                console.log('Alpine Store: Configuration and memos saved successfully');
             } catch (error) {
                 console.error('Alpine Store: Failed to save configuration:', error);
                 window.showMessage('Failed to save configuration: ' + error.message, 'error');
-            } finally {
-                this.saving = false;
+                this.saving = false; // Only reset on error
             }
         },
         
@@ -1126,6 +1128,9 @@ ${urlLine}`;
         
         // LED effect functions (WLED-style unified interface)
         async testLedEffect(effectName) {
+            if (this.testingEffect) return; // Prevent multiple simultaneous tests
+            
+            this.testingEffect = true;
             try {
                 // Build colors array based on effect
                 let colors = [];
@@ -1141,7 +1146,7 @@ ${urlLine}`;
                     colors = [this.effectParams.colors[0]];
                 }
 
-                // Build unified payload - use cycles instead of duration
+                // Build unified payload - only standard parameters  
                 let effectParams = {
                     effect: effectName,
                     cycles: parseInt(this.effectParams.cycles), // Ensure it's a number
@@ -1149,10 +1154,7 @@ ${urlLine}`;
                     intensity: this.effectParams.intensity,
                     colors: colors
                 };
-                
-                // Add effect-specific custom parameters
-                const customParams = this.getEffectCustomParams(effectName);
-                Object.assign(effectParams, customParams);
+                // No custom parameters - all moved to speed/intensity
                 
                 // Debug logging
                 console.log('LED Effect Payload:', effectParams);
@@ -1162,122 +1164,112 @@ ${urlLine}`;
                 const result = await window.SettingsAPI.triggerLedEffect(effectParams);
                 
                 // Success is indicated by getting a response (no exception thrown) with expected properties
-                if (result && (result.message || result.effect)) {
-                    const cycleText = this.effectParams.cycles === 1 ? '1 cycle' : `${this.effectParams.cycles} cycles`;
-                    window.showMessage(`Testing ${effectName} effect for ${cycleText}`, 'info');
-                } else {
+                if (!result || (!result.message && !result.effect)) {
                     throw new Error('LED effect failed - unexpected response format');
                 }
+                // Don't show success toast - just let the effect run
             } catch (error) {
                 console.error('LED effect test failed:', error);
                 window.showMessage(`Failed to test LED effect: ${error.message}`, 'error');
+            } finally {
+                this.testingEffect = false;
             }
         },
         
-        // Map generic parameters to effect-specific ones
-        getEffectCustomParams(effectName) {
-            const params = {};
-            
-            switch(effectName) {
-                case 'chase_single':
-                    // intensity = unused, custom1-3 = unused
-                    break;
-                case 'rainbow':
-                    // intensity = density, custom1 = wave length
-                    params.density = this.effectParams.intensity;
-                    params.waveLength = this.effectParams.custom1;
-                    break;
-                case 'twinkle':
-                    // intensity = density, custom1 = fade speed
-                    params.density = this.effectParams.intensity;
-                    params.fadeSpeed = this.effectParams.custom1;
-                    break;
-                case 'chase_multi':
-                    // intensity = trail_length, custom1 = dot size (color spacing)
-                    params.trailLength = this.effectParams.intensity;
-                    params.colorSpacing = this.effectParams.custom1;
-                    break;
-                case 'pulse':
-                    // intensity = unused
-                    break;
-                case 'matrix':
-                    // intensity = unused, custom2 = drop rate
-                    params.drops = this.effectParams.custom2;
-                    break;
-            }
-            
-            return params;
-        },
         
-        // Get custom slider labels and ranges for current effect
+        // No custom sliders - all parameters now use standardized speed/intensity
         getCustomSlider1Label() {
-            switch(this.selectedEffect) {
-                case 'rainbow': return 'Wave Length';
-                case 'twinkle': return 'Fade Speed';
-                case 'chase_multi': return 'Dot Size';
-                default: return null;
-            }
+            return null; // All parameters moved to speed/intensity
         },
         
         getCustomSlider1Range() {
-            switch(this.selectedEffect) {
-                case 'rainbow': return { min: 1, max: 20, step: 1 };
-                case 'twinkle': return { min: 1, max: 10, step: 1 };
-                case 'chase_multi': return { min: 1, max: 10, step: 1 };
-                default: return { min: 1, max: 100, step: 1 };
-            }
+            return { min: 1, max: 100, step: 1 };
         },
         
         getCustomSlider2Label() {
-            switch(this.selectedEffect) {
-                case 'matrix': return 'Drop Rate';
-                default: return null;
-            }
+            return null; // All parameters moved to speed/intensity
         },
         
         getCustomSlider2Range() {
-            switch(this.selectedEffect) {
-                case 'matrix': return { min: 1, max: 20, step: 1 };
-                default: return { min: 1, max: 100, step: 1 };
-            }
+            return { min: 1, max: 100, step: 1 };
         },
         
         getCustomSlider3Label() {
-            // Currently no effects use 3 custom sliders
-            return null;
+            return null; // All parameters moved to speed/intensity
         },
         
         getCustomSlider3Range() {
             return { min: 1, max: 100, step: 1 };
         },
         
-        // Initialize effect parameters based on selected effect  
+        // Initialize effect parameters based on selected effect using backend defaults
         initEffectParams() {
-            const defaults = {
-                'chase_single': { speed: 10, intensity: 50, cycles: 5, colors: ['#0062ff', '#0062ff', '#0062ff'], custom1: 10, custom2: 5, custom3: 1 },
-                'rainbow': { speed: 20, intensity: 5, cycles: 5, colors: ['#ff0000', '#ff0000', '#ff0000'], custom1: 5, custom2: 3, custom3: 1 },
-                'twinkle': { speed: 5, intensity: 10, cycles: 5, colors: ['#ffff00', '#ffff00', '#ffff00'], custom1: 3, custom2: 2, custom3: 1 },
-                'chase_multi': { speed: 15, intensity: 10, cycles: 5, colors: ['#ff0000', '#00ff00', '#0000ff'], custom1: 3, custom2: 5, custom3: 1 },
-                'pulse': { speed: 4, intensity: 50, cycles: 5, colors: ['#800080', '#800080', '#800080'], custom1: 5, custom2: 3, custom3: 1 },
-                'matrix': { speed: 25, intensity: 20, cycles: 5, colors: ['#008000', '#008000', '#008000'], custom1: 8, custom2: 10, custom3: 1 }
+            // Check if backend has provided LED effect defaults
+            const ledDefaults = this.config?.leds?.effectDefaults;
+            if (!ledDefaults) {
+                console.error('❌ LED effect defaults missing from backend /api/config');
+                // Use minimal fallback to prevent crash, but show error
+                this.effectParams = {
+                    speed: 50,
+                    intensity: 50, 
+                    cycles: 3,
+                    colors: ['#ff0000', '#00ff00', '#0000ff']
+                };
+                return;
+            }
+            
+            // Use backend defaults for the selected effect
+            const effectDefaults = ledDefaults[this.selectedEffect];
+            if (!effectDefaults) {
+                console.error(`❌ LED effect defaults for '${this.selectedEffect}' missing from backend`);
+                // Use minimal fallback 
+                this.effectParams = {
+                    speed: ledDefaults.universal?.speed || 50,
+                    intensity: ledDefaults.universal?.intensity || 50,
+                    cycles: ledDefaults.universal?.cycles || 3,
+                    colors: ['#ff0000', '#00ff00', '#0000ff']
+                };
+                return;
+            }
+            
+            // Successfully load from backend
+            this.effectParams = {
+                speed: effectDefaults.speed || 50,
+                intensity: effectDefaults.intensity || 50,
+                cycles: effectDefaults.cycles || 3,
+                colors: effectDefaults.colors || ['#ff0000']
             };
             
-            if (defaults[this.selectedEffect]) {
-                this.effectParams = { ...defaults[this.selectedEffect] };
-            }
+            console.log(`✅ LED effect '${this.selectedEffect}' defaults loaded from backend:`, this.effectParams);
         },
         
-        // Get effect description
-        getEffectDescription() {
+        // Get parameter descriptions for individual sliders
+        getSpeedDescription() {
             const descriptions = {
-                'chase_single': 'Single colour dot chasing around the strip. Speed controls movement rate, Intensity controls trail length.',
-                'rainbow': 'Smooth rainbow wave moving across the strip. Speed controls wave movement, Intensity controls density of colors, Wave Length controls how many colors appear simultaneously.',
-                'twinkle': 'Random twinkling stars effect. Speed controls twinkle rate, Intensity controls number of active twinkles, Fade Speed controls how quickly stars fade out.',
-                'chase_multi': 'Multiple coloured dots chasing with trails using three settable colors. Speed controls movement, Intensity controls trail length, Dot Size controls the size of each colour dot.',
-                'pulse': 'Entire strip pulsing in selected color. Speed controls pulse rate, Intensity controls brightness variation.',
-                'matrix': 'Matrix-style digital rain effect. Speed controls falling rate, Intensity affects brightness variations, Drop Rate controls frequency of new drops.'
+                'chase_single': 'Controls movement rate',
+                'rainbow': 'Controls wave movement', 
+                'twinkle': 'Controls twinkle rate',
+                'chase_multi': 'Controls movement',
+                'pulse': 'Controls pulse rate',
+                'matrix': 'Controls falling rate'
             };
-            return descriptions[this.selectedEffect] || 'LED effect description not available.';
+            return descriptions[this.selectedEffect] || 'Controls effect speed';
+        },
+
+        getIntensityDescription() {
+            const descriptions = {
+                'chase_single': 'Controls trail length',
+                'rainbow': 'Controls wave length/density',
+                'twinkle': 'Controls number of active twinkles', 
+                'chase_multi': 'Controls trail length',
+                'pulse': 'Controls brightness variation',
+                'matrix': 'Controls number of drops'
+            };
+            return descriptions[this.selectedEffect] || 'Controls effect intensity';
+        },
+
+        getCyclesDescription() {
+            return 'Number of times to repeat the effect';
         },
         
         async turnOffLeds() {
@@ -1285,11 +1277,10 @@ ${urlLine}`;
                 // Use API layer instead of direct fetch
                 const result = await window.SettingsAPI.turnOffLeds();
                 
-                if (result.success) {
-                    window.showMessage('LEDs turned off', 'success');
-                } else {
+                if (!result.success) {
                     throw new Error(result.message || 'Failed to turn off LEDs');
                 }
+                // Don't show success toast - the LEDs turning off is immediate visual feedback
             } catch (error) {
                 console.error('Turn off LEDs failed:', error);
                 window.showMessage(`Failed to turn off LEDs: ${error.message}`, 'error');
