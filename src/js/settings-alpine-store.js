@@ -1339,10 +1339,10 @@ ${urlLine}`;
             }
         },
         
-        // Check if a prompt preset is currently active
         isPromptActive(type) {
             const presets = this.config.unbiddenInk.promptPresets || {};
-            return this.config.unbiddenInk.prompt === presets[type];
+            const currentPrompt = this.config.unbiddenInk.prompt || '';
+            return currentPrompt.trim() === (presets[type] || '').trim();
         },
         
         // Frequency slider specific values

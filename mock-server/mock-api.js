@@ -346,6 +346,15 @@ function createRequestHandler() {
           }, 300);
         });
         
+      } else if (pathname === '/api/leds-off' && req.method === 'POST') {
+        console.log('💡 LEDs turned off');
+        setTimeout(() => {
+          sendJSON(res, {
+            message: "LEDs turned off",
+            success: true
+          });
+        }, 200);
+        
       } else if (pathname === '/api/scan-wifi') {
         console.log('📶 WiFi scan requested');
         setTimeout(() => sendJSON(res, mockWifiScan), 800);
