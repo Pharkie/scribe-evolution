@@ -35,6 +35,7 @@
 #include "api_handlers.h" // For sendErrorResponse
 #include "web_server.h"   // For getRequestBody function
 #include "../core/config.h"
+#include "../core/config_loader.h"
 #include "../core/led_config.h"
 #include "../core/logging.h"
 #include "../leds/LedEffects.h"
@@ -206,13 +207,20 @@ void handleLedEffect(AsyncWebServerRequest *request)
         
         if (effectName.equalsIgnoreCase("chase_single"))
         {
-            // REDESIGNED: Speed controls position advancement per frame at 60Hz
-            // Current speed=100 should become speed=50, with room to go faster/slower
-            // Speed 50 = 1 pixel advance per frame (reasonable)
-            // Speed 10 = 0.2 pixel advance per frame (5x slower) 
-            // Speed 100 = 2 pixel advance per frame (2x faster)
-            float speedMultiplier = speed / 50.0f; // 50 becomes 1.0 baseline
-            playgroundConfig.chaseSingle.speed = max(1, (int)(4 / speedMultiplier)); // Invert for frame delay
+            // IMPROVED SPEED MAPPING: Much more dramatic differences between speed values
+            // Speed 10 = 50 frames (very slow, ~1.7 seconds per pixel at 30fps)
+            // Speed 50 = 6 frames (moderately fast) 
+            // Speed 100 = 1 frame (very fast)
+            // Uses inverse exponential for dramatic visual differences
+            int frameDelay;
+            if (speed <= 10) frameDelay = 50;
+            else if (speed >= 100) frameDelay = 1; 
+            else {
+                // Exponential decay: speed 10->50 frames, 50->6 frames, 100->1 frame
+                float t = (speed - 10) / 90.0f; // 0 to 1
+                frameDelay = (int)(50 * pow(0.02f, t)); // Exponential decay from 50 to 1
+            }
+            playgroundConfig.chaseSingle.speed = max(1, frameDelay);
             
             // Intensity: 10-100 -> trail length (50 = 15 pixels, good balance)
             playgroundConfig.chaseSingle.trailLength = max(3, min(30, (int)(intensity * 0.3)));
@@ -221,9 +229,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("chase_multi"))
         {
-            // REDESIGNED: Similar speed philosophy - 50 = baseline smooth movement
-            float speedMultiplier = speed / 50.0f; // 50 becomes 1.0 baseline  
-            playgroundConfig.chaseMulti.speed = max(1, (int)(3 / speedMultiplier)); // Baseline 3 frames
+            // IMPROVED SPEED MAPPING: Dramatic differences for chase_multi
+            // Speed 10 = 40 frames (very slow), Speed 50 = 5 frames (moderate), Speed 100 = 1 frame (very fast)
+            int frameDelay;
+            if (speed <= 10) frameDelay = 40;
+            else if (speed >= 100) frameDelay = 1; 
+            else {
+                float t = (speed - 10) / 90.0f; // 0 to 1
+                frameDelay = (int)(40 * pow(0.025f, t)); // Exponential decay from 40 to 1
+            }
+            playgroundConfig.chaseMulti.speed = max(1, frameDelay);
             
             // Intensity: 10-100 -> trail length (50 = 15 pixels) 
             playgroundConfig.chaseMulti.trailLength = max(3, min(25, (int)(intensity * 0.3)));
@@ -243,10 +258,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("matrix"))
         {
-            // REDESIGNED: Speed controls drop falling rate - 50 = smooth natural fall
-            // Speed 50 = 2 frame delay (natural), Speed 10 = 8 frames (very slow), Speed 100 = 1 frame (very fast)
-            float speedMultiplier = speed / 50.0f; // 50 becomes 1.0 baseline
-            playgroundConfig.matrix.speed = max(1, (int)(2.5 / speedMultiplier)); // Baseline 2.5 frames
+            // IMPROVED SPEED MAPPING: Dramatic differences for matrix effect
+            // Speed 10 = 30 frames (very slow drops), Speed 50 = 4 frames (moderate), Speed 100 = 1 frame (very fast)
+            int frameDelay;
+            if (speed <= 10) frameDelay = 30;
+            else if (speed >= 100) frameDelay = 1; 
+            else {
+                float t = (speed - 10) / 90.0f; // 0 to 1
+                frameDelay = (int)(30 * pow(0.033f, t)); // Exponential decay from 30 to 1
+            }
+            playgroundConfig.matrix.speed = max(1, frameDelay);
             
             // Intensity: 10-100 -> number of drops (50 = good density, scales with LED count)
             // For 30 LEDs: 50 intensity = ~6 drops, 10 = 1-2 drops, 100 = 10-12 drops
@@ -261,9 +282,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("twinkle"))
         {
-            // Speed: 1-100 -> both twinkle rate and fade speed (50 ideal)
-            // Faster speed = both faster twinkling AND faster fading
-            int twinkleRate = max(1, (int)(12.5 - (speed * 0.2))); // 50->2.5, 25->7.5, 100->0.5
+            // IMPROVED SPEED MAPPING: Dramatic differences for twinkle effect
+            // Speed 10 = 25 frames (very slow twinkle), Speed 50 = 3 frames (moderate), Speed 100 = 1 frame (very fast)
+            int twinkleRate;
+            if (speed <= 10) twinkleRate = 25;
+            else if (speed >= 100) twinkleRate = 1; 
+            else {
+                float t = (speed - 10) / 90.0f; // 0 to 1
+                twinkleRate = (int)(25 * pow(0.04f, t)); // Exponential decay from 25 to 1
+            }
+            twinkleRate = max(1, twinkleRate);
             
             // Intensity: 1-100 -> number of active twinkles (50->10 twinkles ideal)
             int numTwinkles = max(1, (int)(intensity * 0.2)); // 50->10, 25->5, 100->20
@@ -276,8 +304,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("pulse"))
         {
-            // Speed: 1-100 -> pulse rate (50->5 frames ideal)
-            playgroundConfig.pulse.speed = max(1, (int)(12.5 - (speed * 0.15)));
+            // IMPROVED SPEED MAPPING: Dramatic differences for pulse effect
+            // Speed 10 = 20 frames (very slow pulse), Speed 50 = 3 frames (moderate), Speed 100 = 1 frame (very fast)
+            int pulseSpeed;
+            if (speed <= 10) pulseSpeed = 20;
+            else if (speed >= 100) pulseSpeed = 1; 
+            else {
+                float t = (speed - 10) / 90.0f; // 0 to 1
+                pulseSpeed = (int)(20 * pow(0.05f, t)); // Exponential decay from 20 to 1
+            }
+            playgroundConfig.pulse.speed = max(1, pulseSpeed);
             
             // Intensity: 1-100 -> brightness variation (50 = moderate variation)
             // Map intensity to min brightness: 50->64 (moderate), 25->128 (subtle), 100->0 (full range)  
@@ -289,9 +325,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("rainbow"))
         {
-            // Speed: 1-100 -> wave movement speed (50->2.5 ideal)
-            float rainbowSpeed = (float)(speed * 0.05); // 50->2.5, 25->1.25, 100->5.0
-            playgroundConfig.rainbow.speed = max(0.1f, rainbowSpeed);
+            // IMPROVED SPEED MAPPING: Dramatic differences for rainbow effect
+            // Speed 10 = 0.5 (very slow movement), Speed 50 = 4.0 (moderate), Speed 100 = 15.0 (very fast)
+            float rainbowSpeed;
+            if (speed <= 10) rainbowSpeed = 0.5f;
+            else if (speed >= 100) rainbowSpeed = 15.0f; 
+            else {
+                float t = (speed - 10) / 90.0f; // 0 to 1
+                rainbowSpeed = 0.5f + (t * t * 14.5f); // Quadratic growth from 0.5 to 15.0
+            }
+            playgroundConfig.rainbow.speed = rainbowSpeed;
             
             // Intensity: 1-100 -> wave length/density (50->2.5 hue step ideal)
             // Lower intensity = longer waves (higher hue step), higher intensity = shorter waves

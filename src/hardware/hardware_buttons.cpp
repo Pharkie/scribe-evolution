@@ -500,56 +500,71 @@ void buttonActionTask(void *parameter)
     // Trigger LED effect immediately (non-blocking)
     triggerButtonLedEffect(params->buttonIndex, params->isLongPress);
 
-    // Process the action directly (no HTTP calls!)
-    if (params->actionType.length() > 0)
-    {
-        // Execute content action directly with timeout
-        bool success = executeButtonActionDirect(params->actionType.c_str());
-
-        if (success)
-        {
-            LOG_VERBOSE("BUTTONS", "Button action completed successfully: %s",
-                        params->actionType.c_str());
-        }
-        else
-        {
-            LOG_WARNING("BUTTONS", "Button action failed or timed out: %s",
-                        params->actionType.c_str());
-        }
-    }
-
-    // Handle MQTT if specified
+    // FIXED: Execute action based on MQTT configuration
+    // If MQTT topic is set, send ONLY via MQTT. If not set, print locally.
     if (params->mqttTopic.length() > 0)
     {
-        if (mqttClient.connected())
+        // MQTT path: generate content and send via MQTT only
+        if (params->actionType.length() > 0)
         {
-            // Create MQTT payload with sender information
-            DynamicJsonDocument payloadDoc(4096);
-            payloadDoc["message"] = currentMessage.message;
-            
-            // Add sender information (device owner)
-            const RuntimeConfig &config = getRuntimeConfig();
-            if (config.deviceOwner.length() > 0)
+            // Execute content action directly with timeout
+            bool success = executeButtonActionDirect(params->actionType.c_str());
+
+            if (success && mqttClient.connected())
             {
-                payloadDoc["sender"] = config.deviceOwner;
+                // Create MQTT payload with sender information
+                DynamicJsonDocument payloadDoc(4096);
+                payloadDoc["message"] = currentMessage.message;
+                
+                // Add sender information (device owner)
+                const RuntimeConfig &config = getRuntimeConfig();
+                if (config.deviceOwner.length() > 0)
+                {
+                    payloadDoc["sender"] = config.deviceOwner;
+                }
+                
+                String payload;
+                serializeJson(payloadDoc, payload);
+                
+                // Publish to MQTT (do NOT print locally)
+                if (mqttClient.publish(params->mqttTopic.c_str(), payload.c_str()))
+                {
+                    LOG_NOTICE("BUTTONS", "Button action sent ONLY via MQTT to topic: %s", params->mqttTopic.c_str());
+                    // Clear local printing flag since we sent via MQTT
+                    currentMessage.shouldPrintLocally = false;
+                }
+                else
+                {
+                    LOG_ERROR("BUTTONS", "Failed to send button action via MQTT to topic: %s", params->mqttTopic.c_str());
+                }
             }
-            
-            String payload;
-            serializeJson(payloadDoc, payload);
-            
-            // Publish to MQTT
-            if (mqttClient.publish(params->mqttTopic.c_str(), payload.c_str()))
+            else if (!mqttClient.connected())
             {
-                LOG_VERBOSE("BUTTONS", "Button action sent via MQTT to topic: %s", params->mqttTopic.c_str());
+                LOG_WARNING("BUTTONS", "MQTT not connected, cannot send button action to topic: %s", params->mqttTopic.c_str());
             }
             else
             {
-                LOG_ERROR("BUTTONS", "Failed to send button action via MQTT to topic: %s", params->mqttTopic.c_str());
+                LOG_WARNING("BUTTONS", "Content generation failed for MQTT button action: %s", params->actionType.c_str());
             }
         }
-        else
+    }
+    else
+    {
+        // Local printing path: no MQTT topic set, print directly
+        if (params->actionType.length() > 0)
         {
-            LOG_WARNING("BUTTONS", "MQTT not connected, cannot send button action to topic: %s", params->mqttTopic.c_str());
+            // Execute content action directly with timeout
+            bool success = executeButtonActionDirect(params->actionType.c_str());
+
+            if (success)
+            {
+                LOG_NOTICE("BUTTONS", "Button action completed for LOCAL printing: %s", params->actionType.c_str());
+                // executeButtonActionDirect already sets shouldPrintLocally = true
+            }
+            else
+            {
+                LOG_WARNING("BUTTONS", "Button action failed or timed out: %s", params->actionType.c_str());
+            }
         }
     }
 
