@@ -483,7 +483,7 @@ function createRequestHandler() {
                  pathname.startsWith('/favicon/')) {
         filePath = path.join(__dirname, '..', 'data', pathname.substring(1));
       } else if (pathname.endsWith('.html')) {
-        // Handle HTML files directly (like /diagnostics.html)
+        // Handle HTML files at root level (settings.html, diagnostics.html, etc.)
         filePath = path.join(__dirname, '..', 'data', 'html', pathname.substring(1));
       } else {
         filePath = path.join(__dirname, '..', 'data', 'html', '404.html');

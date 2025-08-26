@@ -3,7 +3,7 @@
         "owner": "MockUser",
         "timezone": "America/New_York",
         "maxCharacters": 1000,
-        "firmware_version": "1.0.0-dev",
+        "firmware_version": "1.0.1-dev",
         "boot_time": "2025-08-21T12:50:47Z",
         "mdns": "scribe-mockuser.local",
         "ip_address": "192.168.1.100",
@@ -38,7 +38,7 @@
     },
     "unbiddenInk": {
         "enabled": true,
-        "startHour": 0,
+        "startHour": 10,
         "endHour": 16,
         "frequencyMinutes": 60,
         "prompt": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
@@ -101,11 +101,6 @@
         "brightness": 64,
         "refreshRate": 60,
         "effectDefaults": {
-            "universal": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3
-            },
             "chase_single": {
                 "speed": 50,
                 "intensity": 50,

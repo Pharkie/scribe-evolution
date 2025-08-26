@@ -60,8 +60,6 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
 {
     // Check if this is already a settings-related request
     String uri = request->url();
-    // DEBUG: Captive portal called for URI
-    // DEBUG: URI check for captive portal handling
 
     if (uri.startsWith("/settings") ||
         uri.startsWith("/config") ||
@@ -75,7 +73,6 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         uri == "/site.webmanifest")
     {
         // Let these requests proceed normally
-        // DEBUG: Allowing request to proceed normally
         return;
     }
 
@@ -93,8 +90,6 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
     }
 
     LOG_VERBOSE("CAPTIVE", "Redirecting captive portal request: %s", uri.c_str());
-    // DEBUG: Redirecting to settings
-    // URI redirection handling
 
     // Redirect to settings page
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to configuration page...");
@@ -249,6 +244,23 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
             } });
 }
 
+// Helper function to setup static file serving (DRY principle)
+void setupStaticRoutes()
+{
+    // Static directories
+    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+    server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+    server.serveStatic("/html/", LittleFS, "/html/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+
+    // Favicon files
+    server.serveStatic("/favicon.ico", LittleFS, "/favicon/favicon.ico", "image/x-icon").setTryGzipFirst(false);
+    server.serveStatic("/favicon.svg", LittleFS, "/favicon/favicon.svg", "image/svg+xml").setTryGzipFirst(false);
+    server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon/favicon-96x96.png", "image/png").setTryGzipFirst(false);
+    server.serveStatic("/apple-touch-icon.png", LittleFS, "/favicon/apple-touch-icon.png", "image/png").setTryGzipFirst(false);
+    server.serveStatic("/site.webmanifest", LittleFS, "/favicon/site.webmanifest", "application/manifest+json").setTryGzipFirst(false);
+}
+
 void setupWebServerRoutes(int maxChars)
 {
     // Store the maxChars value for validation
@@ -285,17 +297,8 @@ void setupWebServerRoutes(int maxChars)
                 *bodyPtr += (char)data[i];
             } });
 
-        // CSS and JS files (always needed) - serve entire directories from LittleFS
-        server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-        server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-        server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-
-        // Favicon files
-        server.serveStatic("/favicon.ico", LittleFS, "/favicon/favicon.ico", "image/x-icon").setTryGzipFirst(false);
-        server.serveStatic("/favicon.svg", LittleFS, "/favicon/favicon.svg", "image/svg+xml").setTryGzipFirst(false);
-        server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon/favicon-96x96.png", "image/png").setTryGzipFirst(false);
-        server.serveStatic("/apple-touch-icon.png", LittleFS, "/favicon/apple-touch-icon.png", "image/png").setTryGzipFirst(false);
-        server.serveStatic("/site.webmanifest", LittleFS, "/favicon/site.webmanifest", "application/manifest+json").setTryGzipFirst(false);
+        // Setup static file serving
+        setupStaticRoutes();
 
         // Catch all other requests and redirect to settings
         server.onNotFound(handleCaptivePortal);
@@ -314,40 +317,30 @@ void setupWebServerRoutes(int maxChars)
         // Initialize route tracking for STA mode only
         registeredRoutes.clear();
 
-        // Static files - serve entire directories from LittleFS
-        server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-        server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-        server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-
-        // Favicon files
-        server.serveStatic("/favicon.ico", LittleFS, "/favicon/favicon.ico", "image/x-icon").setTryGzipFirst(false);
-        server.serveStatic("/favicon.svg", LittleFS, "/favicon/favicon.svg", "image/svg+xml").setTryGzipFirst(false);
-        server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon/favicon-96x96.png", "image/png").setTryGzipFirst(false);
-        server.serveStatic("/apple-touch-icon.png", LittleFS, "/favicon/apple-touch-icon.png", "image/png").setTryGzipFirst(false);
-        server.serveStatic("/site.webmanifest", LittleFS, "/favicon/site.webmanifest", "application/manifest+json").setTryGzipFirst(false);
+        // Setup static file serving
+        setupStaticRoutes();
 
         // Manually track static routes (since serveStatic can't be wrapped)
         registeredRoutes.push_back({"GET", "/css/*", "CSS static files", false});
         registeredRoutes.push_back({"GET", "/js/*", "JavaScript static files", false});
         registeredRoutes.push_back({"GET", "/images/*", "Image static files", false});
+        registeredRoutes.push_back({"GET", "/html/*", "HTML partial files", false});
         registeredRoutes.push_back({"GET", "/favicon.ico", "Site favicon (ICO)", false});
         registeredRoutes.push_back({"GET", "/favicon.svg", "Site favicon (SVG)", false});
         registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Site favicon (PNG 96x96)", false});
         registeredRoutes.push_back({"GET", "/apple-touch-icon.png", "Apple touch icon", false});
         registeredRoutes.push_back({"GET", "/site.webmanifest", "Web app manifest", false});
 
-        // Register web pages
+        // Root redirect to main interface  
         registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/index.html", "text/html"); }, false);
 
+        // HTML pages served at root level (settings.html, diagnostics.html, etc.)
         registerRoute("GET", "/settings.html", "Configuration settings", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/settings.html", "text/html"); }, false);
-
+        
         registerRoute("GET", "/diagnostics.html", "System diagnostics", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/diagnostics.html", "text/html"); }, false);
-
-        // Serve static files (in addition to tracked routes above)
-        server.serveStatic("/diagnostics.html", LittleFS, "/html/diagnostics.html", "text/html").setTryGzipFirst(false);
 
         // Add SSE endpoint for real-time updates
         sseEvents.onConnect([](AsyncEventSourceClient *client)

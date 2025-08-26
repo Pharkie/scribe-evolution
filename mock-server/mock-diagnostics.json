@@ -15,8 +15,8 @@
         "flash": {
             "total_chip_size": 4194304,
             "app_partition": {
-                "used": 1320368,
-                "free": 1432144,
+                "used": 1510298,
+                "free": 1242214,
                 "total": 2752512,
                 "percent_of_total_flash": 65
             },
@@ -49,6 +49,10 @@
             {
                 "path": "/images/*",
                 "description": "Image static files"
+            },
+            {
+                "path": "/html/*",
+                "description": "HTML partial files"
             },
             {
                 "path": "/favicon.ico",

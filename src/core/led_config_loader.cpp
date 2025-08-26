@@ -17,48 +17,51 @@ LedEffectsConfig getDefaultLedEffectsConfig()
 {
     LedEffectsConfig config;
 
-    // Chase Single defaults
-    config.chaseSingle.speed = DEFAULT_CHASE_SINGLE_SPEED;
-    config.chaseSingle.trailLength = DEFAULT_CHASE_SINGLE_TRAIL_LENGTH;
-    config.chaseSingle.trailFade = DEFAULT_CHASE_SINGLE_TRAIL_FADE;
+    // Use standardized defaults that map from DEFAULT_LED_EFFECT_SPEED/INTENSITY
+    // These will be overridden by the API handlers with proper 10-100 mapping
+    
+    // Chase Single defaults (mapped from standard 50 speed/intensity)
+    config.chaseSingle.speed = 5;  // Reasonable frame delay for 50 speed
+    config.chaseSingle.trailLength = 15;  // Reasonable trail for 50 intensity  
+    config.chaseSingle.trailFade = 15;  // Fixed fade amount
     config.chaseSingle.defaultColor = String(DEFAULT_CHASE_SINGLE_COLOR);
 
-    // Chase Multi defaults
-    config.chaseMulti.speed = DEFAULT_CHASE_MULTI_SPEED;
-    config.chaseMulti.trailLength = DEFAULT_CHASE_MULTI_TRAIL_LENGTH;
-    config.chaseMulti.trailFade = DEFAULT_CHASE_MULTI_TRAIL_FADE;
+    // Chase Multi defaults (mapped from standard 50 speed/intensity)
+    config.chaseMulti.speed = 3;  // Reasonable frame delay for 50 speed
+    config.chaseMulti.trailLength = 15;  // Reasonable trail for 50 intensity
+    config.chaseMulti.trailFade = 20;  // Fixed fade amount
     config.chaseMulti.colorSpacing = DEFAULT_CHASE_MULTI_COLOR_SPACING;
     config.chaseMulti.color1 = String(DEFAULT_CHASE_MULTI_COLOR1);
     config.chaseMulti.color2 = String(DEFAULT_CHASE_MULTI_COLOR2);
     config.chaseMulti.color3 = String(DEFAULT_CHASE_MULTI_COLOR3);
 
-    // Matrix defaults
-    config.matrix.speed = DEFAULT_MATRIX_SPEED;
-    config.matrix.drops = DEFAULT_MATRIX_DROPS;
-    config.matrix.backgroundFade = DEFAULT_MATRIX_BACKGROUND_FADE;
-    config.matrix.trailFade = DEFAULT_MATRIX_TRAIL_FADE;
-    config.matrix.brightnessFade = DEFAULT_MATRIX_BRIGHTNESS_FADE;
+    // Matrix defaults (mapped from standard 50 speed/intensity)
+    config.matrix.speed = 4;  // Reasonable frame delay for 50 speed
+    config.matrix.drops = 10;  // Reasonable drops for 50 intensity
+    config.matrix.backgroundFade = 64;  // Fixed background fade
+    config.matrix.trailFade = 32;  // Fixed trail fade
+    config.matrix.brightnessFade = 40;  // Fixed brightness fade
     config.matrix.defaultColor = String(DEFAULT_MATRIX_COLOR);
 
-    // Twinkle defaults
-    config.twinkle.density = DEFAULT_TWINKLE_DENSITY;
-    config.twinkle.fadeSpeed = DEFAULT_TWINKLE_FADE_SPEED;
-    config.twinkle.minBrightness = DEFAULT_TWINKLE_MIN_BRIGHTNESS;
-    config.twinkle.maxBrightness = DEFAULT_TWINKLE_MAX_BRIGHTNESS;
+    // Twinkle defaults (mapped from standard 50 speed/intensity)
+    config.twinkle.density = 10;  // Reasonable twinkles for 50 intensity
+    config.twinkle.fadeSpeed = 3;  // Reasonable fade speed for 50 speed
+    config.twinkle.minBrightness = 50;  // Fixed min brightness
+    config.twinkle.maxBrightness = 255;  // Fixed max brightness
     config.twinkle.defaultColor = String(DEFAULT_TWINKLE_COLOR);
 
-    // Pulse defaults
-    config.pulse.speed = DEFAULT_PULSE_SPEED;
-    config.pulse.minBrightness = DEFAULT_PULSE_MIN_BRIGHTNESS;
-    config.pulse.maxBrightness = DEFAULT_PULSE_MAX_BRIGHTNESS;
-    config.pulse.waveFrequency = DEFAULT_PULSE_WAVE_FREQUENCY;
+    // Pulse defaults (mapped from standard 50 speed/intensity)
+    config.pulse.speed = 5;  // Reasonable frame delay for 50 speed
+    config.pulse.minBrightness = 127;  // Reasonable variation for 50 intensity
+    config.pulse.maxBrightness = 255;  // Fixed max brightness
+    config.pulse.waveFrequency = 0.05f;  // Fixed wave frequency
     config.pulse.defaultColor = String(DEFAULT_PULSE_COLOR);
 
-    // Rainbow defaults
-    config.rainbow.speed = DEFAULT_RAINBOW_SPEED;
-    config.rainbow.saturation = DEFAULT_RAINBOW_SATURATION;
-    config.rainbow.brightness = DEFAULT_RAINBOW_BRIGHTNESS;
-    config.rainbow.hueStep = DEFAULT_RAINBOW_HUE_STEP;
+    // Rainbow defaults (mapped from standard 50 speed/intensity)
+    config.rainbow.speed = 2.5f;  // Reasonable wave speed for 50 speed
+    config.rainbow.saturation = 255;  // Fixed saturation
+    config.rainbow.brightness = 255;  // Fixed brightness
+    config.rainbow.hueStep = 2.0f;  // Reasonable wave length for 50 intensity
 
     return config;
 }
@@ -80,67 +83,67 @@ void loadLedEffectsFromJson(JsonObject leds, LedEffectsConfig &effectsConfig)
     JsonObject chaseSingle = effects["chaseSingle"];
     if (!chaseSingle.isNull())
     {
-        effectsConfig.chaseSingle.speed = chaseSingle["speed"] | DEFAULT_CHASE_SINGLE_SPEED;
-        effectsConfig.chaseSingle.trailLength = chaseSingle["trailLength"] | DEFAULT_CHASE_SINGLE_TRAIL_LENGTH;
-        effectsConfig.chaseSingle.trailFade = chaseSingle["trailFade"] | DEFAULT_CHASE_SINGLE_TRAIL_FADE;
-        effectsConfig.chaseSingle.defaultColor = chaseSingle["defaultColor"] | String(DEFAULT_CHASE_SINGLE_COLOR);
+        effectsConfig.chaseSingle.speed = chaseSingle["speed"] | effectsConfig.chaseSingle.speed;
+        effectsConfig.chaseSingle.trailLength = chaseSingle["trailLength"] | effectsConfig.chaseSingle.trailLength;
+        effectsConfig.chaseSingle.trailFade = chaseSingle["trailFade"] | effectsConfig.chaseSingle.trailFade;
+        effectsConfig.chaseSingle.defaultColor = chaseSingle["defaultColor"] | effectsConfig.chaseSingle.defaultColor;
     }
 
     // Load Chase Multi configuration
     JsonObject chaseMulti = effects["chaseMulti"];
     if (!chaseMulti.isNull())
     {
-        effectsConfig.chaseMulti.speed = chaseMulti["speed"] | DEFAULT_CHASE_MULTI_SPEED;
-        effectsConfig.chaseMulti.trailLength = chaseMulti["trailLength"] | DEFAULT_CHASE_MULTI_TRAIL_LENGTH;
-        effectsConfig.chaseMulti.trailFade = chaseMulti["trailFade"] | DEFAULT_CHASE_MULTI_TRAIL_FADE;
-        effectsConfig.chaseMulti.colorSpacing = chaseMulti["colorSpacing"] | DEFAULT_CHASE_MULTI_COLOR_SPACING;
-        effectsConfig.chaseMulti.color1 = chaseMulti["color1"] | String(DEFAULT_CHASE_MULTI_COLOR1);
-        effectsConfig.chaseMulti.color2 = chaseMulti["color2"] | String(DEFAULT_CHASE_MULTI_COLOR2);
-        effectsConfig.chaseMulti.color3 = chaseMulti["color3"] | String(DEFAULT_CHASE_MULTI_COLOR3);
+        effectsConfig.chaseMulti.speed = chaseMulti["speed"] | effectsConfig.chaseMulti.speed;
+        effectsConfig.chaseMulti.trailLength = chaseMulti["trailLength"] | effectsConfig.chaseMulti.trailLength;
+        effectsConfig.chaseMulti.trailFade = chaseMulti["trailFade"] | effectsConfig.chaseMulti.trailFade;
+        effectsConfig.chaseMulti.colorSpacing = chaseMulti["colorSpacing"] | effectsConfig.chaseMulti.colorSpacing;
+        effectsConfig.chaseMulti.color1 = chaseMulti["color1"] | effectsConfig.chaseMulti.color1;
+        effectsConfig.chaseMulti.color2 = chaseMulti["color2"] | effectsConfig.chaseMulti.color2;
+        effectsConfig.chaseMulti.color3 = chaseMulti["color3"] | effectsConfig.chaseMulti.color3;
     }
 
     // Load Matrix configuration
     JsonObject matrix = effects["matrix"];
     if (!matrix.isNull())
     {
-        effectsConfig.matrix.speed = matrix["speed"] | DEFAULT_MATRIX_SPEED;
-        effectsConfig.matrix.drops = matrix["drops"] | DEFAULT_MATRIX_DROPS;
-        effectsConfig.matrix.backgroundFade = matrix["backgroundFade"] | DEFAULT_MATRIX_BACKGROUND_FADE;
-        effectsConfig.matrix.trailFade = matrix["trailFade"] | DEFAULT_MATRIX_TRAIL_FADE;
-        effectsConfig.matrix.brightnessFade = matrix["brightnessFade"] | DEFAULT_MATRIX_BRIGHTNESS_FADE;
-        effectsConfig.matrix.defaultColor = matrix["defaultColor"] | String(DEFAULT_MATRIX_COLOR);
+        effectsConfig.matrix.speed = matrix["speed"] | effectsConfig.matrix.speed;
+        effectsConfig.matrix.drops = matrix["drops"] | effectsConfig.matrix.drops;
+        effectsConfig.matrix.backgroundFade = matrix["backgroundFade"] | effectsConfig.matrix.backgroundFade;
+        effectsConfig.matrix.trailFade = matrix["trailFade"] | effectsConfig.matrix.trailFade;
+        effectsConfig.matrix.brightnessFade = matrix["brightnessFade"] | effectsConfig.matrix.brightnessFade;
+        effectsConfig.matrix.defaultColor = matrix["defaultColor"] | effectsConfig.matrix.defaultColor;
     }
 
     // Load Twinkle configuration
     JsonObject twinkle = effects["twinkle"];
     if (!twinkle.isNull())
     {
-        effectsConfig.twinkle.density = twinkle["density"] | DEFAULT_TWINKLE_DENSITY;
-        effectsConfig.twinkle.fadeSpeed = twinkle["fadeSpeed"] | DEFAULT_TWINKLE_FADE_SPEED;
-        effectsConfig.twinkle.minBrightness = twinkle["minBrightness"] | DEFAULT_TWINKLE_MIN_BRIGHTNESS;
-        effectsConfig.twinkle.maxBrightness = twinkle["maxBrightness"] | DEFAULT_TWINKLE_MAX_BRIGHTNESS;
-        effectsConfig.twinkle.defaultColor = twinkle["defaultColor"] | String(DEFAULT_TWINKLE_COLOR);
+        effectsConfig.twinkle.density = twinkle["density"] | effectsConfig.twinkle.density;
+        effectsConfig.twinkle.fadeSpeed = twinkle["fadeSpeed"] | effectsConfig.twinkle.fadeSpeed;
+        effectsConfig.twinkle.minBrightness = twinkle["minBrightness"] | effectsConfig.twinkle.minBrightness;
+        effectsConfig.twinkle.maxBrightness = twinkle["maxBrightness"] | effectsConfig.twinkle.maxBrightness;
+        effectsConfig.twinkle.defaultColor = twinkle["defaultColor"] | effectsConfig.twinkle.defaultColor;
     }
 
     // Load Pulse configuration
     JsonObject pulse = effects["pulse"];
     if (!pulse.isNull())
     {
-        effectsConfig.pulse.speed = pulse["speed"] | DEFAULT_PULSE_SPEED;
-        effectsConfig.pulse.minBrightness = pulse["minBrightness"] | DEFAULT_PULSE_MIN_BRIGHTNESS;
-        effectsConfig.pulse.maxBrightness = pulse["maxBrightness"] | DEFAULT_PULSE_MAX_BRIGHTNESS;
-        effectsConfig.pulse.waveFrequency = pulse["waveFrequency"] | DEFAULT_PULSE_WAVE_FREQUENCY;
-        effectsConfig.pulse.defaultColor = pulse["defaultColor"] | String(DEFAULT_PULSE_COLOR);
+        effectsConfig.pulse.speed = pulse["speed"] | effectsConfig.pulse.speed;
+        effectsConfig.pulse.minBrightness = pulse["minBrightness"] | effectsConfig.pulse.minBrightness;
+        effectsConfig.pulse.maxBrightness = pulse["maxBrightness"] | effectsConfig.pulse.maxBrightness;
+        effectsConfig.pulse.waveFrequency = pulse["waveFrequency"] | effectsConfig.pulse.waveFrequency;
+        effectsConfig.pulse.defaultColor = pulse["defaultColor"] | effectsConfig.pulse.defaultColor;
     }
 
     // Load Rainbow configuration
     JsonObject rainbow = effects["rainbow"];
     if (!rainbow.isNull())
     {
-        effectsConfig.rainbow.speed = rainbow["speed"] | DEFAULT_RAINBOW_SPEED;
-        effectsConfig.rainbow.saturation = rainbow["saturation"] | DEFAULT_RAINBOW_SATURATION;
-        effectsConfig.rainbow.brightness = rainbow["brightness"] | DEFAULT_RAINBOW_BRIGHTNESS;
-        effectsConfig.rainbow.hueStep = rainbow["hueStep"] | DEFAULT_RAINBOW_HUE_STEP;
+        effectsConfig.rainbow.speed = rainbow["speed"] | effectsConfig.rainbow.speed;
+        effectsConfig.rainbow.saturation = rainbow["saturation"] | effectsConfig.rainbow.saturation;
+        effectsConfig.rainbow.brightness = rainbow["brightness"] | effectsConfig.rainbow.brightness;
+        effectsConfig.rainbow.hueStep = rainbow["hueStep"] | effectsConfig.rainbow.hueStep;
     }
 
     LOG_VERBOSE("LED_CONFIG", "Per-effect LED configuration loaded successfully");

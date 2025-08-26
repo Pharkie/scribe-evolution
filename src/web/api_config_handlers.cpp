@@ -255,8 +255,58 @@ void handleConfigGet(AsyncWebServerRequest *request)
     leds["brightness"] = config.ledBrightness;
     leds["refreshRate"] = config.ledRefreshRate;
 
-    // Add per-effect autonomous configurations
-    saveLedEffectsToJson(leds, config.ledEffects);
+    // Add effectDefaults structure for frontend LED playground (10-100 scale)
+    JsonObject effectDefaults = leds.createNestedObject("effectDefaults");
+    
+    // Chase Single defaults
+    JsonObject chaseSingle = effectDefaults.createNestedObject("chase_single");
+    chaseSingle["speed"] = 50;
+    chaseSingle["intensity"] = 50;
+    chaseSingle["cycles"] = 3;
+    JsonArray chaseSingleColors = chaseSingle.createNestedArray("colors");
+    chaseSingleColors.add(config.ledEffects.chaseSingle.defaultColor);
+    
+    // Chase Multi defaults  
+    JsonObject chaseMulti = effectDefaults.createNestedObject("chase_multi");
+    chaseMulti["speed"] = 50;
+    chaseMulti["intensity"] = 50;
+    chaseMulti["cycles"] = 3;
+    JsonArray chaseMultiColors = chaseMulti.createNestedArray("colors");
+    chaseMultiColors.add(config.ledEffects.chaseMulti.color1);
+    chaseMultiColors.add(config.ledEffects.chaseMulti.color2);
+    chaseMultiColors.add(config.ledEffects.chaseMulti.color3);
+    
+    // Matrix defaults
+    JsonObject matrix = effectDefaults.createNestedObject("matrix");
+    matrix["speed"] = 50;
+    matrix["intensity"] = 50;
+    matrix["cycles"] = 3;
+    JsonArray matrixColors = matrix.createNestedArray("colors");
+    matrixColors.add(config.ledEffects.matrix.defaultColor);
+    
+    // Twinkle defaults
+    JsonObject twinkle = effectDefaults.createNestedObject("twinkle");
+    twinkle["speed"] = 50;
+    twinkle["intensity"] = 50;
+    twinkle["cycles"] = 3;
+    JsonArray twinkleColors = twinkle.createNestedArray("colors");
+    twinkleColors.add(config.ledEffects.twinkle.defaultColor);
+    
+    // Pulse defaults
+    JsonObject pulse = effectDefaults.createNestedObject("pulse");
+    pulse["speed"] = 50;
+    pulse["intensity"] = 50;
+    pulse["cycles"] = 3;
+    JsonArray pulseColors = pulse.createNestedArray("colors");
+    pulseColors.add(config.ledEffects.pulse.defaultColor);
+    
+    // Rainbow defaults  
+    JsonObject rainbow = effectDefaults.createNestedObject("rainbow");
+    rainbow["speed"] = 50;
+    rainbow["intensity"] = 50;
+    rainbow["cycles"] = 3;
+    JsonArray rainbowColors = rainbow.createNestedArray("colors");
+    rainbowColors.add("#ff0000"); // Rainbow doesn't use colors but needs array
 #endif
 
     // GPIO information for frontend validation

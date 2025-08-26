@@ -192,28 +192,32 @@ void handleLedEffect(AsyncWebServerRequest *request)
     {
         LedEffectsConfig playgroundConfig = {}; // Start with empty config
 
-        // Map 1-100 speed/intensity to reasonable effect parameters (50 = ideal)
+        // Map 10-100 speed/intensity to reasonable effect parameters (50 = ideal)
         int speed = settings["speed"] | 50;        // Default to 50 if missing
         int intensity = settings["intensity"] | 50; // Default to 50 if missing
         
+        // Clamp to expected range
+        speed = max(10, min(100, speed));
+        intensity = max(10, min(100, intensity));
+        
         if (effectName.equalsIgnoreCase("chase_single"))
         {
-            // Speed: 1-100 -> frame delay (higher speed = lower delay = faster movement)
-            // Map 50->5 frames, 25->10 frames (50% slower), 100->2.5 frames (2x faster)
-            playgroundConfig.chaseSingle.speed = max(1, (int)(12.5 - (speed * 0.2))); 
+            // Speed: 10-100 -> frame delay (higher speed = lower delay = faster movement)  
+            // Map 50->5 frames (50% faster than old 7), 20->8 frames (slower), 100->1 frame (fastest)
+            playgroundConfig.chaseSingle.speed = max(1, (int)(10 - (speed * 0.09))); 
             
-            // Intensity: 1-100 -> trail length (50 = reasonable trail)
-            // Map 50->15 pixels, 25->7 pixels (50% shorter), 100->30 pixels (2x longer)
+            // Intensity: 10-100 -> trail length (50 = reasonable trail)
+            // Map 50->15 pixels, 20->6 pixels (shorter), 100->30 pixels (2x longer)
             playgroundConfig.chaseSingle.trailLength = max(1, (int)(intensity * 0.3));
             playgroundConfig.chaseSingle.trailFade = 15; // Fixed fade amount
             playgroundConfig.chaseSingle.defaultColor = "#0062ff";
         }
         else if (effectName.equalsIgnoreCase("chase_multi"))
         {
-            // Speed: 1-100 -> frame delay (50->3 frames ideal)
-            playgroundConfig.chaseMulti.speed = max(1, (int)(8.0 - (speed * 0.12)));
+            // Speed: 10-100 -> frame delay (50->2 frames, 50% faster than old 3)
+            playgroundConfig.chaseMulti.speed = max(1, (int)(6.5 - (speed * 0.045)));
             
-            // Intensity: 1-100 -> trail length (50->15 pixels ideal) 
+            // Intensity: 10-100 -> trail length (50->15 pixels ideal) 
             playgroundConfig.chaseMulti.trailLength = max(1, (int)(intensity * 0.3));
             playgroundConfig.chaseMulti.trailFade = 20; // Fixed fade amount
             

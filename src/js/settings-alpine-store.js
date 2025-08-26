@@ -350,9 +350,6 @@ function initializeSettingsStore() {
             }
             this.initialized = true;
             
-            // Initialize LED effect parameters
-            this.initEffectParams();
-            
             this.loading = true;
             try {
                 // Load configuration and memos separately
@@ -372,6 +369,9 @@ function initializeSettingsStore() {
                 
                 // Set up watchers for password field changes after initial load
                 this.setupPasswordWatchers();
+                
+                // Initialize LED effect parameters now that config is loaded
+                this.initEffectParams();
                 
                 console.log('Alpine Store: Configuration and memos loaded successfully');
                 
@@ -875,6 +875,7 @@ ${urlLine}`;
                 this.config.leds.count = serverConfig.leds.count;
                 this.config.leds.brightness = serverConfig.leds.brightness;
                 this.config.leds.refreshRate = serverConfig.leds.refreshRate;
+                this.config.leds.effectDefaults = serverConfig.leds.effectDefaults;
                 
                 // Validate required LED config values
                 if (!this.config.leds.pin || this.config.leds.pin === 0) {

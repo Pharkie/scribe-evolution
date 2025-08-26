@@ -20,7 +20,7 @@ npm install
 npm run build
 
 # Build and upload everything to ESP32
-pio run --target upload_all
+pio run --target upload -e main && pio run --target uploadfs -e main
 
 # Development: watch for frontend changes
 npm run watch
