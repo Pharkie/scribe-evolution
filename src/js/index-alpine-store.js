@@ -862,10 +862,7 @@ function initializeIndexStore() {
     }
   };
   
-  // Register Alpine store for global access
-  document.addEventListener('alpine:init', () => {
-    Alpine.store('index', store);
-  });
+  // Don't register store here - it will be registered globally
   
   return store;
 }

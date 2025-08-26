@@ -495,10 +495,7 @@ function initializeDiagnosticsStore() {
     }
   };
   
-  // Register Alpine store for partials to access
-  document.addEventListener('alpine:init', () => {
-    Alpine.store('diagnostics', store);
-  });
+  // Don't register store here - it will be registered globally
   
   return store;
 }

@@ -405,37 +405,31 @@ function initializeSettingsStore() {
             }
         },
         
-        // Setup watchers for password field changes
+        // Setup watchers for password field changes - implemented without $watch
         setupPasswordWatchers() {
-            // Watch for WiFi password changes
-            this.$watch('config.device.wifi.password', (newValue) => {
-                const isMasked = newValue && newValue.includes('●');
-                const hasChanged = newValue !== this.originalMaskedValues.wifiPassword;
-                this.passwordsModified.wifiPassword = hasChanged && !isMasked;
-                console.log('WiFi password modified:', this.passwordsModified.wifiPassword);
-            });
-            
-            // Watch for MQTT password changes
-            this.$watch('config.mqtt.password', (newValue) => {
-                const isMasked = newValue && newValue.includes('●');
-                const hasChanged = newValue !== this.originalMaskedValues.mqttPassword;
-                this.passwordsModified.mqttPassword = hasChanged && !isMasked;
-                console.log('MQTT password modified:', this.passwordsModified.mqttPassword);
-            });
-            
-            // Watch for ChatGPT API token changes
-            this.$watch('config.unbiddenInk.chatgptApiToken', (newValue) => {
-                const isMasked = newValue && newValue.includes('●');
-                const hasChanged = newValue !== this.originalMaskedValues.chatgptApiToken;
-                this.passwordsModified.chatgptApiToken = hasChanged && !isMasked;
-                console.log('ChatGPT API token modified:', this.passwordsModified.chatgptApiToken);
-            });
-            
-            // Watch for LED pin changes to debug dropdown issue
-            this.$watch('config.leds.pin', (newValue, oldValue) => {
-                console.log('🔌 LED pin watcher triggered:', oldValue, '->', newValue, '(type:', typeof newValue, ')');
-                console.log('🔌 Available GPIO options at time of change:', this.gpioOptions.map(opt => opt.value));
-            });
+            // Store original masked values for comparison
+            this.originalMaskedValues.wifiPassword = this.config.device.wifi.password || '';
+            this.originalMaskedValues.mqttPassword = this.config.mqtt.password || '';
+            this.originalMaskedValues.chatgptApiToken = this.config.unbiddenInk.chatgptApiToken || '';
+        },
+        
+        // Methods to track password modifications (called from templates)
+        trackWifiPasswordChange(newValue) {
+            const isMasked = newValue && newValue.includes('●');
+            const hasChanged = newValue !== this.originalMaskedValues.wifiPassword;
+            this.passwordsModified.wifiPassword = hasChanged && !isMasked;
+        },
+        
+        trackMqttPasswordChange(newValue) {
+            const isMasked = newValue && newValue.includes('●');
+            const hasChanged = newValue !== this.originalMaskedValues.mqttPassword;
+            this.passwordsModified.mqttPassword = hasChanged && !isMasked;
+        },
+        
+        trackChatgptTokenChange(newValue) {
+            const isMasked = newValue && newValue.includes('●');
+            const hasChanged = newValue !== this.originalMaskedValues.chatgptApiToken;
+            this.passwordsModified.chatgptApiToken = hasChanged && !isMasked;
         },
         
         // Initialize WiFi state - simplified
@@ -897,18 +891,6 @@ ${urlLine}`;
                 if (!this.config.leds.refreshRate) {
                     console.error('❌ Missing LED refresh rate from backend');
                 }
-                console.log('🔌 LED pin set to:', this.config.leds.pin, '(type:', typeof this.config.leds.pin, ') from server config:', serverConfig.leds.pin, '(type:', typeof serverConfig.leds.pin, ')');
-                console.log('🔌 GPIO availablePins array:', this.gpio.availablePins);
-                console.log('🔌 GPIO safePins array:', this.gpio.safePins);
-                console.log('🔌 GPIO options available:', this.gpioOptions.map(opt => `${opt.value}:${opt.label}:disabled=${opt.disabled}`));
-                console.log('🔌 Looking for pin', this.config.leds.pin, 'in options:', this.gpioOptions.find(opt => opt.value === this.config.leds.pin));
-                
-                // Use Alpine's $nextTick to ensure proper reactivity after both model and options are set
-                this.$nextTick(() => {
-                    console.log('🔌 Post-tick LED pin check:', this.config.leds.pin);
-                    console.log('🔌 Post-tick GPIO options:', this.gpioOptions.length, 'options available');
-                    console.log('🔌 Matching option found:', this.gpioOptions.find(opt => opt.value === this.config.leds.pin));
-                });
             } else {
                 console.warn('⚠️ Missing leds section in config');
             }
@@ -1461,10 +1443,7 @@ ${urlLine}`;
         },
     };
     
-    // Register Alpine store for partials to access
-    document.addEventListener('alpine:init', () => {
-        Alpine.store('settings', store);
-    });
+    // Don't register store here - it will be registered globally
     
     return store;
 }

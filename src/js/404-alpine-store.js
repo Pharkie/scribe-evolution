@@ -238,10 +238,7 @@ Current URL: ${this.errorReport.url}`;
     }
   };
   
-  // Register Alpine store for global access
-  document.addEventListener('alpine:init', () => {
-    Alpine.store('error', store);
-  });
+  // Don't register store here - it will be registered globally
   
   return store;
 }
