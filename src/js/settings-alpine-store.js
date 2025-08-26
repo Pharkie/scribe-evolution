@@ -543,6 +543,7 @@ function initializeSettingsStore() {
                 device: {
                     owner: this.config.device.owner,
                     timezone: this.config.device.timezone,
+                    printerTxPin: this.config.device.printerTxPin,
                     // Include WiFi nested under device
                     wifi: {
                         ssid: this.config.device.wifi.ssid,
@@ -1071,20 +1072,20 @@ ${urlLine}`;
         get usedGpioPins() {
             const used = new Set();
             
-            // Add printer TX pin
-            if (this.config.device.printerTxPin !== null) {
+            // Add printer TX pin (exclude -1 "Not connected")
+            if (this.config.device.printerTxPin !== null && this.config.device.printerTxPin !== -1) {
                 used.add(Number(this.config.device.printerTxPin));
             }
             
-            // Add LED strip pin
-            if (this.config.leds?.pin !== null) {
+            // Add LED strip pin (exclude -1 "Not connected")
+            if (this.config.leds?.pin !== null && this.config.leds?.pin !== -1) {
                 used.add(Number(this.config.leds.pin));
             }
             
-            // Add button GPIO pins
+            // Add button GPIO pins (exclude -1 "Not connected")
             for (let i = 1; i <= 4; i++) {
                 const buttonGpio = this.config.buttons[`button${i}`]?.gpio;
-                if (buttonGpio !== null) {
+                if (buttonGpio !== null && buttonGpio !== -1) {
                     used.add(Number(buttonGpio));
                 }
             }
@@ -1103,11 +1104,32 @@ ${urlLine}`;
                 return {
                     pin: pinNumber,
                     description: description,
-                    available: isSafe && !isUsed,
+                    // "Not connected" (-1) is always available, others check safety and usage
+                    available: pinNumber === -1 ? true : (isSafe && !isUsed),
                     isSafe: isSafe,
                     inUse: isUsed
                 };
             });
+        },
+        
+        // GPIO options specifically for printer TX (excludes "Not connected" option)
+        get printerGpioOptions() {
+            return this.gpio.availablePins
+                .filter(pin => Number(pin) !== -1) // Exclude "Not connected" option
+                .map(pin => {
+                    const pinNumber = Number(pin);
+                    const isSafe = this.gpio.safePins.includes(pin);
+                    const description = this.gpio.pinDescriptions[pin] || 'Unknown';
+                    const isUsed = this.usedGpioPins.has(pinNumber);
+                    
+                    return {
+                        pin: pinNumber,
+                        description: description,
+                        available: isSafe && !isUsed,
+                        isSafe: isSafe,
+                        inUse: isUsed
+                    };
+                });
         },
         
         // Combined GPIO options that handles loading state properly for Alpine reactivity

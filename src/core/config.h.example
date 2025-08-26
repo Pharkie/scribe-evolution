@@ -47,19 +47,20 @@ struct GPIOInfo
 // ESP32-C3 GPIO configuration (compile-time, not user-configurable)
 // Based on ESP32-C3 datasheet and hardware constraints
 static const GPIOInfo ESP32C3_GPIO_MAP[] = {
-    {0, GPIO_TYPE_AVOID, "Strapping pin at boot, avoid"},
-    {1, GPIO_TYPE_AVOID, "TX for UART0 (USB-Serial), avoid"},
+    {-1, GPIO_TYPE_SAFE, "Not connected"},
+    {0, GPIO_TYPE_AVOID, "Avoid: Strapping pin"},
+    {1, GPIO_TYPE_AVOID, "Avoid: TX for UART0 (USB-Serial)"},
     {2, GPIO_TYPE_SAFE, "Safe"},
-    {3, GPIO_TYPE_AVOID, "RX for UART0 (USB-Serial), avoid"},
+    {3, GPIO_TYPE_AVOID, "Avoid: RX for UART0 (USB-Serial)"},
     {4, GPIO_TYPE_SAFE, "Safe"},
     {5, GPIO_TYPE_SAFE, "Safe"},
     {6, GPIO_TYPE_SAFE, "Safe"},
     {7, GPIO_TYPE_SAFE, "Safe"},
-    {8, GPIO_TYPE_AVOID, "Onboard LED, avoid"},
-    {9, GPIO_TYPE_AVOID, "Strapping pin, avoid"},
+    {8, GPIO_TYPE_AVOID, "Avoid: Onboard LED"},
+    {9, GPIO_TYPE_AVOID, "Avoid: Strapping pin"},
     {10, GPIO_TYPE_SAFE, "Safe"},
-    {20, GPIO_TYPE_SAFE, "UART1 TX - Safe"},
-    {21, GPIO_TYPE_SAFE, "UART1 RX - Safe"}};
+    {20, GPIO_TYPE_SAFE, "Safe (UART1 TX)"},
+    {21, GPIO_TYPE_SAFE, "Safe (UART1 RX)"}};
 
 static const int ESP32C3_GPIO_COUNT = sizeof(ESP32C3_GPIO_MAP) / sizeof(ESP32C3_GPIO_MAP[0]);
 

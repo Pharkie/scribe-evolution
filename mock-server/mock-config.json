@@ -86,7 +86,7 @@
             "longLedEffect": "pulse"
         },
         "button4": {
-            "gpio": 4,
+            "gpio": -1,
             "shortAction": "QUIZ",
             "shortMqttTopic": "",
             "longAction": "",
@@ -147,9 +147,10 @@
         }
     },
     "gpio": {
-        "availablePins": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
-        "safePins": [2, 4, 5, 6, 7, 10, 20, 21],
+        "availablePins": [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
+        "safePins": [-1, 2, 4, 5, 6, 7, 10, 20, 21],
         "pinDescriptions": {
+            "-1": "Not connected",
             "0": "Strapping pin at boot, avoid",
             "1": "TX for UART0 (USB-Serial), avoid",
             "2": "Safe",
