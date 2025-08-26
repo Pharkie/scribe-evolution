@@ -762,6 +762,7 @@ ${urlLine}`;
                 this.config.device.mqtt_topic = serverConfig.device.mqtt_topic;
                 this.config.device.mdns = serverConfig.device.mdns;
                 this.config.device.maxCharacters = serverConfig.device.maxCharacters;
+                this.config.device.printerTxPin = serverConfig.device.printerTxPin;
                 
                 if (!serverConfig.device.owner) {
                     console.warn('⚠️ Missing device.owner in config');
@@ -1160,11 +1161,12 @@ ${urlLine}`;
                 // Use API layer with the full effectParams object
                 const result = await window.SettingsAPI.triggerLedEffect(effectParams);
                 
-                if (result.success) {
+                // Success is indicated by getting a response (no exception thrown) with expected properties
+                if (result && (result.message || result.effect)) {
                     const cycleText = this.effectParams.cycles === 1 ? '1 cycle' : `${this.effectParams.cycles} cycles`;
                     window.showMessage(`Testing ${effectName} effect for ${cycleText}`, 'info');
                 } else {
-                    throw new Error(result.message || 'LED effect failed');
+                    throw new Error('LED effect failed - unexpected response format');
                 }
             } catch (error) {
                 console.error('LED effect test failed:', error);

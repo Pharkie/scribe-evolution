@@ -182,10 +182,10 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     // Add prompt presets for quick selection
     JsonObject prompts = unbiddenInk.createNestedObject("promptPresets");
-    prompts["creative"] = defaultUnbiddenInkPromptCreative;
-    prompts["wisdom"] = defaultUnbiddenInkPromptWisdom;
-    prompts["humor"] = defaultUnbiddenInkPromptHumor;
-    prompts["doctorwho"] = defaultUnbiddenInkPromptDoctorWho;
+    prompts["creative"] = unbiddenInkPromptCreative;
+    prompts["wisdom"] = unbiddenInkPromptWisdom;
+    prompts["humor"] = unbiddenInkPromptHumor;
+    prompts["doctorwho"] = unbiddenInkPromptDoctorWho;
 
     // Add runtime status for Unbidden Ink
     if (config.unbiddenInkEnabled)

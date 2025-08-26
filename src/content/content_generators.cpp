@@ -24,10 +24,13 @@
 #include "../utils/time_utils.h"
 #include "../core/config.h"
 #include "../core/config_loader.h"
+#include "../core/config_utils.h"
 #include "../core/logging.h"
+#include "../core/network.h"
 #include "unbidden_ink.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
 
 String generateRiddleContent()
 {
@@ -399,4 +402,37 @@ String generateNewsContent(int timeoutMs)
 
     LOG_VERBOSE("NEWS", "Generated news content with %d items", itemCount);
     return newsContent;
+}
+
+// ================================
+// AP Details Generation
+// ================================
+
+String generateAPDetailsContent()
+{
+    // Build the same message as used in settings-alpine-store.js (DRY principle)
+    String ssid = fallbackAPSSID;
+    String password = fallbackAPPassword;
+    String mdnsHostname = String(getMdnsHostname()) + ".local";
+    String apIP = WiFi.softAPIP().toString();
+    
+    // Build URL line - same logic as JavaScript version
+    String urlLine = "";
+    if (mdnsHostname.length() > 0 && apIP.length() > 0) {
+        urlLine = "http://" + mdnsHostname + "\n(or http://" + apIP + ")";
+    } else if (mdnsHostname.length() > 0) {
+        urlLine = "http://" + mdnsHostname;
+    } else {
+        return ""; // No valid URL available
+    }
+    
+    // Build the exact same message format as JavaScript version
+    String apDetails = "Scribe Evolution Setup (Fallback) Network\n";
+    apDetails += "================================\n";
+    apDetails += "Network: " + ssid + "\n";
+    apDetails += "Password: " + password + "\n";
+    apDetails += "If WiFi connection fails, connect to the above network, then visit:\n";
+    apDetails += urlLine;
+    
+    return apDetails;
 }

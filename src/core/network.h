@@ -31,5 +31,6 @@ void updateStatusLED();
 void initializeStatusLED();
 bool isAPMode();
 void handleDNSServer();
+void printAPDetailsOnStartup();
 
 #endif // NETWORK_H

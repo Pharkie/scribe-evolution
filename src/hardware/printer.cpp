@@ -15,8 +15,9 @@ void stabilizePrinterPin()
 {
     // Set TX pin to HIGH (idle state) before UART initialization
     // This prevents spurious data from being sent to the printer during boot
-    pinMode(TX_PIN, OUTPUT);
-    digitalWrite(TX_PIN, HIGH); // UART idle state is HIGH
+    const RuntimeConfig &config = getRuntimeConfig();
+    pinMode(config.printerTxPin, OUTPUT);
+    digitalWrite(config.printerTxPin, HIGH); // UART idle state is HIGH
 
     // Small delay to ensure pin is stable
     delay(100);
@@ -28,7 +29,8 @@ void initializePrinter()
 
     // The TX pin was manually set to HIGH in stabilizePrinterPin()
     // Now initialize UART1 which will take over pin control
-    printer.begin(9600, SERIAL_8N1, -1, TX_PIN); // baud, config, RX pin (-1 = not used), TX pin
+    const RuntimeConfig &config = getRuntimeConfig();
+    printer.begin(9600, SERIAL_8N1, -1, config.printerTxPin); // baud, config, RX pin (-1 = not used), TX pin
 
     // Give printer and UART time to settle after pin transition
     delay(100);

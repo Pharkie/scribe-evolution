@@ -65,10 +65,13 @@ void initializeHardwareButtons()
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
     LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
 
+    // Get runtime configuration ONCE after GPIO setup
+    const RuntimeConfig &config = getRuntimeConfig();
+
     // ESP32-C3 GPIO safety validation before initialization
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        int gpio = defaultButtons[i].gpio;
+        int gpio = config.buttonGpios[i];
 
         // Validate GPIO using centralized configuration
         if (!isValidGPIO(gpio))
@@ -95,7 +98,7 @@ void initializeHardwareButtons()
     // Initialize GPIO pins with error handling
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        int gpio = defaultButtons[i].gpio;
+        int gpio = config.buttonGpios[i];
 
         // Skip invalid GPIOs identified above
         if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
@@ -135,17 +138,14 @@ void initializeHardwareButtons()
         // Feed watchdog after each button to prevent timeout
         esp_task_wdt_reset();
 
-        LOG_VERBOSE("BUTTONS", "Button %d GPIO %d initialized", i, defaultButtons[i].gpio);
+        LOG_VERBOSE("BUTTONS", "Button %d GPIO %d initialized", i, config.buttonGpios[i]);
     }
-
-    // Get runtime configuration ONCE after GPIO setup
-    const RuntimeConfig &config = getRuntimeConfig();
 
     // Log button configuration
     for (int i = 0; i < numHardwareButtons; i++)
     {
         LOG_NOTICE("BUTTONS", "Button %d: GPIO %d -> Short: '%s', Long: '%s'",
-                   i, defaultButtons[i].gpio,
+                   i, config.buttonGpios[i],
                    config.buttonShortActions[i].c_str(),
                    config.buttonLongActions[i].c_str());
 
@@ -165,10 +165,10 @@ void checkHardwareButtons()
 
     // Get runtime configuration ONCE to avoid repeated calls
     const RuntimeConfig &config = getRuntimeConfig();
-
+    
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        int gpio = defaultButtons[i].gpio;
+        int gpio = config.buttonGpios[i];
 
         // Skip buttons with invalid GPIOs (safety check)
         if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)

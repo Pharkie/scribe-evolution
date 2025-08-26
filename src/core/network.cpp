@@ -2,6 +2,8 @@
 #include "logging.h"
 #include "config_utils.h"
 #include "config_loader.h"
+#include "../content/content_generators.h"
+#include "../utils/content_actions.h"
 #include <esp_task_wdt.h>
 
 // Network status variables
@@ -214,5 +216,36 @@ void handleDNSServer()
     if (currentWiFiMode == WIFI_MODE_AP_FALLBACK)
     {
         dnsServer.processNextRequest();
+    }
+}
+
+// === AP Details Printing ===
+void printAPDetailsOnStartup()
+{
+    // Only print if we're actually in AP mode
+    if (currentWiFiMode != WIFI_MODE_AP_FALLBACK)
+    {
+        return;
+    }
+    
+    // Generate the AP details content using the shared function
+    String apContent = generateAPDetailsContent();
+    
+    if (apContent.length() > 0)
+    {
+        // Create a content action result and queue for printing
+        ContentActionResult result(true, apContent);
+        if (queueContentForPrinting(result))
+        {
+            LOG_NOTICE("NETWORK", "AP connection details queued for printing");
+        }
+        else
+        {
+            LOG_ERROR("NETWORK", "Failed to queue AP details for printing");
+        }
+    }
+    else
+    {
+        LOG_ERROR("NETWORK", "Failed to generate AP details content");
     }
 }

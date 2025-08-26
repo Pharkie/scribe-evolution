@@ -150,6 +150,9 @@ void setup()
   // Initialize printer
   initializePrinter();
 
+  // Print AP details if we're in AP mode (after printer is ready)
+  printAPDetailsOnStartup();
+
   // Initialize hardware buttons
   initializeHardwareButtons();
 

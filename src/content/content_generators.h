@@ -78,4 +78,10 @@ String generatePokeContent();
  */
 String generateNewsContent(int timeoutMs = 10000);
 
+/**
+ * @brief Generate AP (Access Point) connection details for startup printing
+ * @return String containing formatted AP connection instructions (no header)
+ */
+String generateAPDetailsContent();
+
 #endif // CONTENT_GENERATORS_H

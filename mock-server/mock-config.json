@@ -9,6 +9,7 @@
         "ip_address": "192.168.1.100",
         "printer_name": "Mock Scribe Printer",
         "mqtt_topic": "scribe/MockUser/print",
+        "printerTxPin": 21,
         "type": "local",
         "wifi": {
             "ssid": "MockWiFi-Network",
@@ -95,7 +96,7 @@
         }
     },
     "leds": {
-        "pin": 4,
+        "pin": 20,
         "count": 30,
         "brightness": 64,
         "refreshRate": 60,
@@ -147,7 +148,7 @@
     },
     "gpio": {
         "availablePins": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
-        "safePins": [2, 4, 5, 6, 7, 8, 9, 10, 20, 21],
+        "safePins": [2, 4, 5, 6, 7, 10, 20, 21],
         "pinDescriptions": {
             "0": "Strapping pin at boot, avoid",
             "1": "TX for UART0 (USB-Serial), avoid",
@@ -157,8 +158,8 @@
             "5": "Safe",
             "6": "Safe",
             "7": "Safe",
-            "8": "Onboard LED",
-            "9": "Safe",
+            "8": "Onboard LED, avoid",
+            "9": "Strapping pin, avoid",
             "10": "Safe",
             "20": "UART1 TX - Safe",
             "21": "UART1 RX - Safe"

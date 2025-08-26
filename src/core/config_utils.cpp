@@ -45,6 +45,7 @@ void validateConfig()
     }
 
     // GPIO validation - check for conflicts between buttons, status LED, and LED strip
+    const RuntimeConfig &config = getRuntimeConfig();
     int usedGpios[32]; // ESP32-C3 has GPIOs 0-21, but use larger array for safety
     int usedCount = 0;
     bool gpioConflict = false;
@@ -52,15 +53,15 @@ void validateConfig()
     // Add button GPIOs
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        usedGpios[usedCount++] = defaultButtons[i].gpio;
+        usedGpios[usedCount++] = config.buttonGpios[i];
     }
 
     // Add status LED GPIO
     usedGpios[usedCount++] = statusLEDPin;
 
 #if ENABLE_LEDS
-    // Add LED strip GPIO (uses DEFAULT_LED_PIN from led_config.h)
-    usedGpios[usedCount++] = DEFAULT_LED_PIN; // Now correctly references GPIO 1
+    // Add LED strip GPIO from runtime config
+    usedGpios[usedCount++] = config.ledPin;
 #endif
 
     // Check for duplicate GPIOs
@@ -122,7 +123,7 @@ void logGPIOUsageSummary()
     Serial.println("  Buttons:");
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        int gpio = defaultButtons[i].gpio;
+        int gpio = config.buttonGpios[i];
         Serial.printf("    GPIO %d: Button %d (%s) - %s\n",
                       gpio, i + 1, config.buttonShortActions[i].c_str(), getGPIODescription(gpio));
     }
@@ -139,7 +140,7 @@ void logGPIOUsageSummary()
 
     // Printer GPIO
     Serial.printf("  Printer:\n    GPIO %d: Printer TX - %s\n",
-                  TX_PIN, getGPIODescription(TX_PIN));
+                  config.printerTxPin, getGPIODescription(config.printerTxPin));
 
     Serial.println();
 }

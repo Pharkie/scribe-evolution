@@ -335,10 +335,13 @@ function createRequestHandler() {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
-          console.log('💡 LED effect triggered');
+          const params = JSON.parse(body || '{}');
+          console.log('💡 LED effect triggered:', params.effect || 'unknown');
           setTimeout(() => {
             sendJSON(res, {
-              message: "LED effect started successfully"
+              message: "LED effect started",
+              effect: params.effect || "unknown", 
+              cycles: params.cycles || 1
             });
           }, 300);
         });
@@ -437,7 +440,7 @@ function createRequestHandler() {
         console.log(`📝 Memo ${memoId} GET requested`);
         
         const memoKeys = ['memo1', 'memo2', 'memo3', 'memo4'];
-        const memoContent = mockConfig.memos[memoKeys[memoId - 1]];
+        const memoContent = mockMemos[memoKeys[memoId - 1]];
         const expandedContent = expandPlaceholders(memoContent);
         
         // Use simple format like other content endpoints (joke, quiz, etc.)
