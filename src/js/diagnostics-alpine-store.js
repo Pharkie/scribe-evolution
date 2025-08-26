@@ -320,11 +320,10 @@ function initializeDiagnosticsStore() {
         return 'ERROR: NVS data not available - API failed or returned empty data';
       }
       
-      // Check for missing required fields
+      // Check for missing essential fields (status is optional)
       const missingFields = [];
       if (!this.nvsData.namespace) missingFields.push('namespace');
       if (!this.nvsData.timestamp) missingFields.push('timestamp');
-      if (!this.nvsData.status) missingFields.push('status');
       if (!this.nvsData.summary) missingFields.push('summary');
       if (this.nvsData.summary && this.nvsData.summary.totalKeys === undefined) missingFields.push('summary.totalKeys');
       if (this.nvsData.summary && this.nvsData.summary.validKeys === undefined) missingFields.push('summary.validKeys');
@@ -332,13 +331,12 @@ function initializeDiagnosticsStore() {
       if (this.nvsData.summary && this.nvsData.summary.invalidKeys === undefined) missingFields.push('summary.invalidKeys');
       
       if (missingFields.length > 0) {
-        console.error('❌ Missing NVS fields:', missingFields);
+        console.warn('⚠️ Missing optional NVS fields:', missingFields);
       }
       
       const formattedData = {
         namespace: this.nvsData.namespace || 'ERROR: Missing namespace',
         timestamp: this.nvsData.timestamp || 'ERROR: Missing timestamp',
-        status: this.nvsData.status || 'ERROR: Missing status',
         summary: {
           totalKeys: this.nvsData.summary?.totalKeys !== undefined ? this.nvsData.summary.totalKeys : 'ERROR: Missing totalKeys',
           validKeys: this.nvsData.summary?.validKeys !== undefined ? this.nvsData.summary.validKeys : 'ERROR: Missing validKeys',
@@ -493,12 +491,14 @@ function initializeDiagnosticsStore() {
     
     // Navigation
     goBack() {
-      window.location.href = '/';
+      window.goBack();
     }
   };
   
-  // Initialize data loading - Alpine.js will call init() automatically
-  // No need to call it manually
+  // Register Alpine store for partials to access
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('diagnostics', store);
+  });
   
   return store;
 }

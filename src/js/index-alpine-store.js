@@ -862,8 +862,10 @@ function initializeIndexStore() {
     }
   };
   
-  // Initialize data loading - Alpine.js will call init() automatically
-  // No need to call it manually
+  // Register Alpine store for global access
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('index', store);
+  });
   
   return store;
 }

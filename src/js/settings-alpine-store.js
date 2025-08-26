@@ -9,7 +9,7 @@
  * Preserves existing API layer while adding reactive state management
  */
 function initializeSettingsStore() {
-    return {
+    const store = {
                 // Core state management
         loading: true,
         error: null,
@@ -1460,6 +1460,13 @@ ${urlLine}`;
             }
         },
     };
+    
+    // Register Alpine store for partials to access
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('settings', store);
+    });
+    
+    return store;
 }
 
 // Export store initializer for use in HTML

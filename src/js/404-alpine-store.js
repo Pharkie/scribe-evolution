@@ -4,8 +4,8 @@
  */
 
 // Alpine.js Store for 404 Error Page
-window.ErrorStore = function() {
-  return {
+function initializeErrorStore() {
+  const store = {
     // Error details from URL or template placeholders
     method: 'GET',
     path: '/unknown',
@@ -103,11 +103,7 @@ window.ErrorStore = function() {
     },
     
     goBack() {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        this.goHome();
-      }
+      window.goBack();
     },
     
     // Try to reload the requested page
@@ -241,4 +237,14 @@ Current URL: ${this.errorReport.url}`;
       }
     }
   };
-};
+  
+  // Register Alpine store for global access
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('error', store);
+  });
+  
+  return store;
+}
+
+// Export for use in HTML
+window.initializeErrorStore = initializeErrorStore;
