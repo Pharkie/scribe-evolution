@@ -1477,7 +1477,7 @@ document.addEventListener('alpine:init', () => {
         loading: {},
         load(name) {
             if (this.cache[name]) return this.cache[name];
-            if (this.loading[name]) return '<div class="p-4 text-center text-gray-500">Loading...</div>';
+            if (this.loading[name]) return '<div class="p-4 text-center opacity-0"></div>';
             
             this.loading[name] = true;
             fetch(`/html/partials/settings/${name}.html`)
@@ -1497,7 +1497,7 @@ document.addEventListener('alpine:init', () => {
                     Alpine.store('partials', { ...this });
                 });
             
-            return '<div class="p-4 text-center text-gray-500">Loading...</div>';
+            return '<div class="p-4 text-center opacity-0"></div>';
         }
     });
 });
