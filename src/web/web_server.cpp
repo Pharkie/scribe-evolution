@@ -375,8 +375,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
         
-        // Memo API endpoints
-        registerRoute("POST", "/api/memos", "Update all memos", handleMemosUpdate, true);
+        // Memo API endpoints - registered later with other handlers
         
         // Individual memo operations - using path parameters
         server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, [](AsyncWebServerRequest *request) {

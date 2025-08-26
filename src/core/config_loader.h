@@ -21,6 +21,10 @@ struct RuntimeConfig
     // Device Configuration
     String deviceOwner;
     String timezone;
+    
+    // Hardware GPIO Configuration
+    int printerTxPin;    // GPIO pin for printer TX (UART communication)
+    int buttonGpios[4];  // GPIO pins for buttons 1-4
 
     // WiFi Configuration
     String wifiSSID;

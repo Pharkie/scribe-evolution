@@ -46,6 +46,7 @@ function initializeSettingsStore() {
                 maxCharacters: null, // Will be set from backend
                 mqtt_topic: null, // Will be set from backend
                 mdns: null, // Will be set from backend
+                printerTxPin: null, // Will be set from backend
                 // WiFi nested under device
                 wifi: {
                     ssid: null, // Will be set from backend
@@ -158,20 +159,28 @@ function initializeSettingsStore() {
             speed: 10,
             intensity: 50,
             cycles: 5,
-            color1: '#0062ff',
-            color2: '#00ff00',
-            color3: '#ff0000',
+            color1: '#0066FF', // Electric Blue (matches preset)
+            color2: '#00FF00', // Bright Green (matches preset)
+            color3: '#FF0000', // Bright Red (matches preset)
             custom1: 10,
             custom2: 5,
             custom3: 1
         },
         
-        // Color picker instances
-        colorPickers: {
-            color1: null,
-            color2: null,
-            color3: null
-        },
+        // Color preset swatches (6 vibrant colors)
+        colorPresets: [
+            '#FF0000', // Bright Red
+            '#0066FF', // Electric Blue  
+            '#00FF00', // Bright Green
+            '#FFFF00', // Bright Yellow
+            '#FF6600', // Orange
+            '#9900FF'  // Purple
+        ],
+        
+        // Track whether each color is using preset or custom
+        color1Type: 'preset',
+        color2Type: 'preset', 
+        color3Type: 'preset',
         
         // WiFi network scanning state using Alpine reactive patterns
         wifiScan: {
@@ -1057,18 +1066,45 @@ ${urlLine}`;
             return hasRequiredFields && memosValid;
         },
         
-        // Get GPIO pin options for dropdowns with safety information
+        // Get all currently used GPIO pins for conflict detection
+        get usedGpioPins() {
+            const used = new Set();
+            
+            // Add printer TX pin
+            if (this.config.device.printerTxPin !== null) {
+                used.add(Number(this.config.device.printerTxPin));
+            }
+            
+            // Add LED strip pin
+            if (this.config.leds?.pin !== null) {
+                used.add(Number(this.config.leds.pin));
+            }
+            
+            // Add button GPIO pins
+            for (let i = 1; i <= 4; i++) {
+                const buttonGpio = this.config.buttons[`button${i}`]?.gpio;
+                if (buttonGpio !== null) {
+                    used.add(Number(buttonGpio));
+                }
+            }
+            
+            return used;
+        },
+        
+        // Get GPIO pin options with conflict detection and safety information
         get gpioOptions() {
             return this.gpio.availablePins.map(pin => {
+                const pinNumber = Number(pin);
                 const isSafe = this.gpio.safePins.includes(pin);
                 const description = this.gpio.pinDescriptions[pin] || 'Unknown';
-                const safetyLabel = isSafe ? 'Safe' : description;
+                const isUsed = this.usedGpioPins.has(pinNumber);
                 
                 return {
-                    value: Number(pin), // Ensure value is explicitly a number
-                    label: `GPIO${pin} (${safetyLabel})`,
-                    disabled: !isSafe,
-                    isSafe: isSafe
+                    pin: pinNumber,
+                    description: description,
+                    available: isSafe && !isUsed,
+                    isSafe: isSafe,
+                    inUse: isUsed
                 };
             });
         },
@@ -1077,10 +1113,11 @@ ${urlLine}`;
         get allGpioOptions() {
             if (this.loading || this.gpio.availablePins.length === 0) {
                 return [{ 
-                    value: '', 
-                    label: 'Loading GPIO options...', 
-                    disabled: true,
-                    isSafe: false
+                    pin: null, 
+                    description: 'Loading GPIO options...', 
+                    available: false,
+                    isSafe: false,
+                    inUse: false
                 }];
             }
             return this.gpioOptions;
@@ -1382,83 +1419,20 @@ ${urlLine}`;
             window.location.href = '/';
         },
         
-        // Initialize Pickr color pickers
-        initColorPickers() {
-            console.log('🎨 Initializing Pickr color pickers...');
+        // Handle color selection from swatches or custom picker
+        selectColor(colorKey, colorValue, type) {
+            console.log(`🎨 Selected ${colorKey}: ${colorValue} (${type})`);
             
-            // Ensure we have valid color values with fallbacks
-            const safeColor1 = this.effectParams.color1 && typeof this.effectParams.color1 === 'string' ? this.effectParams.color1 : '#0062ff';
-            const safeColor2 = this.effectParams.color2 && typeof this.effectParams.color2 === 'string' ? this.effectParams.color2 : '#00ff00';
-            const safeColor3 = this.effectParams.color3 && typeof this.effectParams.color3 === 'string' ? this.effectParams.color3 : '#ff0000';
+            // Update the effect parameter
+            this.effectParams[colorKey] = colorValue;
             
-            console.log('🎨 Color picker values:', { safeColor1, safeColor2, safeColor3 });
+            // Track whether this is a preset or custom color
+            this[colorKey + 'Type'] = type;
             
-            // Common Pickr configuration
-            const commonConfig = {
-                theme: 'nano',
-                default: '#0062ff',
-                swatches: [
-                    '#FF0000', // Red
-                    '#1E90FF', // Electric Blue  
-                    '#32CD32', // Lime Green
-                    '#FFFF00', // Bright Yellow
-                    '#FFA500', // Orange
-                    '#800080'  // Purple
-                ],
-                components: {
-                    preview: true,
-                    hue: true,
-                    interaction: {
-                        hex: true,
-                        input: true,
-                        save: true
-                    }
-                }
-            };
-            
-            // Initialize color1 picker
-            if (this.$refs.color1Pickr) {
-                this.colorPickers.color1 = Pickr.create({
-                    ...commonConfig,
-                    el: this.$refs.color1Pickr,
-                    default: safeColor1
-                });
-                
-                this.colorPickers.color1.on('save', (color) => {
-                    if (color) {
-                        this.effectParams.color1 = color.toHEXA().toString();
-                    }
-                });
-            }
-            
-            // Initialize color2 picker (for multicolor chase)
-            if (this.$refs.color2Pickr) {
-                this.colorPickers.color2 = Pickr.create({
-                    ...commonConfig,
-                    el: this.$refs.color2Pickr,
-                    default: safeColor2
-                });
-                
-                this.colorPickers.color2.on('save', (color) => {
-                    if (color) {
-                        this.effectParams.color2 = color.toHEXA().toString();
-                    }
-                });
-            }
-            
-            // Initialize color3 picker (for multicolor chase)
-            if (this.$refs.color3Pickr) {
-                this.colorPickers.color3 = Pickr.create({
-                    ...commonConfig,
-                    el: this.$refs.color3Pickr,
-                    default: safeColor3
-                });
-                
-                this.colorPickers.color3.on('save', (color) => {
-                    if (color) {
-                        this.effectParams.color3 = color.toHEXA().toString();
-                    }
-                });
+            // If a custom color is selected, make sure the color input shows the right value
+            if (type === 'custom') {
+                // The x-model binding will handle this automatically
+                console.log(`🎨 Custom color selected for ${colorKey}: ${colorValue}`);
             }
         },
     };

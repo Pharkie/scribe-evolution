@@ -16,6 +16,13 @@
 constexpr const char *NVS_DEVICE_OWNER = "device_owner";
 constexpr const char *NVS_DEVICE_TIMEZONE = "device_timezone"; // Note: stored as device_timezone, not device_tz
 
+// Hardware GPIO Configuration Keys
+constexpr const char *NVS_PRINTER_TX_PIN = "printer_tx_pin";
+constexpr const char *NVS_BUTTON1_GPIO = "btn1_gpio";
+constexpr const char *NVS_BUTTON2_GPIO = "btn2_gpio";
+constexpr const char *NVS_BUTTON3_GPIO = "btn3_gpio";
+constexpr const char *NVS_BUTTON4_GPIO = "btn4_gpio";
+
 // WiFi Configuration Keys
 constexpr const char *NVS_WIFI_SSID = "wifi_ssid";
 constexpr const char *NVS_WIFI_PASSWORD = "wifi_password";

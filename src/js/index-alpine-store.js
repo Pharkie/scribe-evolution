@@ -726,6 +726,139 @@ function initializeIndexStore() {
       } finally {
         this.printing = false;
       }
+    },
+
+    // Printer Discovery and SSE (Index page only)
+    initializePrinterDiscovery() {
+      console.log('🔌 Initializing real-time printer discovery (SSE)');
+      
+      let eventSource = null;
+      
+      const connectSSE = () => {
+        // Close existing connection if any
+        if (eventSource) {
+          eventSource.close();
+        }
+        
+        // Create new SSE connection
+        eventSource = new EventSource('/events');
+        
+        // Handle printer updates
+        eventSource.addEventListener('printer-update', (event) => {
+          try {
+            console.log('🖨️ Real-time printer update received');
+            const data = JSON.parse(event.data);
+            this.updatePrintersFromData(data);
+          } catch (error) {
+            console.error('Error parsing printer update:', error);
+          }
+        });
+        
+        // Handle system status updates
+        eventSource.addEventListener('system-status', (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log(`📡 System status: ${data.status} - ${data.message}`);
+            this.showSystemNotification(data.status, data.message);
+          } catch (error) {
+            console.error('Error parsing system status:', error);
+          }
+        });
+        
+        // Handle connection errors
+        eventSource.onerror = (error) => {
+          console.error('SSE connection error:', error);
+          // Attempt to reconnect after 5 seconds
+          setTimeout(() => {
+            console.log('🔄 Attempting to reconnect SSE...');
+            connectSSE();
+          }, 5000);
+        };
+        
+        // Handle successful connection
+        eventSource.onopen = (event) => {
+          console.log('✅ Real-time updates connected');
+        };
+      };
+      
+      // Start initial connection
+      connectSSE();
+      
+      // Clean up on page unload
+      window.addEventListener('beforeunload', () => {
+        if (eventSource) {
+          eventSource.close();
+        }
+      });
+    },
+
+    updatePrintersFromData(data) {
+      if (data && data.discovered_printers) {
+        // Update the store's printers array directly
+        this.printers = data.discovered_printers;
+        
+        // Also dispatch custom event for backward compatibility if needed
+        const event = new CustomEvent('printersUpdated', {
+          detail: {
+            printers: data.discovered_printers
+          }
+        });
+        document.dispatchEvent(event);
+      }
+    },
+
+    showSystemNotification(status, message) {
+      // Only show notifications for specific status types
+      if (!['connected', 'error', 'reconnecting'].includes(status)) {
+        return;
+      }
+      
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${status}`;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 15px;
+        border-radius: 4px;
+        color: white;
+        font-size: 14px;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      `;
+      
+      // Set background color based on status
+      switch (status) {
+        case 'connected':
+          notification.style.backgroundColor = '#10b981'; // Green
+          break;
+        case 'error':
+          notification.style.backgroundColor = '#ef4444'; // Red
+          break;
+        case 'reconnecting':
+          notification.style.backgroundColor = '#f59e0b'; // Yellow
+          break;
+      }
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // Fade in
+      requestAnimationFrame(() => {
+        notification.style.opacity = '1';
+      });
+      
+      // Auto-remove after 3 seconds
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
     }
   };
   

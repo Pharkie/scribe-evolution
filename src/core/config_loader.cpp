@@ -126,6 +126,13 @@ bool loadNVSConfig()
     // Load device configuration
     g_runtimeConfig.deviceOwner = getNVSString(prefs, NVS_DEVICE_OWNER, defaultDeviceOwner, 50);
     g_runtimeConfig.timezone = getNVSString(prefs, NVS_DEVICE_TIMEZONE, defaultTimezone, 50);
+    
+    // Load hardware GPIO configuration
+    g_runtimeConfig.printerTxPin = getNVSInt(prefs, NVS_PRINTER_TX_PIN, defaultPrinterTxPin, 0, 39);
+    g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, defaultButtons[0].gpio, 0, 39);
+    g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, defaultButtons[1].gpio, 0, 39);
+    g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, defaultButtons[2].gpio, 0, 39);
+    g_runtimeConfig.buttonGpios[3] = getNVSInt(prefs, NVS_BUTTON4_GPIO, defaultButtons[3].gpio, 0, 39);
 
     // Load WiFi configuration
     g_runtimeConfig.wifiSSID = getNVSString(prefs, NVS_WIFI_SSID, defaultWifiSSID, 32);
@@ -203,6 +210,13 @@ void loadDefaultConfig()
     // Load device defaults
     g_runtimeConfig.deviceOwner = defaultDeviceOwner;
     g_runtimeConfig.timezone = defaultTimezone;
+    
+    // Load hardware GPIO defaults
+    g_runtimeConfig.printerTxPin = defaultPrinterTxPin;
+    g_runtimeConfig.buttonGpios[0] = defaultButtons[0].gpio;
+    g_runtimeConfig.buttonGpios[1] = defaultButtons[1].gpio;
+    g_runtimeConfig.buttonGpios[2] = defaultButtons[2].gpio;
+    g_runtimeConfig.buttonGpios[3] = defaultButtons[3].gpio;
 
     // Load WiFi defaults (empty by default, must be configured)
     g_runtimeConfig.wifiSSID = defaultWifiSSID;
@@ -272,6 +286,13 @@ bool saveNVSConfig(const RuntimeConfig &config)
     // Save device configuration
     prefs.putString(NVS_DEVICE_OWNER, config.deviceOwner);
     prefs.putString(NVS_DEVICE_TIMEZONE, config.timezone);
+    
+    // Save hardware GPIO configuration
+    prefs.putInt(NVS_PRINTER_TX_PIN, config.printerTxPin);
+    prefs.putInt(NVS_BUTTON1_GPIO, config.buttonGpios[0]);
+    prefs.putInt(NVS_BUTTON2_GPIO, config.buttonGpios[1]);
+    prefs.putInt(NVS_BUTTON3_GPIO, config.buttonGpios[2]);
+    prefs.putInt(NVS_BUTTON4_GPIO, config.buttonGpios[3]);
 
     // Save WiFi configuration
     prefs.putString(NVS_WIFI_SSID, config.wifiSSID);

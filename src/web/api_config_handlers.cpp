@@ -114,6 +114,9 @@ void handleConfigGet(AsyncWebServerRequest *request)
     device["printer_name"] = getLocalPrinterName();
     device["mqtt_topic"] = getLocalPrinterTopic();
     device["type"] = "local";
+    
+    // Hardware GPIO configuration
+    device["printerTxPin"] = config.printerTxPin;
 
     // WiFi configuration - nested under device to match settings structure
     JsonObject wifi = device.createNestedObject("wifi");
@@ -232,7 +235,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
         JsonObject button = buttons.createNestedObject(buttonKey);
 
         // Add GPIO pin information for each button
-        button["gpio"] = defaultButtons[i].gpio;
+        button["gpio"] = config.buttonGpios[i];
 
         button["shortAction"] = config.buttonShortActions[i];
         button["shortMqttTopic"] = config.buttonShortMqttTopics[i];
@@ -373,6 +376,18 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
     newConfig.deviceOwner = owner;
     newConfig.timezone = timezone;
+    
+    // Parse printer TX GPIO configuration
+    if (device.containsKey("printerTxPin")) {
+        int printerTxPin = device["printerTxPin"];
+        if (!isValidGPIO(printerTxPin) || !isSafeGPIO(printerTxPin)) {
+            sendValidationError(request, ValidationResult(false, "Invalid printer TX GPIO pin"));
+            return;
+        }
+        newConfig.printerTxPin = printerTxPin;
+    } else {
+        newConfig.printerTxPin = defaultPrinterTxPin;
+    }
 
     // maxCharacters is now in device section, but remains hardcoded from config.h
     newConfig.maxCharacters = maxCharacters;
@@ -555,6 +570,18 @@ void handleConfigPost(AsyncWebServerRequest *request)
         {
             sendValidationError(request, ValidationResult(false, "Missing shortAction or longAction for " + String(buttonKeys[i])));
             return;
+        }
+        
+        // Parse and validate button GPIO configuration
+        if (button.containsKey("gpio")) {
+            int buttonGpio = button["gpio"];
+            if (!isValidGPIO(buttonGpio) || !isSafeGPIO(buttonGpio)) {
+                sendValidationError(request, ValidationResult(false, "Invalid GPIO pin for " + String(buttonKeys[i])));
+                return;
+            }
+            newConfig.buttonGpios[i] = buttonGpio;
+        } else {
+            newConfig.buttonGpios[i] = defaultButtons[i].gpio;
         }
 
         String shortAction = button["shortAction"];
