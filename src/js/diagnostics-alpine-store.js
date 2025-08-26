@@ -19,11 +19,11 @@ function initializeDiagnosticsStore() {
     
     // Section definitions
     sections: [
-      { id: 'microcontroller-section', name: 'Microcontroller', icon: '🎛️', color: 'orange' },
-      { id: 'logging-section', name: 'Logging', icon: '📋', color: 'indigo' },
-      { id: 'pages-endpoints-section', name: 'Pages & Endpoints', icon: '🔗', color: 'teal' },
-      { id: 'config-file-section', name: 'Runtime Configuration', icon: '⚙️', color: 'green' },
-      { id: 'nvs-storage-section', name: 'NVS', icon: '💾', color: 'cyan' }
+      { id: 'microcontroller-section', name: 'Microcontroller', icon: 'cpuChip', color: 'orange' },
+      { id: 'logging-section', name: 'Logging', icon: 'clipboardDocumentList', color: 'indigo' },
+      { id: 'pages-endpoints-section', name: 'Pages & Endpoints', icon: 'link', color: 'teal' },
+      { id: 'config-file-section', name: 'Runtime Configuration', icon: 'cog6Tooth', color: 'green' },
+      { id: 'nvs-storage-section', name: 'NVS', icon: 'saveFloppyDisk', color: 'cyan' }
     ],
     
     // Initialize store

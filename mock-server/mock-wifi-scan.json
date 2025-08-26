@@ -1,6 +1,14 @@
 {
-    "count": 8,
+    "count": 9,
     "networks": [
+        {
+            "ssid": "MockWiFi-Network",
+            "rssi": -45,
+            "channel": 6,
+            "secure": true,
+            "encryption": "WPA2",
+            "signal_strength": "Good"
+        },
         {
             "ssid": "MooseCave",
             "rssi": -60,

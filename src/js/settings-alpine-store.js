@@ -199,7 +199,7 @@ function initializeSettingsStore() {
             },
             
             get scanLabel() {
-                return this.hasScanned ? '👀 Rescan networks' : '👀 Scan networks for more';
+                return this.hasScanned ? 'Rescan networks' : 'Scan networks for more';
             },
             
             // Reactive options
@@ -216,8 +216,8 @@ function initializeSettingsStore() {
                 if (this.currentSSID) {
                     const currentSignalStrength = getNetworkSignalStrength(this.currentSSID);
                     const currentLabel = currentSignalStrength 
-                        ? `${this.currentSSID} (${currentSignalStrength}) 👈 active`
-                        : `${this.currentSSID} 👈 active`;
+                        ? `${this.currentSSID} (${currentSignalStrength}) ← active`
+                        : `${this.currentSSID} ← active`;
                     
                     options.push({
                         value: this.currentSSID,
@@ -272,17 +272,17 @@ function initializeSettingsStore() {
         
         // Section definitions for navigation
         sections: [
-            { id: 'device', name: 'Device', icon: '⚙️', color: 'blue' },
-            { id: 'memos', name: 'Memos', icon: '📝', color: 'pink' },
-            { id: 'mqtt', name: 'MQTT', icon: '📡', color: 'yellow' },
-            { id: 'unbidden', name: 'Unbidden Ink', icon: '🎲', color: 'green' },
-            { id: 'buttons', name: 'Buttons', icon: '🎛️', color: 'teal' },
-            { id: 'leds', name: 'LEDs', icon: '🌈', color: 'purple' }
+            { id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' },
+            { id: 'memos', name: 'Memos', icon: 'pencil', color: 'pink' },
+            { id: 'mqtt', name: 'MQTT', icon: 'signal', color: 'yellow' },
+            { id: 'unbidden', name: 'Unbidden Ink', icon: 'sparkles', color: 'green' },
+            { id: 'buttons', name: 'Buttons', icon: 'arrowDownCircle', color: 'teal' },
+            { id: 'leds', name: 'LEDs', icon: 'lightBulb', color: 'purple' }
         ],
         
         // Computed properties for complex UI states
         get apPrintButtonText() {
-            return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Scribe a note of the Wifi Fallback (AP)';
+            return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Scribe Wifi Fallback AP';
         },
         
         get timeRangeDisplay() {
@@ -464,11 +464,12 @@ function initializeSettingsStore() {
                 this.wifiScan.networks = uniqueNetworks;
                 this.wifiScan.hasScanned = true;
                 
-                // Auto-select current SSID if found and nothing else selected
-                if (this.wifiScan.currentSSID && !this.wifiScan.selectedNetwork) {
+                // Always reselect current SSID after scan if it's found in the results
+                if (this.wifiScan.currentSSID) {
                     const currentNetwork = uniqueNetworks.find(n => n.ssid === this.wifiScan.currentSSID);
                     if (currentNetwork) {
                         this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
+                        console.log('Auto-reselected current network after scan:', this.wifiScan.currentSSID);
                     }
                 }
                 
@@ -515,17 +516,17 @@ function initializeSettingsStore() {
         
         // Get formatted network display string
         formatNetworkDisplay(network) {
-            const securityIcon = network.secure ? '🔒' : '📡';
+            const securityIcon = network.secure ? getIcon('lockClosed') : getIcon('wifi');
             const signalIcon = this.getSignalIcon(network.signal_percent);
             return `${securityIcon} ${network.ssid} ${signalIcon} (${network.signal_percent}%)`;
         },
         
         // Get signal strength icon
         getSignalIcon(signalPercent) {
-            if (signalPercent >= 75) return '🔴';
-            if (signalPercent >= 50) return '🟡';
-            if (signalPercent >= 25) return '🟢';
-            return '⚪';
+            if (signalPercent >= 75) return getIcon('signal', 'scribe-icon text-red-500');
+            if (signalPercent >= 50) return getIcon('signal', 'scribe-icon text-yellow-500');
+            if (signalPercent >= 25) return getIcon('signal', 'scribe-icon text-green-500');
+            return getIcon('signal', 'scribe-icon text-gray-300');
         },
         
         // Create a clean config object without read-only fields for server submission

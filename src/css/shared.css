@@ -357,4 +357,28 @@
       background-color: rgb(17 24 39 / 0.3);
     }
   }
+
+  /* Icon Styles */
+  .scribe-icon {
+    @apply inline-block;
+    stroke-width: 1.5;
+    color: currentColor;
+  }
+
+  /* Icon animations */
+  .scribe-icon {
+    transition: all 0.2s ease;
+  }
+
+  /* Icon in buttons */
+  button .scribe-icon {
+    @apply flex-shrink-0;
+  }
+  
+  /* Icon in action buttons */
+  .action-button .scribe-icon {
+    @apply text-2xl mb-1;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 }
