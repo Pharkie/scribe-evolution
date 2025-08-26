@@ -16,6 +16,7 @@ function initializeDiagnosticsStore() {
     
     // UI state
     currentSection: 'microcontroller-section',
+    progressReady: false,
     
     // Section definitions
     sections: [
@@ -117,6 +118,16 @@ function initializeDiagnosticsStore() {
     // Section management
     showSection(sectionId) {
       this.currentSection = sectionId;
+    },
+    
+    // Trigger progress bar animations when content is ready
+    triggerProgressAnimations() {
+      // Use requestAnimationFrame for smooth timing
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.progressReady = true;
+        });
+      });
     },
     
     getSectionClass(sectionId) {
