@@ -500,5 +500,52 @@ function initializeDiagnosticsStore() {
   return store;
 }
 
-// Export for use in HTML
-window.initializeDiagnosticsStore = initializeDiagnosticsStore;
+// Auto-register the store when this script loads  
+document.addEventListener('alpine:init', () => {
+    // Prevent multiple initializations if alpine:init fires multiple times
+    if (window.diagnosticsStoreInstance) {
+        console.log('🛠️ Diagnostics: Store already exists, skipping alpine:init');
+        return;
+    }
+    
+    // Create and register diagnostics store immediately, initialize it once
+    const diagnosticsStore = initializeDiagnosticsStore();
+    Alpine.store('diagnostics', diagnosticsStore);
+    
+    // Make store available globally for body x-data
+    window.diagnosticsStoreInstance = diagnosticsStore;
+    
+    // Initialize the store immediately during alpine:init (not later in x-init)
+    diagnosticsStore.init();
+    
+    // Alpine.js store for loading diagnostics partials (clean version)
+    Alpine.store('diagnosticsPartials', {
+        cache: {},
+        loading: {},
+        load(name) {
+            if (this.cache[name]) return this.cache[name];
+            if (this.loading[name]) return '<div class="p-4 text-center text-gray-500">Loading...</div>';
+            
+            this.loading[name] = true;
+            fetch(`/html/partials/diagnostics/${name}.html`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Failed to load partial: ${name}`);
+                    return response.text();
+                })
+                .then(html => {
+                    this.loading[name] = false;
+                    this.cache[name] = html;
+                    // Trigger reactivity by updating the store
+                    Alpine.store('diagnosticsPartials', { ...this });
+                })
+                .catch(error => {
+                    console.error('Error loading partial:', error);
+                    this.cache[name] = `<div class="p-4 text-center text-red-500">Error loading ${name}</div>`;
+                    this.loading[name] = false;
+                    Alpine.store('diagnosticsPartials', { ...this });
+                });
+            
+            return '<div class="p-4 text-center text-gray-500">Loading...</div>';
+        }
+    });
+});

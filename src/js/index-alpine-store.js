@@ -867,5 +867,21 @@ function initializeIndexStore() {
   return store;
 }
 
-// Export for use in HTML
-window.initializeIndexStore = initializeIndexStore;
+// Auto-register the store when this script loads
+document.addEventListener('alpine:init', () => {
+    // Prevent multiple initializations if alpine:init fires multiple times
+    if (window.indexStoreInstance) {
+        console.log('🏠 Index: Store already exists, skipping alpine:init');
+        return;
+    }
+    
+    // Create and register index store immediately, initialize it once
+    const indexStore = initializeIndexStore();
+    Alpine.store('index', indexStore);
+    
+    // Make store available globally for body x-data
+    window.indexStoreInstance = indexStore;
+    
+    // Initialize the store immediately during alpine:init (not later in x-init)
+    indexStore.init();
+});

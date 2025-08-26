@@ -243,5 +243,21 @@ Current URL: ${this.errorReport.url}`;
   return store;
 }
 
-// Export for use in HTML
-window.initializeErrorStore = initializeErrorStore;
+// Auto-register the store when this script loads
+document.addEventListener('alpine:init', () => {
+    // Prevent multiple initializations if alpine:init fires multiple times
+    if (window.errorStoreInstance) {
+        console.log('🗑️ 404: Store already exists, skipping alpine:init');
+        return;
+    }
+    
+    // Create and register error store immediately, initialize it once
+    const errorStore = initializeErrorStore();
+    Alpine.store('error', errorStore);
+    
+    // Make store available globally for body x-data
+    window.errorStoreInstance = errorStore;
+    
+    // Initialize the store immediately during alpine:init (not later in x-init)
+    errorStore.init();
+});

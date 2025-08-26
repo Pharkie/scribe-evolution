@@ -159,9 +159,7 @@ function initializeSettingsStore() {
             speed: 10,
             intensity: 50,
             cycles: 5,
-            color1: '#0066FF', // Electric Blue (matches preset)
-            color2: '#00FF00', // Bright Green (matches preset)
-            color3: '#FF0000', // Bright Red (matches preset)
+            colors: ['#0066FF', '#00FF00', '#FF0000'], // Array of colors
             custom1: 10,
             custom2: 5,
             custom3: 1
@@ -178,9 +176,7 @@ function initializeSettingsStore() {
         ],
         
         // Track whether each color is using preset or custom
-        color1Type: 'preset',
-        color2Type: 'preset', 
-        color3Type: 'preset',
+        colorTypes: ['preset', 'preset', 'preset'],
         
         // WiFi network scanning state using Alpine reactive patterns
         wifiScan: {
@@ -1131,18 +1127,18 @@ ${urlLine}`;
         // LED effect functions (WLED-style unified interface)
         async testLedEffect(effectName) {
             try {
-                // Build colors array based on effect - always use colors array
+                // Build colors array based on effect
                 let colors = [];
                 if (effectName === 'chase_multi') {
                     // Multicolour chase uses 3 colors
                     colors = [
-                        this.effectParams.color1,
-                        this.effectParams.color2,
-                        this.effectParams.color3
+                        this.effectParams.colors[0],
+                        this.effectParams.colors[1], 
+                        this.effectParams.colors[2]
                     ];
                 } else {
                     // All other effects use single color
-                    colors = [this.effectParams.color1];
+                    colors = [this.effectParams.colors[0]];
                 }
 
                 // Build unified payload - use cycles instead of duration
@@ -1258,12 +1254,12 @@ ${urlLine}`;
         // Initialize effect parameters based on selected effect  
         initEffectParams() {
             const defaults = {
-                'chase_single': { speed: 10, intensity: 50, cycles: 5, color1: '#0062ff', color2: '#0062ff', color3: '#0062ff', custom1: 10, custom2: 5, custom3: 1 },
-                'rainbow': { speed: 20, intensity: 5, cycles: 5, color1: '#ff0000', color2: '#ff0000', color3: '#ff0000', custom1: 5, custom2: 3, custom3: 1 },
-                'twinkle': { speed: 5, intensity: 10, cycles: 5, color1: '#ffff00', color2: '#ffff00', color3: '#ffff00', custom1: 3, custom2: 2, custom3: 1 },
-                'chase_multi': { speed: 15, intensity: 10, cycles: 5, color1: '#ff0000', color2: '#00ff00', color3: '#0000ff', custom1: 3, custom2: 5, custom3: 1 },
-                'pulse': { speed: 4, intensity: 50, cycles: 5, color1: '#800080', color2: '#800080', color3: '#800080', custom1: 5, custom2: 3, custom3: 1 },
-                'matrix': { speed: 25, intensity: 20, cycles: 5, color1: '#008000', color2: '#008000', color3: '#008000', custom1: 8, custom2: 10, custom3: 1 }
+                'chase_single': { speed: 10, intensity: 50, cycles: 5, colors: ['#0062ff', '#0062ff', '#0062ff'], custom1: 10, custom2: 5, custom3: 1 },
+                'rainbow': { speed: 20, intensity: 5, cycles: 5, colors: ['#ff0000', '#ff0000', '#ff0000'], custom1: 5, custom2: 3, custom3: 1 },
+                'twinkle': { speed: 5, intensity: 10, cycles: 5, colors: ['#ffff00', '#ffff00', '#ffff00'], custom1: 3, custom2: 2, custom3: 1 },
+                'chase_multi': { speed: 15, intensity: 10, cycles: 5, colors: ['#ff0000', '#00ff00', '#0000ff'], custom1: 3, custom2: 5, custom3: 1 },
+                'pulse': { speed: 4, intensity: 50, cycles: 5, colors: ['#800080', '#800080', '#800080'], custom1: 5, custom2: 3, custom3: 1 },
+                'matrix': { speed: 25, intensity: 20, cycles: 5, colors: ['#008000', '#008000', '#008000'], custom1: 8, custom2: 10, custom3: 1 }
             };
             
             if (defaults[this.selectedEffect]) {
@@ -1426,19 +1422,35 @@ ${urlLine}`;
         },
         
         // Handle color selection from swatches or custom picker
-        selectColor(colorKey, colorValue, type) {
-            console.log(`🎨 Selected ${colorKey}: ${colorValue} (${type})`);
+        selectColor(colorIndex, colorValue, type) {
+            console.log(`🎨 Selected color ${colorIndex}: ${colorValue} (${type})`);
             
             // Update the effect parameter
-            this.effectParams[colorKey] = colorValue;
+            this.effectParams.colors[colorIndex] = colorValue;
             
             // Track whether this is a preset or custom color
-            this[colorKey + 'Type'] = type;
+            this.colorTypes[colorIndex] = type;
             
             // If a custom color is selected, make sure the color input shows the right value
             if (type === 'custom') {
                 // The x-model binding will handle this automatically
-                console.log(`🎨 Custom color selected for ${colorKey}: ${colorValue}`);
+                console.log(`🎨 Custom color selected for index ${colorIndex}: ${colorValue}`);
+            }
+        },
+        
+        // Check if color controls should be shown for current effect
+        showColorControls() {
+            // Show color controls for effects that use colors
+            const colorEffects = ['chase_single', 'twinkle', 'pulse', 'chase_multi', 'matrix'];
+            return colorEffects.includes(this.selectedEffect);
+        },
+        
+        // Get color names based on current effect
+        getColorNames() {
+            if (this.selectedEffect === 'chase_multi') {
+                return ['Color 1', 'Color 2', 'Color 3'];
+            } else {
+                return ['Color 1'];
             }
         },
     };
@@ -1448,5 +1460,51 @@ ${urlLine}`;
     return store;
 }
 
-// Export store initializer for use in HTML
-window.initializeSettingsStore = initializeSettingsStore;
+// Auto-register the store when this script loads
+document.addEventListener('alpine:init', () => {
+    // Prevent multiple initializations if alpine:init fires multiple times
+    if (window.settingsStoreInstance) {
+        console.log('⚙️ Settings: Store already exists, skipping alpine:init');
+        return;
+    }
+    
+    // Create and register settings store immediately, initialize it once
+    const settingsStore = initializeSettingsStore();
+    Alpine.store('settings', settingsStore);
+    
+    // Make store available globally for body x-data
+    window.settingsStoreInstance = settingsStore;
+    
+    // Initialize the store immediately during alpine:init (not later in x-init)
+    settingsStore.init();
+    
+    // Alpine.js store for loading partials (clean version)
+    Alpine.store('partials', {
+        cache: {},
+        loading: {},
+        load(name) {
+            if (this.cache[name]) return this.cache[name];
+            if (this.loading[name]) return '<div class="p-4 text-center text-gray-500">Loading...</div>';
+            
+            this.loading[name] = true;
+            fetch(`/html/partials/settings/${name}.html`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Failed to load partial: ${name}`);
+                    return response.text();
+                })
+                .then(html => {
+                    this.loading[name] = false;
+                    this.cache[name] = html;
+                    Alpine.store('partials', { ...this });
+                })
+                .catch(error => {
+                    console.error(`Error loading partial ${name}:`, error);
+                    this.cache[name] = `<div class="p-4 bg-red-50 border border-red-200 rounded-lg"><p class="text-red-600">Failed to load ${name} section</p></div>`;
+                    this.loading[name] = false;
+                    Alpine.store('partials', { ...this });
+                });
+            
+            return '<div class="p-4 text-center text-gray-500">Loading...</div>';
+        }
+    });
+});
