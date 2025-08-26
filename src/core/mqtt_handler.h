@@ -24,7 +24,7 @@ extern const unsigned long mqttReconnectInterval;
 void setupMQTT();
 void connectToMQTT();
 void mqttCallback(char *topic, byte *payload, unsigned int length);
-void handleMQTTMessage(String message);
+void handleMQTTMessage(String topic, String message);
 void handleMQTTConnection();
 void updateMQTTSubscription();
 void setupMQTTWithDiscovery();

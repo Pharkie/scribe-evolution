@@ -518,11 +518,39 @@ void buttonActionTask(void *parameter)
         }
     }
 
-    // Handle MQTT if specified (placeholder)
+    // Handle MQTT if specified
     if (params->mqttTopic.length() > 0)
     {
-        LOG_WARNING("BUTTONS", "MQTT functionality not yet implemented for buttons: %s",
-                    params->mqttTopic.c_str());
+        if (mqttClient.connected())
+        {
+            // Create MQTT payload with sender information
+            DynamicJsonDocument payloadDoc(4096);
+            payloadDoc["message"] = currentMessage.message;
+            
+            // Add sender information (device owner)
+            const RuntimeConfig &config = getRuntimeConfig();
+            if (config.deviceOwner.length() > 0)
+            {
+                payloadDoc["sender"] = config.deviceOwner;
+            }
+            
+            String payload;
+            serializeJson(payloadDoc, payload);
+            
+            // Publish to MQTT
+            if (mqttClient.publish(params->mqttTopic.c_str(), payload.c_str()))
+            {
+                LOG_VERBOSE("BUTTONS", "Button action sent via MQTT to topic: %s", params->mqttTopic.c_str());
+            }
+            else
+            {
+                LOG_ERROR("BUTTONS", "Failed to send button action via MQTT to topic: %s", params->mqttTopic.c_str());
+            }
+        }
+        else
+        {
+            LOG_WARNING("BUTTONS", "MQTT not connected, cannot send button action to topic: %s", params->mqttTopic.c_str());
+        }
     }
 
     // Cleanup and mark complete

@@ -232,6 +232,13 @@ void handleMQTTSend(AsyncWebServerRequest *request)
     // Create the MQTT payload as JSON with proper escaping
     DynamicJsonDocument payloadDoc(4096);
     payloadDoc["message"] = message; // ArduinoJson handles escaping automatically
+    
+    // Add sender information (device owner)
+    const RuntimeConfig &config = getRuntimeConfig();
+    if (config.deviceOwner.length() > 0)
+    {
+        payloadDoc["sender"] = config.deviceOwner;
+    }
 
     String payload;
     serializeJson(payloadDoc, payload);

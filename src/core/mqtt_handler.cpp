@@ -144,12 +144,12 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
     }
     else
     {
-        // Handle regular print messages
-        handleMQTTMessage(message);
+        // Handle regular print messages - pass topic to extract sender
+        handleMQTTMessage(topicStr, message);
     }
 }
 
-void handleMQTTMessage(String message)
+void handleMQTTMessage(String topic, String message)
 {
     // Parse JSON message
     DynamicJsonDocument doc(4096); // Increased to match MQTT buffer size
@@ -166,6 +166,34 @@ void handleMQTTMessage(String message)
     {
         String printMessage = doc["message"].as<String>();
         String timestamp = getFormattedDateTime();
+
+        // Extract sender name from JSON payload (if provided)
+        String senderName = "";
+        if (doc.containsKey("sender"))
+        {
+            senderName = doc["sender"].as<String>();
+        }
+
+        // Add "from {sender}" to message headers if sender identified
+        if (senderName.length() > 0)
+        {
+            // Check if message already has "from" to avoid duplicates
+            if (printMessage.indexOf(" from ") == -1)
+            {
+                // Find the header end (first newline or end of string)
+                int headerEnd = printMessage.indexOf('\n');
+                if (headerEnd == -1) headerEnd = printMessage.length();
+                
+                // Insert " from {sender}" before the newline or at the end
+                String modifiedMessage = printMessage.substring(0, headerEnd) + 
+                                       " from " + senderName;
+                if (headerEnd < printMessage.length())
+                {
+                    modifiedMessage += printMessage.substring(headerEnd);
+                }
+                printMessage = modifiedMessage;
+            }
+        }
 
         // Print immediately using the existing printWithHeader function
         printWithHeader(timestamp, printMessage);

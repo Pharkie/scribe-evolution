@@ -378,6 +378,13 @@ void handlePrintContent(AsyncWebServerRequest *request)
         DynamicJsonDocument payloadDoc(jsonDocumentSize);
         payloadDoc["message"] = currentMessage.message;
         payloadDoc["timestamp"] = currentMessage.timestamp;
+        
+        // Add sender information (device owner)
+        const RuntimeConfig &config = getRuntimeConfig();
+        if (config.deviceOwner.length() > 0)
+        {
+            payloadDoc["sender"] = config.deviceOwner;
+        }
         String payload;
         serializeJson(payloadDoc, payload);
 

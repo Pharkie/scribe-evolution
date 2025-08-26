@@ -192,6 +192,10 @@ void handleLedEffect(AsyncWebServerRequest *request)
     {
         LedEffectsConfig playgroundConfig = {}; // Start with empty config
 
+        // Get LED configuration for calculations
+        const RuntimeConfig &config = getRuntimeConfig();
+        int ledCount = config.ledCount;
+        
         // Map 10-100 speed/intensity to reasonable effect parameters (50 = ideal)
         int speed = settings["speed"] | 50;        // Default to 50 if missing
         int intensity = settings["intensity"] | 50; // Default to 50 if missing
@@ -202,27 +206,31 @@ void handleLedEffect(AsyncWebServerRequest *request)
         
         if (effectName.equalsIgnoreCase("chase_single"))
         {
-            // Speed: 10-100 -> frame delay (higher speed = lower delay = faster movement)  
-            // Map 50->5 frames (50% faster than old 7), 20->8 frames (slower), 100->1 frame (fastest)
-            playgroundConfig.chaseSingle.speed = max(1, (int)(10 - (speed * 0.09))); 
+            // REDESIGNED: Speed controls position advancement per frame at 60Hz
+            // Current speed=100 should become speed=50, with room to go faster/slower
+            // Speed 50 = 1 pixel advance per frame (reasonable)
+            // Speed 10 = 0.2 pixel advance per frame (5x slower) 
+            // Speed 100 = 2 pixel advance per frame (2x faster)
+            float speedMultiplier = speed / 50.0f; // 50 becomes 1.0 baseline
+            playgroundConfig.chaseSingle.speed = max(1, (int)(4 / speedMultiplier)); // Invert for frame delay
             
-            // Intensity: 10-100 -> trail length (50 = reasonable trail)
-            // Map 50->15 pixels, 20->6 pixels (shorter), 100->30 pixels (2x longer)
-            playgroundConfig.chaseSingle.trailLength = max(1, (int)(intensity * 0.3));
+            // Intensity: 10-100 -> trail length (50 = 15 pixels, good balance)
+            playgroundConfig.chaseSingle.trailLength = max(3, min(30, (int)(intensity * 0.3)));
             playgroundConfig.chaseSingle.trailFade = 15; // Fixed fade amount
             playgroundConfig.chaseSingle.defaultColor = "#0062ff";
         }
         else if (effectName.equalsIgnoreCase("chase_multi"))
         {
-            // Speed: 10-100 -> frame delay (50->2 frames, 50% faster than old 3)
-            playgroundConfig.chaseMulti.speed = max(1, (int)(6.5 - (speed * 0.045)));
+            // REDESIGNED: Similar speed philosophy - 50 = baseline smooth movement
+            float speedMultiplier = speed / 50.0f; // 50 becomes 1.0 baseline  
+            playgroundConfig.chaseMulti.speed = max(1, (int)(3 / speedMultiplier)); // Baseline 3 frames
             
-            // Intensity: 10-100 -> trail length (50->15 pixels ideal) 
-            playgroundConfig.chaseMulti.trailLength = max(1, (int)(intensity * 0.3));
+            // Intensity: 10-100 -> trail length (50 = 15 pixels) 
+            playgroundConfig.chaseMulti.trailLength = max(3, min(25, (int)(intensity * 0.3)));
             playgroundConfig.chaseMulti.trailFade = 20; // Fixed fade amount
             
-            // Custom1 (colorSpacing): from frontend or default
-            playgroundConfig.chaseMulti.colorSpacing = settings["custom1"] | 3;
+            // Color spacing based on LED count for optimal visual effect
+            playgroundConfig.chaseMulti.colorSpacing = max(2, ledCount / 10); // Auto-scale to strip length
             
             // Colors from frontend
             if (settings.containsKey("colors") && settings["colors"].as<JsonArray>().size() > 0)
@@ -235,14 +243,17 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("matrix"))
         {
-            // Speed: 1-100 -> frame delay (50->4 frames ideal)
-            playgroundConfig.matrix.speed = max(1, (int)(9.0 - (speed * 0.1)));
+            // REDESIGNED: Speed controls drop falling rate - 50 = smooth natural fall
+            // Speed 50 = 2 frame delay (natural), Speed 10 = 8 frames (very slow), Speed 100 = 1 frame (very fast)
+            float speedMultiplier = speed / 50.0f; // 50 becomes 1.0 baseline
+            playgroundConfig.matrix.speed = max(1, (int)(2.5 / speedMultiplier)); // Baseline 2.5 frames
             
-            // Intensity: 1-100 -> number of drops (50->10 drops ideal)
-            // Map 50->10 drops, 25->5 drops (50% fewer), 100->20 drops (2x more)
-            playgroundConfig.matrix.drops = max(1, (int)(intensity * 0.2));
+            // Intensity: 10-100 -> number of drops (50 = good density, scales with LED count)
+            // For 30 LEDs: 50 intensity = ~6 drops, 10 = 1-2 drops, 100 = 10-12 drops
+            int baseDensity = max(1, ledCount / 15); // Scale to strip length
+            playgroundConfig.matrix.drops = max(1, (int)(baseDensity * intensity / 50.0f));
             
-            // Fixed internal parameters
+            // Fixed internal parameters for smooth matrix effect
             playgroundConfig.matrix.backgroundFade = 64;
             playgroundConfig.matrix.trailFade = 32;
             playgroundConfig.matrix.brightnessFade = 40;
