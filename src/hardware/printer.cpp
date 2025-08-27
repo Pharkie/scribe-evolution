@@ -3,6 +3,7 @@
 #include "../core/logging.h"
 #include "../core/config_utils.h"
 #include "../core/shared_types.h"
+#include "../core/network.h"
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 
@@ -76,7 +77,12 @@ void printServerInfo()
     // Feed watchdog after first log (network logging can be slow)
     esp_task_wdt_reset();
 
-    String serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
+    String serverInfo;
+    if (isAPMode()) {
+        serverInfo = "AP MODE SETUP\nConnect to WiFi: " + String(fallbackAPSSID) + "\nThen visit: " + WiFi.softAPIP().toString();
+    } else {
+        serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
+    }
 
     // Feed watchdog before thermal printing (can be slow)
     esp_task_wdt_reset();

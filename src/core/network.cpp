@@ -122,11 +122,17 @@ void startFallbackAP()
     {
         currentWiFiMode = WIFI_MODE_AP_FALLBACK;
         IPAddress apIP = WiFi.softAPIP();
-        Serial.print("AP Mode: ");
-        Serial.print(fallbackAPSSID);
-        Serial.print(" -> http://");
-        Serial.print(apIP);
-        Serial.println("/settings.html");
+        Serial.println();
+        Serial.println("======================================");
+        Serial.println("🔴 DEVICE STARTED IN AP MODE");
+        Serial.println("======================================");
+        Serial.println("WiFi Network: " + String(fallbackAPSSID));
+        Serial.println("Setup URL: http://" + apIP.toString() + "/settings.html");
+        Serial.println("1. Connect to WiFi: " + String(fallbackAPSSID));
+        Serial.println("2. Open browser to: " + apIP.toString());
+        Serial.println("3. Configure your WiFi settings");
+        Serial.println("======================================");
+        Serial.println();
 
         // Start DNS server for captive portal (redirect all requests to settings)
         dnsServer.start(53, "*", apIP);
@@ -142,6 +148,13 @@ void startFallbackAP()
 // === mDNS Setup ===
 void setupmDNS()
 {
+    // Skip mDNS setup in AP mode - it's not useful and creates confusion
+    if (isAPMode())
+    {
+        Serial.println("Skipping mDNS setup (AP mode - use IP address instead)");
+        return;
+    }
+
     if (MDNS.begin(getMdnsHostname()))
     {
         Serial.println("mDNS responder started");

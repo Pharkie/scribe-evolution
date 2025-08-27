@@ -266,7 +266,11 @@ void setupWebServerRoutes(int maxChars)
     // Store the maxChars value for validation
     setMaxCharacters(maxChars);
 
-    LOG_NOTICE("WEB", "Setting up web server routes for WiFi mode: %d (AP=%s)", currentWiFiMode, isAPMode() ? "true" : "false");
+    if (isAPMode()) {
+        LOG_NOTICE("WEB", "Setting up captive portal for AP mode setup");
+    } else {
+        LOG_NOTICE("WEB", "Setting up web server routes for WiFi mode");
+    }
 
     // In AP mode, set up minimal captive portal - no route tracking needed
     if (isAPMode())
@@ -278,8 +282,8 @@ void setupWebServerRoutes(int maxChars)
                   { request->send(LittleFS, "/html/settings.html", "text/html"); });
 
         // Configuration endpoints (needed for settings page)
-        server.on("/config", HTTP_GET, handleConfigGet);
-        server.on("/config", HTTP_POST, [](AsyncWebServerRequest *request)
+        server.on("/api/config", HTTP_GET, handleConfigGet);
+        server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request)
                   { handleConfigPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
                   {
             // Handle chunked upload properly

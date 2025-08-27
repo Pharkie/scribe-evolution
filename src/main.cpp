@@ -198,7 +198,11 @@ void setup()
   // Initialize Unbidden Ink schedule
   initializeUnbiddenInk();
 
-  LOG_NOTICE("BOOT", "=== Scribe Evolution Ready ===");
+  if (isAPMode()) {
+    LOG_NOTICE("BOOT", "=== Scribe Ready (AP Setup Mode) ===");
+  } else {
+    LOG_NOTICE("BOOT", "=== Scribe Evolution Ready ===");
+  }
 }
 
 void loop()
