@@ -297,6 +297,65 @@ void setupWebServerRoutes(int maxChars)
                 *bodyPtr += (char)data[i];
             } });
 
+        // Additional API endpoints needed for settings page in AP mode
+        server.on("/api/scan-wifi", HTTP_GET, handleWiFiScan);
+        server.on("/api/memos", HTTP_GET, handleMemosGet);
+        server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleMemosPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+            // Handle chunked upload properly
+            String *bodyPtr = static_cast<String*>(request->_tempObject);
+            if (index == 0) {
+                // First chunk - create new string
+                if (bodyPtr) delete bodyPtr;
+                bodyPtr = new String();
+                request->_tempObject = bodyPtr;
+                bodyPtr->reserve(total); // Reserve space for entire body
+            }
+            
+            // Append this chunk
+            for (size_t i = 0; i < len; i++) {
+                *bodyPtr += (char)data[i];
+            } });
+
+#if ENABLE_LEDS
+        // LED endpoints for AP mode
+        server.on("/api/led-effect", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleLedEffect(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+            // Handle chunked upload properly
+            String *bodyPtr = static_cast<String*>(request->_tempObject);
+            if (index == 0) {
+                // First chunk - create new string
+                if (bodyPtr) delete bodyPtr;
+                bodyPtr = new String();
+                request->_tempObject = bodyPtr;
+                bodyPtr->reserve(total); // Reserve space for entire body
+            }
+            
+            // Append this chunk
+            for (size_t i = 0; i < len; i++) {
+                *bodyPtr += (char)data[i];
+            } });
+        server.on("/api/leds-off", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleLedOff(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+                  {
+            // Handle chunked upload properly
+            String *bodyPtr = static_cast<String*>(request->_tempObject);
+            if (index == 0) {
+                // First chunk - create new string
+                if (bodyPtr) delete bodyPtr;
+                bodyPtr = new String();
+                request->_tempObject = bodyPtr;
+                bodyPtr->reserve(total); // Reserve space for entire body
+            }
+            
+            // Append this chunk
+            for (size_t i = 0; i < len; i++) {
+                *bodyPtr += (char)data[i];
+            } });
+#endif
+
         // Setup static file serving
         setupStaticRoutes();
 

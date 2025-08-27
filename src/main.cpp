@@ -128,7 +128,14 @@ void setup()
   LOG_VERBOSE("BOOT", "Watchdog timer enabled (%ds timeout)", watchdogTimeoutSeconds);
 
   // Initialize timezone with conditional NTP sync (only in STA mode)
-  setupTime();
+  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
+  {
+    setupTime();
+  }
+  else
+  {
+    LOG_VERBOSE("BOOT", "Skipping NTP sync - no internet connection (AP mode)");
+  }
 
   // Record boot time for consistent reporting (after timezone is set)
   deviceBootTime = getISOTimestamp();
