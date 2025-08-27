@@ -21,6 +21,7 @@
             "fallback_ap_ip": "192.168.4.1",
             "status": {
                 "connected": true,
+                "ap_mode": false,
                 "ip_address": "192.168.1.100",
                 "mac_address": "AA:BB:CC:DD:EE:FF",
                 "gateway": "192.168.1.1",

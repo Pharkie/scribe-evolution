@@ -133,6 +133,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // WiFi status information
     JsonObject wifiStatus = wifi.createNestedObject("status");
     wifiStatus["connected"] = (WiFi.status() == WL_CONNECTED);
+    wifiStatus["ap_mode"] = isAPMode(); // Indicate if device is in AP setup mode
     wifiStatus["ip_address"] = WiFi.localIP().toString();
     wifiStatus["mac_address"] = WiFi.macAddress();
     wifiStatus["gateway"] = WiFi.gatewayIP().toString();

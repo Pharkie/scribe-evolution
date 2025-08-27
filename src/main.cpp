@@ -160,8 +160,12 @@ void setup()
   // Print AP details if we're in AP mode (after printer is ready)
   printAPDetailsOnStartup();
 
-  // Initialize hardware buttons
-  initializeHardwareButtons();
+  // Initialize hardware buttons (only in STA mode)
+  if (!isAPMode()) {
+    initializeHardwareButtons();
+  } else {
+    LOG_VERBOSE("BOOT", "Skipping hardware buttons setup (AP mode - configure WiFi first)");
+  }
 
 #if ENABLE_LEDS
   // Initialize LED effects system
@@ -181,8 +185,12 @@ void setup()
   // Setup mDNS
   setupmDNS();
 
-  // Setup MQTT with printer discovery
-  setupMQTTWithDiscovery();
+  // Setup MQTT with printer discovery (only in STA mode)
+  if (!isAPMode()) {
+    setupMQTTWithDiscovery();
+  } else {
+    LOG_VERBOSE("BOOT", "Skipping MQTT setup (AP mode - configure WiFi first)");
+  }
 
   // Setup web server routes
   setupWebServerRoutes(maxCharacters);

@@ -105,11 +105,14 @@ void handleNVSDump(AsyncWebServerRequest *request)
         {"btn4_long_act", "string", "Button 4 long press action", false, 0, 0},
         {"btn4_long_mq", "string", "Button 4 long press MQTT topic", false, 0, 0},
 
+#if ENABLE_LEDS
         // LED Configuration (only when ENABLE_LEDS is defined)
         {NVS_LED_PIN, "int", "LED strip GPIO pin", false, 0, 39},
         {NVS_LED_COUNT, "int", "Number of LEDs", false, 1, 1000},
         {NVS_LED_BRIGHTNESS, "int", "LED brightness", false, 1, 255},
-        {NVS_LED_REFRESH_RATE, "int", "LED refresh rate", false, 10, 120}};
+        {NVS_LED_REFRESH_RATE, "int", "LED refresh rate", false, 10, 120}
+#endif
+    };
 
     const size_t numKeys = sizeof(knownKeys) / sizeof(knownKeys[0]);
 

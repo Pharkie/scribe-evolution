@@ -72,7 +72,11 @@ void validateConfig()
             if (usedGpios[i] == usedGpios[j])
             {
                 Serial.printf("❌ GPIO CONFLICT: GPIO %d is used multiple times!\n", usedGpios[i]);
+#if ENABLE_LEDS
                 Serial.println("  Check button configurations, status LED, and LED strip GPIO assignments");
+#else
+                Serial.println("  Check button configurations and status LED GPIO assignments");
+#endif
                 gpioConflict = true;
                 break;
             }

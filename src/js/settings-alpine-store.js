@@ -270,8 +270,14 @@ function initializeSettingsStore() {
             }
         },
         
-        // Computed property for section definitions (dynamic based on LED support)
+        // Computed property for section definitions (dynamic based on LED support and AP mode)
         get sections() {
+            // In AP mode, only show Device section for basic WiFi configuration
+            if (this.config?.device?.wifi?.status?.ap_mode) {
+                return [{ id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' }];
+            }
+            
+            // Normal mode - show all sections
             const baseSections = [
                 { id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' },
                 { id: 'memos', name: 'Memos', icon: 'pencil', color: 'pink' },
