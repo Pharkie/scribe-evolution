@@ -270,15 +270,23 @@ function initializeSettingsStore() {
             }
         },
         
-        // Section definitions for navigation
-        sections: [
-            { id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' },
-            { id: 'memos', name: 'Memos', icon: 'pencil', color: 'pink' },
-            { id: 'mqtt', name: 'MQTT', icon: 'signal', color: 'yellow' },
-            { id: 'unbidden', name: 'Unbidden Ink', icon: 'sparkles', color: 'green' },
-            { id: 'buttons', name: 'Buttons', icon: 'arrowDownCircle', color: 'teal' },
-            { id: 'leds', name: 'LEDs', icon: 'lightBulb', color: 'purple' }
-        ],
+        // Computed property for section definitions (dynamic based on LED support)
+        get sections() {
+            const baseSections = [
+                { id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' },
+                { id: 'memos', name: 'Memos', icon: 'pencil', color: 'pink' },
+                { id: 'mqtt', name: 'MQTT', icon: 'signal', color: 'yellow' },
+                { id: 'unbidden', name: 'Unbidden Ink', icon: 'sparkles', color: 'green' },
+                { id: 'buttons', name: 'Buttons', icon: 'arrowDownCircle', color: 'teal' }
+            ];
+            
+            // Only add LEDs section if LED support is compiled in
+            if (this.config?.leds?.enabled) {
+                baseSections.push({ id: 'leds', name: 'LEDs', icon: 'lightBulb', color: 'purple' });
+            }
+            
+            return baseSections;
+        },
         
         // Computed properties for complex UI states
         get apPrintButtonText() {

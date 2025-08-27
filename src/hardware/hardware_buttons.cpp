@@ -14,7 +14,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 #include "../leds/LedEffects.h"
 extern LedEffects ledEffects;
 #endif
@@ -292,7 +292,7 @@ bool isButtonRateLimited(int buttonIndex, unsigned long currentTime)
 
 void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
 {
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     // Get runtime configuration to access configured LED effects (avoid repeated calls)
     const RuntimeConfig &config = getRuntimeConfig();
 
@@ -522,8 +522,10 @@ void buttonActionTask(void *parameter)
                 // Publish to MQTT (do NOT print locally)
                 if (mqttClient.publish(params->mqttTopic.c_str(), payload.c_str()))
                 {
+                    const RuntimeConfig &config = getRuntimeConfig();
+                    int gpio = config.buttonGpios[params->buttonIndex];
                     LOG_NOTICE("BUTTONS", "Button %d (GPIO%d) sent %s via MQTT to: %s", 
-                              params->buttonIndex + 1, params->gpio, params->actionType.c_str(), params->mqttTopic.c_str());
+                              params->buttonIndex + 1, gpio, params->actionType.c_str(), params->mqttTopic.c_str());
                 }
                 else
                 {

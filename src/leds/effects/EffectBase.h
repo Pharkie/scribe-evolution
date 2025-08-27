@@ -12,7 +12,7 @@
 
 #include "../../core/config.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 #include <Arduino.h>
 #include <FastLED.h>

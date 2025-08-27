@@ -9,7 +9,7 @@
 
 #include "ChaseSingle.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 #include "../../core/logging.h"
 #include "../../core/config.h"

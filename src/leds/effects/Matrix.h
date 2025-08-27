@@ -12,7 +12,7 @@
 
 #include "EffectBase.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 /**
  * @brief Matrix-style falling code effect

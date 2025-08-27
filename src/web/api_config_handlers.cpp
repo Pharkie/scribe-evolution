@@ -250,6 +250,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
 #if ENABLE_LEDS
     // LEDs configuration - top-level section matching settings.html
     JsonObject leds = configDoc.createNestedObject("leds");
+    leds["enabled"] = true;  // LED support is compiled in
     leds["pin"] = config.ledPin;
     leds["count"] = config.ledCount;
     leds["brightness"] = config.ledBrightness;
@@ -307,6 +308,10 @@ void handleConfigGet(AsyncWebServerRequest *request)
     rainbow["cycles"] = 3;
     JsonArray rainbowColors = rainbow.createNestedArray("colors");
     rainbowColors.add("#ff0000"); // Rainbow doesn't use colors but needs array
+#else
+    // LEDs disabled at compile time - provide minimal config to inform frontend
+    JsonObject leds = configDoc.createNestedObject("leds");
+    leds["enabled"] = false;  // LED support is NOT compiled in
 #endif
 
     // GPIO information for frontend validation

@@ -186,3 +186,4 @@ The project uses a two-layer configuration architecture:
 - Check JSON document buffer sizes for large responses
 
 This codebase emphasizes modularity, safety, and maintainability. Follow the established patterns and always prioritize the user experience through clear error handling and consistent interfaces.
+- Adhere to the principle of failing fast

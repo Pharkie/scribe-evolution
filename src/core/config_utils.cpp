@@ -133,7 +133,7 @@ void logGPIOUsageSummary()
                   statusLEDPin, getGPIODescription(statusLEDPin));
 
 // LED Strip GPIO (if LEDs enabled)
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
     Serial.printf("  LED Strip:\n    GPIO %d: LED Strip - %s\n",
                   config.ledPin, getGPIODescription(config.ledPin));
 #endif

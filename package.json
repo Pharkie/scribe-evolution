@@ -32,7 +32,11 @@
         "watch-js-diagnostics": "npx terser src/js/diagnostics-alpine-store.js src/js/diagnostics-api.js --output data/js/page-diagnostics.min.js --watch",
         "watch-js-404": "npx terser src/js/404-alpine-store.js --output data/js/page-404.min.js --watch",
         "watch": "npm run watch-css & npm run watch-js",
-        "clean": "rm -rf data/css/*.min.css data/js/*.min.js"
+        "clean": "rm -rf data/css/*.min.css data/js/*.min.js",
+        "firmware": "python3 scripts/build_firmware_release.py",
+        "firmware:recover": "python3 scripts/build_firmware_release.py --recover",
+        "firmware:esp32c3": "pio run -e esp32c3",
+        "firmware:lolin32lite": "pio run -e lolin32lite"
     },
     "dependencies": {
         "@tailwindcss/cli": "^4.1.12",

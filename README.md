@@ -49,31 +49,49 @@ It has pressable buttons to save your favourite actions for quick access, and li
 
 ## Quick Start
 
-### 1. Hardware Setup
+### 🚀 **Ready to Print? Start Here!**
+
+**👉 [Quick Start Guide - Flash Pre-built Firmware →](docs/quick-start.md)**
+
+Get your Scribe printer running in minutes with pre-built firmware. No development environment needed!
+
+---
+
+### 🛠️ **Developer Setup**
+
+Building from source? Follow these steps:
+
+#### 1. Hardware Setup
 Build your Scribe Evolution printer following the [Hardware Guide](docs/hardware.md). You'll need:
 - ESP32-C3 development board
 - CSN-A4L thermal printer  
 - 3D printed enclosure ([download files](https://makerworld.com/en/models/1577165-project-scribe))
 - 5V power supply (2.4A+ recommended)
 
-### 2. Software Configuration
+#### 2. Software Configuration
 ```bash
 # Create your configuration file
-cp src/config.h.example src/config.h
+cp src/core/config.h.example src/core/config.h
 
-# Edit src/config.h with your settings:
+# Edit src/core/config.h with your settings:
 # - WiFi credentials
-# - MQTT broker (optional)
+# - MQTT broker (optional)  
 # - Timezone preferences
 ```
 
-### 3. Build and Deploy
+#### 3. Build and Deploy
 ```bash
 # Install dependencies
 npm install
 
-# Build and upload everything
-pio run --target upload_all
+# Build frontend assets and upload everything
+npm run build && pio run --target upload -e main && pio run --target uploadfs -e main
+```
+
+#### 4. Build Firmware for Distribution
+```bash
+# Build clean firmware releases for both board types
+npm run firmware
 ```
 
 ### 4. Access Your Printer

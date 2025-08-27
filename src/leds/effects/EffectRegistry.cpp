@@ -9,7 +9,7 @@
 
 #include "EffectRegistry.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 #include "../../core/logging.h"
 

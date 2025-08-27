@@ -9,7 +9,7 @@
 
 #include "TwinkleStars.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 #include "../../core/led_config.h"
 

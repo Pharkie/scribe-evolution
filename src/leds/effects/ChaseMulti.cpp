@@ -10,7 +10,7 @@
 
 #include "ChaseMulti.h"
 
-#ifdef ENABLE_LEDS
+#if ENABLE_LEDS
 
 #include "../../core/logging.h"
 #include "../../utils/color_utils.h"
