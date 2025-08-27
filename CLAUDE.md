@@ -20,22 +20,22 @@ npm install
 npm run build
 
 # Build and upload everything to ESP32
-pio run --target upload -e main && pio run --target uploadfs -e main
+pio run --target upload -e esp32c3-dev && pio run --target uploadfs -e esp32c3-dev
 
 # Development: watch for frontend changes
 npm run watch
 
 # Run tests
-pio test -e test
+pio test -e esp32c3-test
 
 # Run single test file  
-pio test -e test -f test_config_validation
+pio test -e esp32c3-test -f test_config_validation
 
 # Build firmware only (no upload)
-pio run -e main
+pio run -e esp32c3-dev
 
 # Upload firmware only
-pio run --target upload_main -e main
+pio run --target upload_main -e esp32c3-dev
 
 # Monitor serial output
 pio device monitor
