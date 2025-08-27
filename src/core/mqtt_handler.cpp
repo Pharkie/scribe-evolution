@@ -175,24 +175,27 @@ void handleMQTTMessage(String topic, String message)
         }
 
         // Add "from {sender}" to message headers if sender identified
-        if (senderName.length() > 0)
+        // Note: Check if message already has "from" to avoid duplicates
+        if (senderName.length() > 0 && printMessage.indexOf(" from ") == -1)
         {
-            // Check if message already has "from" to avoid duplicates
-            if (printMessage.indexOf(" from ") == -1)
+            // Find the header end (first newline or end of string)
+            int headerEnd = printMessage.indexOf('\n');
+            if (headerEnd == -1) headerEnd = printMessage.length();
+            
+            // Insert " from {sender}" before the newline or at the end
+            String modifiedMessage = printMessage.substring(0, headerEnd) + 
+                                   " from " + senderName;
+            if (headerEnd < printMessage.length())
             {
-                // Find the header end (first newline or end of string)
-                int headerEnd = printMessage.indexOf('\n');
-                if (headerEnd == -1) headerEnd = printMessage.length();
-                
-                // Insert " from {sender}" before the newline or at the end
-                String modifiedMessage = printMessage.substring(0, headerEnd) + 
-                                       " from " + senderName;
-                if (headerEnd < printMessage.length())
-                {
-                    modifiedMessage += printMessage.substring(headerEnd);
-                }
-                printMessage = modifiedMessage;
+                modifiedMessage += printMessage.substring(headerEnd);
             }
+            printMessage = modifiedMessage;
+            
+            LOG_VERBOSE("MQTT", "Added sender to header: %s", senderName.c_str());
+        }
+        else if (senderName.length() > 0)
+        {
+            LOG_VERBOSE("MQTT", "Sender header already present in message, skipping duplicate");
         }
 
         // Print immediately using the existing printWithHeader function

@@ -47,7 +47,7 @@ struct ButtonActionParams
 
 // Forward declarations
 void buttonActionTask(void *parameter);
-bool executeButtonActionDirect(const char *actionType);
+bool executeButtonActionDirect(const char *actionType, bool shouldSetPrintFlag = true);
 bool createButtonActionTask(int buttonIndex, bool isLongPress);
 
 // ========================================
@@ -507,21 +507,14 @@ void buttonActionTask(void *parameter)
         // MQTT path: generate content and send via MQTT only
         if (params->actionType.length() > 0)
         {
-            // Execute content action directly with timeout
-            bool success = executeButtonActionDirect(params->actionType.c_str());
+            // Execute content action for MQTT (don't set print flag)
+            bool success = executeButtonActionDirect(params->actionType.c_str(), false);
 
             if (success && mqttClient.connected())
             {
-                // Create MQTT payload with sender information
+                // Create MQTT payload (sender already included in message header)
                 DynamicJsonDocument payloadDoc(4096);
                 payloadDoc["message"] = currentMessage.message;
-                
-                // Add sender information (device owner)
-                const RuntimeConfig &config = getRuntimeConfig();
-                if (config.deviceOwner.length() > 0)
-                {
-                    payloadDoc["sender"] = config.deviceOwner;
-                }
                 
                 String payload;
                 serializeJson(payloadDoc, payload);
@@ -530,8 +523,6 @@ void buttonActionTask(void *parameter)
                 if (mqttClient.publish(params->mqttTopic.c_str(), payload.c_str()))
                 {
                     LOG_NOTICE("BUTTONS", "Button action sent ONLY via MQTT to topic: %s", params->mqttTopic.c_str());
-                    // Clear local printing flag since we sent via MQTT
-                    currentMessage.shouldPrintLocally = false;
                 }
                 else
                 {
@@ -581,7 +572,7 @@ void buttonActionTask(void *parameter)
 /**
  * @brief Direct execution of button actions without HTTP layer
  */
-bool executeButtonActionDirect(const char *actionType)
+bool executeButtonActionDirect(const char *actionType, bool shouldSetPrintFlag)
 {
     if (!actionType || strlen(actionType) == 0)
     {
@@ -589,25 +580,32 @@ bool executeButtonActionDirect(const char *actionType)
         return false;
     }
 
-    LOG_VERBOSE("BUTTONS", "Executing button action directly: %s", actionType);
+    LOG_VERBOSE("BUTTONS", "Executing button action directly: %s (print flag: %s)", 
+                actionType, shouldSetPrintFlag ? "true" : "false");
 
     String actionString = String(actionType);
     
     // Convert action type string to ContentActionType enum using utility function
     ContentActionType contentAction = stringToActionType(actionString);
 
+    // Get sender information for content generation
+    const RuntimeConfig &config = getRuntimeConfig();
+    String senderName = (shouldSetPrintFlag == false && config.deviceOwner.length() > 0) ? 
+                        config.deviceOwner : "";
+    
     // Execute content action directly with button-specific timeout
     ContentActionResult result = executeContentActionWithTimeout(
-        contentAction, "", "", BUTTON_ACTION_TIMEOUT_MS);
+        contentAction, "", senderName, BUTTON_ACTION_TIMEOUT_MS);
 
     if (result.success && result.content.length() > 0)
     {
-        // Queue content for printing (this sets currentMessage)
+        // Set currentMessage content and timestamp
         currentMessage.message = result.content;
         currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = true;
+        currentMessage.shouldPrintLocally = shouldSetPrintFlag;
 
-        LOG_VERBOSE("BUTTONS", "Content queued for printing (%d chars)", result.content.length());
+        LOG_VERBOSE("BUTTONS", "Content generated (%d chars), shouldPrintLocally = %s", 
+                    result.content.length(), shouldSetPrintFlag ? "true" : "false");
         return true;
     }
     else
