@@ -120,8 +120,15 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     // WiFi configuration - nested under device to match settings structure
     JsonObject wifi = device.createNestedObject("wifi");
-    wifi["ssid"] = config.wifiSSID;
-    wifi["password"] = maskSecret(config.wifiPassword);
+    
+    // In AP mode, encourage fresh setup by showing generic placeholders
+    if (isAPMode()) {
+        wifi["ssid"] = "AP_MODE";
+        wifi["password"] = ""; // Blank to encourage manual entry
+    } else {
+        wifi["ssid"] = config.wifiSSID;
+        wifi["password"] = maskSecret(config.wifiPassword);
+    }
     wifi["connect_timeout"] = config.wifiConnectTimeoutMs;
 
     // Include fallback AP details for client use - always available regardless of current mode

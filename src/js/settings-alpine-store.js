@@ -273,7 +273,7 @@ function initializeSettingsStore() {
         // Computed property for section definitions (dynamic based on LED support and AP mode)
         get sections() {
             // In AP mode, only show Device section for basic WiFi configuration
-            if (this.config?.device?.wifi?.status?.ap_mode) {
+            if (this.config?.device?.wifi?.status?.ap_mode === true) {
                 return [{ id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' }];
             }
             
