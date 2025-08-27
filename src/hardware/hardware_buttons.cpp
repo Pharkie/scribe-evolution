@@ -522,7 +522,8 @@ void buttonActionTask(void *parameter)
                 // Publish to MQTT (do NOT print locally)
                 if (mqttClient.publish(params->mqttTopic.c_str(), payload.c_str()))
                 {
-                    LOG_NOTICE("BUTTONS", "Button action sent ONLY via MQTT to topic: %s", params->mqttTopic.c_str());
+                    LOG_NOTICE("BUTTONS", "Button %d (GPIO%d) sent %s via MQTT to: %s", 
+                              params->buttonIndex + 1, params->gpio, params->actionType.c_str(), params->mqttTopic.c_str());
                 }
                 else
                 {
