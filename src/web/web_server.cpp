@@ -56,24 +56,44 @@ Message currentMessage = {"", "", false};
  * @brief Captive portal handler that redirects all non-setup requests to setup.html
  * Used when in AP fallback mode to force configuration
  */
+// Simple rate limiter for captive portal (AP mode only)
+static unsigned long lastCaptivePortalRequest = 0;
+static const unsigned long CAPTIVE_PORTAL_MIN_INTERVAL_MS = 100; // Max 10 requests per second
+
 void handleCaptivePortal(AsyncWebServerRequest *request)
 {
     String uri = request->url();
 
-    // Allow essential requests to proceed normally
+    // Rate limit ALL requests except static assets
+    bool isStaticAsset = (uri.startsWith("/css/") ||
+                         uri.startsWith("/js/") ||
+                         uri.startsWith("/images/") ||
+                         uri == "/favicon.ico" ||
+                         uri == "/favicon.svg" ||
+                         uri == "/favicon-96x96.png" ||
+                         uri == "/apple-touch-icon.png" ||
+                         uri == "/site.webmanifest");
+
+    if (!isStaticAsset)
+    {
+        // Rate limit all non-static requests to prevent system overload
+        unsigned long now = millis();
+        if (now - lastCaptivePortalRequest < CAPTIVE_PORTAL_MIN_INTERVAL_MS)
+        {
+            // Too many requests - send minimal response
+            request->send(429, "text/plain", "Rate limited");
+            return;
+        }
+        lastCaptivePortalRequest = now;
+    }
+
+    // Allow setup-related requests to proceed normally (but rate-limited)
     if (uri == "/setup.html" ||
         uri == "/api/setup" ||
         uri == "/api/wifi-scan" ||
-        uri.startsWith("/css/") ||
-        uri.startsWith("/js/") ||
-        uri.startsWith("/images/") ||
-        uri == "/favicon.ico" ||
-        uri == "/favicon.svg" ||
-        uri == "/favicon-96x96.png" ||
-        uri == "/apple-touch-icon.png" ||
-        uri == "/site.webmanifest")
+        isStaticAsset)
     {
-        return; // Let these proceed normally
+        return; // Let these proceed to their handlers
     }
 
     // Redirect everything else to setup page

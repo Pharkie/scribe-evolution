@@ -128,7 +128,7 @@ bool saveNVSConfig(const RuntimeConfig &config);
 bool checkAndMigrateNVSSchema();
 
 /**
- * @brief Update the global runtime configuration
+ * @brief Update the global runtime configuration and save to NVS
  * @param config New configuration to set
  */
 void setRuntimeConfig(const RuntimeConfig &config);

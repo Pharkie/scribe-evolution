@@ -850,16 +850,16 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.ledEffects = getDefaultLedEffectsConfig(); // TODO: Parse effects from JSON
 #endif
 
-    // Save configuration to NVS
+    // Update global runtime configuration
+    setRuntimeConfig(newConfig);
+    
+    // Save to NVS for persistence
     if (!saveNVSConfig(newConfig))
     {
         LOG_ERROR("WEB", "Failed to save configuration to NVS");
-        sendErrorResponse(request, 500, "Failed to save configuration to NVS");
+        sendErrorResponse(request, 500, "Failed to save configuration");
         return;
     }
-
-    // Update global runtime configuration
-    setRuntimeConfig(newConfig);
 
     // Update MQTT subscription to new device owner topic
     updateMQTTSubscription();
@@ -1079,6 +1079,14 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
     // Save the updated configuration
     setRuntimeConfig(newConfig);
+    
+    // Save to NVS for persistence
+    if (!saveNVSConfig(newConfig))
+    {
+        LOG_ERROR("WEB", "Failed to save setup configuration to NVS");
+        sendErrorResponse(request, 500, "Failed to save configuration");
+        return;
+    }
 
     LOG_NOTICE("WEB", "Setup configuration saved successfully");
     
