@@ -2,262 +2,121 @@
 
 **Goal:** Modernize and modularize the settings system without breaking functionality.
 
-**Current State:**
-- 1704-line monolithic `settings-alpine-store.js` 
-- HTML partials system working well
-- ✅ **esbuild-based build system fast and optimized**
-- All functionality working (known-good state)
+**Architecture:**
+- Bundling constraints require internal code organization (not external modules)
+- Alpine.js patterns with proper stores and reactivity
+- Page separation with code duplication until Phase 4 bundling improvements
+- Incremental approach with continuous testing
 
 ## Phase 1: Build System Modernization ⚡ ✅ COMPLETED
 
-### Step 1.1: Install and Configure esbuild ✅
-- [x] Install esbuild as dev dependency
-- [x] Create `esbuild.config.js` with proper bundling (not just concat)
-- [x] Test esbuild builds - **IMPROVED** output sizes with tree-shaking  
-- [x] Verify all pages work with proper module bundling
-- [x] Confirm Alpine.js functionality preserved
-
-**Results:**
-- Build time: <0.9 seconds (vs ~3+ seconds with terser)
-- page-settings.min.js: 66,723 bytes (properly bundled vs 34,872 concat)
-- All Alpine.js stores working perfectly
-- Proper tree-shaking and optimization active
-- Mock-server verified working
-
-### Step 1.2: Migrate Build Scripts ✅ COMPLETED
-- [x] Replace all terser commands with esbuild equivalents in package.json
-- [x] Update npm scripts: `build`, `build-js-*`, `watch`, etc.  
-- [x] Test parallel builds and watch mode - **WORKING**
-- [x] Verify build performance improvements - **3x faster builds**
-- [x] Test mock-server compatibility - **VERIFIED**
-- [x] Remove terser dependency ✅
-
-### Step 1.3: Build System Polish ✅ COMPLETED  
-- [x] Fix file naming convention: dev builds use `.js`, production builds use `.min.js`
-- [x] Rename vendor.min.js → alpine.min.js for clarity
-- [x] Configure mock-server to map `.min.js` requests to readable `.js` files for debugging
-- [x] Update all HTML templates to reference alpine.min.js
-- [x] Verify both dev and prod builds work correctly
-
-**Final Results:** 
-- Build system fully modernized and polished
-- Clear dev/prod distinction with proper file naming
-- Enhanced debugging experience via mock-server mapping
-- 3x faster builds with better optimization than terser
-- All functionality preserved and verified
-
-**Status:** Phase 1 100% complete, ready for Phase 2
+- [x] Replace terser with esbuild for 3x faster builds
+- [x] Configure proper bundling with tree-shaking and optimization
+- [x] Implement dev/prod file naming: `.js` dev, `.min.js` prod
+- [x] Rename vendor → alpine for clarity
+- [x] Add mock-server debugging support with file mapping
+- [x] Remove terser dependency
 
 ---
 
-## Phase 2: Foundation Extraction 🏗️
-*Prepare for page separation by extracting reusable components*
+## Phase 2: Internal Organization 🏗️
+*Organize code within existing files, prepare for page separation*
 
-### Step 2.0: Separate WiFi Section in Current Settings ✅ COMPLETED
-- [x] Split Device section in current `settings.html` into:
-  - **Device section** - Owner, timezone, GPIO pins (6 dropdowns), basic device config
-  - **WiFi section** - SSID, password, connection timeout, and WiFi status display  
-- [x] Update current Alpine store to handle separated sections
-- [x] Test that both sections work in current monolithic settings page
-- [x] **Build frontend:** `npm run build-js-settings` - update dev JS for mock server
-- [x] **Test with mock server:** `node mock-server/mock-api.js` - verify WiFi section appears and functions
-- [x] **Git commit:** "Separate WiFi into distinct section in current settings"
+### Step 2.0: Section Separation ✅ COMPLETED
+- [x] Split Device/WiFi sections in current settings
+- [x] Create separate `wifi.html` and `device.html` partials
+- [x] Update Alpine store for separated sections
+- [x] Verify both sections work in monolithic page
 
-**Results:**
-- Created separate `wifi.html` partial with all WiFi functionality
-- Updated `device.html` to focus on device-specific content only
-- Added WiFi section to settings navigation (Device | **WiFi** | Memos | MQTT | etc.)
-- Both sections working independently in current monolithic settings page
-- Mock server serves WiFi partial correctly
-- **Status:** ✅ Complete, ready for Step 2.1
+### Step 2.1: Utils Structure ✅ COMPLETED  
+- [x] Create `src/js/settings/utils/` directory
+- [x] Basic file structure for future use
 
-### Step 2.1: Create Utils Directory Structure (MINIMAL)
-- [ ] Create `src/js/settings/utils/` directory
-- [ ] Create empty `http-utils.js` file with basic structure
-- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
+### Step 2.2: Internal Utilities ✅ COMPLETED
+- [x] Extract `showErrorMessage` utility within main store
+- [x] Verify internal function extraction works
 
-### Step 2.2: Extract ONE HTTP Utility Function
-- [ ] **CRITICAL:** Start with simplest function first
-- [ ] Extract ONE common HTTP pattern from existing store (e.g., error handling)
-- [ ] Move to `utils/http-utils.js` and import in main store
-- [ ] Test that existing functionality still works exactly the same
-- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
-- [ ] **STOP:** Verify this ONE function works 100% before proceeding
-
-### Step 2.3: Extract ONE API Function  
-- [ ] **CRITICAL:** Choose simplest API call (probably device config load/save)
-- [ ] Create `settings-device-api.js` with ONE function only
-- [ ] Update main store to import and use this ONE function
-- [ ] Test that device section still works exactly the same
-- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify) 
-- [ ] **STOP:** Verify this ONE API function works 100% before proceeding
-
-### Step 2.4: Gradually Extract More Functions (ITERATIVE)
-- [ ] **ONE function at a time:** Extract next simplest API function
-- [ ] **Test after each:** Verify existing functionality unchanged
-- [ ] **Repeat until:** All critical functions extracted safely
-- [ ] **Apply Standard Testing Workflow** ⬆️ after each function extraction
-
-### Step 2.5: Create ONE Test Section Page  
-- [ ] **CRITICAL:** Start with Device section (simplest, most fundamental)
-- [ ] Create `device.html` with navigation back to main settings
-- [ ] Create focused `page-device.js` Alpine store with:
-  - **State only** (config, loading, error states)
-  - **UI logic only** (computed properties, form handlers)
-  - **Import and use** extracted API modules from 2.1
-  - **PURE ALPINE PATTERNS** - No script tags, no hacks, proper stores/reactivity
-- [ ] Alpine store calls API functions but handles **no HTTP directly**
-- [ ] Test EVERYTHING: save, load, validation, navigation, error handling
-- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
-- [ ] **STOP:** Verify this ONE page works 100% before proceeding
-
-**Expected Outcome:** Proof of concept for page separation architecture
-**Safety:** Main settings.html remains fully functional
+### Step 2.3: Organize API Functions 
+- [ ] Group device API functions within main store
+- [ ] Organize by concern: device, WiFi, MQTT, LEDs, memos, etc.
+- [ ] Test each group after organization
 
 ---
 
 ## Phase 3: Complete Page Architecture 📄
-*Only proceed if Phase 2.3 test page works perfectly*
+*Create individual pages for each settings section*
 
-### Standard Section Page Pattern 📋
-**Each section follows this template:**
-1. Create `[section].html` + `page-[section].js` (Alpine store + imports API modules)
-2. Alpine store: **state + UI logic only**, **no direct HTTP calls**
-3. Test section page thoroughly: [section-specific functionality]
-4. **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
-5. **STOP:** Verify section page works 100% before proceeding
+### Step 3.1: Create Test Page (Device)
+- [ ] Create standalone `device.html` page with navigation
+- [ ] Create focused `page-device.js` Alpine store
+- [ ] Copy organized functions from main store (code duplication)
+- [ ] Test complete device functionality
+- [ ] Verify proof of concept for page separation
 
-### Step 3.1: WiFi Section Page
-- [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** Network scanning, SSID/password, connection timeout, WiFi status
+### Standard Section Pattern
+1. Create `[section].html` + `page-[section].js` (Alpine store with copied functions)
+2. Alpine store: state + UI logic + API functions (code duplication)
+3. Test section page thoroughly
+4. Verify 100% functionality before next page
 
-### Step 3.2: MQTT Section Page  
-- [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** MQTT configuration, connection testing
+### Remaining Section Pages
+- [ ] **WiFi**: Network scanning, SSID/password, connection timeout
+- [ ] **MQTT**: Configuration, connection testing  
+- [ ] **LEDs**: Effects, colors, GPIO validation
+- [ ] **Memos**: Content save/load
+- [ ] **Unbidden Ink**: AI configuration, scheduling
+- [ ] **Buttons**: GPIO configuration, button actions
+- [ ] **System**: Restart, factory reset, NVS operations
 
-### Step 3.3: LEDs Section Page
-- [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** LED effects, colors, GPIO validation
-
-### Step 3.4: Memos Section Page
-- [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** Memo content save/load
-
-### Step 3.5: Unbidden Ink Section Page
-- [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** AI configuration, scheduling
-
-### Step 3.6: Buttons Section Page
-- [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** GPIO configuration, button actions
-
-### Step 3.7: System Section Page
-- [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** Restart, factory reset, NVS operations
-
-### Step 3.8: Add Client-Side Navigation
-- [ ] Create `src/js/shared/navigation.js` - Handle routing between settings pages
-- [ ] Add breadcrumb navigation to all pages
-- [ ] Implement state preservation between page transitions
-- [ ] Add "Overview" main settings page with section links
-- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
-
-### Step 3.9: Remove Monolithic Files (FINAL STEP)
-- [ ] **ONLY after all pages work perfectly:**
-- [ ] Remove old settings-alpine-store.js monolith
-- [ ] Update main settings.html to redirect to overview page
-- [ ] Clean up unused partials if desired
-- [ ] **Apply Standard Testing Workflow** ⬆️ (final production build → test → commit)
+### Navigation & Cleanup
+- [ ] Add client-side navigation between pages
+- [ ] Create overview page with section links
+- [ ] Remove monolithic files after all pages work
+- [ ] Clean up unused partials
 
 ---
 
 ## Phase 4: Build System Optimization 🚀
-*Only proceed after Phase 3 is complete and stable*
+*Resolve bundling constraints and optimize builds*
 
-### Step 4.1: Bundle Optimization per Page
-- [ ] Configure esbuild for code splitting per settings page
-- [ ] Create page-specific CSS bundles (device.css, mqtt.css, etc.)
-- [ ] Optimize shared chunks (common Alpine.js, utilities)
-- [ ] Add build size monitoring and reporting
-- [ ] **Git commit:** "Optimize bundle sizes with page-specific builds"
-
-### Step 4.2: Development Experience Enhancement
-- [ ] Implement hot reload for CSS/JS changes during development
-- [ ] Enhanced source maps for better debugging
-- [ ] Integrate linting with esbuild pipeline
-- [ ] Add bundle analysis tools and size tracking
-- [ ] **Git commit:** "Enhance development experience and tooling"
+- [ ] Fix esbuild multi-entry plugin to support imports
+- [ ] Enable proper module separation with external files  
+- [ ] Configure code splitting per settings page
+- [ ] Create page-specific CSS bundles
+- [ ] Add build size monitoring and hot reload
+- [ ] Eliminate code duplication through proper imports
 
 ---
 
-## Phase 5: Future Refactor Planning 📋
-*Create new refactor plan based on lessons learned from settings*
+## Phase 5: Future Planning 📋
+*Apply lessons to remaining pages*
 
-### Step 5.1: Document Lessons Learned
-- [ ] Analyze what worked well in settings refactor (API separation, Alpine patterns, etc.)
-- [ ] Document anti-patterns to avoid (monolithic stores, mixed concerns)
-- [ ] Create reusable templates for page structure and API patterns
-- [ ] **Git commit:** "Document settings refactor lessons and patterns"
-
-### Step 5.2: Plan Remaining Pages Refactor
-- [ ] Create comprehensive refactor plan for:
-  - **index.html** + current monolithic structure
-  - **diagnostics.html** + diagnostic systems
-  - **404.html** + error handling patterns
-- [ ] Apply lessons learned from settings refactor
-- [ ] Define same safety principles: one step at a time, git commits, Alpine best practices
-- [ ] Plan API extraction patterns for each page type
-- [ ] **Deliverable:** New `REFACTOR_PLAN_PHASE2.md` for remaining pages
+- [ ] Document working patterns from settings refactor
+- [ ] Create new refactor plan for index, diagnostics, 404 pages
+- [ ] Define templates for page structure and API patterns
 
 ---
 
 ## Implementation Strategy 🛠️
 
-### Standard Testing Workflow 🔄
-**Every step follows this pattern:**
-1. **Code changes** - Implement the specific functionality  
-2. **Build frontend** - `npm run build-js-settings` (for settings changes) or `npm run build` (for new pages)
-3. **Test with mock server** - `node mock-server/mock-api.js` - verify changes work correctly
-4. **Git commit** - Clear commit message describing the change
-5. **STOP** - Verify 100% functionality before proceeding to next step
+### Standard Testing Workflow
+1. **Code changes** - Implement functionality
+2. **Build frontend** - `npm run build-js-settings` or `npm run build`
+3. **Test with mock server** - `node mock-server/mock-api.js`
+4. **Git commit** - Clear commit message  
+5. **STOP** - Verify 100% before proceeding
 
-### Safety First Principles:
-1. **One step at a time** - Complete each step fully before proceeding
-2. **Test ONE page thoroughly** - Phase 2.3 creates single test page, verify 100% before continuing
-3. **Keep old code** - Main settings.html stays functional throughout Phase 2 & 3.1
-4. **Git commit between phases** - Clear rollback points at every major step
-5. **Test everything** - Every API endpoint, every form, every validation on each page
-6. **Real hardware validation** - Verify all settings save/load correctly on ESP32
+### Core Principles
+- **One step at a time** - Complete fully before proceeding
+- **Keep old code functional** - Main settings.html works throughout
+- **Alpine.js patterns only** - No hacks, use built-in reactivity
+- **Fail fast** - No fallback values, let Alpine handle missing data
+- **Test everything** - Every endpoint, form, validation
 
-### CRITICAL: Alpine.js Best Practices ONLY ⚡
-7. **ALPINE PATTERNS MUST BE RESPECTED** - No hacks, no script tags in HTML, no fucking about
-8. **NO NON-STANDARD IDEAS** - If it's not Alpine best practice, ASK FIRST
-9. **USE ALPINE PROPERLY** - Built-in reactivity ($watch, x-effect), stores, getters
-10. **NO CUSTOM SOLUTIONS** - Don't create homebrew caching, watching, or reactivity systems
-11. **FAIL FAST PRINCIPLE** - No fallback values or defensive arrays, let Alpine handle missing data
+### Success Criteria
+- All settings functionality identical to current
+- Code more maintainable and modular
+- No regressions in UX
+- ESP32 memory usage unchanged
 
-### Success Criteria:
-- ✅ All settings functionality identical to current
-- ✅ Build times significantly improved  
-- ✅ Code is more maintainable and modular
-- ✅ No regressions in mobile or desktop UX
-- ✅ ESP32 memory usage unchanged or improved
-
-### Rollback Plan:
-- Each phase has a git tag for easy revert
-- Keep `settings-alpine-store.js` backup until Phase 2 complete
-- Build scripts can fall back to terser if needed
-
----
-
-## Why This Plan Works ✅
-
-1. **Incremental:** Each step adds value without breaking current functionality
-2. **Testable:** Easy to verify each change works before proceeding  
-3. **Reversible:** Clear rollback points if anything goes wrong
-4. **Focused:** Each phase has a single concern (build, JS, HTML, optimization)
-5. **Proven:** Based on failed attempt analysis - avoids previous pitfalls
-
-**Next Step:** Phase 2.1 - Create Utils Directory Structure (minimal, safe start to API extraction)
-
-**Future Vision:** After completing settings refactor (Phases 1-4), Phase 5 will create a new comprehensive refactor plan for index, diagnostics, and 404 pages based on lessons learned and proven patterns.
+**Next Step:** Phase 2.3 - Organize API Functions

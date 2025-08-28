@@ -10,7 +10,13 @@
  */
 function initializeSettingsStore() {
     const store = {
-                // Core state management
+        // Simple utility function extracted from repeated showMessage patterns
+        // Step 2.2: Extract ONE HTTP utility pattern (internal function)
+        showErrorMessage(message) {
+            window.showMessage(message, 'error');
+        },
+
+        // Core state management
         loading: true,
         error: null,
         saving: false,
@@ -493,7 +499,7 @@ function initializeSettingsStore() {
             } catch (error) {
                 console.error('WiFi scan failed:', error);
                 this.wifiScan.error = error.message;
-                window.showMessage(`WiFi scan failed: ${error.message}`, 'error');
+                this.showErrorMessage(`WiFi scan failed: ${error.message}`);
             } finally {
                 this.wifiScan.isScanning = false;
             }
