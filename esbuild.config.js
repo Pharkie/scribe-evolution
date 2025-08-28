@@ -2,41 +2,92 @@ const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
 
-// Simple file concatenation and minification (like terser does)
-async function concatAndMinify(inputFiles, outputFile, minify = false) {
-  console.log(`Processing: ${inputFiles.join(', ')} -> ${outputFile}`);
-  
-  // Read and concatenate all input files
-  let content = '';
-  for (const file of inputFiles) {
-    if (fs.existsSync(file)) {
-      content += fs.readFileSync(file, 'utf8') + '\n';
-    } else {
-      console.warn(`Warning: File not found: ${file}`);
-    }
+// esbuild plugins for proper bundling
+const multiEntryPlugin = {
+  name: 'multi-entry',
+  setup(build) {
+    build.onResolve({ filter: /^multi-entry:/ }, (args) => {
+      const files = args.path.replace('multi-entry:', '').split(',');
+      return {
+        path: args.path,
+        namespace: 'multi-entry',
+        pluginData: { files }
+      };
+    });
+
+    build.onLoad({ filter: /.*/, namespace: 'multi-entry' }, (args) => {
+      const files = args.pluginData.files;
+      const contents = files.map((file, index) => {
+        const filePath = file.trim();
+        // Check if file exists and read it directly
+        if (fs.existsSync(filePath)) {
+          return fs.readFileSync(filePath, 'utf8');
+        } else {
+          console.warn(`Warning: File not found: ${filePath}`);
+          return `// File not found: ${filePath}`;
+        }
+      }).join('\n\n');
+      
+      return {
+        contents,
+        loader: 'js'
+      };
+    });
   }
+};
+
+// Enhanced bundling function
+async function buildWithEsbuild(config) {
+  const { input, output, minify = false } = config;
   
-  // Use esbuild to process the concatenated content
-  const result = await esbuild.transform(content, {
-    minify: minify,
-    target: 'es2017',
-    format: 'iife',
-    sourcemap: false,
-  });
+  console.log(`🚀 Bundling: ${input.join(', ')} -> ${output}`);
   
-  // Write output
-  fs.writeFileSync(outputFile, result.code);
-  
-  const stats = fs.statSync(outputFile);
-  console.log(`✅ ${outputFile} (${stats.size} bytes)`);
+  try {
+    let entryPoint;
+    if (input.length === 1) {
+      entryPoint = input[0];
+    } else {
+      // Use virtual multi-entry for multiple files
+      entryPoint = `multi-entry:${input.join(',')}`;
+    }
+    
+    const result = await esbuild.build({
+      entryPoints: [entryPoint],
+      bundle: true,
+      minify: minify,
+      treeShaking: true,
+      target: 'es2017',
+      format: 'iife',
+      platform: 'browser',
+      outfile: output,
+      sourcemap: false,
+      plugins: input.length > 1 ? [multiEntryPlugin] : [],
+      // Optimize for browser
+      legalComments: 'none',
+      // Don't bundle external dependencies (Alpine.js etc)
+      external: [], // We'll handle Alpine separately
+      // Better minification
+      keepNames: false,
+      write: true,
+      logLevel: 'silent'
+    });
+    
+    const stats = fs.statSync(output);
+    console.log(`✅ ${output} (${stats.size} bytes)`);
+    
+    return result;
+  } catch (error) {
+    console.error(`❌ Failed to bundle ${output}:`, error.message);
+    throw error;
+  }
 }
 
 // Build configurations matching current package.json structure
 const buildConfigs = {
-  // Vendor bundle (Alpine.js) - just copy the file
-  vendor: {
+  // Alpine.js library - just copy the file
+  alpine: {
     input: ['node_modules/alpinejs/dist/cdn.min.js'],
-    output: 'data/js/vendor.min.js',
+    output: 'data/js/alpine.min.js',
     minify: false, // Already minified
   },
 
@@ -47,7 +98,7 @@ const buildConfigs = {
       'src/js/icons.js', 
       'src/js/app-common.js'
     ],
-    output: 'data/js/app-common.min.js',
+    output: 'data/js/app-common.js',
     minify: false,
   },
 
@@ -67,7 +118,7 @@ const buildConfigs = {
       'src/js/index-alpine-store.js',
       'src/js/index-api.js'
     ],
-    output: 'data/js/page-index.min.js',
+    output: 'data/js/page-index.js',
     minify: false,
   },
 
@@ -85,7 +136,7 @@ const buildConfigs = {
       'src/js/settings-alpine-store.js',
       'src/js/settings-api.js'
     ],
-    output: 'data/js/page-settings.min.js',
+    output: 'data/js/page-settings.js',
     minify: false,
   },
 
@@ -103,7 +154,7 @@ const buildConfigs = {
       'src/js/diagnostics-alpine-store.js',
       'src/js/diagnostics-api.js'
     ],
-    output: 'data/js/page-diagnostics.min.js',
+    output: 'data/js/page-diagnostics.js',
     minify: false,
   },
 
@@ -121,7 +172,7 @@ const buildConfigs = {
       'src/js/setup-alpine-store.js',
       'src/js/setup-api.js'
     ],
-    output: 'data/js/page-setup.min.js',
+    output: 'data/js/page-setup.js',
     minify: false,
   },
 
@@ -136,7 +187,7 @@ const buildConfigs = {
 
   '404': {
     input: ['src/js/404-alpine-store.js'],
-    output: 'data/js/page-404.min.js',
+    output: 'data/js/page-404.js',
     minify: false,
   },
 
@@ -157,7 +208,22 @@ async function build(configName) {
 
   try {
     console.log(`Building ${configName}...`);
-    await concatAndMinify(config.input, config.output, config.minify);
+    
+    // Special handling for Alpine.js bundle - just copy
+    if (configName === 'alpine') {
+      const sourceFile = config.input[0];
+      const targetFile = config.output;
+      
+      if (fs.existsSync(sourceFile)) {
+        fs.copyFileSync(sourceFile, targetFile);
+        const stats = fs.statSync(targetFile);
+        console.log(`✅ ${targetFile} (${stats.size} bytes) - copied`);
+      } else {
+        throw new Error(`Alpine.js file not found: ${sourceFile}`);
+      }
+    } else {
+      await buildWithEsbuild(config);
+    }
   } catch (error) {
     console.error(`❌ Error building ${configName}:`, error);
     process.exit(1);
@@ -167,7 +233,7 @@ async function build(configName) {
 async function buildAll(production = false) {
   const suffix = production ? 'Prod' : '';
   const configs = [
-    'vendor',
+    'alpine',
     `common${suffix}`,
     `index${suffix}`,
     `settings${suffix}`,

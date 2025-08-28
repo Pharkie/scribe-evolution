@@ -584,7 +584,21 @@ function createRequestHandler() {
                  pathname.startsWith('/js/') || 
                  pathname.startsWith('/images/') ||
                  pathname.startsWith('/favicon/')) {
-        filePath = path.join(__dirname, '..', 'data', pathname.substring(1));
+        
+        // Development mode: Map .min.js requests to readable .js files for debugging
+        let requestPath = pathname.substring(1);
+        if (pathname.startsWith('/js/') && pathname.endsWith('.min.js')) {
+          // Check if corresponding .js file exists
+          const devPath = requestPath.replace('.min.js', '.js');
+          const devFilePath = path.join(__dirname, '..', 'data', devPath);
+          
+          if (fs.existsSync(devFilePath)) {
+            console.log(`🛠️  Dev mapping: ${pathname} → ${devPath} (readable for debugging)`);
+            requestPath = devPath;
+          }
+        }
+        
+        filePath = path.join(__dirname, '..', 'data', requestPath);
       } else if (pathname.endsWith('.html')) {
         // Handle HTML files at root level (settings.html, diagnostics.html, etc.)
         if (pathname === '/setup.html' && currentMode !== 'ap-mode') {
