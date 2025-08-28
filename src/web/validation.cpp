@@ -30,6 +30,12 @@ static String lastRateLimitReason = "";
 
 bool isRateLimited()
 {
+    // Disable rate limiting completely in AP mode for initial setup
+    extern bool isAPMode(); 
+    if (isAPMode()) {
+        return false;
+    }
+
     unsigned long currentTime = millis();
 
     // Basic timing rate limit (prevent rapid-fire requests)

@@ -16,7 +16,7 @@ extern const int maxCharsPerLine;
 void stabilizePrinterPin();
 void initializePrinter();
 void printMessage();
-void printServerInfo();
+void printStartupMessage();
 void setInverse(bool enable);
 void advancePaper(int lines);
 void printWrapped(String text);

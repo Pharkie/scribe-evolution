@@ -4,6 +4,7 @@
 #include "../core/config_utils.h"
 #include "../core/shared_types.h"
 #include "../core/network.h"
+#include "../content/content_generators.h"
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 
@@ -72,35 +73,53 @@ void printMessage()
     LOG_VERBOSE("PRINTER", "Message printed successfully");
 }
 
-void printServerInfo()
+void printStartupMessage()
 {
     // Feed watchdog after first log (network logging can be slow)
     esp_task_wdt_reset();
 
-    String serverInfo;
     if (isAPMode()) {
-        serverInfo = "AP MODE SETUP\nConnect to WiFi: " + String(fallbackAPSSID) + "\nThen visit: " + WiFi.softAPIP().toString();
+        // In AP mode, print the proper setup message using existing content generator
+        String apContent = generateAPDetailsContent();
+        if (apContent.length() > 0) {
+            // Feed watchdog before thermal printing (can be slow)
+            esp_task_wdt_reset();
+            
+            LOG_VERBOSE("PRINTER", "Printing AP setup message");
+            
+            advancePaper(1);
+            
+            // Feed watchdog before the actual printing
+            esp_task_wdt_reset();
+            
+            String timestamp = getFormattedDateTime();
+            printWithHeader(timestamp, apContent);
+            
+            // Feed watchdog after thermal printing completes
+            esp_task_wdt_reset();
+        }
     } else {
-        serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
+        // In STA mode, print normal server info
+        String serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
+
+        // Feed watchdog before thermal printing (can be slow)
+        esp_task_wdt_reset();
+
+        LOG_VERBOSE("PRINTER", "Printing startup message");
+
+        advancePaper(1);
+
+        // Feed watchdog before the actual printing
+        esp_task_wdt_reset();
+
+        // Format the startup message with datetime in header and SCRIBE READY in body
+        String timestamp = getFormattedDateTime();
+        String startupMessage = "SCRIBE READY\n\n" + serverInfo;
+        printWithHeader(timestamp, startupMessage);
+
+        // Feed watchdog after thermal printing completes
+        esp_task_wdt_reset();
     }
-
-    // Feed watchdog before thermal printing (can be slow)
-    esp_task_wdt_reset();
-
-    LOG_VERBOSE("PRINTER", "Printing startup message");
-
-    advancePaper(1);
-
-    // Feed watchdog before the actual printing
-    esp_task_wdt_reset();
-
-    // Format the startup message with datetime in header and SCRIBE READY in body
-    String timestamp = getFormattedDateTime();
-    String startupMessage = "SCRIBE READY\n\n" + serverInfo;
-    printWithHeader(timestamp, startupMessage);
-
-    // Feed watchdog after thermal printing completes
-    esp_task_wdt_reset();
 }
 
 void setInverse(bool enable)

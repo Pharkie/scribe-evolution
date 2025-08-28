@@ -157,15 +157,15 @@ void setup()
   // Initialize printer
   initializePrinter();
 
-  // Print AP details if we're in AP mode (after printer is ready)
-  printAPDetailsOnStartup();
-
-  // Initialize hardware buttons (only in STA mode)  
+  // Initialize hardware buttons (only in STA mode)
   LOG_NOTICE("BOOT", "WiFi mode check: currentWiFiMode=%d, isAPMode()=%s", currentWiFiMode, isAPMode() ? "true" : "false");
-  if (!isAPMode()) {
+  if (!isAPMode())
+  {
     LOG_NOTICE("BOOT", "Initializing hardware buttons (STA mode)");
     initializeHardwareButtons();
-  } else {
+  }
+  else
+  {
     LOG_NOTICE("BOOT", "Skipping hardware buttons setup (AP mode - configure WiFi first)");
   }
 
@@ -188,9 +188,12 @@ void setup()
   setupmDNS();
 
   // Setup MQTT with printer discovery (only in STA mode)
-  if (!isAPMode()) {
+  if (!isAPMode())
+  {
     setupMQTTWithDiscovery();
-  } else {
+  }
+  else
+  {
     LOG_VERBOSE("BOOT", "Skipping MQTT setup (AP mode - configure WiFi first)");
   }
 
@@ -202,15 +205,18 @@ void setup()
   String webServerInfo = "Web server started: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
   LOG_VERBOSE("BOOT", "%s", webServerInfo.c_str());
 
-  // Print server info
-  printServerInfo();
+  // Print startup message (handles both AP mode and normal mode)
+  printStartupMessage();
 
   // Initialize Unbidden Ink schedule
   initializeUnbiddenInk();
 
-  if (isAPMode()) {
+  if (isAPMode())
+  {
     LOG_NOTICE("BOOT", "=== Scribe Ready (AP Setup Mode) ===");
-  } else {
+  }
+  else
+  {
     LOG_NOTICE("BOOT", "=== Scribe Evolution Ready ===");
   }
 }
@@ -229,8 +235,11 @@ void loop()
   // Handle DNS server for captive portal in AP mode
   handleDNSServer();
 
-  // Check hardware buttons (work without WiFi)
-  checkHardwareButtons();
+  // Check hardware buttons (only if not in AP mode - buttons disabled in AP mode)
+  if (!isAPMode())
+  {
+    checkHardwareButtons();
+  }
 
 #if ENABLE_LEDS
   // Update LED effects (non-blocking)

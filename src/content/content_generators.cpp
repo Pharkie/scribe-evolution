@@ -415,24 +415,29 @@ String generateAPDetailsContent()
     String password = fallbackAPPassword;
     String mdnsHostname = String(getMdnsHostname()) + ".local";
     String apIP = WiFi.softAPIP().toString();
-    
+
     // Build URL line - same logic as JavaScript version
     String urlLine = "";
-    if (mdnsHostname.length() > 0 && apIP.length() > 0) {
+    if (mdnsHostname.length() > 0 && apIP.length() > 0)
+    {
         urlLine = "http://" + mdnsHostname + "\n(or http://" + apIP + ")";
-    } else if (mdnsHostname.length() > 0) {
+    }
+    else if (mdnsHostname.length() > 0)
+    {
         urlLine = "http://" + mdnsHostname;
-    } else {
+    }
+    else
+    {
         return ""; // No valid URL available
     }
-    
+
     // Build the exact same message format as JavaScript version
-    String apDetails = "Scribe Evolution Setup (Fallback) Network\n";
+    String apDetails = "Scribe Evolution Setup WiFi\n";
     apDetails += "================================\n";
     apDetails += "Network: " + ssid + "\n";
     apDetails += "Password: " + password + "\n";
-    apDetails += "If WiFi connection fails, connect to the above network, then visit:\n";
+    apDetails += "For setup, connect to the above network, then visit:\n";
     apDetails += urlLine;
-    
+
     return apDetails;
 }
