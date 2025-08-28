@@ -270,7 +270,7 @@ def create_merged_binary(environment):
         log(f"Creating complete merged binary for {environment}...", "INFO")
         
         # Determine chip type and bootloader address for merge-bin command
-        if environment == "esp32c3":
+        if environment.startswith("esp32c3"):
             chip_type = "ESP32C3"
             bootloader_addr = "0x0000"  # ESP32-C3 uses 0x0000
         else:
@@ -357,7 +357,7 @@ def create_release_info():
     # Format template with build date and environment
     build_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
-    for env in ["esp32c3", "lolin32lite"]:
+    for env in ["esp32c3-prod", "lolin32lite-no-leds"]:
         # Format template for this specific environment
         release_info = template.format(build_date=build_date, environment=env)
         
@@ -421,7 +421,7 @@ def main():
         sys.exit(1)
 
     # Build targets
-    targets = ["esp32c3", "lolin32lite"]
+    targets = ["esp32c3-prod", "lolin32lite-no-leds"]
 
     success = True
 
