@@ -66,12 +66,12 @@
 
 ### Remaining Section Pages
 - [ ] **WiFi**: Network scanning, SSID/password, connection timeout
-- [ ] **MQTT**: Configuration, connection testing  
-- [ ] **LEDs**: Effects, colors, GPIO validation
 - [ ] **Memos**: Content save/load
+- [ ] **MQTT**: Configuration, connection testing  
 - [ ] **Unbidden Ink**: AI configuration, scheduling
-- [ ] **Buttons**: GPIO configuration, button actions
-- [ ] **System**: Restart, factory reset, NVS operations
+- [ ] **Buttons**: GPIO configuration, button action
+- [ ] **LEDs**: Effects, colors, GPIO validation
+- [ ] **System**: (not a section page) Restart, factory reset, NVS operations
 
 ### Navigation & Cleanup
 - [ ] Add client-side navigation between pages
@@ -110,7 +110,7 @@
 3. **Test with mock server** - `node mock-server/mock-api.js`
 4. **Verify functionality** - Test all affected features work correctly
 5. **Live device testing** - Invite Adam to deploy to ESP32 and verify on actual hardware (end of phases)
-6. **Update REFACTOR_PLAN.md** - Mark step completed, update next step
+6. **Update REFACTOR_PLAN.md** - Revise and mark steps completed. Revise the plan forward from here based on lessons learned.
 7. **Git commit** - Clear commit message with detailed summary
 8. **STOP** - Verify 100% before proceeding
 
