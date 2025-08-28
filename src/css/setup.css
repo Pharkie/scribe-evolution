@@ -2,8 +2,9 @@
 @import "./shared.css";
 
 @layer base {
-  /* Hide error states by default until Alpine.js initializes - prevents flash of error content */
-  [x-show="error"] {
+  /* Hide error states and overlay by default until Alpine.js initializes - prevents FOUC */
+  [x-show="error"],
+  [x-show="saving"] {
     display: none !important;
   }
 }

@@ -282,10 +282,9 @@ function initializeSettingsStore() {
             ];
             
             // Only add LEDs section if LED support is compiled in
-            if (this.config?.leds?.enabled) {
+            if (this.config?.leds?.enabled === true) {
                 baseSections.push({ id: 'leds', name: 'LEDs', icon: 'lightBulb', color: 'purple' });
             }
-            
             return baseSections;
         },
         
@@ -882,6 +881,7 @@ ${urlLine}`;
             
             // LEDs - log errors for missing values
             if (serverConfig.leds) {
+                this.config.leds.enabled = serverConfig.leds.enabled;
                 this.config.leds.pin = Number(serverConfig.leds.pin);
                 this.config.leds.count = serverConfig.leds.count;
                 this.config.leds.brightness = serverConfig.leds.brightness;
