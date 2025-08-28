@@ -1,0 +1,164 @@
+{
+    "device": {
+        "owner": "MockUser",
+        "timezone": "Europe/London",
+        "maxCharacters": 1000,
+        "firmware_version": "1.0.1-dev-ap",
+        "boot_time": "2025-08-21T12:50:47Z",
+        "mdns": "scribe-mockuser.local",
+        "ip_address": "192.168.4.1",
+        "printer_name": "Mock Scribe Printer (AP Setup)",
+        "mqtt_topic": "scribe/MockUser/print",
+        "printerTxPin": 21,
+        "type": "local",
+        "wifi": {
+            "ssid": "AP_MODE",
+            "password": "",
+            "connect_timeout": 15000,
+            "fallback_ap_ssid": "Scribe-setup",
+            "fallback_ap_password": "scribe123",
+            "fallback_ap_mdns": "scribe-mockuser.local",
+            "fallback_ap_ip": "192.168.4.1",
+            "status": {
+                "connected": false,
+                "ap_mode": true,
+                "ip_address": "192.168.4.1",
+                "mac_address": "AA:BB:CC:DD:EE:FF",
+                "gateway": "192.168.4.1",
+                "dns": "192.168.4.1",
+                "signal_strength": "N/A (AP Mode)"
+            }
+        }
+    },
+    "mqtt": {
+        "server": "mock-mqtt.example.com",
+        "port": 1883,
+        "username": "mock_user",
+        "password": "mo●●●●●●●●rd",
+        "connected": false
+    },
+    "unbiddenInk": {
+        "enabled": false,
+        "startHour": 10,
+        "endHour": 16,
+        "frequencyMinutes": 60,
+        "prompt": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+        "chatgptApiToken": "",
+        "nextScheduled": "Not scheduled (no WiFi)",
+        "promptPresets": {
+            "creative": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+            "wisdom": "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
+            "humor": "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining.",
+            "doctorwho": "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone."
+        }
+    },
+    "buttons": {
+        "count": 4,
+        "debounce_time": 50,
+        "long_press_time": 2000,
+        "active_low": true,
+        "min_interval": 3000,
+        "max_per_minute": 20,
+        "button1": {
+            "gpio": -1,
+            "shortAction": "",
+            "shortMqttTopic": "",
+            "longAction": "",
+            "longMqttTopic": "",
+            "shortLedEffect": "",
+            "longLedEffect": ""
+        },
+        "button2": {
+            "gpio": -1,
+            "shortAction": "",
+            "shortMqttTopic": "",
+            "longAction": "",
+            "longMqttTopic": "",
+            "shortLedEffect": "",
+            "longLedEffect": ""
+        },
+        "button3": {
+            "gpio": -1,
+            "shortAction": "",
+            "shortMqttTopic": "",
+            "longAction": "",
+            "longMqttTopic": "",
+            "shortLedEffect": "",
+            "longLedEffect": ""
+        },
+        "button4": {
+            "gpio": -1,
+            "shortAction": "",
+            "shortMqttTopic": "",
+            "longAction": "",
+            "longMqttTopic": "",
+            "shortLedEffect": "",
+            "longLedEffect": ""
+        }
+    },
+    "leds": {
+        "enabled": true,
+        "pin": -1,
+        "count": 30,
+        "brightness": 64,
+        "refreshRate": 60,
+        "effectDefaults": {
+            "chase_single": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#0062ff"]
+            },
+            "chase_multi": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#ff0000", "#00ff00", "#0000ff"]
+            },
+            "matrix": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#00ff00"]
+            },
+            "twinkle": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#ffff00"]
+            },
+            "pulse": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#800080"]
+            },
+            "rainbow": {
+                "speed": 50,
+                "intensity": 50,
+                "cycles": 3,
+                "colors": ["#ff0000"]
+            }
+        }
+    },
+    "gpio": {
+        "availablePins": [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
+        "safePins": [-1, 2, 4, 5, 6, 7, 10, 20, 21],
+        "pinDescriptions": {
+            "-1": "Not connected",
+            "0": "Strapping pin at boot, avoid",
+            "1": "TX for UART0 (USB-Serial), avoid",
+            "2": "Safe",
+            "3": "RX for UART0 (USB-Serial), avoid",
+            "4": "Safe",
+            "5": "Safe",
+            "6": "Safe",
+            "7": "Safe",
+            "8": "Onboard LED, avoid",
+            "9": "Strapping pin, avoid",
+            "10": "Safe",
+            "20": "UART1 TX - Safe",
+            "21": "UART1 RX - Safe"
+        }
+    }
+}

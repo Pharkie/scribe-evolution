@@ -160,11 +160,13 @@ void setup()
   // Print AP details if we're in AP mode (after printer is ready)
   printAPDetailsOnStartup();
 
-  // Initialize hardware buttons (only in STA mode)
+  // Initialize hardware buttons (only in STA mode)  
+  LOG_NOTICE("BOOT", "WiFi mode check: currentWiFiMode=%d, isAPMode()=%s", currentWiFiMode, isAPMode() ? "true" : "false");
   if (!isAPMode()) {
+    LOG_NOTICE("BOOT", "Initializing hardware buttons (STA mode)");
     initializeHardwareButtons();
   } else {
-    LOG_VERBOSE("BOOT", "Skipping hardware buttons setup (AP mode - configure WiFi first)");
+    LOG_NOTICE("BOOT", "Skipping hardware buttons setup (AP mode - configure WiFi first)");
   }
 
 #if ENABLE_LEDS

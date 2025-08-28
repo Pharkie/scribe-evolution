@@ -58,6 +58,7 @@ function initializeSettingsStore() {
                     fallback_ap_ip: null, // Will be set from backend
                     status: {
                         connected: null, // Will be set from backend
+                        ap_mode: null, // Will be set from backend
                         ip_address: null, // Will be set from backend
                         mac_address: null, // Will be set from backend
                         gateway: null, // Will be set from backend
@@ -270,14 +271,8 @@ function initializeSettingsStore() {
             }
         },
         
-        // Computed property for section definitions (dynamic based on LED support and AP mode)
+        // Computed property for section definitions (dynamic based on LED support)
         get sections() {
-            // In AP mode, only show Device section for basic WiFi configuration
-            if (this.config?.device?.wifi?.status?.ap_mode === true) {
-                return [{ id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' }];
-            }
-            
-            // Normal mode - show all sections
             const baseSections = [
                 { id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' },
                 { id: 'memos', name: 'Memos', icon: 'pencil', color: 'pink' },
@@ -804,6 +799,7 @@ ${urlLine}`;
                 // Load WiFi status data if available
                 if (serverConfig.device.wifi.status) {
                     this.config.device.wifi.status.connected = serverConfig.device.wifi.status.connected || false;
+                    this.config.device.wifi.status.ap_mode = serverConfig.device.wifi.status.ap_mode || false;
                     this.config.device.wifi.status.ip_address = serverConfig.device.wifi.status.ip_address || '';
                     this.config.device.wifi.status.mac_address = serverConfig.device.wifi.status.mac_address || '';
                     this.config.device.wifi.status.gateway = serverConfig.device.wifi.status.gateway || '';

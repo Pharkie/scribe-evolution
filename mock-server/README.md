@@ -16,21 +16,32 @@ A complete mock API server for local development and testing of the Scribe Evolu
 
 ## Files
 
-- **`mock-api.js`** - Main server script
-- **`mock-config.json`** - Mock configuration data (matches `/api/config`)
-- **`mock-diagnostics.json`** - Mock diagnostics data (matches `/api/diagnostics`)  
-- **`mock-printer-discovery.json`** - Mock printer discovery data (matches `/events` SSE)
-- **`mock-nvs-dump.json`** - Mock NVS storage dump (matches `/api/nvs-dump`)
+- **`mock-api.js`** - Main server script with enhanced port conflict resolution
+- **`data/`** - Mock data files directory
+  - **`mock-config.json`** - Normal mode configuration (matches `/api/config`)
+  - **`mock-config-ap-mode.json`** - AP mode configuration for setup testing
+  - **`mock-config-no-leds.json`** - No-LEDs build configuration
+  - **`mock-diagnostics.json`** - Mock diagnostics data (matches `/api/diagnostics`)  
+  - **`mock-printer-discovery.json`** - Mock printer discovery data (matches `/events` SSE)
+  - **`mock-nvs-dump.json`** - Mock NVS storage dump (matches `/api/nvs-dump`)
+  - **`mock-wifi-scan.json`** - Mock WiFi network scan results
+  - **`mock-memos.json`** - Mock memo storage data
 
 ## Usage
 
 ```bash
-# Start the server
+# Start the server (normal mode)
 cd mock-server
 node mock-api.js
 
+# Start in AP mode (for testing setup.html)
+node mock-api.js --ap-mode
+
+# Start in no-LEDs mode (for testing builds without LED support)
+node mock-api.js --no-leds
+
 # Or from project root
-node mock-server/mock-api.js
+node mock-server/mock-api.js [--ap-mode|--no-leds]
 ```
 
 ## Features
@@ -46,6 +57,8 @@ node mock-server/mock-api.js
 - **Server-Sent Events**: `/events` with proper `printer-update` events and discovery data
 - **Static File Serving**: Complete web interface (HTML, CSS, JS, images, favicons)
 - **CORS Enabled**: Cross-origin requests for development tools
+- **Smart Port Conflict Resolution**: Automatically detects port 3001 conflicts and offers to kill conflicting processes
+- **Mode Switching**: `--ap-mode` for testing setup.html, `--no-leds` for LED-disabled builds  
 - **Live Keyboard Controls**:
   - Press **"r" + Enter** to reload server (picks up code changes)
   - Press **"d" + Enter** to reload JSON data files (picks up data changes)

@@ -1,13 +1,13 @@
 {
     "device": {
         "owner": "MockUser",
-        "timezone": "America/New_York",
+        "timezone": "Europe/London",
         "maxCharacters": 1000,
-        "firmware_version": "1.0.1-dev",
+        "firmware_version": "1.0.1-dev-no-leds",
         "boot_time": "2025-08-21T12:50:47Z",
         "mdns": "scribe-mockuser.local",
         "ip_address": "192.168.1.100",
-        "printer_name": "Mock Scribe Printer",
+        "printer_name": "Mock Scribe Printer (No LEDs)",
         "mqtt_topic": "scribe/MockUser/print",
         "printerTxPin": 21,
         "type": "local",
@@ -65,8 +65,8 @@
             "shortMqttTopic": "",
             "longAction": "CHARACTER_TEST",
             "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
+            "shortLedEffect": "",
+            "longLedEffect": ""
         },
         "button2": {
             "gpio": 6,
@@ -74,8 +74,8 @@
             "shortMqttTopic": "",
             "longAction": "",
             "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
+            "shortLedEffect": "",
+            "longLedEffect": ""
         },
         "button3": {
             "gpio": 7,
@@ -83,8 +83,8 @@
             "shortMqttTopic": "",
             "longAction": "",
             "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
+            "shortLedEffect": "",
+            "longLedEffect": ""
         },
         "button4": {
             "gpio": -1,
@@ -92,57 +92,41 @@
             "shortMqttTopic": "",
             "longAction": "",
             "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
+            "shortLedEffect": "",
+            "longLedEffect": ""
         }
     },
     "leds": {
-        "pin": 20,
-        "count": 30,
-        "brightness": 64,
-        "refreshRate": 60,
-        "effectDefaults": {
-            "chase_single": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#0062ff"]
-            },
-            "chase_multi": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#ff0000", "#00ff00", "#0000ff"]
-            },
-            "matrix": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#00ff00"]
-            },
-            "twinkle": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#ffff00"]
-            },
-            "pulse": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#800080"]
-            },
-            "rainbow": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#ff0000"]
-            }
-        }
+        "enabled": false
     },
     "gpio": {
-        "availablePins": [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
-        "safePins": [-1, 2, 4, 5, 6, 7, 10, 20, 21],
+        "availablePins": [
+            -1,
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            20,
+            21
+        ],
+        "safePins": [
+            -1,
+            2,
+            4,
+            5,
+            6,
+            7,
+            10,
+            20,
+            21
+        ],
         "pinDescriptions": {
             "-1": "Not connected",
             "0": "Strapping pin at boot, avoid",

@@ -53,7 +53,7 @@ Message currentMessage = {"", "", false};
 // ========================================
 
 /**
- * @brief Captive portal handler that redirects all non-settings requests to settings.html
+ * @brief Captive portal handler that redirects all non-setup requests to setup.html
  * Used when in AP fallback mode to force configuration
  */
 void handleCaptivePortal(AsyncWebServerRequest *request)
@@ -84,16 +84,16 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         uri.startsWith("/fwlink"))
     {
         AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to WiFi configuration");
-        response->addHeader("Location", "/settings.html");
+        response->addHeader("Location", "/setup.html");
         request->send(response);
         return;
     }
 
     LOG_VERBOSE("CAPTIVE", "Redirecting captive portal request: %s", uri.c_str());
 
-    // Redirect to settings page
-    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to configuration page...");
-    response->addHeader("Location", "/settings.html");
+    // Redirect to setup page
+    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup page...");
+    response->addHeader("Location", "/setup.html");
     request->send(response);
 }
 
@@ -277,9 +277,22 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up captive portal for AP mode");
 
-        // Always serve settings page and its dependencies (needed for AP mode)
-        server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request)
-                  { request->send(LittleFS, "/html/settings.html", "text/html"); });
+        // Redirect settings.html to setup.html in AP mode
+        server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup page...");
+            response->addHeader("Location", "/setup.html");
+            request->send(response);
+        });
+        
+        // Setup page (only available in AP mode)
+        server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
+        {
+            if (!isAPMode()) {
+                request->send(LittleFS, "/html/404.html", "text/html", 404);
+                return;
+            }
+            request->send(LittleFS, "/html/setup.html", "text/html");
+        });
 
         // Configuration endpoints (needed for settings page)
         server.on("/api/config", HTTP_GET, handleConfigGet);
@@ -363,14 +376,14 @@ void setupWebServerRoutes(int maxChars)
         // Setup static file serving
         setupStaticRoutes();
 
-        // Catch all other requests and redirect to settings
+        // Catch all other requests and redirect to setup
         server.onNotFound(handleCaptivePortal);
 
-        // Redirect root to settings
+        // Redirect root to setup
         server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to configuration page...");
-            response->addHeader("Location", "/settings.html");
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup page...");
+            response->addHeader("Location", "/setup.html");
             request->send(response); });
     }
     else

@@ -6,6 +6,7 @@
 #include "../core/config.h"
 #include "../core/config_loader.h"
 #include "../core/shared_types.h"
+#include "../core/network.h"
 #include "../utils/time_utils.h"
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
@@ -580,6 +581,14 @@ bool executeButtonActionDirect(const char *actionType, bool shouldSetPrintFlag)
     if (!actionType || strlen(actionType) == 0)
     {
         LOG_ERROR("BUTTONS", "Invalid action type: null or empty");
+        return false;
+    }
+
+    // Skip internet-dependent actions when WiFi is not connected
+    if (isAPMode() || WiFi.status() != WL_CONNECTED)
+    {
+        LOG_WARNING("BUTTONS", "Skipping button action '%s' - no internet connection (WiFi status: %d)", 
+                    actionType, WiFi.status());
         return false;
     }
 
