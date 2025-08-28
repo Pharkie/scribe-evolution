@@ -36,6 +36,27 @@ void handleConfigGet(AsyncWebServerRequest *request);
 void handleConfigPost(AsyncWebServerRequest *request);
 
 /**
+ * @brief Handle setup GET request (AP mode configuration template)
+ * @param request The HTTP request
+ *
+ * Endpoint: GET /api/setup
+ * 
+ * Returns minimal configuration structure for initial setup with blanks for user input
+ */
+void handleSetupGet(AsyncWebServerRequest *request);
+
+/**
+ * @brief Handle setup POST request (initial device setup with minimal validation)
+ * @param request The HTTP request containing basic setup configuration
+ *
+ * Endpoint: POST /api/setup
+ * Body: JSON with device.owner, device.timezone, device.wifi.ssid, device.wifi.password
+ * 
+ * Performs minimal validation and updates only device settings, preserving all other config
+ */
+void handleSetupPost(AsyncWebServerRequest *request);
+
+/**
  * @brief Handle memos GET request (read all memos)
  * @param request The HTTP request
  *

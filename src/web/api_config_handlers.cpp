@@ -994,3 +994,151 @@ void handleMemosPost(AsyncWebServerRequest *request)
     sendSuccessResponse(request, "Memos saved successfully");
     LOG_NOTICE("WEB", "All memos saved successfully");
 }
+
+void handleSetupPost(AsyncWebServerRequest *request)
+{
+    extern String getRequestBody(AsyncWebServerRequest * request);
+
+    LOG_VERBOSE("WEB", "handleSetupPost() called - initial device setup");
+
+    // Get request body
+    String body = getRequestBody(request);
+    if (body.length() == 0)
+    {
+        LOG_ERROR("WEB", "Setup request body is empty");
+        sendErrorResponse(request, 400, "Request body is empty");
+        return;
+    }
+
+    // Parse JSON - minimal buffer since setup only has device config
+    DynamicJsonDocument doc(1024);
+    
+    LOG_VERBOSE("WEB", "Setup POST body: %s", body.c_str());
+    
+    DeserializationError error = deserializeJson(doc, body);
+    if (error)
+    {
+        LOG_ERROR("WEB", "Setup JSON deserialization failed: %s", error.c_str());
+        sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
+        return;
+    }
+
+    // Minimal validation - only require device section for setup
+    if (!doc.containsKey("device"))
+    {
+        sendValidationError(request, ValidationResult(false, "Missing required section: device"));
+        return;
+    }
+
+    // Load current configuration to preserve existing settings
+    RuntimeConfig currentConfig = getRuntimeConfig();
+    RuntimeConfig newConfig = currentConfig; // Start with current values
+
+    // Validate and extract device configuration
+    JsonObject device = doc["device"];
+    if (!device.containsKey("owner") || !device.containsKey("timezone"))
+    {
+        sendValidationError(request, ValidationResult(false, "Missing required device configuration fields (owner, timezone)"));
+        return;
+    }
+
+    // Validate WiFi configuration (nested under device)
+    if (!device.containsKey("wifi") || !device["wifi"].containsKey("ssid") || !device["wifi"].containsKey("password"))
+    {
+        sendValidationError(request, ValidationResult(false, "Missing required WiFi configuration (ssid, password)"));
+        return;
+    }
+
+    String owner = device["owner"];
+    String timezone = device["timezone"];
+    String ssid = device["wifi"]["ssid"];
+    String password = device["wifi"]["password"];
+    
+    // Validate non-empty values
+    if (owner.length() == 0 || timezone.length() == 0 || ssid.length() == 0 || password.length() == 0)
+    {
+        sendValidationError(request, ValidationResult(false, "Device owner, timezone, WiFi SSID, and password cannot be empty"));
+        return;
+    }
+
+    // Update only the setup-configurable fields
+    newConfig.deviceOwner = owner;
+    newConfig.timezone = timezone;
+    newConfig.wifiSSID = ssid;
+    newConfig.wifiPassword = password;
+
+    // Parse optional printer TX GPIO (preserve default if not provided)
+    if (device.containsKey("printerTxPin")) {
+        int printerTxPin = device["printerTxPin"];
+        if (!isValidGPIO(printerTxPin) || !isSafeGPIO(printerTxPin)) {
+            sendValidationError(request, ValidationResult(false, "Invalid printer TX GPIO pin"));
+            return;
+        }
+        newConfig.printerTxPin = printerTxPin;
+    }
+
+    // Save the updated configuration
+    setRuntimeConfig(newConfig);
+
+    LOG_NOTICE("WEB", "Setup configuration saved successfully");
+    
+    sendSuccessResponse(request, "Setup complete - device will restart");
+
+    // In AP mode, reboot after short delay to connect to new WiFi
+    if (isAPMode())
+    {
+        LOG_NOTICE("WEB", "Device in AP mode - rebooting to connect to new WiFi configuration");
+        // Use async callback instead of blocking delay
+        static WiFiEventId_t eventId = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+            ESP.restart();
+        }, ARDUINO_EVENT_WIFI_AP_STOP);
+        
+        // Schedule restart in next loop iteration
+        WiFi.mode(WIFI_STA); // This will trigger AP stop and restart
+    }
+}
+
+void handleSetupGet(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "handleSetupGet() called - AP mode setup configuration request");
+
+    // Create minimal configuration document for setup - only what's needed for initial configuration
+    DynamicJsonDocument setupDoc(512);
+
+    // Device section with minimal defaults
+    JsonObject device = setupDoc.createNestedObject("device");
+    device["owner"] = "";  // Always blank in setup mode
+    device["timezone"] = "Etc/UTC";  // Default timezone
+
+    // WiFi section with blanks for user input
+    JsonObject wifi = device.createNestedObject("wifi");
+    wifi["ssid"] = "";
+    wifi["password"] = "";
+    
+    // Optional printer settings with current runtime config default
+    const RuntimeConfig &config = getRuntimeConfig();
+    device["printerTxPin"] = config.printerTxPin;
+
+    // Minimal GPIO info for the printer pin selector
+    JsonObject gpio = setupDoc.createNestedObject("gpio");
+    JsonArray safePins = gpio.createNestedArray("safePins");
+    JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
+    
+    // Only include safe pins for setup
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++) {
+        int pin = ESP32C3_GPIO_MAP[i].pin;
+        if (isSafeGPIO(pin)) {
+            safePins.add(pin);
+            pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
+        }
+    }
+
+    String response;
+    serializeJson(setupDoc, response);
+    
+    AsyncWebServerResponse *res = request->beginResponse(200, "application/json", response);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    request->send(res);
+    
+    LOG_VERBOSE("WEB", "Setup configuration sent (minimal for AP mode)");
+}

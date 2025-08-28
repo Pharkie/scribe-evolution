@@ -49,6 +49,21 @@
     @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100;
   }
   
+  /* WiFi network dropdown overflow handling */
+  #wifi-ssid {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  #wifi-ssid option {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
   /* Loading state for scan button */
   .scan-button-loading {
     @apply opacity-75 cursor-not-allowed;

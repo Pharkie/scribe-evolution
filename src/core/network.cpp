@@ -228,6 +228,7 @@ void handleDNSServer()
 {
     if (currentWiFiMode == WIFI_MODE_AP_FALLBACK)
     {
+        // Process DNS requests - this will redirect all domain queries to our AP IP
         dnsServer.processNextRequest();
     }
 }

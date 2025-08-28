@@ -60,9 +60,13 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
 {
     // Check if this is already a settings-related request
     String uri = request->url();
+    String host = request->getHeader("Host") ? request->getHeader("Host")->value() : "unknown";
 
-    if (uri.startsWith("/settings") ||
-        uri.startsWith("/config") ||
+    LOG_VERBOSE("CAPTIVE", "Captive portal request: Host=%s, URI=%s", host.c_str(), uri.c_str());
+
+    if (uri == "/setup.html" ||
+        uri == "/api/setup" ||
+        uri == "/api/wifi-scan" ||
         uri.startsWith("/css/") ||
         uri.startsWith("/js/") ||
         uri.startsWith("/images/") ||
@@ -72,28 +76,32 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         uri == "/apple-touch-icon.png" ||
         uri == "/site.webmanifest")
     {
-        // Let these requests proceed normally
+        // Let these requests proceed normally (will result in 404 if not found)
+        LOG_VERBOSE("CAPTIVE", "Allowing request to proceed: %s", uri.c_str());
         return;
     }
 
-    // Handle captive portal detection requests with simple redirect
+    // Handle captive portal detection requests with full URL redirect
+    String setupUrl = "http://192.168.4.1/setup.html";
+    
     if (uri == "/hotspot-detect.html" ||
         uri == "/generate_204" ||
         uri == "/connecttest.txt" ||
         uri == "/redirect" ||
         uri.startsWith("/fwlink"))
     {
+        LOG_VERBOSE("CAPTIVE", "OS captive portal detection URL: %s", uri.c_str());
         AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to WiFi configuration");
-        response->addHeader("Location", "/setup.html");
+        response->addHeader("Location", setupUrl);
         request->send(response);
         return;
     }
 
-    LOG_VERBOSE("CAPTIVE", "Redirecting captive portal request: %s", uri.c_str());
+    LOG_VERBOSE("CAPTIVE", "Redirecting general request to setup: %s", uri.c_str());
 
-    // Redirect to setup page
+    // Redirect to setup page with full URL
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup page...");
-    response->addHeader("Location", "/setup.html");
+    response->addHeader("Location", setupUrl);
     request->send(response);
 }
 
@@ -294,31 +302,13 @@ void setupWebServerRoutes(int maxChars)
             request->send(LittleFS, "/html/setup.html", "text/html");
         });
 
-        // Configuration endpoints (needed for settings page)
-        server.on("/api/config", HTTP_GET, handleConfigGet);
-        server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleConfigPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-            // Handle chunked upload properly
-            String *bodyPtr = static_cast<String*>(request->_tempObject);
-            if (index == 0) {
-                // First chunk - create new string
-                if (bodyPtr) delete bodyPtr;
-                bodyPtr = new String();
-                request->_tempObject = bodyPtr;
-                bodyPtr->reserve(total); // Reserve space for entire body
-            }
-            
-            // Append this chunk
-            for (size_t i = 0; i < len; i++) {
-                *bodyPtr += (char)data[i];
-            } });
+        // WiFi scanning endpoint (needed for setup)
+        server.on("/api/wifi-scan", HTTP_POST, handleWiFiScan);
 
-        // Additional API endpoints needed for settings page in AP mode
-        server.on("/api/scan-wifi", HTTP_GET, handleWiFiScan);
-        server.on("/api/memos", HTTP_GET, handleMemosGet);
-        server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleMemosPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+        // Setup endpoints for AP mode initial configuration
+        server.on("/api/setup", HTTP_GET, handleSetupGet);
+        server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleSetupPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
                   {
             // Handle chunked upload properly
             String *bodyPtr = static_cast<String*>(request->_tempObject);
@@ -372,6 +362,28 @@ void setupWebServerRoutes(int maxChars)
                 *bodyPtr += (char)data[i];
             } });
 #endif
+
+        // Add explicit handlers for common captive portal detection URLs
+        server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
+            LOG_VERBOSE("CAPTIVE", "Android captive portal detection: /generate_204");
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup");
+            response->addHeader("Location", "http://192.168.4.1/setup.html");
+            request->send(response);
+        });
+        
+        server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+            LOG_VERBOSE("CAPTIVE", "iOS captive portal detection: /hotspot-detect.html");
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup");
+            response->addHeader("Location", "http://192.168.4.1/setup.html");
+            request->send(response);
+        });
+        
+        server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
+            LOG_VERBOSE("CAPTIVE", "Windows captive portal detection: /connecttest.txt");
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup");
+            response->addHeader("Location", "http://192.168.4.1/setup.html");
+            request->send(response);
+        });
 
         // Setup static file serving
         setupStaticRoutes();

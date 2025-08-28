@@ -37,35 +37,44 @@ document.addEventListener('alpine:init', () => {
             try {
                 await this.loadConfiguration();
             } catch (error) {
-                console.error('Setup Store: Failed to initialize:', error);
-                this.error = error.message;
+                // loadConfiguration now handles its own errors gracefully
+                console.error('Setup Store: Unexpected initialization error:', error);
             } finally {
                 this.loading = false;
             }
         },
         
-        // Load configuration from server (reuse SettingsAPI)
+        // Load configuration from server (use dedicated SetupAPI)
         async loadConfiguration() {
             console.log('Setup Store: Loading configuration...');
-            const response = await window.SettingsAPI.loadConfiguration();
-            
-            // Extract only the fields we need for setup - keep owner and ssid blank for new setup
-            this.config.device.owner = '';  // Always start blank
-            this.config.device.timezone = response.device?.timezone || '';
-            this.config.device.wifi.ssid = '';  // Always start blank in AP mode
-            this.config.device.wifi.password = '';
-            
-            console.log('Setup Store: Configuration loaded:', this.config);
+            try {
+                const response = await window.SetupAPI.loadConfiguration();
+                
+                // Use the response directly since SetupAPI returns exactly what we need
+                this.config.device.owner = response.device?.owner || '';
+                this.config.device.timezone = response.device?.timezone || 'Etc/UTC';
+                this.config.device.wifi.ssid = response.device?.wifi?.ssid || '';
+                this.config.device.wifi.password = response.device?.wifi?.password || '';
+                
+                console.log('Setup Store: Configuration loaded:', this.config);
+            } catch (error) {
+                console.warn('Setup Store: Could not load setup configuration, using defaults:', error);
+                // Initialize with defaults if setup endpoint fails
+                this.config.device.owner = '';
+                this.config.device.timezone = 'Etc/UTC';
+                this.config.device.wifi.ssid = '';
+                this.config.device.wifi.password = '';
+            }
         },
         
-        // WiFi scanning (reuse SettingsAPI)
+        // WiFi scanning (use SetupAPI)
         async scanWiFi() {
             if (this.scanning) return;
             
             this.scanning = true;
             try {
                 console.log('Setup Store: Scanning for WiFi networks...');
-                const networks = await window.SettingsAPI.scanWiFiNetworks();
+                const networks = await window.SetupAPI.scanWiFiNetworks();
                 this.availableNetworks = networks;
                 console.log('Setup Store: Found', networks.length, 'networks');
             } catch (error) {
@@ -126,8 +135,8 @@ document.addEventListener('alpine:init', () => {
                 
                 console.log('Setup Store: Saving configuration...', configToSave);
                 
-                // Save configuration (reuse SettingsAPI)
-                await window.SettingsAPI.saveConfiguration(configToSave);
+                // Use SetupAPI to save configuration
+                await window.SetupAPI.saveConfiguration(configToSave);
                 console.log('Setup Store: Configuration saved successfully');
                 
                 // No redirect needed - device will restart and disconnect from AP network
