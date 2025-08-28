@@ -78,9 +78,7 @@
   - `settings-system-api.js` - restart, factory reset, NVS HTTP calls
 - [ ] Extract API functions from monolithic store, keeping them **stateless**
 - [ ] Test all API functionality works independently (can be unit tested)
-- [ ] **Build frontend:** `npm run build-js-settings` - update dev JS for mock server
-- [ ] **Test with mock server:** Verify extracted APIs work with existing settings page
-- [ ] **Git commit:** "Extract API layer and utilities for settings modularization"
+- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
 
 ### Step 2.2: Test Extracted Components
 - [ ] Verify all utils work independently:
@@ -88,9 +86,7 @@
   - System utilities from `utils/system-utils.js` (GPIO, time, validation, colors)
 - [ ] Test all section APIs import and use utils correctly
 - [ ] Ensure no circular dependencies or missing imports
-- [ ] **Build frontend:** `npm run build-js-settings` - update dev JS for mock server
-- [ ] **Test with mock server:** Verify all extracted components integrate properly
-- [ ] **Git commit:** "Verify extracted API and utility components"
+- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
 
 ### Step 2.3: Create ONE Test Section Page  
 - [ ] **CRITICAL:** Start with Device section (simplest, most fundamental)
@@ -102,9 +98,7 @@
   - **PURE ALPINE PATTERNS** - No script tags, no hacks, proper stores/reactivity
 - [ ] Alpine store calls API functions but handles **no HTTP directly**
 - [ ] Test EVERYTHING: save, load, validation, navigation, error handling
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify standalone device page works completely
-- [ ] **Git commit:** "Add device.html as first separated settings page"
+- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
 - [ ] **STOP:** Verify this ONE page works 100% before proceeding
 
 **Expected Outcome:** Proof of concept for page separation architecture
@@ -115,86 +109,55 @@
 ## Phase 3: Complete Page Architecture 📄
 *Only proceed if Phase 2.3 test page works perfectly*
 
+### Standard Section Page Pattern 📋
+**Each section follows this template:**
+1. Create `[section].html` + `page-[section].js` (Alpine store + imports API modules)
+2. Alpine store: **state + UI logic only**, **no direct HTTP calls**
+3. Test section page thoroughly: [section-specific functionality]
+4. **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
+5. **STOP:** Verify section page works 100% before proceeding
+
 ### Step 3.1: WiFi Section Page
-- [ ] Create `wifi.html` + `page-wifi.js` (Alpine store + imports API modules)
-- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
-- [ ] Test WiFi page thoroughly: scanning, connection, AP mode
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify WiFi page works as standalone
-- [ ] **Git commit:** "Add wifi.html settings page"
-- [ ] **STOP:** Verify WiFi page works 100% before proceeding
+- [ ] **Apply Standard Section Page Pattern** ⬆️
+- [ ] **Focus:** WiFi scanning, connection, AP mode
 
 ### Step 3.2: MQTT Section Page  
-- [ ] Create `mqtt.html` + `page-mqtt.js` (Alpine store + imports API modules)
-- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
-- [ ] Test MQTT page thoroughly: configuration, connection testing
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify MQTT page works as standalone
-- [ ] **Git commit:** "Add mqtt.html settings page"
-- [ ] **STOP:** Verify MQTT page works 100% before proceeding
+- [ ] **Apply Standard Section Page Pattern** ⬆️
+- [ ] **Focus:** MQTT configuration, connection testing
 
 ### Step 3.3: LEDs Section Page
-- [ ] Create `leds.html` + `page-leds.js` (Alpine store + imports API modules)
-- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
-- [ ] Test LEDs page thoroughly: effects, colors, GPIO validation
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify LEDs page works as standalone
-- [ ] **Git commit:** "Add leds.html settings page"
-- [ ] **STOP:** Verify LEDs page works 100% before proceeding
+- [ ] **Apply Standard Section Page Pattern** ⬆️
+- [ ] **Focus:** LED effects, colors, GPIO validation
 
 ### Step 3.4: Memos Section Page
-- [ ] Create `memos.html` + `page-memos.js` (Alpine store + imports API modules)
-- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
-- [ ] Test Memos page thoroughly: content save/load
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify Memos page works as standalone
-- [ ] **Git commit:** "Add memos.html settings page"
-- [ ] **STOP:** Verify Memos page works 100% before proceeding
+- [ ] **Apply Standard Section Page Pattern** ⬆️
+- [ ] **Focus:** Memo content save/load
 
 ### Step 3.5: Unbidden Ink Section Page
-- [ ] Create `unbidden-ink.html` + `page-unbidden-ink.js` (Alpine store + imports API modules)
-- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
-- [ ] Test Unbidden Ink page thoroughly: AI configuration, scheduling
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify Unbidden Ink page works as standalone
-- [ ] **Git commit:** "Add unbidden-ink.html settings page"
-- [ ] **STOP:** Verify Unbidden Ink page works 100% before proceeding
+- [ ] **Apply Standard Section Page Pattern** ⬆️
+- [ ] **Focus:** AI configuration, scheduling
 
 ### Step 3.6: Buttons Section Page
-- [ ] Create `buttons.html` + `page-buttons.js` (Alpine store + imports API modules)
-- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
-- [ ] Test Buttons page thoroughly: GPIO configuration, actions
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify Buttons page works as standalone
-- [ ] **Git commit:** "Add buttons.html settings page"
-- [ ] **STOP:** Verify Buttons page works 100% before proceeding
+- [ ] **Apply Standard Section Page Pattern** ⬆️
+- [ ] **Focus:** GPIO configuration, button actions
 
 ### Step 3.7: System Section Page
-- [ ] Create `system.html` + `page-system.js` (Alpine store + imports API modules)
-- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
-- [ ] Test System page thoroughly: restart, factory reset, NVS operations
-- [ ] **Build frontend:** `npm run build` - update all JS files for standalone page
-- [ ] **Test with mock server:** Verify System page works as standalone
-- [ ] **Git commit:** "Add system.html settings page"
-- [ ] **STOP:** Verify System page works 100% before proceeding
+- [ ] **Apply Standard Section Page Pattern** ⬆️
+- [ ] **Focus:** Restart, factory reset, NVS operations
 
 ### Step 3.8: Add Client-Side Navigation
 - [ ] Create `src/js/shared/navigation.js` - Handle routing between settings pages
 - [ ] Add breadcrumb navigation to all pages
 - [ ] Implement state preservation between page transitions
 - [ ] Add "Overview" main settings page with section links
-- [ ] **Build frontend:** `npm run build` - update all JS files for navigation
-- [ ] **Test with mock server:** Verify navigation between all pages works perfectly
-- [ ] **Git commit:** "Add client-side navigation for settings pages"
+- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
 
 ### Step 3.9: Remove Monolithic Files (FINAL STEP)
 - [ ] **ONLY after all pages work perfectly:**
 - [ ] Remove old settings-alpine-store.js monolith
 - [ ] Update main settings.html to redirect to overview page
 - [ ] Clean up unused partials if desired
-- [ ] **Build frontend:** `npm run build` - final production build
-- [ ] **Test with mock server:** Final verification that entire system works
-- [ ] **Git commit:** "Complete settings page architecture refactor"
+- [ ] **Apply Standard Testing Workflow** ⬆️ (final production build → test → commit)
 
 ---
 
@@ -239,6 +202,14 @@
 ---
 
 ## Implementation Strategy 🛠️
+
+### Standard Testing Workflow 🔄
+**Every step follows this pattern:**
+1. **Code changes** - Implement the specific functionality  
+2. **Build frontend** - `npm run build-js-settings` (for settings changes) or `npm run build` (for new pages)
+3. **Test with mock server** - `node mock-server/mock-api.js` - verify changes work correctly
+4. **Git commit** - Clear commit message describing the change
+5. **STOP** - Verify 100% functionality before proceeding to next step
 
 ### Safety First Principles:
 1. **One step at a time** - Complete each step fully before proceeding
