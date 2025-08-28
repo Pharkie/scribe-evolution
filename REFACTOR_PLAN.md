@@ -53,15 +53,23 @@
 ## Phase 2: Foundation Extraction 🏗️
 *Prepare for page separation by extracting reusable components*
 
-### Step 2.0: Separate WiFi Section in Current Settings
-- [ ] Split Device section in current `settings.html` into:
+### Step 2.0: Separate WiFi Section in Current Settings ✅ COMPLETED
+- [x] Split Device section in current `settings.html` into:
   - **Device section** - Owner, timezone, GPIO pins (6 dropdowns), basic device config
-  - **WiFi section** - WiFi networks, AP mode, network configuration  
-- [ ] Update current Alpine store to handle separated sections
-- [ ] Test that both sections work in current monolithic settings page
-- [ ] **Build frontend:** `npm run build-js-settings` - update dev JS for mock server
-- [ ] **Test with mock server:** `node mock-server/mock-api.js` - verify WiFi section appears and functions
-- [ ] **Git commit:** "Separate WiFi into distinct section in current settings"
+  - **WiFi section** - SSID, password, connection timeout, and WiFi status display  
+- [x] Update current Alpine store to handle separated sections
+- [x] Test that both sections work in current monolithic settings page
+- [x] **Build frontend:** `npm run build-js-settings` - update dev JS for mock server
+- [x] **Test with mock server:** `node mock-server/mock-api.js` - verify WiFi section appears and functions
+- [x] **Git commit:** "Separate WiFi into distinct section in current settings"
+
+**Results:**
+- Created separate `wifi.html` partial with all WiFi functionality
+- Updated `device.html` to focus on device-specific content only
+- Added WiFi section to settings navigation (Device | **WiFi** | Memos | MQTT | etc.)
+- Both sections working independently in current monolithic settings page
+- Mock server serves WiFi partial correctly
+- **Status:** ✅ Complete, ready for Step 2.1
 
 ### Step 2.1: Extract Settings API Layer
 - [ ] Create `src/js/settings/utils/` directory structure:
@@ -119,7 +127,7 @@
 
 ### Step 3.1: WiFi Section Page
 - [ ] **Apply Standard Section Page Pattern** ⬆️
-- [ ] **Focus:** WiFi scanning, connection, AP mode
+- [ ] **Focus:** Network scanning, SSID/password, connection timeout, WiFi status
 
 ### Step 3.2: MQTT Section Page  
 - [ ] **Apply Standard Section Page Pattern** ⬆️
@@ -248,6 +256,6 @@
 4. **Focused:** Each phase has a single concern (build, JS, HTML, optimization)
 5. **Proven:** Based on failed attempt analysis - avoids previous pitfalls
 
-**Next Step:** Phase 2.1 - Extract Settings API Layer (prepare foundation for settings page separation)
+**Next Step:** Phase 2.1 - Extract Settings API Layer (create reusable HTTP functions and utilities)
 
 **Future Vision:** After completing settings refactor (Phases 1-4), Phase 5 will create a new comprehensive refactor plan for index, diagnostics, and 404 pages based on lessons learned and proven patterns.
