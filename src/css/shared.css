@@ -1,6 +1,5 @@
 /* Shared base styles and components */
 @import "tailwindcss";
-@import "../../node_modules/@simonwep/pickr/dist/themes/nano.min.css";
 
 @layer base {
   /* Root HTML styling */
