@@ -74,8 +74,8 @@
 - [ ] **System**: (not a section page) Restart, factory reset, NVS operations
 
 ### Navigation & Cleanup
-- [ ] Add client-side navigation between pages
-- [ ] Create overview page with section links
+- [x] Create overview page with section links (`/settings.html` with navigation grid)
+- [ ] Add client-side navigation between pages  
 - [ ] Remove monolithic files after all pages work
 - [ ] Clean up unused partials
 

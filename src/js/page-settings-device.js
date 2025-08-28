@@ -155,8 +155,8 @@ function initializeDeviceSettingsStore() {
                 
                 console.log('Alpine Device Store: Configuration saved successfully');
                 
-                // Redirect to main settings page with success indicator
-                window.location.href = '/settings.html?saved=device';
+                // Redirect back to settings overview page  
+                window.location.href = '/settings.html';
                 
             } catch (error) {
                 console.error('Alpine Device Store: Failed to save configuration:', error);
