@@ -7,6 +7,7 @@
 #include "../core/config_loader.h"
 #include "../core/shared_types.h"
 #include "../core/network.h"
+#include "../core/mqtt_handler.h"
 #include "../utils/time_utils.h"
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
@@ -511,7 +512,7 @@ void buttonActionTask(void *parameter)
             // Execute content action for MQTT (don't set print flag)
             bool success = executeButtonActionDirect(params->actionType.c_str(), false);
 
-            if (success && mqttClient.connected())
+            if (success && isMQTTEnabled() && mqttClient.connected())
             {
                 // Create MQTT payload (sender already included in message header)
                 DynamicJsonDocument payloadDoc(4096);
@@ -532,6 +533,10 @@ void buttonActionTask(void *parameter)
                 {
                     LOG_ERROR("BUTTONS", "Failed to send button action via MQTT to topic: %s", params->mqttTopic.c_str());
                 }
+            }
+            else if (!isMQTTEnabled())
+            {
+                LOG_WARNING("BUTTONS", "MQTT disabled, cannot send button action to topic: %s", params->mqttTopic.c_str());
             }
             else if (!mqttClient.connected())
             {

@@ -32,6 +32,7 @@ struct RuntimeConfig
     unsigned long wifiConnectTimeoutMs;
 
     // MQTT Configuration
+    bool mqttEnabled;
     String mqttServer;
     int mqttPort;
     String mqttUsername;

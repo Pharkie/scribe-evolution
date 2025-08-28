@@ -140,6 +140,7 @@ bool loadNVSConfig()
     g_runtimeConfig.wifiConnectTimeoutMs = getNVSInt(prefs, NVS_WIFI_TIMEOUT, wifiConnectTimeoutMs, 5000, 60000);
 
     // Load MQTT configuration
+    g_runtimeConfig.mqttEnabled = prefs.getBool(NVS_MQTT_ENABLED, defaultMqttEnabled);
     g_runtimeConfig.mqttServer = getNVSString(prefs, NVS_MQTT_SERVER, defaultMqttServer, 255);
     g_runtimeConfig.mqttPort = getNVSInt(prefs, NVS_MQTT_PORT, defaultMqttPort, 1, 65535);
     g_runtimeConfig.mqttUsername = getNVSString(prefs, NVS_MQTT_USERNAME, defaultMqttUsername, 100);
@@ -224,6 +225,7 @@ void loadDefaultConfig()
     g_runtimeConfig.wifiConnectTimeoutMs = wifiConnectTimeoutMs;
 
     // Load defaults from config.h constants
+    g_runtimeConfig.mqttEnabled = defaultMqttEnabled;
     g_runtimeConfig.mqttServer = defaultMqttServer;
     g_runtimeConfig.mqttPort = defaultMqttPort;
     g_runtimeConfig.mqttUsername = defaultMqttUsername;
@@ -300,6 +302,7 @@ bool saveNVSConfig(const RuntimeConfig &config)
     prefs.putULong(NVS_WIFI_TIMEOUT, config.wifiConnectTimeoutMs);
 
     // Save MQTT configuration
+    prefs.putBool(NVS_MQTT_ENABLED, config.mqttEnabled);
     prefs.putString(NVS_MQTT_SERVER, config.mqttServer);
     prefs.putInt(NVS_MQTT_PORT, config.mqttPort);
     prefs.putString(NVS_MQTT_USERNAME, config.mqttUsername);

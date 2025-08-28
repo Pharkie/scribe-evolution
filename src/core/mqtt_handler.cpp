@@ -278,3 +278,32 @@ void setupMQTTWithDiscovery()
     setupMQTT();
     setupPrinterDiscovery();
 }
+
+// Dynamic MQTT control functions
+bool isMQTTEnabled()
+{
+    const RuntimeConfig &config = getRuntimeConfig();
+    return config.mqttEnabled;
+}
+
+void startMQTTClient()
+{
+    if (!isMQTTEnabled())
+    {
+        LOG_VERBOSE("MQTT", "MQTT is disabled, not starting client");
+        return;
+    }
+    
+    LOG_NOTICE("MQTT", "Starting MQTT client");
+    setupMQTT();
+}
+
+void stopMQTTClient()
+{
+    if (mqttClient.connected())
+    {
+        LOG_NOTICE("MQTT", "Stopping MQTT client");
+        mqttClient.disconnect();
+    }
+    currentSubscribedTopic = "";
+}

@@ -17,6 +17,11 @@ function initializeSettingsStore() {
         initialized: false, // Flag to prevent duplicate initialization
         apPrintStatus: 'normal', // 'normal', 'scribing'
         
+        // MQTT test connection state
+        mqttTesting: false,
+        mqttTestResult: null, // { success: boolean, message: string }
+        mqttTestPassed: false, // Track if test passed for save validation
+        
         // Track which password fields have been modified by user
         passwordsModified: {
             wifiPassword: false,
@@ -68,6 +73,7 @@ function initializeSettingsStore() {
                 }
             },
             mqtt: {
+                enabled: null, // Will be set from backend
                 server: null, // Will be set from backend
                 port: null, // Will be set from backend
                 username: null, // Will be set from backend
@@ -553,6 +559,7 @@ function initializeSettingsStore() {
                     // Exclude mqtt_topic as it's read-only
                 },
                 mqtt: {
+                    enabled: this.config.mqtt.enabled,
                     server: this.config.mqtt.server,
                     port: this.config.mqtt.port,
                     username: this.config.mqtt.username
@@ -619,6 +626,12 @@ function initializeSettingsStore() {
         
         // Save configuration to server
         async saveConfiguration() {
+            // Check if MQTT is enabled and test hasn't passed
+            if (this.config.mqtt.enabled && !this.mqttTestPassed) {
+                window.showMessage('Please test MQTT connection before saving', 'error');
+                return false;
+            }
+            
             // Validate form before saving
             if (!this.validateForm()) {
                 this.showValidationFeedback = true;

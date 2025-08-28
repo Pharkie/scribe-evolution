@@ -29,4 +29,9 @@ void handleMQTTConnection();
 void updateMQTTSubscription();
 void setupMQTTWithDiscovery();
 
+// Dynamic MQTT control functions
+bool isMQTTEnabled();
+void startMQTTClient();
+void stopMQTTClient();
+
 #endif // MQTT_HANDLER_H

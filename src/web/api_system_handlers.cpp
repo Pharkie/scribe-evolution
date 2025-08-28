@@ -182,6 +182,12 @@ void handleMQTTSend(AsyncWebServerRequest *request)
         return;
     }
 
+    if (!isMQTTEnabled())
+    {
+        sendErrorResponse(request, 503, "MQTT is disabled");
+        return;
+    }
+    
     if (!mqttClient.connected())
     {
         sendErrorResponse(request, 503, "MQTT client not connected");

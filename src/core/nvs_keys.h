@@ -29,6 +29,7 @@ constexpr const char *NVS_WIFI_PASSWORD = "wifi_password";
 constexpr const char *NVS_WIFI_TIMEOUT = "wifi_timeout";
 
 // MQTT Configuration Keys
+constexpr const char *NVS_MQTT_ENABLED = "mqtt_enabled";
 constexpr const char *NVS_MQTT_SERVER = "mqtt_server";
 constexpr const char *NVS_MQTT_PORT = "mqtt_port";
 constexpr const char *NVS_MQTT_USERNAME = "mqtt_username";

@@ -120,6 +120,7 @@ static const char *defaultDeviceOwner = "YOUR_DEVICE_NAME";
 static const char *defaultTimezone = "Europe/London";
 
 // Default MQTT broker settings
+static const bool defaultMqttEnabled = false; // MQTT disabled by default
 static const char *defaultMqttServer = "YOUR_MQTT_SERVER.hivemq.cloud";
 static const int defaultMqttPort = 8883; // TLS port
 static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";

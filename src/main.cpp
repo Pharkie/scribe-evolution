@@ -187,14 +187,21 @@ void setup()
   // Setup mDNS
   setupmDNS();
 
-  // Setup MQTT with printer discovery (only in STA mode)
-  if (!isAPMode())
+  // Setup MQTT with printer discovery (only in STA mode and when MQTT enabled)
+  if (!isAPMode() && isMQTTEnabled())
   {
     setupMQTTWithDiscovery();
   }
   else
   {
-    LOG_VERBOSE("BOOT", "Skipping MQTT setup (AP mode - configure WiFi first)");
+    if (isAPMode())
+    {
+      LOG_VERBOSE("BOOT", "Skipping MQTT setup (AP mode - configure WiFi first)");
+    }
+    else
+    {
+      LOG_VERBOSE("BOOT", "Skipping MQTT setup (MQTT disabled in configuration)");
+    }
   }
 
   // Setup web server routes
@@ -249,12 +256,12 @@ void loop()
   // Handle web server requests - AsyncWebServer handles this automatically
   // No need to call server.handleClient() with async server
 
-  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
+  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
   {
-    // Handle MQTT connection and messages (only in STA mode)
+    // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
     handleMQTTConnection();
 
-    // Handle printer discovery (only in STA mode)
+    // Handle printer discovery (only in STA mode when MQTT enabled)
     handlePrinterDiscovery();
   }
 

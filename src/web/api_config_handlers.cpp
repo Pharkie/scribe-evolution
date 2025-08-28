@@ -172,12 +172,13 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     // MQTT configuration - top-level section matching settings.html
     JsonObject mqtt = configDoc.createNestedObject("mqtt");
+    mqtt["enabled"] = config.mqttEnabled;
     mqtt["server"] = config.mqttServer;
     mqtt["port"] = config.mqttPort;
     mqtt["username"] = config.mqttUsername;
     mqtt["password"] = maskSecret(config.mqttPassword);
     // Skip MQTT connection check in AP mode to avoid potential blocking
-    mqtt["connected"] = isAPMode() ? false : mqttClient.connected();
+    mqtt["connected"] = (isAPMode() || !config.mqttEnabled) ? false : mqttClient.connected();
 
     // Unbidden Ink configuration - top-level section matching settings.html
     JsonObject unbiddenInk = configDoc.createNestedObject("unbiddenInk");
@@ -494,33 +495,50 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // MQTT configuration (top-level section)
     JsonObject mqtt = doc["mqtt"];
-    if (!mqtt.containsKey("server") || !mqtt.containsKey("port") || !mqtt.containsKey("username"))
+    
+    // Extract MQTT enabled flag
+    newConfig.mqttEnabled = mqtt["enabled"] | false;
+    
+    // Only validate MQTT fields if MQTT is enabled
+    if (newConfig.mqttEnabled)
     {
-        sendValidationError(request, ValidationResult(false, "Missing required MQTT configuration fields"));
-        return;
-    }
+        if (!mqtt.containsKey("server") || !mqtt.containsKey("port") || !mqtt.containsKey("username"))
+        {
+            sendValidationError(request, ValidationResult(false, "Missing required MQTT configuration fields when MQTT is enabled"));
+            return;
+        }
 
-    int port = mqtt["port"];
-    if (port < 1 || port > 65535)
-    {
-        sendValidationError(request, ValidationResult(false, "MQTT port must be between 1 and 65535"));
-        return;
-    }
-    newConfig.mqttServer = mqtt["server"].as<const char *>();
-    newConfig.mqttPort = port;
-    newConfig.mqttUsername = mqtt["username"].as<const char *>();
+        int port = mqtt["port"];
+        if (port < 1 || port > 65535)
+        {
+            sendValidationError(request, ValidationResult(false, "MQTT port must be between 1 and 65535"));
+            return;
+        }
+        newConfig.mqttServer = mqtt["server"].as<const char *>();
+        newConfig.mqttPort = port;
+        newConfig.mqttUsername = mqtt["username"].as<const char *>();
 
-    // Handle MQTT password - preserve existing if not provided (masked field)
-    if (mqtt.containsKey("password"))
-    {
-        newConfig.mqttPassword = mqtt["password"].as<const char *>();
+        // Handle MQTT password - preserve existing if not provided (masked field)
+        if (mqtt.containsKey("password"))
+        {
+            newConfig.mqttPassword = mqtt["password"].as<const char *>();
+        }
+        else
+        {
+            // Preserve existing MQTT password when not provided (masked field not changed)
+            const RuntimeConfig &currentConfig = getRuntimeConfig();
+            newConfig.mqttPassword = currentConfig.mqttPassword;
+            LOG_VERBOSE("WEB", "MQTT password not provided, preserving existing value");
+        }
     }
     else
     {
-        // Preserve existing MQTT password when not provided (masked field not changed)
+        // MQTT disabled - preserve existing config but don't validate
         const RuntimeConfig &currentConfig = getRuntimeConfig();
+        newConfig.mqttServer = currentConfig.mqttServer;
+        newConfig.mqttPort = currentConfig.mqttPort;
+        newConfig.mqttUsername = currentConfig.mqttUsername;
         newConfig.mqttPassword = currentConfig.mqttPassword;
-        LOG_VERBOSE("WEB", "MQTT password not provided, preserving existing value");
     }
 
     // Validate unbidden ink configuration
@@ -850,6 +868,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.ledEffects = getDefaultLedEffectsConfig(); // TODO: Parse effects from JSON
 #endif
 
+    // Check if MQTT enabled state changed
+    const RuntimeConfig &currentConfig = getRuntimeConfig();
+    bool mqttStateChanged = (currentConfig.mqttEnabled != newConfig.mqttEnabled);
+    
     // Update global runtime configuration
     setRuntimeConfig(newConfig);
     
@@ -861,8 +883,25 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Update MQTT subscription to new device owner topic
-    updateMQTTSubscription();
+    // Handle dynamic MQTT start/stop
+    if (mqttStateChanged)
+    {
+        if (newConfig.mqttEnabled)
+        {
+            LOG_NOTICE("WEB", "MQTT enabled - starting client");
+            startMQTTClient();
+        }
+        else
+        {
+            LOG_NOTICE("WEB", "MQTT disabled - stopping client");
+            stopMQTTClient();
+        }
+    }
+    else if (newConfig.mqttEnabled)
+    {
+        // MQTT was already enabled, just update subscription
+        updateMQTTSubscription();
+    }
 
 #if ENABLE_LEDS
     // Reinitialize LED system with new configuration
