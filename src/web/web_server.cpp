@@ -310,6 +310,9 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("GET", "/settings.html", "Configuration settings", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/settings.html", "text/html"); }, false);
 
+        registerRoute("GET", "/settings/device.html", "Device settings", [](AsyncWebServerRequest *request)
+                      { request->send(LittleFS, "/html/settings/device.html", "text/html"); }, false);
+
         registerRoute("GET", "/diagnostics.html", "System diagnostics", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/diagnostics.html", "text/html"); }, false);
 

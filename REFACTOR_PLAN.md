@@ -72,6 +72,7 @@
 - [ ] **Buttons**: GPIO configuration, button action
 - [ ] **LEDs**: Effects, colors, GPIO validation
 - [ ] **System**: (not a section page) Restart, factory reset, NVS operations
+- [ ] **Setup Page**: Update setup.html to the new format
 
 ### Navigation & Cleanup
 - [x] Create overview page with section links (`/settings.html` with navigation grid)
