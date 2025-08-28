@@ -281,9 +281,10 @@ function initializeSettingsStore() {
         get sections() {
             const baseSections = [
                 { id: 'device', name: 'Device', icon: 'cpuChip', color: 'blue' },
+                { id: 'wifi', name: 'WiFi', icon: 'wifi', color: 'green' },
                 { id: 'memos', name: 'Memos', icon: 'pencil', color: 'pink' },
                 { id: 'mqtt', name: 'MQTT', icon: 'signal', color: 'yellow' },
-                { id: 'unbidden', name: 'Unbidden Ink', icon: 'sparkles', color: 'green' },
+                { id: 'unbidden', name: 'Unbidden Ink', icon: 'sparkles', color: 'indigo' },
                 { id: 'buttons', name: 'Buttons', icon: 'arrowDownCircle', color: 'teal' }
             ];
             
