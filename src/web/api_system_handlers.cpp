@@ -270,7 +270,7 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     // Check if we're in AP mode - scanning might not work properly
     if (WiFi.getMode() == WIFI_AP)
     {
-        LOG_WARNING("WEB", "WiFi scan requested while in AP mode - may have limited results");
+        LOG_VERBOSE("WEB", "WiFi scan requested while in AP mode");
     }
 
     // Start scanning for networks

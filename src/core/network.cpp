@@ -73,8 +73,7 @@ WiFiConnectionMode connectToWiFi()
     String password = config.wifiPassword;
     unsigned long timeout = config.wifiConnectTimeoutMs;
 
-    // Debug logging to see what was loaded
-    Serial.println("🔍 WiFi Connection Debug:");
+    Serial.println("🔍 WiFi Connection:");
     Serial.println("SSID: '" + ssid + "' (length: " + String(ssid.length()) + ")");
     Serial.println("Password: '" + String(password.length() > 0 ? "[HIDDEN]" : "[EMPTY]") + "' (length: " + String(password.length()) + ")");
     Serial.println("Timeout: " + String(timeout) + "ms");
