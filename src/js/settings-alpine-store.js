@@ -10,6 +10,7 @@
  */
 function initializeSettingsStore() {
     const store = {
+        // ================== UTILITY FUNCTIONS ==================
         // Simple utility function extracted from repeated showMessage patterns
         // Step 2.2: Extract ONE HTTP utility pattern (internal function)
         showErrorMessage(message) {
@@ -362,6 +363,7 @@ function initializeSettingsStore() {
             };
         },
         
+        // ================== DEVICE CONFIGURATION API ==================
         // Initialize store with data from server
         async init() {
             // Prevent duplicate initialization
@@ -460,6 +462,7 @@ function initializeSettingsStore() {
             this.wifiScan.error = null;
         },
 
+        // ================== WIFI API ==================
         // WiFi scanning - simplified with reactive updates
         async scanWiFiNetworks() {
             this.wifiScan.isScanning = true;
@@ -632,6 +635,7 @@ function initializeSettingsStore() {
         },
         
         // Save configuration to server
+        // Save configuration and memos via API
         async saveConfiguration() {
             // Check if MQTT is enabled and test hasn't passed
             if (this.config.mqtt.enabled && !this.mqttTestPassed) {
@@ -687,6 +691,7 @@ function initializeSettingsStore() {
             window.location.href = '/';
         },
         
+        // ================== SYSTEM/PRINTING API ==================
         // Print AP details to thermal printer
         async printAPDetails() {
             try {
@@ -1271,6 +1276,7 @@ ${urlLine}`;
             return this.gpioOptions;
         },
         
+        // ================== LED API ==================
         // LED effect functions (WLED-style unified interface)
         async testLedEffect(effectName) {
             if (this.testingEffect) return; // Prevent multiple simultaneous tests
@@ -1417,6 +1423,7 @@ ${urlLine}`;
             return 'Number of times to repeat the effect';
         },
         
+        // Turn off all LEDs via API
         async turnOffLeds() {
             try {
                 // Use API layer instead of direct fetch
@@ -1590,6 +1597,7 @@ ${urlLine}`;
             }
         },
         
+        // ================== MQTT API ==================
         // Test MQTT connection
         async testMQTTConnection() {
             this.mqttTesting = true;
