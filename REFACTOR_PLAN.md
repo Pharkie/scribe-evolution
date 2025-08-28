@@ -71,32 +71,34 @@
 - Mock server serves WiFi partial correctly
 - **Status:** ✅ Complete, ready for Step 2.1
 
-### Step 2.1: Extract Settings API Layer
-- [ ] Create `src/js/settings/utils/` directory structure:
-  - `http-utils.js` - HTTP utility functions (error handling, request wrappers)
-  - `system-utils.js` - System utility functions (GPIO validation, time formatting, etc.)
-- [ ] Create section-specific **pure HTTP function** modules:
-  - `settings-device-api.js` - device owner, timezone HTTP calls (no state, no Alpine)
-  - `settings-wifi-api.js` - WiFi networks, AP mode, network HTTP calls
-  - `settings-mqtt-api.js` - MQTT testing and config HTTP calls
-  - `settings-led-api.js` - LED effects and config HTTP calls  
-  - `settings-memos-api.js` - memo content save/load HTTP calls
-  - `settings-unbidden-ink-api.js` - AI content configuration HTTP calls
-  - `settings-buttons-api.js` - button configuration HTTP calls
-  - `settings-system-api.js` - restart, factory reset, NVS HTTP calls
-- [ ] Extract API functions from monolithic store, keeping them **stateless**
-- [ ] Test all API functionality works independently (can be unit tested)
+### Step 2.1: Create Utils Directory Structure (MINIMAL)
+- [ ] Create `src/js/settings/utils/` directory
+- [ ] Create empty `http-utils.js` file with basic structure
 - [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
 
-### Step 2.2: Test Extracted Components
-- [ ] Verify all utils work independently:
-  - HTTP request patterns from `utils/http-utils.js`
-  - System utilities from `utils/system-utils.js` (GPIO, time, validation, colors)
-- [ ] Test all section APIs import and use utils correctly
-- [ ] Ensure no circular dependencies or missing imports
+### Step 2.2: Extract ONE HTTP Utility Function
+- [ ] **CRITICAL:** Start with simplest function first
+- [ ] Extract ONE common HTTP pattern from existing store (e.g., error handling)
+- [ ] Move to `utils/http-utils.js` and import in main store
+- [ ] Test that existing functionality still works exactly the same
 - [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify)
+- [ ] **STOP:** Verify this ONE function works 100% before proceeding
 
-### Step 2.3: Create ONE Test Section Page  
+### Step 2.3: Extract ONE API Function  
+- [ ] **CRITICAL:** Choose simplest API call (probably device config load/save)
+- [ ] Create `settings-device-api.js` with ONE function only
+- [ ] Update main store to import and use this ONE function
+- [ ] Test that device section still works exactly the same
+- [ ] **Apply Standard Testing Workflow** ⬆️ (build → test → commit → verify) 
+- [ ] **STOP:** Verify this ONE API function works 100% before proceeding
+
+### Step 2.4: Gradually Extract More Functions (ITERATIVE)
+- [ ] **ONE function at a time:** Extract next simplest API function
+- [ ] **Test after each:** Verify existing functionality unchanged
+- [ ] **Repeat until:** All critical functions extracted safely
+- [ ] **Apply Standard Testing Workflow** ⬆️ after each function extraction
+
+### Step 2.5: Create ONE Test Section Page  
 - [ ] **CRITICAL:** Start with Device section (simplest, most fundamental)
 - [ ] Create `device.html` with navigation back to main settings
 - [ ] Create focused `page-device.js` Alpine store with:
@@ -256,6 +258,6 @@
 4. **Focused:** Each phase has a single concern (build, JS, HTML, optimization)
 5. **Proven:** Based on failed attempt analysis - avoids previous pitfalls
 
-**Next Step:** Phase 2.1 - Extract Settings API Layer (create reusable HTTP functions and utilities)
+**Next Step:** Phase 2.1 - Create Utils Directory Structure (minimal, safe start to API extraction)
 
 **Future Vision:** After completing settings refactor (Phases 1-4), Phase 5 will create a new comprehensive refactor plan for index, diagnostics, and 404 pages based on lessons learned and proven patterns.
