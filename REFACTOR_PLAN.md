@@ -36,10 +36,10 @@
 - [x] Extract `showErrorMessage` utility within main store
 - [x] Verify internal function extraction works
 
-### Step 2.3: Organize API Functions 
-- [ ] Group device API functions within main store
-- [ ] Organize by concern: device, WiFi, MQTT, LEDs, memos, etc.
-- [ ] Test each group after organization
+### Step 2.3: Organize API Functions ✅ COMPLETED
+- [x] Group API functions within main store by concern
+- [x] Add section headers: DEVICE, WIFI, LED, MQTT, SYSTEM/PRINTING, UTILITIES  
+- [x] Verify build and functionality preserved
 
 ---
 
@@ -49,9 +49,10 @@
 ### Step 3.1: Create Test Page (Device)
 - [ ] Create standalone `device.html` page with navigation
 - [ ] Create focused `page-device.js` Alpine store
-- [ ] Copy organized functions from main store (code duplication)
-- [ ] Test complete device functionality
-- [ ] Verify proof of concept for page separation
+- [ ] Copy organized DEVICE CONFIGURATION API functions from main store
+- [ ] Include UTILITY FUNCTIONS section (showErrorMessage)
+- [ ] Test complete device functionality: owner, timezone, GPIO pins
+- [ ] Verify proof of concept for page separation with organized code
 
 ### Standard Section Pattern
 1. Create `[section].html` + `page-[section].js` (Alpine store with copied functions)
@@ -103,8 +104,9 @@
 1. **Code changes** - Implement functionality
 2. **Build frontend** - `npm run build-js-settings` or `npm run build`
 3. **Test with mock server** - `node mock-server/mock-api.js`
-4. **Git commit** - Clear commit message  
-5. **STOP** - Verify 100% before proceeding
+4. **Verify functionality** - Test all affected features work correctly
+5. **Git commit** - Clear commit message with detailed summary
+6. **STOP** - Verify 100% before proceeding
 
 ### Core Principles
 - **One step at a time** - Complete fully before proceeding
@@ -119,4 +121,4 @@
 - No regressions in UX
 - ESP32 memory usage unchanged
 
-**Next Step:** Phase 2.3 - Organize API Functions
+**Next Step:** Phase 3.1 - Create Test Page (Device)
