@@ -409,37 +409,30 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Validate required top-level sections exist (memos now handled separately)
-    const char *requiredSections[] = {"device", "mqtt", "unbiddenInk", "buttons", "leds"};
-    for (int i = 0; i < 5; i++)
-    {
-        if (!doc.containsKey(requiredSections[i]))
+    // Load current configuration for partial updates
+    RuntimeConfig newConfig = getRuntimeConfig();
+    
+    // Support partial updates - only process sections that are present
+    // Frontend validation ensures required fields within sections
+
+    // Validate and extract device configuration (if present)
+    if (doc.containsKey("device")) {
+        JsonObject device = doc["device"];
+        if (!device.containsKey("owner") || !device.containsKey("timezone"))
         {
-            sendValidationError(request, ValidationResult(false, "Missing required section: " + String(requiredSections[i])));
+            sendValidationError(request, ValidationResult(false, "Missing required device configuration fields"));
             return;
         }
-    }
 
-    // Create new runtime configuration from JSON
-    RuntimeConfig newConfig;
-
-    // Validate and extract device configuration
-    JsonObject device = doc["device"];
-    if (!device.containsKey("owner") || !device.containsKey("timezone"))
-    {
-        sendValidationError(request, ValidationResult(false, "Missing required device configuration fields"));
-        return;
-    }
-
-    String owner = device["owner"];
-    String timezone = device["timezone"];
-    if (owner.length() == 0 || timezone.length() == 0)
-    {
-        sendValidationError(request, ValidationResult(false, "Device owner and timezone cannot be empty"));
-        return;
-    }
-    newConfig.deviceOwner = owner;
-    newConfig.timezone = timezone;
+        String owner = device["owner"];
+        String timezone = device["timezone"];
+        if (owner.length() == 0 || timezone.length() == 0)
+        {
+            sendValidationError(request, ValidationResult(false, "Device owner and timezone cannot be empty"));
+            return;
+        }
+        newConfig.deviceOwner = owner;
+        newConfig.timezone = timezone;
     
     // Parse printer TX GPIO configuration
     if (device.containsKey("printerTxPin")) {
@@ -492,9 +485,11 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
     newConfig.wifiConnectTimeoutMs = wifi["connect_timeout"] | wifiConnectTimeoutMs;
+    } // End device section
 
-    // MQTT configuration (top-level section)
-    JsonObject mqtt = doc["mqtt"];
+    // MQTT configuration (top-level section, if present)
+    if (doc.containsKey("mqtt")) {
+        JsonObject mqtt = doc["mqtt"];
     
     // Extract MQTT enabled flag
     newConfig.mqttEnabled = mqtt["enabled"] | false;
@@ -540,9 +535,11 @@ void handleConfigPost(AsyncWebServerRequest *request)
         newConfig.mqttUsername = currentConfig.mqttUsername;
         newConfig.mqttPassword = currentConfig.mqttPassword;
     }
+    } // End MQTT section
 
-    // Validate unbidden ink configuration
-    JsonObject unbiddenInk = doc["unbiddenInk"];
+    // Validate unbidden ink configuration (if present)
+    if (doc.containsKey("unbiddenInk")) {
+        JsonObject unbiddenInk = doc["unbiddenInk"];
     if (!unbiddenInk.containsKey("enabled"))
     {
         sendValidationError(request, ValidationResult(false, "Missing required Unbidden Ink 'enabled' field"));
@@ -622,8 +619,9 @@ void handleConfigPost(AsyncWebServerRequest *request)
         newConfig.chatgptApiToken = currentConfig.chatgptApiToken;
         LOG_VERBOSE("WEB", "ChatGPT API token not provided, preserving existing value");
     }
+    } // End unbidden ink section
 
-    // Non-user configurable APIs remain as constants
+    // Non-user configurable APIs remain as constants (always set regardless of sections present)
     newConfig.jokeAPI = jokeAPI;
     newConfig.quoteAPI = quoteAPI;
     newConfig.triviaAPI = triviaAPI;
@@ -633,8 +631,9 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // Memos are now handled by separate /api/memos endpoint
 
-    // Validate button configuration (exactly 4 buttons)
-    JsonObject buttons = doc["buttons"];
+    // Validate button configuration (exactly 4 buttons, if present)
+    if (doc.containsKey("buttons")) {
+        JsonObject buttons = doc["buttons"];
     const char *buttonKeys[] = {"button1", "button2", "button3", "button4"};
     const char *validActions[] = {"JOKE", "RIDDLE", "QUOTE", "QUIZ", "NEWS", "CHARACTER_TEST", "UNBIDDEN_INK", "MEMO1", "MEMO2", "MEMO3", "MEMO4", ""};
 
@@ -750,10 +749,12 @@ void handleConfigPost(AsyncWebServerRequest *request)
         newConfig.buttonShortLedEffects[i] = shortLedEffect;
         newConfig.buttonLongLedEffects[i] = longLedEffect;
     }
+    } // End buttons section
 
 #if ENABLE_LEDS
-    // Validate LED configuration with new autonomous structure
-    JsonObject leds = doc["leds"];
+    // Validate LED configuration with new autonomous structure (if present)
+    if (doc.containsKey("leds")) {
+        JsonObject leds = doc["leds"];
     if (!leds.containsKey("pin") || !leds.containsKey("count") ||
         !leds.containsKey("brightness") || !leds.containsKey("refreshRate"))
     {
@@ -866,6 +867,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // Load LED effects configuration (simplified for now)
     newConfig.ledEffects = getDefaultLedEffectsConfig(); // TODO: Parse effects from JSON
+    } // End LEDs section
 #endif
 
     // Check if MQTT enabled state changed
