@@ -684,13 +684,10 @@ function initializeSettingsStore() {
                     throw new Error('Fallback AP credentials not available from backend');
                 }
                 
-                // Always have mDNS, optionally have IP as fallback
+                // In AP mode, only use direct IP - mDNS doesn't work
                 let urlLine = '';
-                if (fallbackMDNS && fallbackIP) {
-                    urlLine = `http://${fallbackMDNS}\n(or http://${fallbackIP})`;
-                } else if (fallbackMDNS) {
-                    // mDNS only (normal case when not in AP mode)
-                    urlLine = `http://${fallbackMDNS}`;
+                if (fallbackIP) {
+                    urlLine = `http://${fallbackIP}`;
                 } else {
                     throw new Error('No AP access URL available from backend');
                 }

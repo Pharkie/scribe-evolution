@@ -410,21 +410,16 @@ String generateNewsContent(int timeoutMs)
 
 String generateAPDetailsContent()
 {
-    // Build the same message as used in settings-alpine-store.js (DRY principle)
+    // Build AP mode setup message - only uses IP address since mDNS doesn't work in AP mode
     String ssid = fallbackAPSSID;
     String password = fallbackAPPassword;
-    String mdnsHostname = String(getMdnsHostname()) + ".local";
     String apIP = WiFi.softAPIP().toString();
 
-    // Build URL line - same logic as JavaScript version
+    // In AP mode, only use direct IP - mDNS doesn't work
     String urlLine = "";
-    if (mdnsHostname.length() > 0 && apIP.length() > 0)
+    if (apIP.length() > 0)
     {
-        urlLine = "http://" + mdnsHostname + "\n(or http://" + apIP + ")";
-    }
-    else if (mdnsHostname.length() > 0)
-    {
-        urlLine = "http://" + mdnsHostname;
+        urlLine = "http://" + apIP;
     }
     else
     {
