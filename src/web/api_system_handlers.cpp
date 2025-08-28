@@ -267,14 +267,25 @@ void handleWiFiScan(AsyncWebServerRequest *request)
         return;
     }
 
+    // Check if we're in AP mode - scanning might not work properly
+    if (WiFi.getMode() == WIFI_AP)
+    {
+        LOG_WARNING("WEB", "WiFi scan requested while in AP mode - may have limited results");
+    }
+
     // Start scanning for networks
     int networkCount = WiFi.scanNetworks();
 
     if (networkCount == WIFI_SCAN_FAILED)
     {
-        LOG_ERROR("WEB", "WiFi scan failed");
-        sendErrorResponse(request, 500, "WiFi scan failed");
+        LOG_ERROR("WEB", "WiFi scan failed - this is common in AP mode");
+        sendErrorResponse(request, 500, "WiFi scan failed - scanning may not work properly in AP mode");
         return;
+    }
+
+    if (networkCount == 0)
+    {
+        LOG_WARNING("WEB", "No networks found - this may be due to AP mode limitations");
     }
 
     // Create JSON response with scanned networks

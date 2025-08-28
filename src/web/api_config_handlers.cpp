@@ -1108,7 +1108,7 @@ void handleSetupGet(AsyncWebServerRequest *request)
     // Device section with minimal defaults
     JsonObject device = setupDoc.createNestedObject("device");
     device["owner"] = "";  // Always blank in setup mode
-    device["timezone"] = "Etc/UTC";  // Default timezone
+    device["timezone"] = defaultTimezone;  // Default from config.h
 
     // WiFi section with blanks for user input
     JsonObject wifi = device.createNestedObject("wifi");

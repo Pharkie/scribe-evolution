@@ -386,7 +386,7 @@ function createRequestHandler() {
           });
         }, 200);
         
-      } else if (pathname === '/api/scan-wifi') {
+      } else if (pathname === '/api/wifi-scan') {
         console.log('📶 WiFi scan requested');
         setTimeout(() => sendJSON(res, mockWifiScan), 800);
         

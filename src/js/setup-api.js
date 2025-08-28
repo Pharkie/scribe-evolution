@@ -65,7 +65,7 @@ window.SetupAPI = {
     async scanWiFiNetworks() {
         console.log('Setup API: Scanning WiFi networks...');
         const response = await fetch('/api/wifi-scan', {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }

@@ -52,7 +52,7 @@ document.addEventListener('alpine:init', () => {
                 
                 // Use the response directly since SetupAPI returns exactly what we need
                 this.config.device.owner = response.device?.owner || '';
-                this.config.device.timezone = response.device?.timezone || 'Etc/UTC';
+                this.config.device.timezone = response.device?.timezone || '';
                 this.config.device.wifi.ssid = response.device?.wifi?.ssid || '';
                 this.config.device.wifi.password = response.device?.wifi?.password || '';
                 
@@ -61,7 +61,7 @@ document.addEventListener('alpine:init', () => {
                 console.warn('Setup Store: Could not load setup configuration, using defaults:', error);
                 // Initialize with defaults if setup endpoint fails
                 this.config.device.owner = '';
-                this.config.device.timezone = 'Etc/UTC';
+                this.config.device.timezone = '';
                 this.config.device.wifi.ssid = '';
                 this.config.device.wifi.password = '';
             }

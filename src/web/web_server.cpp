@@ -67,6 +67,7 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
     if (uri == "/setup.html" ||
         uri == "/api/setup" ||
         uri == "/api/wifi-scan" ||
+        uri == "/api/test-route" ||
         uri.startsWith("/css/") ||
         uri.startsWith("/js/") ||
         uri.startsWith("/images/") ||
@@ -302,9 +303,6 @@ void setupWebServerRoutes(int maxChars)
             request->send(LittleFS, "/html/setup.html", "text/html");
         });
 
-        // WiFi scanning endpoint (needed for setup)
-        server.on("/api/wifi-scan", HTTP_POST, handleWiFiScan);
-
         // Setup endpoints for AP mode initial configuration
         server.on("/api/setup", HTTP_GET, handleSetupGet);
         server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request)
@@ -383,6 +381,16 @@ void setupWebServerRoutes(int maxChars)
             AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup");
             response->addHeader("Location", "http://192.168.4.1/setup.html");
             request->send(response);
+        });
+
+        // WiFi scanning endpoint (needed for setup) - register BEFORE static routes
+        LOG_NOTICE("WEB", "*** REGISTERING /api/wifi-scan handler in AP mode ***");
+        server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
+        
+        // Also test a different endpoint
+        server.on("/api/test-route", HTTP_GET, [](AsyncWebServerRequest *request) {
+            LOG_ERROR("WEB", "*** TEST ROUTE HIT ***");
+            request->send(200, "application/json", "{\"test\":\"different_route\"}");
         });
 
         // Setup static file serving
@@ -492,7 +500,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
         registerRoute("GET", "/api/memos", "Get all memos", handleMemosGet, true);
         registerRoute("POST", "/api/memos", "Update all memos", handleMemosPost, true);
-        registerRoute("GET", "/api/scan-wifi", "Scan WiFi networks", handleWiFiScan, true);
+        registerRoute("GET", "/api/wifi-scan", "Scan WiFi networks", handleWiFiScan, true);
 
 #if ENABLE_LEDS
         // Consolidated LED effect endpoints
