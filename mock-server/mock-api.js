@@ -386,6 +386,45 @@ function createRequestHandler() {
           });
         }, 200);
         
+      } else if (pathname === '/api/test-mqtt' && req.method === 'POST') {
+        console.log('🔌 MQTT connection test requested');
+        
+        // Parse request body to get connection details
+        let body = '';
+        req.on('data', chunk => body += chunk.toString());
+        req.on('end', () => {
+          try {
+            const testData = JSON.parse(body);
+            console.log(`   Testing: ${testData.server}:${testData.port} (${testData.username})`);
+            
+            // Simulate connection test with realistic delay
+            setTimeout(() => {
+              // Mock successful connection for valid-looking configs
+              const isValidConfig = testData.server && testData.port && testData.username;
+              const isFakeFailure = testData.server?.includes('fail') || testData.username === 'baduser';
+              
+              if (isValidConfig && !isFakeFailure) {
+                console.log('   ✅ MQTT test: SUCCESS');
+                sendJSON(res, {
+                  success: true,
+                  message: "Successfully connected to MQTT broker"
+                });
+              } else {
+                console.log('   ❌ MQTT test: FAILED');
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                  error: isFakeFailure ? "Invalid username or password" : "Invalid MQTT test parameters"
+                }));
+              }
+            }, 1500); // Realistic connection test delay
+            
+          } catch (err) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: "Invalid JSON in test request" }));
+          }
+        });
+        return; // Don't fall through to 404
+        
       } else if (pathname === '/api/wifi-scan') {
         console.log('📶 WiFi scan requested');
         setTimeout(() => sendJSON(res, mockWifiScan), 800);

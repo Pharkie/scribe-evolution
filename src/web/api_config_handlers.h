@@ -72,4 +72,15 @@ void handleMemosGet(AsyncWebServerRequest *request);
  */
 void handleMemosPost(AsyncWebServerRequest *request);
 
+/**
+ * @brief Handle MQTT connection test
+ * @param request The HTTP request containing MQTT connection details
+ *
+ * Endpoint: POST /api/test-mqtt
+ * Body: JSON with server, port, username, password (optional)
+ * 
+ * Tests MQTT connection without saving configuration
+ */
+void handleTestMQTT(AsyncWebServerRequest *request);
+
 #endif // API_CONFIG_HANDLERS_H

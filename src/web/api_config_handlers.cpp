@@ -1189,3 +1189,130 @@ void handleSetupGet(AsyncWebServerRequest *request)
     
     LOG_VERBOSE("WEB", "Setup configuration sent (minimal for AP mode)");
 }
+
+void handleTestMQTT(AsyncWebServerRequest *request)
+{
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    
+    LOG_VERBOSE("WEB", "handleTestMQTT() called - testing MQTT connection");
+
+    // Get request body
+    String body = getRequestBody(request);
+    if (body.length() == 0)
+    {
+        LOG_ERROR("WEB", "MQTT test request body is empty");
+        sendErrorResponse(request, 400, "Request body is empty");
+        return;
+    }
+
+    // Parse JSON - small buffer for test data
+    DynamicJsonDocument doc(512);
+    
+    LOG_VERBOSE("WEB", "MQTT test POST body: %s", body.c_str());
+    
+    DeserializationError error = deserializeJson(doc, body);
+    if (error)
+    {
+        LOG_ERROR("WEB", "MQTT test JSON deserialization failed: %s", error.c_str());
+        sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
+        return;
+    }
+
+    // Extract test parameters
+    if (!doc.containsKey("server") || !doc.containsKey("port") || !doc.containsKey("username"))
+    {
+        sendValidationError(request, ValidationResult(false, "Missing required MQTT test fields (server, port, username)"));
+        return;
+    }
+
+    String server = doc["server"];
+    int port = doc["port"];
+    String username = doc["username"];
+    String password = doc["password"] | "";
+
+    if (server.length() == 0 || port < 1 || port > 65535)
+    {
+        sendValidationError(request, ValidationResult(false, "Invalid MQTT test parameters"));
+        return;
+    }
+
+    LOG_NOTICE("WEB", "Testing MQTT connection to %s:%d with username: %s", server.c_str(), port, username.c_str());
+
+    // Create temporary MQTT client for testing
+    WiFiClientSecure testWifiClient;
+    testWifiClient.setInsecure(); // Same TLS config as main client
+    
+    PubSubClient testMqttClient(testWifiClient);
+    testMqttClient.setServer(server.c_str(), port);
+    testMqttClient.setBufferSize(1024); // Smaller buffer for test
+    
+    // Generate unique client ID for test
+    String clientId = "ScribeTest_" + String(random(0xffff), HEX);
+    
+    // Attempt connection
+    bool connected = false;
+    if (password.length() > 0)
+    {
+        connected = testMqttClient.connect(clientId.c_str(), username.c_str(), password.c_str());
+    }
+    else
+    {
+        connected = testMqttClient.connect(clientId.c_str(), username.c_str(), "");
+    }
+    
+    DynamicJsonDocument response(256);
+    
+    if (connected)
+    {
+        LOG_NOTICE("WEB", "MQTT test connection successful");
+        response["success"] = true;
+        response["message"] = "Successfully connected to MQTT broker";
+        testMqttClient.disconnect(); // Clean disconnect
+        
+        String responseStr;
+        serializeJson(response, responseStr);
+        
+        AsyncWebServerResponse *res = request->beginResponse(200, "application/json", responseStr);
+        res->addHeader("Access-Control-Allow-Origin", "*");
+        request->send(res);
+    }
+    else
+    {
+        int state = testMqttClient.state();
+        String errorMsg = "Connection failed (code: " + String(state) + ")";
+        
+        switch(state)
+        {
+            case MQTT_CONNECTION_TIMEOUT:
+                errorMsg = "Connection timeout - check server address and port";
+                break;
+            case MQTT_CONNECTION_LOST:
+                errorMsg = "Connection lost during handshake";
+                break;
+            case MQTT_CONNECT_FAILED:
+                errorMsg = "Network connection failed";
+                break;
+            case MQTT_DISCONNECTED:
+                errorMsg = "Disconnected - check network connectivity";
+                break;
+            case MQTT_CONNECT_BAD_PROTOCOL:
+                errorMsg = "Bad protocol version";
+                break;
+            case MQTT_CONNECT_BAD_CLIENT_ID:
+                errorMsg = "Bad client ID";
+                break;
+            case MQTT_CONNECT_UNAVAILABLE:
+                errorMsg = "Server unavailable";
+                break;
+            case MQTT_CONNECT_BAD_CREDENTIALS:
+                errorMsg = "Invalid username or password";
+                break;
+            case MQTT_CONNECT_UNAUTHORIZED:
+                errorMsg = "Client not authorized";
+                break;
+        }
+        
+        LOG_WARNING("WEB", "MQTT test connection failed: %s", errorMsg.c_str());
+        sendErrorResponse(request, 400, errorMsg);
+    }
+}

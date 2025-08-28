@@ -1180,7 +1180,10 @@ ${urlLine}`;
             // All memos must be within character limits
             const memosValid = this.canSaveAllMemos;
             
-            return hasRequiredFields && memosValid;
+            // If MQTT is enabled, test must have passed
+            const mqttValid = !this.config?.mqtt?.enabled || this.mqttTestPassed;
+            
+            return hasRequiredFields && memosValid && mqttValid;
         },
         
         // Get all currently used GPIO pins for conflict detection
@@ -1579,7 +1582,73 @@ ${urlLine}`;
                 return ['Color 1'];
             }
         },
+        
+        // Test MQTT connection
+        async testMQTTConnection() {
+            this.mqttTesting = true;
+            this.mqttTestResult = null;
+            
+            try {
+                const testData = {
+                    server: this.config.mqtt.server,
+                    port: this.config.mqtt.port,
+                    username: this.config.mqtt.username
+                };
+                
+                // Include password if modified
+                if (this.passwordsModified.mqttPassword && this.config.mqtt.password) {
+                    testData.password = this.config.mqtt.password;
+                }
+                
+                const response = await fetch('/api/test-mqtt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    this.mqttTestResult = {
+                        success: true,
+                        message: result.message || 'Successfully connected to MQTT broker'
+                    };
+                    this.mqttTestPassed = true;
+                } else {
+                    this.mqttTestResult = {
+                        success: false,
+                        message: result.error || 'Connection test failed'
+                    };
+                    this.mqttTestPassed = false;
+                }
+            } catch (error) {
+                console.error('MQTT test error:', error);
+                this.mqttTestResult = {
+                    success: false,
+                    message: 'Network error during connection test'
+                };
+                this.mqttTestPassed = false;
+            } finally {
+                this.mqttTesting = false;
+            }
+        },
+        
+        // Reset MQTT test state when configuration changes
+        resetMQTTTestState() {
+            this.mqttTestPassed = false;
+            this.mqttTestResult = null;
+        },
     };
+    
+    // Add watchers for MQTT config changes to reset test state
+    Alpine.effect(() => {
+        if (store.config?.mqtt?.server || store.config?.mqtt?.port || store.config?.mqtt?.username) {
+            // MQTT config changed, reset test state
+            store.resetMQTTTestState();
+        }
+    });
     
     // Don't register store here - it will be registered globally
     
