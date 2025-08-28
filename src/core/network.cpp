@@ -73,9 +73,16 @@ WiFiConnectionMode connectToWiFi()
     String password = config.wifiPassword;
     unsigned long timeout = config.wifiConnectTimeoutMs;
 
+    // Debug logging to see what was loaded
+    Serial.println("🔍 WiFi Connection Debug:");
+    Serial.println("SSID: '" + ssid + "' (length: " + String(ssid.length()) + ")");
+    Serial.println("Password: '" + String(password.length() > 0 ? "[HIDDEN]" : "[EMPTY]") + "' (length: " + String(password.length()) + ")");
+    Serial.println("Timeout: " + String(timeout) + "ms");
+
     if (ssid.length() == 0)
     {
         // No WiFi SSID configured, starting fallback AP mode
+        Serial.println("❌ No SSID configured - starting AP mode");
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
