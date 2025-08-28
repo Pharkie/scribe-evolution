@@ -59,6 +59,7 @@
   - **WiFi section** - WiFi networks, AP mode, network configuration  
 - [ ] Update current Alpine store to handle separated sections
 - [ ] Test that both sections work in current monolithic settings page
+- [ ] **Test with mock server:** `node mock-server/mock-api.js` - verify WiFi section appears and functions
 - [ ] **Git commit:** "Separate WiFi into distinct section in current settings"
 
 ### Step 2.1: Extract Settings API Layer
@@ -76,6 +77,7 @@
   - `settings-system-api.js` - restart, factory reset, NVS HTTP calls
 - [ ] Extract API functions from monolithic store, keeping them **stateless**
 - [ ] Test all API functionality works independently (can be unit tested)
+- [ ] **Test with mock server:** Verify extracted APIs work with existing settings page
 - [ ] **Git commit:** "Extract API layer and utilities for settings modularization"
 
 ### Step 2.2: Test Extracted Components
@@ -84,6 +86,7 @@
   - System utilities from `utils/system-utils.js` (GPIO, time, validation, colors)
 - [ ] Test all section APIs import and use utils correctly
 - [ ] Ensure no circular dependencies or missing imports
+- [ ] **Test with mock server:** Verify all extracted components integrate properly
 - [ ] **Git commit:** "Verify extracted API and utility components"
 
 ### Step 2.3: Create ONE Test Section Page  
@@ -96,6 +99,7 @@
   - **PURE ALPINE PATTERNS** - No script tags, no hacks, proper stores/reactivity
 - [ ] Alpine store calls API functions but handles **no HTTP directly**
 - [ ] Test EVERYTHING: save, load, validation, navigation, error handling
+- [ ] **Test with mock server:** Verify standalone device page works completely
 - [ ] **Git commit:** "Add device.html as first separated settings page"
 - [ ] **STOP:** Verify this ONE page works 100% before proceeding
 
@@ -111,6 +115,7 @@
 - [ ] Create `wifi.html` + `page-wifi.js` (Alpine store + imports API modules)
 - [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
 - [ ] Test WiFi page thoroughly: scanning, connection, AP mode
+- [ ] **Test with mock server:** Verify WiFi page works as standalone
 - [ ] **Git commit:** "Add wifi.html settings page"
 - [ ] **STOP:** Verify WiFi page works 100% before proceeding
 
@@ -118,6 +123,7 @@
 - [ ] Create `mqtt.html` + `page-mqtt.js` (Alpine store + imports API modules)
 - [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
 - [ ] Test MQTT page thoroughly: configuration, connection testing
+- [ ] **Test with mock server:** Verify MQTT page works as standalone
 - [ ] **Git commit:** "Add mqtt.html settings page"
 - [ ] **STOP:** Verify MQTT page works 100% before proceeding
 
@@ -125,6 +131,7 @@
 - [ ] Create `leds.html` + `page-leds.js` (Alpine store + imports API modules)
 - [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
 - [ ] Test LEDs page thoroughly: effects, colors, GPIO validation
+- [ ] **Test with mock server:** Verify LEDs page works as standalone
 - [ ] **Git commit:** "Add leds.html settings page"
 - [ ] **STOP:** Verify LEDs page works 100% before proceeding
 
@@ -132,6 +139,7 @@
 - [ ] Create `memos.html` + `page-memos.js` (Alpine store + imports API modules)
 - [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
 - [ ] Test Memos page thoroughly: content save/load
+- [ ] **Test with mock server:** Verify Memos page works as standalone
 - [ ] **Git commit:** "Add memos.html settings page"
 - [ ] **STOP:** Verify Memos page works 100% before proceeding
 
@@ -139,6 +147,7 @@
 - [ ] Create `unbidden-ink.html` + `page-unbidden-ink.js` (Alpine store + imports API modules)
 - [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
 - [ ] Test Unbidden Ink page thoroughly: AI configuration, scheduling
+- [ ] **Test with mock server:** Verify Unbidden Ink page works as standalone
 - [ ] **Git commit:** "Add unbidden-ink.html settings page"
 - [ ] **STOP:** Verify Unbidden Ink page works 100% before proceeding
 
@@ -146,6 +155,7 @@
 - [ ] Create `buttons.html` + `page-buttons.js` (Alpine store + imports API modules)
 - [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
 - [ ] Test Buttons page thoroughly: GPIO configuration, actions
+- [ ] **Test with mock server:** Verify Buttons page works as standalone
 - [ ] **Git commit:** "Add buttons.html settings page"
 - [ ] **STOP:** Verify Buttons page works 100% before proceeding
 
@@ -153,6 +163,7 @@
 - [ ] Create `system.html` + `page-system.js` (Alpine store + imports API modules)
 - [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
 - [ ] Test System page thoroughly: restart, factory reset, NVS operations
+- [ ] **Test with mock server:** Verify System page works as standalone
 - [ ] **Git commit:** "Add system.html settings page"
 - [ ] **STOP:** Verify System page works 100% before proceeding
 
@@ -161,6 +172,7 @@
 - [ ] Add breadcrumb navigation to all pages
 - [ ] Implement state preservation between page transitions
 - [ ] Add "Overview" main settings page with section links
+- [ ] **Test with mock server:** Verify navigation between all pages works perfectly
 - [ ] **Git commit:** "Add client-side navigation for settings pages"
 
 ### Step 3.9: Remove Monolithic Files (FINAL STEP)
@@ -168,6 +180,7 @@
 - [ ] Remove old settings-alpine-store.js monolith
 - [ ] Update main settings.html to redirect to overview page
 - [ ] Clean up unused partials if desired
+- [ ] **Test with mock server:** Final verification that entire system works
 - [ ] **Git commit:** "Complete settings page architecture refactor"
 
 ---
