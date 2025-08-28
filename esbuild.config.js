@@ -196,6 +196,25 @@ const buildConfigs = {
     output: 'data/js/page-404.min.js',
     minify: true,
   },
+
+  // Device settings page
+  device: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-device.js'
+    ],
+    output: 'data/js/page-settings-device.js',
+    minify: false,
+  },
+
+  deviceProd: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-device.js'
+    ],
+    output: 'data/js/page-settings-device.min.js',
+    minify: true,
+  },
 };
 
 // Build functions

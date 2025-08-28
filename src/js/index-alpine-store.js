@@ -619,7 +619,7 @@ function initializeIndexStore() {
     
     // Navigation
     goToSettings() {
-      window.location.href = '/settings.html';
+      window.location.href = '/settings/device.html'; // Step 3.1 test: redirect to device page
     },
     
     // === Memo Functions ===

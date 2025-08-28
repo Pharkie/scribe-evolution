@@ -48,14 +48,14 @@
 
 ### Step 3.1: Create Test Page (Device)
 - [ ] Create standalone `device.html` page with navigation
-- [ ] Create focused `page-device.js` Alpine store
+- [ ] Create focused `page-settings-device.js` Alpine store
 - [ ] Copy organized DEVICE CONFIGURATION API functions from main store
 - [ ] Include UTILITY FUNCTIONS section (showErrorMessage)
 - [ ] Test complete device functionality: owner, timezone, GPIO pins
 - [ ] Verify proof of concept for page separation with organized code
 
 ### Standard Section Pattern
-1. Create `[section].html` + `page-[section].js` (Alpine store with copied functions)
+1. Create `[section].html` + `page-settings-[section].js` (Alpine store with copied functions)
 2. Alpine store: state + UI logic + API functions (code duplication)
 3. Test section page thoroughly
 4. Verify 100% functionality before next page
@@ -105,8 +105,10 @@
 2. **Build frontend** - `npm run build-js-settings` or `npm run build`
 3. **Test with mock server** - `node mock-server/mock-api.js`
 4. **Verify functionality** - Test all affected features work correctly
-5. **Git commit** - Clear commit message with detailed summary
-6. **STOP** - Verify 100% before proceeding
+5. **Live device testing** - Invite Adam to deploy to ESP32 and verify on actual hardware (end of phases)
+6. **Update REFACTOR_PLAN.md** - Mark step completed, update next step
+7. **Git commit** - Clear commit message with detailed summary
+8. **STOP** - Verify 100% before proceeding
 
 ### Core Principles
 - **One step at a time** - Complete fully before proceeding
@@ -114,6 +116,7 @@
 - **Alpine.js patterns only** - No hacks, use built-in reactivity
 - **Fail fast** - No fallback values, let Alpine handle missing data
 - **Test everything** - Every endpoint, form, validation
+- **Live device testing** - Required at end of each phase for hardware-dependent features
 
 ### Success Criteria
 - All settings functionality identical to current
