@@ -76,11 +76,15 @@ void handlePrinterUpdates(AsyncWebServerRequest *request);
 void handleCaptivePortal(AsyncWebServerRequest *request);
 
 /**
+ * @brief Helper function for handling chunked uploads (DRY principle)
+ */
+void handleChunkedUpload(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
+/**
  * @brief Check if current request should be redirected to settings in AP mode
  * @param request The request to check
  * @return true if redirect is needed
  */
-bool shouldRedirectToSettings(AsyncWebServerRequest *request);
 
 /**
  * @brief Helper function to recursively list directory contents for debugging

@@ -58,16 +58,12 @@ Message currentMessage = {"", "", false};
  */
 void handleCaptivePortal(AsyncWebServerRequest *request)
 {
-    // Check if this is already a settings-related request
     String uri = request->url();
-    String host = request->getHeader("Host") ? request->getHeader("Host")->value() : "unknown";
 
-    LOG_VERBOSE("CAPTIVE", "Captive portal request: Host=%s, URI=%s", host.c_str(), uri.c_str());
-
+    // Allow essential requests to proceed normally
     if (uri == "/setup.html" ||
         uri == "/api/setup" ||
         uri == "/api/wifi-scan" ||
-        uri == "/api/test-route" ||
         uri.startsWith("/css/") ||
         uri.startsWith("/js/") ||
         uri.startsWith("/images/") ||
@@ -77,56 +73,13 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         uri == "/apple-touch-icon.png" ||
         uri == "/site.webmanifest")
     {
-        // Let these requests proceed normally (will result in 404 if not found)
-        LOG_VERBOSE("CAPTIVE", "Allowing request to proceed: %s", uri.c_str());
-        return;
+        return; // Let these proceed normally
     }
 
-    // Handle captive portal detection requests with full URL redirect
-    String setupUrl = "http://192.168.4.1/setup.html";
-    
-    if (uri == "/hotspot-detect.html" ||
-        uri == "/generate_204" ||
-        uri == "/connecttest.txt" ||
-        uri == "/redirect" ||
-        uri.startsWith("/fwlink"))
-    {
-        LOG_VERBOSE("CAPTIVE", "OS captive portal detection URL: %s", uri.c_str());
-        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to WiFi configuration");
-        response->addHeader("Location", setupUrl);
-        request->send(response);
-        return;
-    }
-
-    LOG_VERBOSE("CAPTIVE", "Redirecting general request to setup: %s", uri.c_str());
-
-    // Redirect to setup page with full URL
-    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup page...");
-    response->addHeader("Location", setupUrl);
+    // Redirect everything else to setup page
+    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+    response->addHeader("Location", "http://192.168.4.1/setup.html");
     request->send(response);
-}
-
-/**
- * @brief Check if request should be redirected in AP mode
- * @return true if request needs captive portal redirect
- */
-bool shouldRedirectToSettings(AsyncWebServerRequest *request)
-{
-    if (!isAPMode())
-        return false;
-
-    String uri = request->url();
-    // Allow settings page and its dependencies
-    return !(uri.startsWith("/settings") ||
-             uri.startsWith("/config") ||
-             uri.startsWith("/css/") ||
-             uri.startsWith("/js/") ||
-             uri.startsWith("/images/") ||
-             uri == "/favicon.ico" ||
-             uri == "/favicon.svg" ||
-             uri == "/favicon-96x96.png" ||
-             uri == "/apple-touch-icon.png" ||
-             uri == "/site.webmanifest");
 }
 
 // Helper functions for POST body handling using request's built-in storage
@@ -148,6 +101,24 @@ String getRequestBody(AsyncWebServerRequest *request)
         return body;
     }
     return "";
+}
+
+// Helper function for chunked upload handling (DRY principle)
+void handleChunkedUpload(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+    String *bodyPtr = static_cast<String*>(request->_tempObject);
+    if (index == 0) {
+        // First chunk - create new string
+        if (bodyPtr) delete bodyPtr;
+        bodyPtr = new String();
+        request->_tempObject = bodyPtr;
+        bodyPtr->reserve(total); // Reserve space for entire body
+    }
+    
+    // Append this chunk
+    for (size_t i = 0; i < len; i++) {
+        *bodyPtr += (char)data[i];
+    }
 }
 
 // ========================================
@@ -174,22 +145,7 @@ void registerRoute(const char *method, const char *path, const char *description
     else if (strcmp(method, "POST") == 0)
     {
         server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
-                  { handler(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-            // Handle chunked upload properly
-            String *bodyPtr = static_cast<String*>(request->_tempObject);
-            if (index == 0) {
-                // First chunk - create new string
-                if (bodyPtr) delete bodyPtr;
-                bodyPtr = new String();
-                request->_tempObject = bodyPtr;
-                bodyPtr->reserve(total); // Reserve space for entire body
-            }
-            
-            // Append this chunk
-            for (size_t i = 0; i < len; i++) {
-                *bodyPtr += (char)data[i];
-            } });
+                  { handler(request); }, NULL, handleChunkedUpload);
     }
 
     // Track for diagnostics
@@ -235,22 +191,7 @@ void addRegisteredRoutesToJson(JsonObject &endpoints)
 void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
 {
     server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
-              { handler(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-              {
-            // Handle chunked upload properly
-            String *bodyPtr = static_cast<String*>(request->_tempObject);
-            if (index == 0) {
-                // First chunk - create new string
-                if (bodyPtr) delete bodyPtr;
-                bodyPtr = new String();
-                request->_tempObject = bodyPtr;
-                bodyPtr->reserve(total); // Reserve space for entire body
-            }
-            
-            // Append this chunk
-            for (size_t i = 0; i < len; i++) {
-                *bodyPtr += (char)data[i];
-            } });
+              { handler(request); }, NULL, handleChunkedUpload);
 }
 
 // Helper function to setup static file serving (DRY principle)
@@ -275,9 +216,12 @@ void setupWebServerRoutes(int maxChars)
     // Store the maxChars value for validation
     setMaxCharacters(maxChars);
 
-    if (isAPMode()) {
+    if (isAPMode())
+    {
         LOG_NOTICE("WEB", "Setting up captive portal for AP mode setup");
-    } else {
+    }
+    else
+    {
         LOG_NOTICE("WEB", "Setting up web server routes for WiFi mode");
     }
 
@@ -286,112 +230,23 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up captive portal for AP mode");
 
-        // Redirect settings.html to setup.html in AP mode
-        server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup page...");
-            response->addHeader("Location", "/setup.html");
-            request->send(response);
-        });
-        
         // Setup page (only available in AP mode)
         server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
-        {
+                  {
             if (!isAPMode()) {
                 request->send(LittleFS, "/html/404.html", "text/html", 404);
                 return;
             }
-            request->send(LittleFS, "/html/setup.html", "text/html");
-        });
+            request->send(LittleFS, "/html/setup.html", "text/html"); });
 
         // Setup endpoints for AP mode initial configuration
         server.on("/api/setup", HTTP_GET, handleSetupGet);
         server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleSetupPost(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-            // Handle chunked upload properly
-            String *bodyPtr = static_cast<String*>(request->_tempObject);
-            if (index == 0) {
-                // First chunk - create new string
-                if (bodyPtr) delete bodyPtr;
-                bodyPtr = new String();
-                request->_tempObject = bodyPtr;
-                bodyPtr->reserve(total); // Reserve space for entire body
-            }
-            
-            // Append this chunk
-            for (size_t i = 0; i < len; i++) {
-                *bodyPtr += (char)data[i];
-            } });
+                  { handleSetupPost(request); }, NULL, handleChunkedUpload);
 
-#if ENABLE_LEDS
-        // LED endpoints for AP mode
-        server.on("/api/led-effect", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleLedEffect(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-            // Handle chunked upload properly
-            String *bodyPtr = static_cast<String*>(request->_tempObject);
-            if (index == 0) {
-                // First chunk - create new string
-                if (bodyPtr) delete bodyPtr;
-                bodyPtr = new String();
-                request->_tempObject = bodyPtr;
-                bodyPtr->reserve(total); // Reserve space for entire body
-            }
-            
-            // Append this chunk
-            for (size_t i = 0; i < len; i++) {
-                *bodyPtr += (char)data[i];
-            } });
-        server.on("/api/leds-off", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleLedOff(request); }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-                  {
-            // Handle chunked upload properly
-            String *bodyPtr = static_cast<String*>(request->_tempObject);
-            if (index == 0) {
-                // First chunk - create new string
-                if (bodyPtr) delete bodyPtr;
-                bodyPtr = new String();
-                request->_tempObject = bodyPtr;
-                bodyPtr->reserve(total); // Reserve space for entire body
-            }
-            
-            // Append this chunk
-            for (size_t i = 0; i < len; i++) {
-                *bodyPtr += (char)data[i];
-            } });
-#endif
 
-        // Add explicit handlers for common captive portal detection URLs
-        server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
-            LOG_VERBOSE("CAPTIVE", "Android captive portal detection: /generate_204");
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup");
-            response->addHeader("Location", "http://192.168.4.1/setup.html");
-            request->send(response);
-        });
-        
-        server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            LOG_VERBOSE("CAPTIVE", "iOS captive portal detection: /hotspot-detect.html");
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup");
-            response->addHeader("Location", "http://192.168.4.1/setup.html");
-            request->send(response);
-        });
-        
-        server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
-            LOG_VERBOSE("CAPTIVE", "Windows captive portal detection: /connecttest.txt");
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup");
-            response->addHeader("Location", "http://192.168.4.1/setup.html");
-            request->send(response);
-        });
-
-        // WiFi scanning endpoint (needed for setup) - register BEFORE static routes
-        LOG_NOTICE("WEB", "*** REGISTERING /api/wifi-scan handler in AP mode ***");
+        // WiFi scanning endpoint (needed for setup)
         server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
-        
-        // Also test a different endpoint
-        server.on("/api/test-route", HTTP_GET, [](AsyncWebServerRequest *request) {
-            LOG_ERROR("WEB", "*** TEST ROUTE HIT ***");
-            request->send(200, "application/json", "{\"test\":\"different_route\"}");
-        });
 
         // Setup static file serving
         setupStaticRoutes();
@@ -427,14 +282,14 @@ void setupWebServerRoutes(int maxChars)
         registeredRoutes.push_back({"GET", "/apple-touch-icon.png", "Apple touch icon", false});
         registeredRoutes.push_back({"GET", "/site.webmanifest", "Web app manifest", false});
 
-        // Root redirect to main interface  
+        // Root redirect to main interface
         registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/index.html", "text/html"); }, false);
 
         // HTML pages served at root level (settings.html, diagnostics.html, etc.)
         registerRoute("GET", "/settings.html", "Configuration settings", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/settings.html", "text/html"); }, false);
-        
+
         registerRoute("GET", "/diagnostics.html", "System diagnostics", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/diagnostics.html", "text/html"); }, false);
 
@@ -463,36 +318,19 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("POST", "/api/poke", "Send poke message", handlePoke, true);
         registerRoute("POST", "/api/unbidden-ink", "Trigger unbidden ink", handleUnbiddenInk, true);
         registerRoute("POST", "/api/user-message", "Send user message", handleUserMessage, true);
-        
+
         // Memo API endpoints - registered later with other handlers
-        
+
         // Individual memo operations - using path parameters
-        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            handleMemoGet(request);
-        });
-        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request) {
-            handleMemoUpdate(request);
-        }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-            // Handle chunked upload properly
-            String *bodyPtr = static_cast<String*>(request->_tempObject);
-            if (index == 0) {
-                // First chunk - create new string
-                if (bodyPtr) delete bodyPtr;
-                bodyPtr = new String();
-                request->_tempObject = bodyPtr;
-                bodyPtr->reserve(total); // Reserve space for entire body
-            }
-            
-            // Append this chunk
-            for (size_t i = 0; i < len; i++) {
-                *bodyPtr += (char)data[i];
-            }
-        });
-        
-        // Track memo routes for diagnostics  
+        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, [](AsyncWebServerRequest *request)
+                  { handleMemoGet(request); });
+        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleMemoUpdate(request); }, NULL, handleChunkedUpload);
+
+        // Track memo routes for diagnostics
         registeredRoutes.push_back({"GET", "/api/memo/{id}", "Get processed memo content", true});
         registeredRoutes.push_back({"POST", "/api/memo/{id}", "Update specific memo", true});
-        
+
         registerRoute("GET", "/api/diagnostics", "System diagnostics", handleDiagnostics, true);
         registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump", handleNVSDump, true);
         registerRoute("POST", "/api/print-mqtt", "Send MQTT message", handleMQTTSend, true);
