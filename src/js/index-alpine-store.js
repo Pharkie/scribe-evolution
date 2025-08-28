@@ -619,7 +619,7 @@ function initializeIndexStore() {
     
     // Navigation
     goToSettings() {
-      window.location.href = '/settings.html'; // Original monolithic settings page (restored)
+      window.location.href = '/settings.html'; // New modular settings overview page
     },
     
     // === Memo Functions ===

@@ -172,6 +172,50 @@ function initializeDeviceSettingsStore() {
         },
 
         // ================== GPIO MANAGEMENT ==================
+        // Get what each GPIO pin is assigned to (reactive getter)
+        getGpioAssignment(pinNumber) {
+            if (pinNumber === -1 || pinNumber === null) return null;
+            
+            const pin = Number(pinNumber);
+            
+            // Check printer TX pin (reactive dependency)
+            if (this.config.device.printerTxPin === pin) {
+                return 'Assigned to printer';
+            }
+            
+            // Check LED strip pin (reactive dependency) 
+            if (this.config.leds?.pin === pin) {
+                return 'Assigned to LED strip';
+            }
+            
+            // Check button pins (reactive dependency)
+            for (let i = 1; i <= 4; i++) {
+                if (this.config.buttons[`button${i}`]?.gpio === pin) {
+                    return `Assigned to button ${i}`;
+                }
+            }
+            
+            return null;
+        },
+
+        // Get formatted text for GPIO option (reactive)
+        getGpioOptionText(option) {
+            if (option.pin === -1) return 'Not connected';
+            
+            let text = `GPIO ${option.pin} - ${option.description}`;
+            if (!option.isSafe) text += ' (Unsafe)';
+            
+            // Direct config access for Alpine reactivity
+            if (this.config.device.printerTxPin === option.pin) text += ' (Assigned to printer)';
+            else if (this.config.leds?.pin === option.pin) text += ' (Assigned to LED strip)';
+            else if (this.config.buttons?.button1?.gpio === option.pin) text += ' (Assigned to button 1)';
+            else if (this.config.buttons?.button2?.gpio === option.pin) text += ' (Assigned to button 2)';
+            else if (this.config.buttons?.button3?.gpio === option.pin) text += ' (Assigned to button 3)';
+            else if (this.config.buttons?.button4?.gpio === option.pin) text += ' (Assigned to button 4)';
+            
+            return text;
+        },
+
         // Get used GPIO pins to avoid conflicts
         get usedGpioPins() {
             const used = new Set();
@@ -215,16 +259,88 @@ function initializeDeviceSettingsStore() {
                     const pinNumber = Number(pin);
                     const isSafe = this.gpio.safePins.includes(pin);
                     const description = this.gpio.pinDescriptions[pin] || 'Unknown';
+                    // Force reactive dependency on config changes
                     const isUsed = this.usedGpioPins.has(pinNumber);
+                    
+                    // Calculate assignment by directly checking config (force reactivity)
+                    let assignment = null;
+                    // Direct config access for reactivity
+                    if (this.config.device.printerTxPin === pinNumber) {
+                        assignment = 'Assigned to printer';
+                    } else if (this.config.leds?.pin === pinNumber) {
+                        assignment = 'Assigned to LED strip';
+                    } else if (this.config.buttons?.button1?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 1';
+                    } else if (this.config.buttons?.button2?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 2';
+                    } else if (this.config.buttons?.button3?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 3';
+                    } else if (this.config.buttons?.button4?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 4';
+                    }
                     
                     return {
                         pin: pinNumber,
                         description: description,
                         available: isSafe && !isUsed,
                         isSafe: isSafe,
-                        inUse: isUsed
+                        inUse: isUsed,
+                        assignment: assignment
                     };
                 });
+        },
+
+        // Force reactive rebuild of GPIO options array with text updates
+        get allGpioOptionsReactive() {
+            // Force re-evaluation by accessing ALL config properties that affect text
+            const triggerUpdate = this.config.device.printerTxPin + '-' + 
+                this.config.leds?.pin + '-' + 
+                this.config.buttons?.button1?.gpio + '-' + 
+                this.config.buttons?.button2?.gpio + '-' + 
+                this.config.buttons?.button3?.gpio + '-' + 
+                this.config.buttons?.button4?.gpio;
+            
+            // Return completely new array with updated text for each option
+            return this.gpio.availablePins.map((pin, index) => {
+                const pinNumber = Number(pin);
+                const isSafe = this.gpio.safePins.includes(pin);
+                const description = this.gpio.pinDescriptions[pin] || 'Unknown';
+                const isUsed = this.usedGpioPins.has(pinNumber);
+                
+                // Build text with current assignments
+                let text;
+                if (pinNumber === -1) {
+                    text = 'Not connected';
+                } else {
+                    text = `GPIO ${pinNumber} - ${description}`;
+                    
+                    // Add assignment labels
+                    if (pinNumber === this.config.device.printerTxPin) {
+                        text += ' (Printer)';
+                    } else if (pinNumber === this.config.leds?.pin) {
+                        text += ' (LED)';
+                    } else if (pinNumber === this.config.buttons?.button1?.gpio) {
+                        text += ' (Button1)';
+                    } else if (pinNumber === this.config.buttons?.button2?.gpio) {
+                        text += ' (Button2)';
+                    } else if (pinNumber === this.config.buttons?.button3?.gpio) {
+                        text += ' (Button3)';
+                    } else if (pinNumber === this.config.buttons?.button4?.gpio) {
+                        text += ' (Button4)';
+                    }
+                }
+                
+                return {
+                    pin: pinNumber,
+                    description: description,
+                    text: text,
+                    available: pinNumber === -1 ? true : (isSafe && !isUsed),
+                    isSafe: isSafe,
+                    inUse: isUsed,
+                    // Add unique key to force Alpine re-render
+                    key: `${pinNumber}-${triggerUpdate}-${index}`
+                };
+            });
         },
 
         // Combined GPIO options that handles loading state properly for Alpine reactivity
@@ -243,7 +359,28 @@ function initializeDeviceSettingsStore() {
                 const pinNumber = Number(pin);
                 const isSafe = this.gpio.safePins.includes(pin);
                 const description = this.gpio.pinDescriptions[pin] || 'Unknown';
+                
+                // Force reactive dependency by accessing ALL config properties
                 const isUsed = this.usedGpioPins.has(pinNumber);
+                
+                // Calculate assignment by directly checking config (force reactivity)
+                let assignment = null;
+                if (pinNumber !== -1 && pinNumber !== null) {
+                    // Direct config access for reactivity
+                    if (this.config.device.printerTxPin === pinNumber) {
+                        assignment = 'Assigned to printer';
+                    } else if (this.config.leds?.pin === pinNumber) {
+                        assignment = 'Assigned to LED strip';
+                    } else if (this.config.buttons?.button1?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 1';
+                    } else if (this.config.buttons?.button2?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 2';
+                    } else if (this.config.buttons?.button3?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 3';
+                    } else if (this.config.buttons?.button4?.gpio === pinNumber) {
+                        assignment = 'Assigned to button 4';
+                    }
+                }
                 
                 return {
                     pin: pinNumber,
@@ -251,7 +388,8 @@ function initializeDeviceSettingsStore() {
                     // "Not connected" (-1) is always available, others check safety and usage
                     available: pinNumber === -1 ? true : (isSafe && !isUsed),
                     isSafe: isSafe,
-                    inUse: isUsed
+                    inUse: isUsed,
+                    assignment: assignment
                 };
             });
         }
