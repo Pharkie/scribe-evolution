@@ -30,95 +30,204 @@
 - [x] Test parallel builds and watch mode - **WORKING**
 - [x] Verify build performance improvements - **3x faster builds**
 - [x] Test mock-server compatibility - **VERIFIED**
-- [x] Ready to remove terser dependency
+- [x] Remove terser dependency ✅
 
-**Results:** Build system fully modernized, significant performance gains
-**Status:** Phase 1 complete, ready for Phase 2
+### Step 1.3: Build System Polish ✅ COMPLETED  
+- [x] Fix file naming convention: dev builds use `.js`, production builds use `.min.js`
+- [x] Rename vendor.min.js → alpine.min.js for clarity
+- [x] Configure mock-server to map `.min.js` requests to readable `.js` files for debugging
+- [x] Update all HTML templates to reference alpine.min.js
+- [x] Verify both dev and prod builds work correctly
 
----
+**Final Results:** 
+- Build system fully modernized and polished
+- Clear dev/prod distinction with proper file naming
+- Enhanced debugging experience via mock-server mapping
+- 3x faster builds with better optimization than terser
+- All functionality preserved and verified
 
-## Phase 2: JavaScript Architecture Modularization 🏗️
-
-### Step 2.1: Extract Settings API Layer  
-- [ ] Create `src/js/settings/api/` directory structure:
-  - `device-api.js` - device/AP/WiFi API calls
-  - `mqtt-api.js` - MQTT testing and config  
-  - `led-api.js` - LED effects and config
-  - `system-api.js` - restart, factory reset, NVS operations
-- [ ] Move API functions from `settings-alpine-store.js` to dedicated files
-- [ ] Update imports and test all API functionality works
-- [ ] Verify settings save/load still works perfectly
-
-### Step 2.2: Extract Utility Functions
-- [ ] Create `src/js/settings/utils/` directory:
-  - `gpio-utils.js` - GPIO validation, pin descriptions  
-  - `time-utils.js` - timezone, time formatting functions
-  - `validation-utils.js` - form validation logic
-  - `color-utils.js` - LED color handling
-- [ ] Move utility functions from main store
-- [ ] Test all form validations work
-- [ ] Verify LED color picker functionality
-
-### Step 2.3: Break Store into Logical Sections  
-- [ ] Create focused Alpine stores:
-  - `settings-device-store.js` - WiFi, AP mode, device config
-  - `settings-mqtt-store.js` - MQTT configuration and testing
-  - `settings-led-store.js` - LED effects and configuration  
-  - `settings-system-store.js` - buttons, memos, unbidden ink
-- [ ] Keep main `settings-alpine-store.js` as coordinator
-- [ ] Implement proper inter-store communication
-- [ ] Test each section works independently
-
-**Expected Outcome:** More maintainable JS, same UX
-**Safety:** Keep old file as backup until fully verified
+**Status:** Phase 1 100% complete, ready for Phase 2
 
 ---
 
-## Phase 3: HTML Structure Evolution 📄
+## Phase 2: Foundation Extraction 🏗️
+*Prepare for page separation by extracting reusable components*
 
-### Step 3.1: Enhanced Partials (Current Structure++)
-- [ ] Add loading states to all partials
-- [ ] Implement proper error handling per section  
-- [ ] Add section-level validation feedback
-- [ ] Enhance mobile responsiveness
-- [ ] Test all partials load and function correctly
+### Step 2.0: Separate WiFi Section in Current Settings
+- [ ] Split Device section in current `settings.html` into:
+  - **Device section** - Owner, timezone, GPIO pins (6 dropdowns), basic device config
+  - **WiFi section** - WiFi networks, AP mode, network configuration  
+- [ ] Update current Alpine store to handle separated sections
+- [ ] Test that both sections work in current monolithic settings page
+- [ ] **Git commit:** "Separate WiFi into distinct section in current settings"
 
-### Step 3.2: Independent Section Pages (Future)
-**ONLY IF Phase 2 is completely stable:**
-- [ ] Create `/settings/device`, `/settings/mqtt` etc. routes  
-- [ ] Convert partials to full pages with navigation
-- [ ] Add breadcrumb navigation system
-- [ ] Implement state preservation between sections
+### Step 2.1: Extract Settings API Layer
+- [ ] Create `src/js/settings/utils/` directory structure:
+  - `http-utils.js` - HTTP utility functions (error handling, request wrappers)
+  - `system-utils.js` - System utility functions (GPIO validation, time formatting, etc.)
+- [ ] Create section-specific **pure HTTP function** modules:
+  - `settings-device-api.js` - device owner, timezone HTTP calls (no state, no Alpine)
+  - `settings-wifi-api.js` - WiFi networks, AP mode, network HTTP calls
+  - `settings-mqtt-api.js` - MQTT testing and config HTTP calls
+  - `settings-led-api.js` - LED effects and config HTTP calls  
+  - `settings-memos-api.js` - memo content save/load HTTP calls
+  - `settings-unbidden-ink-api.js` - AI content configuration HTTP calls
+  - `settings-buttons-api.js` - button configuration HTTP calls
+  - `settings-system-api.js` - restart, factory reset, NVS HTTP calls
+- [ ] Extract API functions from monolithic store, keeping them **stateless**
+- [ ] Test all API functionality works independently (can be unit tested)
+- [ ] **Git commit:** "Extract API layer and utilities for settings modularization"
 
-**Expected Outcome:** Better UX, cleaner URLs
-**Safety:** Keep partials system as fallback
+### Step 2.2: Test Extracted Components
+- [ ] Verify all utils work independently:
+  - HTTP request patterns from `utils/http-utils.js`
+  - System utilities from `utils/system-utils.js` (GPIO, time, validation, colors)
+- [ ] Test all section APIs import and use utils correctly
+- [ ] Ensure no circular dependencies or missing imports
+- [ ] **Git commit:** "Verify extracted API and utility components"
+
+### Step 2.3: Create ONE Test Section Page  
+- [ ] **CRITICAL:** Start with Device section (simplest, most fundamental)
+- [ ] Create `device.html` with navigation back to main settings
+- [ ] Create focused `page-device.js` Alpine store with:
+  - **State only** (config, loading, error states)
+  - **UI logic only** (computed properties, form handlers)
+  - **Import and use** extracted API modules from 2.1
+  - **PURE ALPINE PATTERNS** - No script tags, no hacks, proper stores/reactivity
+- [ ] Alpine store calls API functions but handles **no HTTP directly**
+- [ ] Test EVERYTHING: save, load, validation, navigation, error handling
+- [ ] **Git commit:** "Add device.html as first separated settings page"
+- [ ] **STOP:** Verify this ONE page works 100% before proceeding
+
+**Expected Outcome:** Proof of concept for page separation architecture
+**Safety:** Main settings.html remains fully functional
+
+---
+
+## Phase 3: Complete Page Architecture 📄
+*Only proceed if Phase 2.3 test page works perfectly*
+
+### Step 3.1: WiFi Section Page
+- [ ] Create `wifi.html` + `page-wifi.js` (Alpine store + imports API modules)
+- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
+- [ ] Test WiFi page thoroughly: scanning, connection, AP mode
+- [ ] **Git commit:** "Add wifi.html settings page"
+- [ ] **STOP:** Verify WiFi page works 100% before proceeding
+
+### Step 3.2: MQTT Section Page  
+- [ ] Create `mqtt.html` + `page-mqtt.js` (Alpine store + imports API modules)
+- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
+- [ ] Test MQTT page thoroughly: configuration, connection testing
+- [ ] **Git commit:** "Add mqtt.html settings page"
+- [ ] **STOP:** Verify MQTT page works 100% before proceeding
+
+### Step 3.3: LEDs Section Page
+- [ ] Create `leds.html` + `page-leds.js` (Alpine store + imports API modules)
+- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
+- [ ] Test LEDs page thoroughly: effects, colors, GPIO validation
+- [ ] **Git commit:** "Add leds.html settings page"
+- [ ] **STOP:** Verify LEDs page works 100% before proceeding
+
+### Step 3.4: Memos Section Page
+- [ ] Create `memos.html` + `page-memos.js` (Alpine store + imports API modules)
+- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
+- [ ] Test Memos page thoroughly: content save/load
+- [ ] **Git commit:** "Add memos.html settings page"
+- [ ] **STOP:** Verify Memos page works 100% before proceeding
+
+### Step 3.5: Unbidden Ink Section Page
+- [ ] Create `unbidden-ink.html` + `page-unbidden-ink.js` (Alpine store + imports API modules)
+- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
+- [ ] Test Unbidden Ink page thoroughly: AI configuration, scheduling
+- [ ] **Git commit:** "Add unbidden-ink.html settings page"
+- [ ] **STOP:** Verify Unbidden Ink page works 100% before proceeding
+
+### Step 3.6: Buttons Section Page
+- [ ] Create `buttons.html` + `page-buttons.js` (Alpine store + imports API modules)
+- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
+- [ ] Test Buttons page thoroughly: GPIO configuration, actions
+- [ ] **Git commit:** "Add buttons.html settings page"
+- [ ] **STOP:** Verify Buttons page works 100% before proceeding
+
+### Step 3.7: System Section Page
+- [ ] Create `system.html` + `page-system.js` (Alpine store + imports API modules)
+- [ ] Alpine store: **state + UI logic only**, **no direct HTTP calls**
+- [ ] Test System page thoroughly: restart, factory reset, NVS operations
+- [ ] **Git commit:** "Add system.html settings page"
+- [ ] **STOP:** Verify System page works 100% before proceeding
+
+### Step 3.8: Add Client-Side Navigation
+- [ ] Create `src/js/shared/navigation.js` - Handle routing between settings pages
+- [ ] Add breadcrumb navigation to all pages
+- [ ] Implement state preservation between page transitions
+- [ ] Add "Overview" main settings page with section links
+- [ ] **Git commit:** "Add client-side navigation for settings pages"
+
+### Step 3.9: Remove Monolithic Files (FINAL STEP)
+- [ ] **ONLY after all pages work perfectly:**
+- [ ] Remove old settings-alpine-store.js monolith
+- [ ] Update main settings.html to redirect to overview page
+- [ ] Clean up unused partials if desired
+- [ ] **Git commit:** "Complete settings page architecture refactor"
 
 ---
 
 ## Phase 4: Build System Optimization 🚀
+*Only proceed after Phase 3 is complete and stable*
 
-### Step 4.1: Bundle Optimization
-- [ ] Implement code splitting per page
-- [ ] Tree shake unused Alpine.js features
-- [ ] Optimize CSS bundle sizes per page
-- [ ] Add build size monitoring
+### Step 4.1: Bundle Optimization per Page
+- [ ] Configure esbuild for code splitting per settings page
+- [ ] Create page-specific CSS bundles (device.css, mqtt.css, etc.)
+- [ ] Optimize shared chunks (common Alpine.js, utilities)
+- [ ] Add build size monitoring and reporting
+- [ ] **Git commit:** "Optimize bundle sizes with page-specific builds"
 
-### Step 4.2: Development Experience  
-- [ ] Hot reload for CSS/JS changes
-- [ ] Better source maps for debugging
-- [ ] Lint integration with esbuild
-- [ ] Bundle analysis tools
+### Step 4.2: Development Experience Enhancement
+- [ ] Implement hot reload for CSS/JS changes during development
+- [ ] Enhanced source maps for better debugging
+- [ ] Integrate linting with esbuild pipeline
+- [ ] Add bundle analysis tools and size tracking
+- [ ] **Git commit:** "Enhance development experience and tooling"
+
+---
+
+## Phase 5: Future Refactor Planning 📋
+*Create new refactor plan based on lessons learned from settings*
+
+### Step 5.1: Document Lessons Learned
+- [ ] Analyze what worked well in settings refactor (API separation, Alpine patterns, etc.)
+- [ ] Document anti-patterns to avoid (monolithic stores, mixed concerns)
+- [ ] Create reusable templates for page structure and API patterns
+- [ ] **Git commit:** "Document settings refactor lessons and patterns"
+
+### Step 5.2: Plan Remaining Pages Refactor
+- [ ] Create comprehensive refactor plan for:
+  - **index.html** + current monolithic structure
+  - **diagnostics.html** + diagnostic systems
+  - **404.html** + error handling patterns
+- [ ] Apply lessons learned from settings refactor
+- [ ] Define same safety principles: one step at a time, git commits, Alpine best practices
+- [ ] Plan API extraction patterns for each page type
+- [ ] **Deliverable:** New `REFACTOR_PLAN_PHASE2.md` for remaining pages
 
 ---
 
 ## Implementation Strategy 🛠️
 
 ### Safety First Principles:
-1. **One phase at a time** - Don't start next phase until current is 100% stable
-2. **Keep old code** - Don't delete anything until replacement is proven
-3. **Test everything** - Every API endpoint, every form, every validation
-4. **Commit early** - Small, focused commits for easy rollback
-5. **User testing** - Verify all settings save/load correctly on real hardware
+1. **One step at a time** - Complete each step fully before proceeding
+2. **Test ONE page thoroughly** - Phase 2.3 creates single test page, verify 100% before continuing
+3. **Keep old code** - Main settings.html stays functional throughout Phase 2 & 3.1
+4. **Git commit between phases** - Clear rollback points at every major step
+5. **Test everything** - Every API endpoint, every form, every validation on each page
+6. **Real hardware validation** - Verify all settings save/load correctly on ESP32
+
+### CRITICAL: Alpine.js Best Practices ONLY ⚡
+7. **ALPINE PATTERNS MUST BE RESPECTED** - No hacks, no script tags in HTML, no fucking about
+8. **NO NON-STANDARD IDEAS** - If it's not Alpine best practice, ASK FIRST
+9. **USE ALPINE PROPERLY** - Built-in reactivity ($watch, x-effect), stores, getters
+10. **NO CUSTOM SOLUTIONS** - Don't create homebrew caching, watching, or reactivity systems
+11. **FAIL FAST PRINCIPLE** - No fallback values or defensive arrays, let Alpine handle missing data
 
 ### Success Criteria:
 - ✅ All settings functionality identical to current
@@ -142,4 +251,6 @@
 4. **Focused:** Each phase has a single concern (build, JS, HTML, optimization)
 5. **Proven:** Based on failed attempt analysis - avoids previous pitfalls
 
-**Next Step:** Phase 2.1 - Extract Settings API Layer (modularize the 1704-line store)
+**Next Step:** Phase 2.1 - Extract Settings API Layer (prepare foundation for settings page separation)
+
+**Future Vision:** After completing settings refactor (Phases 1-4), Phase 5 will create a new comprehensive refactor plan for index, diagnostics, and 404 pages based on lessons learned and proven patterns.
