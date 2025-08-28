@@ -31,12 +31,21 @@ function initializeDeviceSettingsStore() {
             pinDescriptions: {}
         },
         
-        // Configuration data (reactive) - Device section only
+        // Configuration data (reactive) - Device section with hardware GPIO
         config: {
             device: {
                 owner: null,
                 timezone: null,
                 printerTxPin: null
+            },
+            buttons: {
+                button1: { gpio: null },
+                button2: { gpio: null },
+                button3: { gpio: null },
+                button4: { gpio: null }
+            },
+            leds: {
+                pin: null
             }
         },
 
@@ -88,6 +97,25 @@ function initializeDeviceSettingsStore() {
                 console.error('❌ Missing device section in config');
             }
             
+            // Buttons GPIO configuration
+            if (serverConfig.buttons) {
+                for (let i = 1; i <= 4; i++) {
+                    const buttonKey = `button${i}`;
+                    if (serverConfig.buttons[buttonKey]) {
+                        this.config.buttons[buttonKey].gpio = serverConfig.buttons[buttonKey].gpio || null;
+                    }
+                }
+            } else {
+                console.warn('⚠️ Missing buttons section in config');
+            }
+            
+            // LEDs GPIO configuration
+            if (serverConfig.leds) {
+                this.config.leds.pin = Number(serverConfig.leds.pin);
+            } else {
+                console.warn('⚠️ Missing leds section in config');
+            }
+            
             // GPIO information
             if (serverConfig.gpio) {
                 this.gpio.availablePins = serverConfig.gpio.availablePins || [];
@@ -110,6 +138,15 @@ function initializeDeviceSettingsStore() {
                         owner: this.config.device.owner,
                         timezone: this.config.device.timezone,
                         printerTxPin: this.config.device.printerTxPin
+                    },
+                    buttons: {
+                        button1: this.config.buttons.button1,
+                        button2: this.config.buttons.button2,
+                        button3: this.config.buttons.button3,
+                        button4: this.config.buttons.button4
+                    },
+                    leds: {
+                        pin: this.config.leds.pin
                     }
                 };
                 
@@ -130,8 +167,8 @@ function initializeDeviceSettingsStore() {
 
         // Cancel configuration changes
         cancelConfiguration() {
-            // Navigate back to main settings
-            window.location.href = '/settings.html';
+            // Navigate back to home
+            window.location.href = '/';
         },
 
         // ================== GPIO MANAGEMENT ==================
@@ -142,6 +179,19 @@ function initializeDeviceSettingsStore() {
             // Add printer TX pin (exclude -1 "Not connected")
             if (this.config.device.printerTxPin !== null && this.config.device.printerTxPin !== -1) {
                 used.add(Number(this.config.device.printerTxPin));
+            }
+            
+            // Add LED strip pin (exclude -1 "Not connected")
+            if (this.config.leds?.pin !== null && this.config.leds?.pin !== -1) {
+                used.add(Number(this.config.leds.pin));
+            }
+            
+            // Add button GPIO pins (exclude -1 "Not connected")
+            for (let i = 1; i <= 4; i++) {
+                const buttonGpio = this.config.buttons[`button${i}`]?.gpio;
+                if (buttonGpio !== null && buttonGpio !== -1) {
+                    used.add(Number(buttonGpio));
+                }
             }
             
             return used;
@@ -175,6 +225,35 @@ function initializeDeviceSettingsStore() {
                         inUse: isUsed
                     };
                 });
+        },
+
+        // Combined GPIO options that handles loading state properly for Alpine reactivity
+        get allGpioOptions() {
+            if (this.loading || this.gpio.availablePins.length === 0) {
+                return [{ 
+                    pin: null, 
+                    description: 'Loading GPIO options...', 
+                    available: false,
+                    isSafe: false,
+                    inUse: false
+                }];
+            }
+
+            return this.gpio.availablePins.map(pin => {
+                const pinNumber = Number(pin);
+                const isSafe = this.gpio.safePins.includes(pin);
+                const description = this.gpio.pinDescriptions[pin] || 'Unknown';
+                const isUsed = this.usedGpioPins.has(pinNumber);
+                
+                return {
+                    pin: pinNumber,
+                    description: description,
+                    // "Not connected" (-1) is always available, others check safety and usage
+                    available: pinNumber === -1 ? true : (isSafe && !isUsed),
+                    isSafe: isSafe,
+                    inUse: isUsed
+                };
+            });
         }
     };
     
