@@ -2,7 +2,7 @@
 
 #include <ArduinoJson.h>
 #include "core/config.h"
-#include "core/runtime_config.h"
+#include "core/config_loader.h"
 
 /**
  * @file config_field_registry.h

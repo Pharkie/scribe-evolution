@@ -42,6 +42,7 @@ struct RuntimeConfig
     String jokeAPI;
     String quoteAPI;
     String triviaAPI;
+    String newsAPI;
     String betterStackToken;
     String betterStackEndpoint;
     String chatgptApiToken;

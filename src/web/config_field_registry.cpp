@@ -1,6 +1,6 @@
 #include "config_field_registry.h"
 #include "core/config.h"
-#include "utils/logging.h"
+#include "core/logging.h"
 #include <cstddef>
 
 // Valid button actions

@@ -57,7 +57,7 @@
 - [x] Verify proof of concept for page separation with organized code
 - [x] **Testing passed** - Adam manually confirmed Standard Testing Workflow
 
-### Step 3.2: Data-Driven Config System ✅ COMPLETED
+### Step 3.2: Data-Driven Config System: Device Page
 **Problem**: Current `/api/config` handler is hardcoded mess - 6 utility functions, manual field mapping, 200+ lines of repetitive validation
 **Solution**: Create elegant data-driven configuration system before proceeding to more settings pages
 - [x] **Design config field definition system**: Declare fields once with validation rules
@@ -67,42 +67,120 @@
 - [x] **Test with device settings page**: Ensure existing functionality preserved
 - [x] **Document the pattern**: Clear examples for future settings pages (`docs/DATA_DRIVEN_CONFIG.md`)
 
-**Result**: Replaced 200+ lines of hardcoded validation with 8 lines of data-driven code. Single source of truth in `CONFIG_FIELDS[]` array handles all validation automatically. **Mock and ESP32 parity confirmed - system working perfectly.**
-
 ### Step 3.3: WiFi Settings Page
-- [ ] **WiFi**: Network scanning, SSID/password, connection timeout
+**Problem**: WiFi configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript  
+**Solution**: Extract existing WiFi interface (text fields, layout, functionality) from settings-old.html into dedicated `/settings/wifi.html` with separate `page-settings-wifi.js` Alpine store to enable eventual elimination of monolithic settings.html
+**Risks**: Network scanning UI freezes, credential security, connection timeout handling, existing WiFi functionality preservation
+**Success Criteria**: WiFi scanning works, connection testing functional, password security maintained, no regressions from settings-old.html
 
-### Step 3.4: MQTT Settings Page  
-- [ ] **MQTT**: Configuration, connection testing
+- [ ] Create `/settings/wifi.html` using data-driven config pattern (reference: `settings-old.html` WiFi section)
+- [ ] Create `page-settings-wifi.js` Alpine store (follow page pattern from Step 3.1)
+- [ ] Implement WiFi network scanning with loading states and timeout handling (as we did for device page)
+- [ ] Add SSID/password form with validation using existing API endpoints, secure password handling
+- [ ] Add connection status feedback and error handling with user-friendly messages
+- [ ] Update `esbuild.config.js` with wifi build config (as we did for device page)
+- [ ] Update `package.json` build scripts to include wifi page bundles
+- [ ] Test against existing WiFi functionality in settings-old.html for feature parity
+- [ ] Run Testing Workflow
+
+### Step 3.4: MQTT Settings Page
+**Problem**: MQTT configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
+**Solution**: Extract existing MQTT interface (server, port, credentials, enable toggle) from settings-old.html into dedicated `/settings/mqtt.html` with separate `page-settings-mqtt.js` Alpine store to enable eventual elimination of monolithic settings.html
+**Risks**: Connection testing failures, credential security, MQTT broker compatibility, existing functionality preservation
+**Success Criteria**: MQTT connection testing works, enable/disable toggle functional, credentials securely handled, no regressions from settings-old.html
+
+- [ ] Create `/settings/mqtt.html` using data-driven config pattern (reference: `settings-old.html` MQTT section)
+- [ ] Create `page-settings-mqtt.js` Alpine store (follow page pattern from Step 3.1)
+- [ ] Implement MQTT connection testing with loading states and timeout handling
+- [ ] Add server/port/credentials form with validation using existing API endpoints, secure credential handling
+- [ ] Add enable/disable toggle with connection status feedback and error handling
+- [ ] Update `esbuild.config.js` with mqtt build config (as we did for device page)
+- [ ] Update `package.json` build scripts to include mqtt page bundles
+- [ ] Test against existing MQTT functionality in settings-old.html for feature parity
+- [ ] Run Testing Workflow
 
 ### Step 3.5: Unbidden Ink Settings Page
-- [ ] **Unbidden Ink**: AI configuration, scheduling
+**Problem**: Unbidden Ink configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
+**Solution**: Extract existing Unbidden Ink interface (API token, scheduling, autoprompts) from settings-old.html into dedicated `/settings/unbidden.html` with separate `page-settings-unbidden.js` Alpine store to enable eventual elimination of monolithic settings.html
+**Risks**: API token security, scheduling validation, autoprompt selection, existing functionality preservation
+**Success Criteria**: API token validation works, scheduling configuration functional, autoprompt selection preserved, no regressions from settings-old.html
+
+- [ ] Create `/settings/unbidden.html` using data-driven config pattern (reference: `settings-old.html` Unbidden Ink section)
+- [ ] Create `page-settings-unbidden.js` Alpine store (follow page pattern from Step 3.1)
+- [ ] Implement API token validation with secure handling and feedback
+- [ ] Add scheduling configuration form with time validation using existing API endpoints
+- [ ] Add autoprompt selection with preview functionality and error handling
+- [ ] Update `esbuild.config.js` with unbidden build config (as we did for device page)
+- [ ] Update `package.json` build scripts to include unbidden page bundles
+- [ ] Test against existing Unbidden Ink functionality in settings-old.html for feature parity
+- [ ] Run Testing Workflow
 
 ### Step 3.6: Button Settings Page
-- [ ] **Buttons**: GPIO configuration, button action
+**Problem**: Button configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
+**Solution**: Extract existing button interface (action dropdowns, testing functionality) from settings-old.html into dedicated `/settings/buttons.html` with separate `page-settings-buttons.js` Alpine store to enable eventual elimination of monolithic settings.html
+**Risks**: Button action validation, testing functionality, action dropdown population, existing functionality preservation
+**Success Criteria**: Button action selection works, testing functionality preserved, action validation maintained, no regressions from settings-old.html
+
+- [ ] Create `/settings/buttons.html` using data-driven config pattern (reference: `settings-old.html` Button section)
+- [ ] Create `page-settings-buttons.js` Alpine store (follow page pattern from Step 3.1)
+- [ ] Implement button action dropdowns with validation using existing API endpoints
+- [ ] Add button testing functionality with feedback and error handling
+- [ ] Add action validation with user-friendly messages
+- [ ] Update `esbuild.config.js` with buttons build config (as we did for device page)
+- [ ] Update `package.json` build scripts to include buttons page bundles
+- [ ] Test against existing button functionality in settings-old.html for feature parity
+- [ ] Run Testing Workflow
 
 ### Step 3.7: LED Settings Page
-- [ ] **LEDs**: Effects, colors, GPIO validation
+**Problem**: LED configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
+**Solution**: Extract existing LED interface (effects, colors, brightness, testing) from settings-old.html into dedicated `/settings/leds.html` with separate `page-settings-leds.js` Alpine store to enable eventual elimination of monolithic settings.html
+**Risks**: LED effect testing, color picker functionality, brightness control, existing functionality preservation
+**Success Criteria**: LED effect testing works, color/brightness controls functional, effect selection preserved, no regressions from settings-old.html
+
+- [ ] Create `/settings/leds.html` using data-driven config pattern (reference: `settings-old.html` LED section)
+- [ ] Create `page-settings-leds.js` Alpine store (follow page pattern from Step 3.1)
+- [ ] Implement LED effect selection with preview and testing functionality
+- [ ] Add color picker and brightness controls using existing API endpoints
+- [ ] Add effect testing with feedback and error handling
+- [ ] Update `esbuild.config.js` with leds build config (as we did for device page)
+- [ ] Update `package.json` build scripts to include leds page bundles
+- [ ] Test against existing LED functionality in settings-old.html for feature parity
+- [ ] Run Testing Workflow
 
 ### Step 3.8: Memo Settings Page
-- [ ] **Memos**: Content save/load
+**Problem**: Memo configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
+**Solution**: Extract existing memo interface (content editor, save/load, management) from settings-old.html into dedicated `/settings/memos.html` with separate `page-settings-memos.js` Alpine store to enable eventual elimination of monolithic settings.html
+**Risks**: Content editor functionality, save/load operations, memo management, existing functionality preservation
+**Success Criteria**: Memo editor works, save/load operations functional, content management preserved, no regressions from settings-old.html
 
-### Step 3.9: System Operations Page
-- [ ] **System**: Restart, factory reset, NVS operations
+- [ ] Create `/settings/memos.html` using data-driven config pattern (reference: `settings-old.html` Memo section)
+- [ ] Create `page-settings-memos.js` Alpine store (follow page pattern from Step 3.1)
+- [ ] Implement memo content editor with validation and character limits
+- [ ] Add save/load functionality using existing API endpoints with error handling
+- [ ] Add memo management (create/edit/delete) with user feedback
+- [ ] Update `esbuild.config.js` with memos build config (as we did for device page)
+- [ ] Update `package.json` build scripts to include memos page bundles
+- [ ] Test against existing memo functionality in settings-old.html for feature parity
+- [ ] Run Testing Workflow
 
-### Step 3.10: Setup Page Update
-- [ ] **Setup Page**: Update setup.html to the new format
+### Step 3.9: Navigation & Cleanup
+**Problem**: Settings pages exist in isolation without proper navigation, monolithic settings.html still present creating maintenance burden
+**Solution**: Add navigation between settings pages and remove monolithic files once all individual pages are functional
+**Risks**: Navigation breaking, links pointing to removed files, user confusion during transition, functionality gaps
+**Success Criteria**: All settings pages accessible via navigation, monolithic files safely removed, no broken links, user experience maintained
 
-### Step 3.11: Navigation & Cleanup
 - [x] Create overview page with section links (`/settings.html` with navigation grid)
-- [ ] Add client-side navigation between pages  
-- [ ] Remove monolithic files after all pages work
-- [ ] Clean up unused partials
+- [ ] Add client-side navigation between pages with breadcrumbs and back buttons
+- [ ] Verify all individual settings pages are fully functional and tested
+- [ ] Remove monolithic settings.html and settings-old.html files
+- [ ] Clean up unused partials and legacy code
+- [ ] Update all internal links to point to new settings pages
+- [ ] Test complete settings workflow end-to-end for regressions
+- [ ] Run Testing Workflow
 
 ---
 
 ## Phase 4: Build System Optimization 🚀
-*Resolve bundling constraints and optimize builds*
 
 - [ ] Fix esbuild multi-entry plugin to support imports
 - [ ] Enable proper module separation with external files  
@@ -114,7 +192,6 @@
 ---
 
 ## Phase 5: Future Planning 📋
-*Apply lessons to remaining pages*
 
 - [ ] Document working patterns from settings refactor
 - [ ] Create new refactor plan for index, diagnostics, 404 pages
@@ -122,7 +199,7 @@
 
 ---
 
-## Implementation Strategy 🛠️
+## Process 🛠️
 
 ### Standard Testing Workflow
 1. **Code changes** - Implement functionality
@@ -137,6 +214,7 @@
 
 ### Core Principles
 - **One step at a time** - Complete fully before proceeding
+- **Ask user** to confirm any major deviations or major decisions before proceeding. Caution. Safety first.
 - **Keep old code functional** - Main settings.html works throughout
 - **Alpine.js patterns only** - No hacks, use built-in reactivity
 - **Fail fast** - No fallback values, let Alpine handle missing data
@@ -144,59 +222,26 @@
 - **Live device testing** - Required at end of each phase for hardware-dependent features
 
 ### Success Criteria
-- All settings functionality identical to current
+- All settings functionality identical to current (settings-old.html)
 - Code more maintainable and modular
-- No regressions in UX
+- No regressions in UX, only improvements.
 - ESP32 memory usage unchanged
 
 ## Lessons Learned 📝
-
-### Alpine.js Select Element Synchronization
-**Problem:** GPIO dropdowns in device.html didn't select correct values compared to monolithic settings
-**Root Cause:** Alpine's `x-model` alone insufficient for complex async data + select elements
-**Solution:** Use Alpine's `x-effect` directive to force DOM synchronization:
-```html
-x-effect="
-    if (!loading && config.device.printerTxPin !== null && printerGpioOptions.length > 0) {
-        $nextTick(() => $el.value = config.device.printerTxPin);
-    }
-"
 ```
 **Key Learning:** Always use Alpine's built-in reactivity (`x-effect`, `$nextTick`) instead of custom solutions
 
-### Alpine.js x-for Keys Must Be Primitives
-**Problem:** `Alpine Warning: x-for key cannot be an object, it must be a string or an integer`
-**Root Cause:** Using `option.pin` as key when `option.pin` could be `null` (object)
-**Solution:** Use array index instead: `:key="'prefix-' + index"`
-**Key Learning:** Alpine x-for keys must be strings/integers, not objects/null
-
-### Alpine.js Reactive Dropdown Text Updates - FUNDAMENTAL LIMITATION ❌
-**Problem:** GPIO dropdown option text labels don't update reactively when assignments change
-**Symptom:** Disabling/enabling works instantly, but text like "GPIO 4 (Assigned to button 2)" doesn't update
-**Root Cause:** Alpine's x-for with HTML select/option elements has fundamental reactivity limitations
-**Attempted Solutions:**
-1. `x-text` with inline ternary expressions - ❌ No reactivity
-2. Computed properties in getter with `assignment` field - ❌ No reactivity  
-3. `$store.settingsDevice` explicit references - ❌ No reactivity
-4. Dynamic `:key` values with unique identifiers - ❌ No reactivity
-5. `x-effect` with `$el.textContent` direct DOM manipulation - ❌ No reactivity
-6. Pre-computed text with dynamic keys - ❌ No reactivity
-
-**Conclusion:** Alpine's x-for with select/option elements cannot reactively update option text
-**Decision:** GPIO assignment labels working correctly is NOT critical for device functionality - proceed to next section
-**Key Learning:** Alpine x-for + select/option reactivity is fundamentally limited - avoid this pattern
-
-### File Management During Refactoring  
-**Problem:** Overwrote working settings.html without backup, risking system stability
-**Root Cause:** Rushed implementation without proper backup strategy
-**Solution:** Always backup originals before major changes:
-- `settings.html` → working monolithic (current)
-- `settings-v2.html` → new modular version (testing)
-- `settings/device.html` → individual page (working)
 **Key Learning:** Maintain parallel versions during major architectural changes
+```
 
-## Current Status 📍
+## Rejected Ideas 🚫
 
-**Currently working on Step 3.1.5: Data-Driven Config System** - must complete before proceeding to additional settings pages.
-
-**Next Step:** Complete Step 3.1.5, then proceed to Step 3.2 (WiFi Settings Page)
+### Partial Config API Endpoints (3.3 - rejected)
+**Problem**: Each settings page needs only its section of config, not full config blob
+**Proposed Solution**: Add `/api/config/device`, `/api/config/wifi`, etc. endpoints
+**Rejection Reasons**:
+- Over-engineering: Full config JSON isn't large enough to warrant optimization
+- Memory overhead: Each new endpoint adds routes/handlers on ESP32 with limited resources
+- Maintenance burden: 6+ new endpoints to maintain, test, and keep in sync  
+- Breaking risk: More complexity = more ways for things to break
+**Alternative**: Keep existing `/api/config`, let pages ignore unneeded sections client-side
