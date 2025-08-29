@@ -17,6 +17,11 @@
 - [x] Add mock-server debugging support with file mapping
 - [x] Remove terser dependency
 
+**⚠️ CRITICAL BUILD NOTE:**
+- Mock server uses **DEV assets** (`.js` files) not production (`.min.js`)
+- Always build dev versions for local testing: `npm run build-js-overview` NOT `npm run build-js-overview-prod`
+- Production builds are for ESP32 deployment only
+
 ---
 
 ## Phase 2: Internal Organization 🏗️

@@ -14,10 +14,14 @@ function initializeSettingsOverviewStore() {
         // Success feedback states
         deviceSaved: false,
         wifiSaved: false,
+        loading: true,
+        error: null,
 
         // ================== INITIALIZATION ==================
         init() {
             this.checkSaveSuccess();
+            // Simulate brief loading then ready state
+            this.loading = false;
         },
 
         // ================== SUCCESS FEEDBACK ==================
@@ -57,10 +61,11 @@ function initializeSettingsOverviewStore() {
     return store;
 }
 
-// Register the Alpine store
-if (typeof Alpine !== 'undefined') {
-    Alpine.store('settingsOverview', initializeSettingsOverviewStore());
-} else {
-    // Store initializer for when Alpine loads
-    window.initializeSettingsOverviewStore = initializeSettingsOverviewStore;
-}
+// Create store immediately when script loads
+const overviewStore = initializeSettingsOverviewStore();
+window.settingsOverviewStoreInstance = overviewStore;
+
+// Register with Alpine when ready
+document.addEventListener('alpine:init', () => {
+    Alpine.store('settingsOverview', overviewStore);
+});
