@@ -83,6 +83,7 @@
 - [x] Test against existing WiFi functionality in settings-old.html for feature parity
 - [x] Run Testing Workflow
 - [x] **Testing passed** - WiFi page created with full network scanning, status display, and secure password handling
+- [x] **Light/dark mode requirement**: All new settings pages must support both light and dark modes using the established CSS class system (`page-body`, `page-main`, `settings-card` classes with `dark:` prefixes)
 
 ### Step 3.4: MQTT Settings Page
 **Problem**: MQTT configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
