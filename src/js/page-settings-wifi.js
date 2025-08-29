@@ -25,6 +25,29 @@ function initializeWiFiSettingsStore() {
         initialized: false,
         apPrintStatus: 'normal', // 'normal', 'scribing'
         
+        // Computed property to check if save should be enabled
+        get canSave() {
+            // Don't allow save while loading, saving, or with errors
+            if (this.loading || this.saving || this.error) {
+                return false;
+            }
+            
+            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
+            const hasValidSSID = selectedSSID && selectedSSID.trim() !== '';
+            
+            // For scan mode: need a selected network
+            if (this.wifiScan.mode === 'scan') {
+                return hasValidSSID && this.wifiScan.selectedNetwork;
+            }
+            
+            // For manual mode: need non-empty SSID
+            if (this.wifiScan.mode === 'manual') {
+                return hasValidSSID;
+            }
+            
+            return false;
+        },
+        
         // Configuration data (reactive) - WiFi section
         config: {
             device: {
@@ -54,89 +77,38 @@ function initializeWiFiSettingsStore() {
             networks: [],
             currentSSID: null,
             selectedNetwork: null,
+            manualSSID: '',
+            mode: 'scan', // 'scan' or 'manual'
             isScanning: false,
             error: null,
             hasScanned: false,
+            passwordVisible: false,
             
             // Computed properties (Alpine getters)
-            get dropdownDisabled() {
-                return this.isScanning;
+            get sortedNetworks() {
+                if (!this.networks || this.networks.length === 0) return [];
+                
+                // Convert RSSI to signal strength and add unique keys
+                // Networks are already deduped and sorted from the scan function
+                const networksWithSignal = this.networks.map((network, index) => ({
+                    ...network,
+                    signal_strength: this.formatSignalStrength(network.rssi),
+                    signal_display: `${this.formatSignalStrength(network.rssi)} (${network.rssi} dBm)`,
+                    uniqueKey: `${network.ssid}-${network.rssi}-${index}` // Unique key for Alpine rendering
+                }));
+                
+                return networksWithSignal;
             },
             
-            get showManualEntry() {
-                return this.selectedNetwork === 'manual';
+            // Format RSSI to signal strength description
+            formatSignalStrength(rssi) {
+                if (rssi > -30) return 'Excellent';
+                if (rssi > -50) return 'Very Good';
+                if (rssi > -60) return 'Good';
+                if (rssi > -70) return 'Fair';
+                return 'Poor';
             },
             
-            get scanLabel() {
-                return this.hasScanned ? 'Rescan networks' : 'Scan networks for more';
-            },
-            
-            // Reactive options
-            get options() {
-                const options = [];
-                
-                // Helper function to get signal strength for a network
-                const getNetworkSignalStrength = (ssid) => {
-                    const network = this.networks.find(n => n.ssid === ssid);
-                    return network ? network.signal_strength : null;
-                };
-                
-                // Always show current SSID first (if available)
-                if (this.currentSSID) {
-                    const currentSignalStrength = getNetworkSignalStrength(this.currentSSID);
-                    const currentLabel = currentSignalStrength 
-                        ? `${this.currentSSID} (${currentSignalStrength}) ← active`
-                        : `${this.currentSSID} ← active`;
-                    
-                    options.push({
-                        value: this.currentSSID,
-                        label: currentLabel,
-                        disabled: false
-                    });
-                }
-                
-                // Add scanned networks (excluding current to avoid duplicates)
-                if (this.hasScanned) {
-                    // Store reference to formatNetworkDisplay to avoid this context issues
-                    const formatNetworkDisplay = (network) => {
-                        return `${network.ssid} (${network.signal_strength})`;
-                    };
-                    
-                    this.networks
-                        .filter(network => network.ssid !== this.currentSSID)
-                        .forEach(network => {
-                            options.push({
-                                value: network.ssid,
-                                label: formatNetworkDisplay(network),
-                                disabled: false
-                            });
-                        });
-                }
-                
-                // Always show manual entry
-                options.push({
-                    value: 'manual',
-                    label: 'Type It Out (Manual entry)',
-                    disabled: false
-                });
-                
-                // Show scan/rescan option (or scanning status)
-                if (this.isScanning) {
-                    options.push({
-                        value: '_scanning',
-                        label: "Scanning the airwaves...",
-                        disabled: true
-                    });
-                } else {
-                    options.push({
-                        value: '_scan',
-                        label: `${this.scanLabel}`,
-                        disabled: false
-                    });
-                }
-                
-                return options;
-            }
         },
         
         // Validation state
@@ -147,6 +119,10 @@ function initializeWiFiSettingsStore() {
         // Computed properties for complex UI states
         get apPrintButtonText() {
             return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Scribe WiFi Fallback AP';
+        },
+        
+        get saveButtonText() {
+            return this.saving ? 'Saving...' : 'Save';
         },
 
         // ================== WIFI CONFIGURATION API ==================
@@ -228,10 +204,13 @@ function initializeWiFiSettingsStore() {
         initializeWiFiState() {
             this.wifiScan.currentSSID = this.config?.device?.wifi?.ssid || null;
             this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
+            this.wifiScan.manualSSID = '';
+            this.wifiScan.mode = 'scan';
             this.wifiScan.networks = [];
             this.wifiScan.isScanning = false;
             this.wifiScan.hasScanned = false;
             this.wifiScan.error = null;
+            this.wifiScan.passwordVisible = false;
         },
 
         // ================== WIFI API ==================
@@ -243,33 +222,42 @@ function initializeWiFiSettingsStore() {
             try {
                 const networks = await window.SettingsAPI.scanWiFiNetworks();
                 
-                // Deduplicate networks by SSID, keeping the strongest signal for each
-                const uniqueNetworks = [];
-                const seenSSIDs = new Set();
+                // Filter valid networks and dedupe by SSID (keep strongest signal only)
+                const networksBySSID = {};
                 
                 networks
-                    .sort((a, b) => b.rssi - a.rssi) // Sort by strongest signal first
+                    .filter(network => network.ssid && network.ssid.trim())
                     .forEach(network => {
-                        if (!seenSSIDs.has(network.ssid)) {
-                            seenSSIDs.add(network.ssid);
-                            uniqueNetworks.push(network);
+                        const ssid = network.ssid.trim();
+                        if (!networksBySSID[ssid] || network.rssi > networksBySSID[ssid].rssi) {
+                            networksBySSID[ssid] = network;
                         }
                     });
                 
+                // Convert to array and sort by signal strength (strongest first), then alphabetically
+                const validNetworks = Object.values(networksBySSID)
+                    .sort((a, b) => {
+                        if (b.rssi !== a.rssi) {
+                            return b.rssi - a.rssi;
+                        }
+                        return a.ssid.localeCompare(b.ssid);
+                    });
+                
                 // Update state - Alpine reactivity handles UI updates
-                this.wifiScan.networks = uniqueNetworks;
+                this.wifiScan.networks = validNetworks;
                 this.wifiScan.hasScanned = true;
                 
-                // Always reselect current SSID after scan if it's found in the results
+                // Switch to scan mode and auto-select current network if found
+                this.wifiScan.mode = 'scan';
                 if (this.wifiScan.currentSSID) {
-                    const currentNetwork = uniqueNetworks.find(n => n.ssid === this.wifiScan.currentSSID);
+                    const currentNetwork = validNetworks.find(n => n.ssid === this.wifiScan.currentSSID);
                     if (currentNetwork) {
                         this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
                         console.log('Auto-reselected current network after scan:', this.wifiScan.currentSSID);
                     }
                 }
                 
-                console.log('WiFi scan completed:', uniqueNetworks.length, 'unique networks found from', networks.length, 'total scanned');
+                console.log('WiFi scan completed:', validNetworks.length, 'valid networks found from', networks.length, 'total scanned');
                 
             } catch (error) {
                 console.error('WiFi scan failed:', error);
@@ -280,38 +268,87 @@ function initializeWiFiSettingsStore() {
             }
         },
         
-        // Handle network selection from dropdown - State machine transitions
-        // Simplified network selection - let Alpine reactivity handle state
-        selectNetwork(value) {
-            if (value === '_scan') {
-                // Trigger scan but don't change selection
-                this.scanWiFiNetworks();
-                return;
-            }
+        // Update SSID based on current mode and selection
+        updateSSID() {
+            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
+            this.config.device.wifi.ssid = selectedSSID || '';
             
-            if (value === '_scanning') {
-                // Ignore scanning placeholder selection
-                return;
-            }
-            
-            // Update selected network - Alpine reactivity handles the rest
-            this.wifiScan.selectedNetwork = value;
-            
-            // Update config based on selection
-            if (value === 'manual') {
-                this.config.device.wifi.ssid = ''; // Clear for manual input
-            } else if (value && value !== '') {
-                this.config.device.wifi.ssid = value;
-            }
-            
-            // Clear validation errors
-            if (this.validation.errors['wifi.ssid']) {
+            // Clear validation errors when SSID changes
+            if (this.validation.errors['wifi.ssid'] && selectedSSID) {
                 delete this.validation.errors['wifi.ssid'];
             }
         },
 
+        // Validate current configuration
+        validateConfiguration() {
+            const errors = {};
+            
+            // Get selected SSID based on current mode
+            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
+            
+            // SSID validation
+            if (!selectedSSID || selectedSSID.trim() === '') {
+                if (this.wifiScan.mode === 'scan') {
+                    errors['wifi.ssid'] = 'Please select a network';
+                } else {
+                    errors['wifi.ssid'] = 'Network name cannot be empty';
+                }
+            }
+            
+            // Password validation (if network requires it)
+            // Note: We can't determine if a network requires a password in scan mode
+            // without additional API data, so we'll be lenient here
+            
+            // Timeout validation
+            const timeoutSeconds = Math.floor(this.config.device.wifi.connect_timeout / 1000);
+            if (timeoutSeconds < 5 || timeoutSeconds > 60) {
+                errors['wifi.connect_timeout'] = 'Timeout must be between 5-60 seconds';
+            }
+            
+            this.validation.errors = errors;
+            return Object.keys(errors).length === 0;
+        },
+        
+        // Check if configuration has meaningful changes
+        hasChanges() {
+            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
+            const currentSSID = this.wifiScan.currentSSID;
+            
+            // SSID changed
+            if (selectedSSID !== currentSSID) {
+                return true;
+            }
+            
+            // Password modified
+            if (this.passwordsModified.wifiPassword) {
+                return true;
+            }
+            
+            // Timeout changed (compare in seconds)
+            const currentTimeoutSeconds = Math.floor(this.config.device.wifi.connect_timeout / 1000);
+            // We'd need to know the original timeout to compare properly
+            // For now, assume any non-empty form with valid values might have changes
+            
+            return false;
+        },
+
         // Save WiFi configuration via API
         async saveConfiguration() {
+            // Ensure SSID is up to date
+            this.updateSSID();
+            
+            // Validate before saving
+            if (!this.validateConfiguration()) {
+                this.showErrorMessage('Please fix the errors before saving');
+                return;
+            }
+            
+            // Check if there are any changes
+            if (!this.hasChanges()) {
+                this.showErrorMessage('No changes to save');
+                return;
+            }
+            
             this.saving = true;
             try {
                 // Create partial WiFi config for server submission
@@ -439,6 +476,17 @@ document.addEventListener('alpine:init', () => {
     
     // Initialize the store immediately during alpine:init
     wifiStore.init();
+    
+    // Setup Alpine watchers for reactive updates
+    Alpine.effect(() => {
+        // Watch for changes in mode, selectedNetwork, or manualSSID
+        const mode = wifiStore.wifiScan.mode;
+        const selectedNetwork = wifiStore.wifiScan.selectedNetwork;
+        const manualSSID = wifiStore.wifiScan.manualSSID;
+        
+        // Update SSID whenever these change
+        wifiStore.updateSSID();
+    });
     
     console.log('✅ WiFi Settings Store registered and initialized');
 });

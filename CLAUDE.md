@@ -187,3 +187,4 @@ The project uses a two-layer configuration architecture:
 
 This codebase emphasizes modularity, safety, and maintainability. Follow the established patterns and always prioritize the user experience through clear error handling and consistent interfaces.
 - Adhere to the principle of failing fast
+- Always run npm run build after every CSS or JS change
