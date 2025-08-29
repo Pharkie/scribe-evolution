@@ -35,7 +35,7 @@ function initializeWiFiSettingsStore() {
             const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
             const hasValidSSID = selectedSSID && selectedSSID.trim() !== '';
             
-            // Must have valid SSID and changes to save
+            // Must have valid SSID
             let formValid = false;
             if (this.wifiScan.mode === 'scan') {
                 formValid = hasValidSSID && this.wifiScan.selectedNetwork;
@@ -43,7 +43,15 @@ function initializeWiFiSettingsStore() {
                 formValid = hasValidSSID;
             }
             
-            return formValid && this.hasChanges();
+            if (!formValid) return false;
+            
+            // If password was modified, it must not be blank
+            if (this.passwordsModified.wifiPassword && (!this.config.device.wifi.password || this.config.device.wifi.password.trim() === '')) {
+                return false;
+            }
+            
+            // Must have changes to save
+            return this.hasChanges();
         },
         
         // Configuration data (reactive) - WiFi section
@@ -67,6 +75,11 @@ function initializeWiFiSettingsStore() {
         },
         originalMaskedValues: {
             wifiPassword: ''
+        },
+        
+        // Store original config to detect changes
+        originalConfig: {
+            connectTimeout: null
         },
         
         // WiFi network scanning state using Alpine reactive patterns
@@ -189,6 +202,9 @@ function initializeWiFiSettingsStore() {
         initializePasswordTracking() {
             // Store original masked values for comparison
             this.originalMaskedValues.wifiPassword = this.config.device.wifi.password || '';
+            
+            // Store original timeout for change detection
+            this.originalConfig.connectTimeout = this.config.device.wifi.connect_timeout || 15000;
         },
         
         // Track password modifications (called from templates)
@@ -277,6 +293,32 @@ function initializeWiFiSettingsStore() {
             }
         },
 
+        // Validate password field specifically (called from UI)
+        validatePassword(value) {
+            // Only validate if password was modified (to avoid showing error on pre-filled masked passwords)
+            if (this.passwordsModified.wifiPassword && (!value || value.trim() === '')) {
+                this.validation.errors['wifi.password'] = 'Password cannot be blank';
+            } else {
+                // Clear the error if it was previously set
+                if (this.validation.errors['wifi.password']) {
+                    delete this.validation.errors['wifi.password'];
+                }
+            }
+        },
+        
+        // Validate timeout field specifically (called from UI)
+        validateTimeout(value) {
+            const timeoutSeconds = parseInt(value);
+            if (isNaN(timeoutSeconds) || timeoutSeconds < 5 || timeoutSeconds > 60) {
+                this.validation.errors['wifi.connect_timeout'] = 'Timeout must be between 5-60 seconds';
+            } else {
+                // Clear the error if it was previously set
+                if (this.validation.errors['wifi.connect_timeout']) {
+                    delete this.validation.errors['wifi.connect_timeout'];
+                }
+            }
+        },
+        
         // Validate current configuration
         validateConfiguration() {
             const errors = {};
@@ -322,10 +364,16 @@ function initializeWiFiSettingsStore() {
                 return true;
             }
             
-            // Timeout changed (compare in seconds)
-            const currentTimeoutSeconds = Math.floor(this.config.device.wifi.connect_timeout / 1000);
-            // We'd need to know the original timeout to compare properly
-            // For now, assume any non-empty form with valid values might have changes
+            // Timeout changed (compare current timeout vs original)
+            const currentTimeout = this.config.device.wifi.connect_timeout || 15000;
+            const originalTimeout = this.originalConfig.connectTimeout || 15000;
+            if (currentTimeout !== originalTimeout) {
+                // Only consider it a valid change if the timeout is within valid range
+                const timeoutSeconds = Math.floor(currentTimeout / 1000);
+                if (timeoutSeconds >= 5 && timeoutSeconds <= 60) {
+                    return true;
+                }
+            }
             
             return false;
         },
@@ -344,19 +392,17 @@ function initializeWiFiSettingsStore() {
             
             this.saving = true;
             try {
-                // Create partial WiFi config for server submission
+                // Create partial WiFi config for server submission - flat structure
                 const partialConfig = {
-                    device: {
-                        wifi: {
-                            ssid: this.config.device.wifi.ssid,
-                            connect_timeout: this.config.device.wifi.connect_timeout
-                        }
+                    wifi: {
+                        ssid: this.config.device.wifi.ssid,
+                        connect_timeout: this.config.device.wifi.connect_timeout
                     }
                 };
                 
                 // Only include password if it was modified by user (not masked)
                 if (this.passwordsModified.wifiPassword) {
-                    partialConfig.device.wifi.password = this.config.device.wifi.password;
+                    partialConfig.wifi.password = this.config.device.wifi.password;
                 }
                 
                 console.log('Saving partial WiFi configuration:', partialConfig);
