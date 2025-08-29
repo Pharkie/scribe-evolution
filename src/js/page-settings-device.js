@@ -52,6 +52,11 @@ function initializeDeviceSettingsStore() {
                 pin: null
             }
         },
+        
+        // Validation state
+        validation: {
+            errors: {}
+        },
 
         // ================== DEVICE CONFIGURATION API ==================
         // Initialize store with data from server
@@ -135,6 +140,30 @@ function initializeDeviceSettingsStore() {
             
             console.log('✅ Device config merge complete:', this.config);
         },
+        
+        // Validate device owner field specifically (called from UI)
+        validateDeviceOwner(value) {
+            if (!value || value.trim() === '') {
+                this.validation.errors['device.owner'] = 'Device owner cannot be blank';
+            } else {
+                // Clear the error if it was previously set
+                if (this.validation.errors['device.owner']) {
+                    delete this.validation.errors['device.owner'];
+                }
+            }
+        },
+        
+        // Validate timezone field specifically (called from UI)
+        validateTimezone(value) {
+            if (!value || value.trim() === '') {
+                this.validation.errors['device.timezone'] = 'Timezone cannot be blank';
+            } else {
+                // Clear the error if it was previously set
+                if (this.validation.errors['device.timezone']) {
+                    delete this.validation.errors['device.timezone'];
+                }
+            }
+        },
 
         // Check if configuration has meaningful changes
         hasChanges() {
@@ -182,6 +211,15 @@ function initializeDeviceSettingsStore() {
         get canSave() {
             // Don't allow save while loading, saving, or with errors
             if (this.loading || this.saving || this.error) {
+                return false;
+            }
+            
+            // Required fields must not be blank
+            if (!this.config.device.owner || this.config.device.owner.trim() === '') {
+                return false;
+            }
+            
+            if (!this.config.device.timezone || this.config.device.timezone.trim() === '') {
                 return false;
             }
             
