@@ -1,148 +1,24 @@
-/* Shared base styles and components */
+/* Shared utilities - utility-first approach following Tailwind philosophy */
 @import "tailwindcss";
 
-@layer base {
-  /* Root HTML styling */
-  .app-root {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
-  }
-}
-
 @layer components {
-  /* Layout Components */
-  .header-spacer {
-    @apply flex-1;
-  }
+  /* Only genuine repetitive utility combinations that justify @apply */
   
-  .header-center {
-    @apply flex-1 flex justify-center;
-  }
-  
-  .header-end {
-    @apply flex-1 flex justify-end;
-  }
-  
-  .page-main {
-    @apply w-full max-w-4xl mx-auto flex-1;
-  }
-  
-  .page-main-wide {
-    @apply w-full max-w-6xl mx-auto flex-1 flex flex-col;
-  }
-  
-  /* Form Components */
-  .form-label {
-    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
-  }
-  
-  .input-field {
+  /* Complex form input styling - appears 10+ times across forms */
+  .form-input {
     @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
-  }
-  
-  .form-textarea {
-    @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none placeholder-gray-400 dark:placeholder-gray-500;
-  }
-  
-  /* Common Cards & Containers */
-  .card-primary {
-    @apply bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 border border-gray-100 dark:border-gray-700;
-  }
-  
-  .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6;
-  }
-  
-  /* Button Components */
-  .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
   }
 }
 
 @layer utilities {
-  /* Spacing Utilities */
-  .vertical-stack-sm {
-    @apply space-y-2;
-  }
+  /* Essential layout patterns used across all pages */
   
-  .vertical-stack {
-    @apply space-y-3;
-  }
-  
-  .vertical-stack-md {
-    @apply space-y-4;
-  }
-  
-  .vertical-stack-lg {
-    @apply space-y-6;
-  }
-  
-  /* Base page layout */
+  /* Base page layout - complex pattern used by every page */
   .page-body {
     @apply flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
   }
   
-  .page-header {
-    @apply w-full max-w-6xl mx-auto flex items-center mb-6 gap-4;
-  }
-  
-  .page-title {
-    @apply text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2;
-  }
-  
-  .page-footer {
-    @apply w-full max-w-6xl mx-auto mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400;
-  }
-  
-  .back-button {
-    @apply flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md;
-  }
-
-  /* Action Buttons - for quick actions and colorful buttons */
-  .action-button {
-    @apply flex flex-col items-center px-4 py-3 border rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md;
-  }
-  
-  .action-button-icon {
-    @apply text-2xl mb-1;
-  }
-  
-  .action-button-label {
-    @apply text-sm font-medium;
-  }
-
-  /* Form Action Buttons - for form submit/cancel pairs */
-  .form-button-primary {
-    @apply flex-1 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg bg-blue-600 hover:bg-blue-700;
-  }
-  
-  .form-button-secondary {
-    @apply flex-1 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg bg-gray-600 hover:bg-gray-700;
-  }
-
-  /* Shared animations - moved here to eliminate duplication */
-  .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-  }
-
-  .animate-fade-out {
-    animation: fade-out 0.6s ease-out forwards;
-  }
-
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fade-out {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-8px); }
-  }
-
-  /* Custom slider styling - shared across components */
+  /* Complex webkit/moz patterns - cannot be done with utilities alone */
   .slider {
     -webkit-appearance: none;
     appearance: none;
@@ -181,38 +57,7 @@
     transform: scale(1.1);
   }
 
-  /* Custom checkbox styling - only for visible checkboxes */
-  input[type="checkbox"]:not(.sr-only) {
-    appearance: none;
-    background-color: #fff;
-    border: 2px solid #d1d5db;
-    border-radius: 4px;
-    display: inline-block;
-    position: relative;
-    transition: all 0.2s ease;
-  }
-
-  input[type="checkbox"]:not(.sr-only):checked {
-    background-color: #10b981;
-    border-color: #10b981;
-  }
-
-  input[type="checkbox"]:not(.sr-only):checked::before {
-    content: '✓';
-    color: white;
-    font-size: 12px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  input[type="checkbox"]:not(.sr-only):focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
-  }
-
-  /* Action Button Color Variants - media query implementation */
+  /* Complex media query patterns - too complex for inline utilities */
   .action-button-yellow {
     background-color: rgb(254 249 195);
     border-color: rgb(254 240 138);
@@ -355,29 +200,5 @@
     .action-button-gray:hover {
       background-color: rgb(17 24 39 / 0.3);
     }
-  }
-
-  /* Icon Styles */
-  .scribe-icon {
-    @apply inline-block;
-    stroke-width: 1.5;
-    color: currentColor;
-  }
-
-  /* Icon animations */
-  .scribe-icon {
-    transition: all 0.2s ease;
-  }
-
-  /* Icon in buttons */
-  button .scribe-icon {
-    @apply flex-shrink-0;
-  }
-  
-  /* Icon in action buttons */
-  .action-button .scribe-icon {
-    @apply text-2xl mb-1;
-    width: 1.5rem;
-    height: 1.5rem;
   }
 }

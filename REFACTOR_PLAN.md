@@ -67,35 +67,24 @@
 - [x] **Test with device settings page**: Ensure existing functionality preserved
 - [x] **Document the pattern**: Clear examples for future settings pages (`docs/DATA_DRIVEN_CONFIG.md`)
 
-### Step 3.3: WiFi Settings Page ✅ COMPLETED
+### Step 3.3: WiFi Settings Page
 **Problem**: WiFi configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript  
 **Solution**: Extract existing WiFi interface (text fields, layout, functionality) from settings-old.html into dedicated `/settings/wifi.html` with separate `page-settings-wifi.js` Alpine store to enable eventual elimination of monolithic settings.html
-**Risks**: Network scanning UI freezes, credential security, connection timeout handling, existing WiFi functionality preservation
-**Success Criteria**: WiFi scanning works, connection testing functional, password security maintained, no regressions from settings-old.html
 
-- [x] Create `/settings/wifi.html` using data-driven config pattern (reference: `settings-old.html` WiFi section)
-- [x] Create `page-settings-wifi.js` Alpine store (follow page pattern from Step 3.1)
-- [x] Implement WiFi network scanning with loading states and timeout handling (as we did for device page)
-- [x] Add SSID/password form with validation using existing API endpoints, secure password handling
-- [x] Add connection status feedback and error handling with user-friendly messages
-- [x] Update `esbuild.config.js` with wifi build config (as we did for device page)
-- [x] Update `package.json` build scripts to include wifi page bundles
-- [x] Test against existing WiFi functionality in settings-old.html for feature parity
-- [x] Run Testing Workflow
-- [x] **Testing passed** - WiFi page created with full network scanning, status display, and secure password handling
-- [x] **Light/dark mode requirement**: All new settings pages must support both light and dark modes using the established CSS class system (`page-body`, `page-main`, `settings-card` classes with `dark:` prefixes)
-- [x] **Semantic CSS classes requirement**: CRITICAL - All long Tailwind class strings must be replaced with semantic CSS classes from shared.css. Examples of violations that need fixing:
-  - GPIO pin buttons: `class="bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-300..."` → `class="gpio-pin-button"`
-  - System action buttons: `class="px-4 py-2 bg-gray-200 dark:bg-gray-700..."` → `class="system-action-button-disabled"`
-  - Settings cards: Long Alpine `:class` expressions should use CSS classes with modifiers
-  - Loading spinners, error cards, form buttons - all need semantic classes
-  - **Action Required**: Current settings pages contain 50+ violations of this rule and need refactoring before proceeding to new pages
+- [ ] Run Testing Workflow
 
-### Step 3.4: MQTT Settings Page
+### Step 3.4: MQTT Settings Page **← NEXT STEP**
 **Problem**: MQTT configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
 **Solution**: Extract existing MQTT interface (server, port, credentials, enable toggle) from settings-old.html into dedicated `/settings/mqtt.html` with separate `page-settings-mqtt.js` Alpine store to enable eventual elimination of monolithic settings.html
-**Risks**: Connection testing failures, credential security, MQTT broker compatibility, existing functionality preservation
-**Success Criteria**: MQTT connection testing works, enable/disable toggle functional, credentials securely handled, no regressions from settings-old.html
+
+**FOLLOW ESTABLISHED PATTERNS:**
+- Use `/settings/mqtt.html` page structure (copy from device.html/wifi.html as templates)
+- Create `page-settings-mqtt.js` Alpine store following existing pattern in `page-settings-device.js` and `page-settings-wifi.js`
+- Reference existing MQTT functionality in `settings-old.html` for feature requirements
+- Must use semantic CSS classes from shared.css - NO long Tailwind strings
+- Update build configs in `esbuild.config.js` and `package.json` (follow device/wifi examples)
+
+**CRITICAL**: All new pages must support light/dark mode and use established CSS architecture. Test thoroughly before proceeding.
 
 - [ ] Create `/settings/mqtt.html` using data-driven config pattern (reference: `settings-old.html` MQTT section)
 - [ ] Create `page-settings-mqtt.js` Alpine store (follow page pattern from Step 3.1)
@@ -209,7 +198,7 @@
 
 ## Process 🛠️
 
-### Standard Testing Workflow
+### Testing Workflow
 1. **Code changes** - Implement functionality
 2. **Update build scripts** - If adding new JS files, update package.json build scripts to include them
 3. **Build frontend** - `npm run build-js-settings` or `npm run build`
@@ -220,7 +209,23 @@
 8. **Git commit** - Clear commit message with detailed summary
 9. **STOP** - Verify 100% before proceeding
 
-### Core Principles
+### CSS Architecture Requirements
+
+**CRITICAL**: All settings pages must follow Tailwind's utility-first philosophy. No exceptions.
+
+### Required CSS Patterns (per official Tailwind docs):
+- **Use utility classes directly in HTML**: Avoid semantic class abstractions
+- **Only use @apply for genuine duplication**: Not for creating "semantic" names  
+- **Keep styling visible in templates**: Don't hide utilities behind abstracted classes
+- **Avoid semantic class names**: Don't create .card or .btn - use utilities directly
+- **Light/Dark Mode**: Support both modes using `dark:` prefixes on utilities
+- **Complex patterns only**: Use @apply only for webkit/moz patterns or media queries too complex for inline utilities
+
+### Examples:
+- ❌ `class="system-action-button-disabled"` (semantic abstraction)
+- ✅ `class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 opacity-50 cursor-not-allowed"` (utilities directly)
+
+## Core Principles
 - **One step at a time** - Complete fully before proceeding
 - **Ask user** to confirm any major deviations or major decisions before proceeding. Caution. Safety first.
 - **Keep old code functional** - Main settings.html works throughout

@@ -234,6 +234,23 @@ const buildConfigs = {
     output: 'data/js/page-settings-wifi.min.js',
     minify: true,
   },
+
+  // Settings overview page
+  overview: {
+    input: [
+      'src/js/page-settings-overview.js'
+    ],
+    output: 'data/js/page-settings-overview.js',
+    minify: false,
+  },
+
+  overviewProd: {
+    input: [
+      'src/js/page-settings-overview.js'
+    ],
+    output: 'data/js/page-settings-overview.min.js',
+    minify: true,
+  },
 };
 
 // Build functions
