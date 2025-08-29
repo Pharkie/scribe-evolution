@@ -45,17 +45,31 @@ function initializeMqttSettingsStore() {
             }
         },
         
+        // Validation state
+        validation: {
+            errors: {}
+        },
+        
         // ================== COMPUTED PROPERTIES ==================
         get canSave() {
-            // Must have all required fields if MQTT is enabled
+            // Must have valid configuration if MQTT is enabled
             if (this.config.mqtt.enabled) {
-                const hasServer = this.config.mqtt.server && this.config.mqtt.server.trim();
-                const hasPort = this.config.mqtt.port && this.config.mqtt.port > 0;
+                const isValid = this.validateConfiguration();
                 const testPassed = this.mqttTestPassed;
-                return hasServer && hasPort && testPassed && this.hasChanges();
+                return isValid && testPassed && this.hasChanges();
             }
             // If MQTT is disabled, just need to have changes
             return this.hasChanges();
+        },
+
+        get testButtonLabel() {
+            if (this.mqttTesting) {
+                return 'Testing...';
+            } else if (this.mqttTestPassed) {
+                return 'MQTT Connected';
+            } else {
+                return 'Test Connection';
+            }
         },
 
         // ================== CHANGE DETECTION ==================
@@ -71,16 +85,75 @@ function initializeMqttSettingsStore() {
             );
         },
 
+        // ================== VALIDATION ==================
+        // Validate MQTT server field
+        validateServer(value) {
+            if (this.config.mqtt.enabled && (!value || value.trim() === '')) {
+                this.validation.errors['mqtt.server'] = 'MQTT server cannot be blank when enabled';
+            } else {
+                if (this.validation.errors['mqtt.server']) {
+                    delete this.validation.errors['mqtt.server'];
+                }
+            }
+        },
+
+        // Validate MQTT port field  
+        validatePort(value) {
+            if (this.config.mqtt.enabled) {
+                const port = parseInt(value);
+                if (isNaN(port) || port < 1 || port > 65535) {
+                    this.validation.errors['mqtt.port'] = 'Port must be between 1-65535';
+                } else {
+                    if (this.validation.errors['mqtt.port']) {
+                        delete this.validation.errors['mqtt.port'];
+                    }
+                }
+            } else {
+                if (this.validation.errors['mqtt.port']) {
+                    delete this.validation.errors['mqtt.port'];
+                }
+            }
+        },
+
+        // Validate MQTT username field
+        validateUsername(value) {
+            if (this.config.mqtt.enabled && (!value || value.trim() === '')) {
+                this.validation.errors['mqtt.username'] = 'Username cannot be blank when MQTT enabled';
+            } else {
+                if (this.validation.errors['mqtt.username']) {
+                    delete this.validation.errors['mqtt.username'];
+                }
+            }
+        },
+
+        // Validate current MQTT configuration
+        validateConfiguration() {
+            const errors = {};
+            
+            if (this.config.mqtt.enabled) {
+                if (!this.config.mqtt.server || this.config.mqtt.server.trim() === '') {
+                    errors['mqtt.server'] = 'MQTT server cannot be blank when enabled';
+                }
+                
+                const port = parseInt(this.config.mqtt.port);
+                if (isNaN(port) || port < 1 || port > 65535) {
+                    errors['mqtt.port'] = 'Port must be between 1-65535';
+                }
+                
+                if (!this.config.mqtt.username || this.config.mqtt.username.trim() === '') {
+                    errors['mqtt.username'] = 'Username cannot be blank when MQTT enabled';
+                }
+            }
+            
+            this.validation.errors = errors;
+            return Object.keys(errors).length === 0;
+        },
+
         // ================== PASSWORD HANDLING ==================
         trackMqttPasswordChange(newValue) {
             const isMasked = newValue && newValue.includes('●');
             const hasChanged = newValue !== this.originalMaskedPassword;
             this.mqttPasswordModified = hasChanged && !isMasked;
-            
-            // Reset test state when password changes
-            if (this.mqttPasswordModified) {
-                this.resetMqttTestState();
-            }
         },
 
         // ================== MQTT TEST FUNCTIONALITY ==================
@@ -221,8 +294,6 @@ function initializeMqttSettingsStore() {
                 const result = await response.json();
                 
                 if (response.ok) {
-                    window.showMessage('MQTT settings saved successfully!', 'success');
-                    
                     // Redirect immediately with success parameter
                     window.location.href = '/settings.html?saved=mqtt';
                     
@@ -267,22 +338,9 @@ document.addEventListener('alpine:init', () => {
     
     // Setup Alpine watchers for reactive updates
     Alpine.effect(() => {
-        // Reset test state when server/port/username changes
-        if (mqttStore.config?.mqtt?.server || mqttStore.config?.mqtt?.port || mqttStore.config?.mqtt?.username) {
-            // Only reset if we have original config to compare against
-            if (mqttStore.originalConfig) {
-                const hasServerChange = mqttStore.config.mqtt.server !== mqttStore.originalConfig.mqtt.server;
-                const hasPortChange = mqttStore.config.mqtt.port !== mqttStore.originalConfig.mqtt.port;
-                const hasUsernameChange = mqttStore.config.mqtt.username !== mqttStore.originalConfig.mqtt.username;
-                
-                if (hasServerChange || hasPortChange || hasUsernameChange) {
-                    mqttStore.resetMqttTestState();
-                }
-            }
-        }
-        
-        // Reset test state when MQTT is disabled
+        // Clear validation errors and reset test state when MQTT is disabled
         if (mqttStore.config?.mqtt?.enabled === false) {
+            mqttStore.validation.errors = {};
             mqttStore.resetMqttTestState();
         }
     });
