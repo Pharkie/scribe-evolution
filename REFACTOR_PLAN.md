@@ -221,6 +221,7 @@
 2. **Visual Hierarchy**: Use accent colors for section headers, not background boxes.
 3. **Save Button**: Only enabled when changes detected. Use Alpine reactive `canSave` getter with `hasChanges()` logic.
 4. **Tab Interfaces**: Proper tab styling with visual connection to content panel (border, background).
+5. **Warning Messages**: Use thin banners above action buttons, not full cards. Left border accent with icon.
 
 ### CSS Architecture Requirements
 
