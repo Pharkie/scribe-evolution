@@ -472,12 +472,7 @@ document.addEventListener('alpine:init', () => {
     
     // Setup Alpine watchers for reactive updates
     Alpine.effect(() => {
-        // Watch for changes in mode, selectedNetwork, or manualSSID
-        const mode = wifiStore.wifiScan.mode;
-        const selectedNetwork = wifiStore.wifiScan.selectedNetwork;
-        const manualSSID = wifiStore.wifiScan.manualSSID;
-        
-        // Update SSID whenever these change
+        // Update SSID whenever mode or selection changes
         wifiStore.updateSSID();
     });
     
