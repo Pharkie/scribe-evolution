@@ -35,17 +35,15 @@ function initializeWiFiSettingsStore() {
             const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
             const hasValidSSID = selectedSSID && selectedSSID.trim() !== '';
             
-            // For scan mode: need a selected network
+            // Must have valid SSID and changes to save
+            let formValid = false;
             if (this.wifiScan.mode === 'scan') {
-                return hasValidSSID && this.wifiScan.selectedNetwork;
+                formValid = hasValidSSID && this.wifiScan.selectedNetwork;
+            } else if (this.wifiScan.mode === 'manual') {
+                formValid = hasValidSSID;
             }
             
-            // For manual mode: need non-empty SSID
-            if (this.wifiScan.mode === 'manual') {
-                return hasValidSSID;
-            }
-            
-            return false;
+            return formValid && this.hasChanges();
         },
         
         // Configuration data (reactive) - WiFi section
@@ -343,11 +341,6 @@ function initializeWiFiSettingsStore() {
                 return;
             }
             
-            // Check if there are any changes
-            if (!this.hasChanges()) {
-                this.showErrorMessage('No changes to save');
-                return;
-            }
             
             this.saving = true;
             try {

@@ -214,6 +214,14 @@
 8. **Git commit** - Clear commit message with detailed summary
 9. **STOP** - Verify 100% before proceeding
 
+### Established UI Patterns (Follow for Phase 3+)
+*Based on wifi.html and device.html implementations:*
+
+1. **Loading States**: Wait till page ready, fade in with opacity transition. No "Loading" text or spinners.
+2. **Visual Hierarchy**: Use accent colors for section headers, not background boxes.
+3. **Save Button**: Only enabled when changes detected. Use Alpine reactive `canSave` getter with `hasChanges()` logic.
+4. **Tab Interfaces**: Proper tab styling with visual connection to content panel (border, background).
+
 ### CSS Architecture Requirements
 
 **CRITICAL**: All settings pages must follow Tailwind's utility-first philosophy. No exceptions.

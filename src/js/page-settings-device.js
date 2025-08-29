@@ -24,6 +24,9 @@ function initializeDeviceSettingsStore() {
         saving: false,
         initialized: false,
         
+        // Original configuration for change detection
+        originalConfig: null,
+        
         // GPIO information from backend
         gpio: {
             availablePins: [],
@@ -64,6 +67,9 @@ function initializeDeviceSettingsStore() {
             try {
                 // Load configuration from API
                 const serverConfig = await window.SettingsAPI.loadConfiguration();
+                
+                // Store original config for change detection
+                this.originalConfig = JSON.parse(JSON.stringify(serverConfig));
                 
                 // Extract only device-related configuration
                 this.mergeDeviceConfig(serverConfig);
@@ -130,6 +136,59 @@ function initializeDeviceSettingsStore() {
             console.log('✅ Device config merge complete:', this.config);
         },
 
+        // Check if configuration has meaningful changes
+        hasChanges() {
+            if (!this.originalConfig) {
+                return false; // Can't determine changes without original config
+            }
+            
+            const original = this.originalConfig;
+            
+            // Check device owner changes
+            if (this.config.device.owner !== (original.device?.owner || '')) {
+                return true;
+            }
+            
+            // Check device timezone changes
+            if (this.config.device.timezone !== (original.device?.timezone || '')) {
+                return true;
+            }
+            
+            // Check printer TX pin changes
+            if (this.config.device.printerTxPin !== original.device?.printerTxPin) {
+                return true;
+            }
+            
+            // Check button GPIO changes
+            for (const buttonKey of ['button1', 'button2', 'button3', 'button4']) {
+                const currentGpio = this.config.buttons[buttonKey].gpio;
+                const originalGpio = original.buttons?.[buttonKey]?.gpio || null;
+                if (currentGpio !== originalGpio) {
+                    return true;
+                }
+            }
+            
+            // Check LED configuration changes (if LEDs are enabled)
+            if (this.config.leds.enabled) {
+                if (this.config.leds.pin !== (original.leds?.pin || null)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        },
+
+        // Computed property to check if save should be enabled
+        get canSave() {
+            // Don't allow save while loading, saving, or with errors
+            if (this.loading || this.saving || this.error) {
+                return false;
+            }
+            
+            // Must have changes to save
+            return this.hasChanges();
+        },
+
         // Save device configuration via API
         async saveConfiguration() {
             this.saving = true;
@@ -173,8 +232,8 @@ function initializeDeviceSettingsStore() {
 
         // Cancel configuration changes
         cancelConfiguration() {
-            // Navigate back to home
-            window.location.href = '/';
+            // Navigate back to settings
+            window.location.href = '/settings.html';
         },
 
         // ================== GPIO MANAGEMENT ==================
