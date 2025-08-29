@@ -61,6 +61,7 @@
 - [x] Test complete device functionality: owner, timezone, GPIO pins
 - [x] Verify proof of concept for page separation with organized code
 - [x] **Testing passed** - Adam manually confirmed Standard Testing Workflow
+- [ ] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
 
 ### Step 3.2: Data-Driven Config System: Device Page
 **Problem**: Current `/api/config` handler is hardcoded mess - 6 utility functions, manual field mapping, 200+ lines of repetitive validation
@@ -72,13 +73,14 @@
 - [x] **Test with device settings page**: Ensure existing functionality preserved
 - [x] **Document the pattern**: Clear examples for future settings pages (`docs/DATA_DRIVEN_CONFIG.md`)
 
-### Step 3.3: WiFi Settings Page
+### Step 3.3: WiFi Settings Page ✅ COMPLETED
 **Problem**: WiFi configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript  
 **Solution**: Extract existing WiFi interface (text fields, layout, functionality) from settings-old.html into dedicated `/settings/wifi.html` with separate `page-settings-wifi.js` Alpine store to enable eventual elimination of monolithic settings.html
 
-- [ ] Run Testing Workflow
+- [x] **Frontend implementation complete** - Mock server testing passed
+- [ ] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
 
-### Step 3.4: MQTT Settings Page **← NEXT STEP**
+### Step 3.4: MQTT Settings Page 🔄 IN PROGRESS
 **Problem**: MQTT configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
 **Solution**: Extract existing MQTT interface (server, port, credentials, enable toggle) from settings-old.html into dedicated `/settings/mqtt.html` with separate `page-settings-mqtt.js` Alpine store to enable eventual elimination of monolithic settings.html
 
@@ -91,15 +93,17 @@
 
 **CRITICAL**: All new pages must support light/dark mode and use established CSS architecture. Test thoroughly before proceeding.
 
-- [ ] Create `/settings/mqtt.html` using data-driven config pattern (reference: `settings-old.html` MQTT section)
-- [ ] Create `page-settings-mqtt.js` Alpine store (follow page pattern from Step 3.1)
-- [ ] Implement MQTT connection testing with loading states and timeout handling
-- [ ] Add server/port/credentials form with validation using existing API endpoints, secure credential handling
-- [ ] Add enable/disable toggle with connection status feedback and error handling
-- [ ] Update `esbuild.config.js` with mqtt build config (as we did for device page)
-- [ ] Update `package.json` build scripts to include mqtt page bundles
-- [ ] Test against existing MQTT functionality in settings-old.html for feature parity
-- [ ] Run Testing Workflow
+- [x] Create `/settings/mqtt.html` using data-driven config pattern (reference: `settings-old.html` MQTT section)
+- [x] Create `page-settings-mqtt.js` Alpine store (follow page pattern from Step 3.1)
+- [x] Implement MQTT connection testing with loading states and timeout handling
+- [x] Add server/port/credentials form with validation using existing API endpoints, secure credential handling
+- [x] Add enable/disable toggle with connection status feedback and error handling
+- [x] Update `esbuild.config.js` with mqtt build config (as we did for device page)
+- [x] Update `package.json` build scripts to include mqtt page bundles
+- [x] Test against existing MQTT functionality in settings-old.html for feature parity
+- [x] **Additional improvements**: Red validation warnings, proper Alpine.js reactivity, test button behavior, no toast messages
+- [x] **Frontend implementation complete** - Mock server testing passed
+- [ ] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
 
 ### Step 3.5: Unbidden Ink Settings Page
 **Problem**: Unbidden Ink configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript
@@ -222,6 +226,54 @@
 3. **Save Button**: Only enabled when changes detected. Use Alpine reactive `canSave` getter with `hasChanges()` logic.
 4. **Tab Interfaces**: Proper tab styling with visual connection to content panel (border, background).
 5. **Warning Messages**: Use thin banners above action buttons, not full cards. Left border accent with icon.
+6. **Form Change Tracking**: Use proper Alpine.js reactive patterns for immediate field change detection.
+
+### Alpine.js Form Change Tracking Patterns
+*Based on MQTT settings page implementation (Step 3.4):*
+
+**✅ DO - Use @input Event Handlers:**
+```html
+<!-- Server field resets test state immediately on change -->
+<input x-model="config.mqtt.server" @input="resetMqttTestState()" />
+
+<!-- Username field with validation and test reset -->
+<input x-model="config.mqtt.username" 
+       @input="resetMqttTestState()" 
+       @blur="validateUsername($event.target.value)" />
+
+<!-- Password field with tracking and test reset -->
+<input x-model="config.mqtt.password" 
+       @input="trackMqttPasswordChange($event.target.value); resetMqttTestState()" />
+```
+
+**✅ DO - Keep Alpine.effect() Simple and Focused:**
+```javascript
+// Only watch high-level state changes, not individual fields
+Alpine.effect(() => {
+    if (mqttStore.config?.mqtt?.enabled === false) {
+        mqttStore.validation.errors = {};
+        mqttStore.resetMqttTestState();
+    }
+});
+```
+
+**❌ DON'T - Custom State Tracking or Manual Watchers:**
+```javascript
+// WRONG - Manual field watching with variables
+let lastServer = mqttStore.config?.mqtt?.server;
+Alpine.effect(() => {
+    if (mqttStore.config?.mqtt?.server !== lastServer) {
+        // Complex comparison logic...
+    }
+});
+```
+
+**Key Benefits:**
+- ✅ **Immediate response**: @input handlers fire as user types
+- ✅ **Declarative**: Clear HTML shows what triggers what action  
+- ✅ **Reactive**: Uses Alpine's built-in reactivity system
+- ✅ **Maintainable**: No complex watcher logic or state tracking
+- ✅ **Performance**: Direct event handling, no polling or comparisons
 
 ### CSS Architecture Requirements
 
@@ -259,7 +311,38 @@
 **Key Learning:** Always use Alpine's built-in reactivity (`x-effect`, `$nextTick`) instead of custom solutions
 
 **Key Learning:** Maintain parallel versions during major architectural changes
+
+**Key Learning:** Use @input handlers for immediate form field change detection, not complex Alpine.effect() watchers
+
+**Key Learning:** Keep Alpine.effect() simple and focused on high-level state changes, not individual field monitoring
 ```
+
+## Live ESP32 Testing Required 🔧
+
+### Step 3.1: Device Settings (Pending Hardware Test)
+- **Owner field**: Text input with validation
+- **Timezone dropdown**: Selection and persistence  
+- **GPIO pin configuration**: Hardware-dependent pin validation and assignment
+- **Save functionality**: NVS persistence and config reload
+
+### Step 3.3: WiFi Settings (Pending Hardware Test)
+- **WiFi scanning**: Hardware radio scanning for available networks
+- **SSID/Password configuration**: Network connection establishment
+- **Connection timeout**: Hardware timeout behavior
+- **Fallback AP mode**: Hardware AP mode activation on connection failure
+- **Save functionality**: Network configuration persistence and device restart behavior
+
+### Step 3.4: MQTT Settings (Pending Hardware Test)  
+- **MQTT broker connection**: Network connectivity to external MQTT brokers
+- **Server/port configuration**: Network socket connection establishment
+- **Username/password authentication**: MQTT client authentication
+- **Connection testing**: Live broker connectivity verification
+- **Enable/disable toggle**: MQTT client service start/stop behavior
+- **Save functionality**: MQTT configuration persistence and service restart
+
+**Ready for ESP32 deployment once Adam is available for hardware testing.**
+
+---
 
 ## Rejected Ideas 🚫
 
