@@ -112,6 +112,7 @@ const CONFIG_FIELDS = {
   'buttons.button4.longMqttTopic': { type: VALIDATION_TYPES.STRING },
   
   // LED configuration
+  'leds.enabled': { type: VALIDATION_TYPES.BOOLEAN },
   'leds.pin': { type: VALIDATION_TYPES.GPIO },
   'leds.count': { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 300 },
   'leds.brightness': { type: VALIDATION_TYPES.RANGE_INT, min: 0, max: 255 },
@@ -740,19 +741,8 @@ function createRequestHandler() {
                  pathname.startsWith('/images/') ||
                  pathname.startsWith('/favicon/')) {
         
-        // Development mode: Map .min.js requests to readable .js files for debugging
-        let requestPath = pathname.substring(1);
-        if (pathname.startsWith('/js/') && pathname.endsWith('.min.js')) {
-          // Check if corresponding .js file exists
-          const devPath = requestPath.replace('.min.js', '.js');
-          const devFilePath = path.join(__dirname, '..', 'data', devPath);
-          
-          if (fs.existsSync(devFilePath)) {
-            console.log(`🛠️  Dev mapping: ${pathname} → ${devPath} (readable for debugging)`);
-            requestPath = devPath;
-          }
-        }
-        
+        // Serve static assets directly
+        const requestPath = pathname.substring(1);
         filePath = path.join(__dirname, '..', 'data', requestPath);
       } else if (pathname.endsWith('.html')) {
         // Handle HTML files at root level (settings.html, diagnostics.html, etc.)

@@ -87,7 +87,13 @@ const buildConfigs = {
   // Alpine.js library - just copy the file
   alpine: {
     input: ['node_modules/alpinejs/dist/cdn.min.js'],
-    output: 'data/js/alpine.min.js',
+    output: 'data/js/alpine.js',
+    minify: false, // Already minified
+  },
+
+  alpineProd: {
+    input: ['node_modules/alpinejs/dist/cdn.min.js'],
+    output: 'data/js/alpine.js',
     minify: false, // Already minified
   },
 
@@ -108,7 +114,7 @@ const buildConfigs = {
       'src/js/icons.js',
       'src/js/app-common.js'
     ],
-    output: 'data/js/app-common.min.js',
+    output: 'data/js/app-common.js',
     minify: true,
   },
 
@@ -127,7 +133,7 @@ const buildConfigs = {
       'src/js/index-alpine-store.js', 
       'src/js/index-api.js'
     ],
-    output: 'data/js/page-index.min.js',
+    output: 'data/js/page-index.js',
     minify: true,
   },
 
@@ -145,7 +151,7 @@ const buildConfigs = {
       'src/js/settings-alpine-store.js',
       'src/js/settings-api.js'
     ],
-    output: 'data/js/page-settings.min.js',
+    output: 'data/js/page-settings.js',
     minify: true,
   },
 
@@ -163,7 +169,7 @@ const buildConfigs = {
       'src/js/diagnostics-alpine-store.js',
       'src/js/diagnostics-api.js'
     ],
-    output: 'data/js/page-diagnostics.min.js',
+    output: 'data/js/page-diagnostics.js',
     minify: true,
   },
 
@@ -181,7 +187,7 @@ const buildConfigs = {
       'src/js/setup-alpine-store.js',
       'src/js/setup-api.js'
     ],
-    output: 'data/js/page-setup.min.js',
+    output: 'data/js/page-setup.js',
     minify: true,
   },
 
@@ -193,7 +199,7 @@ const buildConfigs = {
 
   '404Prod': {
     input: ['src/js/404-alpine-store.js'],
-    output: 'data/js/page-404.min.js',
+    output: 'data/js/page-404.js',
     minify: true,
   },
 
@@ -212,7 +218,7 @@ const buildConfigs = {
       'src/js/settings-api.js',
       'src/js/page-settings-device.js'
     ],
-    output: 'data/js/page-settings-device.min.js',
+    output: 'data/js/page-settings-device.js',
     minify: true,
   },
 
@@ -231,7 +237,7 @@ const buildConfigs = {
       'src/js/settings-api.js',
       'src/js/page-settings-wifi.js'
     ],
-    output: 'data/js/page-settings-wifi.min.js',
+    output: 'data/js/page-settings-wifi.js',
     minify: true,
   },
 
@@ -248,7 +254,7 @@ const buildConfigs = {
     input: [
       'src/js/page-settings-overview.js'
     ],
-    output: 'data/js/page-settings-overview.min.js',
+    output: 'data/js/page-settings-overview.js',
     minify: true,
   },
 };
@@ -288,13 +294,16 @@ async function build(configName) {
 async function buildAll(production = false) {
   const suffix = production ? 'Prod' : '';
   const configs = [
-    'alpine',
+    `alpine${suffix}`,
     `common${suffix}`,
     `index${suffix}`,
     `settings${suffix}`,
     `diagnostics${suffix}`, 
     `setup${suffix}`,
-    `404${suffix}`
+    `404${suffix}`,
+    `device${suffix}`,
+    `wifi${suffix}`,
+    `overview${suffix}`
   ];
 
   console.log(`Building all configs (production: ${production})...`);

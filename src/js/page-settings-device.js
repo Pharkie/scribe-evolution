@@ -146,12 +146,15 @@ function initializeDeviceSettingsStore() {
                         button2: this.config.buttons.button2,
                         button3: this.config.buttons.button3,
                         button4: this.config.buttons.button4
-                    },
-                    leds: {
-                        enabled: this.config.leds.enabled,
-                        pin: this.config.leds.pin
                     }
                 };
+                
+                // Include LED configuration if LEDs are compiled in (card is visible)
+                if (this.config.leds.enabled) {
+                    partialConfig.leds = {
+                        pin: this.config.leds.pin
+                    };
+                }
                 
                 console.log('Saving partial device configuration:', partialConfig);
                 const message = await window.SettingsAPI.saveConfiguration(partialConfig);
