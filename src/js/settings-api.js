@@ -50,9 +50,9 @@ async function saveConfiguration(configData) {
             throw new Error(`Server error: ${response.status} - ${errorText}`);
         }
         
-        const result = await response.text();
+        const result = await response.json();
         console.log('API: Server response:', result);
-        return result;
+        return result.message || 'Configuration saved';
         
     } catch (error) {
         console.error('API: Failed to save configuration:', error);

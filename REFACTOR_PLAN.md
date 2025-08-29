@@ -46,7 +46,7 @@
 ## Phase 3: Complete Page Architecture 📄
 *Create individual pages for each settings section*
 
-### Step 3.1: Create Test Page (Device) (current)
+### Step 3.1: Create Test Page (Device) ✅ COMPLETED
 - [x] Create standalone `device.html` page with navigation
 - [x] Create focused `page-settings-device.js` Alpine store  
 - [x] Copy organized DEVICE CONFIGURATION API functions from main store
@@ -55,26 +55,45 @@
 - [x] Update index.html Settings button for testing
 - [x] Test complete device functionality: owner, timezone, GPIO pins
 - [x] Verify proof of concept for page separation with organized code
-- [ ] **Testing passed** - Adam manually confirmed Standard Testing Workflow
+- [x] **Testing passed** - Adam manually confirmed Standard Testing Workflow
 
-### Standard Section Pattern
-1. Create `[section].html` + `page-settings-[section].js` (Alpine store with copied functions)
-2. Alpine store: state + UI logic + API functions (code duplication)
-3. Test section page thoroughly
-4. **Testing passed** - Adam manually confirms Standard Testing Workflow
-5. Verify 100% functionality before next page
+### Step 3.2: Data-Driven Config System ✅ COMPLETED
+**Problem**: Current `/api/config` handler is hardcoded mess - 6 utility functions, manual field mapping, 200+ lines of repetitive validation
+**Solution**: Create elegant data-driven configuration system before proceeding to more settings pages
+- [x] **Design config field definition system**: Declare fields once with validation rules
+- [x] **Create generic validation engine**: Single handler iterates JSON keys, applies rules
+- [x] **Eliminate hardcoded field names**: Use reflection/mapping instead of manual switches
+- [x] **Consistent partial update pattern**: Any valid key:value updates runtime + NVS automatically
+- [x] **Test with device settings page**: Ensure existing functionality preserved
+- [x] **Document the pattern**: Clear examples for future settings pages (`docs/DATA_DRIVEN_CONFIG.md`)
 
-### Remaining Section Pages
+**Result**: Replaced 200+ lines of hardcoded validation with 8 lines of data-driven code. Single source of truth in `CONFIG_FIELDS[]` array handles all validation automatically. **Mock and ESP32 parity confirmed - system working perfectly.**
+
+### Step 3.3: WiFi Settings Page
 - [ ] **WiFi**: Network scanning, SSID/password, connection timeout
-- [ ] **Memos**: Content save/load
-- [ ] **MQTT**: Configuration, connection testing  
+
+### Step 3.4: MQTT Settings Page  
+- [ ] **MQTT**: Configuration, connection testing
+
+### Step 3.5: Unbidden Ink Settings Page
 - [ ] **Unbidden Ink**: AI configuration, scheduling
+
+### Step 3.6: Button Settings Page
 - [ ] **Buttons**: GPIO configuration, button action
+
+### Step 3.7: LED Settings Page
 - [ ] **LEDs**: Effects, colors, GPIO validation
-- [ ] **System**: (not a section page) Restart, factory reset, NVS operations
+
+### Step 3.8: Memo Settings Page
+- [ ] **Memos**: Content save/load
+
+### Step 3.9: System Operations Page
+- [ ] **System**: Restart, factory reset, NVS operations
+
+### Step 3.10: Setup Page Update
 - [ ] **Setup Page**: Update setup.html to the new format
 
-### Navigation & Cleanup
+### Step 3.11: Navigation & Cleanup
 - [x] Create overview page with section links (`/settings.html` with navigation grid)
 - [ ] Add client-side navigation between pages  
 - [ ] Remove monolithic files after all pages work
@@ -107,13 +126,14 @@
 
 ### Standard Testing Workflow
 1. **Code changes** - Implement functionality
-2. **Build frontend** - `npm run build-js-settings` or `npm run build`
-3. **Test with mock server** - `node mock-server/mock-api.js`
-4. **Verify functionality** - Test all affected features work correctly
-5. **Live device testing** - Invite Adam to deploy to ESP32 and verify on actual hardware (end of phases)
-6. **Update REFACTOR_PLAN.md** - Revise and mark steps completed. Revise the plan forward from here based on lessons learned.
-7. **Git commit** - Clear commit message with detailed summary
-8. **STOP** - Verify 100% before proceeding
+2. **Update build scripts** - If adding new JS files, update package.json build scripts to include them
+3. **Build frontend** - `npm run build-js-settings` or `npm run build`
+4. **Test with mock server** - `node mock-server/mock-api.js`
+5. **Verify functionality** - Test all affected features work correctly
+6. **Live device testing** - Invite Adam to deploy to ESP32 and verify on actual hardware (end of phases)
+7. **Update REFACTOR_PLAN.md** - Revise and mark steps completed. Revise the plan forward from here based on lessons learned.
+8. **Git commit** - Clear commit message with detailed summary
+9. **STOP** - Verify 100% before proceeding
 
 ### Core Principles
 - **One step at a time** - Complete fully before proceeding
@@ -177,31 +197,6 @@ x-effect="
 
 ## Current Status 📍
 
-### Phase 3 Progress
-- ✅ **Step 3.1 COMPLETED**: Device settings page fully functional with perfect UX
-- ✅ **Navigation Architecture**: Clean navigation flow without redundant icons
-- ✅ **Responsive GPIO Interface**: Card-based layout with proper mobile/desktop breakpoints
-- ✅ **File Structure**: Clean separation with modular architecture working
-- ✅ **Ready for Live Testing**: API integration confirmed working with both mock and live endpoints
+**Currently working on Step 3.1.5: Data-Driven Config System** - must complete before proceeding to additional settings pages.
 
-### Architecture Achievements
-- **Perfect Responsive Design**: 3-column desktop (640px+), 1-column mobile with proper button ordering
-- **Clean UX Patterns**: Removed redundant UI elements, proper color scheme (grey/blue), intuitive layout
-- **Alpine.js Best Practices**: Proper reactivity, CSS flexbox order for responsive button placement
-- **Build System**: esBuild working perfectly with fast iteration cycles
-- **API Integration**: Modular approach confirmed working with live ESP32 endpoints
-
-### Files Modified/Created in Step 3.1
-- `data/html/settings.html` → Clean overview page (removed redundant home icon)
-- `data/html/settings/device.html` → Perfect responsive device page with CPU chip icon
-- `src/js/page-settings-device.js` → Focused Alpine store (22KB bundled with API)
-- `REFACTOR_PLAN.md` → Updated with comprehensive lessons learned
-
-### Major UX Improvements Completed
-- **GPIO Interface**: Card-based with clean titles, proper touch targets, conflict detection
-- **Responsive Buttons**: CSS order classes for proper Save/Cancel positioning on mobile vs desktop
-- **Clean Navigation**: Single "Back to Settings" link, no redundant home icons
-- **Typography**: IANA timezone field with helpful examples, clean section headers
-- **Visual Polish**: Removed status dots, capsules, redundant labels - self-evident interface
-
-**Next Step:** Proceed to Step 3.2 (WiFi Settings Page) - device page is production-ready
+**Next Step:** Complete Step 3.1.5, then proceed to Step 3.2 (WiFi Settings Page)

@@ -38,6 +38,165 @@ function logSuccess(...args) {
   console.log(colors.green + args.join(' ') + colors.reset);
 }
 
+// Data-driven validation system - mirrors ESP32 CONFIG_FIELDS array
+const VALIDATION_TYPES = {
+  STRING: 'string',
+  NON_EMPTY_STRING: 'non_empty_string',
+  GPIO: 'gpio',
+  RANGE_INT: 'range_int',
+  BOOLEAN: 'boolean',
+  ENUM_STRING: 'enum_string'
+};
+
+const VALID_BUTTON_ACTIONS = ['JOKE', 'RIDDLE', 'QUOTE', 'QUIZ', 'NEWS', 'CHARACTER_TEST', 'UNBIDDEN_INK', 'MEMO1', 'MEMO2', 'MEMO3', 'MEMO4', ''];
+const VALID_LED_EFFECTS = ['chase_single', 'chase_multi', 'rainbow', 'twinkle', 'pulse', 'matrix', 'none'];
+
+// ESP32-C3 GPIO validation - mirrors config.h ESP32C3_GPIO_MAP
+const VALID_GPIOS = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
+const SAFE_GPIOS = [-1, 2, 4, 5, 6, 7, 10, 20, 21]; // Only GPIO_TYPE_SAFE pins from config.h
+
+const CONFIG_FIELDS = {
+  // Device configuration
+  'device.owner': { type: VALIDATION_TYPES.NON_EMPTY_STRING },
+  'device.timezone': { type: VALIDATION_TYPES.NON_EMPTY_STRING },
+  'device.printerTxPin': { type: VALIDATION_TYPES.GPIO },
+  
+  // WiFi configuration
+  'wifi.ssid': { type: VALIDATION_TYPES.NON_EMPTY_STRING },
+  'wifi.password': { type: VALIDATION_TYPES.STRING },
+  'wifi.connect_timeout': { type: VALIDATION_TYPES.RANGE_INT, min: 1000, max: 30000 },
+  
+  // MQTT configuration
+  'mqtt.enabled': { type: VALIDATION_TYPES.BOOLEAN },
+  'mqtt.server': { type: VALIDATION_TYPES.STRING },
+  'mqtt.port': { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 65535 },
+  'mqtt.username': { type: VALIDATION_TYPES.STRING },
+  'mqtt.password': { type: VALIDATION_TYPES.STRING },
+  
+  // Unbidden Ink configuration
+  'unbiddenInk.enabled': { type: VALIDATION_TYPES.BOOLEAN },
+  'unbiddenInk.startHour': { type: VALIDATION_TYPES.RANGE_INT, min: 0, max: 24 },
+  'unbiddenInk.endHour': { type: VALIDATION_TYPES.RANGE_INT, min: 0, max: 24 },
+  'unbiddenInk.frequencyMinutes': { type: VALIDATION_TYPES.RANGE_INT, min: 15, max: 480 },
+  'unbiddenInk.prompt': { type: VALIDATION_TYPES.NON_EMPTY_STRING },
+  'unbiddenInk.chatgptApiToken': { type: VALIDATION_TYPES.STRING },
+  
+  // Button configuration
+  'buttons.button1.gpio': { type: VALIDATION_TYPES.GPIO },
+  'buttons.button2.gpio': { type: VALIDATION_TYPES.GPIO },
+  'buttons.button3.gpio': { type: VALIDATION_TYPES.GPIO },
+  'buttons.button4.gpio': { type: VALIDATION_TYPES.GPIO },
+  'buttons.button1.shortAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button1.longAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button2.shortAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button2.longAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button3.shortAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button3.longAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button4.shortAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button4.longAction': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_BUTTON_ACTIONS },
+  'buttons.button1.shortLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button1.longLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button2.shortLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button2.longLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button3.shortLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button3.longLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button4.shortLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button4.longLedEffect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
+  'buttons.button1.shortMqttTopic': { type: VALIDATION_TYPES.STRING },
+  'buttons.button1.longMqttTopic': { type: VALIDATION_TYPES.STRING },
+  'buttons.button2.shortMqttTopic': { type: VALIDATION_TYPES.STRING },
+  'buttons.button2.longMqttTopic': { type: VALIDATION_TYPES.STRING },
+  'buttons.button3.shortMqttTopic': { type: VALIDATION_TYPES.STRING },
+  'buttons.button3.longMqttTopic': { type: VALIDATION_TYPES.STRING },
+  'buttons.button4.shortMqttTopic': { type: VALIDATION_TYPES.STRING },
+  'buttons.button4.longMqttTopic': { type: VALIDATION_TYPES.STRING },
+  
+  // LED configuration
+  'leds.pin': { type: VALIDATION_TYPES.GPIO },
+  'leds.count': { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 300 },
+  'leds.brightness': { type: VALIDATION_TYPES.RANGE_INT, min: 0, max: 255 },
+  'leds.refreshRate': { type: VALIDATION_TYPES.RANGE_INT, min: 10, max: 120 },
+};
+
+function validateField(fieldPath, value, fieldDef) {
+  switch (fieldDef.type) {
+    case VALIDATION_TYPES.STRING:
+      return { valid: typeof value === 'string' };
+    
+    case VALIDATION_TYPES.NON_EMPTY_STRING:
+      if (typeof value !== 'string') return { valid: false, error: `${fieldPath} must be a string` };
+      if (value.length === 0) return { valid: false, error: `${fieldPath} cannot be empty` };
+      return { valid: true };
+    
+    case VALIDATION_TYPES.GPIO:
+      if (typeof value !== 'number') return { valid: false, error: `${fieldPath} must be a number` };
+      if (!VALID_GPIOS.includes(value)) return { valid: false, error: `${fieldPath} invalid GPIO pin: ${value}` };
+      if (!SAFE_GPIOS.includes(value)) return { valid: false, error: `${fieldPath} GPIO ${value} is not safe to use` };
+      return { valid: true };
+    
+    case VALIDATION_TYPES.RANGE_INT:
+      if (typeof value !== 'number') return { valid: false, error: `${fieldPath} must be a number` };
+      if (value < fieldDef.min || value > fieldDef.max) {
+        return { valid: false, error: `${fieldPath} must be between ${fieldDef.min} and ${fieldDef.max}` };
+      }
+      return { valid: true };
+    
+    case VALIDATION_TYPES.BOOLEAN:
+      if (typeof value !== 'boolean') return { valid: false, error: `${fieldPath} must be a boolean` };
+      return { valid: true };
+    
+    case VALIDATION_TYPES.ENUM_STRING:
+      if (typeof value !== 'string') return { valid: false, error: `${fieldPath} must be a string` };
+      if (!fieldDef.values.includes(value)) {
+        return { valid: false, error: `${fieldPath} invalid value: ${value}` };
+      }
+      return { valid: true };
+    
+    default:
+      return { valid: false, error: `${fieldPath} unsupported validation type: ${fieldDef.type}` };
+  }
+}
+
+function flattenObject(obj, prefix = '') {
+  const flattened = {};
+  for (const key in obj) {
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      Object.assign(flattened, flattenObject(obj[key], prefix + key + '.'));
+    } else {
+      flattened[prefix + key] = obj[key];
+    }
+  }
+  return flattened;
+}
+
+function validateConfigFields(configUpdate) {
+  const flatConfig = flattenObject(configUpdate);
+  
+  for (const [fieldPath, value] of Object.entries(flatConfig)) {
+    const fieldDef = CONFIG_FIELDS[fieldPath];
+    if (!fieldDef) {
+      return { valid: false, error: `Unknown configuration field: ${fieldPath}` };
+    }
+    
+    const validation = validateField(fieldPath, value, fieldDef);
+    if (!validation.valid) {
+      return { valid: false, error: validation.error };
+    }
+  }
+  
+  return { valid: true };
+}
+
+function logProcessedFields(configUpdate) {
+  const flatConfig = flattenObject(configUpdate);
+  const processedFields = Object.keys(flatConfig);
+  
+  console.log(`✅ Processed ${processedFields.length} fields:`);
+  processedFields.forEach(field => {
+    console.log(`   • ${field}: ${JSON.stringify(flatConfig[field])}`);
+  });
+}
+
 // Load mock data from JSON files
 function loadMockData() {
   try {
@@ -273,26 +432,22 @@ function createRequestHandler() {
         req.on('end', () => {
           try {
             const configUpdate = JSON.parse(body);
-            console.log('📝 Config update received');
+            console.log('📝 Config update received:', JSON.stringify(configUpdate, null, 2));
             
-            // Simulate the new password handling logic - only update if provided
-            if (configUpdate.device?.wifi?.password) {
-              console.log('   ✓ WiFi password updated');
-            } else {
-              console.log('   - WiFi password preserved (masked value not changed)');
+            // Data-driven validation simulation - matches ESP32 CONFIG_FIELDS array
+            const validationResult = validateConfigFields(configUpdate);
+            if (!validationResult.valid) {
+              console.log(`❌ Validation failed: ${validationResult.error}`);
+              setTimeout(() => {
+                sendJSON(res, { 
+                  error: validationResult.error 
+                }, 400);
+              }, 200);
+              return;
             }
             
-            if (configUpdate.mqtt?.password) {
-              console.log('   ✓ MQTT password updated');
-            } else {
-              console.log('   - MQTT password preserved (masked value not changed)');
-            }
-            
-            if (configUpdate.unbiddenInk?.chatgptApiToken) {
-              console.log('   ✓ ChatGPT API token updated');
-            } else {
-              console.log('   - ChatGPT API token preserved (masked value not changed)');
-            }
+            // Log field updates that were processed
+            logProcessedFields(configUpdate);
             
             setTimeout(() => {
               sendJSON(res, { 
