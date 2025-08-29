@@ -14,6 +14,7 @@ function initializeSettingsOverviewStore() {
         // Success feedback states
         deviceSaved: false,
         wifiSaved: false,
+        mqttSaved: false,
         loading: true,
         error: null,
 
@@ -53,6 +54,18 @@ function initializeSettingsOverviewStore() {
                 // Fade back to normal after 2 seconds
                 setTimeout(() => {
                     this.wifiSaved = false;
+                }, 2000);
+            } else if (saved === 'mqtt') {
+                // Clean URL without reload
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+                
+                // Show success feedback
+                this.mqttSaved = true;
+                
+                // Fade back to normal after 2 seconds
+                setTimeout(() => {
+                    this.mqttSaved = false;
                 }, 2000);
             }
         }

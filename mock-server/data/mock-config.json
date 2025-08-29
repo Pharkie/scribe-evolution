@@ -31,6 +31,7 @@
         }
     },
     "mqtt": {
+        "enabled": true,
         "server": "mock-mqtt.example.com",
         "port": 1883,
         "username": "mock_user",

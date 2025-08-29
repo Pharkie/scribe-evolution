@@ -241,6 +241,25 @@ const buildConfigs = {
     minify: true,
   },
 
+  // MQTT settings page
+  mqtt: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-mqtt.js'
+    ],
+    output: 'data/js/page-settings-mqtt.js',
+    minify: false,
+  },
+
+  mqttProd: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-mqtt.js'
+    ],
+    output: 'data/js/page-settings-mqtt.js',
+    minify: true,
+  },
+
   // Settings overview page
   overview: {
     input: [
@@ -303,6 +322,7 @@ async function buildAll(production = false) {
     `404${suffix}`,
     `device${suffix}`,
     `wifi${suffix}`,
+    `mqtt${suffix}`,
     `overview${suffix}`
   ];
 
