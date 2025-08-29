@@ -45,6 +45,7 @@ function initializeDeviceSettingsStore() {
                 button4: { gpio: null }
             },
             leds: {
+                enabled: false,
                 pin: null
             }
         },
@@ -111,6 +112,7 @@ function initializeDeviceSettingsStore() {
             
             // LEDs GPIO configuration
             if (serverConfig.leds) {
+                this.config.leds.enabled = serverConfig.leds.enabled || false;
                 this.config.leds.pin = Number(serverConfig.leds.pin);
             } else {
                 console.warn('⚠️ Missing leds section in config');
@@ -146,6 +148,7 @@ function initializeDeviceSettingsStore() {
                         button4: this.config.buttons.button4
                     },
                     leds: {
+                        enabled: this.config.leds.enabled,
                         pin: this.config.leds.pin
                     }
                 };
