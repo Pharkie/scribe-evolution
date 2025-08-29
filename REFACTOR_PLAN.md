@@ -84,6 +84,12 @@
 - [x] Run Testing Workflow
 - [x] **Testing passed** - WiFi page created with full network scanning, status display, and secure password handling
 - [x] **Light/dark mode requirement**: All new settings pages must support both light and dark modes using the established CSS class system (`page-body`, `page-main`, `settings-card` classes with `dark:` prefixes)
+- [x] **Semantic CSS classes requirement**: CRITICAL - All long Tailwind class strings must be replaced with semantic CSS classes from shared.css. Examples of violations that need fixing:
+  - GPIO pin buttons: `class="bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-300..."` → `class="gpio-pin-button"`
+  - System action buttons: `class="px-4 py-2 bg-gray-200 dark:bg-gray-700..."` → `class="system-action-button-disabled"`
+  - Settings cards: Long Alpine `:class` expressions should use CSS classes with modifiers
+  - Loading spinners, error cards, form buttons - all need semantic classes
+  - **Action Required**: Current settings pages contain 50+ violations of this rule and need refactoring before proceeding to new pages
 
 ### Step 3.4: MQTT Settings Page
 **Problem**: MQTT configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript

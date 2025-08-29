@@ -98,7 +98,7 @@
   }
   
   .back-button {
-    @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md;
+    @apply flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md;
   }
 
   /* Action Buttons - for quick actions and colorful buttons */
