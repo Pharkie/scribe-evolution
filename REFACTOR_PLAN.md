@@ -67,21 +67,22 @@
 - [x] **Test with device settings page**: Ensure existing functionality preserved
 - [x] **Document the pattern**: Clear examples for future settings pages (`docs/DATA_DRIVEN_CONFIG.md`)
 
-### Step 3.3: WiFi Settings Page
+### Step 3.3: WiFi Settings Page ✅ COMPLETED
 **Problem**: WiFi configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript  
 **Solution**: Extract existing WiFi interface (text fields, layout, functionality) from settings-old.html into dedicated `/settings/wifi.html` with separate `page-settings-wifi.js` Alpine store to enable eventual elimination of monolithic settings.html
 **Risks**: Network scanning UI freezes, credential security, connection timeout handling, existing WiFi functionality preservation
 **Success Criteria**: WiFi scanning works, connection testing functional, password security maintained, no regressions from settings-old.html
 
-- [ ] Create `/settings/wifi.html` using data-driven config pattern (reference: `settings-old.html` WiFi section)
-- [ ] Create `page-settings-wifi.js` Alpine store (follow page pattern from Step 3.1)
-- [ ] Implement WiFi network scanning with loading states and timeout handling (as we did for device page)
-- [ ] Add SSID/password form with validation using existing API endpoints, secure password handling
-- [ ] Add connection status feedback and error handling with user-friendly messages
-- [ ] Update `esbuild.config.js` with wifi build config (as we did for device page)
-- [ ] Update `package.json` build scripts to include wifi page bundles
-- [ ] Test against existing WiFi functionality in settings-old.html for feature parity
-- [ ] Run Testing Workflow
+- [x] Create `/settings/wifi.html` using data-driven config pattern (reference: `settings-old.html` WiFi section)
+- [x] Create `page-settings-wifi.js` Alpine store (follow page pattern from Step 3.1)
+- [x] Implement WiFi network scanning with loading states and timeout handling (as we did for device page)
+- [x] Add SSID/password form with validation using existing API endpoints, secure password handling
+- [x] Add connection status feedback and error handling with user-friendly messages
+- [x] Update `esbuild.config.js` with wifi build config (as we did for device page)
+- [x] Update `package.json` build scripts to include wifi page bundles
+- [x] Test against existing WiFi functionality in settings-old.html for feature parity
+- [x] Run Testing Workflow
+- [x] **Testing passed** - WiFi page created with full network scanning, status display, and secure password handling
 
 ### Step 3.4: MQTT Settings Page
 **Problem**: MQTT configuration exists in monolithic settings.html with mixed concerns - single file contains all settings sections and JavaScript

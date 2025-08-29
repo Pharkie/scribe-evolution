@@ -215,6 +215,25 @@ const buildConfigs = {
     output: 'data/js/page-settings-device.min.js',
     minify: true,
   },
+
+  // WiFi settings page
+  wifi: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-wifi.js'
+    ],
+    output: 'data/js/page-settings-wifi.js',
+    minify: false,
+  },
+
+  wifiProd: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-wifi.js'
+    ],
+    output: 'data/js/page-settings-wifi.min.js',
+    minify: true,
+  },
 };
 
 // Build functions
