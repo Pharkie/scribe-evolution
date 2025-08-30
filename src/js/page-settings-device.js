@@ -284,16 +284,42 @@ function initializeDeviceSettingsStore() {
                         const parts = zone.id ? zone.id.split('/') : ['Unknown'];
                         const city = parts[parts.length - 1].replace(/_/g, ' ');
                         
-                        // Create display name: "City, Country"
+                        // Create enhanced display name with comment and DST info
                         const countryName = zone.location && zone.location.countryName ? zone.location.countryName : null;
-                        const displayName = countryName ? 
-                            `${city}, ${countryName}` : 
-                            zone.id || 'Unknown'; // Fallback to IANA ID if no country
+                        const comment = zone.location && zone.location.comment ? zone.location.comment.trim() : '';
                         
-                        // Clean up offset display
-                        const offset = zone.currentOffset ? 
-                            zone.currentOffset.replace(/\s*\(.*\)/, '').replace(/^\+/, 'UTC+').replace(/^-/, 'UTC-') :
-                            '';
+                        let displayName;
+                        let offset = '';
+                        
+                        if (zone.offsets && Array.isArray(zone.offsets) && zone.offsets.length > 0) {
+                            // Format offsets with :00 suffix for clarity
+                            const formatOffset = (o) => {
+                                const cleaned = o.replace(/^\+/, '+').replace(/^-/, '-').replace(/^00/, '+00');
+                                return cleaned + ':00';
+                            };
+                            
+                            if (zone.offsets.length === 1) {
+                                // Single offset (no DST)
+                                offset = 'UTC' + formatOffset(zone.offsets[0]);
+                                displayName = countryName ? `${city}, ${countryName}` : (zone.id || 'Unknown');
+                                if (comment) {
+                                    displayName += ` — ${comment}`;
+                                }
+                            } else {
+                                // Multiple offsets (DST zone) - first is standard, second is DST
+                                const standardOffset = formatOffset(zone.offsets[0]);
+                                const dstOffset = formatOffset(zone.offsets[1]);
+                                offset = `UTC${standardOffset} / ${dstOffset} DST`;
+                                
+                                displayName = countryName ? `${city}, ${countryName}` : (zone.id || 'Unknown');
+                                if (comment) {
+                                    displayName += ` — ${comment}`;
+                                }
+                            }
+                        } else {
+                            // Fallback if no offsets available
+                            displayName = countryName ? `${city}, ${countryName}` : (zone.id || 'Unknown');
+                        }
 
                         return {
                             id: zone.id || 'Unknown',
@@ -338,9 +364,14 @@ function initializeDeviceSettingsStore() {
 
         // Open timezone picker (clear search on click/focus)
         async openTimezonePicker() {
-            // Clear the search query to show all results
+            // Always load timezones if needed first
+            if (!this.timezonePicker.initialized && !this.timezonePicker.loading) {
+                await this.loadTimezones();
+            }
+            
+            // Clear search to show popular timezones, then open
             this.searchQuery = '';
-            await this.loadTimezonesAndOpen();
+            this.isOpen = true;
         },
 
         // Handle search input changes
@@ -365,7 +396,7 @@ function initializeDeviceSettingsStore() {
             console.log('Selected timezone:', timezone.id);
         },
 
-        // Get display name for a timezone ID
+        // Get display name for a timezone ID (for dropdown)
         getTimezoneDisplayName(timezoneId) {
             if (!timezoneId) return '';
             
@@ -378,6 +409,33 @@ function initializeDeviceSettingsStore() {
             const parts = timezoneId.split('/');
             const city = parts[parts.length - 1].replace(/_/g, ' ');
             return `${city} (${timezoneId})`;
+        },
+        
+        // Get display name for selected timezone (without offset)
+        getSelectedTimezoneDisplayName(timezoneId) {
+            if (!timezoneId) return '';
+            
+            const timezone = this.timezonePicker.timezones.find(tz => tz.id === timezoneId);
+            if (timezone) {
+                return timezone.displayName;
+            }
+            
+            // Fallback: convert IANA ID to readable format
+            const parts = timezoneId.split('/');
+            const city = parts[parts.length - 1].replace(/_/g, ' ');
+            return city;
+        },
+        
+        // Get offset display for selected timezone
+        getSelectedTimezoneOffset(timezoneId) {
+            if (!timezoneId) return '';
+            
+            const timezone = this.timezonePicker.timezones.find(tz => tz.id === timezoneId);
+            if (timezone) {
+                return `(${timezone.offset})`;
+            }
+            
+            return `(${timezoneId})`;
         },
 
         // Check if configuration has meaningful changes
