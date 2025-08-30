@@ -82,6 +82,11 @@ function initializeDeviceSettingsStore() {
                 // Extract only device-related configuration
                 this.mergeDeviceConfig(serverConfig);
                 
+                // Preload timezone data for proper display formatting
+                if (this.config.device.timezone) {
+                    await this.loadTimezones();
+                }
+                
                 console.log('Alpine Device Store: Configuration loaded successfully');
                 
             } catch (error) {
@@ -184,11 +189,9 @@ function initializeDeviceSettingsStore() {
 
             const query = (this.searchQuery || '').toLowerCase().trim();
             if (!query) {
-                // Show popular timezones when no search query
+                // Show top 5 popular timezones when no search query (alphabetical by city)
                 const popularTimezones = [
-                    'UTC', 'GMT', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-                    'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'Europe/Madrid',
-                    'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata', 'Asia/Dubai', 'Australia/Sydney'
+                    'Europe/London', 'America/New_York', 'America/Sao_Paulo', 'Australia/Sydney', 'Asia/Tokyo'
                 ];
                 
                 const popular = [];
@@ -210,7 +213,7 @@ function initializeDeviceSettingsStore() {
                 });
                 
                 // Return popular first, then fill with others if needed
-                return [...popular, ...others.slice(0, 10 - popular.length)].slice(0, 10);
+                return [...popular, ...others.slice(0, 5 - popular.length)].slice(0, 5);
             }
 
             const results = this.timezonePicker.timezones.filter(timezone => {
@@ -397,7 +400,7 @@ function initializeDeviceSettingsStore() {
 
         // Navigate down in timezone list (Alpine context version)
         navigateTimezoneDown(refs, nextTick) {
-            const maxIndex = Math.min(this.filteredTimezones.length - 1, 9);
+            const maxIndex = Math.min(this.filteredTimezones.length - 1, 4);
             this.focusedIndex = this.focusedIndex < maxIndex ? this.focusedIndex + 1 : 0;
             nextTick(() => {
                 const options = refs.dropdown.querySelectorAll('.timezone-option');
@@ -419,7 +422,7 @@ function initializeDeviceSettingsStore() {
         // Navigate to last timezone option from input  
         navigateToLastTimezone(refs, nextTick) {
             if (this.isOpen && this.filteredTimezones.length > 0) {
-                this.focusedIndex = Math.min(this.filteredTimezones.length - 1, 9);
+                this.focusedIndex = Math.min(this.filteredTimezones.length - 1, 4);
                 nextTick(() => {
                     const options = refs.dropdown.querySelectorAll('.timezone-option');
                     options[this.focusedIndex]?.focus();
@@ -472,14 +475,14 @@ function initializeDeviceSettingsStore() {
         
         // Get display name for selected timezone (without offset)
         getSelectedTimezoneDisplayName(timezoneId) {
-            return this.getSelectedTimezone(timezoneId)?.displayName || 
-                   timezoneId?.split('/').pop()?.replace(/_/g, ' ') || '';
+            const timezone = this.getSelectedTimezone(timezoneId);
+            return timezone ? timezone.displayName : '';
         },
         
-        // Get offset display for selected timezone
+        // Get offset display for selected timezone  
         getSelectedTimezoneOffset(timezoneId) {
             const timezone = this.getSelectedTimezone(timezoneId);
-            return timezone ? `(${timezone.offset})` : (timezoneId ? `(${timezoneId})` : '');
+            return timezone ? `(${timezone.offset})` : '';
         },
         
         // Helper to find selected timezone
