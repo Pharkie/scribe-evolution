@@ -87,7 +87,17 @@ WiFiConnectionMode connectToWiFi()
     }
 
     currentWiFiMode = WIFI_MODE_CONNECTING;
+    
     WiFi.mode(WIFI_STA);
+    
+    // Force clean WiFi scan state before connecting
+    int scanState = WiFi.scanComplete();
+    if (scanState != WIFI_SCAN_RUNNING) {
+        LOG_NOTICE("NETWORK", "Cleaning WiFi scan state (%d) before connection", scanState);
+        WiFi.scanDelete();
+        delay(100); // Let WiFi stack reset
+    }
+    
     WiFi.begin(ssid.c_str(), password.c_str());
 
     unsigned long startTime = millis();

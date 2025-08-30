@@ -296,7 +296,30 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     // Debug current WiFi mode and status
     wifi_mode_t mode = WiFi.getMode();
     wl_status_t status = WiFi.status();
+    String ssid = WiFi.SSID();
+    int8_t rssi = WiFi.RSSI();
+    uint8_t channel = WiFi.channel();
+    
     LOG_NOTICE("WEB", "WiFi scan debug - Mode: %d, Status: %d, IP: %s", mode, status, WiFi.localIP().toString().c_str());
+    LOG_NOTICE("WEB", "WiFi connection - SSID: '%s', RSSI: %d, Channel: %d", ssid.c_str(), rssi, channel);
+    
+    // Check if there's already a scan running
+    int existingScan = WiFi.scanComplete();
+    LOG_NOTICE("WEB", "Existing scan state: %d (%s)", existingScan,
+               existingScan == WIFI_SCAN_RUNNING ? "SCAN_RUNNING" :
+               existingScan == WIFI_SCAN_FAILED ? "SCAN_FAILED" :
+               existingScan >= 0 ? "SCAN_DONE" : "ERROR");
+    
+    // Clean up any existing scan (including failed ones)
+    if (existingScan != WIFI_SCAN_RUNNING) {
+        if (existingScan >= 0) {
+            LOG_NOTICE("WEB", "Cleaning up existing scan results (%d networks)", existingScan);
+        } else {
+            LOG_NOTICE("WEB", "Cleaning up failed scan state (%d)", existingScan);
+        }
+        WiFi.scanDelete();
+        delay(100); // Give WiFi stack time to clean up
+    }
     
     // Check if we're in AP mode - scanning might not work properly
     if (mode == WIFI_AP)
@@ -311,10 +334,44 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     int scanResult = WiFi.scanNetworks(true); // true = async mode
     LOG_NOTICE("WEB", "WiFi.scanNetworks(async=true) returned: %d", scanResult);
     
-    // Fail fast if async scan initiation failed
-    if (scanResult == WIFI_SCAN_FAILED) {
-        LOG_ERROR("WEB", "Async WiFi scan failed to start - Mode: %d, Status: %d", mode, status);
-        sendErrorResponse(request, 500, "WiFi scanning not available - async scan initialization failed");
+    // Fail fast if async scan initiation failed (-1 or -2)
+    if (scanResult < 0) {
+        LOG_ERROR("WEB", "Async WiFi scan FAILED to start - returned %d", scanResult);
+        LOG_ERROR("WEB", "  - Return code meaning: %s", 
+                  scanResult == -1 ? "Generic error/busy" :
+                  scanResult == -2 ? "WIFI_SCAN_FAILED" : "Unknown error");
+        LOG_ERROR("WEB", "  - WiFi Mode: %d (%s)", mode, 
+                  mode == WIFI_MODE_NULL ? "NULL" :
+                  mode == WIFI_MODE_STA ? "STA" :
+                  mode == WIFI_MODE_AP ? "AP" :
+                  mode == WIFI_MODE_APSTA ? "AP+STA" : "UNKNOWN");
+        LOG_ERROR("WEB", "  - WiFi Status: %d (%s)", status,
+                  status == WL_IDLE_STATUS ? "IDLE" :
+                  status == WL_NO_SSID_AVAIL ? "NO_SSID" :
+                  status == WL_SCAN_COMPLETED ? "SCAN_COMPLETED" :
+                  status == WL_CONNECTED ? "CONNECTED" :
+                  status == WL_CONNECT_FAILED ? "CONNECT_FAILED" :
+                  status == WL_CONNECTION_LOST ? "CONNECTION_LOST" :
+                  status == WL_DISCONNECTED ? "DISCONNECTED" : "UNKNOWN");
+        LOG_ERROR("WEB", "  - Connected SSID: '%s'", ssid.c_str());
+        LOG_ERROR("WEB", "  - Existing scan state: %d", existingScan);
+        
+        // Check for common issues
+        String diagnosis = "Unknown WiFi scan failure";
+        if (mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA) {
+            diagnosis = "Cannot scan in AP mode - WiFi radio conflict";
+        } else if (status != WL_CONNECTED) {
+            diagnosis = "WiFi not connected - scanning may be disabled";
+        } else if (existingScan == WIFI_SCAN_RUNNING) {
+            diagnosis = "Another scan already in progress";
+        } else if (existingScan == WIFI_SCAN_FAILED && scanResult == -1) {
+            diagnosis = "WiFi stack stuck after previous failed scan - cleanup failed";
+        } else if (scanResult == -1) {
+            diagnosis = "WiFi scanning busy or hardware error";
+        }
+        
+        LOG_ERROR("WEB", "  - Likely cause: %s", diagnosis.c_str());
+        sendErrorResponse(request, 500, "WiFi scanning failed: " + diagnosis);
         return;
     }
     
