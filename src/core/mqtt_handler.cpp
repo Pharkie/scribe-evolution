@@ -26,10 +26,11 @@ static unsigned long lastFailureTime = 0;
 const int MAX_CONSECUTIVE_FAILURES = 5;
 const unsigned long FAILURE_COOLDOWN_MS = 60000; // 1 minute
 
+
 // === MQTT Functions ===
 void setupMQTT()
 {
-    // Load CA certificate once and store in persistent buffer
+    // Load CA certificate exactly like test - local String variable
     LOG_NOTICE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
     if (!certFile) {
@@ -37,20 +38,20 @@ void setupMQTT()
         return;
     }
     
-    caCertificateBuffer = certFile.readString();
+    String certContent = certFile.readString();
     certFile.close();
     
-    LOG_NOTICE("MQTT", "CA certificate loaded, length: %d bytes", caCertificateBuffer.length());
+    LOG_NOTICE("MQTT", "CA certificate loaded, length: %d bytes", certContent.length());
     
-    if (caCertificateBuffer.length() == 0) {
+    if (certContent.length() == 0) {
         LOG_ERROR("MQTT", "CA certificate file is empty");
         return;
     }
     
     // Validate certificate format
-    bool validCert = caCertificateBuffer.indexOf("-----BEGIN CERTIFICATE-----") != -1 && 
-                     caCertificateBuffer.indexOf("-----END CERTIFICATE-----") != -1 &&
-                     caCertificateBuffer.length() > 100;
+    bool validCert = certContent.indexOf("-----BEGIN CERTIFICATE-----") != -1 && 
+                     certContent.indexOf("-----END CERTIFICATE-----") != -1 &&
+                     certContent.length() > 100;
     
     if (!validCert) {
         LOG_ERROR("MQTT", "CA certificate file format is invalid");
@@ -59,8 +60,15 @@ void setupMQTT()
     
     LOG_NOTICE("MQTT", "CA certificate validation passed, configuring WiFiClientSecure");
     
-    wifiSecureClient.setCACert(caCertificateBuffer.c_str()); // Static buffer guarantees lifetime
+    // Store in static buffer to ensure lifetime during connection attempts
+    caCertificateBuffer = certContent;
+    
+    // Configure exactly like test - local string passed to setCACert
+    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
     wifiSecureClient.setHandshakeTimeout(10000);
+    
+    // Ensure MQTT client uses the refreshed secure client
+    mqttClient.setClient(wifiSecureClient);
     
     // Configure MQTT client
     const RuntimeConfig &config = getRuntimeConfig();
@@ -98,14 +106,23 @@ void connectToMQTT()
         }
     }
 
-    // Ensure clean SSL state before connection attempt
+    // Debug socket state before connection attempt
+    LOG_NOTICE("MQTT", "Connection attempt - WiFi status: %d, wifiSecureClient.connected(): %d", 
+               WiFi.status(), wifiSecureClient.connected());
+    
+    // Always clean the client state like test does with fresh object
     if (wifiSecureClient.connected()) {
-        LOG_VERBOSE("MQTT", "Closing existing SSL connection before new attempt");
+        LOG_VERBOSE("MQTT", "Stopping existing WiFiClientSecure connection");
         wifiSecureClient.stop();
     }
     
-    // Small delay to ensure SSL context is reset
-    delay(50);
+    // Force clean state by recreating the secure client (match test behavior)
+    wifiSecureClient = WiFiClientSecure();
+    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
+    wifiSecureClient.setHandshakeTimeout(10000);
+    wifiSecureClient.setTimeout(5000);
+    
+    LOG_VERBOSE("MQTT", "WiFiClientSecure reset to clean state");
 
     String printerId = getPrinterId();
     String clientId = "ScribePrinter-" + printerId; // Use consistent ID based on printer ID
@@ -397,3 +414,4 @@ void stopMQTTClient()
     }
     currentSubscribedTopic = "";
 }
+
