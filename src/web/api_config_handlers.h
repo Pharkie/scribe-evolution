@@ -83,4 +83,15 @@ void handleMemosPost(AsyncWebServerRequest *request);
  */
 void handleTestMQTT(AsyncWebServerRequest *request);
 
+/**
+ * @brief Handle timezone data GET request
+ * @param request The HTTP request
+ *
+ * Endpoint: GET /api/timezones
+ * 
+ * Returns IANA timezone database in JSON format with lazy loading and caching
+ * Data loaded from /resources/timezones.json on first request
+ */
+void handleTimezonesGet(AsyncWebServerRequest *request);
+
 #endif // API_CONFIG_HANDLERS_H

@@ -42,6 +42,7 @@ function logSuccess(...args) {
 const VALIDATION_TYPES = {
   STRING: 'string',
   NON_EMPTY_STRING: 'non_empty_string',
+  IANA_TIMEZONE: 'iana_timezone',
   GPIO: 'gpio',
   RANGE_INT: 'range_int',
   BOOLEAN: 'boolean',
@@ -58,7 +59,7 @@ const SAFE_GPIOS = [-1, 2, 4, 5, 6, 7, 10, 20, 21]; // Only GPIO_TYPE_SAFE pins 
 const CONFIG_FIELDS = {
   // Device configuration
   'device.owner': { type: VALIDATION_TYPES.NON_EMPTY_STRING },
-  'device.timezone': { type: VALIDATION_TYPES.NON_EMPTY_STRING },
+  'device.timezone': { type: VALIDATION_TYPES.IANA_TIMEZONE },
   'device.printerTxPin': { type: VALIDATION_TYPES.GPIO },
   
   // WiFi configuration
@@ -127,6 +128,31 @@ function validateField(fieldPath, value, fieldDef) {
     case VALIDATION_TYPES.NON_EMPTY_STRING:
       if (typeof value !== 'string') return { valid: false, error: `${fieldPath} must be a string` };
       if (value.length === 0) return { valid: false, error: `${fieldPath} cannot be empty` };
+      return { valid: true };
+    
+    case VALIDATION_TYPES.IANA_TIMEZONE:
+      if (typeof value !== 'string') return { valid: false, error: `${fieldPath} must be a string` };
+      if (value.length === 0) return { valid: false, error: `${fieldPath} cannot be empty` };
+      
+      // Basic IANA timezone format validation (mirrors backend logic)
+      if (value.length > 50) return { valid: false, error: `${fieldPath} timezone name too long` };
+      if (value.indexOf('/') === -1 && value !== 'UTC' && value !== 'GMT' && !value.startsWith('Etc/')) {
+        return { valid: false, error: `${fieldPath} invalid IANA timezone format: ${value} (expected format: Area/Location, e.g., America/New_York, Europe/London)` };
+      }
+      if (value.startsWith('/') || value.endsWith('/')) {
+        return { valid: false, error: `${fieldPath} invalid IANA timezone format: ${value} (cannot start or end with slash)` };
+      }
+      if (value.indexOf(' ') !== -1) {
+        return { valid: false, error: `${fieldPath} invalid IANA timezone format: ${value} (spaces not allowed, use underscores)` };
+      }
+      
+      // Check for valid IANA timezone prefixes
+      const validPrefixes = ['Africa/', 'America/', 'Antarctica/', 'Asia/', 'Atlantic/', 'Australia/', 'Europe/', 'Indian/', 'Pacific/', 'Etc/'];
+      const hasValidPrefix = validPrefixes.some(prefix => value.startsWith(prefix)) || value === 'UTC' || value === 'GMT';
+      if (!hasValidPrefix) {
+        return { valid: false, error: `${fieldPath} invalid IANA timezone format: ${value} (expected format: Area/Location, e.g., America/New_York, Europe/London)` };
+      }
+      
       return { valid: true };
     
     case VALIDATION_TYPES.GPIO:
@@ -584,6 +610,21 @@ function createRequestHandler() {
       } else if (pathname === '/api/wifi-scan') {
         console.log('📶 WiFi scan requested');
         setTimeout(() => sendJSON(res, mockWifiScan), 800);
+        
+      } else if (pathname === '/api/timezones') {
+        console.log('🌍 Timezone data requested');
+        // Serve timezone data from the actual file
+        const fs = require('fs');
+        const path = require('path');
+        try {
+          const timezonePath = path.join(__dirname, '..', 'data', 'resources', 'timezones.json');
+          const timezoneData = JSON.parse(fs.readFileSync(timezonePath, 'utf8'));
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          setTimeout(() => sendJSON(res, timezoneData), 100);
+        } catch (error) {
+          console.error('Failed to load timezone data:', error);
+          setTimeout(() => sendJSON(res, { error: "Timezone data not available" }, 500), 100);
+        }
         
       } else if (pathname === '/api/joke') {
         console.log('😄 Joke requested');

@@ -360,6 +360,7 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
         registerRoute("POST", "/api/test-mqtt", "Test MQTT connection", handleTestMQTT, true);
+        registerRoute("GET", "/api/timezones", "Get IANA timezone data", handleTimezonesGet, true);
         registerRoute("GET", "/api/memos", "Get all memos", handleMemosGet, true);
         registerRoute("POST", "/api/memos", "Update all memos", handleMemosPost, true);
         registerRoute("GET", "/api/wifi-scan", "Scan WiFi networks", handleWiFiScan, true);

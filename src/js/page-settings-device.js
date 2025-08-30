@@ -57,6 +57,9 @@ function initializeDeviceSettingsStore() {
         validation: {
             errors: {}
         },
+        
+        // Timezone picker UI state
+        searchQuery: '',
 
         // ================== DEVICE CONFIGURATION API ==================
         // Initialize store with data from server
@@ -163,6 +166,218 @@ function initializeDeviceSettingsStore() {
                     delete this.validation.errors['device.timezone'];
                 }
             }
+        },
+
+        // TIMEZONE PICKER FUNCTIONALITY
+        timezonePicker: {
+            loading: false,
+            error: null,
+            timezones: [],
+            initialized: false
+        },
+
+        // Computed property for filtered timezones
+        get filteredTimezones() {
+            if (!Array.isArray(this.timezonePicker.timezones) || this.timezonePicker.timezones.length === 0) {
+                return [];
+            }
+
+            const query = (this.searchQuery || '').toLowerCase().trim();
+            if (!query) {
+                // Show popular timezones when no search query
+                const popularTimezones = [
+                    'UTC', 'GMT', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+                    'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'Europe/Madrid',
+                    'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata', 'Asia/Dubai', 'Australia/Sydney'
+                ];
+                
+                const popular = [];
+                const others = [];
+                
+                this.timezonePicker.timezones.forEach(timezone => {
+                    if (popularTimezones.includes(timezone.id)) {
+                        popular.push(timezone);
+                    } else {
+                        others.push(timezone);
+                    }
+                });
+                
+                // Sort popular by the order in popularTimezones array
+                popular.sort((a, b) => {
+                    const aIndex = popularTimezones.indexOf(a.id);
+                    const bIndex = popularTimezones.indexOf(b.id);
+                    return aIndex - bIndex;
+                });
+                
+                // Return popular first, then fill with others if needed
+                return [...popular, ...others.slice(0, 10 - popular.length)].slice(0, 10);
+            }
+
+            const results = this.timezonePicker.timezones.filter(timezone => {
+                // Search in display name (city, country)
+                if (timezone.displayName.toLowerCase().includes(query)) return true;
+                
+                // Search in IANA ID
+                if (timezone.id.toLowerCase().includes(query)) return true;
+                
+                // Search in city name (extracted from IANA ID)
+                const parts = timezone.id.split('/');
+                const city = parts[parts.length - 1].replace(/_/g, ' ').toLowerCase();
+                if (city.includes(query)) return true;
+                
+                // Search in country name
+                if (timezone.countryName && timezone.countryName.toLowerCase().includes(query)) return true;
+                
+                // Search in region (first part of IANA ID)
+                const region = timezone.id.split('/')[0];
+                if (region && region.toLowerCase().includes(query)) return true;
+                
+                // Search in aliases
+                if (timezone.aliases && timezone.aliases.some(alias => 
+                    alias.toLowerCase().includes(query))) return true;
+                
+                // Search in comment
+                if (timezone.comment && timezone.comment.toLowerCase().includes(query)) return true;
+                
+                return false;
+            });
+
+            // Sort results by relevance
+            return results.sort((a, b) => {
+                // Exact matches first
+                if (a.displayName.toLowerCase() === query) return -1;
+                if (b.displayName.toLowerCase() === query) return 1;
+                
+                // Starts with query
+                if (a.displayName.toLowerCase().startsWith(query) && !b.displayName.toLowerCase().startsWith(query)) return -1;
+                if (b.displayName.toLowerCase().startsWith(query) && !a.displayName.toLowerCase().startsWith(query)) return 1;
+                
+                // Alphabetical
+                return a.displayName.localeCompare(b.displayName);
+            });
+        },
+
+        // Load timezone data from API
+        async loadTimezones() {
+            if (this.timezonePicker.initialized) return;
+
+            this.timezonePicker.loading = true;
+            this.timezonePicker.error = null;
+
+            try {
+                const response = await fetch('/api/timezones');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.zones || !Array.isArray(data.zones)) {
+                    throw new Error('Invalid timezone data format');
+                }
+
+                // Transform timezone data for frontend use
+                this.timezonePicker.timezones = data.zones.map(zone => {
+                    try {
+                        // Extract city name from IANA ID (after last '/')
+                        const parts = zone.id ? zone.id.split('/') : ['Unknown'];
+                        const city = parts[parts.length - 1].replace(/_/g, ' ');
+                        
+                        // Create display name: "City, Country"
+                        const countryName = zone.location && zone.location.countryName ? zone.location.countryName : null;
+                        const displayName = countryName ? 
+                            `${city}, ${countryName}` : 
+                            zone.id || 'Unknown'; // Fallback to IANA ID if no country
+                        
+                        // Clean up offset display
+                        const offset = zone.currentOffset ? 
+                            zone.currentOffset.replace(/\s*\(.*\)/, '').replace(/^\+/, 'UTC+').replace(/^-/, 'UTC-') :
+                            '';
+
+                        return {
+                            id: zone.id || 'Unknown',
+                            displayName,
+                            countryName: countryName,
+                            comment: zone.location && zone.location.comment ? zone.location.comment : '',
+                            aliases: zone.aliases || [],
+                            offset
+                        };
+                    } catch (transformError) {
+                        console.error('Error transforming timezone:', zone, transformError);
+                        return {
+                            id: zone.id || 'Unknown',
+                            displayName: zone.id || 'Unknown',
+                            countryName: '',
+                            comment: '',
+                            aliases: [],
+                            offset: ''
+                        };
+                    }
+                });
+
+                this.timezonePicker.initialized = true;
+                console.log(`Loaded ${this.timezonePicker.timezones.length} timezones`);
+
+            } catch (error) {
+                console.error('Failed to load timezone data:', error);
+                console.error('Error details:', error.message, error.stack);
+                this.timezonePicker.error = `Failed to load timezone data: ${error.message}`;
+            } finally {
+                this.timezonePicker.loading = false;
+            }
+        },
+
+        // Load timezones and open dropdown
+        async loadTimezonesAndOpen() {
+            if (!this.timezonePicker.initialized && !this.timezonePicker.loading) {
+                await this.loadTimezones();
+            }
+            this.isOpen = true;
+        },
+
+        // Open timezone picker (clear search on click/focus)
+        async openTimezonePicker() {
+            // Clear the search query to show all results
+            this.searchQuery = '';
+            await this.loadTimezonesAndOpen();
+        },
+
+        // Handle search input changes
+        onSearchInput() {
+            // Ensure dropdown stays open when typing
+            if (!this.isOpen && this.timezonePicker.initialized) {
+                this.isOpen = true;
+            }
+        },
+
+        // Select a timezone
+        selectTimezone(timezone) {
+            this.config.device.timezone = timezone.id;
+            this.searchQuery = timezone.displayName;
+            this.isOpen = false;
+            
+            // Clear any validation errors
+            if (this.validation.errors['device.timezone']) {
+                delete this.validation.errors['device.timezone'];
+            }
+            
+            console.log('Selected timezone:', timezone.id);
+        },
+
+        // Get display name for a timezone ID
+        getTimezoneDisplayName(timezoneId) {
+            if (!timezoneId) return '';
+            
+            const timezone = this.timezonePicker.timezones.find(tz => tz.id === timezoneId);
+            if (timezone) {
+                return `${timezone.displayName} (${timezone.offset})`;
+            }
+            
+            // Fallback: convert IANA ID to readable format
+            const parts = timezoneId.split('/');
+            const city = parts[parts.length - 1].replace(/_/g, ' ');
+            return `${city} (${timezoneId})`;
         },
 
         // Check if configuration has meaningful changes
