@@ -15,6 +15,7 @@ function initializeSettingsOverviewStore() {
         deviceSaved: false,
         wifiSaved: false,
         mqttSaved: false,
+        memosSaved: false,
         loading: true,
         error: null,
 
@@ -31,43 +32,25 @@ function initializeSettingsOverviewStore() {
             const urlParams = new URLSearchParams(window.location.search);
             const saved = urlParams.get('saved');
             
-            if (saved === 'device') {
-                // Clean URL without reload
-                const cleanUrl = window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
-                
-                // Show success feedback
-                this.deviceSaved = true;
-                
-                // Fade back to normal after 2 seconds
-                setTimeout(() => {
-                    this.deviceSaved = false;
-                }, 2000);
-            } else if (saved === 'wifi') {
-                // Clean URL without reload
-                const cleanUrl = window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
-                
-                // Show success feedback
-                this.wifiSaved = true;
-                
-                // Fade back to normal after 2 seconds
-                setTimeout(() => {
-                    this.wifiSaved = false;
-                }, 2000);
-            } else if (saved === 'mqtt') {
-                // Clean URL without reload
-                const cleanUrl = window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
-                
-                // Show success feedback
-                this.mqttSaved = true;
-                
-                // Fade back to normal after 2 seconds
-                setTimeout(() => {
-                    this.mqttSaved = false;
-                }, 2000);
+            if (saved && this.hasOwnProperty(saved + 'Saved')) {
+                this.showSuccessFeedback(saved);
             }
+        },
+
+        // Show success feedback for a given setting type
+        showSuccessFeedback(settingType) {
+            // Clean URL without reload
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+            
+            // Show success feedback
+            const savedProperty = settingType + 'Saved';
+            this[savedProperty] = true;
+            
+            // Fade back to normal after 2 seconds
+            setTimeout(() => {
+                this[savedProperty] = false;
+            }, 2000);
         }
     };
 

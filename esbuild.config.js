@@ -276,6 +276,23 @@ const buildConfigs = {
     output: 'data/js/page-settings-overview.js',
     minify: true,
   },
+
+  // Memos settings page
+  memos: {
+    input: [
+      'src/js/page-settings-memos.js'
+    ],
+    output: 'data/js/page-settings-memos.js',
+    minify: false,
+  },
+
+  memosProd: {
+    input: [
+      'src/js/page-settings-memos.js'
+    ],
+    output: 'data/js/page-settings-memos.js',
+    minify: true,
+  },
 };
 
 // Build functions
@@ -323,7 +340,8 @@ async function buildAll(production = false) {
     `device${suffix}`,
     `wifi${suffix}`,
     `mqtt${suffix}`,
-    `overview${suffix}`
+    `overview${suffix}`,
+    `memos${suffix}`
   ];
 
   console.log(`Building all configs (production: ${production})...`);
