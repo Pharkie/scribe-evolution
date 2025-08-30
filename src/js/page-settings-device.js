@@ -216,48 +216,49 @@ function initializeDeviceSettingsStore() {
                 return [...popular, ...others.slice(0, 5 - popular.length)].slice(0, 5);
             }
 
-            const results = this.timezonePicker.timezones.filter(timezone => {
-                // Search in display name (city, country)
-                if (timezone.displayName.toLowerCase().includes(query)) return true;
+            // Search and score results by field priority
+            const results = [];
+            
+            this.timezonePicker.timezones.forEach(timezone => {
+                let priority = null;
                 
-                // Search in IANA ID
-                if (timezone.id.toLowerCase().includes(query)) return true;
-                
-                // Search in city name (extracted from IANA ID)
+                // Priority 1: City name (extracted from IANA ID)
                 const parts = timezone.id.split('/');
                 const city = parts[parts.length - 1].replace(/_/g, ' ').toLowerCase();
-                if (city.includes(query)) return true;
+                if (city.includes(query)) {
+                    priority = 1;
+                } 
+                // Priority 2: Display name
+                else if (timezone.displayName.toLowerCase().includes(query)) {
+                    priority = 2;
+                } 
+                // Priority 3: Timezone ID
+                else if (timezone.id.toLowerCase().includes(query)) {
+                    priority = 3;
+                } 
+                // Priority 4: Country name
+                else if (timezone.countryName && timezone.countryName.toLowerCase().includes(query)) {
+                    priority = 4;
+                } 
+                // Priority 5: Comments
+                else if (timezone.comment && timezone.comment.toLowerCase().includes(query)) {
+                    priority = 5;
+                }
                 
-                // Search in country name
-                if (timezone.countryName && timezone.countryName.toLowerCase().includes(query)) return true;
-                
-                // Search in region (first part of IANA ID)
-                const region = timezone.id.split('/')[0];
-                if (region && region.toLowerCase().includes(query)) return true;
-                
-                // Search in aliases
-                if (timezone.aliases && timezone.aliases.some(alias => 
-                    alias.toLowerCase().includes(query))) return true;
-                
-                // Search in comment
-                if (timezone.comment && timezone.comment.toLowerCase().includes(query)) return true;
-                
-                return false;
+                if (priority !== null) {
+                    results.push({ timezone, priority });
+                }
             });
 
-            // Sort results by relevance
-            return results.sort((a, b) => {
-                // Exact matches first
-                if (a.displayName.toLowerCase() === query) return -1;
-                if (b.displayName.toLowerCase() === query) return 1;
-                
-                // Starts with query
-                if (a.displayName.toLowerCase().startsWith(query) && !b.displayName.toLowerCase().startsWith(query)) return -1;
-                if (b.displayName.toLowerCase().startsWith(query) && !a.displayName.toLowerCase().startsWith(query)) return 1;
-                
-                // Alphabetical
-                return a.displayName.localeCompare(b.displayName);
-            });
+            // Sort by priority first, then alphabetically by display name
+            return results
+                .sort((a, b) => {
+                    if (a.priority !== b.priority) {
+                        return a.priority - b.priority;
+                    }
+                    return a.timezone.displayName.localeCompare(b.timezone.displayName);
+                })
+                .map(result => result.timezone);
         },
 
         // Load timezone data from API
@@ -377,6 +378,33 @@ function initializeDeviceSettingsStore() {
         // Reset focus index
         resetTimezoneFocus() {
             this.focusedIndex = -1;
+        },
+
+        // Handle global keydown to capture typing when dropdown is open
+        handleGlobalKeydown(event, refs) {
+            // Only handle when dropdown is open and not already focused on search input
+            if (!this.isOpen || document.activeElement === refs.searchInput) {
+                return;
+            }
+
+            // Handle printable characters (letters, numbers, space)
+            if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                // Focus search input and add the character
+                refs.searchInput.focus();
+                // Let the input handle the character naturally
+                return;
+            }
+
+            // Handle backspace to focus input for editing
+            if (event.key === 'Backspace') {
+                event.preventDefault();
+                refs.searchInput.focus();
+                // Clear last character if search query exists
+                if (this.searchQuery.length > 0) {
+                    this.searchQuery = this.searchQuery.slice(0, -1);
+                    this.onSearchInputWithReset();
+                }
+            }
         },
 
         // Close timezone picker
