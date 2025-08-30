@@ -3,6 +3,60 @@
 #include "core/logging.h"
 #include <cstddef>
 
+/**
+ * @brief Validate IANA timezone string format
+ * @param timezone Timezone string to validate
+ * @return true if timezone appears to be a valid IANA timezone
+ */
+bool isValidIANATimezone(const String& timezone) {
+    // Basic format validation for IANA timezone strings
+    if (timezone.length() == 0 || timezone.length() > 50) {
+        return false;
+    }
+    
+    // Must contain at least one slash (Area/Location)
+    if (timezone.indexOf('/') == -1) {
+        return false;
+    }
+    
+    // Cannot start or end with slash
+    if (timezone.startsWith("/") || timezone.endsWith("/")) {
+        return false;
+    }
+    
+    // Cannot contain spaces, must use underscores
+    if (timezone.indexOf(' ') != -1) {
+        return false;
+    }
+    
+    // Check for common valid patterns
+    // Allow: Letters, numbers, underscores, slashes, hyphens, plus signs
+    for (int i = 0; i < timezone.length(); i++) {
+        char c = timezone.charAt(i);
+        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || 
+              (c >= '0' && c <= '9') || c == '_' || c == '/' || c == '-' || c == '+')) {
+            return false;
+        }
+    }
+    
+    // Validate common IANA timezone prefixes
+    if (timezone.startsWith("Africa/") || 
+        timezone.startsWith("America/") || 
+        timezone.startsWith("Antarctica/") ||
+        timezone.startsWith("Asia/") || 
+        timezone.startsWith("Atlantic/") ||
+        timezone.startsWith("Australia/") || 
+        timezone.startsWith("Europe/") ||
+        timezone.startsWith("Indian/") || 
+        timezone.startsWith("Pacific/") ||
+        timezone == "UTC" || timezone == "GMT" ||
+        timezone.startsWith("Etc/")) {
+        return true;
+    }
+    
+    return false;
+}
+
 // Valid button actions
 const char* const VALID_BUTTON_ACTIONS[] = {
     "JOKE", "RIDDLE", "QUOTE", "QUIZ", "NEWS", "CHARACTER_TEST", 
@@ -20,7 +74,7 @@ const int VALID_LED_EFFECTS_COUNT = 7;
 const ConfigFieldDef CONFIG_FIELDS[] = {
     // Device configuration
     {"device.owner", ValidationType::NON_EMPTY_STRING, offsetof(RuntimeConfig, deviceOwner), 0, 0, nullptr, 0},
-    {"device.timezone", ValidationType::NON_EMPTY_STRING, offsetof(RuntimeConfig, timezone), 0, 0, nullptr, 0},
+    {"device.timezone", ValidationType::IANA_TIMEZONE, offsetof(RuntimeConfig, timezone), 0, 0, nullptr, 0},
     {"device.printerTxPin", ValidationType::GPIO, offsetof(RuntimeConfig, printerTxPin), 0, 0, nullptr, 0},
     
     // WiFi configuration
@@ -120,6 +174,20 @@ bool validateAndUpdateField(const ConfigFieldDef* field, JsonVariant value, Runt
             String str = value.as<String>();
             if (str.length() == 0) {
                 errorMsg = String(field->jsonPath) + " cannot be empty";
+                return false;
+            }
+            *reinterpret_cast<String*>(fieldPtr) = str;
+            return true;
+        }
+        
+        case ValidationType::IANA_TIMEZONE: {
+            String str = value.as<String>();
+            if (str.length() == 0) {
+                errorMsg = String(field->jsonPath) + " cannot be empty";
+                return false;
+            }
+            if (!isValidIANATimezone(str)) {
+                errorMsg = String(field->jsonPath) + " invalid IANA timezone format: " + str + " (expected format: Area/Location, e.g., America/New_York, Europe/London)";
                 return false;
             }
             *reinterpret_cast<String*>(fieldPtr) = str;

@@ -17,6 +17,7 @@
 enum class ValidationType {
     STRING,              // Any string value (including empty)
     NON_EMPTY_STRING,    // String that cannot be empty
+    IANA_TIMEZONE,       // Valid IANA timezone string
     GPIO,                // GPIO pin number (validates safety)
     RANGE_INT,           // Integer within min/max range
     RANGE_FLOAT,         // Float within min/max range
