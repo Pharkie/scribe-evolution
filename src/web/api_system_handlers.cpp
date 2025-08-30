@@ -177,9 +177,10 @@ void handleRoutes(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "handleRoutes() called - listing pages and API endpoints");
 
     DynamicJsonDocument doc(8192); // Large buffer for all routes
+    JsonObject routes = doc.to<JsonObject>();
 
     // === PAGES AND ENDPOINTS ===
-    addRegisteredRoutesToJson(doc);
+    addRegisteredRoutesToJson(routes);
 
     // Serialize and send
     String response;

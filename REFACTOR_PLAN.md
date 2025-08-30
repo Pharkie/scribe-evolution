@@ -189,6 +189,32 @@
 - [ ] Add build size monitoring and hot reload
 - [ ] Eliminate code duplication through proper imports
 
+### Step 4.1: Playwright End-to-End Testing Setup
+**Problem**: Need automated testing for Alpine.js + Tailwind frontend to prevent regressions during refactoring
+**Solution**: Add Playwright E2E tests that work with existing mock server at http://localhost:3001
+**Benefits**: Catch UI/API integration issues early, validate settings pages work correctly, prevent deployment of broken builds
+
+**Implementation Tasks**:
+- [ ] **Install dependencies**: Add dev dependencies @playwright/test, dotenv, cross-env
+- [ ] **Browser setup**: Run `npx playwright install --with-deps` for browser binaries
+- [ ] **Environment config**: Create `.env.test` with `APP_URL=http://localhost:3001`
+- [ ] **Playwright config**: Create `playwright.config.js` with testDir="tests", baseURL from env, trace="on-first-retry"
+- [ ] **Package scripts**: Add `test:e2e`, `test:e2e:ui`, and `mock` commands to package.json
+- [ ] **API tests**: Create `tests/api/status.spec.js` to validate mock server /status endpoint returns {ok: true}
+- [ ] **UI smoke tests**: Create `tests/ui/smoke.spec.js` to validate homepage loads and key elements are visible
+- [ ] **CI workflow**: Document test execution order (start mock server, run tests in separate shell)
+- [ ] **Settings page tests**: Add E2E tests for device/wifi/mqtt settings pages once Step 3 is complete
+
+**Test Coverage Goals**:
+- API endpoints return valid JSON responses
+- Settings pages load without JavaScript errors
+- Form validation works correctly
+- Save/load functionality preserves data
+- Navigation between settings sections works
+- Mobile responsive layout renders correctly
+
+**Success Criteria**: All tests pass consistently, mock server integration works, test suite runs in under 30 seconds
+
 ### Critical Issue: CSS File Sizes 🚨
 **Problem Discovered**: Tailwind CSS files are 60-80KB each (should be 5-15KB)
 - Multiple builds each including large Tailwind 4.x base?
