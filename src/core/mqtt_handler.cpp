@@ -10,18 +10,20 @@
 
 // MQTT objects
 WiFiClientSecure wifiSecureClient;
-PubSubClient mqttClient; // Initialize without client initially
+PubSubClient mqttClient(wifiSecureClient);
 unsigned long lastMQTTReconnectAttempt = 0;
 const unsigned long mqttReconnectInterval = 5000; // 5 seconds
 
 // Track current subscription
 String currentSubscribedTopic = "";
 
+// Persistent CA certificate buffer (must outlive wifiSecureClient)
+static String caCertificateBuffer;
+
 // === MQTT Functions ===
 void setupMQTT()
 {
-    // Configure TLS for HiveMQ Cloud with proper certificate verification
-    // Load ISRG Root X1 CA certificate from filesystem
+    // Load CA certificate once and store in persistent buffer
     LOG_NOTICE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
     if (!certFile) {
@@ -29,20 +31,20 @@ void setupMQTT()
         return;
     }
     
-    String certContent = certFile.readString();
+    caCertificateBuffer = certFile.readString();
     certFile.close();
     
-    LOG_NOTICE("MQTT", "CA certificate loaded, length: %d bytes", certContent.length());
+    LOG_NOTICE("MQTT", "CA certificate loaded, length: %d bytes", caCertificateBuffer.length());
     
-    if (certContent.length() == 0) {
+    if (caCertificateBuffer.length() == 0) {
         LOG_ERROR("MQTT", "CA certificate file is empty");
         return;
     }
     
     // Validate certificate format
-    bool validCert = certContent.indexOf("-----BEGIN CERTIFICATE-----") != -1 && 
-                     certContent.indexOf("-----END CERTIFICATE-----") != -1 &&
-                     certContent.length() > 100; // Minimum reasonable cert size
+    bool validCert = caCertificateBuffer.indexOf("-----BEGIN CERTIFICATE-----") != -1 && 
+                     caCertificateBuffer.indexOf("-----END CERTIFICATE-----") != -1 &&
+                     caCertificateBuffer.length() > 100;
     
     if (!validCert) {
         LOG_ERROR("MQTT", "CA certificate file format is invalid");
@@ -51,32 +53,18 @@ void setupMQTT()
     
     LOG_NOTICE("MQTT", "CA certificate validation passed, configuring WiFiClientSecure");
     
-    // Ensure clean state - stop any existing connections
-    wifiSecureClient.stop();
+    wifiSecureClient.setCACert(caCertificateBuffer.c_str()); // Static buffer guarantees lifetime
+    wifiSecureClient.setHandshakeTimeout(10000);
     
-    wifiSecureClient.setCACert(certContent.c_str());
-    wifiSecureClient.setHandshakeTimeout(10000); // 10 second timeout for proper certificate verification
-
-    // Feed watchdog after TLS configuration
-    esp_task_wdt_reset();
-
-    // Reconfigure MQTT client to use the updated secure client
+    // Configure MQTT client
     const RuntimeConfig &config = getRuntimeConfig();
-    mqttClient.setClient(wifiSecureClient); // Update client reference to configured WiFiClientSecure
     mqttClient.setServer(config.mqttServer.c_str(), config.mqttPort);
     mqttClient.setCallback(mqttCallback);
-
-    // Set buffer size for larger messages
     mqttClient.setBufferSize(4096);
-
-    // Feed watchdog before TLS connection attempt
-    esp_task_wdt_reset();
 
     // Initial connection attempt
     connectToMQTT();
 
-    // Since we're using WiFiClientSecure with setCACert() and no setInsecure(), 
-    // any successful connection is by definition using secure TLS with certificate verification
     const char* tlsMode = mqttClient.connected() ? "Secure (TLS with CA verification)" : "Secure (TLS configured, connection pending)";
     LOG_NOTICE("MQTT", "MQTT server configured: %s:%d | Inbox topic: %s | TLS mode: %s | Buffer size: 4096 bytes", config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), tlsMode);
 }
