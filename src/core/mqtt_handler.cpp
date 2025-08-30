@@ -85,6 +85,10 @@ void setupMQTT()
 
 void connectToMQTT()
 {
+    static int attemptCounter = 0;
+    attemptCounter++;
+    LOG_NOTICE("MQTT", "=== connectToMQTT() ENTRY #%d ===", attemptCounter);
+    
     if (WiFi.status() != WL_CONNECTED)
     {
         // WiFi not connected, skipping MQTT connection
