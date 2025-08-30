@@ -364,14 +364,67 @@ function initializeDeviceSettingsStore() {
 
         // Open timezone picker (clear search on click/focus)
         async openTimezonePicker() {
-            // Always load timezones if needed first
             if (!this.timezonePicker.initialized && !this.timezonePicker.loading) {
                 await this.loadTimezones();
             }
-            
-            // Clear search to show popular timezones, then open
             this.searchQuery = '';
             this.isOpen = true;
+        },
+
+        // Reset focus index
+        resetTimezoneFocus() {
+            this.focusedIndex = -1;
+        },
+
+        // Close timezone picker
+        closeTimezonePicker() {
+            this.isOpen = false;
+            this.focusedIndex = -1;
+        },
+
+        // Navigate up in timezone list (Alpine context version)
+        navigateTimezoneUp(refs, nextTick) {
+            this.focusedIndex = this.focusedIndex > 0 ? this.focusedIndex - 1 : -1;
+            if (this.focusedIndex === -1) {
+                refs.searchInput.focus();
+            } else {
+                nextTick(() => {
+                    const options = refs.dropdown.querySelectorAll('.timezone-option');
+                    options[this.focusedIndex]?.focus();
+                });
+            }
+        },
+
+        // Navigate down in timezone list (Alpine context version)
+        navigateTimezoneDown(refs, nextTick) {
+            const maxIndex = Math.min(this.filteredTimezones.length - 1, 9);
+            this.focusedIndex = this.focusedIndex < maxIndex ? this.focusedIndex + 1 : 0;
+            nextTick(() => {
+                const options = refs.dropdown.querySelectorAll('.timezone-option');
+                options[this.focusedIndex]?.focus();
+            });
+        },
+
+        // Navigate to first timezone option from input
+        navigateToFirstTimezone(refs, nextTick) {
+            if (this.isOpen && this.filteredTimezones.length > 0) {
+                this.focusedIndex = 0;
+                nextTick(() => {
+                    const options = refs.dropdown.querySelectorAll('.timezone-option');
+                    options[0]?.focus();
+                });
+            }
+        },
+
+        // Navigate to last timezone option from input  
+        navigateToLastTimezone(refs, nextTick) {
+            if (this.isOpen && this.filteredTimezones.length > 0) {
+                this.focusedIndex = Math.min(this.filteredTimezones.length - 1, 9);
+                nextTick(() => {
+                    const options = refs.dropdown.querySelectorAll('.timezone-option');
+                    options[this.focusedIndex]?.focus();
+                });
+            }
         },
 
         // Handle search input changes
@@ -380,6 +433,12 @@ function initializeDeviceSettingsStore() {
             if (!this.isOpen && this.timezonePicker.initialized) {
                 this.isOpen = true;
             }
+        },
+
+        // Handle search input with focus reset (Alpine-native single method)
+        onSearchInputWithReset() {
+            this.onSearchInput();
+            this.resetTimezoneFocus();
         },
 
         // Select a timezone
@@ -413,29 +472,19 @@ function initializeDeviceSettingsStore() {
         
         // Get display name for selected timezone (without offset)
         getSelectedTimezoneDisplayName(timezoneId) {
-            if (!timezoneId) return '';
-            
-            const timezone = this.timezonePicker.timezones.find(tz => tz.id === timezoneId);
-            if (timezone) {
-                return timezone.displayName;
-            }
-            
-            // Fallback: convert IANA ID to readable format
-            const parts = timezoneId.split('/');
-            const city = parts[parts.length - 1].replace(/_/g, ' ');
-            return city;
+            return this.getSelectedTimezone(timezoneId)?.displayName || 
+                   timezoneId?.split('/').pop()?.replace(/_/g, ' ') || '';
         },
         
         // Get offset display for selected timezone
         getSelectedTimezoneOffset(timezoneId) {
-            if (!timezoneId) return '';
-            
-            const timezone = this.timezonePicker.timezones.find(tz => tz.id === timezoneId);
-            if (timezone) {
-                return `(${timezone.offset})`;
-            }
-            
-            return `(${timezoneId})`;
+            const timezone = this.getSelectedTimezone(timezoneId);
+            return timezone ? `(${timezone.offset})` : (timezoneId ? `(${timezoneId})` : '');
+        },
+        
+        // Helper to find selected timezone
+        getSelectedTimezone(timezoneId) {
+            return timezoneId ? this.timezonePicker.timezones.find(tz => tz.id === timezoneId) : null;
         },
 
         // Check if configuration has meaningful changes
