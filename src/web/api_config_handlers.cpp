@@ -882,71 +882,16 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 
 void handleTimezonesGet(AsyncWebServerRequest *request)
 {
-    if (isRateLimited())
-    {
-        sendRateLimitResponse(request);
+    LOG_VERBOSE("WEB", "handleTimezonesGet() called - serving static file");
+
+    // Serve timezone data directly from filesystem
+    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/resources/timezones.json", "application/json");
+    
+    if (!response) {
+        LOG_ERROR("WEB", "Failed to create response for /resources/timezones.json");
+        sendErrorResponse(request, 500, "Timezone data not available");
         return;
     }
-
-    LOG_VERBOSE("WEB", "handleTimezonesGet() called");
-
-    // Static variables for lazy loading and caching
-    static String cachedTimezoneData = "";
-    static bool dataLoaded = false;
-    
-    // Load timezone data on first request
-    if (!dataLoaded) {
-        LOG_VERBOSE("WEB", "Loading timezone data from /resources/timezones.json");
-        
-        File file = LittleFS.open("/resources/timezones.json", "r");
-        if (!file) {
-            LOG_ERROR("WEB", "Failed to open /resources/timezones.json");
-            sendErrorResponse(request, 500, "Timezone data not available");
-            return;
-        }
-        
-        // Check file size to prevent memory issues
-        size_t fileSize = file.size();
-        if (fileSize > 200000) { // 200KB limit for safety
-            LOG_ERROR("WEB", "Timezone file too large: %zu bytes", fileSize);
-            file.close();
-            sendErrorResponse(request, 500, "Timezone data file too large");
-            return;
-        }
-        
-        // Read file in chunks to avoid memory issues with large files
-        cachedTimezoneData.reserve(fileSize + 1);
-        const size_t chunkSize = 1024;
-        char buffer[chunkSize];
-        
-        while (file.available()) {
-            size_t bytesRead = file.readBytes(buffer, chunkSize);
-            cachedTimezoneData += String(buffer).substring(0, bytesRead);
-        }
-        file.close();
-        
-        if (cachedTimezoneData.length() == 0) {
-            LOG_ERROR("WEB", "Failed to read timezone data from file");
-            sendErrorResponse(request, 500, "Failed to read timezone data");
-            return;
-        }
-        
-        // Validate JSON structure by attempting to parse
-        DynamicJsonDocument testDoc(1024);
-        DeserializationError error = deserializeJson(testDoc, cachedTimezoneData.substring(0, 1000));
-        if (error) {
-            LOG_ERROR("WEB", "Invalid JSON in timezone data: %s", error.c_str());
-            cachedTimezoneData = ""; // Clear invalid data
-            sendErrorResponse(request, 500, "Invalid timezone data format");
-            return;
-        }
-        
-        dataLoaded = true;
-        LOG_NOTICE("WEB", "Timezone data loaded successfully (%zu bytes)", cachedTimezoneData.length());
-    }
-    
-    // Create response with caching headers
-    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", cachedTimezoneData);
     
     // Add caching headers (24 hours)
     response->addHeader("Cache-Control", "public, max-age=86400");
@@ -954,5 +899,5 @@ void handleTimezonesGet(AsyncWebServerRequest *request)
     
     request->send(response);
     
-    LOG_VERBOSE("WEB", "Timezone data sent to client (%zu bytes)", cachedTimezoneData.length());
+    LOG_VERBOSE("WEB", "Timezone data served directly from filesystem");
 }

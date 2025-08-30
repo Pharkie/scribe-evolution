@@ -182,6 +182,52 @@
 
 ## Phase 4: Build System Optimization 🚀
 
+### Step 4.0: REST API Semantics Refactor
+**Problem**: Most endpoints were POST even when they only fetch or transform content
+**Solution**: Align HTTP methods with REST semantics for proper API design
+
+**HTTP Method Guidelines:**
+- GET = safe retrieval or pure transform, no state change
+- PATCH = partial updates
+- PUT = full replacement of a resource  
+- POST = actions with side effects or one-shot triggers
+
+**Corrected Endpoint List:**
+
+**GET Routes (Content Retrieval):**
+- `GET /api/character-test` → Get character test pattern content
+- `GET /api/joke` → Get random joke content
+- `GET /api/news` → Get BBC news headlines
+- `GET /api/quiz` → Get random quiz content
+- `GET /api/quote` → Get random quote content
+- `GET /api/riddle` → Get random riddle content
+- `GET /api/poke` → Get poke content
+- `GET /api/user-message` → Echo/transform user message for print (e.g., ?text=...)
+
+**PATCH Routes (Partial Updates):**
+- `PATCH /api/config` → Partially update configuration
+
+**PUT Routes (Full Replacement):**
+- `PUT /api/memo/{id}` → Replace specific memo
+- `PUT /api/memos` → Bulk replace all memos
+
+**POST Routes (Actions with Side Effects):**
+- `POST /api/led-effect` → Trigger one-shot LED effect
+- `POST /api/print-local` → Print custom message locally
+- `POST /api/print-mqtt` → Send MQTT message to print
+- `POST /api/test-mqtt` → Test MQTT connection
+- `POST /api/unbidden-ink` → Trigger unbidden ink
+
+**Implementation Tasks:**
+- [ ] Update backend route handlers for new HTTP methods
+- [ ] Update frontend code to use correct HTTP methods
+- [ ] Update mock server to match new route definitions
+- [ ] Update documentation with corrected API specifications
+- [ ] Apply URL length limits for GET /api/user-message query parameters
+- [ ] Test all endpoints maintain functionality with new methods
+
+**Success Criteria:** All API endpoints follow REST semantics, no functionality regressions, improved API clarity
+
 - [ ] Fix esbuild multi-entry plugin to support imports
 - [ ] Enable proper module separation with external files  
 - [ ] Configure code splitting per settings page
