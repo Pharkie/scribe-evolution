@@ -792,6 +792,12 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     int port = doc["port"];
     String username = doc["username"];
     String password = doc["password"] | "";
+    
+    // If no password provided in test request, use stored password from config
+    if (password.length() == 0) {
+        const RuntimeConfig &config = getRuntimeConfig();
+        password = config.mqttPassword;
+    }
 
     if (server.length() == 0 || port < 1 || port > 65535)
     {
@@ -807,12 +813,12 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     
     PubSubClient testMqttClient(testWifiClient);
     testMqttClient.setServer(server.c_str(), port);
-    testMqttClient.setBufferSize(1024); // Smaller buffer for test
+    testMqttClient.setBufferSize(4096); // Match main client buffer size
     
     // Generate unique client ID for test
     String clientId = "ScribeTest_" + String(random(0xffff), HEX);
     
-    // Attempt connection
+    // Attempt connection (match main startup code - no LWT for test)
     bool connected = false;
     if (password.length() > 0)
     {

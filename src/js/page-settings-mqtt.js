@@ -185,7 +185,7 @@ function initializeMqttSettingsStore() {
                     username: this.config.mqtt.username
                 };
                 
-                // Include password if modified
+                // Include password only if modified by user
                 if (this.mqttPasswordModified && this.config.mqtt.password) {
                     testData.password = this.config.mqtt.password;
                 }

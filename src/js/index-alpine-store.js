@@ -107,6 +107,14 @@ function initializeIndexStore() {
       
       try {
         await this.loadConfig();
+        
+        // Only initialize printer discovery if MQTT is enabled
+        if (this.config.mqtt?.enabled) {
+          console.log('📋 Index: MQTT enabled, initializing printer discovery');
+          this.initializePrinterDiscovery();
+        } else {
+          console.log('📋 Index: MQTT disabled, skipping printer discovery');
+        }
       } catch (error) {
         console.error('📋 Index: Config loading failed:', error);
         // Set error state - Alpine.js standard pattern
@@ -114,7 +122,6 @@ function initializeIndexStore() {
         this.loading = false;
       }
 
-      this.initializePrinterDiscovery();
       this.setupEventListeners();
       console.log('📋 Index: Initialization complete');
     },
@@ -161,11 +168,8 @@ function initializeIndexStore() {
     
     // Initialize printer discovery
     initializePrinterDiscovery() {
-      // Start SSE for printer discovery
-      if (typeof window.initializePrinterDiscovery === 'function') {
-        window.initializePrinterDiscovery();
-      }
-      
+      // Use our own SSE initialization method (removed duplicate global call)
+      this.setupSSEConnection();
       this.updatePrinterList();
     },
     
@@ -728,8 +732,8 @@ function initializeIndexStore() {
       }
     },
 
-    // Printer Discovery and SSE (Index page only)
-    initializePrinterDiscovery() {
+    // Setup SSE connection for printer discovery
+    setupSSEConnection() {
       console.log('🔌 Initializing real-time printer discovery (SSE)');
       
       let eventSource = null;
