@@ -880,6 +880,9 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     testWifiClient.stop(); // Explicitly close SSL connection
     testWifiClient.setCACert(NULL); // Clear certificate to avoid state pollution
     
+    // Add a small delay to ensure SSL context is completely reset
+    delay(100); // 100ms delay to let SSL state settle
+    
     if (connected)
     {
         LOG_NOTICE("WEB", "MQTT test connection successful");

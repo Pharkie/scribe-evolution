@@ -20,6 +20,12 @@ String currentSubscribedTopic = "";
 // Persistent CA certificate buffer (must outlive wifiSecureClient)
 static String caCertificateBuffer;
 
+// Failure tracking to prevent system crashes
+static int consecutiveFailures = 0;
+static unsigned long lastFailureTime = 0;
+const int MAX_CONSECUTIVE_FAILURES = 5;
+const unsigned long FAILURE_COOLDOWN_MS = 60000; // 1 minute
+
 // === MQTT Functions ===
 void setupMQTT()
 {
@@ -76,6 +82,30 @@ void connectToMQTT()
         // WiFi not connected, skipping MQTT connection
         return;
     }
+    
+    // Check if we should skip connection due to consecutive failures
+    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES)
+    {
+        if (millis() - lastFailureTime < FAILURE_COOLDOWN_MS)
+        {
+            // Still in cooldown period, skip connection attempt
+            return;
+        }
+        else
+        {
+            LOG_NOTICE("MQTT", "Cooldown period expired, resetting failure count and attempting reconnection");
+            consecutiveFailures = 0;
+        }
+    }
+
+    // Ensure clean SSL state before connection attempt
+    if (wifiSecureClient.connected()) {
+        LOG_VERBOSE("MQTT", "Closing existing SSL connection before new attempt");
+        wifiSecureClient.stop();
+    }
+    
+    // Small delay to ensure SSL context is reset
+    delay(50);
 
     String printerId = getPrinterId();
     String clientId = "ScribePrinter-" + printerId; // Use consistent ID based on printer ID
@@ -93,23 +123,32 @@ void connectToMQTT()
 
     // Try connection with or without credentials, including LWT
     const RuntimeConfig &config = getRuntimeConfig();
-    if (config.mqttUsername.length() > 0 && config.mqttPassword.length() > 0)
-    {
-        connected = mqttClient.connect(clientId.c_str(),
-                                       config.mqttUsername.c_str(),
-                                       config.mqttPassword.c_str(),
-                                       statusTopic.c_str(),
-                                       0,
-                                       true,
-                                       lwtPayload.c_str());
-    }
-    else
-    {
-        connected = mqttClient.connect(clientId.c_str(),
-                                       statusTopic.c_str(),
-                                       0,
-                                       true,
-                                       lwtPayload.c_str());
+    
+    // Set a shorter timeout to prevent blocking
+    wifiSecureClient.setTimeout(5000); // 5 second timeout
+    
+    try {
+        if (config.mqttUsername.length() > 0 && config.mqttPassword.length() > 0)
+        {
+            connected = mqttClient.connect(clientId.c_str(),
+                                           config.mqttUsername.c_str(),
+                                           config.mqttPassword.c_str(),
+                                           statusTopic.c_str(),
+                                           0,
+                                           true,
+                                           lwtPayload.c_str());
+        }
+        else
+        {
+            connected = mqttClient.connect(clientId.c_str(),
+                                           statusTopic.c_str(),
+                                           0,
+                                           true,
+                                           lwtPayload.c_str());
+        }
+    } catch (...) {
+        LOG_ERROR("MQTT", "MQTT connection threw exception, treating as failed");
+        connected = false;
     }
     
     // Feed watchdog again after connection attempt
@@ -117,6 +156,9 @@ void connectToMQTT()
 
     if (connected)
     {
+        // Reset failure count on successful connection
+        consecutiveFailures = 0;
+        
         // Subscribe to the inbox topic
         String newTopic = String(getLocalPrinterTopic());
         if (!mqttClient.subscribe(newTopic.c_str()))
@@ -145,7 +187,19 @@ void connectToMQTT()
     }
     else
     {
-        LOG_WARNING("MQTT", "MQTT connection failed, state: %d - Will retry in %d seconds", mqttClient.state(), mqttReconnectInterval / 1000);
+        // Track consecutive failures
+        consecutiveFailures++;
+        lastFailureTime = millis();
+        
+        int state = mqttClient.state();
+        LOG_WARNING("MQTT", "MQTT connection failed (attempt %d/%d), state: %d - Will retry in %d seconds", 
+                   consecutiveFailures, MAX_CONSECUTIVE_FAILURES, state, mqttReconnectInterval / 1000);
+        
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES)
+        {
+            LOG_ERROR("MQTT", "Too many consecutive MQTT failures (%d), entering cooldown mode for %d seconds to prevent system instability", 
+                     MAX_CONSECUTIVE_FAILURES, FAILURE_COOLDOWN_MS / 1000);
+        }
     }
 }
 
