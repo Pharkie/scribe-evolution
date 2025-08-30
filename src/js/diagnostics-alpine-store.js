@@ -13,6 +13,7 @@ function initializeDiagnosticsStore() {
     diagnosticsData: {},
     configData: {},
     nvsData: {},
+    routesData: {},
     
     // UI state
     currentSection: 'microcontroller-section',
@@ -49,23 +50,26 @@ function initializeDiagnosticsStore() {
       
       try {
         console.log('🛠️ Diagnostics: Making parallel API calls...');
-        // Load diagnostics, config, and NVS data in parallel with individual error handling
-        const [diagnosticsResponse, configResponse, nvsResponse] = await Promise.allSettled([
+        // Load diagnostics, config, NVS, and routes data in parallel with individual error handling
+        const [diagnosticsResponse, configResponse, nvsResponse, routesResponse] = await Promise.allSettled([
           window.DiagnosticsAPI.loadDiagnostics(),
           window.DiagnosticsAPI.loadConfiguration(),
-          window.DiagnosticsAPI.loadNVSDump()
+          window.DiagnosticsAPI.loadNVSDump(),
+          window.DiagnosticsAPI.loadRoutes()
         ]);
         
         console.log('🛠️ Diagnostics: API responses received:', {
           diagnostics: diagnosticsResponse.status === 'fulfilled',
           config: configResponse.status === 'fulfilled',
-          nvs: nvsResponse.status === 'fulfilled'
+          nvs: nvsResponse.status === 'fulfilled',
+          routes: routesResponse.status === 'fulfilled'
         });
         
         // Check if at least one API succeeded
         const anyApiSuccess = diagnosticsResponse.status === 'fulfilled' || 
                              configResponse.status === 'fulfilled' || 
-                             nvsResponse.status === 'fulfilled';
+                             nvsResponse.status === 'fulfilled' ||
+                             routesResponse.status === 'fulfilled';
         
         if (!anyApiSuccess) {
           // All APIs failed - this is an error state
@@ -99,10 +103,19 @@ function initializeDiagnosticsStore() {
           this.nvsData = {}; // Empty object will trigger "data missing" displays
         }
         
+        if (routesResponse.status === 'fulfilled') {
+          this.routesData = routesResponse.value;
+          console.log('✅ Routes API data loaded:', Object.keys(this.routesData));
+        } else {
+          console.error('❌ Routes API failed - routes data will be incomplete:', routesResponse.reason);
+          this.routesData = {}; // Empty object will trigger "data missing" displays
+        }
+        
         console.log('✅ Diagnostics loading complete:', {
           diagnosticsKeys: Object.keys(this.diagnosticsData).length,
           configKeys: Object.keys(this.configData).length,
-          nvsKeys: this.nvsData.keys ? Object.keys(this.nvsData.keys).length : 0
+          nvsKeys: this.nvsData.keys ? Object.keys(this.nvsData.keys).length : 0,
+          routesKeys: Object.keys(this.routesData).length
         });
         
         this.error = null;
@@ -225,13 +238,13 @@ function initializeDiagnosticsStore() {
     
     // Web pages computed properties - show errors instead of silent fallbacks
     get sortedRoutes() {
-      const routes = this.diagnosticsData.pages_and_endpoints?.web_pages;
+      const routes = this.routesData?.web_pages;
       
       if (!routes) {
-        console.error('❌ Missing pages_and_endpoints.web_pages data from diagnostics API');
+        console.error('❌ Missing web_pages data from routes API');
         return [{
           path: 'ERROR: Missing Data',
-          description: 'Web pages data not available from diagnostics API',
+          description: 'Web pages data not available from routes API',
           isError: true
         }];
       }
@@ -285,14 +298,14 @@ function initializeDiagnosticsStore() {
     
     // API endpoints computed properties - show errors instead of silent fallbacks
     get apiEndpoints() {
-      const endpoints = this.diagnosticsData.pages_and_endpoints?.api_endpoints;
+      const endpoints = this.routesData?.api_endpoints;
       
       if (!endpoints) {
-        console.error('❌ Missing pages_and_endpoints.api_endpoints data from diagnostics API');
+        console.error('❌ Missing api_endpoints data from routes API');
         return {
           ERROR: [{
             path: 'ERROR: Missing Data',
-            description: 'API endpoints data not available from diagnostics API'
+            description: 'API endpoints data not available from routes API'
           }]
         };
       }

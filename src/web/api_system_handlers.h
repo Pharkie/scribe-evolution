@@ -24,6 +24,15 @@
 void handleDiagnostics(AsyncWebServerRequest *request);
 
 /**
+ * @brief Handle routes listing request
+ * @param request The HTTP request
+ *
+ * Endpoint: GET /api/routes
+ * Returns all registered web pages and API endpoints with descriptions.
+ */
+void handleRoutes(AsyncWebServerRequest *request);
+
+/**
  * @brief Handle MQTT message sending request
  * @param request The HTTP request containing MQTT topic and message
  *

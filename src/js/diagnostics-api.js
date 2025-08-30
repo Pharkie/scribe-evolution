@@ -130,11 +130,35 @@ async function printLocalContent(content) {
     }
 }
 
+/**
+ * Load routes data from server API
+ * @returns {Promise<Object>} Routes object from server
+ */
+async function loadRoutes() {
+    try {
+        console.log('API: Loading routes from server...');
+        
+        const response = await fetch('/api/routes');
+        if (!response.ok) {
+            throw new Error(`Routes API returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const routes = await response.json();
+        console.log('API: Routes loaded successfully');
+        return routes;
+        
+    } catch (error) {
+        console.error('API: Failed to load routes:', error);
+        throw error;
+    }
+}
+
 // Export API module
 window.DiagnosticsAPI = {
     loadDiagnostics,
     loadConfiguration,
     loadNVSDump,
     executeQuickAction,
-    printLocalContent
+    printLocalContent,
+    loadRoutes
 };

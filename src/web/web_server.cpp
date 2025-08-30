@@ -355,6 +355,7 @@ void setupWebServerRoutes(int maxChars)
         registeredRoutes.push_back({"POST", "/api/memo/{id}", "Update specific memo", true});
 
         registerRoute("GET", "/api/diagnostics", "System diagnostics", handleDiagnostics, true);
+        registerRoute("GET", "/api/routes", "List all routes and endpoints", handleRoutes, true);
         registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump", handleNVSDump, true);
         registerRoute("POST", "/api/print-mqtt", "Send MQTT message", handleMQTTSend, true);
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);

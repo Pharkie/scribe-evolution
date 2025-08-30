@@ -101,9 +101,6 @@ static const char *getGPIODescription(int pin)
     return "Unknown GPIO";
 }
 
-// Display current GPIO usage summary (call after boot validation)
-// Implementation in config_utils.cpp
-
 // ============================================================================
 // RUNTIME DEFAULTS - Can be overridden by config.json
 // ============================================================================

@@ -98,95 +98,15 @@
 - [x] **Frontend implementation complete** - Mock server testing passed
 - [ ] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
 
-#### Step 3.4.5: Timezone Picker Enhancement
-**Problem**: Current timezone text input allows invalid IANA timezone strings despite backend validation - users can enter format-correct but invalid timezones like "America/Invalid_City"
-**Solution**: Replace text input with searchable timezone picker to eliminate user errors and improve UX
-**Approach**: 
-- Create separate `/api/timezones` endpoint (not in `/config` - would bloat with 341 entries)
-- Implement lazy loading - only fetch when timezone picker is opened
-- Add client-side caching after first load
-- Create searchable dropdown with friendly display names
-- Allow searching by city name, region, or IANA string
-
-**Implementation Plan**:
-- [ ] **Data Acquisition**: Download canonical IANA timezone data:
-  ```bash
-  curl -L "https://nodatime.org/TimeZones?format=json&version=2025b" -o data/resources/timezones.json
-  ```
-- [ ] **Backend Data Storage**: Timezone data stored as JSON file in `data/resources/timezones.json` with TZDB format:
-  ```json
-  {
-    "ianaVersion": "2025b",
-    "fullVersionId": "TZDB: 2025b (mapping: $Revision$)",
-    "zones": [
-      {
-        "id": "Africa/Abidjan", 
-        "aliases": ["Africa/Accra", "Iceland"],
-        "location": {
-          "countryCode": "CI",
-          "countryName": "Côte d'Ivoire", 
-          "comment": ""
-        },
-        "currentOffset": "+00 (GMT)"
-      }
-    ]
-  }
-  ```
-- [ ] **Backend API**: Create `/api/timezones` endpoint with robust error handling:
-  - Lazy load: Only reads from LittleFS on first request (memory efficient)
-  - Static cache: Store in static String variable for subsequent requests (performance)
-  - Error handling: Return 500 if file missing, 500 if JSON malformed, appropriate error messages
-  - Memory safety: Monitor heap usage during JSON parsing of large dataset
-  - Headers: Add `Cache-Control: public, max-age=86400` and `Content-Type: application/json`
-  - Rate limiting: Use existing rate limiting infrastructure
-  
-- [ ] **Frontend Component**: Replace timezone text input with comprehensive searchable dropdown:
-  - **Loading states**: Show spinner while fetching `/api/timezones` on first open
-  - **Error handling**: Display error message if API fails, allow retry
-  - **Dropdown UI**: Fixed-height scrollable list (max 300px), highlight on hover/keyboard navigation
-  - **Keyboard navigation**: Arrow up/down, Enter to select, Escape to close, Tab to next field
-  - **Mobile responsive**: Touch-friendly sizing, prevent zoom on input focus
-  - **Accessibility**: ARIA labels, screen reader support, proper focus management
-  
-- [ ] **Search Engine**: Implement comprehensive search with ranking:
-  - **Matching logic**: Case-insensitive, partial matching (prefix and contains)
-  - **Search fields**: City (IANA ID after `/`, `_` → space), country name, region, aliases, comments
-  - **Search examples**:
-    - "New York" → "America/New_York" (city extraction with underscore conversion)
-    - "United States" → all US timezones (country matching)  
-    - "America" → all America/* timezones (region matching)
-    - "US/Eastern" → "America/New_York" (alias matching)
-    - "Eastern" → "America/New_York" (comment matching)
-  - **Result ranking**: Exact matches first, then prefix matches, then contains matches
-  - **Performance**: Limit results to top 10, use debounced search (300ms delay)
-  
-- [ ] **Display Format**: Consistent user-friendly formatting:
-  - **Format**: "City, Country (UTC±HH)" - e.g., "New York, United States (UTC-04)"
-  - **City extraction**: Split IANA ID on `/`, take last part, convert `_` to spaces
-  - **Country**: Use `location.countryName` field
-  - **Offset**: Parse `currentOffset` field, clean format to "UTC±HH" 
-  - **Fallback**: If city extraction fails, show IANA ID directly
-  
-- [ ] **Performance Optimization**:
-  - **Client caching**: Cache timezone data in memory after first load, persist across page refreshes
-  - **Search optimization**: Build searchable index on first load (city/country/alias arrays)
-  - **Lazy rendering**: Only render visible dropdown items (virtual scrolling for 341+ items)
-  - **Memory cleanup**: Clear search results when dropdown closes
-  
-- [ ] **Integration & State Management**:
-  - **Alpine.js patterns**: Use reactive data, proper x-model binding for selected timezone
-  - **Form integration**: Maintain existing validation, change detection, save functionality
-  - **Current value handling**: Pre-select current timezone when dropdown opens
-  - **Change tracking**: Trigger hasChanges() when selection changes
-  
-- [ ] **Comprehensive Testing**:
-  - **Search functionality**: Test all search types (city, country, region, alias, comment)
-  - **Edge cases**: Empty search, no results, malformed timezone data, API failures
-  - **Performance**: Test with full 341 timezone dataset, measure search speed
-  - **Accessibility**: Screen reader testing, keyboard-only navigation
-  - **Mobile**: Touch interaction, dropdown positioning, virtual keyboard handling  
-  - **Integration**: Verify save/load works, form validation preserved
-  - **Fallback**: Test backend IANA validation catches any invalid selections
+#### Step 3.4.5: Timezone Picker Enhancement ✅ COMPLETED
+**Problem**: Current timezone text input allows invalid IANA timezone strings despite backend validation
+**Solution**: Replaced text input with searchable timezone picker 
+**Key Implementation**: 
+- `/api/timezones` endpoint with lazy loading and static caching
+- Searchable dropdown with city/country/region/alias matching  
+- Format: "City, Country (UTC±HH)" display with IANA ID storage
+- Alpine.js reactive integration with existing form validation
+- Full 341 timezone dataset with performance optimization
 
 **Benefits**: Eliminates timezone input errors, better UX, faster selection, timezone discovery
 
@@ -327,6 +247,16 @@
 
 **Alternative**: Serve pre-compressed files directly without runtime decompression - browsers handle gzip automatically
 
+### Additional Optimization Opportunities 🗜️
+**Large Resource Files**:
+- `/data/resources/timezones.json` - **174KB** (major space hog)
+- `/data/resources/riddles.ndjson` - **111KB** 
+
+**Solutions**:
+1. **Gzip compress resources** - `timezones.json.gz` could reduce to ~40KB (70% reduction)
+2. **Minify JSON** - Remove whitespace and formatting
+3. **Load externally?** - Fetch timezone data from web API instead of local storage (needs evaluation - offline capability, reliability, latency implications)
+
 **Priority**: Address before Phase 5 - current CSS sizes block ESP32 deployment
 
 ---
@@ -464,6 +394,43 @@ Alpine.effect(() => {
 - No regressions in UX, only improvements.
 - ESP32 memory usage unchanged
 
+## Recent Critical Issues & Fixes 🔥
+
+### Filesystem Space Crisis (RESOLVED)
+**Issue**: ESP32-C3 SPIFFS filesystem full (-28 error) during uploadfs with only 634 bytes free
+**Root Cause**: 1.34MB partition too small for 1.3MB data + metadata overhead  
+**Solution**: Increased SPIFFS partition from 0x150000 to 0x1F0000 (1.9MB) in `partitions_no_ota.csv`
+**Learning**: Always maintain 16%+ headroom for filesystem metadata and wear leveling
+
+### Timezone JSON Corruption (RESOLVED)
+**Issue**: "Invalid JSON in timezone data: IncompleteInput" error on `/api/config`
+**Root Cause**: `file.readString()` truncated large files on ESP32
+**Solution**: Replaced with chunked reading in `api_config_handlers.cpp:loadTimezoneCache()`
+```cpp
+// Read file in chunks to avoid memory issues with large files
+const size_t chunkSize = 1024;
+char buffer[chunkSize];
+while (file.available()) {
+    size_t bytesRead = file.readBytes(buffer, chunkSize);
+    cachedTimezoneData += String(buffer).substring(0, bytesRead);
+}
+```
+
+### Diagnostics API Truncation (RESOLVED)
+**Issue**: Diagnostics response truncated due to large route listing in JSON
+**Solution**: Created separate `/api/routes` endpoint instead of increasing buffer size
+- Reverted diagnostics buffer to 4096 bytes (working within constraints)
+- Added `handleRoutes()` in `api_system_handlers.cpp`
+- Updated frontend to load routes separately via `DiagnosticsAPI.loadRoutes()`
+- Created mock server support with `mock-routes.json`
+
+### Memo Configuration System Fix (RESOLVED)
+**Issue**: Memo system bypassed centralized config loader, read NVS directly, causing NOT_FOUND errors on first boot
+**Solution**: Integrated memo system with `RuntimeConfig` centralized loader
+- Added `memos[4]` array to `RuntimeConfig` structure
+- Modified memo handlers to use `g_runtimeConfig.memos[x]` instead of direct NVS reads
+- Ensured memo defaults from `config.h` load properly on first boot
+
 ## Lessons Learned 📝
 ```
 **Key Learning:** Always use Alpine's built-in reactivity (`x-effect`, `$nextTick`) instead of custom solutions
@@ -473,6 +440,12 @@ Alpine.effect(() => {
 **Key Learning:** Use @input handlers for immediate form field change detection, not complex Alpine.effect() watchers
 
 **Key Learning:** Keep Alpine.effect() simple and focused on high-level state changes, not individual field monitoring
+
+**Key Learning:** ESP32 file.readString() fails on large files - use chunked reading for files >8KB
+
+**Key Learning:** Work within buffer constraints - separate endpoints better than large JSON responses
+
+**Key Learning:** Centralized config loading prevents inconsistencies - all settings should use RuntimeConfig
 ```
 
 ## Live ESP32 Testing Required 🔧

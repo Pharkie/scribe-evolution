@@ -164,14 +164,32 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     logging["mqtt_enabled"] = enableMQTTLogging;
     logging["betterstack_enabled"] = enableBetterStackLogging;
 
-    // === PAGES AND ENDPOINTS ===
-    JsonObject pages_and_endpoints = doc.createNestedObject("pages_and_endpoints");
-    addRegisteredRoutesToJson(pages_and_endpoints);
+    // Pages and endpoints moved to separate /api/routes endpoint
 
     // Serialize and send
     String response;
     serializeJson(doc, response);
     request->send(200, "application/json", response);
+}
+
+void handleRoutes(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "handleRoutes() called - listing pages and API endpoints");
+
+    DynamicJsonDocument doc(8192); // Large buffer for all routes
+
+    // === PAGES AND ENDPOINTS ===
+    addRegisteredRoutesToJson(doc);
+
+    // Serialize and send
+    String response;
+    serializeJson(doc, response);
+    
+    AsyncWebServerResponse *res = request->beginResponse(200, "application/json", response);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    request->send(res);
+    
+    LOG_VERBOSE("WEB", "Routes data sent (%zu bytes)", response.length());
 }
 
 void handleMQTTSend(AsyncWebServerRequest *request)

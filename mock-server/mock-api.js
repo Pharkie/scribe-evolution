@@ -235,15 +235,16 @@ function loadMockData() {
     const mockNvsDump = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/mock-nvs-dump.json'), 'utf8'));
     const mockWifiScan = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/mock-wifi-scan.json'), 'utf8'));
     const mockMemos = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/mock-memos.json'), 'utf8'));
+    const mockRoutes = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/mock-routes.json'), 'utf8'));
     
-    return { mockConfig, mockConfigAPMode, mockConfigNoLEDs, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan, mockMemos };
+    return { mockConfig, mockConfigAPMode, mockConfigNoLEDs, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan, mockMemos, mockRoutes };
   } catch (error) {
     logError('Error loading mock data files:', error.message);
     process.exit(1);
   }
 }
 
-let { mockConfig, mockConfigAPMode, mockConfigNoLEDs, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan, mockMemos } = loadMockData();
+let { mockConfig, mockConfigAPMode, mockConfigNoLEDs, mockDiagnostics, mockPrinterDiscovery, mockNvsDump, mockWifiScan, mockMemos, mockRoutes } = loadMockData();
 
 // MIME types
 const mimeTypes = {
@@ -500,6 +501,10 @@ function createRequestHandler() {
         mockDiagnostics.microcontroller.temperature = 40.5 + Math.random() * 5; // Simulate temperature variation
         
         setTimeout(() => sendJSON(res, mockDiagnostics), 150);
+        
+      } else if (pathname === '/api/routes') {
+        // Return routes and endpoints listing
+        setTimeout(() => sendJSON(res, mockRoutes), 100);
         
       } else if (pathname === '/api/nvs-dump') {
         // Update timestamp to current time

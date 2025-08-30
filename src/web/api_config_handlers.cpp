@@ -914,8 +914,15 @@ void handleTimezonesGet(AsyncWebServerRequest *request)
             return;
         }
         
-        // Read entire file into memory
-        cachedTimezoneData = file.readString();
+        // Read file in chunks to avoid memory issues with large files
+        cachedTimezoneData.reserve(fileSize + 1);
+        const size_t chunkSize = 1024;
+        char buffer[chunkSize];
+        
+        while (file.available()) {
+            size_t bytesRead = file.readBytes(buffer, chunkSize);
+            cachedTimezoneData += String(buffer).substring(0, bytesRead);
+        }
         file.close();
         
         if (cachedTimezoneData.length() == 0) {
