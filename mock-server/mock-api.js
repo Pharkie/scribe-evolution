@@ -18,7 +18,8 @@ const startTime = Date.now();
 // Check for command line arguments
 const args = process.argv.slice(2);
 const currentMode = args.includes('--ap-mode') ? 'ap-mode' : 
-                   args.includes('--no-leds') ? 'no-leds' : 'normal';
+                   args.includes('--no-leds') ? 'no-leds' :
+                   args.includes('--disable-mqtt') ? 'disable-mqtt' : 'normal';
 
 // ANSI color codes for console output
 const colors = {
@@ -338,20 +339,36 @@ function logServerStartup() {
   console.log('===================================================');
   console.log(`🚀 Mock server started at: http://localhost:${PORT}`);
   
-  // Show current mode
+  // Show current mode with all status details
+  console.log('📋 Configuration Status:');
+  
   if (currentMode === 'ap-mode') {
-    console.log('🚀 Running in: AP Setup Mode (ap_mode: true)');
+    console.log('  🚀 Mode: AP Setup');
+    console.log('  📶 Network: AP Mode (WiFi hotspot)');
+    console.log('  💡 LEDs: Enabled');
+    console.log('  📡 MQTT: Enabled');
   } else if (currentMode === 'no-leds') {
-    console.log('💡 Running in: No LEDs Mode (leds.enabled: false)');  
+    console.log('  ⚙️  Mode: No LEDs');
+    console.log('  📶 Network: STA Mode (connect to WiFi)');
+    console.log('  💡 LEDs: Disabled');
+    console.log('  📡 MQTT: Enabled');
+  } else if (currentMode === 'disable-mqtt') {
+    console.log('  📡 Mode: MQTT Disabled');
+    console.log('  📶 Network: STA Mode (connect to WiFi)');
+    console.log('  💡 LEDs: Enabled');
+    console.log('  📡 MQTT: Disabled');
   } else {
-    console.log('⚙️  Running in: Normal Mode (LEDs enabled, STA mode)');
+    console.log('  ⚙️  Mode: Normal');
+    console.log('  📶 Network: STA Mode (connect to WiFi)');
+    console.log('  💡 LEDs: Enabled');
+    console.log('  📡 MQTT: Enabled');
   }
   
   console.log('Commands:');
   console.log('"r" + Enter to restart and pick up HTML/CSS/JS changes.');
   console.log('"d" + Enter to reload JSON data files');
   console.log('"x" + Enter to stop gracefully (or CTRL-C');
-  console.log('Usage: node mock-api.js [--ap-mode|--no-leds]');
+  console.log('Usage: node mock-api.js [--ap-mode|--no-leds|--disable-mqtt]');
 }
 
 // Create server request handler (DRY - used for initial server and restarts)
@@ -423,6 +440,9 @@ function createRequestHandler() {
         } else if (mode === 'no-leds') {
           console.log('💡 Serving no-LEDs config');
           configToSend = mockConfigNoLEDs;
+        } else if (mode === 'disable-mqtt') {
+          console.log('📡 Serving MQTT disabled config');
+          configToSend = { ...mockConfig, mqtt: { ...mockConfig.mqtt, enabled: false } };
         }
         setTimeout(() => sendJSON(res, configToSend), 200);
         

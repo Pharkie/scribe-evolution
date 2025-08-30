@@ -420,6 +420,22 @@ void handleConfigPost(AsyncWebServerRequest *request)
         sendValidationError(request, ValidationResult(false, errorMsg));
         return;
     }
+    
+    // Debug: Check MQTT password before and after processing
+    LOG_NOTICE("WEB", "MQTT Debug - Current password length: %d", newConfig.mqttPassword.length());
+    LOG_NOTICE("WEB", "MQTT Debug - NewConfig password length after processing: %d", newConfig.mqttPassword.length());
+    
+    // MQTT password fix: If frontend didn't send password, preserve existing one
+    if (doc.containsKey("mqtt") && doc["mqtt"].is<JsonObject>()) {
+        JsonObject mqttObj = doc["mqtt"];
+        if (!mqttObj.containsKey("password")) {
+            const RuntimeConfig &currentConfig = getRuntimeConfig();
+            LOG_NOTICE("WEB", "MQTT password not in request, preserving existing stored password (length: %d)", currentConfig.mqttPassword.length());
+            newConfig.mqttPassword = currentConfig.mqttPassword;
+        } else {
+            LOG_NOTICE("WEB", "MQTT password provided in request");
+        }
+    }
 
     // Non-user configurable APIs remain as constants (always set regardless of sections present)
     newConfig.jokeAPI = jokeAPI;
@@ -807,9 +823,37 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 
     LOG_NOTICE("WEB", "Testing MQTT connection to %s:%d with username: %s", server.c_str(), port, username.c_str());
 
-    // Create temporary MQTT client for testing
+    // Create temporary MQTT client for testing with proper certificate verification
     WiFiClientSecure testWifiClient;
-    testWifiClient.setInsecure(); // Same TLS config as main client
+    
+    // Load same CA certificate as main MQTT client
+    LOG_NOTICE("WEB", "TEST: Loading CA certificate from /resources/isrg-root-x1.pem");
+    File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
+    if (!certFile) {
+        LOG_ERROR("WEB", "TEST: Failed to open CA certificate file for MQTT test");
+        AsyncWebServerResponse *res = request->beginResponse(500, "application/json", "{\"success\":false,\"message\":\"CA certificate file not found\"}");
+        res->addHeader("Access-Control-Allow-Origin", "*");
+        request->send(res);
+        return;
+    }
+    
+    String certContent = certFile.readString();
+    certFile.close();
+    
+    LOG_NOTICE("WEB", "TEST: CA certificate loaded, length: %d bytes", certContent.length());
+    
+    if (certContent.length() == 0) {
+        LOG_ERROR("WEB", "TEST: CA certificate file is empty for MQTT test");
+        AsyncWebServerResponse *res = request->beginResponse(500, "application/json", "{\"success\":false,\"message\":\"CA certificate file is empty\"}");
+        res->addHeader("Access-Control-Allow-Origin", "*");
+        request->send(res);
+        return;
+    }
+    
+    LOG_NOTICE("WEB", "TEST: Configuring test WiFiClientSecure with CA certificate");
+    
+    testWifiClient.setCACert(certContent.c_str());
+    testWifiClient.setHandshakeTimeout(10000); // 10 second timeout for proper certificate verification
     
     PubSubClient testMqttClient(testWifiClient);
     testMqttClient.setServer(server.c_str(), port);
@@ -831,12 +875,16 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     
     DynamicJsonDocument response(256);
     
+    // Always clean up test client resources regardless of success/failure
+    testMqttClient.disconnect(); // Clean disconnect
+    testWifiClient.stop(); // Explicitly close SSL connection
+    testWifiClient.setCACert(NULL); // Clear certificate to avoid state pollution
+    
     if (connected)
     {
         LOG_NOTICE("WEB", "MQTT test connection successful");
         response["success"] = true;
         response["message"] = "Successfully connected to MQTT broker";
-        testMqttClient.disconnect(); // Clean disconnect
         
         String responseStr;
         serializeJson(response, responseStr);

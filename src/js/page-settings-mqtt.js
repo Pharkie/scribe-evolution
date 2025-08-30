@@ -311,8 +311,9 @@ function initializeMqttSettingsStore() {
                 const result = await response.json();
                 
                 if (response.ok) {
-                    // Redirect immediately with success parameter
+                    // Redirect immediately with success parameter (don't reset saving state)
                     window.location.href = '/settings.html?saved=mqtt';
+                    return; // Exit without resetting saving state
                     
                 } else {
                     throw new Error(result.error || 'Unknown error occurred');
@@ -320,8 +321,7 @@ function initializeMqttSettingsStore() {
             } catch (error) {
                 console.error('Error saving MQTT config:', error);
                 this.showErrorMessage(`Failed to save MQTT settings: ${error.message}`);
-            } finally {
-                this.saving = false;
+                this.saving = false; // Only reset on error
             }
         },
 

@@ -108,12 +108,17 @@ function initializeIndexStore() {
       try {
         await this.loadConfig();
         
-        // Only initialize printer discovery if MQTT is enabled
-        if (this.config.mqtt?.enabled) {
-          console.log('📋 Index: MQTT enabled, initializing printer discovery');
-          this.initializePrinterDiscovery();
+        // Always initialize local printer, conditionally initialize remote (MQTT) discovery  
+        this.initializeLocalPrinter();
+        
+        console.log('📋 Index: Checking MQTT status:', this.config.mqtt);
+        console.log('📋 Index: MQTT enabled value:', this.config.mqtt?.enabled);
+        
+        if (this.config.mqtt?.enabled === true) {
+          console.log('📋 Index: MQTT enabled, initializing remote printer (MQTT) discovery');
+          this.initializeRemotePrinterDiscovery();
         } else {
-          console.log('📋 Index: MQTT disabled, skipping printer discovery');
+          console.log('📋 Index: MQTT disabled, skipping remote printer (MQTT) discovery');
         }
       } catch (error) {
         console.error('📋 Index: Config loading failed:', error);
@@ -166,11 +171,16 @@ function initializeIndexStore() {
       }
     },
     
-    // Initialize printer discovery
-    initializePrinterDiscovery() {
-      // Use our own SSE initialization method (removed duplicate global call)
-      this.setupSSEConnection();
+    // Initialize local printer (always available)
+    initializeLocalPrinter() {
+      console.log('📋 Index: Initializing local printer');
       this.updatePrinterList();
+    },
+    
+    // Initialize remote printer (MQTT) discovery
+    initializeRemotePrinterDiscovery() {
+      console.log('🔌 Initializing remote printer (MQTT) discovery via SSE');
+      this.setupSSEConnection();
     },
     
     // Update printer list from discovered printers
@@ -732,9 +742,9 @@ function initializeIndexStore() {
       }
     },
 
-    // Setup SSE connection for printer discovery
+    // Setup SSE connection for remote printer (MQTT) discovery
     setupSSEConnection() {
-      console.log('🔌 Initializing real-time printer discovery (SSE)');
+      console.log('🔌 Setting up SSE connection for remote printer (MQTT) discovery');
       
       let eventSource = null;
       
@@ -747,14 +757,14 @@ function initializeIndexStore() {
         // Create new SSE connection
         eventSource = new EventSource('/events');
         
-        // Handle printer updates
+        // Handle remote printer (MQTT) updates
         eventSource.addEventListener('printer-update', (event) => {
           try {
-            console.log('🖨️ Real-time printer update received');
+            console.log('🖨️ Remote printer (MQTT) update received');
             const data = JSON.parse(event.data);
             this.updatePrintersFromData(data);
           } catch (error) {
-            console.error('Error parsing printer update:', error);
+            console.error('Error parsing remote printer (MQTT) update:', error);
           }
         });
         
@@ -771,17 +781,17 @@ function initializeIndexStore() {
         
         // Handle connection errors
         eventSource.onerror = (error) => {
-          console.error('SSE connection error:', error);
+          console.error('SSE connection error for remote printer (MQTT) discovery:', error);
           // Attempt to reconnect after 5 seconds
           setTimeout(() => {
-            console.log('🔄 Attempting to reconnect SSE...');
+            console.log('🔄 Attempting to reconnect remote printer (MQTT) discovery SSE...');
             connectSSE();
           }, 5000);
         };
         
         // Handle successful connection
         eventSource.onopen = (event) => {
-          console.log('✅ Real-time updates connected');
+          console.log('✅ Remote printer (MQTT) discovery SSE connected');
         };
       };
       
