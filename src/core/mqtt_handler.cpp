@@ -31,7 +31,7 @@ const unsigned long FAILURE_COOLDOWN_MS = 60000; // 1 minute
 void setupMQTT()
 {
     // Load CA certificate exactly like test - local String variable
-    LOG_NOTICE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
+    LOG_VERBOSE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
     if (!certFile) {
         LOG_ERROR("MQTT", "Failed to open CA certificate file");
@@ -41,7 +41,7 @@ void setupMQTT()
     String certContent = certFile.readString();
     certFile.close();
     
-    LOG_NOTICE("MQTT", "CA certificate loaded, length: %d bytes", certContent.length());
+    LOG_VERBOSE("MQTT", "CA certificate loaded, length: %d bytes", certContent.length());
     
     if (certContent.length() == 0) {
         LOG_ERROR("MQTT", "CA certificate file is empty");
@@ -58,7 +58,7 @@ void setupMQTT()
         return;
     }
     
-    LOG_NOTICE("MQTT", "CA certificate validation passed, configuring WiFiClientSecure");
+    LOG_VERBOSE("MQTT", "CA certificate validation passed, configuring WiFiClientSecure");
     
     // Store in static buffer to ensure lifetime during connection attempts
     caCertificateBuffer = certContent;
@@ -86,14 +86,23 @@ void setupMQTT()
 void connectToMQTT()
 {
     static int attemptCounter = 0;
+    static bool connectionInProgress = false;
+    
     attemptCounter++;
-    LOG_NOTICE("MQTT", "=== connectToMQTT() ENTRY #%d ===", attemptCounter);
+    LOG_VERBOSE("MQTT", "=== connectToMQTT() ENTRY #%d ===", attemptCounter);
+    
+    if (connectionInProgress) {
+        LOG_WARNING("MQTT", "Connection already in progress, skipping duplicate call #%d", attemptCounter);
+        return;
+    }
     
     if (WiFi.status() != WL_CONNECTED)
     {
         // WiFi not connected, skipping MQTT connection
         return;
     }
+    
+    connectionInProgress = true;
     
     // Check if we should skip connection due to consecutive failures
     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES)
@@ -111,7 +120,7 @@ void connectToMQTT()
     }
 
     // Debug socket state before connection attempt
-    LOG_NOTICE("MQTT", "Connection attempt - WiFi status: %d, wifiSecureClient.connected(): %d", 
+    LOG_VERBOSE("MQTT", "Connection attempt - WiFi status: %d, wifiSecureClient.connected(): %d", 
                WiFi.status(), wifiSecureClient.connected());
     
     // Always clean the client state like test does with fresh object
@@ -222,6 +231,8 @@ void connectToMQTT()
                      MAX_CONSECUTIVE_FAILURES, FAILURE_COOLDOWN_MS / 1000);
         }
     }
+    
+    connectionInProgress = false;
 }
 
 void mqttCallback(char *topic, byte *payload, unsigned int length)
@@ -396,8 +407,7 @@ void startMQTTClient()
         return;
     }
     
-    LOG_NOTICE("MQTT", "Starting MQTT client");
-    LOG_NOTICE("MQTT", "Note: Initial SSL handshake errors are normal for cloud MQTT brokers");
+    LOG_VERBOSE("MQTT", "Starting MQTT client");
     
     // Ensure WiFi is stable before attempting MQTT connection
     if (WiFi.status() != WL_CONNECTED)

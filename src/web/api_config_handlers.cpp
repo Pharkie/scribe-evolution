@@ -422,15 +422,15 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
     
     // Debug: Check MQTT password before and after processing
-    LOG_NOTICE("WEB", "MQTT Debug - Current password length: %d", newConfig.mqttPassword.length());
-    LOG_NOTICE("WEB", "MQTT Debug - NewConfig password length after processing: %d", newConfig.mqttPassword.length());
+    LOG_VERBOSE("WEB", "MQTT Debug - Current password length: %d", newConfig.mqttPassword.length());
+    LOG_VERBOSE("WEB", "MQTT Debug - NewConfig password length after processing: %d", newConfig.mqttPassword.length());
     
     // MQTT password fix: If frontend didn't send password, preserve existing one
     if (doc.containsKey("mqtt") && doc["mqtt"].is<JsonObject>()) {
         JsonObject mqttObj = doc["mqtt"];
         if (!mqttObj.containsKey("password")) {
             const RuntimeConfig &currentConfig = getRuntimeConfig();
-            LOG_NOTICE("WEB", "MQTT password not in request, preserving existing stored password (length: %d)", currentConfig.mqttPassword.length());
+            LOG_VERBOSE("WEB", "MQTT password not in request, preserving existing stored password (length: %d)", currentConfig.mqttPassword.length());
             newConfig.mqttPassword = currentConfig.mqttPassword;
         } else {
             LOG_NOTICE("WEB", "MQTT password provided in request");
@@ -827,7 +827,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     WiFiClientSecure testWifiClient;
     
     // Load same CA certificate as main MQTT client
-    LOG_NOTICE("WEB", "TEST: Loading CA certificate from /resources/isrg-root-x1.pem");
+    LOG_VERBOSE("WEB", "TEST: Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
     if (!certFile) {
         LOG_ERROR("WEB", "TEST: Failed to open CA certificate file for MQTT test");
@@ -840,7 +840,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     String certContent = certFile.readString();
     certFile.close();
     
-    LOG_NOTICE("WEB", "TEST: CA certificate loaded, length: %d bytes", certContent.length());
+    LOG_VERBOSE("WEB", "TEST: CA certificate loaded, length: %d bytes", certContent.length());
     
     if (certContent.length() == 0) {
         LOG_ERROR("WEB", "TEST: CA certificate file is empty for MQTT test");
@@ -850,7 +850,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
         return;
     }
     
-    LOG_NOTICE("WEB", "TEST: Configuring test WiFiClientSecure with CA certificate");
+    LOG_VERBOSE("WEB", "TEST: Configuring test WiFiClientSecure with CA certificate");
     
     testWifiClient.setCACert(certContent.c_str());
     testWifiClient.setHandshakeTimeout(10000); // 10 second timeout for proper certificate verification
