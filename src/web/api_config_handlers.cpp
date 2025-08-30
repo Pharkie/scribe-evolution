@@ -511,20 +511,13 @@ void handleMemosGet(AsyncWebServerRequest *request)
     // Create JSON response with all memos
     DynamicJsonDocument memosDoc(2048);
     
-    // Get memo values from NVS
-    Preferences prefs;
-    if (!prefs.begin("scribe-app", true)) { // read-only
-        LOG_ERROR("WEB", "Failed to access NVS for memos");
-        sendErrorResponse(request, 500, "Failed to access memo storage");
-        return;
-    }
+    // Get memo values from centralized config system
+    const RuntimeConfig &config = getRuntimeConfig();
     
-    memosDoc["memo1"] = prefs.getString(NVS_MEMO_1, "");
-    memosDoc["memo2"] = prefs.getString(NVS_MEMO_2, "");
-    memosDoc["memo3"] = prefs.getString(NVS_MEMO_3, "");
-    memosDoc["memo4"] = prefs.getString(NVS_MEMO_4, "");
-    
-    prefs.end();
+    memosDoc["memo1"] = config.memos[0];
+    memosDoc["memo2"] = config.memos[1];
+    memosDoc["memo3"] = config.memos[2];
+    memosDoc["memo4"] = config.memos[3];
     
     // Check for overflow
     if (memosDoc.overflowed()) {
@@ -569,36 +562,36 @@ void handleMemosPost(AsyncWebServerRequest *request)
         return;
     }
     
-    // Validate and save each memo to NVS
-    Preferences prefs;
-    if (!prefs.begin("scribe-app", false)) { // read-write
-        LOG_ERROR("WEB", "Failed to access NVS for memo saving");
-        sendErrorResponse(request, 500, "Failed to access memo storage");
-        return;
-    }
-    
-    // Save each memo with validation
-    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
+    // Get current config and update memo fields
+    RuntimeConfig currentConfig = getRuntimeConfig();
     const char* memoNames[] = {"memo1", "memo2", "memo3", "memo4"};
     
+    // Update each memo with validation
     for (int i = 0; i < 4; i++) {
         if (memosDoc.containsKey(memoNames[i])) {
             String memoContent = memosDoc[memoNames[i]].as<String>();
             
             // Validate memo length
             if (memoContent.length() > MEMO_MAX_LENGTH) {
-                prefs.end();
                 sendErrorResponse(request, 400, 
                     String("Memo ") + String(i+1) + " exceeds maximum length of " + String(MEMO_MAX_LENGTH) + " characters");
                 return;
             }
             
-            prefs.putString(memoKeys[i], memoContent);
-            LOG_VERBOSE("WEB", "Saved memo %d (%d characters)", i+1, memoContent.length());
+            currentConfig.memos[i] = memoContent;
+            LOG_VERBOSE("WEB", "Updated memo %d (%d characters)", i+1, memoContent.length());
         }
     }
     
-    prefs.end();
+    // Save updated config to NVS through centralized system
+    if (!saveNVSConfig(currentConfig)) {
+        LOG_ERROR("WEB", "Failed to save memo configuration to NVS");
+        sendErrorResponse(request, 500, "Failed to save memo configuration");
+        return;
+    }
+    
+    // Update runtime config
+    setRuntimeConfig(currentConfig);
     
     sendSuccessResponse(request, "Memos saved successfully");
     LOG_NOTICE("WEB", "All memos saved successfully");

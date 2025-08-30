@@ -15,9 +15,9 @@ def build_frontend(source, target, env):  # pylint: disable=unused-argument
     print("📦 Building frontend assets...")
 
     try:
-        # Build frontend assets using npm
+        # Build frontend assets using npm (production builds for minified assets)
         result = subprocess.run(
-            ["npm", "run", "build"], check=False, capture_output=True, text=True
+            ["npm", "run", "build-prod"], check=False, capture_output=True, text=True
         )
 
         if result.returncode == 0:

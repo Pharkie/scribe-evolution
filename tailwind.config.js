@@ -2,9 +2,7 @@
 export default {
   content: [
     "./data/html/**/*.html",
-    "./data/**/*.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./**/*.html"
+    "./src/js/**/*.js"
   ],
   darkMode: 'media', // Automatic system preference detection
   theme: {

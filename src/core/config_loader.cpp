@@ -202,6 +202,12 @@ bool loadNVSConfig()
     g_runtimeConfig.ledEffects = getDefaultLedEffectsConfig();
 #endif
 
+    // Load memo configuration (4 memo slots)
+    g_runtimeConfig.memos[0] = getNVSString(prefs, NVS_MEMO_1, defaultMemo1, 500);
+    g_runtimeConfig.memos[1] = getNVSString(prefs, NVS_MEMO_2, defaultMemo2, 500);
+    g_runtimeConfig.memos[2] = getNVSString(prefs, NVS_MEMO_3, defaultMemo3, 500);
+    g_runtimeConfig.memos[3] = getNVSString(prefs, NVS_MEMO_4, defaultMemo4, 500);
+
     prefs.end();
     return true;
 }
@@ -341,6 +347,12 @@ bool saveNVSConfig(const RuntimeConfig &config)
 
     // TODO: Save LED effects configuration if needed
 #endif
+
+    // Save memo configuration (4 memo slots)
+    prefs.putString(NVS_MEMO_1, config.memos[0]);
+    prefs.putString(NVS_MEMO_2, config.memos[1]);
+    prefs.putString(NVS_MEMO_3, config.memos[2]);
+    prefs.putString(NVS_MEMO_4, config.memos[3]);
 
     prefs.end();
     LOG_NOTICE("CONFIG", "Configuration saved to NVS");

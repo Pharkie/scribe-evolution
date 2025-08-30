@@ -68,6 +68,9 @@ struct RuntimeConfig
     String buttonShortLedEffects[4]; // LED effects for short press actions (default: simple_chase)
     String buttonLongLedEffects[4];  // LED effects for long press actions (default: simple_chase)
 
+    // Memo Configuration (4 memo slots)
+    String memos[4]; // Memo content for slots 1-4
+
 #if ENABLE_LEDS
     // LED Configuration (runtime configurable)
     int ledPin;         // GPIO pin for LED strip data

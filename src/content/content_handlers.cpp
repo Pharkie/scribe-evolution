@@ -12,6 +12,7 @@
 #include "../web/validation.h"
 #include "../web/web_server.h"
 #include "../core/config.h"
+#include "../core/config_loader.h"
 #include "../core/config_utils.h"
 #include "../core/nvs_keys.h"
 #include "../core/logging.h"
@@ -444,22 +445,13 @@ String generateMemoContent(int memoId)
         return "";
     }
 
-    // Get memo content from NVS
-    Preferences prefs;
-    if (!prefs.begin("scribe-app", true)) // read-only
-    {
-        LOG_ERROR("CONTENT", "Failed to access memo storage");
-        return "";
-    }
-
-    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-    
-    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
-    prefs.end();
+    // Get memo content from centralized config system
+    const RuntimeConfig &config = getRuntimeConfig();
+    String memoContent = config.memos[memoId - 1];
     
     if (memoContent.isEmpty())
     {
-        LOG_ERROR("CONTENT", "Memo %d not found in storage", memoId);
+        LOG_ERROR("CONTENT", "Memo %d is empty", memoId);
         return "";
     }
 
@@ -476,22 +468,13 @@ bool generateAndQueueMemo(int memoId)
         return false;
     }
 
-    // Get memo content from NVS
-    Preferences prefs;
-    if (!prefs.begin("scribe-app", true)) // read-only
-    {
-        LOG_ERROR("CONTENT", "Failed to access memo storage");
-        return false;
-    }
-
-    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-    
-    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
-    prefs.end();
+    // Get memo content from centralized config system
+    const RuntimeConfig &config = getRuntimeConfig();
+    String memoContent = config.memos[memoId - 1];
     
     if (memoContent.isEmpty())
     {
-        LOG_ERROR("CONTENT", "Memo %d not found in storage", memoId);
+        LOG_ERROR("CONTENT", "Memo %d is empty", memoId);
         return false;
     }
 

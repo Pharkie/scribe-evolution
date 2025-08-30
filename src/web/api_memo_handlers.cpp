@@ -12,6 +12,7 @@
 #include "../content/content_handlers.h"
 #include "../core/nvs_keys.h"
 #include "../core/config.h"
+#include "../core/config_loader.h"
 #include "../core/shared_types.h"
 #include "../core/logging.h"
 #include "../utils/json_helpers.h"
@@ -39,18 +40,9 @@ void handleMemoGet(AsyncWebServerRequest *request)
         return;
     }
 
-    // Get memo content from NVS
-    Preferences prefs;
-    if (!prefs.begin("scribe-app", true)) // read-only
-    {
-        sendErrorResponse(request, 500, "Failed to access memo storage");
-        return;
-    }
-
-    const char* memoKeys[] = {NVS_MEMO_1, NVS_MEMO_2, NVS_MEMO_3, NVS_MEMO_4};
-
-    String memoContent = prefs.getString(memoKeys[memoId - 1], "");
-    prefs.end();
+    // Get memo content from centralized config system
+    const RuntimeConfig &config = getRuntimeConfig();
+    String memoContent = config.memos[memoId - 1];
     
     if (memoContent.isEmpty())
     {

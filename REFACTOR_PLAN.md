@@ -269,6 +269,66 @@
 - [ ] Add build size monitoring and hot reload
 - [ ] Eliminate code duplication through proper imports
 
+### Critical Issue: CSS File Sizes 🚨
+**Problem Discovered**: Tailwind CSS files are 60-80KB each (should be 5-15KB)
+- Multiple builds each including large Tailwind 4.x base?
+- `settings.css`: 81KB
+- `diagnostics.css`: 78KB  
+- `index.css`: 65KB
+- `setup.css`: 61KB
+- `404.css`: 60KB
+
+**Note**: Tailwind 4.x has a large base framework size by design - even minimal builds are 50-80KB
+
+**Investigation Results**:
+- ✅ CSS minification works (files are single line)
+- ✅ `--minify` flag applied correctly
+- ✅ Content detection working as designed
+- ℹ️ Tailwind 4.x base size is inherently large (~50-80KB)
+
+**Potential Solutions**:
+1. **Single shared CSS build** - One CSS file for all pages instead of 5 separate builds
+2. **Manual utility extraction** - Extract only used utilities to custom CSS
+3. **Gzip compression** - Compress CSS/JS assets at build time with server decompression
+
+### Gzip Compression Solution 📦
+**Concept**: Build-time gzip compression with runtime decompression to reduce filesystem usage by ~70%
+
+**Expected Savings**:
+- CSS files: 60-80KB → 15-20KB each (~70% reduction)
+- JS files: Alpine.js 64KB → ~18KB (~72% reduction)
+- Total filesystem: 1.3MB → ~600-800KB
+- **Net result**: Reduced FS partition
+
+**Implementation Requirements**:
+
+**Build Process**:
+- Add gzip compression to npm build scripts (using Node.js zlib)
+- Generate `.css.gz` and `.js.gz` files alongside originals
+- Update file extensions: `index.css` → `index.css.gz`
+- Preserve original files for mock-server development
+
+**ESP32 Web Server**:
+- Detect `.gz` extensions in file serving logic
+- Add `Content-Encoding: gzip` header for compressed files
+- Ensure `AsyncWebServer` serves compressed content correctly
+- Fallback to uncompressed if decompression fails
+
+**Mock Server Updates**:
+- Serve uncompressed originals during development (`.css`, `.js`)
+- Add gzip middleware for testing compressed serving (optional)
+- Maintain separate dev/prod file serving logic
+
+**Technical Considerations**:
+- ESP32-C3 CPU overhead for decompression (minimal for static files)
+- Browser compatibility (universal gzip support)
+- Build complexity increase
+- Development workflow impact (need both compressed/uncompressed)
+
+**Alternative**: Serve pre-compressed files directly without runtime decompression - browsers handle gzip automatically
+
+**Priority**: Address before Phase 5 - current CSS sizes block ESP32 deployment
+
 ---
 
 ## Phase 5: Future Planning 📋
