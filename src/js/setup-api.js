@@ -64,9 +64,17 @@ window.SetupAPI = {
      */
     async scanWiFiNetworks() {
         console.log('Setup API: Scanning WiFi networks...');
+        
+        // Use AbortController for longer timeout (WiFi scan can take 5-10 seconds)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+        
         const response = await fetch('/api/wifi-scan', {
-            method: 'GET'
+            method: 'GET',
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));

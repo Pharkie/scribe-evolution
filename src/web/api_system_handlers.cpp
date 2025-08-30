@@ -21,6 +21,7 @@
 #include <LittleFS.h>
 #include <WiFi.h>
 #include <esp_ota_ops.h>
+#include <esp_task_wdt.h>
 
 // External references
 extern PubSubClient mqttClient;
@@ -292,19 +293,83 @@ void handleWiFiScan(AsyncWebServerRequest *request)
         return;
     }
 
+    // Debug current WiFi mode and status
+    wifi_mode_t mode = WiFi.getMode();
+    wl_status_t status = WiFi.status();
+    LOG_NOTICE("WEB", "WiFi scan debug - Mode: %d, Status: %d, IP: %s", mode, status, WiFi.localIP().toString().c_str());
+    
     // Check if we're in AP mode - scanning might not work properly
-    if (WiFi.getMode() == WIFI_AP)
+    if (mode == WIFI_AP)
     {
-        LOG_VERBOSE("WEB", "WiFi scan requested while in AP mode");
+        LOG_WARNING("WEB", "WiFi scan requested while in AP mode - may fail");
     }
 
-    // Start scanning for networks
-    int networkCount = WiFi.scanNetworks();
+    // Start async WiFi scan - fail fast if it doesn't work
+    LOG_NOTICE("WEB", "Starting async WiFi scan");
+    
+    // Start async scan - returns immediately
+    int scanResult = WiFi.scanNetworks(true); // true = async mode
+    LOG_NOTICE("WEB", "WiFi.scanNetworks(async=true) returned: %d", scanResult);
+    
+    // Fail fast if async scan initiation failed
+    if (scanResult == WIFI_SCAN_FAILED) {
+        LOG_ERROR("WEB", "Async WiFi scan failed to start - Mode: %d, Status: %d", mode, status);
+        sendErrorResponse(request, 500, "WiFi scanning not available - async scan initialization failed");
+        return;
+    }
+    
+    // Wait for scan completion with watchdog feeding
+    int networkCount = WIFI_SCAN_RUNNING;
+    unsigned long scanStartTime = millis();
+    const unsigned long PARTIAL_RESULT_TIME = 10000; // Return partial results after 10s
+    const unsigned long MAX_SCAN_TIME = 15000; // Hard timeout at 15s
+    bool partialResults = false;
+    
+    while (networkCount == WIFI_SCAN_RUNNING) {
+        networkCount = WiFi.scanComplete();
+        unsigned long elapsed = millis() - scanStartTime;
+        
+        // Return partial results after 10 seconds
+        if (elapsed > PARTIAL_RESULT_TIME && networkCount == WIFI_SCAN_RUNNING) {
+            LOG_NOTICE("WEB", "WiFi scan taking longer than %ds, checking for partial results", PARTIAL_RESULT_TIME / 1000);
+            networkCount = WiFi.scanComplete(); // Get whatever we have so far
+            if (networkCount == WIFI_SCAN_RUNNING) {
+                networkCount = 0; // If still running, return empty results rather than error
+            }
+            partialResults = true;
+            break;
+        }
+        
+        // Hard timeout
+        if (elapsed > MAX_SCAN_TIME) {
+            LOG_WARNING("WEB", "WiFi scan hard timeout after %d seconds", MAX_SCAN_TIME / 1000);
+            networkCount = WiFi.scanComplete(); // Try to get partial results
+            if (networkCount == WIFI_SCAN_RUNNING) {
+                WiFi.scanDelete(); // Clean up if still running
+                sendErrorResponse(request, 500, "WiFi scan timeout - no results available");
+                return;
+            }
+            partialResults = true;
+            break;
+        }
+        
+        // Feed watchdog and yield to other tasks
+        esp_task_wdt_reset();
+        delay(500); // Poll every 500ms - balance responsiveness vs efficiency
+    }
 
     if (networkCount == WIFI_SCAN_FAILED)
     {
-        LOG_ERROR("WEB", "WiFi scan failed - this is common in AP mode");
-        sendErrorResponse(request, 500, "WiFi scan failed - scanning may not work properly in AP mode");
+        LOG_ERROR("WEB", "Async WiFi scan failed - Mode: %d, Status: %d", mode, status);
+        
+        String errorMsg;
+        if (mode == WIFI_AP) {
+            errorMsg = "WiFi scan failed - scanning not supported in AP mode";
+        } else {
+            errorMsg = "WiFi scan failed - check WiFi radio state";
+        }
+        
+        sendErrorResponse(request, 500, errorMsg);
         return;
     }
 
@@ -316,6 +381,7 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     // Create JSON response with scanned networks
     DynamicJsonDocument doc(2048);
     doc["count"] = networkCount;
+    doc["partial"] = partialResults;
 
     JsonArray networks = doc.createNestedArray("networks");
 
@@ -390,7 +456,11 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     String response;
     serializeJson(doc, response);
 
-    LOG_VERBOSE("WEB", "WiFi scan completed - found %d networks", networkCount);
+    if (partialResults) {
+        LOG_NOTICE("WEB", "WiFi scan returned partial results - found %d networks", networkCount);
+    } else {
+        LOG_VERBOSE("WEB", "WiFi scan completed - found %d networks", networkCount);
+    }
     request->send(200, "application/json", response);
 
     // Clean up scan results to free memory
