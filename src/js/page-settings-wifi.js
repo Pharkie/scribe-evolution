@@ -500,18 +500,9 @@ This memo printed from Settings → WiFi`;
 
 // Auto-register the WiFi store when this script loads
 document.addEventListener('alpine:init', () => {
-    // Prevent multiple initializations if alpine:init fires multiple times
-    if (window.wifiStoreInstance) {
-        console.log('📡 WiFi Settings: Store already exists, skipping alpine:init');
-        return;
-    }
-    
     // Create and register WiFi settings store
     const wifiStore = initializeWiFiSettingsStore();
     Alpine.store('settingsWifi', wifiStore);
-    
-    // Make store available globally for body x-data
-    window.wifiStoreInstance = wifiStore;
     
     // Initialize the store immediately during alpine:init
     wifiStore.init();

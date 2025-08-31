@@ -120,6 +120,10 @@ const CONFIG_FIELDS = {
   'leds.count': { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 300 },
   'leds.brightness': { type: VALIDATION_TYPES.RANGE_INT, min: 0, max: 255 },
   'leds.refreshRate': { type: VALIDATION_TYPES.RANGE_INT, min: 10, max: 120 },
+  'leds.speed': { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 100 },
+  'leds.intensity': { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 100 },
+  'leds.cycles': { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 10 },
+  'leds.effect': { type: VALIDATION_TYPES.ENUM_STRING, values: VALID_LED_EFFECTS },
 };
 
 function validateField(fieldPath, value, fieldDef) {
@@ -578,6 +582,25 @@ function createRequestHandler() {
         
       } else if (pathname === '/api/leds-off' && req.method === 'POST') {
         console.log('💡 LEDs turned off');
+        setTimeout(() => {
+          res.writeHead(200);
+          res.end();
+        }, 200);
+        
+      } else if (pathname === '/api/leds/test' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+          const params = JSON.parse(body || '{}');
+          console.log('💡 LED effect test:', params.effect || 'unknown', 'brightness:', params.brightness || 'N/A');
+          setTimeout(() => {
+            res.writeHead(200);
+            res.end();
+          }, 300);
+        });
+        
+      } else if (pathname === '/api/leds/off' && req.method === 'POST') {
+        console.log('💡 LEDs turned off via /api/leds/off');
         setTimeout(() => {
           res.writeHead(200);
           res.end();

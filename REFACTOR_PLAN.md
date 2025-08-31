@@ -107,13 +107,26 @@
 - [x] Button action configuration for 4 hardware buttons
 - [x] Short and long press actions with MQTT topics and LED effects
 - [x] Hardware configuration display (read-only)
-- [x] Indigo theme with proper dark mode support
+- [x] Cyan theme with proper dark mode support (updated from indigo)
 - [x] **UX improvements**: Grouped Short/Long press sections, MQTT validation, better contrast
-- [x] **Icon consistency**: Save button uses checkmark across all settings pages
+- [x] **Icon consistency**: Save button uses checkmark across all settings pages, button icon uses Heroicons circle
 - [x] **Partial config architecture**: Only sends button-specific fields, not entire config object
+- [x] **Bug fixes**: Fixed double API loading with initialization guard, removed success toast for consistency
+- [x] **Color scheme consistency**: All settings pages follow color-coded sections for visual organization
 
-**3.7 LED Settings** - Extract LED effect configuration with preview using established patterns  
-**3.8 Unbidden Ink** - Extract AI content configuration using established patterns
+### Step 3.7: LED Settings ⏳ READY TO START
+- [ ] **Frontend implementation** - Extract LED effect configuration with preview
+- [ ] **Pink color scheme**: Use `#db2777` (pink-600) theme matching established patterns
+- [ ] **LED effect configuration**: Cycle effects, brightness, timing, preview
+- [ ] **Hardware validation**: GPIO pin safety checks for LED strips
+- [ ] **Partial config updates**: Only send LED-specific fields
+- [ ] **Mock server testing**: Verify functionality before ESP32 testing
+
+### Step 3.8: Unbidden Ink Settings
+- [ ] **Frontend implementation** - Extract AI content configuration 
+- [ ] **Purple color scheme**: Use `#9333ea` (purple-600) theme
+- [ ] **Content configuration**: Prompts, scheduling, API settings
+- [ ] **Partial config updates**: Only send Unbidden Ink-specific fields
 
 ### Development Patterns for Steps 3.7-3.8 (MANDATORY)
 

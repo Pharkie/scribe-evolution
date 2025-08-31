@@ -149,7 +149,7 @@ async function triggerLedEffect(effectName, duration = 10000, settings = null) {
             }
         }
         
-        const response = await fetch('/api/led-effect', {
+        const response = await fetch('/api/leds/test', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ async function triggerLedEffect(effectName, duration = 10000, settings = null) {
  */
 async function turnOffLeds() {
     try {
-        const response = await fetch('/api/leds-off', {
+        const response = await fetch('/api/leds/off', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

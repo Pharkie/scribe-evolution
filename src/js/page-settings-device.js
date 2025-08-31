@@ -856,18 +856,9 @@ function initializeDeviceSettingsStore() {
 
 // Auto-register the device store when this script loads
 document.addEventListener('alpine:init', () => {
-    // Prevent multiple initializations if alpine:init fires multiple times
-    if (window.deviceStoreInstance) {
-        console.log('⚙️ Device Settings: Store already exists, skipping alpine:init');
-        return;
-    }
-    
     // Create and register device settings store
     const deviceStore = initializeDeviceSettingsStore();
     Alpine.store('settingsDevice', deviceStore);
-    
-    // Make store available globally for body x-data
-    window.deviceStoreInstance = deviceStore;
     
     // Initialize the store immediately during alpine:init
     deviceStore.init();

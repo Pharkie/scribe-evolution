@@ -128,29 +128,19 @@ window.addEventListener('alpine:init', () => {
                 // Success - update original config for buttons section only
                 this.originalConfig.buttons = JSON.parse(JSON.stringify(this.config.buttons));
                 
-                // Redirect to settings overview with success parameter
-                setTimeout(() => {
-                    window.location.href = '/settings.html?saved=buttons';
-                }, 1000);
+                // Redirect immediately to settings overview with success parameter
+                window.location.href = '/settings.html?saved=buttons';
 
             } catch (error) {
                 console.error('Error saving configuration:', error);
                 this.error = error.message || 'Failed to save configuration';
                 this.showErrorMessage(this.error);
-            } finally {
                 this.saving = false;
             }
         },
 
         cancelConfiguration() {
-            if (this.hasChanges) {
-                if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
-                    this.config = JSON.parse(JSON.stringify(this.originalConfig));
-                    window.location.href = '/settings.html';
-                }
-            } else {
-                window.location.href = '/settings.html';
-            }
+            window.location.href = '/settings.html';
         },
 
         // VALIDATION FUNCTIONS
@@ -201,5 +191,4 @@ window.addEventListener('alpine:init', () => {
     });
 });
 
-// Initialize settings buttons store instance
-window.settingsButtonsStoreInstance = Alpine.store('settingsButtons');
+// Settings buttons store registered above with Alpine.store()

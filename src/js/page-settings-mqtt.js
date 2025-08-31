@@ -343,18 +343,9 @@ function initializeMqttSettingsStore() {
 
 // Auto-register the MQTT store when this script loads
 document.addEventListener('alpine:init', () => {
-    // Prevent multiple initializations if alpine:init fires multiple times
-    if (window.mqttStoreInstance) {
-        console.log('📡 MQTT Settings: Store already exists, skipping alpine:init');
-        return;
-    }
-    
     // Create and register MQTT settings store
     const mqttStore = initializeMqttSettingsStore();
     Alpine.store('settingsMqtt', mqttStore);
-    
-    // Make store available globally for body x-data
-    window.mqttStoreInstance = mqttStore;
     
     // Initialize the store immediately during alpine:init
     mqttStore.init();

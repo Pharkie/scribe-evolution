@@ -170,7 +170,7 @@ function createMemosStore() {
                 
                 this.hasUnsavedChanges = false;
                 
-                // Redirect back to settings with success indicator
+                // Redirect immediately back to settings with success indicator
                 console.log('🔧 Redirecting to settings with success indicator...');
                 window.location.href = '/settings.html?saved=memos';
                 
@@ -178,7 +178,6 @@ function createMemosStore() {
                 console.error('❌ Error saving memos:', error);
                 this.error = `Failed to save memo settings: ${error.message}`;
                 showErrorMessage(this.error);
-            } finally {
                 this.saving = false;
             }
         },
@@ -324,11 +323,12 @@ function createMemosStore() {
 
 // =================== ALPINE STORE REGISTRATION ===================
 
-// Create and register the store instance
-console.log('🔧 Registering Memos Alpine store...');
-const memosStoreInstance = createMemosStore();
-
-// Make globally available for debugging and HTML access
-window.memosStoreInstance = memosStoreInstance;
-
-console.log('✅ Memos Store registered successfully');
+window.addEventListener('alpine:init', () => {
+    console.log('🔧 Registering Memos Alpine store...');
+    const memosStore = createMemosStore();
+    Alpine.store('settingsMemos', memosStore);
+    
+    // Store registered with Alpine.store() above
+    
+    console.log('✅ Memos Store registered successfully');
+});

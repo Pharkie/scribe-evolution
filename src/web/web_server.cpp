@@ -384,8 +384,8 @@ void setupWebServerRoutes(int maxChars)
 
 #if ENABLE_LEDS
         // Consolidated LED effect endpoints
-        registerRoute("POST", "/api/led-effect", "Trigger LED Effect", handleLedEffect, true);
-        registerRoute("POST", "/api/leds-off", "Turn LEDs Off", handleLedOff, true);
+        registerRoute("POST", "/api/leds/test", "Trigger LED Effect", handleLedEffect, true);
+        registerRoute("POST", "/api/leds/off", "Turn LEDs Off", handleLedOff, true);
 #endif
 
         // Debug endpoint to list LittleFS contents (only in STA mode)
