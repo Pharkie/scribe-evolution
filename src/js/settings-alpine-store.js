@@ -1697,7 +1697,7 @@ document.addEventListener('alpine:init', () => {
             if (this.loading[name]) return '<div class="p-4 text-center opacity-0"></div>';
             
             this.loading[name] = true;
-            fetch(`/html/partials/settings/${name}.html`)
+            fetch(`/partials/settings/${name}.html`)
                 .then(response => {
                     if (!response.ok) throw new Error(`Failed to load partial: ${name}`);
                     return response.text();

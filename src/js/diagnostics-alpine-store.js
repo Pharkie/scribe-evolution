@@ -551,7 +551,7 @@ document.addEventListener('alpine:init', () => {
             if (this.loading[name]) return '<div class="p-4 text-center text-gray-500">Loading...</div>';
             
             this.loading[name] = true;
-            fetch(`/html/partials/diagnostics/${name}.html`)
+            fetch(`/partials/diagnostics/${name}.html`)
                 .then(response => {
                     if (!response.ok) throw new Error(`Failed to load partial: ${name}`);
                     return response.text();
