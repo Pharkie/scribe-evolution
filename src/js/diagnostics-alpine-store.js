@@ -10,10 +10,56 @@ function initializeDiagnosticsStore() {
     loading: true,
     error: null,
     initialized: false, // Flag to prevent duplicate initialization
-    diagnosticsData: {},
-    configData: {},
-    nvsData: {},
-    routesData: {},
+    diagnosticsData: {
+      microcontroller: {
+        chip_model: null,
+        cpu_frequency_mhz: null,
+        flash: {
+          total_chip_size: null,
+          app_partition: {
+            used: null,
+            total: null
+          }
+        },
+        memory: {
+          used_heap: null,
+          total_heap: null
+        },
+        sdk_version: null,
+        uptime_ms: null,
+        temperature: null
+      },
+      logging: {
+        level_name: null,
+        serial_enabled: null,
+        betterstack_enabled: null,
+        file_enabled: null,
+        mqtt_enabled: null
+      }
+    },
+    configData: {
+      device: null,
+      mqtt: null,
+      unbiddenInk: null,
+      buttons: null,
+      leds: null,
+      gpio: null
+    },
+    nvsData: {
+      namespace: null,
+      timestamp: null,
+      keys: null,
+      summary: {
+        totalKeys: null,
+        validKeys: null,
+        correctedKeys: null,
+        invalidKeys: null
+      }
+    },
+    routesData: {
+      web_pages: [],
+      api_endpoints: []
+    },
     
     // UI state
     currentSection: 'microcontroller-section',
@@ -28,28 +74,18 @@ function initializeDiagnosticsStore() {
       { id: 'nvs-storage-section', name: 'NVS', icon: 'saveFloppyDisk', color: 'cyan' }
     ],
     
-    // Initialize store
-    async init() {
+    // Load diagnostics data (main initialization method)
+    async loadDiagnostics() {
       // Prevent duplicate initialization
       if (this.initialized) {
         console.log('🛠️ Diagnostics: Already initialized, skipping');
         return;
       }
       this.initialized = true;
-      
-      console.log('🛠️ Diagnostics: Starting initialization...');
-      await this.loadDiagnostics();
-      console.log('🛠️ Diagnostics: Initialization complete, loading:', this.loading, 'error:', this.error);
-    },
-    
-    // Load all diagnostics data with proper error logging instead of silent fallbacks
-    async loadDiagnostics() {
       this.loading = true;
       this.error = null;
-      console.log('🛠️ Diagnostics: Loading data from APIs...');
       
       try {
-        console.log('🛠️ Diagnostics: Making parallel API calls...');
         // Load diagnostics, config, NVS, and routes data in parallel with individual error handling
         const [diagnosticsResponse, configResponse, nvsResponse, routesResponse] = await Promise.allSettled([
           window.DiagnosticsAPI.loadDiagnostics(),
@@ -57,13 +93,6 @@ function initializeDiagnosticsStore() {
           window.DiagnosticsAPI.loadNVSDump(),
           window.DiagnosticsAPI.loadRoutes()
         ]);
-        
-        console.log('🛠️ Diagnostics: API responses received:', {
-          diagnostics: diagnosticsResponse.status === 'fulfilled',
-          config: configResponse.status === 'fulfilled',
-          nvs: nvsResponse.status === 'fulfilled',
-          routes: routesResponse.status === 'fulfilled'
-        });
         
         // Check if at least one API succeeded
         const anyApiSuccess = diagnosticsResponse.status === 'fulfilled' || 
@@ -81,7 +110,6 @@ function initializeDiagnosticsStore() {
         // Parse responses with error logging for failed APIs
         if (diagnosticsResponse.status === 'fulfilled') {
           this.diagnosticsData = diagnosticsResponse.value;
-          console.log('✅ Diagnostics API data loaded:', Object.keys(this.diagnosticsData));
         } else {
           console.error('❌ Diagnostics API failed - diagnostics data will be incomplete:', diagnosticsResponse.reason);
           this.diagnosticsData = {}; // Empty object will trigger "data missing" displays
@@ -89,7 +117,6 @@ function initializeDiagnosticsStore() {
         
         if (configResponse.status === 'fulfilled') {
           this.configData = configResponse.value;
-          console.log('✅ Config API data loaded:', Object.keys(this.configData));
         } else {
           console.error('❌ Config API failed - configuration data will be incomplete:', configResponse.reason);
           this.configData = {}; // Empty object will trigger "data missing" displays  
@@ -97,7 +124,6 @@ function initializeDiagnosticsStore() {
         
         if (nvsResponse.status === 'fulfilled') {
           this.nvsData = nvsResponse.value;
-          console.log('✅ NVS API data loaded:', Object.keys(this.nvsData));
         } else {
           console.error('❌ NVS API failed - NVS storage data will be incomplete:', nvsResponse.reason);
           this.nvsData = {}; // Empty object will trigger "data missing" displays
@@ -105,18 +131,11 @@ function initializeDiagnosticsStore() {
         
         if (routesResponse.status === 'fulfilled') {
           this.routesData = routesResponse.value;
-          console.log('✅ Routes API data loaded:', Object.keys(this.routesData));
         } else {
           console.error('❌ Routes API failed - routes data will be incomplete:', routesResponse.reason);
           this.routesData = {}; // Empty object will trigger "data missing" displays
         }
         
-        console.log('✅ Diagnostics loading complete:', {
-          diagnosticsKeys: Object.keys(this.diagnosticsData).length,
-          configKeys: Object.keys(this.configData).length,
-          nvsKeys: this.nvsData.keys ? Object.keys(this.nvsData.keys).length : 0,
-          routesKeys: Object.keys(this.routesData).length
-        });
         
         this.error = null;
         this.loading = false;
@@ -155,7 +174,20 @@ function initializeDiagnosticsStore() {
     get microcontrollerInfo() {
       const microcontroller = this.diagnosticsData.microcontroller;
       
-      if (!microcontroller) {
+      // Check if data is still null (not loaded) vs empty object (API failed)
+      if (microcontroller.chip_model === null) {
+        // Data not yet loaded, return null values
+        return {
+          chipModel: null,
+          cpuFrequency: null,
+          flashSize: null,
+          firmwareVersion: null,
+          uptime: null,
+          temperature: null
+        };
+      }
+      
+      if (!microcontroller || Object.keys(microcontroller).length === 0) {
         console.error('❌ Missing microcontroller data from diagnostics API');
         return {
           chipModel: 'ERROR: Missing Data',
@@ -181,7 +213,18 @@ function initializeDiagnosticsStore() {
     get memoryUsage() {
       const microcontroller = this.diagnosticsData.microcontroller;
       
-      if (!microcontroller) {
+      // Check if data is still null (not loaded) 
+      if (microcontroller.chip_model === null) {
+        // Data not yet loaded, return null values
+        return {
+          flashUsageText: null,
+          heapUsageText: null,
+          flashUsagePercent: 0,
+          heapUsagePercent: 0
+        };
+      }
+      
+      if (!microcontroller || Object.keys(microcontroller).length === 0) {
         console.error('❌ Missing microcontroller data for memory usage');
         return {
           flashUsageText: 'ERROR: Missing Data',
@@ -216,7 +259,19 @@ function initializeDiagnosticsStore() {
     get loggingInfo() {
       const logging = this.diagnosticsData.logging;
       
-      if (!logging) {
+      // Check if data is still null (not loaded)
+      if (logging.level_name === null) {
+        // Data not yet loaded, return null values
+        return {
+          level: null,
+          serialLogging: null,
+          webLogging: null, 
+          fileLogging: null,
+          mqttLogging: null
+        };
+      }
+      
+      if (!logging || Object.keys(logging).length === 0) {
         console.error('❌ Missing logging data from diagnostics API');
         return {
           level: 'ERROR: Missing Data',
@@ -239,6 +294,12 @@ function initializeDiagnosticsStore() {
     // Web pages computed properties - show errors instead of silent fallbacks
     get sortedRoutes() {
       const routes = this.routesData?.web_pages;
+      
+      // Check if data is still empty array (not loaded)
+      if (Array.isArray(routes) && routes.length === 0) {
+        // Data not yet loaded, return empty array
+        return [];
+      }
       
       if (!routes) {
         console.error('❌ Missing web_pages data from routes API');
@@ -300,6 +361,12 @@ function initializeDiagnosticsStore() {
     get apiEndpoints() {
       const endpoints = this.routesData?.api_endpoints;
       
+      // Check if data is still empty array (not loaded)
+      if (Array.isArray(endpoints) && endpoints.length === 0) {
+        // Data not yet loaded, return empty object
+        return {};
+      }
+      
       if (!endpoints) {
         console.error('❌ Missing api_endpoints data from routes API');
         return {
@@ -339,33 +406,25 @@ function initializeDiagnosticsStore() {
     
     // NVS data formatted
     get nvsDataFormatted() {
+      // Check if data is still null (not loaded)
+      if (this.nvsData.namespace === null) {
+        // Data not yet loaded, return null
+        return null;
+      }
+      
       if (!this.nvsData || Object.keys(this.nvsData).length === 0) {
         console.error('❌ Missing NVS data from nvs-dump API');
         return 'ERROR: NVS data not available - API failed or returned empty data';
-      }
-      
-      // Check for missing essential fields (status is optional)
-      const missingFields = [];
-      if (!this.nvsData.namespace) missingFields.push('namespace');
-      if (!this.nvsData.timestamp) missingFields.push('timestamp');
-      if (!this.nvsData.summary) missingFields.push('summary');
-      if (this.nvsData.summary && this.nvsData.summary.totalKeys === undefined) missingFields.push('summary.totalKeys');
-      if (this.nvsData.summary && this.nvsData.summary.validKeys === undefined) missingFields.push('summary.validKeys');
-      if (this.nvsData.summary && this.nvsData.summary.correctedKeys === undefined) missingFields.push('summary.correctedKeys');
-      if (this.nvsData.summary && this.nvsData.summary.invalidKeys === undefined) missingFields.push('summary.invalidKeys');
-      
-      if (missingFields.length > 0) {
-        console.warn('⚠️ Missing optional NVS fields:', missingFields);
       }
       
       const formattedData = {
         namespace: this.nvsData.namespace || 'ERROR: Missing namespace',
         timestamp: this.nvsData.timestamp || 'ERROR: Missing timestamp',
         summary: {
-          totalKeys: this.nvsData.summary?.totalKeys !== undefined ? this.nvsData.summary.totalKeys : 'ERROR: Missing totalKeys',
-          validKeys: this.nvsData.summary?.validKeys !== undefined ? this.nvsData.summary.validKeys : 'ERROR: Missing validKeys',
-          correctedKeys: this.nvsData.summary?.correctedKeys !== undefined ? this.nvsData.summary.correctedKeys : 'ERROR: Missing correctedKeys',
-          invalidKeys: this.nvsData.summary?.invalidKeys !== undefined ? this.nvsData.summary.invalidKeys : 'ERROR: Missing invalidKeys'
+          totalKeys: this.nvsData.summary?.totalKeys ?? 'ERROR: Missing totalKeys',
+          validKeys: this.nvsData.summary?.validKeys ?? 'ERROR: Missing validKeys',
+          correctedKeys: this.nvsData.summary?.correctedKeys ?? 'ERROR: Missing correctedKeys',
+          invalidKeys: this.nvsData.summary?.invalidKeys ?? 'ERROR: Missing invalidKeys'
         },
         keys: {}
       };
@@ -526,21 +585,11 @@ function initializeDiagnosticsStore() {
 
 // Auto-register the store when this script loads  
 document.addEventListener('alpine:init', () => {
-    // Prevent multiple initializations if alpine:init fires multiple times
-    if (window.diagnosticsStoreInstance) {
-        console.log('🛠️ Diagnostics: Store already exists, skipping alpine:init');
-        return;
-    }
-    
-    // Create and register diagnostics store immediately, initialize it once
+    // Create and register diagnostics store - no immediate initialization
     const diagnosticsStore = initializeDiagnosticsStore();
     Alpine.store('diagnostics', diagnosticsStore);
     
-    // Make store available globally for body x-data
-    window.diagnosticsStoreInstance = diagnosticsStore;
-    
-    // Initialize the store immediately during alpine:init (not later in x-init)
-    diagnosticsStore.init();
+    console.log('✅ Diagnostics Store registered');
     
     // Alpine.js store for loading diagnostics partials (clean version)
     Alpine.store('diagnosticsPartials', {
