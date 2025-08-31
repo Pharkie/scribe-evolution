@@ -609,7 +609,7 @@ void handleMemosPost(AsyncWebServerRequest *request)
     // Update runtime config
     setRuntimeConfig(currentConfig);
     
-    sendSuccessResponse(request, "Memos saved successfully");
+    request->send(200);
     LOG_NOTICE("WEB", "All memos saved successfully");
 }
 

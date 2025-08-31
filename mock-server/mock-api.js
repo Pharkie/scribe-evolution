@@ -456,13 +456,10 @@ function createRequestHandler() {
         req.on('end', () => {
           try {
             const memoData = JSON.parse(body);
-            // Update mock memos data in memory
-            Object.assign(mockMemos, memoData);
-            console.log('📝 Memos updated');
+            console.log('📝 Memos update received:', JSON.stringify(memoData, null, 2));
             setTimeout(() => {
-              sendJSON(res, { 
-                message: "Memos saved successfully" 
-              });
+              res.writeHead(200);
+              res.end();
             }, 300);
           } catch (error) {
             console.error('Error parsing memos JSON:', error.message);
