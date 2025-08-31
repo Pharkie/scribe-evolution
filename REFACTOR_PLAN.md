@@ -314,6 +314,68 @@ Split up from monolithic like settings.html.
 - **Dark mode**: Use Tailwind classes `dark:` not inline styles (timezone dropdown fix pattern)
 - **Save button consistency**: Always use `canSave` getter with `hasChanges` logic across all settings pages
 
+**Alpine Store Initialization Pattern:**
+```javascript
+// ✅ CORRECT: Initialize AFTER DOM binding is established
+function createMyStore() {
+    return {
+        loading: false,
+        ready: false,
+        data: {},
+        
+        async loadData() {
+            this.loading = true;
+            // ... load data ...
+            this.ready = true;
+            this.loading = false;
+        }
+    };
+}
+
+window.addEventListener('alpine:init', () => {
+    Alpine.store('myStore', createMyStore()); // No immediate initialization
+});
+```
+
+```html
+<!-- HTML: Initialize after Alpine establishes DOM binding -->
+<body x-data="$store.myStore" x-init="$nextTick(() => loadData())">
+    <template x-if="!loading && !error && ready">
+        <!-- Content shows after async load completes -->
+    </template>
+</body>
+```
+
+```javascript
+// ❌ ANTIPATTERN 1: Initialize during store creation (timing issue)
+function createMyStore() {
+    const store = { /* methods */ };
+    
+    // ❌ BAD: Alpine hasn't established DOM reactivity yet
+    store.loadData(); // State changes invisible to Alpine
+    
+    return store;
+}
+```
+
+```javascript
+// ❌ ANTIPATTERN 2: Custom init() method causes double initialization  
+function createMyStore() {
+    return {
+        async init() { /* Gets called multiple times */ },
+        /* other methods */
+    };
+}
+
+window.addEventListener('alpine:init', () => {
+    const store = createMyStore();
+    Alpine.store('myStore', store);
+    store.init(); // ← Manual call + Alpine auto-call = double initialization
+});
+```
+
+**Critical Timing Rule**: Store initialization MUST happen AFTER Alpine establishes DOM binding (`x-data`), not during store creation or registration. Use `x-init="$nextTick(() => loadData())"` to ensure proper timing.
+
 **ESP32 Constraints:**
 - file.readString() fails on large files - use chunked reading for >8KB
 - Work within buffer constraints - separate endpoints better than large JSON

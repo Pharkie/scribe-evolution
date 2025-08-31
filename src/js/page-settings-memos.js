@@ -81,7 +81,7 @@ function showErrorMessage(message, duration = 5000) {
 // =================== MAIN ALPINE STORE ===================
 
 function createMemosStore() {
-    return {
+    const store = {
         // =================== STATE ===================
         loading: false,
         saving: false,
@@ -95,18 +95,6 @@ function createMemosStore() {
             memo2: '',
             memo3: '',
             memo4: ''
-        },
-
-        // =================== INITIALIZATION ===================
-        
-        async init() {
-            console.log('🔧 Memos Store: Initializing...');
-            await this.loadMemos();
-            
-            // Mark as ready with slight delay for smooth transitions
-            this.$nextTick(() => {
-                this.ready = true;
-            });
         },
 
         // =================== MEMO LOADING ===================
@@ -132,6 +120,8 @@ function createMemosStore() {
                 }
                 
                 this.hasUnsavedChanges = false;
+                this.ready = true;
+                console.log('✅ Memos Store initialized');
                 
             } catch (error) {
                 console.error('❌ Error loading memos:', error);
@@ -319,6 +309,8 @@ function createMemosStore() {
             return this.hasUnsavedChanges && !this.hasCharacterLimitExceeded;
         }
     };
+    
+    return store;
 }
 
 // =================== ALPINE STORE REGISTRATION ===================
@@ -327,8 +319,6 @@ window.addEventListener('alpine:init', () => {
     console.log('🔧 Registering Memos Alpine store...');
     const memosStore = createMemosStore();
     Alpine.store('settingsMemos', memosStore);
-    
-    // Store registered with Alpine.store() above
     
     console.log('✅ Memos Store registered successfully');
 });
