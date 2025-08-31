@@ -7,7 +7,21 @@
 function initializeIndexStore() {
   const store = {
     // Core state
-    config: {},
+    config: {
+      device: {
+        maxCharacters: null,
+        printer_name: null,
+        ip_address: null,
+        mdns: null,
+        firmware_version: null,
+        timezone: null,
+        boot_time: null,
+        owner: null
+      },
+      mqtt: {
+        enabled: null
+      }
+    },
     loading: true,
     error: null,
     initialized: false, // Flag to prevent duplicate initialization
@@ -47,7 +61,7 @@ function initializeIndexStore() {
     // Character limits - updated path for new structure
     get maxChars() {
       if (!this.config?.device?.maxCharacters) {
-        throw new Error('Maximum characters configuration is missing from server');
+        return 384; // Default fallback to prevent errors during initialization
       }
       return this.config.device.maxCharacters;
     },
@@ -90,7 +104,7 @@ function initializeIndexStore() {
     },
     
     get isConfigReady() {
-      return !this.loading && !this.error && this.config && this.config.device && this.config.device.maxCharacters;
+      return !this.loading && !this.error && this.config?.device?.maxCharacters;
     },
     
     // Initialize store
@@ -102,7 +116,6 @@ function initializeIndexStore() {
       }
       this.initialized = true;
       
-      console.log('📋 Index: Starting initialization...');
       this.checkForSettingsSuccess();
       
       try {
@@ -111,14 +124,8 @@ function initializeIndexStore() {
         // Always initialize local printer, conditionally initialize remote (MQTT) discovery  
         this.initializeLocalPrinter();
         
-        console.log('📋 Index: Checking MQTT status:', this.config.mqtt);
-        console.log('📋 Index: MQTT enabled value:', this.config.mqtt?.enabled);
-        
         if (this.config.mqtt?.enabled === true) {
-          console.log('📋 Index: MQTT enabled, initializing remote printer (MQTT) discovery');
           this.initializeRemotePrinterDiscovery();
-        } else {
-          console.log('📋 Index: MQTT disabled, skipping remote printer (MQTT) discovery');
         }
       } catch (error) {
         console.error('📋 Index: Config loading failed:', error);
@@ -128,19 +135,13 @@ function initializeIndexStore() {
       }
 
       this.setupEventListeners();
-      console.log('📋 Index: Initialization complete');
     },
     
     // Load configuration
     async loadConfig() {
       try {
-        console.log('📋 Index: Loading configuration from API...');
-        
         // Use API layer instead of direct fetch
         this.config = await window.IndexAPI.loadConfiguration();
-        
-        console.log('📋 Index: Raw config received:', this.config);
-        console.log('📋 Index: Config keys:', Object.keys(this.config));
         
         if (this.config?.device?.printer_name === undefined) {
           throw new Error('Printer name configuration is missing from server');
@@ -153,7 +154,6 @@ function initializeIndexStore() {
         }
         
         this.localPrinterName = this.config.device.printer_name;
-        console.log('📋 Index: Config loaded successfully, printer name:', this.localPrinterName);
         
         // Load memos from separate API endpoint
         await this.loadMemosFromAPI();
@@ -173,13 +173,11 @@ function initializeIndexStore() {
     
     // Initialize local printer (always available)
     initializeLocalPrinter() {
-      console.log('📋 Index: Initializing local printer');
       this.updatePrinterList();
     },
     
     // Initialize remote printer (MQTT) discovery
     initializeRemotePrinterDiscovery() {
-      console.log('🔌 Initializing remote printer (MQTT) discovery via SSE');
       this.setupSSEConnection();
     },
     
@@ -213,7 +211,6 @@ function initializeIndexStore() {
     setupEventListeners() {
       // Listen for printer updates from SSE
       document.addEventListener('printersUpdated', (event) => {
-        console.log('🔄 Printers updated, refreshing index page printer selection');
         this.updatePrinterList(event.detail.printers || []);
       });
     },
@@ -322,7 +319,8 @@ function initializeIndexStore() {
     // Printer info overlay
     showLocalPrinterInfo() {
       if (!this.config?.device) {
-        throw new Error('Device configuration is missing from server');
+        console.warn('Device configuration not loaded yet');
+        return;
       }
       
       const deviceConfig = this.config.device;
@@ -642,8 +640,6 @@ function initializeIndexStore() {
       // Don't reload if already loaded
       if (this.memosLoaded) return;
       
-      console.log('📝 Loading memos from API...');
-      
       try {
         const memosData = await window.IndexAPI.loadMemos();
         
@@ -656,7 +652,6 @@ function initializeIndexStore() {
         ];
         
         this.memosLoaded = true;
-        console.log('📝 Memos loaded from API:', this.memos);
       } catch (error) {
         console.error('📝 Failed to load memos:', error);
         // Fallback to empty memos
@@ -671,7 +666,6 @@ function initializeIndexStore() {
     },
     
     async showMemoModal() {
-      console.log('📝 Opening memo modal');
       this.memoModalVisible = true;
       
       // Ensure memos are loaded
@@ -681,7 +675,6 @@ function initializeIndexStore() {
     },
     
     closeMemoModal() {
-      console.log('📝 Closing memo modal');
       this.memoModalVisible = false;
     },
     
@@ -690,7 +683,6 @@ function initializeIndexStore() {
       
       try {
         this.printing = true;
-        console.log(`📝 Printing memo ${memoId}...`);
         
         // Step 1: Get processed memo content (clean GET request)
         const response = await fetch(`/api/memo/${memoId}`);
@@ -703,8 +695,6 @@ function initializeIndexStore() {
         if (!memoData.content) {
           throw new Error('No memo content received');
         }
-        
-        console.log(`📝 Memo ${memoId} retrieved: ${memoData.content}`);
         
         // Step 2: Print using the same method as other buttons
         let printResponse;
@@ -735,7 +725,7 @@ function initializeIndexStore() {
           this.activeQuickAction = null;
         }, 2000);
       } catch (error) {
-        console.error(`📝 Failed to print memo ${memoId}:`, error);
+        console.error('Failed to print memo:', error);
         this.showToast(`Failed to print memo: ${error.message}`, 'error');
       } finally {
         this.printing = false;
@@ -744,7 +734,6 @@ function initializeIndexStore() {
 
     // Setup SSE connection for remote printer (MQTT) discovery
     setupSSEConnection() {
-      console.log('🔌 Setting up SSE connection for remote printer (MQTT) discovery');
       
       let eventSource = null;
       
@@ -760,7 +749,6 @@ function initializeIndexStore() {
         // Handle remote printer (MQTT) updates
         eventSource.addEventListener('printer-update', (event) => {
           try {
-            console.log('🖨️ Remote printer (MQTT) update received');
             const data = JSON.parse(event.data);
             this.updatePrintersFromData(data);
           } catch (error) {
@@ -772,7 +760,6 @@ function initializeIndexStore() {
         eventSource.addEventListener('system-status', (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log(`📡 System status: ${data.status} - ${data.message}`);
             this.showSystemNotification(data.status, data.message);
           } catch (error) {
             console.error('Error parsing system status:', error);
@@ -784,14 +771,13 @@ function initializeIndexStore() {
           console.error('SSE connection error for remote printer (MQTT) discovery:', error);
           // Attempt to reconnect after 5 seconds
           setTimeout(() => {
-            console.log('🔄 Attempting to reconnect remote printer (MQTT) discovery SSE...');
             connectSSE();
           }, 5000);
         };
         
         // Handle successful connection
         eventSource.onopen = (event) => {
-          console.log('✅ Remote printer (MQTT) discovery SSE connected');
+          // Connection established
         };
       };
       
@@ -883,19 +869,9 @@ function initializeIndexStore() {
 
 // Auto-register the store when this script loads
 document.addEventListener('alpine:init', () => {
-    // Prevent multiple initializations if alpine:init fires multiple times
-    if (window.indexStoreInstance) {
-        console.log('🏠 Index: Store already exists, skipping alpine:init');
-        return;
-    }
-    
-    // Create and register index store immediately, initialize it once
+    // Create and register index store - no immediate initialization
     const indexStore = initializeIndexStore();
     Alpine.store('index', indexStore);
     
-    // Make store available globally for body x-data
-    window.indexStoreInstance = indexStore;
-    
-    // Initialize the store immediately during alpine:init (not later in x-init)
-    indexStore.init();
+    console.log('✅ Index Store registered');
 });

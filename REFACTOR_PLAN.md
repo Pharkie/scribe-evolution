@@ -484,10 +484,21 @@ config: {},  // Alpine expressions like config.buttons.button1 will fail immedia
 **✅ COMPLETED - Step 3.4: MQTT Settings**
 **✅ COMPLETED - Step 3.4.5: Timezone Picker**
 **✅ COMPLETED - Step 3.5: Memo Settings**
-**✅ COMPLETED - Step 3.6: Button Settings** 
-**✅ COMPLETED - Step 3.7: LED Settings** (mock tested, pending live ESP32)
+**✅ COMPLETED - Step 3.6: Button Settings** (mock tested, pending live ESP32)
+**✅ COMPLETED - Step 3.7: LED Settings** (mock tested, pending live ESP32)  
+**✅ COMPLETED - Step 3.8: Unbidden Ink Settings** (mock tested, pending live ESP32)
 
-All completed settings pages except Button Settings and LED Settings have been verified on live ESP32 hardware.
+**🔧 NEXT: Live ESP32 Hardware Testing**
+All settings pages have been mock tested and are ready for live ESP32 hardware verification:
+- Button Settings: Alpine.js initialization fixed, config structure properly initialized
+- LED Settings: Alpine.js initialization fixed, playground values separated from config
+- Unbidden Ink Settings: Alpine.js initialization fixed, formatHour functions made null-safe
+
+**Critical Alpine.js Pattern Applied**: All settings pages now use the consistent initialization pattern:
+- `document.addEventListener('alpine:init')` (Alpine.js canonical pattern)
+- Config structures pre-initialized with null values to prevent "Cannot read properties of undefined" errors
+- Initialization guards to prevent duplicate calls
+- Null-safe functions for all computed properties that handle initial null values
 
 ---
 
