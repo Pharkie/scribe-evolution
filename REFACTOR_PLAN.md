@@ -108,19 +108,23 @@
 - [x] Short and long press actions with MQTT topics and LED effects
 - [x] Hardware configuration display (read-only)
 - [x] Indigo theme with proper dark mode support
+- [x] **UX improvements**: Grouped Short/Long press sections, MQTT validation, better contrast
+- [x] **Icon consistency**: Save button uses checkmark across all settings pages
+- [x] **Partial config architecture**: Only sends button-specific fields, not entire config object
 
 **3.7 LED Settings** - Extract LED effect configuration with preview using established patterns  
 **3.8 Unbidden Ink** - Extract AI content configuration using established patterns
 
-### Development Patterns for Steps 3.6-3.8 (MANDATORY)
+### Development Patterns for Steps 3.7-3.8 (MANDATORY)
 
 **Follow Existing Refactored Patterns**:
-- **HTML Structure**: Copy from `device.html`, `wifi.html`, `mqtt.html`, `memos.html`
+- **HTML Structure**: Copy from `device.html`, `wifi.html`, `mqtt.html`, `memos.html`, `buttons.html`
 - **Alpine.js Stores**: Follow `page-settings-*.js` patterns
 - **API Integration**: Use `settings-api.js` patterns with `window.SettingsAPI`
 - **CSS Themes**: Use established color schemes (accent colour per section)
 - **Form Validation**: Use existing validation patterns and error handling
 - **Save/Cancel Flow**: Follow exact patterns from existing pages
+- **Partial Config Updates**: CRITICAL - Only send relevant config section, not entire config object
 
 **Mandatory Implementation Steps** (DO NOT DEVIATE):
 1. **Copy existing HTML structure** - header, form, validation, save buttons
@@ -166,6 +170,7 @@
 - [x] Eliminates JSON parsing errors and creates consistent API behavior
 - [x] Content generation endpoints converted from POST to GET (proper REST semantics)
 - [x] **Both ESP32 backend AND mock server updated** - full stack consistency
+- [x] **Partial Config Pattern**: All settings pages send only relevant config sections, never entire config object
 
 **4.1 Full REST API Compliance** - Convert endpoints to proper HTTP methods:
 - **GET** for content generation: `/api/joke`, `/api/riddle`, `/api/quote`, etc. ✅ DONE

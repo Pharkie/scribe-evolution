@@ -7,6 +7,7 @@ window.addEventListener('alpine:init', () => {
         loading: true,
         error: null,
         saving: false,
+        initialized: false,
         config: {},
         originalConfig: {},
         validationErrors: {},
@@ -17,7 +18,7 @@ window.addEventListener('alpine:init', () => {
         },
 
         get hasChanges() {
-            return JSON.stringify(this.config) !== JSON.stringify(this.originalConfig);
+            return JSON.stringify(this.config.buttons) !== JSON.stringify(this.originalConfig.buttons);
         },
 
         get hasValidationErrors() {
@@ -26,6 +27,13 @@ window.addEventListener('alpine:init', () => {
 
         // Initialization
         async init() {
+            // Prevent duplicate initialization
+            if (this.initialized) {
+                console.log('🔘 Button Settings: Already initialized, skipping');
+                return;
+            }
+            this.initialized = true;
+
             try {
                 await this.loadConfiguration();
             } catch (error) {
@@ -86,12 +94,23 @@ window.addEventListener('alpine:init', () => {
             this.error = null;
 
             try {
+                // Create partial config with ONLY button-specific fields
+                const partialConfig = {
+                    buttons: {
+                        button1: this.config.buttons.button1,
+                        button2: this.config.buttons.button2,
+                        button3: this.config.buttons.button3,
+                        button4: this.config.buttons.button4
+                    }
+                };
+
+                console.log('Saving partial button configuration:', partialConfig);
                 const response = await fetch('/api/config', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(this.config)
+                    body: JSON.stringify(partialConfig)
                 });
 
                 if (!response.ok) {
@@ -106,8 +125,8 @@ window.addEventListener('alpine:init', () => {
                     throw new Error(errorMessage);
                 }
 
-                // Success - update original config
-                this.originalConfig = JSON.parse(JSON.stringify(this.config));
+                // Success - update original config for buttons section only
+                this.originalConfig.buttons = JSON.parse(JSON.stringify(this.config.buttons));
                 
                 // Show success feedback and redirect
                 this.showSuccessMessage('Button settings saved successfully!');
