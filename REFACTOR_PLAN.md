@@ -91,7 +91,7 @@
 
 ### Step 3.5: Memo Settings ✅ COMPLETED
 - [x] **Frontend implementation complete** - Mock server testing passed
-- [x] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
+- [x] **Live ESP32 testing complete** - Adam verified on actual hardware
 - [x] Memo content editor with placeholder system (date, time, timezone, device owner)
 - [x] Individual memo editing and bulk save functionality
 - [x] Orange theme with proper dark mode support
@@ -101,7 +101,14 @@
 
 **CRITICAL**: Follow established patterns from Device/WiFi/MQTT/Memo pages - DO NOT reinvent solutions
 
-**3.6 Button Settings** - Extract button action configuration with testing using established patterns
+### Step 3.6: Button Settings ✅ COMPLETED
+- [x] **Frontend implementation complete** - Mock server testing passed
+- [x] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
+- [x] Button action configuration for 4 hardware buttons
+- [x] Short and long press actions with MQTT topics and LED effects
+- [x] Hardware configuration display (read-only)
+- [x] Indigo theme with proper dark mode support
+
 **3.7 LED Settings** - Extract LED effect configuration with preview using established patterns  
 **3.8 Unbidden Ink** - Extract AI content configuration using established patterns
 
@@ -138,7 +145,8 @@
 - [x] Device Settings - functional with live ESP32 testing
 - [x] WiFi Settings - functional with live ESP32 testing  
 - [x] MQTT Settings - functional with live ESP32 testing
-- [x] Memo Settings - functional (mock tested, pending live ESP32)
+- [x] Memo Settings - functional with live ESP32 testing
+- [x] Button Settings - functional (mock tested, pending live ESP32)
 - [x] Navigation complete - clean Home → Settings → Individual Page hierarchy
 
 **Cleanup Tasks**:
@@ -292,6 +300,7 @@ Split up from monolithic like settings.html.
 **✅ COMPLETED - Step 3.3: WiFi Settings** 
 **✅ COMPLETED - Step 3.4: MQTT Settings**
 **✅ COMPLETED - Step 3.4.5: Timezone Picker**
+**✅ COMPLETED - Step 3.5: Memo Settings**
 
 All completed settings pages have been verified on live ESP32 hardware.
 

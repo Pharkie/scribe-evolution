@@ -61,6 +61,7 @@ const CONFIG_FIELDS = {
   // Device configuration
   'device.owner': { type: VALIDATION_TYPES.NON_EMPTY_STRING },
   'device.timezone': { type: VALIDATION_TYPES.IANA_TIMEZONE },
+  'device.maxCharacters': { type: VALIDATION_TYPES.RANGE_INT, min: 100, max: 10000 },
   'device.printerTxPin': { type: VALIDATION_TYPES.GPIO },
   
   // WiFi configuration

@@ -16,6 +16,7 @@ function initializeSettingsOverviewStore() {
         wifiSaved: false,
         mqttSaved: false,
         memosSaved: false,
+        buttonsSaved: false,
         loading: true,
         error: null,
 

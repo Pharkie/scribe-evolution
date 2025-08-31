@@ -293,6 +293,25 @@ const buildConfigs = {
     output: 'data/js/page-settings-memos.js',
     minify: true,
   },
+
+  // Buttons settings page
+  buttons: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-buttons.js'
+    ],
+    output: 'data/js/page-settings-buttons.js',
+    minify: false,
+  },
+
+  buttonsProd: {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-buttons.js'
+    ],
+    output: 'data/js/page-settings-buttons.js',
+    minify: true,
+  },
 };
 
 // Build functions
@@ -341,7 +360,8 @@ async function buildAll(production = false) {
     `wifi${suffix}`,
     `mqtt${suffix}`,
     `overview${suffix}`,
-    `memos${suffix}`
+    `memos${suffix}`,
+    `buttons${suffix}`
   ];
 
   console.log(`Building all configs (production: ${production})...`);
