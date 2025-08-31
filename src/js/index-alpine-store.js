@@ -7,24 +7,10 @@
 function initializeIndexStore() {
   const store = {
     // Core state
-    config: {
-      device: {
-        maxCharacters: null,
-        printer_name: null,
-        ip_address: null,
-        mdns: null,
-        firmware_version: null,
-        timezone: null,
-        boot_time: null,
-        owner: null
-      },
-      mqtt: {
-        enabled: null
-      }
-    },
-    loading: true,
     error: null,
     initialized: false, // Flag to prevent duplicate initialization
+    loaded: false, // Flag to indicate data has been loaded
+    data: {},
     
     // Form state
     message: '',
@@ -60,10 +46,12 @@ function initializeIndexStore() {
     
     // Character limits - updated path for new structure
     get maxChars() {
-      if (!this.config?.device?.maxCharacters) {
+      if (!this.loaded) return 384; // Default while loading
+      
+      if (!this.data.config?.device?.maxCharacters) {
         return 384; // Default fallback to prevent errors during initialization
       }
-      return this.config.device.maxCharacters;
+      return this.data.config.device.maxCharacters;
     },
     
     get charCount() {
@@ -104,7 +92,7 @@ function initializeIndexStore() {
     },
     
     get isConfigReady() {
-      return !this.loading && !this.error && this.config?.device?.maxCharacters;
+      return this.loaded && !this.error && this.data.config?.device?.maxCharacters;
     },
     
     // Initialize store
@@ -115,6 +103,8 @@ function initializeIndexStore() {
         return;
       }
       this.initialized = true;
+      this.loaded = false;
+      this.error = null;
       
       this.checkForSettingsSuccess();
       
@@ -124,14 +114,15 @@ function initializeIndexStore() {
         // Always initialize local printer, conditionally initialize remote (MQTT) discovery  
         this.initializeLocalPrinter();
         
-        if (this.config.mqtt?.enabled === true) {
+        if (this.data.config?.mqtt?.enabled === true) {
           this.initializeRemotePrinterDiscovery();
         }
+        
+        this.loaded = true;
       } catch (error) {
         console.error('📋 Index: Config loading failed:', error);
         // Set error state - Alpine.js standard pattern
         this.error = error.message;
-        this.loading = false;
       }
 
       this.setupEventListeners();
@@ -141,32 +132,30 @@ function initializeIndexStore() {
     async loadConfig() {
       try {
         // Use API layer instead of direct fetch
-        this.config = await window.IndexAPI.loadConfiguration();
+        this.data.config = await window.IndexAPI.loadConfiguration();
         
-        if (this.config?.device?.printer_name === undefined) {
+        if (this.data.config?.device?.printer_name === undefined) {
           throw new Error('Printer name configuration is missing from server');
         }
-        if (this.config?.device?.maxCharacters === undefined) {
+        if (this.data.config?.device?.maxCharacters === undefined) {
           throw new Error('Maximum characters validation configuration is missing from server');
         }
-        if (this.config?.device === undefined) {
+        if (this.data.config?.device === undefined) {
           throw new Error('Device configuration is missing from server');
         }
         
-        this.localPrinterName = this.config.device.printer_name;
+        this.localPrinterName = this.data.config.device.printer_name;
         
         // Load memos from separate API endpoint
         await this.loadMemosFromAPI();
         
-        // Clear any previous error and set loading to false on success
+        // Clear any previous error on success
         this.error = null;
-        this.loading = false;
         
-        return this.config;
+        return this.data.config;
       } catch (error) {
         console.error('📋 Index: Failed to load config:', error);
         this.error = error.message;
-        this.loading = false;
         throw error; // Re-throw to ensure proper error handling
       }
     },
@@ -318,12 +307,12 @@ function initializeIndexStore() {
     
     // Printer info overlay
     showLocalPrinterInfo() {
-      if (!this.config?.device) {
+      if (!this.data.config?.device) {
         console.warn('Device configuration not loaded yet');
         return;
       }
       
-      const deviceConfig = this.config.device;
+      const deviceConfig = this.data.config.device;
       const localPrinterData = {
         name: deviceConfig.printer_name || deviceConfig.owner,
         ip_address: deviceConfig.ip_address,

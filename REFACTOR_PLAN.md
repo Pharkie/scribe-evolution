@@ -213,7 +213,7 @@
 
 ---
 
-## Phase 6: AI Memos Settings (Future Enhancement) 🤖
+## Phase 6: AI Memos (New settings page) 🤖
 **Concept**: Dedicated AI memo generation with hardware button integration
 
 ### Step 6.1: AI Memos Configuration
@@ -499,6 +499,102 @@ All settings pages have been mock tested and are ready for live ESP32 hardware v
 - Config structures pre-initialized with null values to prevent "Cannot read properties of undefined" errors
 - Initialization guards to prevent duplicate calls
 - Null-safe functions for all computed properties that handle initial null values
+
+**⚡ IMPROVED: Simple Loading Flag Pattern (Applied to diagnostics.html)**
+
+The original pre-initialized null structures pattern was fragile and required exact API structure matching. A better pattern emerged:
+
+**1. Replace Pre-Initialized Structures with Simple Loading Flag:**
+```javascript
+// ❌ FRAGILE: Pre-initialized null structures
+diagnosticsData: {
+  microcontroller: {
+    chip_model: null,
+    cpu_frequency_mhz: null,
+    flash: { /* complex nested null structure */ }
+  }
+}
+
+// ✅ SIMPLE: Just use loading flag + empty data object
+loaded: false,
+data: {}
+```
+
+**2. Replace 'loading' with 'loaded' Flag:**
+```javascript
+// ❌ REDUNDANT: Multiple loading states
+loading: true,    // for API calls in progress
+ready: false,     // for data availability 
+error: null
+
+// ✅ CLEAN: Single state flag
+loaded: false,    // false = loading/not ready, true = data available
+error: null       // still need error state
+```
+
+**3. Update Getters to Check Loading State:**
+```javascript
+// ✅ All getters follow same pattern
+get someData() {
+  if (!this.loaded) return null;  // or return [] for arrays
+  
+  const data = this.data.someApi?.someField;
+  if (!data) {
+    console.error('❌ Missing data from API');
+    return 'ERROR: Missing Data';
+  }
+  return data;
+}
+```
+
+**4. Update HTML Templates:**
+```html
+<!-- ❌ OLD: Multiple flags -->
+<div x-show="!loading && !error && ready">
+
+<!-- ✅ NEW: Simple flag -->
+<div x-show="loaded && !error">
+```
+
+**5. API Loading Pattern:**
+```javascript
+async loadData() {
+  this.loaded = false;
+  this.error = null;
+  
+  try {
+    // Load all APIs
+    this.data.someApi = await fetchSomeData();
+    this.data.otherApi = await fetchOtherData();
+    
+    this.loaded = true;
+  } catch (error) {
+    this.error = error.message;
+  }
+}
+```
+
+**Benefits of Simple Loading Flag Pattern:**
+- **Less Brittle**: No need to pre-define exact API structure
+- **Backend Flexible**: API can change structure without breaking frontend initialization  
+- **Cleaner Code**: ~20 lines vs ~50+ lines of complex null initialization
+- **Better Separation**: Loading state vs data access clearly separated
+- **Future-Proof**: Adding new API fields won't break existing code
+- **Maintains Alpine Patterns**: Still uses canonical Alpine.js initialization
+
+**When to Apply This Pattern:**
+- Pages with complex nested API data structures
+- Pages consuming multiple API endpoints
+- Any page where API structure might change
+- Diagnostics-type pages with dynamic data requirements
+
+**Implementation Checklist:**
+1. Replace pre-init structures with `loaded: false, data: {}`
+2. Remove redundant `loading`/`ready` flags, keep just `loaded`
+3. Update all getters: `if (!this.loaded) return null/[]`
+4. Update HTML: `x-show="loaded && !error"`
+5. Set `this.loaded = true` after successful API calls
+6. Test that page shows loading state, then content, handles errors
 
 ---
 

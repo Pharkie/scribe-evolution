@@ -7,59 +7,10 @@
 function initializeDiagnosticsStore() {
   const store = {
     // Core state
-    loading: true,
     error: null,
     initialized: false, // Flag to prevent duplicate initialization
-    diagnosticsData: {
-      microcontroller: {
-        chip_model: null,
-        cpu_frequency_mhz: null,
-        flash: {
-          total_chip_size: null,
-          app_partition: {
-            used: null,
-            total: null
-          }
-        },
-        memory: {
-          used_heap: null,
-          total_heap: null
-        },
-        sdk_version: null,
-        uptime_ms: null,
-        temperature: null
-      },
-      logging: {
-        level_name: null,
-        serial_enabled: null,
-        betterstack_enabled: null,
-        file_enabled: null,
-        mqtt_enabled: null
-      }
-    },
-    configData: {
-      device: null,
-      mqtt: null,
-      unbiddenInk: null,
-      buttons: null,
-      leds: null,
-      gpio: null
-    },
-    nvsData: {
-      namespace: null,
-      timestamp: null,
-      keys: null,
-      summary: {
-        totalKeys: null,
-        validKeys: null,
-        correctedKeys: null,
-        invalidKeys: null
-      }
-    },
-    routesData: {
-      web_pages: [],
-      api_endpoints: []
-    },
+    loaded: false, // Flag to indicate data has been loaded
+    data: {},
     
     // UI state
     currentSection: 'microcontroller-section',
@@ -82,7 +33,7 @@ function initializeDiagnosticsStore() {
         return;
       }
       this.initialized = true;
-      this.loading = true;
+      this.loaded = false;
       this.error = null;
       
       try {
@@ -103,47 +54,46 @@ function initializeDiagnosticsStore() {
         if (!anyApiSuccess) {
           // All APIs failed - this is an error state
           this.error = 'All diagnostic APIs are unavailable. Please check the system.';
-          this.loading = false;
           return;
         }
         
         // Parse responses with error logging for failed APIs
+        this.data.diagnostics = {};
+        this.data.config = {};
+        this.data.nvs = {};
+        this.data.routes = {};
+        
         if (diagnosticsResponse.status === 'fulfilled') {
-          this.diagnosticsData = diagnosticsResponse.value;
+          this.data.diagnostics = diagnosticsResponse.value;
         } else {
           console.error('❌ Diagnostics API failed - diagnostics data will be incomplete:', diagnosticsResponse.reason);
-          this.diagnosticsData = {}; // Empty object will trigger "data missing" displays
         }
         
         if (configResponse.status === 'fulfilled') {
-          this.configData = configResponse.value;
+          this.data.config = configResponse.value;
         } else {
           console.error('❌ Config API failed - configuration data will be incomplete:', configResponse.reason);
-          this.configData = {}; // Empty object will trigger "data missing" displays  
         }
         
         if (nvsResponse.status === 'fulfilled') {
-          this.nvsData = nvsResponse.value;
+          this.data.nvs = nvsResponse.value;
         } else {
           console.error('❌ NVS API failed - NVS storage data will be incomplete:', nvsResponse.reason);
-          this.nvsData = {}; // Empty object will trigger "data missing" displays
         }
         
         if (routesResponse.status === 'fulfilled') {
-          this.routesData = routesResponse.value;
+          this.data.routes = routesResponse.value;
         } else {
           console.error('❌ Routes API failed - routes data will be incomplete:', routesResponse.reason);
-          this.routesData = {}; // Empty object will trigger "data missing" displays
         }
         
         
         this.error = null;
-        this.loading = false;
+        this.loaded = true;
       } catch (error) {
         console.error('🛠️ Diagnostics: Unexpected error loading diagnostics:', error);
         // Unexpected error - show error state
         this.error = `Unexpected error loading diagnostics: ${error.message}`;
-        this.loading = false;
       }
     },
     
@@ -172,11 +122,7 @@ function initializeDiagnosticsStore() {
     
     // Microcontroller computed properties - show errors instead of silent fallbacks
     get microcontrollerInfo() {
-      const microcontroller = this.diagnosticsData.microcontroller;
-      
-      // Check if data is still null (not loaded) vs empty object (API failed)
-      if (microcontroller.chip_model === null) {
-        // Data not yet loaded, return null values
+      if (!this.loaded) {
         return {
           chipModel: null,
           cpuFrequency: null,
@@ -187,7 +133,9 @@ function initializeDiagnosticsStore() {
         };
       }
       
-      if (!microcontroller || Object.keys(microcontroller).length === 0) {
+      const microcontroller = this.data.diagnostics?.microcontroller;
+      
+      if (!microcontroller) {
         console.error('❌ Missing microcontroller data from diagnostics API');
         return {
           chipModel: 'ERROR: Missing Data',
@@ -211,11 +159,7 @@ function initializeDiagnosticsStore() {
     
     // Memory usage computed properties - show errors instead of silent fallbacks
     get memoryUsage() {
-      const microcontroller = this.diagnosticsData.microcontroller;
-      
-      // Check if data is still null (not loaded) 
-      if (microcontroller.chip_model === null) {
-        // Data not yet loaded, return null values
+      if (!this.loaded) {
         return {
           flashUsageText: null,
           heapUsageText: null,
@@ -224,7 +168,9 @@ function initializeDiagnosticsStore() {
         };
       }
       
-      if (!microcontroller || Object.keys(microcontroller).length === 0) {
+      const microcontroller = this.data.diagnostics?.microcontroller;
+      
+      if (!microcontroller) {
         console.error('❌ Missing microcontroller data for memory usage');
         return {
           flashUsageText: 'ERROR: Missing Data',
@@ -257,11 +203,7 @@ function initializeDiagnosticsStore() {
     
     // Logging computed properties - show errors instead of silent fallbacks
     get loggingInfo() {
-      const logging = this.diagnosticsData.logging;
-      
-      // Check if data is still null (not loaded)
-      if (logging.level_name === null) {
-        // Data not yet loaded, return null values
+      if (!this.loaded) {
         return {
           level: null,
           serialLogging: null,
@@ -271,7 +213,9 @@ function initializeDiagnosticsStore() {
         };
       }
       
-      if (!logging || Object.keys(logging).length === 0) {
+      const logging = this.data.diagnostics?.logging;
+      
+      if (!logging) {
         console.error('❌ Missing logging data from diagnostics API');
         return {
           level: 'ERROR: Missing Data',
@@ -293,13 +237,11 @@ function initializeDiagnosticsStore() {
     
     // Web pages computed properties - show errors instead of silent fallbacks
     get sortedRoutes() {
-      const routes = this.routesData?.web_pages;
-      
-      // Check if data is still empty array (not loaded)
-      if (Array.isArray(routes) && routes.length === 0) {
-        // Data not yet loaded, return empty array
+      if (!this.loaded) {
         return [];
       }
+      
+      const routes = this.data.routes?.web_pages;
       
       if (!routes) {
         console.error('❌ Missing web_pages data from routes API');
@@ -359,13 +301,11 @@ function initializeDiagnosticsStore() {
     
     // API endpoints computed properties - show errors instead of silent fallbacks
     get apiEndpoints() {
-      const endpoints = this.routesData?.api_endpoints;
-      
-      // Check if data is still empty array (not loaded)
-      if (Array.isArray(endpoints) && endpoints.length === 0) {
-        // Data not yet loaded, return empty object
+      if (!this.loaded) {
         return {};
       }
+      
+      const endpoints = this.data.routes?.api_endpoints;
       
       if (!endpoints) {
         console.error('❌ Missing api_endpoints data from routes API');
@@ -396,43 +336,45 @@ function initializeDiagnosticsStore() {
     
     // Config file formatted
     get configFileFormatted() {
-      if (!this.configData || Object.keys(this.configData).length === 0) {
+      if (!this.loaded) {
+        return null;
+      }
+      
+      if (!this.data.config || Object.keys(this.data.config).length === 0) {
         return 'Configuration not available';
       }
       
-      const redacted = this.redactSecrets(this.configData);
+      const redacted = this.redactSecrets(this.data.config);
       return JSON.stringify(redacted, null, 2);
     },
     
     // NVS data formatted
     get nvsDataFormatted() {
-      // Check if data is still null (not loaded)
-      if (this.nvsData.namespace === null) {
-        // Data not yet loaded, return null
+      if (!this.loaded) {
         return null;
       }
       
-      if (!this.nvsData || Object.keys(this.nvsData).length === 0) {
+      if (!this.data.nvs || Object.keys(this.data.nvs).length === 0) {
         console.error('❌ Missing NVS data from nvs-dump API');
         return 'ERROR: NVS data not available - API failed or returned empty data';
       }
       
       const formattedData = {
-        namespace: this.nvsData.namespace || 'ERROR: Missing namespace',
-        timestamp: this.nvsData.timestamp || 'ERROR: Missing timestamp',
+        namespace: this.data.nvs.namespace || 'ERROR: Missing namespace',
+        timestamp: this.data.nvs.timestamp || 'ERROR: Missing timestamp',
         summary: {
-          totalKeys: this.nvsData.summary?.totalKeys ?? 'ERROR: Missing totalKeys',
-          validKeys: this.nvsData.summary?.validKeys ?? 'ERROR: Missing validKeys',
-          correctedKeys: this.nvsData.summary?.correctedKeys ?? 'ERROR: Missing correctedKeys',
-          invalidKeys: this.nvsData.summary?.invalidKeys ?? 'ERROR: Missing invalidKeys'
+          totalKeys: this.data.nvs.summary?.totalKeys ?? 'ERROR: Missing totalKeys',
+          validKeys: this.data.nvs.summary?.validKeys ?? 'ERROR: Missing validKeys',
+          correctedKeys: this.data.nvs.summary?.correctedKeys ?? 'ERROR: Missing correctedKeys',
+          invalidKeys: this.data.nvs.summary?.invalidKeys ?? 'ERROR: Missing invalidKeys'
         },
         keys: {}
       };
       
-      if (this.nvsData.keys) {
-        const sortedKeys = Object.keys(this.nvsData.keys).sort();
+      if (this.data.nvs.keys) {
+        const sortedKeys = Object.keys(this.data.nvs.keys).sort();
         sortedKeys.forEach(key => {
-          const keyData = this.nvsData.keys[key];
+          const keyData = this.data.nvs.keys[key];
           formattedData.keys[key] = {
             type: keyData.type,
             description: keyData.description,
