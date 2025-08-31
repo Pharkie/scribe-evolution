@@ -376,6 +376,44 @@ window.addEventListener('alpine:init', () => {
 
 **Critical Timing Rule**: Store initialization MUST happen AFTER Alpine establishes DOM binding (`x-data`), not during store creation or registration. Use `x-init="$nextTick(() => loadData())"` to ensure proper timing.
 
+**Smooth Fade-In Transitions Pattern:**
+```html
+<!-- ✅ CORRECT: x-show + x-transition for smooth fade-in -->
+<div x-show="!loading && !error" x-transition>
+    <form><!-- Content --></form>
+</div>
+```
+
+```javascript
+// ✅ CORRECT: Start with loading: true for fade-in effect
+function createMyStore() {
+    return {
+        loading: true,  // Hides content initially
+        ready: false,
+        
+        async loadData() {
+            this.loading = true;
+            // ... load data ...
+            this.ready = true;
+            this.loading = false;  // Triggers fade-in via x-show
+        }
+    };
+}
+```
+
+```html
+<!-- ❌ WRONG: x-if prevents transitions (removes/recreates DOM) -->
+<template x-if="!loading && !error">
+    <div x-transition><!-- Won't work - element doesn't exist for transition --></div>
+</template>
+```
+
+**Key Points:**
+- **Use `x-show`** (toggles visibility) NOT `x-if` (removes DOM elements)
+- **Start with `loading: true`** to hide content initially  
+- **Alpine's `x-transition`** provides automatic fade-in when `x-show` becomes true
+- **Apply to ALL settings pages** for consistent UX
+
 **ESP32 Constraints:**
 - file.readString() fails on large files - use chunked reading for >8KB
 - Work within buffer constraints - separate endpoints better than large JSON

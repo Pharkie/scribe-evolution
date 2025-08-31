@@ -19,7 +19,7 @@ function initializeDeviceSettingsStore() {
 
         // ================== STATE MANAGEMENT ==================
         // Core state management
-        loading: true,
+        loading: true,  // Start as loading for fade-in effect
         error: null,
         saving: false,
         initialized: false,
@@ -62,8 +62,8 @@ function initializeDeviceSettingsStore() {
         searchQuery: '',
 
         // ================== DEVICE CONFIGURATION API ==================
-        // Initialize store with data from server
-        async init() {
+        // Load configuration data from server
+        async loadConfiguration() {
             // Prevent duplicate initialization
             if (this.initialized) {
                 console.log('⚙️ Device Settings: Already initialized, skipping');
@@ -860,8 +860,6 @@ document.addEventListener('alpine:init', () => {
     const deviceStore = initializeDeviceSettingsStore();
     Alpine.store('settingsDevice', deviceStore);
     
-    // Initialize the store immediately during alpine:init
-    deviceStore.init();
-    
-    console.log('✅ Device Settings Store registered and initialized');
+    // No manual init() - let HTML handle initialization timing with x-init
+    console.log('✅ Device Settings Store registered');
 });
