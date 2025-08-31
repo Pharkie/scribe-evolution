@@ -128,9 +128,6 @@ window.addEventListener('alpine:init', () => {
                 // Success - update original config for buttons section only
                 this.originalConfig.buttons = JSON.parse(JSON.stringify(this.config.buttons));
                 
-                // Show success feedback and redirect
-                this.showSuccessMessage('Button settings saved successfully!');
-                
                 // Redirect to settings overview with success parameter
                 setTimeout(() => {
                     window.location.href = '/settings.html?saved=buttons';
@@ -184,24 +181,6 @@ window.addEventListener('alpine:init', () => {
         },
 
         // UTILITY FUNCTIONS
-        showSuccessMessage(message) {
-            // Create and show success notification
-            const notification = document.createElement('div');
-            notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-
-            // Auto-remove after 3 seconds
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
-        },
-
         showErrorMessage(message) {
             // Create and show error notification
             const notification = document.createElement('div');
