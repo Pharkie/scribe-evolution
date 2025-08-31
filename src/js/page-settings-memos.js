@@ -83,7 +83,7 @@ function showErrorMessage(message, duration = 5000) {
 function createMemosStore() {
     const store = {
         // =================== STATE ===================
-        loading: false,
+        loading: true,  // Start as loading for fade-in effect
         saving: false,
         error: null,
         ready: false,
