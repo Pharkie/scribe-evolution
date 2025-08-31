@@ -89,39 +89,83 @@
 - [x] Searchable timezone picker with 341 IANA timezones
 - [x] Format: "City, Country (UTC±HH)" with performance optimization
 
+### Step 3.5: Memo Settings ✅ COMPLETED
+- [x] **Frontend implementation complete** - Mock server testing passed
+- [x] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
+- [x] Memo content editor with placeholder system (date, time, timezone, device owner)
+- [x] Individual memo editing and bulk save functionality
+- [x] Orange theme with proper dark mode support
+- [x] Real-time character counter and validation
+
 ### Next Steps: Remaining Settings Pages
 
-**3.5 Memo Settings** - Extract memo content editor
-**3.6 Unbidden Ink** - Extract AI content configuration (API token, scheduling, autoprompts)
-**3.7 Button Settings** - Extract button action configuration with testing 
-**3.8 LED Settings** - Extract LED effect configuration with preview
-**3.9 Navigation** - Add page navigation and remove monolithic files
+**CRITICAL**: Follow established patterns from Device/WiFi/MQTT/Memo pages - DO NOT reinvent solutions
 
-### Step 3.9: Navigation & Cleanup
-**Problem**: Settings pages exist in isolation, monolithic files create maintenance burden
-**Solution**: Add navigation and remove monolithic files
-**Risks**: Navigation breaking, broken links, user confusion, functionality gaps
-**Success Criteria**: All pages accessible via navigation, monolithic files removed, no broken links
+**3.6 Button Settings** - Extract button action configuration with testing using established patterns
+**3.7 LED Settings** - Extract LED effect configuration with preview using established patterns  
+**3.8 Unbidden Ink** - Extract AI content configuration using established patterns
 
-**Implementation Tasks**:
-- [x] Create overview page with section links (`/settings.html` with navigation grid)
-- [ ] Add client-side navigation between pages with breadcrumbs and back buttons
-- [ ] Verify all individual settings pages are fully functional and tested
-- [ ] Remove monolithic settings.html and settings-old.html files
-- [ ] Clean up unused partials and legacy code
-- [ ] Update all internal links to point to new settings pages
-- [ ] Test complete settings workflow end-to-end for regressions
-- [ ] Run **Testing Workflow**
+### Development Patterns for Steps 3.6-3.8 (MANDATORY)
+
+**Follow Existing Refactored Patterns**:
+- **HTML Structure**: Copy from `device.html`, `wifi.html`, `mqtt.html`, `memos.html`
+- **Alpine.js Stores**: Follow `page-settings-*.js` patterns
+- **API Integration**: Use `settings-api.js` patterns with `window.SettingsAPI`
+- **CSS Themes**: Use established color schemes (accent colour per section)
+- **Form Validation**: Use existing validation patterns and error handling
+- **Save/Cancel Flow**: Follow exact patterns from existing pages
+
+**Mandatory Implementation Steps** (DO NOT DEVIATE):
+1. **Copy existing HTML structure** - header, form, validation, save buttons
+2. **Create Alpine store** following `page-settings-device.js` patterns
+3. **Use existing API functions** from `settings-api.js`
+4. **Apply colors** consistently with existing pages
+5. **Test with mock server first**, then invite and help user to test ESP32
+6. **Update settings overview** with new page links
+
+**Success Criteria**:
+- Similar user experience to Device/WiFi/MQTT/Memo pages
+- Minimise new patterns introduced - reuse existing solutions or ask the user
+- Consistent styling, validation, and save flow
+- Full functionality extraction from settings-old.html (do not edit or change that reference file or the settings partials)
+- Mock server testing passes before ESP32 testing
+
+### Step 3.9: Legacy Cleanup
+**Goal**: Remove outdated monolithic files and finalize modular settings architecture
+**Status**: Ready to execute - all individual settings pages are complete and functional
+
+**Current State**: ✅ Modular settings architecture complete
+- [x] Device Settings - functional with live ESP32 testing
+- [x] WiFi Settings - functional with live ESP32 testing  
+- [x] MQTT Settings - functional with live ESP32 testing
+- [x] Memo Settings - functional (mock tested, pending live ESP32)
+- [x] Navigation complete - clean Home → Settings → Individual Page hierarchy
+
+**Cleanup Tasks**:
+- [ ] Remove `settings-old.html` (legacy monolithic file)
+- [ ] Clean up unused partials in `/partials/settings/`
+- [ ] Verify no broken internal links remain
+- [ ] Final end-to-end testing of complete settings workflow
 
 ---
 
 ## Phase 4: Build System Optimization 🚀
 
 **4.0 REST API Pattern Standardization** ✅ COMPLETED
-- All POST endpoints now consistently follow the correct pattern:
+- [x] All POST endpoints now consistently follow the correct pattern:
   - **Success**: HTTP 200 + empty body (no JSON parsing)
   - **Error**: Non-200 status + JSON error response (parse for error messages)
-- Eliminates JSON parsing errors and creates consistent API behavior
+- [x] Eliminates JSON parsing errors and creates consistent API behavior
+- [x] Content generation endpoints converted from POST to GET (proper REST semantics)
+- [x] **Both ESP32 backend AND mock server updated** - full stack consistency
+
+**4.1 Full REST API Compliance** - Convert endpoints to proper HTTP methods:
+- **GET** for content generation: `/api/joke`, `/api/riddle`, `/api/quote`, etc. ✅ DONE
+- **GET** for reading config: `/api/config` (already correct)
+- **PUT** for updating entire config: `/api/config` (currently POST - needs change)
+- **PATCH** for partial config updates: `/api/config` (currently POST - consider)
+- **POST** for actions only: `/api/print-local`, `/api/print-mqtt`, `/api/setup`
+- **DELETE** for resource removal (future possibility)
 **4.1 Module System** - Fix esbuild imports, enable code splitting, eliminate duplication
 **4.2 CSS Optimization** - Address 60-80KB CSS files, consider gzip compression
 
@@ -138,11 +182,49 @@
 
 ---
 
-## Phase 5: Future Planning 📋
+## Phase 5: Core Pages Refactor 📄
 
-- [ ] Document working patterns from settings refactor
-- [ ] Create new refactor plan for index, diagnostics, 404 pages
-- [ ] Define templates for page structure and API patterns
+**Goal**: Apply proven settings refactor patterns to remaining pages
+**Approach**: Use established patterns from Phase 3 settings pages as templates
+
+### Step 5.1: Index Page Refactor
+**Current State**: Monolithic `index.html` with embedded Alpine store
+**Target**: Modular architecture following settings patterns
+- **HTML**: Clean separation of concerns, component-based structure
+- **JS**: Extract to `page-index.js` following `page-settings-*.js` patterns  
+- **API**: Consolidate API calls using established `*-api.js` patterns
+- **Theme**: Maintain existing design while improving code organization
+
+### Step 5.2: Diagnostics Page Refactor  
+**Current State**: Functional but should follow established patterns better
+Split up from monolithic like settings.html.
+**Target**: Align with settings architecture patterns and modularize diagnostic sections
+
+**Sub-phases**:
+- **5.2.1 Microcontroller** - Hardware, firmware, memory diagnostics
+- **5.2.2 Logging** - System logs
+- **5.2.3 Routes** - Pages and API endpoints
+- **5.2.4 Runtime Config** - Active configuration display and validation  
+- **5.2.5 NVS** - Non-volatile storage (NVS) inspection
+
+**Implementation**:
+- **HTML**: Review and align with settings page structure, modularize sections
+- **JS**: Ensure `page-diagnostics.js` follows established patterns
+- **API**: Standardize API integration patterns  
+- **Validation**: Apply settings-style validation and error handling
+- **Partials**: Consider extracting diagnostic sections to reusable components
+
+### Step 5.3: 404 Page Refactor
+**Current State**: Basic functionality
+**Target**: Polish and align with overall architecture
+- **HTML**: Consistent styling and structure
+- **JS**: Minimal but following patterns where applicable
+- **UX**: Improve navigation and user guidance
+
+### Step 5.4: Documentation & Templates
+- [ ] Document proven patterns from settings and core page refactors  
+- [ ] Create reusable templates for future page development
+- [ ] Establish coding standards and architectural guidelines
 
 ---
 
@@ -185,6 +267,7 @@
 - Use built-in reactivity (`x-effect`, `$nextTick`) not custom solutions
 - Use @input handlers for immediate form changes, not complex watchers
 - Keep Alpine.effect() simple and focused on high-level state changes
+- **Dark mode**: Use Tailwind classes `dark:` not inline styles (timezone dropdown fix pattern)
 
 **ESP32 Constraints:**
 - file.readString() fails on large files - use chunked reading for >8KB
