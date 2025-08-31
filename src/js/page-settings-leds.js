@@ -28,7 +28,18 @@ window.addEventListener('alpine:init', () => {
         },
 
         get hasChanges() {
-            return JSON.stringify(this.config.leds) !== JSON.stringify(this.originalConfig.leds);
+            // Only check system settings that are actually saved (not playground effects)
+            const currentSystemSettings = {
+                count: this.config.leds?.count,
+                brightness: this.config.leds?.brightness,
+                refreshRate: this.config.leds?.refreshRate
+            };
+            const originalSystemSettings = {
+                count: this.originalConfig.leds?.count,
+                brightness: this.originalConfig.leds?.brightness,
+                refreshRate: this.originalConfig.leds?.refreshRate
+            };
+            return JSON.stringify(currentSystemSettings) !== JSON.stringify(originalSystemSettings);
         },
 
         // Initialization
@@ -109,17 +120,12 @@ window.addEventListener('alpine:init', () => {
             this.error = null;
 
             try {
-                // Create partial config with ONLY LED-specific fields
+                // Create partial config with ONLY LED system settings (exclude effect playground params)
                 const partialConfig = {
                     leds: {
                         count: this.config.leds.count,
-                        effect: this.config.leds.effect,
                         brightness: this.config.leds.brightness,
-                        refreshRate: this.config.leds.refreshRate,
-                        speed: this.config.leds.speed,
-                        intensity: this.config.leds.intensity,
-                        cycles: this.config.leds.cycles,
-                        colors: this.config.leds.colors
+                        refreshRate: this.config.leds.refreshRate
                     }
                 };
 
@@ -144,19 +150,19 @@ window.addEventListener('alpine:init', () => {
                     throw new Error(errorMessage);
                 }
 
-                // Success - update original config for LEDs section only
-                this.originalConfig.leds = JSON.parse(JSON.stringify(this.config.leds));
+                // Success - update original config for system settings only (not playground effects)
+                this.originalConfig.leds = this.originalConfig.leds || {};
+                this.originalConfig.leds.count = this.config.leds.count;
+                this.originalConfig.leds.brightness = this.config.leds.brightness;
+                this.originalConfig.leds.refreshRate = this.config.leds.refreshRate;
                 
-                // Redirect to settings overview with success parameter
-                setTimeout(() => {
-                    window.location.href = '/settings.html?saved=leds';
-                }, 1000);
+                // Redirect to settings overview with success parameter (no timeout)
+                window.location.href = '/settings.html?saved=leds';
 
             } catch (error) {
                 console.error('Error saving configuration:', error);
                 this.error = error.message || 'Failed to save configuration';
                 this.showErrorMessage(this.error);
-            } finally {
                 this.saving = false;
             }
         },
@@ -169,22 +175,27 @@ window.addEventListener('alpine:init', () => {
         showColorControls() {
             return this.config.leds && 
                    (this.config.leds.effect === 'chase_single' || 
-                    this.config.leds.effect === 'pulse' || 
-                    this.config.leds.effect === 'chase_multi');
+                    this.config.leds.effect === 'chase_multi' ||
+                    this.config.leds.effect === 'matrix' ||
+                    this.config.leds.effect === 'twinkle' ||
+                    this.config.leds.effect === 'pulse');
         },
 
         updateEffectParams() {
-            // Reset colors based on effect type
-            if (this.config.leds.effect === 'chase_single' || this.config.leds.effect === 'pulse') {
-                // Single color effects only need first color
-                if (!this.config.leds.colors || this.config.leds.colors.length === 0) {
-                    this.config.leds.colors = ['#0062ff'];
-                }
+            // Reset colors based on C++ config requirements
+            if (this.config.leds.effect === 'chase_single') {
+                this.config.leds.colors = ['#0062ff']; // Blue (DEFAULT_CHASE_SINGLE_COLOR)
             } else if (this.config.leds.effect === 'chase_multi') {
-                // Multi color effects need 3 colors
-                if (!this.config.leds.colors || this.config.leds.colors.length < 3) {
-                    this.config.leds.colors = ['#0062ff', '#ff0000', '#00ff00'];
-                }
+                this.config.leds.colors = ['#ff0000', '#00ff00', '#0000ff']; // Red, Green, Blue
+            } else if (this.config.leds.effect === 'matrix') {
+                this.config.leds.colors = ['#00ff00']; // Green (DEFAULT_MATRIX_COLOR)
+            } else if (this.config.leds.effect === 'twinkle') {
+                this.config.leds.colors = ['#ffff00']; // Yellow (DEFAULT_TWINKLE_COLOR)
+            } else if (this.config.leds.effect === 'pulse') {
+                this.config.leds.colors = ['#800080']; // Purple (DEFAULT_PULSE_COLOR)
+            } else if (this.config.leds.effect === 'rainbow') {
+                // Rainbow effect uses no colors - procedurally generated
+                this.config.leds.colors = [];
             }
         },
 
@@ -194,19 +205,35 @@ window.addEventListener('alpine:init', () => {
             
             this.testingEffect = true;
             try {
-                // Create effect parameters object
+                // Create effect parameters object (exclude system settings like brightness/refreshRate)
+                let colors = this.config.leds.colors || ['#0062ff'];
+                
+                // Only send relevant colors based on C++ config requirements
+                if (this.config.leds.effect === 'chase_single' || 
+                    this.config.leds.effect === 'matrix' ||
+                    this.config.leds.effect === 'twinkle' ||
+                    this.config.leds.effect === 'pulse') {
+                    // Single color effects
+                    colors = [colors[0]];
+                } else if (this.config.leds.effect === 'chase_multi') {
+                    // Multi color effects need exactly 3 colors
+                    colors = colors.slice(0, 3);
+                } else if (this.config.leds.effect === 'rainbow') {
+                    // Rainbow effect uses no colors
+                    colors = [];
+                }
+                
                 const effectParams = {
                     effect: this.config.leds.effect,
-                    brightness: this.config.leds.brightness || 128,
                     speed: this.config.leds.speed || 50,
                     intensity: this.config.leds.intensity || 50,
                     cycles: this.config.leds.cycles || 3,
-                    colors: this.config.leds.colors || ['#0062ff']
+                    colors: colors
                 };
 
                 console.log('Testing LED effect:', effectParams);
                 
-                // Use fetch to test LED effect
+                // Use fetch to test LED effect with JSON body
                 const response = await fetch('/api/leds/test', {
                     method: 'POST',
                     headers: {
@@ -236,8 +263,7 @@ window.addEventListener('alpine:init', () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({})
+                    }
                 });
 
                 if (!response.ok) {

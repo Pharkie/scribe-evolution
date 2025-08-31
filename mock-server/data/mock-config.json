@@ -101,7 +101,7 @@
         "enabled": true,
         "pin": 20,
         "count": 30,
-        "brightness": 64,
+        "brightness": 100,
         "refreshRate": 60,
         "effectDefaults": {
             "chase_single": {

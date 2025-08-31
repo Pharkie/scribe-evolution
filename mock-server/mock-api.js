@@ -592,12 +592,13 @@ function createRequestHandler() {
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
           const params = JSON.parse(body || '{}');
-          console.log('💡 LED effect test:', params.effect || 'unknown', 'brightness:', params.brightness || 'N/A');
+          console.log('💡 LED effect test:', params.effect || 'unknown', 'brightness:', params.brightness || 'N/A', 'speed:', params.speed || 'N/A');
           setTimeout(() => {
             res.writeHead(200);
             res.end();
           }, 300);
         });
+        return; // Don't fall through to 404
         
       } else if (pathname === '/api/leds/off' && req.method === 'POST') {
         console.log('💡 LEDs turned off via /api/leds/off');
@@ -605,6 +606,7 @@ function createRequestHandler() {
           res.writeHead(200);
           res.end();
         }, 200);
+        return; // Don't fall through to 404
         
       } else if (pathname === '/api/test-mqtt' && req.method === 'POST') {
         console.log('🔌 MQTT connection test requested');

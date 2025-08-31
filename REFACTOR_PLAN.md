@@ -128,6 +128,7 @@
 - [ ] **Content configuration**: Prompts, scheduling, API settings
 - [ ] **Partial config updates**: Only send Unbidden Ink-specific fields
 
+
 ### Development Patterns for Steps 3.7-3.8 (MANDATORY)
 
 **Follow Existing Refactored Patterns**:
@@ -205,6 +206,19 @@
 **Large Resources**:
 - `timezones.json`: 174KB
 - `riddles.ndjson`: 111KB
+
+---
+
+## Phase 6: AI Memos Settings (Future Enhancement) 🤖
+**Concept**: Dedicated AI memo generation with hardware button integration
+
+### Step 6.1: AI Memos Configuration
+- [ ] **AI Memos section**: 4 configurable AI prompts (e.g. "Daily reflection", "Creative writing", "Problem solving", "Random inspiration")
+- [ ] **Hardware button integration**: Each prompt assignable to physical buttons for instant generation
+- [ ] **System-level ChatGPT configuration**: Move ChatGPT API token from Unbidden Ink to Device settings as shared system resource
+- [ ] **Separation of concerns**: Scheduled AI content (Unbidden Ink) vs on-demand AI content (AI Memos)
+- [ ] **Color scheme**: TBD - likely distinct from existing pages
+- [ ] **Integration**: Coordinate with Button settings for AI memo action assignment
 
 ---
 
