@@ -198,19 +198,26 @@ function initializeMqttSettingsStore() {
                     body: JSON.stringify(testData)
                 });
                 
-                const result = await response.json();
-                
                 if (response.ok) {
                     this.mqttTestResult = {
                         success: true,
-                        message: result.message || 'Successfully connected to MQTT broker'
+                        message: 'Successfully connected to MQTT broker'
                     };
                     this.mqttTestPassed = true;
                 } else {
-                    this.mqttTestResult = {
-                        success: false,
-                        message: result.error || 'Connection test failed'
-                    };
+                    // For error responses, try to parse JSON for error message
+                    try {
+                        const result = await response.json();
+                        this.mqttTestResult = {
+                            success: false,
+                            message: result.error || 'Connection test failed'
+                        };
+                    } catch (parseError) {
+                        this.mqttTestResult = {
+                            success: false,
+                            message: 'Connection test failed'
+                        };
+                    }
                     this.mqttTestPassed = false;
                 }
             } catch (error) {
@@ -308,14 +315,13 @@ function initializeMqttSettingsStore() {
                     body: JSON.stringify(configUpdate)
                 });
                 
-                const result = await response.json();
-                
                 if (response.ok) {
                     // Redirect immediately with success parameter (don't reset saving state)
                     window.location.href = '/settings.html?saved=mqtt';
                     return; // Exit without resetting saving state
-                    
                 } else {
+                    // Parse error response for error message
+                    const result = await response.json().catch(() => ({}));
                     throw new Error(result.error || 'Unknown error occurred');
                 }
             } catch (error) {

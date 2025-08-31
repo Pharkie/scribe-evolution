@@ -48,9 +48,7 @@ async function saveMemos(memosData) {
             throw new Error(`Memos API returned ${response.status}: ${errorText}`);
         }
         
-        const result = await response.text();
         console.log('API: Memos saved successfully');
-        return result;
         
     } catch (error) {
         console.error('API: Error saving memos:', error);

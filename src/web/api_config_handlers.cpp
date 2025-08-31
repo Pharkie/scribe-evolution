@@ -506,7 +506,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 #endif
 
-    sendSuccessResponse(request, "Configuration saved successfully");
+    request->send(200);
 
     if (isAPMode())
     {
@@ -708,7 +708,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
     LOG_NOTICE("WEB", "Setup configuration saved successfully");
     
-    sendSuccessResponse(request, "Setup complete - device will restart");
+    request->send(200);
 
     // In AP mode, reboot after short delay to connect to new WiFi
     if (isAPMode())

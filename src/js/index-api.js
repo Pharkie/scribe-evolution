@@ -47,9 +47,7 @@ async function printLocalContent(content) {
             throw new Error(`Print failed: ${errorData}`);
         }
         
-        const result = await response.json();
         console.log('API: Content sent to local printer successfully');
-        return result;
         
     } catch (error) {
         console.error('API: Failed to print local content:', error);
@@ -81,9 +79,7 @@ async function printMQTTContent(content, topic) {
             throw new Error(`MQTT print failed: ${errorData}`);
         }
         
-        const result = await response.json();
         console.log('API: Content sent to MQTT printer successfully');
-        return result;
         
     } catch (error) {
         console.error('API: Failed to print MQTT content:', error);

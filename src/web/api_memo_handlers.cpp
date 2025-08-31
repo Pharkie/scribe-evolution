@@ -148,7 +148,7 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
     }
 
     LOG_NOTICE("WEB", "Memo %d updated successfully", memoId);
-    sendSuccessResponse(request, "Memo updated successfully");
+    request->send(200);
 }
 
 
@@ -249,5 +249,5 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
     }
 
     LOG_NOTICE("WEB", "All memos updated successfully");
-    sendSuccessResponse(request, "All memos updated successfully");
+    request->send(200);
 }

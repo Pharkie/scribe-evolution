@@ -360,7 +360,7 @@ void handlePrintContent(AsyncWebServerRequest *request)
         currentMessage.shouldPrintLocally = true;
         LOG_VERBOSE("WEB", "Custom message queued for local direct printing");
 
-        request->send(200, "application/json", "{\"message\":\"Message processed successfully\"}");
+        request->send(200);
     }
     else
     {
@@ -393,7 +393,7 @@ void handlePrintContent(AsyncWebServerRequest *request)
         if (mqttClient.publish(source.c_str(), payload.c_str()))
         {
             LOG_VERBOSE("WEB", "Custom message successfully sent via MQTT");
-            sendSuccessResponse(request, "Message processed successfully");
+            request->send(200);
         }
         else
         {

@@ -53,9 +53,7 @@ window.SetupAPI = {
             throw new Error(errorData.message || `Failed to save setup configuration: ${response.status} - ${response.statusText}`);
         }
 
-        const result = await response.json();
-        console.log('Setup API: Configuration saved:', result);
-        return result;
+        console.log('Setup API: Configuration saved successfully');
     },
 
     /**

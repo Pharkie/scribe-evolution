@@ -50,9 +50,8 @@ async function saveConfiguration(configData) {
             throw new Error(`Server error: ${response.status} - ${errorText}`);
         }
         
-        const result = await response.json();
-        console.log('API: Server response:', result);
-        return result.message || 'Configuration saved';
+        console.log('API: Configuration saved successfully');
+        return 'Configuration saved';
         
     } catch (error) {
         console.error('API: Failed to save configuration:', error);
@@ -163,7 +162,8 @@ async function triggerLedEffect(effectName, duration = 10000, settings = null) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        return await response.json();
+        // LED effect triggered successfully (no response body expected)
+        return;
         
     } catch (error) {
         console.error('API: Failed to trigger LED effect:', error);
@@ -188,7 +188,8 @@ async function turnOffLeds() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        return await response.json();
+        // LEDs turned off successfully (no response body expected)
+        return;
         
     } catch (error) {
         console.error('API: Failed to turn off LEDs:', error);

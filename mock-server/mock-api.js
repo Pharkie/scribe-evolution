@@ -495,9 +495,8 @@ function createRequestHandler() {
             logProcessedFields(configUpdate);
             
             setTimeout(() => {
-              sendJSON(res, { 
-                message: "Configuration saved successfully" 
-              });
+              res.writeHead(200);
+              res.end();
             }, 500);
             
           } catch (error) {
@@ -548,9 +547,8 @@ function createRequestHandler() {
         req.on('end', () => {
           console.log('🖨️  Print request received');
           setTimeout(() => {
-            sendJSON(res, {
-              message: "Message processed successfully"
-            });
+            res.writeHead(200);
+            res.end();
           }, 800);
         });
         
@@ -560,9 +558,8 @@ function createRequestHandler() {
         req.on('end', () => {
           console.log('📡 MQTT print request received');
           setTimeout(() => {
-            sendJSON(res, {
-              message: "Message scribed via MQTT"
-            });
+            res.writeHead(200);
+            res.end();
           }, 500);
         });
         
@@ -573,21 +570,16 @@ function createRequestHandler() {
           const params = JSON.parse(body || '{}');
           console.log('💡 LED effect triggered:', params.effect || 'unknown');
           setTimeout(() => {
-            sendJSON(res, {
-              message: "LED effect started",
-              effect: params.effect || "unknown", 
-              cycles: params.cycles || 1
-            });
+            res.writeHead(200);
+            res.end();
           }, 300);
         });
         
       } else if (pathname === '/api/leds-off' && req.method === 'POST') {
         console.log('💡 LEDs turned off');
         setTimeout(() => {
-          sendJSON(res, {
-            message: "LEDs turned off",
-            success: true
-          });
+          res.writeHead(200);
+          res.end();
         }, 200);
         
       } else if (pathname === '/api/test-mqtt' && req.method === 'POST') {
@@ -609,10 +601,8 @@ function createRequestHandler() {
               
               if (isValidConfig && !isFakeFailure) {
                 console.log('   ✅ MQTT test: SUCCESS');
-                sendJSON(res, {
-                  success: true,
-                  message: "Successfully connected to MQTT broker"
-                });
+                res.writeHead(200);
+                res.end();
               } else {
                 console.log('   ❌ MQTT test: FAILED');
                 res.writeHead(400, { 'Content-Type': 'application/json' });
