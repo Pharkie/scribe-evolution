@@ -7,7 +7,7 @@
 document.addEventListener('alpine:init', () => {
     const unbiddenInkStore = {
         // State
-        loading: true,
+        loading: true,  // Start as loading for fade-in effect
         saving: false,
         error: null,
         config: {
@@ -31,14 +31,9 @@ document.addEventListener('alpine:init', () => {
         },
         passwordModified: false,
 
-        // Initialization
-        async init() {
-            console.log('🎭 Initializing Unbidden Ink Settings...');
-            await this.loadConfiguration();
-        },
-
         // API Operations
         async loadConfiguration() {
+            console.log('🎭 Initializing Unbidden Ink Settings...');
             this.loading = true;
             this.error = null;
 
@@ -315,8 +310,5 @@ document.addEventListener('alpine:init', () => {
     // Register the store
     Alpine.store('settingsUnbiddenInk', unbiddenInkStore);
     
-    // Initialize the store immediately during alpine:init
-    unbiddenInkStore.init();
-    
-    console.log('✅ Unbidden Ink Settings Store registered and initialized');
+    console.log('✅ Unbidden Ink Settings Store registered');
 });

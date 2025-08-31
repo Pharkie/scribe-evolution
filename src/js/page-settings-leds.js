@@ -4,11 +4,25 @@
 window.addEventListener('alpine:init', () => {
     Alpine.store('settingsLeds', {
         // State
-        loading: true,
+        loading: true,  // Start as loading for fade-in effect
         error: null,
         saving: false,
         initialized: false,
-        config: {},
+        config: {
+            leds: {
+                gpio: null,
+                count: null,
+                brightness: null,
+                refreshRate: null
+            }
+        },
+        
+        // Effects playground (temporary, not saved to config)
+        effect: null,
+        speed: null,
+        intensity: null,
+        cycles: null,
+        colors: [],
         originalConfig: {},
         testingEffect: false,
 
@@ -42,8 +56,8 @@ window.addEventListener('alpine:init', () => {
             return JSON.stringify(currentSystemSettings) !== JSON.stringify(originalSystemSettings);
         },
 
-        // Initialization
-        async init() {
+        // LED CONFIGURATION API
+        async loadConfiguration() {
             // Prevent duplicate initialization
             if (this.initialized) {
                 console.log('💡 LED Settings: Already initialized, skipping');
@@ -51,16 +65,6 @@ window.addEventListener('alpine:init', () => {
             }
             this.initialized = true;
 
-            try {
-                await this.loadConfiguration();
-            } catch (error) {
-                console.error('Failed to initialize LED settings:', error);
-                this.error = 'Failed to initialize LED settings. Please refresh the page.';
-            }
-        },
-
-        // LED CONFIGURATION API
-        async loadConfiguration() {
             this.loading = true;
             this.error = null;
 
@@ -99,8 +103,8 @@ window.addEventListener('alpine:init', () => {
                 });
 
                 // Ensure colors array exists and has at least 3 colors
-                if (!Array.isArray(this.config.leds.colors) || this.config.leds.colors.length < 3) {
-                    this.config.leds.colors = ['#0062ff', '#ff0000', '#00ff00'];
+                if (!Array.isArray(this.colors) || this.colors.length < 3) {
+                    this.colors = ['#0062ff', '#ff0000', '#00ff00'];
                 }
 
             } catch (error) {
@@ -174,28 +178,28 @@ window.addEventListener('alpine:init', () => {
         // COLOR CONTROL FUNCTIONS
         showColorControls() {
             return this.config.leds && 
-                   (this.config.leds.effect === 'chase_single' || 
-                    this.config.leds.effect === 'chase_multi' ||
-                    this.config.leds.effect === 'matrix' ||
-                    this.config.leds.effect === 'twinkle' ||
-                    this.config.leds.effect === 'pulse');
+                   (this.effect === 'chase_single' || 
+                    this.effect === 'chase_multi' ||
+                    this.effect === 'matrix' ||
+                    this.effect === 'twinkle' ||
+                    this.effect === 'pulse');
         },
 
         updateEffectParams() {
             // Reset colors based on C++ config requirements
-            if (this.config.leds.effect === 'chase_single') {
-                this.config.leds.colors = ['#0062ff']; // Blue (DEFAULT_CHASE_SINGLE_COLOR)
-            } else if (this.config.leds.effect === 'chase_multi') {
-                this.config.leds.colors = ['#ff0000', '#00ff00', '#0000ff']; // Red, Green, Blue
-            } else if (this.config.leds.effect === 'matrix') {
-                this.config.leds.colors = ['#00ff00']; // Green (DEFAULT_MATRIX_COLOR)
-            } else if (this.config.leds.effect === 'twinkle') {
-                this.config.leds.colors = ['#ffff00']; // Yellow (DEFAULT_TWINKLE_COLOR)
-            } else if (this.config.leds.effect === 'pulse') {
-                this.config.leds.colors = ['#800080']; // Purple (DEFAULT_PULSE_COLOR)
-            } else if (this.config.leds.effect === 'rainbow') {
+            if (this.effect === 'chase_single') {
+                this.colors = ['#0062ff']; // Blue (DEFAULT_CHASE_SINGLE_COLOR)
+            } else if (this.effect === 'chase_multi') {
+                this.colors = ['#ff0000', '#00ff00', '#0000ff']; // Red, Green, Blue
+            } else if (this.effect === 'matrix') {
+                this.colors = ['#00ff00']; // Green (DEFAULT_MATRIX_COLOR)
+            } else if (this.effect === 'twinkle') {
+                this.colors = ['#ffff00']; // Yellow (DEFAULT_TWINKLE_COLOR)
+            } else if (this.effect === 'pulse') {
+                this.colors = ['#800080']; // Purple (DEFAULT_PULSE_COLOR)
+            } else if (this.effect === 'rainbow') {
                 // Rainbow effect uses no colors - procedurally generated
-                this.config.leds.colors = [];
+                this.colors = [];
             }
         },
 
@@ -206,28 +210,28 @@ window.addEventListener('alpine:init', () => {
             this.testingEffect = true;
             try {
                 // Create effect parameters object (exclude system settings like brightness/refreshRate)
-                let colors = this.config.leds.colors || ['#0062ff'];
+                let colors = this.colors || ['#0062ff'];
                 
                 // Only send relevant colors based on C++ config requirements
-                if (this.config.leds.effect === 'chase_single' || 
-                    this.config.leds.effect === 'matrix' ||
-                    this.config.leds.effect === 'twinkle' ||
-                    this.config.leds.effect === 'pulse') {
+                if (this.effect === 'chase_single' || 
+                    this.effect === 'matrix' ||
+                    this.effect === 'twinkle' ||
+                    this.effect === 'pulse') {
                     // Single color effects
                     colors = [colors[0]];
-                } else if (this.config.leds.effect === 'chase_multi') {
+                } else if (this.effect === 'chase_multi') {
                     // Multi color effects need exactly 3 colors
                     colors = colors.slice(0, 3);
-                } else if (this.config.leds.effect === 'rainbow') {
+                } else if (this.effect === 'rainbow') {
                     // Rainbow effect uses no colors
                     colors = [];
                 }
                 
                 const effectParams = {
-                    effect: this.config.leds.effect,
-                    speed: this.config.leds.speed || 50,
-                    intensity: this.config.leds.intensity || 50,
-                    cycles: this.config.leds.cycles || 3,
+                    effect: this.effect,
+                    speed: this.speed || 50,
+                    intensity: this.intensity || 50,
+                    cycles: this.cycles || 3,
                     colors: colors
                 };
 

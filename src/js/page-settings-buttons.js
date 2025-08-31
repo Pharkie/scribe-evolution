@@ -4,11 +4,18 @@
 window.addEventListener('alpine:init', () => {
     Alpine.store('settingsButtons', {
         // State
-        loading: true,
+        loading: true,  // Start as loading for fade-in effect
         error: null,
         saving: false,
         initialized: false,
-        config: {},
+        config: {
+            buttons: {
+                button1: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null },
+                button2: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null },
+                button3: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null },
+                button4: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null }
+            }
+        },
         originalConfig: {},
         validationErrors: {},
 
@@ -25,8 +32,8 @@ window.addEventListener('alpine:init', () => {
             return this.validationErrors && Object.keys(this.validationErrors).length > 0;
         },
 
-        // Initialization
-        async init() {
+        // BUTTON CONFIGURATION API
+        async loadConfiguration() {
             // Prevent duplicate initialization
             if (this.initialized) {
                 console.log('🔘 Button Settings: Already initialized, skipping');
@@ -34,16 +41,6 @@ window.addEventListener('alpine:init', () => {
             }
             this.initialized = true;
 
-            try {
-                await this.loadConfiguration();
-            } catch (error) {
-                console.error('Failed to initialize button settings:', error);
-                this.error = 'Failed to initialize button settings. Please refresh the page.';
-            }
-        },
-
-        // BUTTON CONFIGURATION API
-        async loadConfiguration() {
             this.loading = true;
             this.error = null;
 

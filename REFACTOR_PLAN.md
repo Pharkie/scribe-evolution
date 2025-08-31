@@ -416,6 +416,41 @@ function createMyStore() {
 - **Alpine's `x-transition`** provides automatic fade-in when `x-show` becomes true
 - **Apply to ALL settings pages** for consistent UX
 
+**CRITICAL: Initialize Config Structure Pattern:**
+```javascript
+// ✅ CORRECT: Initialize ALL data structures that Alpine expressions will access
+function createMyStore() {
+    return {
+        loading: true,
+        config: {
+            // Initialize EXACT structure needed by HTML expressions with null values
+            buttons: {
+                button1: { gpio: null, shortAction: null, longAction: null },
+                button2: { gpio: null, shortAction: null, longAction: null },
+                // ... all fields that HTML will access
+            },
+            device: {
+                owner: null,
+                timezone: null,
+                printerTxPin: null
+            }
+            // ... other sections as needed
+        },
+        
+        async loadConfiguration() {
+            // This overwrites the null values with real data from server
+        }
+    };
+}
+```
+
+```javascript
+// ❌ WRONG: Empty config object causes "Cannot read properties of undefined" errors
+config: {},  // Alpine expressions like config.buttons.button1 will fail immediately
+```
+
+**Data Structure Rule**: Alpine.js tries to evaluate ALL expressions immediately when the store binds to HTML. If your HTML contains expressions like `config.buttons.button1.gpio`, the ENTIRE path (`config.buttons.button1`) must exist in the store's initial state, even with `null` values. The structure gets populated with real data when `loadConfiguration()` completes.
+
 **ESP32 Constraints:**
 - file.readString() fails on large files - use chunked reading for >8KB
 - Work within buffer constraints - separate endpoints better than large JSON
