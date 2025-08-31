@@ -17,7 +17,7 @@ function initializeMqttSettingsStore() {
         },
 
         // ================== STATE MANAGEMENT ==================
-        loading: true,
+        loading: true,  // Start as loading for fade-in effect
         error: null,
         saving: false,
         initialized: false,
@@ -239,7 +239,7 @@ function initializeMqttSettingsStore() {
         },
 
         // ================== API CALLS ==================
-        async init() {
+        async loadConfiguration() {
             // Prevent duplicate initialization
             if (this.initialized) {
                 console.log('📡 MQTT Settings: Already initialized, skipping');
@@ -347,8 +347,7 @@ document.addEventListener('alpine:init', () => {
     const mqttStore = initializeMqttSettingsStore();
     Alpine.store('settingsMqtt', mqttStore);
     
-    // Initialize the store immediately during alpine:init
-    mqttStore.init();
+    // No manual init() - let HTML handle initialization timing with x-init
     
     // Setup Alpine watchers for reactive updates
     Alpine.effect(() => {

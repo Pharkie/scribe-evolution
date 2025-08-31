@@ -378,11 +378,13 @@ window.addEventListener('alpine:init', () => {
 
 **Smooth Fade-In Transitions Pattern:**
 ```html
-<!-- ✅ CORRECT: x-show + x-transition for smooth fade-in -->
-<div x-show="!loading && !error" x-transition>
+<!-- ✅ CORRECT: x-show + x-transition + style="display: none" to prevent FOUC -->
+<div x-show="!loading && !error" x-transition style="display: none">
     <form><!-- Content --></form>
 </div>
 ```
+
+**FOUC Prevention**: The `style="display: none"` is CRITICAL to prevent Flash of Unstyled Content (FOUC). Without it, content briefly appears before Alpine.js loads and applies the `x-show` logic.
 
 ```javascript
 // ✅ CORRECT: Start with loading: true for fade-in effect
