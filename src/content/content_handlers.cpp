@@ -104,53 +104,35 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     // since they only generate content and don't perform actions.
     // Rate limiting is applied to the actual delivery endpoints (/print-local, /print-mqtt)
 
-    // Get target parameter and custom data from request body
-    String body = getRequestBody(request);
+    // Get target parameter and custom data from query parameters
     String target = "local-direct"; // Default
     String customData = "";
-
-    if (body.length() > 0)
+    
+    // Get target from query parameter
+    if (request->hasParam("target"))
     {
-        DynamicJsonDocument doc(1024);
-        DeserializationError error = deserializeJson(doc, body);
-        if (!error)
+        target = request->getParam("target")->value();
+    }
+    
+    // Handle user message custom data from query parameter
+    if (contentType == USER_MESSAGE)
+    {
+        if (!request->hasParam("message"))
         {
-            if (doc.containsKey("target"))
-            {
-                target = doc["target"].as<String>();
-            }
-            
-            // Handle user message custom data
-            if (contentType == USER_MESSAGE)
-            {
-                if (!doc.containsKey("message"))
-                {
-                    sendValidationError(request, ValidationResult(false, "Missing required field 'message' in JSON"));
-                    return;
-                }
-                
-                customData = doc["message"].as<String>();
-                
-                // Validate message content
-                ValidationResult messageValidation = validateMessage(customData);
-                if (!messageValidation.isValid)
-                {
-                    LOG_WARNING("WEB", "User message validation failed: %s", messageValidation.errorMessage.c_str());
-                    sendValidationError(request, messageValidation);
-                    return;
-                }
-            }
-        }
-        else if (contentType == USER_MESSAGE)
-        {
-            sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(error.c_str())));
+            sendValidationError(request, ValidationResult(false, "Missing required query parameter 'message'"));
             return;
         }
-    }
-    else if (contentType == USER_MESSAGE)
-    {
-        sendValidationError(request, ValidationResult(false, "No JSON body provided"));
-        return;
+        
+        customData = request->getParam("message")->value();
+        
+        // Validate message content
+        ValidationResult messageValidation = validateMessage(customData);
+        if (!messageValidation.isValid)
+        {
+            LOG_WARNING("WEB", "User message validation failed: %s", messageValidation.errorMessage.c_str());
+            sendValidationError(request, messageValidation);
+            return;
+        }
     }
 
     // Determine if this is for MQTT (needs sender info) or local (no sender)
@@ -214,20 +196,13 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
 {
     LOG_VERBOSE("WEB", "handleUnbiddenInk() called");
 
-    // Check if there's a custom prompt in the request body
+    // Check if there's a custom prompt in query parameters
     String customPrompt = "";
-    String body = getRequestBody(request);
-    if (body.length() > 0)
+    if (request->hasParam("prompt"))
     {
-        DynamicJsonDocument doc(1024);
-        DeserializationError error = deserializeJson(doc, body);
-
-        if (!error && doc.containsKey("prompt"))
-        {
-            customPrompt = doc["prompt"].as<String>();
-            customPrompt.trim();
-            LOG_VERBOSE("WEB", "Using custom prompt from request: %s", customPrompt.c_str());
-        }
+        customPrompt = request->getParam("prompt")->value();
+        customPrompt.trim();
+        LOG_VERBOSE("WEB", "Using custom prompt from query parameter: %s", customPrompt.c_str());
     }
 
     // Execute content action using shared business logic

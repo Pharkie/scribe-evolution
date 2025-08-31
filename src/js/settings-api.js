@@ -66,12 +66,11 @@ async function saveConfiguration(configData) {
  */
 async function testUnbiddenInkGeneration(prompt) {
     try {
-        const response = await fetch('/api/unbidden-ink', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ prompt })
+        // Build query parameter for custom prompt
+        const url = prompt ? `/api/unbidden-ink?prompt=${encodeURIComponent(prompt)}` : '/api/unbidden-ink';
+        
+        const response = await fetch(url, {
+            method: 'GET'
         });
         
         if (!response.ok) {

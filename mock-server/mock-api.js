@@ -638,7 +638,7 @@ function createRequestHandler() {
           setTimeout(() => sendJSON(res, { error: "Timezone data not available" }, 500), 100);
         }
         
-      } else if (pathname === '/api/joke') {
+      } else if (pathname === '/api/joke' && req.method === 'GET') {
         console.log('😄 Joke requested');
         setTimeout(() => {
           sendJSON(res, {
@@ -646,7 +646,7 @@ function createRequestHandler() {
           });
         }, 300);
         
-      } else if (pathname === '/api/riddle') {
+      } else if (pathname === '/api/riddle' && req.method === 'GET') {
         console.log('🧩 Riddle requested');
         setTimeout(() => {
           sendJSON(res, {
@@ -654,7 +654,7 @@ function createRequestHandler() {
           });
         }, 400);
         
-      } else if (pathname === '/api/quote') {
+      } else if (pathname === '/api/quote' && req.method === 'GET') {
         console.log('💭 Quote requested');
         setTimeout(() => {
           sendJSON(res, {
@@ -662,7 +662,7 @@ function createRequestHandler() {
           });
         }, 350);
         
-      } else if (pathname === '/api/quiz') {
+      } else if (pathname === '/api/quiz' && req.method === 'GET') {
         console.log('❓ Quiz requested');
         setTimeout(() => {
           sendJSON(res, {
@@ -670,7 +670,7 @@ function createRequestHandler() {
           });
         }, 450);
         
-      } else if (pathname === '/api/news') {
+      } else if (pathname === '/api/news' && req.method === 'GET') {
         console.log('📰 News requested');
         setTimeout(() => {
           sendJSON(res, {
@@ -678,50 +678,67 @@ function createRequestHandler() {
           });
         }, 500);
         
-      } else if (pathname === '/api/user-message') {
+      } else if (pathname === '/api/poke' && req.method === 'GET') {
+        console.log('👋 Poke requested');
+        setTimeout(() => {
+          sendJSON(res, {
+            content: "POKE"
+          });
+        }, 250);
+        
+      } else if (pathname === '/api/user-message' && req.method === 'GET') {
         console.log('💬 User message requested');
         
-        // Parse request body to get the message
-        let body = '';
-        req.on('data', chunk => {
-          body += chunk.toString();
-        });
+        // Get message and target from query parameters
+        const userMessage = urlQuery.message;
+        const target = urlQuery.target || 'local-direct';
         
-        req.on('end', () => {
-          try {
-            const data = JSON.parse(body);
-            const userMessage = data.message || 'Hello from mock server!';
-            const target = data.target || 'local-direct';
-            
-            console.log(`  → Parsed data: message="${userMessage}", target="${target}"`);
-            console.log(`  → mockConfig.device.owner: "${mockConfig.device.owner}"`);
-            
-            // Determine header format based on target (like real server)
-            let content;
-            if (target === 'local-direct') {
-              // Local message: no sender
-              content = `MESSAGE\n\n${userMessage}`;
-              console.log('  → Local message (no sender)');
-            } else {
-              // MQTT message: include sender (use mock device owner)
-              const deviceOwner = mockConfig.device.owner || 'MockDevice';
-              content = `MESSAGE from ${deviceOwner}\n\n${userMessage}`;
-              console.log(`  → MQTT message (sender: ${deviceOwner})`);
-              console.log(`  → Full content: ${JSON.stringify(content)}`);
-            }
-            
-            setTimeout(() => {
-              sendJSON(res, { content });
-            }, 200);
-            
-          } catch (error) {
-            console.error('Error parsing user message:', error);
-            sendJSON(res, {
-              error: 'Invalid JSON format'
-            }, 400);
-          }
-        });
-        return; // Don't fall through to 404
+        if (!userMessage) {
+          sendJSON(res, {
+            error: "Missing required query parameter 'message'"
+          }, 400);
+          return;
+        }
+        
+        console.log(`  → Query params: message="${userMessage}", target="${target}"`);
+        console.log(`  → mockConfig.device.owner: "${mockConfig.device.owner}"`);
+        
+        // Determine header format based on target (like real server)
+        let content;
+        if (target === 'local-direct') {
+          // Local message: no sender
+          content = `MESSAGE\n\n${userMessage}`;
+          console.log('  → Local message (no sender)');
+        } else {
+          // MQTT message: include sender (use mock device owner)
+          const deviceOwner = mockConfig.device.owner || 'MockDevice';
+          content = `MESSAGE from ${deviceOwner}\n\n${userMessage}`;
+          console.log(`  → MQTT message (sender: ${deviceOwner})`);
+          console.log(`  → Full content: ${JSON.stringify(content)}`);
+        }
+        
+        setTimeout(() => {
+          sendJSON(res, { content });
+        }, 200);
+        
+      } else if (pathname === '/api/unbidden-ink' && req.method === 'GET') {
+        console.log('✨ Unbidden Ink requested');
+        
+        // Get optional custom prompt from query parameters
+        const customPrompt = urlQuery.prompt;
+        
+        let content;
+        if (customPrompt) {
+          content = `UNBIDDEN INK (Custom)\n\n${customPrompt}\n\nThe shadows dance with secrets untold, whispering tales of digital dreams and analog desires...`;
+          console.log(`  → Using custom prompt: ${customPrompt}`);
+        } else {
+          content = "UNBIDDEN INK\n\nIn the quiet hum of circuits dreaming, where electrons dance to silicon symphonies, lies the poetry of computation - each bit a verse in the endless song of possibility.";
+          console.log('  → Using default creative prompt');
+        }
+        
+        setTimeout(() => {
+          sendJSON(res, { content });
+        }, 600);
         
       } else if (pathname.match(/^\/api\/memo\/([1-4])$/) && req.method === 'GET') {
         const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])$/)[1]);

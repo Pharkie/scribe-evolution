@@ -83,8 +83,7 @@ async function executeQuickAction(action) {
         console.log(`API: Executing quick action: ${action}`);
         
         const response = await fetch(`/api/${action}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            method: 'GET'
         });
 
         if (!response.ok) {

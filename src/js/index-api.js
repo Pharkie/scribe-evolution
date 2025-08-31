@@ -97,8 +97,7 @@ async function executeQuickAction(action) {
         console.log(`API: Executing quick action: ${action}`);
         
         const response = await fetch(`/api/${action}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            method: 'GET'
         });
 
         if (!response.ok) {
@@ -126,16 +125,14 @@ async function generateUserMessage(message, target = 'local-direct') {
     try {
         console.log('API: Generating user message content...');
         
-        // Build payload with target for proper header formatting
-        const payload = { message: message };
+        // Build query parameters for proper header formatting
+        const params = new URLSearchParams({ message: message });
         if (target !== 'local-direct') {
-            payload.target = target;
+            params.set('target', target);
         }
         
-        const response = await fetch('/api/user-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        const response = await fetch(`/api/user-message?${params}`, {
+            method: 'GET'
         });
         
         if (!response.ok) {
