@@ -332,7 +332,7 @@ function createMyStore() {
     };
 }
 
-window.addEventListener('alpine:init', () => {
+document.addEventListener('alpine:init', () => {
     Alpine.store('myStore', createMyStore()); // No immediate initialization
 });
 ```
@@ -367,12 +367,14 @@ function createMyStore() {
     };
 }
 
-window.addEventListener('alpine:init', () => {
+document.addEventListener('alpine:init', () => {
     const store = createMyStore();
     Alpine.store('myStore', store);
     store.init(); // ← Manual call + Alpine auto-call = double initialization
 });
 ```
+
+**Alpine Event Listener Pattern**: Use `document.addEventListener('alpine:init', ...)` which attaches to Alpine's init event on the document object. This is what Alpine officially documents and is the canonical pattern.
 
 **Critical Timing Rule**: Store initialization MUST happen AFTER Alpine establishes DOM binding (`x-data`), not during store creation or registration. Use `x-init="$nextTick(() => loadData())"` to ensure proper timing.
 

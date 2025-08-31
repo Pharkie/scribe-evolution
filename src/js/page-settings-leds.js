@@ -1,7 +1,7 @@
 // LED Settings Alpine.js Store
 // Follows established patterns from page-settings-buttons.js
 
-window.addEventListener('alpine:init', () => {
+document.addEventListener('alpine:init', () => {
     Alpine.store('settingsLeds', {
         // State
         loading: true,  // Start as loading for fade-in effect

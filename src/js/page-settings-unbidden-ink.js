@@ -3,13 +3,13 @@
  * Handles AI content scheduling, dual-handle slider, frequency settings
  */
 
-// Auto-register the unbidden ink store when this script loads
 document.addEventListener('alpine:init', () => {
-    const unbiddenInkStore = {
+    Alpine.store('settingsUnbiddenInk', {
         // State
         loading: true,  // Start as loading for fade-in effect
         saving: false,
         error: null,
+        initialized: false,
         config: {
             unbiddenInk: {
                 enabled: null,
@@ -18,7 +18,7 @@ document.addEventListener('alpine:init', () => {
                 frequencyMinutes: null,
                 prompt: null,
                 chatgptApiToken: null,
-                promptPresets: {}
+                promptPresets: null
             }
         },
         originalValues: {
@@ -33,6 +33,13 @@ document.addEventListener('alpine:init', () => {
 
         // API Operations
         async loadConfiguration() {
+            // Prevent duplicate initialization
+            if (this.initialized) {
+                console.log('🎭 Unbidden Ink Settings: Already initialized, skipping');
+                return;
+            }
+            this.initialized = true;
+            
             console.log('🎭 Initializing Unbidden Ink Settings...');
             this.loading = true;
             this.error = null;
@@ -41,32 +48,28 @@ document.addEventListener('alpine:init', () => {
                 const config = await window.SettingsAPI.loadConfiguration();
                 console.log('📥 Loaded configuration:', config);
                 
-                if (config.unbiddenInk) {
-                    // Store config values
-                    this.config.unbiddenInk = {
-                        enabled: config.unbiddenInk.enabled || false,
-                        startHour: config.unbiddenInk.startHour || 8,
-                        endHour: config.unbiddenInk.endHour || 22,
-                        frequencyMinutes: config.unbiddenInk.frequencyMinutes || 120,
-                        prompt: config.unbiddenInk.prompt || '',
-                        chatgptApiToken: config.unbiddenInk.chatgptApiToken || '',
-                        promptPresets: config.unbiddenInk.promptPresets || {}
-                    };
+                // Store config values with fallbacks
+                this.config.unbiddenInk = {
+                    enabled: config.unbiddenInk?.enabled || false,
+                    startHour: config.unbiddenInk?.startHour || 8,
+                    endHour: config.unbiddenInk?.endHour || 22,
+                    frequencyMinutes: config.unbiddenInk?.frequencyMinutes || 120,
+                    prompt: config.unbiddenInk?.prompt || '',
+                    chatgptApiToken: config.unbiddenInk?.chatgptApiToken || '',
+                    promptPresets: config.unbiddenInk?.promptPresets || {}
+                };
 
-                    // Store original values for change tracking
-                    this.originalValues = {
-                        enabled: this.config.unbiddenInk.enabled,
-                        startHour: this.config.unbiddenInk.startHour,
-                        endHour: this.config.unbiddenInk.endHour,
-                        frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
-                        prompt: this.config.unbiddenInk.prompt,
-                        chatgptApiToken: this.config.unbiddenInk.chatgptApiToken
-                    };
+                // Store original values for change tracking
+                this.originalValues = {
+                    enabled: this.config.unbiddenInk.enabled,
+                    startHour: this.config.unbiddenInk.startHour,
+                    endHour: this.config.unbiddenInk.endHour,
+                    frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
+                    prompt: this.config.unbiddenInk.prompt,
+                    chatgptApiToken: this.config.unbiddenInk.chatgptApiToken
+                };
 
-                    console.log('🎭 Unbidden Ink prompts loaded:', Object.keys(this.config.unbiddenInk.promptPresets).length, 'presets');
-                } else {
-                    throw new Error('Unbidden Ink configuration not found in server response');
-                }
+                console.log('🎭 Unbidden Ink prompts loaded:', Object.keys(this.config.unbiddenInk.promptPresets).length, 'presets');
             } catch (error) {
                 console.error('❌ Failed to load configuration:', error);
                 this.error = error.message;
@@ -223,12 +226,14 @@ document.addEventListener('alpine:init', () => {
 
         // Time Formatting
         formatHour(hour) {
+            if (hour === null || hour === undefined) return '--:--';
             if (hour === 0) return '00:00';
             if (hour === 24) return '24:00';
             return hour.toString().padStart(2, '0') + ':00';
         },
 
         formatHour12(hour) {
+            if (hour === null || hour === undefined) return '--';
             if (hour === 0 || hour === 24) return '12 am';
             if (hour === 12) return '12 pm';
             if (hour < 12) return `${hour} am`;
@@ -305,10 +310,7 @@ document.addEventListener('alpine:init', () => {
         showErrorMessage(message) {
             this.error = message;
         }
-    };
-    
-    // Register the store
-    Alpine.store('settingsUnbiddenInk', unbiddenInkStore);
+    });
     
     console.log('✅ Unbidden Ink Settings Store registered');
 });

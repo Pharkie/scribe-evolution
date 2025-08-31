@@ -1,7 +1,7 @@
 // Button Settings Alpine.js Store
 // Follows established patterns from page-settings-device.js
 
-window.addEventListener('alpine:init', () => {
+document.addEventListener('alpine:init', () => {
     Alpine.store('settingsButtons', {
         // State
         loading: true,  // Start as loading for fade-in effect

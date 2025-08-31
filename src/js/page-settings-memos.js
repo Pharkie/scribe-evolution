@@ -315,7 +315,7 @@ function createMemosStore() {
 
 // =================== ALPINE STORE REGISTRATION ===================
 
-window.addEventListener('alpine:init', () => {
+document.addEventListener('alpine:init', () => {
     console.log('🔧 Registering Memos Alpine store...');
     const memosStore = createMemosStore();
     Alpine.store('settingsMemos', memosStore);
