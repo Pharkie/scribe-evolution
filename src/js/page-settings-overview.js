@@ -18,6 +18,7 @@ function initializeSettingsOverviewStore() {
         memosSaved: false,
         buttonsSaved: false,
         ledsSaved: false,
+        unbiddenInkSaved: false,
         loading: true,
         error: null,
 

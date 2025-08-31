@@ -330,6 +330,25 @@ const buildConfigs = {
     output: 'data/js/page-settings-leds.js',
     minify: true,
   },
+
+  // Unbidden Ink settings page
+  'unbidden-ink': {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-unbidden-ink.js'
+    ],
+    output: 'data/js/page-settings-unbidden-ink.js',
+    minify: false,
+  },
+
+  'unbidden-inkProd': {
+    input: [
+      'src/js/settings-api.js',
+      'src/js/page-settings-unbidden-ink.js'
+    ],
+    output: 'data/js/page-settings-unbidden-ink.js',
+    minify: true,
+  },
 };
 
 // Build functions
@@ -380,7 +399,8 @@ async function buildAll(production = false) {
     `overview${suffix}`,
     `memos${suffix}`,
     `buttons${suffix}`,
-    `leds${suffix}`
+    `leds${suffix}`,
+    `unbidden-ink${suffix}`
   ];
 
   console.log(`Building all configs (production: ${production})...`);

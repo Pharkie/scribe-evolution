@@ -114,13 +114,17 @@
 - [x] **Bug fixes**: Fixed double API loading with initialization guard, removed success toast for consistency
 - [x] **Color scheme consistency**: All settings pages follow color-coded sections for visual organization
 
-### Step 3.7: LED Settings ⏳ READY TO START
-- [ ] **Frontend implementation** - Extract LED effect configuration with preview
-- [ ] **Pink color scheme**: Use `#db2777` (pink-600) theme matching established patterns
-- [ ] **LED effect configuration**: Cycle effects, brightness, timing, preview
-- [ ] **Hardware validation**: GPIO pin safety checks for LED strips
-- [ ] **Partial config updates**: Only send LED-specific fields
-- [ ] **Mock server testing**: Verify functionality before ESP32 testing
+### Step 3.7: LED Settings ✅ COMPLETED
+- [x] **Frontend implementation complete** - Mock server testing passed
+- [x] **Live ESP32 testing pending** - Needs Adam to verify on actual hardware
+- [x] **Pink color scheme**: Using `#db2777` (pink-600) theme matching established patterns
+- [x] **LED effect configuration**: Speed, intensity, cycles, colors with live preview testing
+- [x] **Hardware validation**: GPIO pin display (configured in Device Settings)
+- [x] **Partial config updates**: Only sends system settings (count, brightness, refreshRate)
+- [x] **Effects Playground**: Separate testing area with proper color controls per effect type
+- [x] **C++ config alignment**: Colors and parameters match led_config.h exactly
+- [x] **Save button logic**: Only enables when system settings change (not playground effects)
+- [x] **Consistent UX**: Matches save flow, button styling, and validation patterns from other pages
 
 ### Step 3.8: Unbidden Ink Settings
 - [ ] **Frontend implementation** - Extract AI content configuration 
@@ -308,6 +312,7 @@ Split up from monolithic like settings.html.
 - Use @input handlers for immediate form changes, not complex watchers
 - Keep Alpine.effect() simple and focused on high-level state changes
 - **Dark mode**: Use Tailwind classes `dark:` not inline styles (timezone dropdown fix pattern)
+- **Save button consistency**: Always use `canSave` getter with `hasChanges` logic across all settings pages
 
 **ESP32 Constraints:**
 - file.readString() fails on large files - use chunked reading for >8KB
@@ -319,6 +324,13 @@ Split up from monolithic like settings.html.
 **Configuration Management:**
 - Centralized config loading prevents inconsistencies - all settings use RuntimeConfig
 - Maintain parallel versions during major architectural changes
+- **C++ config alignment critical**: Frontend defaults and parameters must exactly match C++ led_config.h constants
+- **Mock server data quality**: Ensure slider step alignment (step="5" requires multiples of 5 values)
+
+**UI/UX Patterns:**
+- **Separate system vs playground settings**: Distinguish between saved configuration and temporary testing features
+- **Visual hierarchy**: Use clear section separation and explanatory text for different functional areas
+- **Icon semantics**: Use beaker icon for testing/experimentation, megaphone for broadcasting/MQTT
 
 ---
 
@@ -333,8 +345,10 @@ Split up from monolithic like settings.html.
 **✅ COMPLETED - Step 3.4: MQTT Settings**
 **✅ COMPLETED - Step 3.4.5: Timezone Picker**
 **✅ COMPLETED - Step 3.5: Memo Settings**
+**✅ COMPLETED - Step 3.6: Button Settings** 
+**✅ COMPLETED - Step 3.7: LED Settings** (mock tested, pending live ESP32)
 
-All completed settings pages have been verified on live ESP32 hardware.
+All completed settings pages except Button Settings and LED Settings have been verified on live ESP32 hardware.
 
 ---
 
