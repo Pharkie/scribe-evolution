@@ -306,21 +306,31 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
                       { request->send(LittleFS, "/html/index.html", "text/html"); }, false);
 
-        // HTML pages served at root level (settings.html, diagnostics.html, etc.)
-        registerRoute("GET", "/settings.html", "Configuration settings", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/html/settings.html", "text/html"); }, false);
+        // HTML files served from root (maps / to /html/)
+        server.on("^/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
+            String path = "/html/" + request->pathArg(0);
+            request->send(LittleFS, path, "text/html");
+        });
+        // Manually track regex route for diagnostics
+        RouteInfo rootHtmlRoute;
+        rootHtmlRoute.method = "GET";
+        rootHtmlRoute.path = "/*.html";
+        rootHtmlRoute.description = "HTML files from root (maps / to /html/)";
+        rootHtmlRoute.isAPI = false;
+        registeredRoutes.push_back(rootHtmlRoute);
 
-        registerRoute("GET", "/settings/device.html", "Device settings", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/html/settings/device.html", "text/html"); }, false);
-
-        registerRoute("GET", "/settings/wifi.html", "WiFi settings", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/html/settings/wifi.html", "text/html"); }, false);
-
-        registerRoute("GET", "/settings/mqtt.html", "MQTT settings", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/html/settings/mqtt.html", "text/html"); }, false);
-
-        registerRoute("GET", "/diagnostics.html", "System diagnostics", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/html/diagnostics.html", "text/html"); }, false);
+        // HTML files in subdirectories (maps /settings/ to /html/settings/)  
+        server.on("^/([^/]+)/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
+            String path = "/html/" + request->pathArg(0) + "/" + request->pathArg(1);
+            request->send(LittleFS, path, "text/html");
+        });
+        // Manually track regex route for diagnostics
+        RouteInfo subHtmlRoute;
+        subHtmlRoute.method = "GET";
+        subHtmlRoute.path = "/*/*.html";
+        subHtmlRoute.description = "HTML files in subdirectories (maps /path/ to /html/path/)";
+        subHtmlRoute.isAPI = false;
+        registeredRoutes.push_back(subHtmlRoute);
 
         // Add SSE endpoint for real-time updates
         sseEvents.onConnect([](AsyncEventSourceClient *client)
