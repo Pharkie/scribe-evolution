@@ -221,7 +221,7 @@ void setupStaticRoutes()
     server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
     server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
     server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-    server.serveStatic("/html/", LittleFS, "/html/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
+    // HTML files now served from root / instead of /html/
 
     // Favicon files
     server.serveStatic("/favicon.ico", LittleFS, "/favicon/favicon.ico", "image/x-icon").setTryGzipFirst(false);
@@ -254,10 +254,10 @@ void setupWebServerRoutes(int maxChars)
         server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
             if (!isAPMode()) {
-                request->send(LittleFS, "/html/404.html", "text/html", 404);
+                request->send(LittleFS, "/404.html", "text/html", 404);
                 return;
             }
-            request->send(LittleFS, "/html/setup.html", "text/html"); });
+            request->send(LittleFS, "/setup.html", "text/html"); });
 
         // Setup endpoints for AP mode initial configuration
         server.on("/api/setup", HTTP_GET, handleSetupGet);
@@ -295,7 +295,7 @@ void setupWebServerRoutes(int maxChars)
         registeredRoutes.push_back({"GET", "/css/*", "CSS static files", false});
         registeredRoutes.push_back({"GET", "/js/*", "JavaScript static files", false});
         registeredRoutes.push_back({"GET", "/images/*", "Image static files", false});
-        registeredRoutes.push_back({"GET", "/html/*", "HTML partial files", false});
+        // HTML files now served from / instead of /html/
         registeredRoutes.push_back({"GET", "/favicon.ico", "Site favicon (ICO)", false});
         registeredRoutes.push_back({"GET", "/favicon.svg", "Site favicon (SVG)", false});
         registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Site favicon (PNG 96x96)", false});
@@ -304,31 +304,31 @@ void setupWebServerRoutes(int maxChars)
 
         // Root redirect to main interface
         registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/html/index.html", "text/html"); }, false);
+                      { request->send(LittleFS, "/index.html", "text/html"); }, false);
 
-        // HTML files served from root (maps / to /html/)
+        // HTML files served from root
         server.on("^/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            String path = "/html/" + request->pathArg(0);
+            String path = "/" + request->pathArg(0);
             request->send(LittleFS, path, "text/html");
         });
         // Manually track regex route for diagnostics
         RouteInfo rootHtmlRoute;
         rootHtmlRoute.method = "GET";
         rootHtmlRoute.path = "/*.html";
-        rootHtmlRoute.description = "HTML files from root (maps / to /html/)";
+        rootHtmlRoute.description = "HTML files from root";
         rootHtmlRoute.isAPI = false;
         registeredRoutes.push_back(rootHtmlRoute);
 
-        // HTML files in subdirectories (maps /settings/ to /html/settings/)  
+        // HTML files in subdirectories
         server.on("^/([^/]+)/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            String path = "/html/" + request->pathArg(0) + "/" + request->pathArg(1);
+            String path = "/" + request->pathArg(0) + "/" + request->pathArg(1);
             request->send(LittleFS, path, "text/html");
         });
         // Manually track regex route for diagnostics
         RouteInfo subHtmlRoute;
         subHtmlRoute.method = "GET";
         subHtmlRoute.path = "/*/*.html";
-        subHtmlRoute.description = "HTML files in subdirectories (maps /path/ to /html/path/)";
+        subHtmlRoute.description = "HTML files in subdirectories";
         subHtmlRoute.isAPI = false;
         registeredRoutes.push_back(subHtmlRoute);
 
@@ -412,7 +412,7 @@ void setupWebServerRoutes(int maxChars)
         RouteInfo notFoundRoute;
         notFoundRoute.method = "ALL";
         notFoundRoute.path = "(unmatched routes)";
-        notFoundRoute.description = "404 Not Found handler (serves /html/404.html)";
+        notFoundRoute.description = "404 Not Found handler (serves /404.html)";
         notFoundRoute.isAPI = false;
         registeredRoutes.push_back(notFoundRoute);
     }

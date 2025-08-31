@@ -764,8 +764,8 @@ function createRequestHandler() {
         // Allow essential files for setup page to work
         const allowedPaths = [
           '/setup.html',
-          '/html/setup.html', 
-          '/html/partials/settings/',
+ 
+          '/partials/settings/',
           '/css/',
           '/js/',
           '/images/',
@@ -795,7 +795,7 @@ function createRequestHandler() {
       let filePath;
       
       if (pathname === '/') {
-        filePath = path.join(__dirname, '..', 'data', 'html', 'index.html');
+        filePath = path.join(__dirname, '..', 'data', 'index.html');
       } else if (pathname === '/site.webmanifest') {
         // Special handling for manifest file
         filePath = path.join(__dirname, '..', 'data', 'favicon', 'site.webmanifest');
@@ -805,7 +805,7 @@ function createRequestHandler() {
                  pathname === '/apple-touch-icon.png') {
         // Special handling for favicon files at root level
         filePath = path.join(__dirname, '..', 'data', 'favicon', pathname.substring(1));
-      } else if (pathname.startsWith('/html/') || 
+      } else if (pathname.startsWith('/partials/') || 
                  pathname.startsWith('/css/') || 
                  pathname.startsWith('/js/') || 
                  pathname.startsWith('/images/') ||
@@ -818,13 +818,13 @@ function createRequestHandler() {
         // Handle HTML files at root level (settings.html, diagnostics.html, etc.)
         if (pathname === '/setup.html' && currentMode !== 'ap-mode') {
           // Setup page only available in AP mode - serve 404 page
-          const notFoundPath = path.join(__dirname, '..', 'data', 'html', '404.html');
+          const notFoundPath = path.join(__dirname, '..', 'data', '404.html');
           serveFile(res, notFoundPath, 404);
           return;
         }
-        filePath = path.join(__dirname, '..', 'data', 'html', pathname.substring(1));
+        filePath = path.join(__dirname, '..', 'data', pathname.substring(1));
       } else {
-        filePath = path.join(__dirname, '..', 'data', 'html', '404.html');
+        filePath = path.join(__dirname, '..', 'data', '404.html');
       }
       
       serveFile(res, filePath);

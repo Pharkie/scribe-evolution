@@ -73,7 +73,7 @@ void handleNotFound(AsyncWebServerRequest *request)
     LOG_WARNING("WEB", "%s", errorDetails.c_str());
 
     // Load 404 template from LittleFS
-    File templateFile = LittleFS.open("/html/404.html", "r");
+    File templateFile = LittleFS.open("/404.html", "r");
     if (!templateFile)
     {
         // Fallback if template file doesn't exist
