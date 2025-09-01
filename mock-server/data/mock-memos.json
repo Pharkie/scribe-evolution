@@ -1,6 +1,6 @@
 {
     "memo1": "Good morning! Today is [weekday], [date]. Current time: [time]",
     "memo2": "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]",
-    "memo3": "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
+    "memo3": "Lotto numbers: [dice:59], [dice:59], [dice:59], [dice:59], [dice:59], [dice:59]. Bonus ball: [dice:59]\nLucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]",
     "memo4": "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]"
 }

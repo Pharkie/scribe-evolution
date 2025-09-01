@@ -19,7 +19,7 @@ String processMemoPlaceholders(const String &memoText)
 {
     String result = memoText;
     
-    // Process placeholders in order
+    // Process placeholders in order - replace only the first occurrence each time
     int startPos = 0;
     while ((startPos = result.indexOf('[', startPos)) != -1)
     {
@@ -32,7 +32,11 @@ String processMemoPlaceholders(const String &memoText)
         String placeholder = result.substring(startPos, endPos + 1);
         String expanded = expandPlaceholder(placeholder);
         
-        result.replace(placeholder, expanded);
+        // Replace only this specific occurrence, not all occurrences
+        String before = result.substring(0, startPos);
+        String after = result.substring(endPos + 1);
+        result = before + expanded + after;
+        
         startPos = startPos + expanded.length(); // Move past the replacement
     }
     
