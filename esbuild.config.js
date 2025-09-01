@@ -133,37 +133,25 @@ const buildConfigs = {
 
 
   diagnostics: {
-    input: [
-      'src/data/js/diagnostics-alpine-store.js',
-      'src/data/js/diagnostics-api.js'
-    ],
+    input: ['src/js/pages/diagnostics.js'], // Single ES6 module entry point
     output: 'data/js/page-diagnostics.js',
     minify: false,
   },
 
   diagnosticsProd: {
-    input: [
-      'src/data/js/diagnostics-alpine-store.js',
-      'src/data/js/diagnostics-api.js'
-    ],
+    input: ['src/js/pages/diagnostics.js'], // Single ES6 module entry point
     output: 'data/js/page-diagnostics.js',
     minify: true,
   },
 
   setup: {
-    input: [
-      'src/data/js/setup-alpine-store.js',
-      'src/data/js/setup-api.js'
-    ],
+    input: ['src/js/pages/setup.js'], // Single ES6 module entry point
     output: 'data/js/page-setup.js',
     minify: false,
   },
 
   setupProd: {
-    input: [
-      'src/data/js/setup-alpine-store.js',
-      'src/data/js/setup-api.js'
-    ],
+    input: ['src/js/pages/setup.js'], // Single ES6 module entry point
     output: 'data/js/page-setup.js',
     minify: true,
   },

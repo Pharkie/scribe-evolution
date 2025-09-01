@@ -505,6 +505,45 @@ function createRequestHandler() {
         }
         setTimeout(() => sendJSON(res, configToSend), 200);
         
+      } else if (pathname === '/api/setup' && req.method === 'GET') {
+        // Setup endpoint for AP mode - returns minimal config for initial setup
+        console.log('🚀 Setup configuration GET request');
+        const setupConfig = {
+          device: {
+            owner: '',
+            timezone: '',
+            wifi: {
+              ssid: '',
+              password: ''
+            }
+          }
+        };
+        setTimeout(() => sendJSON(res, setupConfig), 200);
+        
+      } else if (pathname === '/api/setup' && req.method === 'POST') {
+        // Setup endpoint for AP mode - saves initial configuration
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+          try {
+            const setupData = JSON.parse(body);
+            console.log('🚀 Setup configuration received:', JSON.stringify(setupData, null, 2));
+            
+            // Simulate device restart after setup
+            setTimeout(() => {
+              res.writeHead(200);
+              res.end();
+            }, 500);
+          } catch (error) {
+            console.error('Error parsing setup JSON:', error.message);
+            setTimeout(() => {
+              sendJSON(res, { 
+                error: "Invalid JSON format" 
+              }, 400);
+            }, 200);
+          }
+        });
+        
       } else if (pathname === '/api/memos' && req.method === 'GET') {
         console.log('📝 Memos GET request');
         setTimeout(() => sendJSON(res, mockMemos), 150);

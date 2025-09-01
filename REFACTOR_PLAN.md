@@ -145,7 +145,7 @@
 **Next Steps - Individual Pages to Convert**:
 4.5.1. ✅ **Convert shared settings API** (`settings-api.js` → `src/js/api/settings.js`) - **COMPLETED**
 4.5.2. ✅ **Remove orphaned legacy files** (`settings-alpine-store.js` + esbuild configs) - **COMPLETED**
-4.5.3. **Diagnostics page** (`diagnostics-alpine-store.js` + `diagnostics-api.js`)
+4.5.3. ✅ **Diagnostics page** (`diagnostics-alpine-store.js` + `diagnostics-api.js`) - **COMPLETED**
 4.5.4. **Setup page** (`setup-alpine-store.js` + `setup-api.js`)
 4.5.5. **404 page** (`404-alpine-store.js`)
 4.5.6. **Settings overview page** (`page-settings-overview.js`) 

@@ -16,14 +16,14 @@ npm install
 
 ### Development Workflow
 ```bash
-# Build all frontend assets (CSS + JS)
+# Build all frontend assets (CSS + JS + compression)
 npm run build
 
 # Build and upload everything to ESP32
 pio run --target upload -e esp32c3-dev && pio run --target uploadfs -e esp32c3-dev
 
-# Development: watch for frontend changes
-npm run watch
+# Development builds (unminified)
+npm run dev
 
 # Run tests
 pio test -e esp32c3-test
@@ -42,9 +42,10 @@ pio device monitor
 ```
 
 ### Frontend Build Details
-- **Production builds**: `npm run build` (minified CSS + compressed JS)
-- **Development builds**: `npm run watch` (unminified, file watching)
-- **Individual components**: `npm run build-css-settings`, `npm run build-js-index`, etc.
+- **Production builds**: `npm run build` (minified CSS + minified JS + GZIP compression)
+- **Development builds**: `npm run dev` (unminified CSS + unminified JS + GZIP compression)  
+- **JS only**: `npm run build-js` (all JS files + compression)
+- **CSS only**: `npm run build-css` (single app.css file)
 
 ## Architecture Overview
 
