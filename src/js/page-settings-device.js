@@ -19,39 +19,14 @@ function initializeDeviceSettingsStore() {
 
         // ================== STATE MANAGEMENT ==================
         // Core state management
-        loading: true,  // Start as loading for fade-in effect
+        loaded: false,
+        config: {},
         error: null,
         saving: false,
         initialized: false,
         
         // Original configuration for change detection
         originalConfig: null,
-        
-        // GPIO information from backend
-        gpio: {
-            availablePins: [],
-            safePins: [],
-            pinDescriptions: {}
-        },
-        
-        // Configuration data (reactive) - Device section with hardware GPIO
-        config: {
-            device: {
-                owner: null,
-                timezone: null,
-                printerTxPin: null
-            },
-            buttons: {
-                button1: { gpio: null },
-                button2: { gpio: null },
-                button3: { gpio: null },
-                button4: { gpio: null }
-            },
-            leds: {
-                enabled: false,
-                pin: null
-            }
-        },
         
         // Validation state
         validation: {
@@ -71,7 +46,7 @@ function initializeDeviceSettingsStore() {
             }
             this.initialized = true;
             
-            this.loading = true;
+            this.loaded = false;
             try {
                 // Load configuration from API
                 const serverConfig = await window.SettingsAPI.loadConfiguration();
@@ -79,11 +54,11 @@ function initializeDeviceSettingsStore() {
                 // Store original config for change detection
                 this.originalConfig = JSON.parse(JSON.stringify(serverConfig));
                 
-                // Extract only device-related configuration
-                this.mergeDeviceConfig(serverConfig);
+                // Store all data in this.config
+                this.config = serverConfig;
                 
                 // Preload timezone data for proper display formatting
-                if (this.config.device.timezone) {
+                if (this.config.device?.timezone) {
                     await this.loadTimezones();
                 }
                 
@@ -93,7 +68,7 @@ function initializeDeviceSettingsStore() {
                 console.error('Alpine Device Store: Failed to load configuration:', error);
                 this.error = error.message;
             } finally {
-                this.loading = false;
+                this.loaded = true;
             }
         },
 

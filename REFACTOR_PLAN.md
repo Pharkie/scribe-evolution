@@ -72,7 +72,7 @@
 Apply proven settings patterns to remaining pages
 
 - **5.1 Index Page** - Extract to `page-index.js`, modular architecture
-- **5.2 Diagnostics** - Split sections (Microcontroller, Logging, Routes, Config, NVS)
+- **5.2 Diagnostics** - Split sections into proper pages like settings (Overview + Microcontroller, Logging, Routes, Config, NVS)
 - **5.3 404 Page** - Polish and align with architecture
 - **5.4 Documentation** - Pattern templates and coding standards
 
@@ -131,21 +131,51 @@ document.addEventListener('alpine:init', () => {
 </body>
 ```
 
-### Loading Flag Pattern
+### Simple Loading Flag Pattern
 **Replace complex pre-initialized structures with simple pattern:**
 
 ```javascript
-// ✅ SIMPLE: Just use loading flag + empty data object
+// ✅ WORKS: Simple empty object + loaded flag
 loaded: false,
-data: {}
+config: {},
 
-// ❌ FRAGILE: Complex pre-initialized null structures  
+async loadData() {
+    this.loaded = false;
+    this.config = await fetchFromAPI();  // Direct assignment
+    this.loaded = true;
+}
+
+// ❌ DOESN'T WORK: Complex pre-initialized null structures  
 config: {
-    buttons: { button1: { gpio: null, shortAction: null } }  // Brittle
+    buttons: { button1: { gpio: null, shortAction: null } }  // Brittle, breaks on API changes
 }
 ```
 
-**Benefits**: Less brittle, backend flexible, cleaner code, future-proof
+```html
+<!-- ✅ WORKS: x-if + x-show for data safety + smooth animations -->
+<template x-if="loaded && !error">
+    <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
+         x-show="show" x-transition.opacity.duration.300ms>
+        <input x-model="config.device.owner"> <!-- Normal access once loaded -->
+    </div>
+</template>
+
+<!-- ❌ DOESN'T WORK: x-show alone - Alpine evaluates expressions immediately -->
+<div x-show="loaded && !error">
+    <input x-model="config.device.owner"> <!-- Crashes: cannot read 'owner' of undefined -->
+</div>
+```
+
+**Key Rules**: 
+- `x-if` prevents DOM creation and expression evaluation until condition is true
+- `x-show` only toggles visibility but Alpine evaluates all expressions immediately for reactivity
+- **Combine both**: `x-if` for data safety + inner `x-show` for smooth fade-in transitions
+
+Key insight: You need BOTH for the full solution:
+  1. x-if="loaded && !error" prevents crashes
+  2. Inner x-show="show" x-transition provides smooth UX
+
+**Benefits**: No crashes, backend flexible, ~30 lines vs ~100 lines of pre-init, future-proof
 
 ### FOUC Prevention & Transitions
 ```html

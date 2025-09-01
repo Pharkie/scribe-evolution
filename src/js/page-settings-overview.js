@@ -19,14 +19,14 @@ function initializeSettingsOverviewStore() {
         buttonsSaved: false,
         ledsSaved: false,
         unbiddenInkSaved: false,
-        loading: true,
+        loaded: false,
         error: null,
 
         // ================== INITIALIZATION ==================
         init() {
             this.checkSaveSuccess();
-            // Simulate brief loading then ready state
-            this.loading = false;
+            // Set loaded state (no async data to load for overview page)
+            this.loaded = true;
         },
 
         // ================== SUCCESS FEEDBACK ==================
