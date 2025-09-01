@@ -126,7 +126,7 @@ function initializeWiFiSettingsStore() {
 
         // ================== WIFI CONFIGURATION API ==================
         // Load data from server
-        async loadData() {
+        async loadConfiguration() {
             // Duplicate initialization guard (failsafe)
             if (this.initialized) {
                 console.log('📡 WiFi Settings: Already initialized, skipping');

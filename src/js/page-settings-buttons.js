@@ -4,24 +4,17 @@
 document.addEventListener('alpine:init', () => {
     Alpine.store('settingsButtons', {
         // State
-        loading: true,  // Start as loading for fade-in effect
+        loaded: false,  // Simple loading flag (starts false)
         error: null,
         saving: false,
         initialized: false,
-        config: {
-            buttons: {
-                button1: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null },
-                button2: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null },
-                button3: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null },
-                button4: { gpio: null, shortAction: null, longAction: null, shortMqttTopic: null, longMqttTopic: null, shortLedEffect: null, longLedEffect: null }
-            }
-        },
+        config: {},     // Empty object (populated on load)
         originalConfig: {},
         validationErrors: {},
 
         // Reactive computed properties
         get canSave() {
-            return !this.saving && !this.loading && !this.error && this.hasChanges && !this.hasValidationErrors;
+            return !this.saving && this.loaded && !this.error && this.hasChanges && !this.hasValidationErrors;
         },
 
         get hasChanges() {
@@ -34,51 +27,68 @@ document.addEventListener('alpine:init', () => {
 
         // BUTTON CONFIGURATION API
         async loadConfiguration() {
-            // Prevent duplicate initialization
+            // Duplicate initialization guard (failsafe)
             if (this.initialized) {
-                console.log('🔘 Button Settings: Already initialized, skipping');
                 return;
             }
             this.initialized = true;
-
-            this.loading = true;
+            
+            this.loaded = false;
             this.error = null;
-
             try {
                 const response = await fetch('/api/config');
                 if (!response.ok) {
-                    throw new Error(`Failed to load configuration: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-
+                
                 const data = await response.json();
-                this.config = data;
-                this.originalConfig = JSON.parse(JSON.stringify(data));
-
-                // Ensure button structure exists
-                if (!this.config.buttons) {
-                    this.config.buttons = {};
-                }
-
-                // Initialize button configurations if missing
-                for (let i = 1; i <= 4; i++) {
-                    if (!this.config.buttons[`button${i}`]) {
-                        this.config.buttons[`button${i}`] = {
-                            gpio: -1,
-                            shortAction: '',
-                            longAction: '',
-                            shortMqttTopic: '',
-                            longMqttTopic: '',
-                            shortLedEffect: 'none',
-                            longLedEffect: 'none'
-                        };
+                
+                // ✅ CRITICAL: Direct assignment to config object
+                this.config.buttons = {
+                    button1: {
+                        gpio: data.buttons?.button1?.gpio ?? -1,
+                        shortAction: data.buttons?.button1?.shortAction ?? '',
+                        longAction: data.buttons?.button1?.longAction ?? '',
+                        shortMqttTopic: data.buttons?.button1?.shortMqttTopic ?? '',
+                        longMqttTopic: data.buttons?.button1?.longMqttTopic ?? '',
+                        shortLedEffect: data.buttons?.button1?.shortLedEffect ?? 'none',
+                        longLedEffect: data.buttons?.button1?.longLedEffect ?? 'none'
+                    },
+                    button2: {
+                        gpio: data.buttons?.button2?.gpio ?? -1,
+                        shortAction: data.buttons?.button2?.shortAction ?? '',
+                        longAction: data.buttons?.button2?.longAction ?? '',
+                        shortMqttTopic: data.buttons?.button2?.shortMqttTopic ?? '',
+                        longMqttTopic: data.buttons?.button2?.longMqttTopic ?? '',
+                        shortLedEffect: data.buttons?.button2?.shortLedEffect ?? 'none',
+                        longLedEffect: data.buttons?.button2?.longLedEffect ?? 'none'
+                    },
+                    button3: {
+                        gpio: data.buttons?.button3?.gpio ?? -1,
+                        shortAction: data.buttons?.button3?.shortAction ?? '',
+                        longAction: data.buttons?.button3?.longAction ?? '',
+                        shortMqttTopic: data.buttons?.button3?.shortMqttTopic ?? '',
+                        longMqttTopic: data.buttons?.button3?.longMqttTopic ?? '',
+                        shortLedEffect: data.buttons?.button3?.shortLedEffect ?? 'none',
+                        longLedEffect: data.buttons?.button3?.longLedEffect ?? 'none'
+                    },
+                    button4: {
+                        gpio: data.buttons?.button4?.gpio ?? -1,
+                        shortAction: data.buttons?.button4?.shortAction ?? '',
+                        longAction: data.buttons?.button4?.longAction ?? '',
+                        shortMqttTopic: data.buttons?.button4?.shortMqttTopic ?? '',
+                        longMqttTopic: data.buttons?.button4?.longMqttTopic ?? '',
+                        shortLedEffect: data.buttons?.button4?.shortLedEffect ?? 'none',
+                        longLedEffect: data.buttons?.button4?.longLedEffect ?? 'none'
                     }
-                }
-
+                };
+                
+                this.originalConfig = { buttons: JSON.parse(JSON.stringify(this.config.buttons)) };
+                
+                this.loaded = true;  // Mark as loaded AFTER data assignment
+                
             } catch (error) {
-                console.error('Error loading configuration:', error);
-                this.error = error.message || 'Failed to load configuration';
-            } finally {
-                this.loading = false;
+                this.error = `Failed to load configuration: ${error.message}`;
             }
         },
 
