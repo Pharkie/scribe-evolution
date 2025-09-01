@@ -280,15 +280,6 @@ void setupWebServerRoutes(int maxChars)
         // Initialize route tracking for STA mode only
         registeredRoutes.clear();
 
-        // Setup static file serving
-        setupStaticRoutes();
-
-        // Static route already tracked above - no need for individual entries
-
-        // Static files are handled by setupStaticRoutes() - no individual routes needed
-        // Track static routes for diagnostics
-        registeredRoutes.push_back({"GET", "/*", "All static files (HTML, CSS, JS, images, favicon)", false});
-
         // Add SSE endpoint for real-time updates
         sseEvents.onConnect([](AsyncEventSourceClient *client)
                             {
@@ -362,7 +353,14 @@ void setupWebServerRoutes(int maxChars)
             
             request->send(200, "text/plain", output); }, true);
 
-        // 404 handler for STA mode
+        // CRITICAL: Setup static file serving AFTER all API routes
+        // This ensures API endpoints are matched before the catch-all static handler
+        setupStaticRoutes();
+
+        // Track static routes for diagnostics
+        registeredRoutes.push_back({"GET", "/*", "All static files (HTML, CSS, JS, images, favicon)", false});
+
+        // 404 handler for STA mode (must be LAST)
         server.onNotFound(handleNotFound);
 
         // Add 404 handler to route tracking for diagnostics
