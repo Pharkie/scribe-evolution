@@ -72,11 +72,8 @@ void handleNotFound(AsyncWebServerRequest *request)
 
     LOG_WARNING("WEB", "%s", errorDetails.c_str());
 
-    // Serve static compressed 404 page (no template processing)
-    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/404.html.gz", "text/html", 404);
-    response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Cache-Control", "no-cache");
-    request->send(response);
+    // Serve static 404 page (AsyncWebServer will serve compressed version automatically)
+    request->send(LittleFS, "/404.html", "text/html", 404);
 }
 
 // ========================================
