@@ -1,5 +1,14 @@
 /* Comprehensive app.css - Single CSS file for entire application */
+
+/* Google Fonts - Outfit */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
 @import "tailwindcss";
+
+/* Tailwind v4 CSS-first configuration */
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
 
 /* ========================================
  * BASE LAYER - Global styles and resets
