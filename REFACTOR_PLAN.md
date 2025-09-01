@@ -148,7 +148,7 @@
 4.5.3. ✅ **Diagnostics page** (`diagnostics-alpine-store.js` + `diagnostics-api.js`) - **COMPLETED**
 4.5.4. ✅ **Setup page** (`setup-alpine-store.js` + `setup-api.js`) - **COMPLETED**
 4.5.5. ✅ **404 page** (`404-alpine-store.js`) - **COMPLETED**
-4.5.6. **Settings overview page** (`page-settings-overview.js`) 
+4.5.6. ✅ **Settings overview page** (`page-settings-overview.js`) - **COMPLETED**
 4.5.7. ✅ **Device settings page** (`page-settings-device.js` + imports shared settings API) - **COMPLETED**
 4.5.8. **WiFi settings page** (`page-settings-wifi.js` + imports shared settings API)
 4.5.9. **MQTT settings page** (`page-settings-mqtt.js` + imports shared settings API)
