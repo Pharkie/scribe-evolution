@@ -221,17 +221,13 @@ const buildConfigs = {
 
   // Settings overview page
   overview: {
-    input: [
-      'src/data/js/page-settings-overview.js'
-    ],
+    input: ['src/js/pages/settings-overview.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-overview.js',
     minify: false,
   },
 
   overviewProd: {
-    input: [
-      'src/data/js/page-settings-overview.js'
-    ],
+    input: ['src/js/pages/settings-overview.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-overview.js',
     minify: true,
   },
