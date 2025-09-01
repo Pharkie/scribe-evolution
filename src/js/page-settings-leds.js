@@ -4,18 +4,11 @@
 document.addEventListener('alpine:init', () => {
     Alpine.store('settingsLeds', {
         // State
-        loading: true,  // Start as loading for fade-in effect
+        loaded: false,  // Simple loading flag (starts false)
         error: null,
         saving: false,
         initialized: false,
-        config: {
-            leds: {
-                gpio: null,
-                count: null,
-                brightness: null,
-                refreshRate: null
-            }
-        },
+        config: {},     // Empty object (populated on load)
         
         // Effects playground (temporary, not saved to config)
         effect: null,
@@ -38,7 +31,7 @@ document.addEventListener('alpine:init', () => {
 
         // Reactive computed properties
         get canSave() {
-            return !this.saving && !this.loading && !this.error && this.hasChanges;
+            return !this.saving && this.loaded && !this.error && this.hasChanges;
         },
 
         get hasChanges() {
@@ -58,60 +51,46 @@ document.addEventListener('alpine:init', () => {
 
         // LED CONFIGURATION API
         async loadConfiguration() {
-            // Prevent duplicate initialization
+            // Duplicate initialization guard (failsafe)
             if (this.initialized) {
-                console.log('💡 LED Settings: Already initialized, skipping');
                 return;
             }
             this.initialized = true;
-
-            this.loading = true;
+            
+            this.loaded = false;
             this.error = null;
-
             try {
                 const response = await fetch('/api/config');
                 if (!response.ok) {
-                    throw new Error(`Failed to load configuration: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-
+                
                 const data = await response.json();
-                this.config = data;
-                this.originalConfig = JSON.parse(JSON.stringify(data));
-
-                // Ensure LED structure exists with defaults
-                if (!this.config.leds) {
-                    this.config.leds = {};
-                }
-
-                // Initialize LED configurations if missing
-                const defaults = {
-                    gpio: -1,
-                    count: 30,
-                    effect: 'chase_single',
-                    brightness: 128,
-                    refreshRate: 60,
-                    speed: 50,
-                    intensity: 50,
-                    cycles: 3,
-                    colors: ['#0062ff', '#ff0000', '#00ff00']
+                
+                // ✅ CRITICAL: Direct assignment to config object
+                this.config.leds = {
+                    gpio: data.leds?.gpio ?? -1,
+                    count: data.leds?.count ?? 30,
+                    effect: data.leds?.effect ?? 'chase_single',
+                    brightness: data.leds?.brightness ?? 128,
+                    refreshRate: data.leds?.refreshRate ?? 60,
+                    speed: data.leds?.speed ?? 50,
+                    intensity: data.leds?.intensity ?? 50,
+                    cycles: data.leds?.cycles ?? 3,
+                    colors: data.leds?.colors ?? ['#0062ff', '#ff0000', '#00ff00']
                 };
-
-                Object.keys(defaults).forEach(key => {
-                    if (this.config.leds[key] === undefined) {
-                        this.config.leds[key] = defaults[key];
-                    }
-                });
-
+                
+                this.originalConfig = { leds: JSON.parse(JSON.stringify(this.config.leds)) };
+                
                 // Ensure colors array exists and has at least 3 colors
                 if (!Array.isArray(this.colors) || this.colors.length < 3) {
                     this.colors = ['#0062ff', '#ff0000', '#00ff00'];
                 }
-
+                
+                this.loaded = true;  // Mark as loaded AFTER data assignment
+                
             } catch (error) {
-                console.error('Error loading configuration:', error);
-                this.error = error.message || 'Failed to load configuration';
-            } finally {
-                this.loading = false;
+                this.error = `Failed to load configuration: ${error.message}`;
             }
         },
 
