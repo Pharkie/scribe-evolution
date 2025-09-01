@@ -118,7 +118,7 @@
 
 **Next Steps**: ESP32 web server implementation when ready
 
-### 4.5: ES6 Module System
+### 4.5: ES6 Module System ✅ COMPLETED
 
 **Conversion Process**: ES6 modules in source → IIFE bundles for ESP32
 
@@ -129,20 +129,8 @@
 4. **Update esbuild config**: Point to single ES6 entry point instead of concatenation
 5. **Test build**: Verify IIFE output works with Alpine.js and mock server
 
-**Completed Pages**: 
-- **✅ Index page** - Full ES6 conversion completed
-  - `src/js/api/index.js`: 6 exported API functions
-  - `src/js/stores/index.js`: `createIndexStore()` factory with explicit imports
-  - `src/js/pages/index.js`: Alpine registration entry point  
-  - Build output: `data/js/page-index.js` (28KB dev, 14KB prod)
-
-**Benefits Realized**:
-- **Explicit dependencies**: Clear `import` statements replace mysterious globals
-- **Superior IDE support**: IntelliSense, go-to-definition, refactoring all work
-- **Self-documenting architecture**: Dependencies visible in source code
-- **Zero runtime changes**: Same IIFE output, Alpine patterns, ESP32 serving
-
 **Next Steps - Individual Pages to Convert**:
+4.5.0. Index.html
 4.5.1. ✅ **Convert shared settings API** (`settings-api.js` → `src/js/api/settings.js`) - **COMPLETED**
 4.5.2. ✅ **Remove orphaned legacy files** (`settings-alpine-store.js` + esbuild configs) - **COMPLETED**
 4.5.3. ✅ **Diagnostics page** (`diagnostics-alpine-store.js` + `diagnostics-api.js`) - **COMPLETED**
@@ -168,50 +156,61 @@
 - ✅ **Self-documenting** - Dependencies visible in source code
 - ✅ **Zero runtime changes** - Same IIFE output, Alpine patterns, ESP32 serving
 
-**Build Size Improvements:**
-- WiFi: 21,397 → 17,481 bytes (**18% smaller**)
-- MQTT: 17,769 → 12,033 bytes (**32% smaller**)
-- Buttons: 16,377 → 10,224 bytes (**38% smaller**)
-- LEDs: 15,758 → 11,212 bytes (**29% smaller**)
-- Unbidden Ink: 17,402 → 12,069 bytes (**31% smaller**)
+---
 
-Each page follows same 5-step conversion process above
+## Phase 5: Local Font Implementation 🔤
+
+**Goal**: Implement Google Fonts Outfit locally for optimal performance and offline access
+
+### Implementation Plan
+
+1. **Download font files** - Outfit woff2 weights 400, 600, 700 (latin subset only) to `/src/data/fonts/`
+2. **Configure build pipeline** - Copy fonts from `/src/data/fonts/` to `/data/fonts/` during build
+3. **Create font-face CSS** - Define @font-face declarations with optimized font metrics  
+4. **Wire up Tailwind v4 theming** - Use @import and @theme in input.css
+5. **Add font preloading** - Prevent FOUC with preload links in all HTML files
+6. **Remove external dependencies** - Clean up Google Fonts CDN references
+7. **Apply globally** - Ensure font-sans class usage across layouts
+8. **Run build** - Execute Tailwind build to apply all changes
+
+**Benefits**:
+- ✅ **Offline compatibility** - No external font dependencies
+- ✅ **Performance** - Faster loading, reduced network requests  
+- ✅ **Reliability** - No CDN failures or font loading delays
+- ✅ **Consistency** - Exact font rendering across all devices
+- ✅ **ESP32 friendly** - Local serving, predictable file sizes
 
 ---
 
-## Phase 5: Remaining Pages
+## Phase 6: Remaining Pages
 
-Apply proven settings patterns to remaining pages
+**What's Next**: Apply proven patterns to remaining non-settings pages for consistency
 
-- **5.0 Setup.html (only accessible in AP mode)** 
-  - Already uses "the Alpine Load Flag process". 
-  - But bring up to speed with UX in settings > wifi.html
-- **5.1 Index Page** - Extract to `page-index.js`, modular architecture
-- **5.2 Diagnostics** - Split sections into proper pages like settings (Overview + Microcontroller, Logging, Routes, Config, NVS)
-- **5.3 404 Page** - Polish and align with architecture
-- **5.4 Documentation** - Pattern templates and coding standards
+### 6.1: Diagnostics Page Refactor
+**Current State**: Basic single-page diagnostics, already ES6 modules ✅
+**Goal**: Split into comprehensive diagnostic sections like settings pages
+**Why**: Diagnostics is becoming complex - needs organization like settings
+**Proposed Structure**:
+- **Overview**: System status, memory, uptime (main diagnostics.html)
+- **Network**: WiFi status, MQTT connections, API endpoints
+- **Hardware**: GPIO states, printer status, button/LED diagnostics
+- **Storage**: SPIFFS usage, config validation, NVS contents
+**Benefits**: Easier troubleshooting, better organization, follows established patterns
 
----
+### 6.2: Setup Page (AP Mode Only)
+**Current State**: Already uses Simple Loading Flag Pattern ✅
+**Goal**: Bring WiFi scanning UX up to speed with settings/wifi.html
+**Why**: Setup page has basic WiFi form, but settings/wifi.html has advanced network scanning, signal strength display, and better UX
+**Tasks**:
+- Import modern WiFi scanning functionality from settings-wifi.js
+- Add signal strength indicators and network selection dropdown
+- Improve error handling and loading states
+- Maintain AP mode compatibility (no dependencies on STA mode)
 
-## Phase 6: Font Review ✨
-
-Typography improvements and font weight optimization across the application.
-
-**Status**:
-
-Review fonts in terms of alternatives and ligatures. Check why headings still use bold instead of normal, 400 weight.
-
-### 6.1: Google Fonts Outfit Integration - ✅ COMPLETED
-- **Issue discovered**: Tailwind v4 build system not reading `tailwind.config.js`
-- **Root cause**: v4 uses CSS-first configuration, not legacy config file approach
-- **Solution implemented**: Proper Tailwind v4 CSS-first configuration using `@theme` directive
-- **Build system fixed**: Removed obsolete config file, updated to modern v4 methodology
-
-### 6.2: Font Weight Optimization - ✅ COMPLETED  
-- **Problem**: Heavy `font-bold` (700-900 weight) inappropriate for Outfit font
-- **Solution**: Adjusted key headings to `font-normal` (400 weight) for better hierarchy
-- **Components updated**: Settings headers, page titles, diagnostic titles, status headers
-- **Result**: More elegant, readable typography with proper visual balance
+### 6.3: 404 Page
+**Current State**: Already converted to ES6 modules ✅
+**Goal**: Align with overall design system and add helpful navigation
+**Why**: Error pages should be as polished as the rest of the app
 
 ---
 
@@ -220,6 +219,9 @@ Review fonts in terms of alternatives and ligatures. Check why headings still us
 Future enhancement: 4 x configurable AI prompts with hardware button integration
 
 ---
+
+## Phase 8: Documentation & Test Harness
+**Goal**: Document established patterns for future development. Ensure unit tests work.
 
 ## Development Guidelines 🛠️
 
@@ -232,7 +234,7 @@ Future enhancement: 4 x configurable AI prompts with hardware button integration
 
 ## Key Patterns & Guidelines 📝
 
-### Simple Loading Flag Pattern with Alpine.js
+### Loading Flag Pattern and Alpine.js init order
 **Core Principle**: Replace complex pre-initialized structures with simple `loaded: false` flag + Alpine store pattern. Eliminate pre-initialized null structures.
 
 **⚠️ CRITICAL: This is a TWO-STEP process - both JavaScript AND HTML must be updated together or Alpine will crash!**
@@ -447,17 +449,3 @@ config: {},  // Empty object populated on load (avoid massive HTML changes)
 - **Use `x-show`** (toggles visibility) NOT `x-if` (removes DOM elements)
 - **Start with `loaded: false`** to hide content initially  
 - **`style="display: none"`** prevents Flash of Unstyled Content (FOUC)
-
-### Development Essentials
-- **Partial Config Updates**: Only send relevant sections, not entire config
-- **Mock Server First**: Test before live ESP32 verification  
-- **Pattern Consistency**: Copy existing page structures, don't reinvent
-- **Error Handling**: Fail fast, let Alpine handle missing data
-- **Console Cleanup**: Remove verbose API messages, keep concise emoji-prefixed messages for debugging
-
----
-
-## Rejected Ideas 🚫
-
-**Partial Config API Endpoints**: Separate endpoints like `/api/config/device` rejected due to ESP32 memory constraints and over-engineering. Current `/api/config` works fine with client-side filtering.
-

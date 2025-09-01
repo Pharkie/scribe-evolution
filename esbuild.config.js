@@ -100,7 +100,6 @@ const buildConfigs = {
   // Common app bundle 
   common: {
     input: [
-      'src/data/js/config.js',
       'src/data/js/icons.js', 
       'src/data/js/app-common.js'
     ],
@@ -110,7 +109,6 @@ const buildConfigs = {
 
   commonProd: {
     input: [
-      'src/data/js/config.js',
       'src/data/js/icons.js',
       'src/data/js/app-common.js'
     ],
