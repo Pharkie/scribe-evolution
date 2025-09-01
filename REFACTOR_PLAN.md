@@ -91,63 +91,91 @@ Future enhancement: 4 x configurable AI prompts with hardware button integration
 ## Key Patterns & Guidelines 📝
 
 ### Simple Loading Flag Pattern with Alpine.js
-**Core Principle**: Replace complex pre-initialized structures with simple `loaded: false` flag + Alpine store pattern
+**Core Principle**: Replace complex pre-initialized structures with simple `loaded: false` flag + Alpine store pattern. Eliminate pre-initialized null structures.
 
-**Critical Timing Rule**: Store initialization MUST happen AFTER Alpine establishes DOM binding
+**⚠️ CRITICAL: This is a TWO-STEP process - both JavaScript AND HTML must be updated together or Alpine will crash!**
+
+We want:
+  - ✅ Simple loaded: false flag
+  - ✅ Empty config: {} object on settings pages, rather than a brittle list of pre-initialized nulls
+  - ✅ Direct assignment from API response
+  - ✅ Proper error handling without fallback structures
+  - ✅ Template safety guards to prevent Alpine expression crashes
+
+## STEP 1: JavaScript Store Changes
 
 ```javascript
 // ✅ CORRECT: Complete Alpine.js + Simple Loading Flag Pattern
 function createMyStore() {
     return {
         loaded: false,  // Simple loading flag (starts false)
-        config: {},       // Empty data or config (settings pages) object (populated on load)
+        config: {},     // CRITICAL: Empty object (NO pre-initialized nulls)
         initialized: false, // Failsafe guard to prevent multiple inits
         error: null,    // Error state
         
-        async loadData() {
+        async loadConfiguration() {  // Use existing method names, don't rename
             // Duplicate initialization guard (failsafe)
             if (this.initialized) {
-                console.log('Already initialized, skipping');
-                return;
+                return;  // No console.log needed
             }
             this.initialized = true;
             
             this.loaded = false;
             this.error = null;
             try {
-                this.data.config = await fetchFromAPI();  // Direct assignment
-                this.loaded = true;
+                const response = await fetch('/api/config');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                
+                // ✅ CRITICAL: Direct assignment to config object (not this.data.config)
+                this.config.mqtt = {
+                    enabled: data.mqtt?.enabled ?? false,
+                    server: data.mqtt?.server ?? '',
+                    port: data.mqtt?.port ?? 1883,
+                    username: data.mqtt?.username ?? '',
+                    password: data.mqtt?.password ?? ''
+                };
+                
+                this.loaded = true;  // Mark as loaded AFTER data assignment
             } catch (error) {
-                this.error = error.message;
+                this.error = `Failed to load configuration: ${error.message}`;
             }
         }
     };
 }
-
-document.addEventListener('alpine:init', () => {
-    Alpine.store('myStore', createMyStore());
-});
 ```
 
+## STEP 2: HTML Template Safety (MANDATORY)
+
+⚠️ **WARNING: If you change JavaScript to empty config: {}, you MUST add template guards or Alpine will crash!**
+
 ```html
-<!-- HTML: Complete pattern implementation -->
-<body x-data="$store.myStore" x-init="loadData()">
+<!-- ❌ BROKEN: Will crash with "Cannot read properties of undefined" -->
+<body x-data="$store.myStore" x-init="loadConfiguration()">
+    <div x-show="loaded && !error">
+        <input x-model="config.mqtt.enabled"> <!-- CRASHES: config.mqtt is undefined -->
+    </div>
+</body>
+
+<!-- ✅ CORRECT: Template safety prevents crashes -->
+<body x-data="$store.myStore" x-init="loadConfiguration()">
     <template x-if="loaded && !error">
         <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
              x-show="show" x-transition.opacity.duration.300ms>
-            <input x-model="data.config.deviceName"> <!-- SAFE: only evaluates when loaded -->
+            <input x-model="config.mqtt.enabled"> <!-- SAFE: only evaluates when loaded -->
         </div>
     </template>
 </body>
 ```
 
 **Critical Rules**:
-- **Method Naming**: Use consistent `loadData()` method name across all pages
-- **Store Pattern**: Always use `$store.storeName` not direct instances  
-- **Single Method**: Only ONE initialization method per store (avoid duplicate `init()` methods)
-- **Template Safety**: Use `x-if="loaded && !error"` to prevent expression evaluation before data loads
-- **Initialization**: Direct `x-init="loadData()"` calls (no `$nextTick` needed for loadData)
-- **Data Assignment**: Direct assignment (`this.data.config = serverData`) not pre-initialized objects
+- **Template Safety**: ALWAYS use `x-if="loaded && !error"` when config starts empty
+- **Method Names**: Keep existing method names (`loadConfiguration`, not `loadData`)
+- **Property Names**: Keep existing property structure (`config.mqtt.*` not `data.config.*`)
+- **Initialization**: Direct `x-init="loadConfiguration()"` calls
+- **Data Assignment**: Direct assignment (`this.config.mqtt = ...`) to existing property names
 
 ### Simple vs Complex Comparison
 
@@ -196,35 +224,58 @@ Key insight: You need BOTH for the full solution:
 
 ### Loading Flag Pattern Pitfalls to Avoid ❌
 
+**❌ DEADLY ERROR: Changing JavaScript without HTML**
+```javascript
+// ❌ If you do this change...
+config: {
+    mqtt: { enabled: false, server: null }  // Remove this...
+}
+// to this...
+config: {},  // Empty object...
+
+// ❌ WITHOUT updating HTML, Alpine crashes with:
+// "Alpine Expression Error: Cannot read properties of undefined (reading 'enabled')"
+// Expression: "config.mqtt.enabled"
+```
+
+**✅ SOLUTION: Both changes together**
+```javascript
+// Step 1: Change JavaScript
+config: {},  // Empty object
+```
+```html
+<!-- Step 2: Add template safety immediately -->
+<template x-if="loaded && !error">
+    <div><!-- Form content --></div>
+</template>
+```
+
 **❌ WRONG: Multiple initialization methods**
 ```javascript
-// Don't have both loadData() AND init() methods - causes duplicate calls
-async loadData() { /* ... */ },
-async init() { /* calls loadData or duplicates logic */ }  // REMOVE THIS
+// Don't have both loadConfiguration() AND init() methods
+async loadConfiguration() { /* ... */ },
+async init() { /* calls loadConfiguration */ }  // REMOVE THIS
 ```
 
-**❌ WRONG: Direct store instances**  
+**❌ WRONG: Using x-show alone with empty config**
 ```html
-<!-- Don't use direct instances -->
-<body x-data="window.myStoreInstance">
-```
-```javascript
-window.myStoreInstance = createStore(); // Avoid this pattern
-```
-
-**❌ WRONG: Using x-show without x-if for async data**
-```html
-<!-- Don't do this - Alpine evaluates expressions immediately -->
+<!-- ❌ This crashes when config is empty {} -->
 <div x-show="loaded && !error">
-    <input x-model="config.device.owner"> <!-- CRASHES: config undefined -->
+    <input x-model="config.mqtt.enabled"> <!-- CRASHES: mqtt undefined -->
 </div>
+
+<!-- ✅ This works - x-if prevents evaluation until loaded -->
+<template x-if="loaded && !error">
+    <div x-show="show" x-transition>
+        <input x-model="config.mqtt.enabled"> <!-- SAFE -->
+    </div>
+</template>
 ```
 
-**❌ WRONG: Massive pointless property renaming**
+**❌ WRONG: Changing property names unnecessarily**
 ```javascript
-// Don't rename existing working properties if easily avoided
-// BAD: Changing all HTML references from config.* to data.config.*
-config: { device: {...} }  →  data: { config: { device: {...} } }  // AVOID THIS
+// Don't force massive HTML changes
+config: {...}  →  data: { config: {...} }  // Breaks all HTML x-model references
 ```
 
 **✅ CORRECT: Use x-if for data safety + x-show for animations**

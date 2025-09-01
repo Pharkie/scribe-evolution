@@ -17,7 +17,7 @@ function initializeMqttSettingsStore() {
         },
 
         // ================== STATE MANAGEMENT ==================
-        loading: true,  // Start as loading for fade-in effect
+        loaded: false,  // Simple loading flag (starts false)
         error: null,
         saving: false,
         initialized: false,
@@ -34,16 +34,8 @@ function initializeMqttSettingsStore() {
         mqttPasswordModified: false,
         originalMaskedPassword: '', // Store original masked value
         
-        // Configuration data (reactive) - MQTT section only
-        config: {
-            mqtt: {
-                enabled: false,
-                server: null,
-                port: null,
-                username: null,
-                password: null
-            }
-        },
+        // Configuration data (reactive) - Empty object (populated on load)
+        config: {},
         
         // Validation state
         validation: {
@@ -240,14 +232,14 @@ function initializeMqttSettingsStore() {
 
         // ================== API CALLS ==================
         async loadConfiguration() {
-            // Prevent duplicate initialization
+            // Duplicate initialization guard (failsafe)
             if (this.initialized) {
-                console.log('📡 MQTT Settings: Already initialized, skipping');
                 return;
             }
             this.initialized = true;
             
-            this.loading = true;
+            this.loaded = false;
+            this.error = null;
             try {
                 const response = await fetch('/api/config');
                 if (!response.ok) {
@@ -256,7 +248,7 @@ function initializeMqttSettingsStore() {
                 
                 const data = await response.json();
                 
-                // Extract MQTT configuration
+                // Extract MQTT configuration - Direct assignment
                 this.config.mqtt = {
                     enabled: data.mqtt?.enabled ?? false,
                     server: data.mqtt?.server ?? '',
@@ -273,13 +265,10 @@ function initializeMqttSettingsStore() {
                 // Store original masked password for change detection
                 this.originalMaskedPassword = this.config.mqtt.password;
                 
-                console.log('✅ MQTT Settings: Configuration loaded successfully');
+                this.loaded = true;
                 
             } catch (error) {
-                console.error('Error loading MQTT config:', error);
                 this.error = `Failed to load configuration: ${error.message}`;
-            } finally {
-                this.loading = false;
             }
         },
 
