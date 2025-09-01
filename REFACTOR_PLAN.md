@@ -95,16 +95,19 @@ Future enhancement: 4 x configurable AI prompts with hardware button integration
 
 ## Key Patterns & Guidelines 📝
 
-### Alpine.js Initialization Pattern
+### Simple Loading Flag Pattern with Alpine.js
+**Core Principle**: Replace complex pre-initialized structures with simple `loaded: false` flag + Alpine store pattern
+
 **Critical Timing Rule**: Store initialization MUST happen AFTER Alpine establishes DOM binding
 
 ```javascript
-// ✅ CORRECT: Initialize AFTER DOM binding is established
+// ✅ CORRECT: Complete Alpine.js + Simple Loading Flag Pattern
 function createMyStore() {
     return {
-        loaded: false,  // Simple loading flag
-        data: {},       // Empty data object
+        loaded: false,  // Simple loading flag (starts false)
+        data: {},       // Empty data object (populated on load)
         initialized: false, // Failsafe guard to prevent multiple inits
+        error: null,    // Error state
         
         async loadData() {
             // Duplicate initialization guard (failsafe)
@@ -115,8 +118,9 @@ function createMyStore() {
             this.initialized = true;
             
             this.loaded = false;
+            this.error = null;
             try {
-                this.data.someApi = await fetchData();
+                this.data.config = await fetchFromAPI();  // Direct assignment
                 this.loaded = true;
             } catch (error) {
                 this.error = error.message;
@@ -131,18 +135,26 @@ document.addEventListener('alpine:init', () => {
 ```
 
 ```html
-<!-- HTML: Initialize after Alpine establishes DOM binding -->
-<body x-data="$store.myStore" x-init="$nextTick(() => loadData())">
-    <div x-show="loaded && !error" x-transition style="display: none">
-        <!-- Content shows after async load completes -->
-    </div>
+<!-- HTML: Complete pattern implementation -->
+<body x-data="$store.myStore" x-init="loadData()">
+    <template x-if="loaded && !error">
+        <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
+             x-show="show" x-transition.opacity.duration.300ms>
+            <input x-model="data.config.deviceName"> <!-- SAFE: only evaluates when loaded -->
+        </div>
+    </template>
 </body>
 ```
 
-**Method Naming**: Use consistent `loadData()` method name across all pages for the Simple Loading Flag Pattern.
+**Critical Rules**:
+- **Method Naming**: Use consistent `loadData()` method name across all pages
+- **Store Pattern**: Always use `$store.storeName` not direct instances  
+- **Single Method**: Only ONE initialization method per store (avoid duplicate `init()` methods)
+- **Template Safety**: Use `x-if="loaded && !error"` to prevent expression evaluation before data loads
+- **Initialization**: Direct `x-init="loadData()"` calls (no `$nextTick` needed for loadData)
+- **Data Assignment**: Direct assignment (`this.data.config = serverData`) not pre-initialized objects
 
-### Simple Loading Flag Pattern
-**Replace complex pre-initialized structures with simple pattern:**
+### Simple vs Complex Comparison
 
 ```javascript
 // ✅ WORKS: Simple empty object + loaded flag
@@ -186,6 +198,41 @@ Key insight: You need BOTH for the full solution:
   2. Inner x-show="show" x-transition provides smooth UX
 
 **Benefits**: No crashes, backend flexible, ~30 lines vs ~100 lines of pre-init, future-proof
+
+### Loading Flag Pattern Pitfalls to Avoid ❌
+
+**❌ WRONG: Multiple initialization methods**
+```javascript
+// Don't have both loadData() AND init() methods - causes duplicate calls
+async loadData() { /* ... */ },
+async init() { /* calls loadData or duplicates logic */ }  // REMOVE THIS
+```
+
+**❌ WRONG: Direct store instances**  
+```html
+<!-- Don't use direct instances -->
+<body x-data="window.myStoreInstance">
+```
+```javascript
+window.myStoreInstance = createStore(); // Avoid this pattern
+```
+
+**❌ WRONG: Using x-show without x-if for async data**
+```html
+<!-- Don't do this - Alpine evaluates expressions immediately -->
+<div x-show="loaded && !error">
+    <input x-model="config.device.owner"> <!-- CRASHES: config undefined -->
+</div>
+```
+
+**✅ CORRECT: Use x-if for data safety + x-show for animations**
+```html
+<template x-if="loaded && !error">
+    <div x-show="show" x-transition>
+        <input x-model="config.device.owner"> <!-- SAFE: only evaluates when loaded -->
+    </div>
+</template>
+```
 
 ### FOUC Prevention & Transitions
 ```html
