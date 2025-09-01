@@ -61,7 +61,7 @@ async function buildWithEsbuild(config) {
       platform: 'browser',
       outfile: output,
       sourcemap: false,
-      plugins: input.length > 1 ? [multiEntryPlugin] : [],
+      plugins: input.length > 1 ? [multiEntryPlugin] : [], // Only use multi-entry for legacy concatenation
       // Optimize for browser
       legalComments: 'none',
       // Don't bundle external dependencies (Alpine.js etc)
@@ -118,22 +118,16 @@ const buildConfigs = {
     minify: true,
   },
 
-  // Page-specific bundles
+  // Page-specific bundles  
   index: {
-    input: [
-      'src/data/js/index-alpine-store.js',
-      'src/data/js/index-api.js'
-    ],
+    input: ['src/js/pages/index.js'], // Single ES6 module entry point
     output: 'data/js/page-index.js',
     minify: false,
   },
 
   indexProd: {
-    input: [
-      'src/data/js/index-alpine-store.js', 
-      'src/data/js/index-api.js'
-    ],
-    output: 'data/js/page-index.js',
+    input: ['src/js/pages/index.js'], // Single ES6 module entry point
+    output: 'data/js/page-index.js', 
     minify: true,
   },
 
