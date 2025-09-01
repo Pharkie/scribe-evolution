@@ -18,17 +18,17 @@ function initializeWiFiSettingsStore() {
         },
 
         // ================== STATE MANAGEMENT ==================
-        // Core state management
-        loading: true,  // Start as loading for fade-in effect
+        // Simple Loading Flag Pattern
+        loaded: false,  // Simple loading flag (starts false)
         error: null,
         saving: false,
-        initialized: false,
+        initialized: false, // Failsafe guard to prevent multiple inits
         apPrintStatus: 'normal', // 'normal', 'scribing'
         
         // Computed property to check if save should be enabled
         get canSave() {
-            // Don't allow save while loading, saving, or with errors
-            if (this.loading || this.saving || this.error) {
+            // Don't allow save while not loaded, saving, or with errors
+            if (!this.loaded || this.saving || this.error) {
                 return false;
             }
             
@@ -54,20 +54,8 @@ function initializeWiFiSettingsStore() {
             return this.hasChanges();
         },
         
-        // Configuration data (reactive) - WiFi section
-        config: {
-            device: {
-                wifi: {
-                    ssid: null,
-                    password: null,
-                    connect_timeout: null,
-                    status: null,
-                    fallback_ap_ssid: null,
-                    fallback_ap_password: null
-                },
-                mdns: null
-            }
-        },
+        // Configuration data (empty object populated on load)
+        config: {},
         
         // Password modification tracking for secure handling
         passwordsModified: {
@@ -137,22 +125,23 @@ function initializeWiFiSettingsStore() {
         },
 
         // ================== WIFI CONFIGURATION API ==================
-        // Load configuration data from server
-        async loadConfiguration() {
-            // Prevent duplicate initialization
+        // Load data from server
+        async loadData() {
+            // Duplicate initialization guard (failsafe)
             if (this.initialized) {
                 console.log('📡 WiFi Settings: Already initialized, skipping');
                 return;
             }
             this.initialized = true;
             
-            this.loading = true;
+            this.loaded = false;
+            this.error = null;
             try {
                 // Load configuration from API
                 const serverConfig = await window.SettingsAPI.loadConfiguration();
                 
-                // Extract only WiFi-related configuration
-                this.mergeWiFiConfig(serverConfig);
+                // Direct assignment to config object
+                this.config = serverConfig;
                 
                 // Initialize WiFi scanning state
                 this.initializeWiFiState();
@@ -161,42 +150,14 @@ function initializeWiFiSettingsStore() {
                 this.initializePasswordTracking();
                 
                 console.log('Alpine WiFi Store: Configuration loaded successfully');
+                this.loaded = true;
                 
             } catch (error) {
                 console.error('Alpine WiFi Store: Failed to load configuration:', error);
                 this.error = error.message;
-            } finally {
-                this.loading = false;
             }
         },
 
-        // Merge server config into reactive state (WiFi section only)
-        mergeWiFiConfig(serverConfig) {
-            console.log('📡 Merging WiFi config from server:', serverConfig);
-            
-            // Device WiFi configuration
-            if (serverConfig.device && serverConfig.device.wifi) {
-                this.config.device.wifi.ssid = serverConfig.device.wifi.ssid || '';
-                this.config.device.wifi.password = serverConfig.device.wifi.password || '';
-                this.config.device.wifi.connect_timeout = serverConfig.device.wifi.connect_timeout || 15000;
-                this.config.device.wifi.status = serverConfig.device.wifi.status || null;
-                this.config.device.wifi.fallback_ap_ssid = serverConfig.device.wifi.fallback_ap_ssid || '';
-                this.config.device.wifi.fallback_ap_password = serverConfig.device.wifi.fallback_ap_password || '';
-                
-                if (!serverConfig.device.wifi.ssid) {
-                    console.warn('⚠️ Missing device.wifi.ssid in config');
-                }
-            } else {
-                console.error('❌ Missing device.wifi section in config');
-            }
-            
-            // mDNS hostname
-            if (serverConfig.device) {
-                this.config.device.mdns = serverConfig.device.mdns || '';
-            }
-            
-            console.log('✅ WiFi config merge complete:', this.config);
-        },
         
         // Initialize password tracking
         initializePasswordTracking() {
@@ -284,6 +245,9 @@ function initializeWiFiSettingsStore() {
         
         // Update SSID based on current mode and selection
         updateSSID() {
+            // Only update if config is loaded
+            if (!this.config?.device?.wifi) return;
+            
             const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
             this.config.device.wifi.ssid = selectedSSID || '';
             

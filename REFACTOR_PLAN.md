@@ -105,7 +105,7 @@ Future enhancement: 4 x configurable AI prompts with hardware button integration
 function createMyStore() {
     return {
         loaded: false,  // Simple loading flag (starts false)
-        data: {},       // Empty data object (populated on load)
+        config: {},       // Empty data or config (settings pages) object (populated on load)
         initialized: false, // Failsafe guard to prevent multiple inits
         error: null,    // Error state
         
