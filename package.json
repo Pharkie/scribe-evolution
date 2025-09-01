@@ -5,7 +5,8 @@
     "private": true,
     "scripts": {
         "build": "npm run build-css & npm run build-js & wait",
-        "build-prod": "npm run build-css-prod & npm run build-js-prod & wait",
+        "build-prod": "npm run build-css-prod & npm run build-js-prod & wait && npm run gzip-assets",
+        "gzip-assets": "node scripts/gzip-assets.js",
         "build-css": "npx @tailwindcss/cli --input ./src/css/app.css --output ./data/css/app.css",
         "build-css-prod": "npx @tailwindcss/cli --input ./src/css/app.css --output ./data/css/app.css --minify",
         "build-css-index": "npx @tailwindcss/cli --input ./src/css/index.css --output ./data/css/index.css",

@@ -321,21 +321,39 @@ function serveFile(res, filePath, statusCode = 200) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = mimeTypes[ext] || 'application/octet-stream';
   
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404, {
-        'Content-Type': 'text/html',
-        'Access-Control-Allow-Origin': '*'
+  // Serve compressed version - all modern browsers support GZIP
+  const gzipPath = filePath + '.gz';
+  fs.readFile(gzipPath, (gzipErr, gzipData) => {
+    if (!gzipErr) {
+      // Serve compressed version with proper headers
+      res.writeHead(statusCode, {
+        'Content-Type': contentType,
+        'Content-Encoding': 'gzip',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=31536000' // Cache for 1 year
       });
-      res.end('<h1>404 Not Found</h1>');
+      res.end(gzipData);
       return;
     }
     
-    res.writeHead(statusCode, {
-      'Content-Type': contentType,
-      'Access-Control-Allow-Origin': '*'
+    // No compressed version available, serve original
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404, {
+          'Content-Type': 'text/html',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end('<h1>404 Not Found</h1>');
+        return;
+      }
+      
+      res.writeHead(statusCode, {
+        'Content-Type': contentType,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=3600' // Cache uncompressed for 1 hour  
+      });
+      res.end(data);
     });
-    res.end(data);
   });
 }
 
