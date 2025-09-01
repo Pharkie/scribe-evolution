@@ -149,11 +149,11 @@ function initializeWiFiSettingsStore() {
                 // Initialize password tracking
                 this.initializePasswordTracking();
                 
-                console.log('Alpine WiFi Store: Configuration loaded successfully');
+                console.log('📡 WiFi: Configuration loaded');
                 this.loaded = true;
                 
             } catch (error) {
-                console.error('Alpine WiFi Store: Failed to load configuration:', error);
+                console.error('📡 WiFi: Failed to load configuration:', error);
                 this.error = error.message;
             }
         },
@@ -228,14 +228,14 @@ function initializeWiFiSettingsStore() {
                     const currentNetwork = validNetworks.find(n => n.ssid === this.wifiScan.currentSSID);
                     if (currentNetwork) {
                         this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
-                        console.log('Auto-reselected current network after scan:', this.wifiScan.currentSSID);
+                        console.log('📡 WiFi: Auto-selected current network:', this.wifiScan.currentSSID);
                     }
                 }
                 
-                console.log('WiFi scan completed:', validNetworks.length, 'valid networks found from', networks.length, 'total scanned');
+                console.log('📡 WiFi: Scan found', validNetworks.length, 'networks');
                 
             } catch (error) {
-                console.error('WiFi scan failed:', error);
+                console.error('📡 WiFi: Scan failed:', error);
                 this.wifiScan.error = error.message;
                 this.showErrorMessage(`WiFi scan failed: ${error.message}`);
             } finally {
@@ -369,16 +369,16 @@ function initializeWiFiSettingsStore() {
                     partialConfig.wifi.password = this.config.device.wifi.password;
                 }
                 
-                console.log('Saving partial WiFi configuration:', partialConfig);
+                console.log('📡 WiFi: Saving configuration');
                 const message = await window.SettingsAPI.saveConfiguration(partialConfig);
                 
-                console.log('Alpine WiFi Store: Configuration saved successfully');
+                console.log('📡 WiFi: Configuration saved successfully');
                 
                 // Redirect immediately with success parameter
                 window.location.href = '/settings.html?saved=wifi';
                 
             } catch (error) {
-                console.error('Alpine WiFi Store: Failed to save configuration:', error);
+                console.error('📡 WiFi: Failed to save configuration:', error);
                 this.showErrorMessage('Failed to save WiFi settings: ' + error.message);
                 this.saving = false; // Only reset on error
             }
@@ -437,7 +437,7 @@ This memo printed from Settings → WiFi`;
                 
                 await window.SettingsAPI.printLocalContent(content);
                 
-                console.log('AP details print request submitted successfully');
+                console.log('📡 WiFi: AP details printed');
                 
                 // Show "Scribing" for 2 seconds then revert to normal
                 setTimeout(() => {
@@ -445,7 +445,7 @@ This memo printed from Settings → WiFi`;
                 }, 2000);
                 
             } catch (error) {
-                console.error('Failed to print AP details:', error);
+                console.error('📡 WiFi: Failed to print AP details:', error);
                 // Reset to normal state and show error to user
                 this.apPrintStatus = 'normal';
                 
@@ -476,5 +476,5 @@ document.addEventListener('alpine:init', () => {
         wifiStore.updateSSID();
     });
     
-    console.log('✅ WiFi Settings Store registered');
+    console.log('📡 WiFi: Store registered');
 });

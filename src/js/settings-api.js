@@ -10,7 +10,6 @@
  */
 async function loadConfiguration() {
     try {
-        console.log('API: Loading configuration from server...');
         
         const response = await fetch('/api/config');
         if (!response.ok) {
@@ -18,7 +17,6 @@ async function loadConfiguration() {
         }
         
         const config = await response.json();
-        console.log('API: Configuration loaded successfully');
         return config;
         
     } catch (error) {
@@ -34,7 +32,6 @@ async function loadConfiguration() {
  */
 async function saveConfiguration(configData) {
     try {
-        console.log('API: Sending config to server...');
         
         const response = await fetch('/api/config', {
             method: 'POST',
@@ -50,7 +47,6 @@ async function saveConfiguration(configData) {
             throw new Error(`Server error: ${response.status} - ${errorText}`);
         }
         
-        console.log('API: Configuration saved successfully');
         return 'Configuration saved';
         
     } catch (error) {
@@ -202,7 +198,6 @@ async function turnOffLeds() {
  */
 async function scanWiFiNetworks() {
     try {
-        console.log('API: Scanning for WiFi networks...');
         
         // Use AbortController for longer timeout (WiFi scan can take 5-10 seconds)
         const controller = new AbortController();
@@ -218,7 +213,6 @@ async function scanWiFiNetworks() {
         }
         
         const result = await response.json();
-        console.log('API: WiFi scan completed:', result);
         
         // Check for networks array instead of success flag
         if (!result.networks || !Array.isArray(result.networks)) {

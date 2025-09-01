@@ -225,6 +225,13 @@ window.myStoreInstance = createStore(); // Avoid this pattern
 </div>
 ```
 
+**❌ WRONG: Massive pointless property renaming**
+```javascript
+// Don't rename existing working properties if easily avoided
+// BAD: Changing all HTML references from config.* to data.config.*
+config: { device: {...} }  →  data: { config: { device: {...} } }  // AVOID THIS
+```
+
 **✅ CORRECT: Use x-if for data safety + x-show for animations**
 ```html
 <template x-if="loaded && !error">
@@ -232,6 +239,13 @@ window.myStoreInstance = createStore(); // Avoid this pattern
         <input x-model="config.device.owner"> <!-- SAFE: only evaluates when loaded -->
     </div>
 </template>
+```
+
+**✅ CORRECT: Keep existing property names when possible**
+```javascript
+// Settings pages: Keep existing config property, just make it empty initially
+config: {},  // Empty object populated on load (avoid massive HTML changes)
+// vs massive changes: data: { config: {} } requiring all HTML updates
 ```
 
 ### FOUC Prevention & Transitions
