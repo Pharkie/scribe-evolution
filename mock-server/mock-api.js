@@ -704,9 +704,23 @@ function createRequestHandler() {
         setTimeout(() => sendJSON(res, mockWifiScan), 800);
         
       } else if (pathname === '/api/timezones') {
-        console.log('🌍 Timezone data requested - serving via static file handler');
-        // Let this fall through to static file serving (mirrors ESP32 serveStatic approach)
-        // The timezone file will be handled by the unified static serving logic below
+        console.log('🌍 Timezone data requested - serving compressed file directly');
+        // Serve compressed file directly (mirrors ESP32 serveStatic approach)
+        const filePath = path.join(__dirname, '..', 'data', 'resources', 'timezones.json.gz');
+        try {
+          const compressedData = fs.readFileSync(filePath);
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Content-Encoding': 'gzip',
+            'Cache-Control': 'public, max-age=86400', // 24 hours like ESP32
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(compressedData);
+        } catch (error) {
+          console.error('Failed to serve timezone data:', error);
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: "Timezone data not available" }));
+        }
         
       } else if (pathname === '/api/joke' && req.method === 'GET') {
         console.log('😄 Joke requested');
