@@ -1,5 +1,4 @@
 /* Setup page specific styles */
-@import "./shared.css";
 
 @layer base {
   /* Hide error states and overlay by default until Alpine.js initializes - prevents FOUC */

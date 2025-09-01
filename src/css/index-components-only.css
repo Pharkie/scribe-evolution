@@ -1,0 +1,163 @@
+/* Index page specific styles - Components only, no Tailwind base */
+
+/* Logo hidden state to prevent FOUC */
+.logo-hidden {
+  opacity: 0;
+  transform: translateZ(-400px) scale(0.5);
+}
+
+/* Scribe Evolution logo entrance animation - inspired by Animata */
+.slide-in-bck-center {
+  animation: scribe-logo-entrance 2s cubic-bezier(0.55, 0.085, 0.68, 0.53) both !important;
+  /* Ensure animation runs from the beginning */
+  animation-delay: 0s !important;
+  animation-fill-mode: both !important;
+  animation-iteration-count: 1 !important;
+}
+
+/**
+ * ----------------------------------------
+ * animation scribe-logo-entrance
+ * ----------------------------------------
+ */
+@keyframes scribe-logo-entrance {
+  0% {
+    transform: translateY(30px) scale(0.8) rotate(-2deg);
+    opacity: 0;
+  }
+  
+  20% {
+    transform: translateY(10px) scale(1.1) rotate(1deg);
+    opacity: 0.6;
+  }
+  
+  30% {
+    transform: translateY(-3px) scale(1.4) rotate(-3deg);
+    opacity: 0.8;
+  }
+  
+  35% {
+    transform: translateY(-3px) scale(1.4) rotate(3deg);
+    opacity: 0.8;
+  }
+  
+  40% {
+    transform: translateY(-3px) scale(1.4) rotate(-2deg);
+    opacity: 0.8;
+  }
+  
+  60% {
+    transform: translateY(1px) scale(0.95) rotate(0deg);
+    opacity: 0.95;
+  }
+  
+  80% {
+    transform: translateY(-0.5px) scale(1.02) rotate(0deg);
+    opacity: 1;
+  }
+  
+  100% {
+    transform: translateY(0px) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Quick Actions Grid - responsive using CSS Grid */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem; /* 12px */
+}
+
+@media (min-width: 640px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Status indicator button with animations */
+.status-indicator-stashed {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  background-color: #ea580c; /* Orange-600 */
+  color: white;
+  animation: fadeToNormal 3s ease-out forwards;
+}
+
+@media (min-width: 640px) {
+  .status-indicator-stashed {
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+@keyframes fadeToNormal {
+  0% {
+    background-color: #ea580c; /* Orange-600 */
+    color: white;
+    font-weight: 700; /* Bold */
+    transform: scale(1.05);
+  }
+  50% {
+    background-color: #f97316; /* Orange-500 */
+    color: white;
+    font-weight: 600; /* Semi-bold */
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: #f3f4f6; /* Gray-100 for light mode */
+    color: #374151; /* Gray-700 for light mode */
+    font-weight: 400; /* Normal */
+    transform: scale(1);
+  }
+}
+
+/* Dark mode version of the animation */
+@media (prefers-color-scheme: dark) {
+  .status-indicator-stashed {
+    animation: fadeToNormalDark 3s ease-out forwards;
+  }
+}
+
+@keyframes fadeToNormalDark {
+  0% {
+    background-color: #ea580c; /* Orange-600 */
+    color: white;
+    font-weight: 700; /* Bold */
+    transform: scale(1.05);
+  }
+  50% {
+    background-color: #f97316; /* Orange-500 */
+    color: white;
+    font-weight: 600; /* Semi-bold */
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: #374151; /* Gray-700 for dark mode */
+    color: #d1d5db; /* Gray-300 for dark mode */
+    font-weight: 400; /* Normal */
+    transform: scale(1);
+  }
+}

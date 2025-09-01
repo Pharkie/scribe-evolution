@@ -1,0 +1,1330 @@
+/* Comprehensive app.css - Single CSS file for entire application */
+@import "tailwindcss";
+
+/* ========================================
+ * BASE LAYER - Global styles and resets
+ * ======================================== */
+@layer base {
+  /* Hide error states by default until Alpine.js initializes - prevents flash of error content */
+  [x-show="error"],
+  [x-show="saving"] {
+    display: none !important;
+  }
+}
+
+/* ========================================
+ * COMPONENTS LAYER - Reusable UI components
+ * ======================================== */
+@layer components {
+  /* ========================================
+   * GLOBAL COMPONENTS - Shared across pages
+   * ======================================== */
+
+  /* Form input styling - appears 10+ times across forms */
+  .form-input {
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+  }
+
+  /* Alternative input styling for settings and setup */
+  .input-standard {
+    @apply w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700;
+  }
+
+  /* Base page layout - complex pattern used by every page */
+  .page-body {
+    @apply flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
+  }
+
+  /* Loading components */
+  .loading-card {
+    @apply bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 shadow-2xl rounded-3xl p-8 text-center;
+  }
+
+  .loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600;
+  }
+
+  /* ========================================
+   * SLIDER COMPONENTS - Complex webkit/moz patterns
+   * ======================================== */
+
+  /* Basic slider styling */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    @apply bg-gray-300 dark:bg-gray-600;
+    outline: none;
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    @apply bg-emerald-500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .slider::-webkit-slider-thumb:hover {
+    @apply bg-emerald-600;
+    transform: scale(1.1);
+  }
+
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    @apply bg-emerald-500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+
+  .slider::-moz-range-thumb:hover {
+    @apply bg-emerald-600;
+    transform: scale(1.1);
+  }
+
+  /* Dual-range slider component (Settings page) */
+  .dual-range-slider {
+    @apply relative h-8;
+  }
+
+  .dual-range-track {
+    @apply absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg;
+    top: 12px;
+  }
+
+  .dual-range-active {
+    @apply absolute h-2 bg-purple-500 rounded-lg;
+    top: 12px;
+  }
+
+  .dual-range-input {
+    @apply absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer;
+    top: 0;
+    pointer-events: none;
+  }
+
+  .dual-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    position: relative;
+    @apply bg-purple-500;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+  }
+
+  .dual-range-start {
+    z-index: 24;
+  }
+
+  .dual-range-start::-webkit-slider-thumb {
+    z-index: 24;
+  }
+
+  .dual-range-end {
+    z-index: 23;
+  }
+
+  .dual-range-end::-webkit-slider-thumb {
+    z-index: 23;
+  }
+
+  /* When dragging, bring to front */
+  .dual-range-start:active::-webkit-slider-thumb {
+    z-index: 25;
+  }
+
+  .dual-range-end:active::-webkit-slider-thumb {
+    z-index: 25;
+  }
+
+  /* Click areas for better UX */
+  .dual-range-click-area {
+    @apply absolute cursor-pointer;
+    top: 0;
+    height: 32px;
+    background: transparent;
+    z-index: 20;
+  }
+
+  /* Single-range slider (frequency slider) */
+  .single-range-slider {
+    @apply relative h-8;
+  }
+
+  .single-range-track {
+    @apply absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg;
+    top: 12px;
+  }
+
+  .single-range-input {
+    @apply absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* Webkit thumb styling for single-range slider */
+  .single-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    @apply w-6 h-6 bg-blue-500 rounded-full shadow-lg cursor-pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .single-range-input::-webkit-slider-thumb:hover {
+    @apply bg-blue-600;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .single-range-input::-webkit-slider-thumb:active {
+    @apply bg-blue-700;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Firefox thumb styling for single-range slider */
+  .single-range-input::-moz-range-thumb {
+    @apply w-6 h-6 bg-blue-500 rounded-full shadow-lg cursor-pointer border-0;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .single-range-input::-moz-range-thumb:hover {
+    @apply bg-blue-600;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .single-range-input::-moz-range-thumb:active {
+    @apply bg-blue-700;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ========================================
+   * BUTTON COMPONENTS - Various button styles
+   * ======================================== */
+
+  /* Primary submit button */
+  .submit-button {
+    @apply w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+  }
+
+  /* Setup specific button styling */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg;
+  }
+
+  /* Secondary link button */
+  .link-button {
+    @apply inline-block px-4 py-2 bg-slate-500 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500 text-white text-sm rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg;
+  }
+
+  /* 404 page error home button */
+  .error-home-button {
+    @apply inline-block bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg text-sm;
+  }
+
+  /* LED Effect Buttons */
+  .led-effect-btn {
+    @apply px-4 py-3 rounded-xl border-2 font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2;
+  }
+
+  /* ========================================
+   * STATUS INDICATORS - Status button components
+   * ======================================== */
+
+  /* Status indicator button */
+  .status-indicator {
+    @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200;
+  }
+
+  /* Status indicator button - stashed state with orange fade animation */
+  .status-indicator-stashed {
+    @apply flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-bold;
+    background-color: #ea580c; /* Orange-600 */
+    color: white;
+    animation: fadeToNormal 3s ease-out forwards;
+  }
+
+  /* ========================================
+   * CARD COMPONENTS - Various card layouts
+   * ======================================== */
+
+  /* Settings cards */
+  .settings-card {
+    @apply shadow-2xl rounded-3xl p-8;
+  }
+
+  .settings-card-blue {
+    @apply bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700;
+  }
+
+  .settings-card-purple {
+    @apply bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700;
+  }
+
+  .settings-card-yellow {
+    @apply bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700;
+  }
+
+  .settings-card-green {
+    @apply bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700;
+  }
+
+  .settings-card-pink {
+    @apply bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-700;
+  }
+
+  .settings-card-teal {
+    @apply bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700;
+  }
+
+  /* Setup card styling */
+  .setup-card {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl p-6 mb-6;
+  }
+
+  /* Error card (404 page) */
+  .error-card {
+    @apply bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-700;
+  }
+
+  /* ========================================
+   * TEXT COMPONENTS - Headers and typography
+   * ======================================== */
+
+  /* Settings card headers */
+  .settings-card-header {
+    @apply text-2xl font-bold mb-6 flex items-center space-x-2;
+  }
+
+  .settings-card-header-blue {
+    @apply text-blue-800 dark:text-blue-100;
+  }
+
+  .settings-card-header-purple {
+    @apply text-purple-800 dark:text-purple-100;
+  }
+
+  .settings-card-header-yellow {
+    @apply text-yellow-800 dark:text-yellow-100;
+  }
+
+  .settings-card-header-green {
+    @apply text-green-800 dark:text-green-100;
+  }
+
+  .settings-card-header-pink {
+    @apply text-pink-800 dark:text-pink-100;
+  }
+
+  .settings-card-header-teal {
+    @apply text-teal-800 dark:text-teal-100;
+  }
+
+  /* Error page typography */
+  .error-title {
+    @apply text-xl font-bold text-blue-600 dark:text-blue-400 mb-2;
+  }
+
+  .error-code {
+    @apply text-5xl font-bold text-gray-300 dark:text-gray-600 text-center my-3;
+  }
+
+  .error-message {
+    @apply text-base text-gray-700 dark:text-gray-300 mb-3;
+  }
+
+  .error-help-text {
+    @apply text-gray-600 dark:text-gray-400 text-xs;
+  }
+
+  .error-help-link {
+    @apply text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors underline;
+  }
+
+  /* Character counter */
+  .char-counter {
+    @apply text-xs text-gray-500 dark:text-gray-400 text-right;
+  }
+
+  /* Footer link styling */
+  .footer-link {
+    @apply text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 underline decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 underline-offset-2;
+  }
+
+  /* Diagnostic section heading styles */
+  .diag-section-heading {
+    @apply font-semibold text-slate-700 dark:text-slate-300 mb-2;
+  }
+
+  /* ========================================
+   * FORM COMPONENTS - Form-related styles
+   * ======================================== */
+
+  /* Textarea with custom styling */
+  .textarea-custom {
+    @apply w-full p-4 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700;
+  }
+
+  /* Settings panel */
+  .settings-panel {
+    @apply fixed inset-0 bg-black/50 flex items-center justify-center p-4 opacity-0 transform scale-95 transition-all duration-200;
+  }
+
+  .settings-form {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 space-y-4 transform transition-all duration-200;
+  }
+
+  .settings-field {
+    @apply space-y-2;
+  }
+
+  .settings-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+
+  /* Settings toggle */
+  .settings-toggle {
+    @apply relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out;
+  }
+
+  .settings-toggle input {
+    @apply sr-only;
+  }
+
+  .settings-toggle span {
+    @apply absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out;
+  }
+
+  .settings-toggle input:checked + span {
+    @apply transform translate-x-6;
+  }
+
+  /* Required field indicators */
+  .required-field::after {
+    content: " *";
+    @apply text-red-500;
+  }
+
+  /* ========================================
+   * NAVIGATION COMPONENTS - Section navigation buttons
+   * ======================================== */
+
+  .section-nav-btn {
+    @apply px-3 py-2 text-sm rounded-lg transition-colors;
+  }
+
+  .section-nav-btn-purple {
+    @apply bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300;
+  }
+
+  .section-nav-btn-blue {
+    @apply bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300;
+  }
+
+  .section-nav-btn-green {
+    @apply bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300;
+  }
+
+  .section-nav-btn-orange {
+    @apply bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300;
+  }
+
+  .section-nav-btn-yellow {
+    @apply bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300;
+  }
+
+  .section-nav-btn-pink {
+    @apply bg-pink-100 hover:bg-pink-200 dark:bg-pink-900/30 dark:hover:bg-pink-900/50 text-pink-700 dark:text-pink-300;
+  }
+
+  .section-nav-btn-teal {
+    @apply bg-teal-100 hover:bg-teal-200 dark:bg-teal-900/30 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300;
+  }
+
+  .section-nav-btn-indigo {
+    @apply bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300;
+  }
+
+  .section-nav-btn-gray {
+    @apply bg-gray-100 hover:bg-gray-200 dark:bg-gray-900/30 dark:hover:bg-gray-900/50 text-gray-700 dark:text-gray-300;
+  }
+
+  .section-nav-btn-red {
+    @apply bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300;
+  }
+
+  .section-nav-btn-cyan {
+    @apply bg-cyan-100 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300;
+  }
+
+  .section-nav-btn-slate {
+    @apply bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 text-slate-700 dark:text-slate-300;
+  }
+
+  .section-nav-btn.active {
+    @apply ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800;
+  }
+
+  /* ========================================
+   * SPECIAL COMPONENTS - Unique page elements
+   * ======================================== */
+
+  /* Warning box */
+  .warning-box {
+    @apply mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg;
+  }
+
+  .warning-title {
+    @apply text-lg font-semibold text-orange-800 dark:text-orange-300;
+  }
+
+  /* Status info box - distinctive read-only sections */
+  .status-info-box {
+    @apply mt-6 p-5 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-800/40 dark:to-slate-700/40 border-2 border-slate-300 dark:border-slate-600 rounded-2xl shadow-inner;
+  }
+
+  .status-info-header {
+    @apply text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center pb-3 border-b-2 border-slate-300 dark:border-slate-600;
+  }
+
+  /* Error details (404 page) */
+  .error-details {
+    @apply bg-gray-50 dark:bg-gray-700 p-2 rounded-lg mb-3;
+  }
+
+  .error-details-title {
+    @apply text-gray-900 dark:text-gray-100 font-bold;
+  }
+
+  .error-details-content {
+    @apply text-gray-700 dark:text-gray-300 mt-1 space-y-0.5 text-xs;
+  }
+
+  .error-details-item {
+    @apply font-mono;
+  }
+
+  .error-actions {
+    @apply text-center space-y-2;
+  }
+
+  /* ========================================
+   * COLOR PICKER COMPONENTS - Pickr integration
+   * ======================================== */
+
+  /* Pickr Integration Styles */
+  .pickr {
+    @apply w-20 h-12 rounded-lg;
+  }
+
+  .pickr .pcr-button {
+    @apply w-full h-full rounded-lg border-0 shadow-sm;
+  }
+
+  .pickr .pcr-button:before {
+    @apply rounded-lg;
+  }
+
+  /* Pickr popup positioning and dark mode support */
+  .pickr .pcr-app {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl;
+  }
+
+  .pickr .pcr-app .pcr-interaction input {
+    @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600;
+  }
+
+  /* ========================================
+   * LAYOUT COMPONENTS - Grid layouts
+   * ======================================== */
+
+  /* Quick Actions Grid - 6 buttons: 2 cols mobile, 3 cols tablet, 6 cols desktop, 3 cols (2 rows) at 1200px+ */
+  .quick-actions-grid {
+    @apply grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-3 gap-3;
+  }
+
+  /* Printer selection grid */
+  .printer-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3;
+  }
+
+  .error-container {
+    @apply max-w-lg mx-auto px-2 py-6;
+  }
+
+  /* Settings section management */
+  .settings-section {
+    @apply block;
+  }
+
+  .settings-section.hidden {
+    @apply hidden;
+  }
+
+  /* ========================================
+   * ANIMATION COMPONENTS - Special animations
+   * ======================================== */
+
+  /* Logo hidden state to prevent FOUC */
+  .logo-hidden {
+    opacity: 0;
+    transform: translateZ(-400px) scale(0.5);
+  }
+
+  /* Scribe Evolution logo entrance animation - inspired by Animata */
+  .slide-in-bck-center {
+    animation: scribe-logo-entrance 2s cubic-bezier(0.55, 0.085, 0.68, 0.53) both !important;
+    /* Ensure animation runs from the beginning */
+    animation-delay: 0s !important;
+    animation-fill-mode: both !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  /* Enhanced form inputs for setup */
+  input[type="text"], 
+  input[type="password"], 
+  select {
+    @apply transition-all duration-200;
+  }
+
+  input[type="text"]:focus, 
+  input[type="password"]:focus, 
+  select:focus {
+    @apply ring-2 ring-blue-500 border-blue-500 shadow-md;
+  }
+
+  /* WiFi network option styling */
+  select option {
+    @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100;
+  }
+
+  /* Loading state for scan button */
+  .scan-button-loading {
+    @apply opacity-75 cursor-not-allowed;
+  }
+}
+
+/* ========================================
+ * UTILITIES LAYER - Single-purpose utilities
+ * ======================================== */
+@layer utilities {
+  /* ========================================
+   * ACTION BUTTONS - Complex media query patterns
+   * ======================================== */
+
+  .action-button-yellow {
+    background-color: rgb(254 249 195);
+    border-color: rgb(254 240 138);
+    color: rgb(161 98 7);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-yellow {
+      background-color: rgb(113 63 18 / 0.2);
+      border-color: rgb(161 98 7);
+      color: rgb(252 211 77);
+    }
+  }
+
+  .action-button-yellow:hover {
+    background-color: rgb(254 240 138);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-yellow:hover {
+      background-color: rgb(113 63 18 / 0.3);
+    }
+  }
+
+  .action-button-emerald {
+    background-color: rgb(236 253 245);
+    border-color: rgb(167 243 208);
+    color: rgb(5 150 105);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-emerald {
+      background-color: rgb(6 78 59 / 0.2);
+      border-color: rgb(5 150 105);
+      color: rgb(110 231 183);
+    }
+  }
+
+  .action-button-emerald:hover {
+    background-color: rgb(209 250 229);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-emerald:hover {
+      background-color: rgb(6 78 59 / 0.3);
+    }
+  }
+
+  .action-button-purple {
+    background-color: rgb(250 245 255);
+    border-color: rgb(221 214 254);
+    color: rgb(109 40 217);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-purple {
+      background-color: rgb(88 28 135 / 0.2);
+      border-color: rgb(109 40 217);
+      color: rgb(196 181 253);
+    }
+  }
+
+  .action-button-purple:hover {
+    background-color: rgb(243 232 255);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-purple:hover {
+      background-color: rgb(88 28 135 / 0.5);
+    }
+  }
+
+  .action-button-cyan {
+    background-color: rgb(236 254 255);
+    border-color: rgb(165 243 252);
+    color: rgb(14 116 144);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-cyan {
+      background-color: rgb(22 78 99 / 0.2);
+      border-color: rgb(14 116 144);
+      color: rgb(103 232 249);
+    }
+  }
+
+  .action-button-cyan:hover {
+    background-color: rgb(207 250 254);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-cyan:hover {
+      background-color: rgb(22 78 99 / 0.3);
+    }
+  }
+
+  .action-button-pink {
+    background-color: rgb(253 242 248);
+    border-color: rgb(251 207 232);
+    color: rgb(190 24 93);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-pink {
+      background-color: rgb(131 24 67 / 0.2);
+      border-color: rgb(190 24 93);
+      color: rgb(244 114 182);
+    }
+  }
+
+  .action-button-pink:hover {
+    background-color: rgb(252 231 243);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-pink:hover {
+      background-color: rgb(131 24 67 / 0.3);
+    }
+  }
+
+  .action-button-gray {
+    background-color: rgb(249 250 251);
+    border-color: rgb(229 231 235);
+    color: rgb(55 65 81);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-gray {
+      background-color: rgb(17 24 39 / 0.2);
+      border-color: rgb(55 65 81);
+      color: rgb(209 213 219);
+    }
+  }
+
+  .action-button-gray:hover {
+    background-color: rgb(243 244 246);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .action-button-gray:hover {
+      background-color: rgb(17 24 39 / 0.3);
+    }
+  }
+
+  /* ========================================
+   * TIME MARKERS - Semantic positioning classes for sliders
+   * ======================================== */
+  .time-marker {
+    @apply absolute;
+  }
+
+  .time-marker-0 { left: 0%; }
+  .time-marker-1 { left: 4.17%; }
+  .time-marker-2 { left: 8.33%; }
+  .time-marker-3 { left: 12.5%; }
+  .time-marker-4 { left: 16.67%; }
+  .time-marker-5 { left: 20.83%; }
+  .time-marker-6 { left: 25%; }
+  .time-marker-7 { left: 29.17%; }
+  .time-marker-8 { left: 33.33%; }
+  .time-marker-9 { left: 37.5%; }
+  .time-marker-10 { left: 41.67%; }
+  .time-marker-11 { left: 45.83%; }
+  .time-marker-12 { left: 50%; }
+  .time-marker-13 { left: 54.17%; }
+  .time-marker-14 { left: 58.33%; }
+  .time-marker-15 { left: 62.5%; }
+  .time-marker-16 { left: 66.67%; }
+  .time-marker-17 { left: 70.83%; }
+  .time-marker-18 { left: 75%; }
+  .time-marker-19 { left: 79.17%; }
+  .time-marker-20 { left: 83.33%; }
+  .time-marker-21 { left: 87.5%; }
+  .time-marker-22 { left: 91.67%; }
+  .time-marker-23 { left: 95.83%; }
+  .time-marker-24 { left: 100%; }
+
+  /* ========================================
+   * ANIMATION UTILITIES - Custom animations
+   * ======================================== */
+
+  /* Scribe Logo Entrance Animation */
+  @keyframes scribe-logo-entrance {
+    0% {
+      transform: translateY(30px) scale(0.8) rotate(-2deg);
+      opacity: 0;
+    }
+    
+    20% {
+      transform: translateY(10px) scale(1.1) rotate(1deg);
+      opacity: 0.6;
+    }
+    
+    30% {
+      transform: translateY(-3px) scale(1.4) rotate(-3deg);
+      opacity: 0.8;
+    }
+    
+    35% {
+      transform: translateY(-3px) scale(1.4) rotate(3deg);
+      opacity: 0.8;
+    }
+    
+    40% {
+      transform: translateY(-3px) scale(1.4) rotate(-2deg);
+      opacity: 0.8;
+    }
+    
+    60% {
+      transform: translateY(1px) scale(0.95) rotate(0deg);
+      opacity: 0.95;
+    }
+    
+    80% {
+      transform: translateY(-0.5px) scale(1.02) rotate(0deg);
+      opacity: 1;
+    }
+    
+    100% {
+      transform: translateY(0px) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* Status indicator fade animations */
+  @keyframes fadeToNormal {
+    0% {
+      background-color: #ea580c; /* Orange-600 */
+      color: white;
+      font-weight: 700; /* Bold */
+      transform: scale(1.05);
+    }
+    50% {
+      background-color: #f97316; /* Orange-500 */
+      color: white;
+      font-weight: 600; /* Semi-bold */
+      transform: scale(1.02);
+    }
+    100% {
+      background-color: #f3f4f6; /* Gray-100 for light mode */
+      color: #374151; /* Gray-700 for light mode */
+      font-weight: 400; /* Normal */
+      transform: scale(1);
+    }
+  }
+
+  /* Dark mode version of the animation */
+  .dark .status-indicator-stashed {
+    animation: fadeToNormalDark 3s ease-out forwards;
+  }
+
+  @keyframes fadeToNormalDark {
+    0% {
+      background-color: #ea580c; /* Orange-600 */
+      color: white;
+      font-weight: 700; /* Bold */
+      transform: scale(1.05);
+    }
+    50% {
+      background-color: #f97316; /* Orange-500 */
+      color: white;
+      font-weight: 600; /* Semi-bold */
+      transform: scale(1.02);
+    }
+    100% {
+      background-color: #374151; /* Gray-700 for dark mode */
+      color: #d1d5db; /* Gray-300 for dark mode */
+      font-weight: 400; /* Normal */
+      transform: scale(1);
+    }
+  }
+
+  /* ========================================
+   * SETTINGS PANEL ANIMATIONS
+   * ======================================== */
+
+  /* Settings panel animations */
+  .settings-show {
+    opacity: 1 !important;
+  }
+
+  .settings-show #settings-panel {
+    transform: scale(1) !important;
+  }
+
+  /* Settings container transition */
+  #unbidden-ink-settings {
+    transition: opacity 0.3s ease, pointer-events 0.3s ease;
+  }
+
+  /* Disabled state styling */
+  #unbidden-ink-settings.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  #unbidden-ink-settings.disabled input,
+  #unbidden-ink-settings.disabled select,
+  #unbidden-ink-settings.disabled textarea,
+  #unbidden-ink-settings.disabled button {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* ========================================
+   * DIAGNOSTIC PAGE UTILITIES - Section variants and styling
+   * ======================================== */
+
+  /* Section base styles */
+  .diag-section {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4;
+  }
+
+  /* Section variants - direct implementation */
+  .diag-section.purple {
+    @apply bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700;
+  }
+
+  .diag-section.blue {
+    @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700;
+  }
+
+  .diag-section.green {
+    @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700;
+  }
+
+  .diag-section.orange {
+    @apply bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700;
+  }
+
+  .diag-section.yellow {
+    @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700;
+  }
+
+  .diag-section.indigo {
+    @apply bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700;
+  }
+
+  .diag-section.slate {
+    @apply bg-slate-50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-700;
+  }
+
+  .diag-section.pink {
+    @apply bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-700;
+  }
+
+  .diag-section.teal {
+    @apply bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-700;
+  }
+
+  .diag-section.gray {
+    @apply bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-700;
+  }
+
+  .diag-section.red {
+    @apply bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700;
+  }
+
+  .diag-section.cyan {
+    @apply bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-700;
+  }
+
+  /* Section headers */
+  .diag-header {
+    @apply flex items-center justify-between mb-3;
+  }
+
+  .diag-title {
+    @apply text-lg font-semibold flex items-center;
+  }
+
+  .diag-title.purple {
+    @apply text-purple-800 dark:text-purple-300;
+  }
+
+  .diag-title.blue {
+    @apply text-blue-800 dark:text-blue-300;
+  }
+
+  .diag-title.green {
+    @apply text-green-800 dark:text-green-300;
+  }
+
+  .diag-title.orange {
+    @apply text-orange-800 dark:text-orange-300;
+  }
+
+  .diag-title.yellow {
+    @apply text-yellow-800 dark:text-yellow-300;
+  }
+
+  .diag-title.indigo {
+    @apply text-indigo-800 dark:text-indigo-300;
+  }
+
+  .diag-title.slate {
+    @apply text-slate-800 dark:text-slate-300;
+  }
+
+  .diag-title.pink {
+    @apply text-pink-800 dark:text-pink-300;
+  }
+
+  .diag-title.teal {
+    @apply text-teal-800 dark:text-teal-300;
+  }
+
+  .diag-title.gray {
+    @apply text-gray-800 dark:text-gray-300;
+  }
+
+  .diag-title.red {
+    @apply text-red-800 dark:text-red-300;
+  }
+
+  .diag-title.cyan {
+    @apply text-cyan-800 dark:text-cyan-300;
+  }
+
+  /* Data rows */
+  .diag-row {
+    @apply flex justify-between;
+  }
+
+  .diag-row.flexible {
+    @apply flex-col sm:flex-row sm:justify-between gap-1;
+  }
+
+  .diag-label {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+
+  .diag-value {
+    @apply font-medium text-gray-900 dark:text-gray-100;
+  }
+
+  .diag-value.flexible {
+    @apply text-right sm:text-left;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+
+  /* Progress bars */
+  .diag-progress-container {
+    @apply w-full rounded-full h-2;
+  }
+
+  .diag-progress-container.orange {
+    @apply bg-orange-200 dark:bg-orange-800/30;
+  }
+
+  .diag-progress-bar {
+    @apply h-2 rounded-full transition-all duration-300;
+  }
+
+  .diag-progress-bar.orange {
+    @apply bg-orange-500;
+  }
+
+  .diag-progress-bar.red {
+    @apply bg-red-500;
+  }
+
+  .diag-progress-bar.orange-dark {
+    @apply bg-orange-600;
+  }
+
+  /* Reference boxes */
+  .diag-reference {
+    @apply mt-4 pt-3 border-t;
+  }
+
+  .diag-reference.blue {
+    @apply border-blue-200 dark:border-blue-700;
+  }
+
+  .diag-reference-title {
+    @apply text-sm font-semibold mb-3 flex items-center;
+  }
+
+  .diag-reference-title.blue {
+    @apply text-blue-700 dark:text-blue-300;
+  }
+
+  .diag-reference-box {
+    @apply p-3 rounded-lg text-sm space-y-2;
+  }
+
+  .diag-reference-box.blue {
+    @apply bg-blue-100 dark:bg-blue-800/30;
+  }
+
+  /* Memory usage section */
+  .diag-memory {
+    @apply space-y-3;
+  }
+
+  .diag-memory-item {
+    @apply space-y-1;
+  }
+
+  .diag-memory-label {
+    @apply flex justify-between text-sm mb-1;
+  }
+
+  /* Error container */
+  .diag-error {
+    @apply hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4;
+  }
+
+  .diag-error.show {
+    @apply block;
+  }
+
+  /* Config file display */
+  .diag-config-display {
+    @apply bg-gray-900 dark:bg-gray-950 text-gray-100 p-3 rounded-lg text-sm max-h-[32rem] overflow-y-auto border font-mono;
+  }
+
+  /* JSON syntax highlighting */
+  .json-string {
+    @apply text-green-400;
+  }
+
+  .json-number {
+    @apply text-blue-300;
+  }
+
+  .json-boolean {
+    @apply text-yellow-400;
+  }
+
+  .json-null {
+    @apply text-red-400;
+  }
+
+  .json-key {
+    @apply text-cyan-300;
+  }
+
+  .json-punctuation {
+    @apply text-gray-400;
+  }
+
+  .diag-config-warning {
+    @apply text-xs mt-1;
+  }
+
+  .diag-config-warning.slate {
+    @apply text-slate-600 dark:text-slate-400;
+  }
+
+  .diag-config-warning.gray {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+
+  .diag-config-warning.red {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  .diag-config-warning.cyan {
+    @apply text-cyan-600 dark:text-cyan-400;
+  }
+
+  /* JSON content display for runtime config and NVS */
+  .diag-json-content {
+    @apply bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-sm font-mono;
+    @apply max-h-96 overflow-auto border border-gray-700;
+    @apply whitespace-pre-wrap break-words;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+
+  /* Fullscreen JSON content - no height limits */
+  .diag-json-wrapper {
+    @apply -mx-4 -my-2; /* Expand beyond container margins */
+  }
+
+  .diag-json-content-fullscreen {
+    @apply bg-gray-900 dark:bg-gray-950 text-gray-100 p-6 rounded-lg text-sm font-mono;
+    @apply border border-gray-700 overflow-x-auto;
+    @apply whitespace-pre;
+    tab-size: 2;
+    line-height: 1.5;
+    min-height: 200px;
+  }
+
+  /* JSON Syntax Highlighting - refined version */
+  .json-key {
+    @apply text-blue-300;
+  }
+
+  .json-string {
+    @apply text-green-300;
+  }
+
+  .json-number {
+    @apply text-yellow-300;
+  }
+
+  .json-boolean {
+    @apply text-purple-300;
+  }
+
+  .json-null {
+    @apply text-gray-400;
+  }
+
+  .json-punctuation {
+    @apply text-gray-300;
+  }
+
+  /* Button sections */
+  .button-section {
+    @apply bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-600 mb-3;
+  }
+
+  .button-section:last-child {
+    @apply mb-0;
+  }
+
+  /* ========================================
+   * LAYOUT AND RESPONSIVE UTILITIES
+   * ======================================== */
+
+  /* Printer info overlay responsive styles */
+  #printer-info-overlay {
+    transition: opacity 0.3s ease;
+  }
+
+  /* Mobile-specific adjustments for printer info overlay */
+  @media (max-width: 640px) {
+    #printer-info-overlay .relative {
+      border-radius: 1rem 1rem 0 0;
+      max-height: 85vh;
+    }
+    
+    #printer-info-overlay {
+      padding: 0;
+    }
+  }
+
+  /* Touch-friendly info icon sizing */
+  .info-icon {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Smooth transitions for printer options */
+  .printer-option {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  /* Ensure info icon doesn't interfere with hover effects on desktop */
+  @media (hover: hover) {
+    .printer-option:hover .info-icon {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Page layout with settings button */
+  .page-main-container {
+    @apply relative max-w-6xl mx-auto px-4 py-6;
+  }
+
+  .settings-button-container {
+    @apply absolute top-0 right-4;
+    /* Position to the right of the main content, vertically centered with title */
+    margin-top: calc(1.5rem + 0.5rem); /* Adjust to align with main content top */
+  }
+
+  /* Hide settings button on smaller screens to prevent overlap */
+  @media (max-width: 768px) {
+    .settings-button-container {
+      @apply hidden;
+    }
+  }
+
+  /* WiFi network dropdown overflow handling */
+  #wifi-ssid {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #wifi-ssid option {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Setup page specific layout adjustments */
+  .page-main {
+    @apply max-w-2xl mx-auto px-4 py-6;
+  }
+
+  .page-header {
+    @apply flex justify-center text-center mb-8;
+  }
+
+  .page-title {
+    @apply flex items-center justify-center text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100;
+  }
+}

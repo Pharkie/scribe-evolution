@@ -6,8 +6,8 @@
     "scripts": {
         "build": "npm run build-css & npm run build-js & wait",
         "build-prod": "npm run build-css-prod & npm run build-js-prod & wait",
-        "build-css": "npx @tailwindcss/cli --input ./src/css/index.css --output ./data/css/index.css & npx @tailwindcss/cli --input ./src/css/diagnostics.css --output ./data/css/diagnostics.css & npx @tailwindcss/cli --input ./src/css/settings.css --output ./data/css/settings.css & npx @tailwindcss/cli --input ./src/css/setup.css --output ./data/css/setup.css & npx @tailwindcss/cli --input ./src/css/404.css --output ./data/css/404.css & wait",
-        "build-css-prod": "npx @tailwindcss/cli --input ./src/css/index.css --output ./data/css/index.css --minify & npx @tailwindcss/cli --input ./src/css/diagnostics.css --output ./data/css/diagnostics.css --minify & npx @tailwindcss/cli --input ./src/css/settings.css --output ./data/css/settings.css --minify & npx @tailwindcss/cli --input ./src/css/setup.css --output ./data/css/setup.css --minify & npx @tailwindcss/cli --input ./src/css/404.css --output ./data/css/404.css --minify & wait",
+        "build-css": "npx @tailwindcss/cli --input ./src/css/app.css --output ./data/css/app.css",
+        "build-css-prod": "npx @tailwindcss/cli --input ./src/css/app.css --output ./data/css/app.css --minify",
         "build-css-index": "npx @tailwindcss/cli --input ./src/css/index.css --output ./data/css/index.css",
         "build-css-index-prod": "npx @tailwindcss/cli --input ./src/css/index.css --output ./data/css/index.css --minify",
         "build-css-diagnostics": "npx @tailwindcss/cli --input ./src/css/diagnostics.css --output ./data/css/diagnostics.css",

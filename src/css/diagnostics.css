@@ -1,5 +1,4 @@
 /* Diagnostics page specific styles */
-@import "./shared.css";
 
 @layer base {
   /* Hide error states by default until Alpine.js initializes - prevents flash of error content */
