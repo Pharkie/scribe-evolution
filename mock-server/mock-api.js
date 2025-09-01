@@ -321,15 +321,29 @@ function serveFile(res, filePath, statusCode = 200) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = mimeTypes[ext] || 'application/octet-stream';
   
-  // Serve compressed version only - no fallbacks needed
+  // Try compressed version first, fall back to uncompressed for binary files
   const gzipPath = filePath + '.gz';
   fs.readFile(gzipPath, (err, data) => {
     if (err) {
-      res.writeHead(404, {
-        'Content-Type': 'text/html',
-        'Access-Control-Allow-Origin': '*'
+      // Try uncompressed version for binary files (png, ico, webmanifest)
+      fs.readFile(filePath, (err2, data2) => {
+        if (err2) {
+          res.writeHead(404, {
+            'Content-Type': 'text/html',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end('<h1>404 Not Found</h1>');
+          return;
+        }
+        
+        // Serve uncompressed binary file
+        res.writeHead(statusCode, {
+          'Content-Type': contentType,
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=31536000'
+        });
+        res.end(data2);
       });
-      res.end('<h1>404 Not Found</h1>');
       return;
     }
     
@@ -655,12 +669,15 @@ function createRequestHandler() {
         
       } else if (pathname === '/api/timezones') {
         console.log('🌍 Timezone data requested');
-        // Serve timezone data from the actual file
+        // Serve timezone data from the compressed file
         const fs = require('fs');
         const path = require('path');
+        const zlib = require('zlib');
         try {
-          const timezonePath = path.join(__dirname, '..', 'data', 'resources', 'timezones.json');
-          const timezoneData = JSON.parse(fs.readFileSync(timezonePath, 'utf8'));
+          const timezonePath = path.join(__dirname, '..', 'data', 'resources', 'timezones.json.gz');
+          const compressedData = fs.readFileSync(timezonePath);
+          const decompressedData = zlib.gunzipSync(compressedData);
+          const timezoneData = JSON.parse(decompressedData.toString('utf8'));
           res.setHeader('Cache-Control', 'public, max-age=86400');
           setTimeout(() => sendJSON(res, timezoneData), 100);
         } catch (error) {
