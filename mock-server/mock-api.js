@@ -827,8 +827,11 @@ function createRequestHandler() {
           '/css/',
           '/js/',
           '/images/',
-          '/favicon/',
-          '/site.webmanifest'
+          '/site.webmanifest',
+          '/favicon.ico',
+          '/favicon.svg',
+          '/favicon-96x96.png',
+          '/apple-touch-icon.png'
         ];
         
         const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
@@ -856,13 +859,13 @@ function createRequestHandler() {
         filePath = path.join(__dirname, '..', 'data', 'index.html');
       } else if (pathname === '/site.webmanifest') {
         // Special handling for manifest file
-        filePath = path.join(__dirname, '..', 'data', 'favicon', 'site.webmanifest');
+        filePath = path.join(__dirname, '..', 'data', 'site.webmanifest');
       } else if (pathname === '/favicon.ico' || 
                  pathname === '/favicon.svg' || 
                  pathname === '/favicon-96x96.png' || 
                  pathname === '/apple-touch-icon.png') {
         // Special handling for favicon files at root level
-        filePath = path.join(__dirname, '..', 'data', 'favicon', pathname.substring(1));
+        filePath = path.join(__dirname, '..', 'data', pathname.substring(1));
       } else if (pathname.startsWith('/partials/') || 
                  pathname.startsWith('/css/') || 
                  pathname.startsWith('/js/') || 

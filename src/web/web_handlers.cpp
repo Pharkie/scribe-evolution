@@ -72,24 +72,11 @@ void handleNotFound(AsyncWebServerRequest *request)
 
     LOG_WARNING("WEB", "%s", errorDetails.c_str());
 
-    // Load 404 template from LittleFS
-    File templateFile = LittleFS.open("/404.html", "r");
-    if (!templateFile)
-    {
-        // Fallback if template file doesn't exist
-        request->send(404, "text/plain", "404 - Page not found: " + method + " " + uri);
-        return;
-    }
-
-    String template404 = templateFile.readString();
-    templateFile.close();
-
-    // Replace template placeholders with dynamic content
-    template404 = replaceTemplate(template404, "METHOD", method);
-    template404 = replaceTemplate(template404, "URI", uri);
-    template404 = replaceTemplate(template404, "HOSTNAME", String(getMdnsHostname()));
-
-    request->send(404, "text/html; charset=UTF-8", template404);
+    // Serve static compressed 404 page (no template processing)
+    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/404.html.gz", "text/html", 404);
+    response->addHeader("Content-Encoding", "gzip");
+    response->addHeader("Cache-Control", "no-cache");
+    request->send(response);
 }
 
 // ========================================

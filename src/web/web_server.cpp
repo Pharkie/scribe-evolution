@@ -217,18 +217,23 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
 // Helper function to setup static file serving (DRY principle)
 void setupStaticRoutes()
 {
-    // Static directories
-    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-    server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=86400").setTryGzipFirst(false);
-    // HTML files now served from root / instead of /html/
+    // Compressed text file directories (serve .gz versions with Content-Encoding: gzip)
+    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=31536000").setContentEncoding("gzip");
+    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=31536000").setContentEncoding("gzip");
+    
+    // Image directories (SVG files are compressed, others uncompressed)
+    server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=31536000").setContentEncoding("gzip");
 
-    // Favicon files
-    server.serveStatic("/favicon.ico", LittleFS, "/favicon/favicon.ico", "image/x-icon").setTryGzipFirst(false);
-    server.serveStatic("/favicon.svg", LittleFS, "/favicon/favicon.svg", "image/svg+xml").setTryGzipFirst(false);
-    server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon/favicon-96x96.png", "image/png").setTryGzipFirst(false);
-    server.serveStatic("/apple-touch-icon.png", LittleFS, "/favicon/apple-touch-icon.png", "image/png").setTryGzipFirst(false);
-    server.serveStatic("/site.webmanifest", LittleFS, "/favicon/site.webmanifest", "application/manifest+json").setTryGzipFirst(false);
+    // Individual favicon files - binary (serve uncompressed)
+    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setCacheControl("max-age=31536000");
+    server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png", "image/png").setCacheControl("max-age=31536000");
+    server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png", "image/png").setCacheControl("max-age=31536000");
+    server.serveStatic("/web-app-manifest-192x192.png", LittleFS, "/web-app-manifest-192x192.png", "image/png").setCacheControl("max-age=31536000");
+    server.serveStatic("/web-app-manifest-512x512.png", LittleFS, "/web-app-manifest-512x512.png", "image/png").setCacheControl("max-age=31536000");
+    
+    // Individual favicon files - compressible text (serve .gz with Content-Encoding: gzip)
+    server.serveStatic("/favicon.svg", LittleFS, "/favicon.svg.gz", "image/svg+xml").setCacheControl("max-age=31536000").setContentEncoding("gzip");
+    server.serveStatic("/site.webmanifest", LittleFS, "/site.webmanifest", "application/manifest+json").setCacheControl("max-age=31536000");
 }
 
 void setupWebServerRoutes(int maxChars)
@@ -250,14 +255,19 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up captive portal for AP mode");
 
-        // Setup page (only available in AP mode)
+        // Setup page (only available in AP mode) - serve compressed
         server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
             if (!isAPMode()) {
-                request->send(LittleFS, "/404.html", "text/html", 404);
+                AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/404.html.gz", "text/html", 404);
+                response->addHeader("Content-Encoding", "gzip");
+                request->send(response);
                 return;
             }
-            request->send(LittleFS, "/setup.html", "text/html"); });
+            AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/setup.html.gz", "text/html");
+            response->addHeader("Content-Encoding", "gzip");
+            response->addHeader("Cache-Control", "max-age=31536000");
+            request->send(response); });
 
         // Setup endpoints for AP mode initial configuration
         server.on("/api/setup", HTTP_GET, handleSetupGet);
@@ -302,14 +312,22 @@ void setupWebServerRoutes(int maxChars)
         registeredRoutes.push_back({"GET", "/apple-touch-icon.png", "Apple touch icon", false});
         registeredRoutes.push_back({"GET", "/site.webmanifest", "Web app manifest", false});
 
-        // Root redirect to main interface
+        // Root redirect to main interface (serve compressed HTML)
         registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/index.html", "text/html"); }, false);
+                      { 
+                        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html.gz", "text/html");
+                        response->addHeader("Content-Encoding", "gzip");
+                        response->addHeader("Cache-Control", "max-age=31536000");
+                        request->send(response);
+                      }, false);
 
-        // HTML files served from root
+        // HTML files served from root (compressed)
         server.on("^/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            String path = "/" + request->pathArg(0);
-            request->send(LittleFS, path, "text/html");
+            String path = "/" + request->pathArg(0) + ".gz";
+            AsyncWebServerResponse *response = request->beginResponse(LittleFS, path, "text/html");
+            response->addHeader("Content-Encoding", "gzip");
+            response->addHeader("Cache-Control", "max-age=31536000");
+            request->send(response);
         });
         // Manually track regex route for diagnostics
         RouteInfo rootHtmlRoute;
@@ -319,10 +337,13 @@ void setupWebServerRoutes(int maxChars)
         rootHtmlRoute.isAPI = false;
         registeredRoutes.push_back(rootHtmlRoute);
 
-        // HTML files in subdirectories
+        // HTML files in subdirectories (compressed)
         server.on("^/([^/]+)/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            String path = "/" + request->pathArg(0) + "/" + request->pathArg(1);
-            request->send(LittleFS, path, "text/html");
+            String path = "/" + request->pathArg(0) + "/" + request->pathArg(1) + ".gz";
+            AsyncWebServerResponse *response = request->beginResponse(LittleFS, path, "text/html");
+            response->addHeader("Content-Encoding", "gzip");
+            response->addHeader("Cache-Control", "max-age=31536000");
+            request->send(response);
         });
         // Manually track regex route for diagnostics
         RouteInfo subHtmlRoute;
