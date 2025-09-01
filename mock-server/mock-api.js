@@ -853,42 +853,28 @@ function createRequestHandler() {
         }
       }
       
+      // Simple unified static file serving - like ESP32's single serveStatic route
       let filePath;
       
       if (pathname === '/') {
         filePath = path.join(__dirname, '..', 'data', 'index.html');
-      } else if (pathname === '/site.webmanifest') {
-        // Special handling for manifest file
-        filePath = path.join(__dirname, '..', 'data', 'site.webmanifest');
-      } else if (pathname === '/favicon.ico' || 
-                 pathname === '/favicon.svg' || 
-                 pathname === '/favicon-96x96.png' || 
-                 pathname === '/apple-touch-icon.png') {
-        // Special handling for favicon files at root level
-        filePath = path.join(__dirname, '..', 'data', pathname.substring(1));
-      } else if (pathname.startsWith('/partials/') || 
-                 pathname.startsWith('/css/') || 
-                 pathname.startsWith('/js/') || 
-                 pathname.startsWith('/images/') ||
-                 pathname.startsWith('/favicon/')) {
-        
-        // Serve static assets directly
-        const requestPath = pathname.substring(1);
-        filePath = path.join(__dirname, '..', 'data', requestPath);
-      } else if (pathname.endsWith('.html')) {
-        // Handle HTML files at root level (settings.html, diagnostics.html, etc.)
-        if (pathname === '/setup.html' && currentMode !== 'ap-mode') {
-          // Setup page only available in AP mode - serve 404 page
-          const notFoundPath = path.join(__dirname, '..', 'data', '404.html');
-          serveFile(res, notFoundPath, 404);
-          return;
-        }
-        filePath = path.join(__dirname, '..', 'data', pathname.substring(1));
+      } else if (pathname === '/setup.html' && currentMode !== 'ap-mode') {
+        // Setup page only available in AP mode - serve 404 page
+        filePath = path.join(__dirname, '..', 'data', '404.html');
+        serveFile(res, filePath, 404);
+        return;
       } else if (pathname.endsWith('/')) {
-        // Handle directory requests by serving index.html from that directory
+        // Directory requests serve index.html from that directory
         filePath = path.join(__dirname, '..', 'data', pathname.substring(1), 'index.html');
       } else {
-        filePath = path.join(__dirname, '..', 'data', '404.html');
+        // All other requests: try to serve the file directly from data/
+        const requestPath = pathname.substring(1); // Remove leading /
+        filePath = path.join(__dirname, '..', 'data', requestPath);
+        
+        // If file doesn't exist, serve 404
+        if (!fs.existsSync(filePath) && !fs.existsSync(filePath + '.gz')) {
+          filePath = path.join(__dirname, '..', 'data', '404.html');
+        }
       }
       
       serveFile(res, filePath);

@@ -217,21 +217,10 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
 // Helper function to setup static file serving (DRY principle)
 void setupStaticRoutes()
 {
-    // Use AsyncWebServer's built-in gzip support - will automatically serve .gz files when they exist
-    server.serveStatic("/css/", LittleFS, "/css/").setDefaultFile("").setCacheControl("max-age=31536000");
-    server.serveStatic("/js/", LittleFS, "/js/").setDefaultFile("").setCacheControl("max-age=31536000");
-    server.serveStatic("/images/", LittleFS, "/images/").setDefaultFile("").setCacheControl("max-age=31536000");
-
-    // Individual favicon files - binary (serve uncompressed)
-    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "image/x-icon").setCacheControl("max-age=31536000");
-    server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png", "image/png").setCacheControl("max-age=31536000");
-    server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png", "image/png").setCacheControl("max-age=31536000");
-    server.serveStatic("/web-app-manifest-192x192.png", LittleFS, "/web-app-manifest-192x192.png", "image/png").setCacheControl("max-age=31536000");
-    server.serveStatic("/web-app-manifest-512x512.png", LittleFS, "/web-app-manifest-512x512.png", "image/png").setCacheControl("max-age=31536000");
-    
-    // Individual favicon files - compressible text (AsyncWebServer will handle .gz automatically)
-    server.serveStatic("/favicon.svg", LittleFS, "/favicon.svg", "image/svg+xml").setCacheControl("max-age=31536000");
-    server.serveStatic("/site.webmanifest", LittleFS, "/site.webmanifest", "application/manifest+json").setCacheControl("max-age=31536000");
+    // Single route for entire static filesystem - AsyncWebServer handles everything automatically
+    server.serveStatic("/", LittleFS, "/")
+          .setDefaultFile("index.html")
+          .setCacheControl("max-age=31536000");
 }
 
 void setupWebServerRoutes(int maxChars)
@@ -253,14 +242,14 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up captive portal for AP mode");
 
-        // Setup page (only available in AP mode) - AsyncWebServer will serve compressed automatically
+        // Setup page (only available in AP mode) - request->send requires explicit .gz
         server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
             if (!isAPMode()) {
-                request->send(LittleFS, "/404.html", "text/html", 404);
+                request->send(LittleFS, "/404.html.gz", "text/html", 404);
                 return;
             }
-            request->send(LittleFS, "/setup.html", "text/html"); });
+            request->send(LittleFS, "/setup.html.gz", "text/html"); });
 
         // Setup endpoints for AP mode initial configuration
         server.on("/api/setup", HTTP_GET, handleSetupGet);
@@ -294,46 +283,11 @@ void setupWebServerRoutes(int maxChars)
         // Setup static file serving
         setupStaticRoutes();
 
-        // Manually track static routes (since serveStatic can't be wrapped)
-        registeredRoutes.push_back({"GET", "/css/*", "CSS static files", false});
-        registeredRoutes.push_back({"GET", "/js/*", "JavaScript static files", false});
-        registeredRoutes.push_back({"GET", "/images/*", "Image static files", false});
-        // HTML files now served from / instead of /html/
-        registeredRoutes.push_back({"GET", "/favicon.ico", "Site favicon (ICO)", false});
-        registeredRoutes.push_back({"GET", "/favicon.svg", "Site favicon (SVG)", false});
-        registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Site favicon (PNG 96x96)", false});
-        registeredRoutes.push_back({"GET", "/apple-touch-icon.png", "Apple touch icon", false});
-        registeredRoutes.push_back({"GET", "/site.webmanifest", "Web app manifest", false});
+        // Static route already tracked above - no need for individual entries
 
-        // Root redirect to main interface (AsyncWebServer will serve compressed version automatically)
-        registerRoute("GET", "/", "Main printer interface", [](AsyncWebServerRequest *request)
-                      { request->send(LittleFS, "/index.html", "text/html"); }, false);
-
-        // HTML files served from root (AsyncWebServer will serve compressed version automatically)
-        server.on("^/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            String path = "/" + request->pathArg(0);
-            request->send(LittleFS, path, "text/html");
-        });
-        // Manually track regex route for diagnostics
-        RouteInfo rootHtmlRoute;
-        rootHtmlRoute.method = "GET";
-        rootHtmlRoute.path = "/*.html";
-        rootHtmlRoute.description = "HTML files from root";
-        rootHtmlRoute.isAPI = false;
-        registeredRoutes.push_back(rootHtmlRoute);
-
-        // HTML files in subdirectories (AsyncWebServer will serve compressed version automatically)
-        server.on("^/([^/]+)/([^/]+\\.html)$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            String path = "/" + request->pathArg(0) + "/" + request->pathArg(1);
-            request->send(LittleFS, path, "text/html");
-        });
-        // Manually track regex route for diagnostics
-        RouteInfo subHtmlRoute;
-        subHtmlRoute.method = "GET";
-        subHtmlRoute.path = "/*/*.html";
-        subHtmlRoute.description = "HTML files in subdirectories";
-        subHtmlRoute.isAPI = false;
-        registeredRoutes.push_back(subHtmlRoute);
+        // Static files are handled by setupStaticRoutes() - no individual routes needed
+        // Track static routes for diagnostics
+        registeredRoutes.push_back({"GET", "/*", "All static files (HTML, CSS, JS, images, favicon)", false});
 
         // Add SSE endpoint for real-time updates
         sseEvents.onConnect([](AsyncEventSourceClient *client)

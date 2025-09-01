@@ -72,8 +72,8 @@ void handleNotFound(AsyncWebServerRequest *request)
 
     LOG_WARNING("WEB", "%s", errorDetails.c_str());
 
-    // Serve static 404 page (AsyncWebServer will serve compressed version automatically)
-    request->send(LittleFS, "/404.html", "text/html", 404);
+    // Serve static 404 page (request->send requires explicit .gz)
+    request->send(LittleFS, "/404.html.gz", "text/html", 404);
 }
 
 // ========================================
