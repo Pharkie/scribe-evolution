@@ -310,7 +310,7 @@
 
   /* Settings card headers */
   .settings-card-header {
-    @apply text-2xl font-bold mb-6 flex items-center space-x-2;
+    @apply text-2xl font-normal mb-6 flex items-center space-x-2;
   }
 
   .settings-card-header-blue {
@@ -339,7 +339,7 @@
 
   /* Error page typography */
   .error-title {
-    @apply text-xl font-bold text-blue-600 dark:text-blue-400 mb-2;
+    @apply text-xl font-normal text-blue-600 dark:text-blue-400 mb-2;
   }
 
   .error-code {
@@ -501,7 +501,7 @@
   }
 
   .status-info-header {
-    @apply text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center pb-3 border-b-2 border-slate-300 dark:border-slate-600;
+    @apply text-lg font-normal text-slate-700 dark:text-slate-200 mb-4 flex items-center pb-3 border-b-2 border-slate-300 dark:border-slate-600;
   }
 
   /* Error details (404 page) */
@@ -997,7 +997,7 @@
   }
 
   .diag-title {
-    @apply text-lg font-semibold flex items-center;
+    @apply text-lg font-normal flex items-center;
   }
 
   .diag-title.purple {
@@ -1334,6 +1334,6 @@
   }
 
   .page-title {
-    @apply flex items-center justify-center text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100;
+    @apply flex items-center justify-center text-2xl sm:text-3xl font-normal text-gray-800 dark:text-gray-100;
   }
 }

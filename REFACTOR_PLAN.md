@@ -175,7 +175,29 @@ Apply proven settings patterns to remaining pages
 
 ---
 
-## Phase 6: AI Memos 🤖
+## Phase 6: Font Review ✨
+
+Typography improvements and font weight optimization across the application.
+
+**Status**:
+
+Review fonts in terms of alternatives and ligatures. Check why headings still use bold instead of normal, 400 weight.
+
+### 6.1: Google Fonts Outfit Integration - ✅ COMPLETED
+- **Issue discovered**: Tailwind v4 build system not reading `tailwind.config.js`
+- **Root cause**: v4 uses CSS-first configuration, not legacy config file approach
+- **Solution implemented**: Proper Tailwind v4 CSS-first configuration using `@theme` directive
+- **Build system fixed**: Removed obsolete config file, updated to modern v4 methodology
+
+### 6.2: Font Weight Optimization - ✅ COMPLETED  
+- **Problem**: Heavy `font-bold` (700-900 weight) inappropriate for Outfit font
+- **Solution**: Adjusted key headings to `font-normal` (400 weight) for better hierarchy
+- **Components updated**: Settings headers, page titles, diagnostic titles, status headers
+- **Result**: More elegant, readable typography with proper visual balance
+
+---
+
+## Phase 7: AI Memos 🤖
 
 Future enhancement: 4 x configurable AI prompts with hardware button integration
 
