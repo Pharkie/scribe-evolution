@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" class="app-root">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memo Settings - Scribe Evolution</title>
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/app-common.js"></script>
+    <script src="/js/page-settings-memos.js"></script>
+    <script src="/js/alpine.js" defer></script>
+</head>
+
+<body 
+    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    x-data="$store.settingsMemos"
+    x-init="loadConfiguration()">
+    <main class="w-full max-w-4xl mx-auto flex-1">
+        <!-- Header -->
+        <header class="w-full max-w-6xl mx-auto flex items-center mb-8 gap-4">
+            <div class="flex-1 flex justify-start">
+                <button onclick="window.location.href='/settings/'" 
+                    class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span class="text-xs sm:text-sm font-medium">Settings</span>
+                </button>
+            </div>
+            <div class="flex-1 flex justify-center">
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2 whitespace-nowrap">
+                    <span x-html="window.renderSectionIcon ? window.renderSectionIcon('pencil') : '📝'"></span>
+                    <span>Memo Settings</span>
+                </h1>
+            </div>
+            <div class="flex-1"></div>
+        </header>
+
+        <!-- Error State -->
+        <div x-show="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6" x-transition>
+            <div class="text-center">
+                <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Memo Settings</h3>
+                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                <button @click="loadConfiguration()" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    Retry
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <template x-if="loaded && !error">
+            <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
+                 x-show="show" x-transition.opacity.duration.300ms>
+            <form @submit.prevent="saveMemos()" class="space-y-6">
+                <!-- Memo Settings Card -->
+                <div class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-orange-600 transition-shadow duration-200">
+                    <div class="space-y-8">
+                        <!-- Placeholder Documentation -->
+                        <div class="p-4 bg-orange-50 dark:bg-gray-700 rounded-xl">
+                            <h2 class="text-lg font-semibold text-orange-800 dark:text-orange-300 mb-3">Available Placeholders</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-gray-200">
+                                <div class="space-y-1">
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[date]</code> → Current date (24Aug25)</p>
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[time]</code> → Current time (12:30)</p>
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[weekday]</code> → Day name (Sunday)</p>
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[uptime]</code> → Device uptime (2h13m)</p>
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[ip]</code> → Device IP address</p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[mdns]</code> → mDNS hostname</p>
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[coin]</code> → Heads or Tails</p>
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[dice:n]</code> → Random 1-n (default 6)</p>
+                                    <p><code class="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-gray-800 dark:text-gray-100">[pick:a|b|c]</code> → Random choice</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Memo Fields -->
+                            <!-- Memo 1 -->
+                            <div class="space-y-2">
+                                <label for="memo-1" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Memo 1:</label>
+                                <textarea 
+                                    id="memo-1" 
+                                    rows="4"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
+                                    placeholder="Enter memo 1 content with placeholders..."
+                                    x-model="memos.memo1"
+                                    @input="hasUnsavedChanges = true"></textarea>
+                                <div :class="memo1CharacterClass" class="text-xs text-right font-mono">
+                                    <span x-text="memo1CharacterText"></span>
+                                </div>
+                            </div>
+
+                            <!-- Memo 2 -->
+                            <div class="space-y-2">
+                                <label for="memo-2" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Memo 2:</label>
+                                <textarea 
+                                    id="memo-2" 
+                                    rows="4"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
+                                    placeholder="Enter memo 2 content with placeholders..."
+                                    x-model="memos.memo2"
+                                    @input="hasUnsavedChanges = true"></textarea>
+                                <div :class="memo2CharacterClass" class="text-xs text-right font-mono">
+                                    <span x-text="memo2CharacterText"></span>
+                                </div>
+                            </div>
+
+                            <!-- Memo 3 -->
+                            <div class="space-y-2">
+                                <label for="memo-3" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Memo 3:</label>
+                                <textarea 
+                                    id="memo-3" 
+                                    rows="4"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
+                                    placeholder="Enter memo 3 content with placeholders..."
+                                    x-model="memos.memo3"
+                                    @input="hasUnsavedChanges = true"></textarea>
+                                <div :class="memo3CharacterClass" class="text-xs text-right font-mono">
+                                    <span x-text="memo3CharacterText"></span>
+                                </div>
+                            </div>
+
+                            <!-- Memo 4 -->
+                            <div class="space-y-2">
+                                <label for="memo-4" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Memo 4:</label>
+                                <textarea 
+                                    id="memo-4" 
+                                    rows="4"
+                                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
+                                    placeholder="Enter memo 4 content with placeholders..."
+                                    x-model="memos.memo4"
+                                    @input="hasUnsavedChanges = true"></textarea>
+                                <div :class="memo4CharacterClass" class="text-xs text-right font-mono">
+                                    <span x-text="memo4CharacterText"></span>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-center gap-8 pt-6">
+                    <button type="submit" :disabled="!canSave"
+                        class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
+                        :class="{ 'opacity-50 cursor-not-allowed': !canSave }">
+                        <span x-show="!saving" class="flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Save Memo Settings
+                        </span>
+                        <span x-show="saving" class="flex items-center justify-center space-x-2">
+                            <div
+                                class="animate-spin rounded-full border-2 border-white border-t-transparent w-5 h-5">
+                            </div>
+                            <span>Saving...</span>
+                        </span>
+                    </button>
+                    <button type="button" @click="window.location.href = '/settings/'"
+                        class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+        </template>
+    </main>
+</body>
+
+</html>

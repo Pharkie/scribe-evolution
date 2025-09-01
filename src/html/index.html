@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" class="app-root">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scribe Evolution</title>
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/app-common.js"></script>
+    <script src="/js/page-index.js"></script>
+    <script src="/js/alpine.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+</head>
+
+<body
+    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    x-data="$store.index" x-init="loadData()">
+
+    <!-- Error State -->
+    <div x-show="error"
+        class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6 w-full max-w-4xl mx-auto"
+        x-transition>
+        <div class="text-center">
+            <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+            <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Index</h3>
+            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+            <button @click="init()"
+                class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                Retry
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <template x-if="loaded && !error">
+        <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" x-show="show"
+            x-transition.opacity.duration.300ms>
+            <main class="w-full max-w-4xl mx-auto flex-1">
+                <!-- Header with title and settings button -->
+                <header class="w-full max-w-6xl mx-auto flex items-center mb-8 gap-4">
+                    <!-- Left spacer -->
+                    <div class="flex-1"></div>
+
+                    <!-- Centered title with logo -->
+                    <div class="flex-1 flex justify-center">
+                        <h1
+                            class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center justify-center">
+                            <!-- Dark mode logo (white) -->
+                            <img src="/images/ScribeLogoMain-white.svg" alt="Scribe Evolution" x-show="loaded"
+                                x-transition:enter="transition-none" x-transition:enter-start=""
+                                x-transition:enter-end=""
+                                class="slide-in-bck-center h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:block hidden"
+                                style="display: none;" />
+                            <!-- Light mode logo (dark) -->
+                            <img src="/images/ScribeLogoMain-black.svg" alt="Scribe Evolution" x-show="loaded"
+                                x-transition:enter="transition-none" x-transition:enter-start=""
+                                x-transition:enter-end=""
+                                class="slide-in-bck-center h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:hidden block"
+                                style="display: none;" />
+                        </h1>
+                    </div>
+
+                    <!-- Right spacer with settings button -->
+                    <div class="flex-1 flex justify-end">
+                        <button @click="goToSettings()"
+                            class="inline-flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            :class="settingsStashed ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-600' : ''">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span class="text-xs sm:text-sm font-medium"
+                                x-text="settingsStashed ? 'Saved' : 'Settings'"></span>
+                        </button>
+                    </div>
+                </header>
+
+
+                <!-- Error State -->
+                <div x-show="error"
+                    class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6"
+                    x-transition>
+                    <div class="text-center">
+                        <svg class="w-10 h-10 mb-4 mx-auto text-red-600 dark:text-red-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z">
+                            </path>
+                        </svg>
+                        <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Loading Error</h3>
+                        <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                        <button @click="init()"
+                            class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <template x-if="loaded && !error">
+                    <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" x-show="show"
+                        x-transition.opacity.duration.300ms>
+                        <!-- Main Printer Interface -->
+                        <div
+                            class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-blue-600 transition-shadow duration-200">
+                            <form @submit="handleSubmit($event)" class="space-y-8">
+                                <!-- Printer Selection -->
+                                <div class="space-y-4">
+                                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Select where to
+                                        print:</h2>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <template x-for="printer in printers" :key="printer.value">
+                                            <div @click="selectPrinter(printer.value)"
+                                                class="cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                                                :class="{
+                                            'border-orange-400 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 dark:border-orange-600': printer.selected,
+                                            'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500': !printer.selected
+                                        }">
+
+                                                <div class="flex items-center justify-between w-full">
+                                                    <!-- Left side with icon and name -->
+                                                    <div class="flex items-center space-x-4 flex-1 min-w-0">
+                                                        <span class="text-3xl"
+                                                            x-html="window.getIcon ? window.getIcon(printer.icon, 'scribe-icon w-8 h-8') : printer.icon"></span>
+                                                        <div class="flex-1 min-w-0 flex items-center">
+                                                            <div class="font-medium text-base truncate"
+                                                                x-text="printer.name">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Info icon -->
+                                                    <div @click.stop="printer.isLocal ? showLocalPrinterInfo() : showPrinterOverlay(printer.data, printer.name, 'mqtt')"
+                                                        class="info-icon ml-3 flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full transition-colors duration-200 cursor-pointer"
+                                                        style="min-width: 56px; min-height: 56px;"
+                                                        title="View printer details">
+                                                        <span class="text-2xl text-gray-600 dark:text-gray-300">ⓘ</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Message Input -->
+                                <div class="space-y-4">
+                                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Message:</h2>
+                                    <template x-if="isConfigReady">
+                                        <div class="w-full">
+                                            <textarea id="message-textarea" x-model="message"
+                                                @keydown="handleTextareaKeydown($event)"
+                                                class="w-full p-4 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 resize-vertical"
+                                                rows="8" placeholder="Enter your message here..." required></textarea>
+                                            <div :class="charCountClass" class="text-xs text-right">
+                                                <span x-text="charCountText"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!isConfigReady">
+                                        <div class="w-full">
+                                            <textarea disabled
+                                                class="w-full p-4 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 opacity-50 resize-vertical"
+                                                rows="8" placeholder="Loading configuration..."></textarea>
+                                            <div class="text-xs text-right text-gray-400 mt-2">
+                                                <span>Loading...</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <button type="submit" id="main-submit-btn" :disabled="!canSubmit"
+                                    class="w-full px-6 py-4 bg-blue-600 dark:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
+                                    :class="{
+                                'opacity-50 cursor-not-allowed': !canSubmit,
+                                'hover:bg-blue-700 dark:hover:bg-blue-600 hover:scale-[1.02]': canSubmit
+                            }">
+                                    <span x-show="!submitting && !buttonTextOverride"
+                                        class="flex items-center justify-center">
+                                        <img src="/images/scribe_magic.svg" alt="Magic Scribe" class="w-4 h-4 mr-2" />
+                                        Scribe
+                                    </span>
+                                    <span x-show="!submitting && buttonTextOverride" x-text="buttonTextOverride"></span>
+                                    <span x-show="submitting" class="flex items-center justify-center">
+                                        <span
+                                            class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                                        Scribing...
+                                    </span>
+                                </button>
+
+                                <!-- Quick Actions -->
+                                <div class="space-y-6 mt-8">
+                                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 text-center">Quick
+                                        Actions</h2>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                        <button type="button" @click="sendQuickAction('riddle')"
+                                            class="flex flex-col items-center justify-center p-4 rounded-xl bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            :class="{ 'opacity-75': activeQuickAction === 'riddle' }"
+                                            :disabled="activeQuickAction !== null" data-action="riddle">
+                                            <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 0 1-.657.643 48.39 48.39 0 0 1-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 0 1-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 0 0-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 0 1-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 0 0 .657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 0 1-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 0 0 5.427-.63 48.05 48.05 0 0 0 .582-4.717.532.532 0 0 0-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.959.401v0a.656.656 0 0 0 .658-.663 48.422 48.422 0 0 0-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 0 1-.61-.58v0Z" />
+                                            </svg>
+                                            <span class="text-sm font-medium text-center"
+                                                x-text="activeQuickAction === 'riddle' ? 'Scribing' : 'Riddle'"></span>
+                                        </button>
+                                        <button type="button" @click="sendQuickAction('joke')"
+                                            class="flex flex-col items-center justify-center p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            :class="{ 'opacity-75': activeQuickAction === 'joke' }"
+                                            :disabled="activeQuickAction !== null" data-action="joke">
+                                            <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" />
+                                            </svg>
+                                            <span class="text-sm font-medium text-center"
+                                                x-text="activeQuickAction === 'joke' ? 'Scribing' : 'Joke'"></span>
+                                        </button>
+                                        <button type="button" @click="sendQuickAction('quote')"
+                                            class="flex flex-col items-center justify-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            :class="{ 'opacity-75': activeQuickAction === 'quote' }"
+                                            :disabled="activeQuickAction !== null" data-action="quote">
+                                            <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
+                                            </svg>
+                                            <span class="text-sm font-medium text-center"
+                                                x-text="activeQuickAction === 'quote' ? 'Scribing' : 'Quote'"></span>
+                                        </button>
+                                        <button type="button" @click="showMemoModal()"
+                                            class="flex flex-col items-center justify-center p-4 rounded-xl bg-pink-50 hover:bg-pink-100 dark:bg-pink-900/20 dark:hover:bg-pink-900/40 border border-pink-200 dark:border-pink-700 text-pink-700 dark:text-pink-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            :class="{ 'opacity-75': activeQuickAction === 'memo' }"
+                                            :disabled="activeQuickAction !== null" data-action="memo">
+                                            <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                            </svg>
+                                            <span class="text-sm font-medium text-center"
+                                                x-text="activeQuickAction === 'memo' ? 'Scribed' : 'Memo'"></span>
+                                        </button>
+                                        <button type="button" @click="sendQuickAction('quiz')"
+                                            class="flex flex-col items-center justify-center p-4 rounded-xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/20 dark:hover:bg-cyan-900/40 border border-cyan-200 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            :class="{ 'opacity-75': activeQuickAction === 'quiz' }"
+                                            :disabled="activeQuickAction !== null" data-action="quiz">
+                                            <span class="text-2xl mb-1"
+                                                x-html="window.getIcon ? window.getIcon('mask', 'w-6 h-6 text-cyan-700 dark:text-cyan-300') : '🎭'"></span>
+                                            <span class="text-sm font-medium text-center"
+                                                x-text="activeQuickAction === 'quiz' ? 'Scribing' : 'Quiz'"></span>
+                                        </button>
+                                        <button type="button" @click="sendQuickAction('news')"
+                                            class="flex flex-col items-center justify-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            :class="{ 'opacity-75': activeQuickAction === 'news' }"
+                                            :disabled="activeQuickAction !== null" data-action="news">
+                                            <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+                                            </svg>
+                                            <span class="text-sm font-medium text-center"
+                                                x-text="activeQuickAction === 'news' ? 'Scribing' : 'News'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div x-show="error"
+                        class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6"
+                        x-transition>
+                        <div class="text-center">
+                            <svg class="w-10 h-10 mb-4 mx-auto text-red-600 dark:text-red-400" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z">
+                                </path>
+                            </svg>
+                            <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Error
+                            </h3>
+                            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                            <p class="text-sm text-red-500 dark:text-red-400">Please check the system.</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Footer -->
+                <footer class="w-full max-w-4xl mx-auto mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex flex-col items-center space-y-4 text-center">
+                        <a href="/diagnostics.html"
+                            class="inline-flex items-center space-x-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z">
+                                </path>
+                            </svg>
+                            <span class="text-sm font-medium">Diagnostics</span>
+                        </a>
+                        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                            <div>
+                                Scribe was invented with love by <a href="https://urbancircles.club" target="_blank"
+                                    class="text-gray-500 dark:text-gray-400 underline decoration-gray-300 dark:decoration-gray-600 underline-offset-2 hover:text-gray-700 dark:hover:text-gray-200 hover:decoration-gray-500 dark:hover:decoration-gray-400 transition-colors duration-200">Peter
+                                    / Urban Circles</a>
+                            </div>
+                            <div>
+                                Scribe Evolution was created with joy by <a href="https://github.com/Pharkie/scribe" target="_blank"
+                                    class="text-gray-500 dark:text-gray-400 underline decoration-gray-300 dark:decoration-gray-600 underline-offset-2 hover:text-gray-700 dark:hover:text-gray-200 hover:decoration-gray-500 dark:hover:decoration-gray-400 transition-colors duration-200">Pharkie</a>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+        </div>
+    </template>
+
+    <!-- Printer Info Overlay -->
+    <div x-show="overlayVisible" x-transition.opacity.duration.500ms @click.self="closePrinterOverlay()"
+        @keydown.escape.window="closePrinterOverlay()"
+        class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center sm:justify-center p-4"
+        style="display: none;">
+
+        <!-- Modal -->
+        <div x-show="overlayVisible" x-transition:enter="transition ease-out duration-500 transform"
+            x-transition:enter-start="translate-y-full sm:translate-y-8 sm:scale-95 opacity-0"
+            x-transition:enter-end="translate-y-0 sm:scale-100 opacity-100"
+            x-transition:leave="transition ease-in duration-500 transform"
+            x-transition:leave-start="translate-y-0 sm:scale-100 opacity-100"
+            x-transition:leave-end="translate-y-full sm:translate-y-8 sm:scale-95 opacity-0" @click.stop
+            class="relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl dark:shadow-2xl">
+
+            <div class="p-6" x-show="overlayData">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <span class="mr-2" x-html="overlayData?.printerIcon"></span>
+                        <span x-text="overlayPrinterName + ' Details'"></span>
+                    </h3>
+                    <button @click="closePrinterOverlay()"
+                        class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        <span class="text-gray-600 dark:text-gray-400 text-xl">×</span>
+                    </button>
+                </div>
+
+                <!-- Information sections -->
+                <div class="space-y-4">
+                    <!-- MQTT Topic (for remote printers) -->
+                    <div x-show="overlayData?.topic">
+                        <div
+                            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                            <span>MQTT Topic</span>
+                            <div x-data="{ copied: false }">
+                                <button
+                                    @click="copyTopic(overlayData?.topic); copied = true; setTimeout(() => copied = false, 2000)"
+                                    class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                                    :title="copied ? 'Copied!' : 'Copy to clipboard'">
+                                    <span x-show="!copied">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                                            class="text-gray-500 dark:text-gray-400">
+                                            <path
+                                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                                        </svg>
+                                    </span>
+                                    <svg x-show="copied" class="w-4 h-4 text-green-600 dark:text-green-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="m4.5 12.75 6 6 9-13.5" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg font-mono text-gray-800 dark:text-gray-200 break-all"
+                            x-text="overlayData?.topic"></div>
+                    </div>
+
+                    <!-- IP Address -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Local IP Address:</span>
+                            <span x-text="overlayData?.ipAddress"></span>
+                        </div>
+                    </div>
+
+                    <!-- mDNS -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Local mDNS:</span>
+                            <span x-text="overlayData?.mdns"></span>
+                        </div>
+                    </div>
+
+                    <!-- Firmware Version -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Firmware Version:</span>
+                            <span x-text="overlayData?.firmwareVersion"></span>
+                        </div>
+                    </div>
+
+                    <!-- Last Power On -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Last Power On:</span>
+                            <span x-text="overlayData?.lastPowerOnText"></span>
+                        </div>
+                    </div>
+
+                    <!-- Timezone -->
+                    <div>
+                        <div class="text-sm text-gray-800 dark:text-gray-200">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Timezone:</span>
+                            <span x-text="overlayData?.timezone"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memo Selection Modal -->
+    <div x-show="memoModalVisible" x-transition.opacity.duration.500ms @click.self="closeMemoModal()"
+        @keydown.escape.window="closeMemoModal()"
+        class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center sm:justify-center p-4"
+        style="display: none;">
+        <!-- Modal -->
+        <div x-show="memoModalVisible" x-transition:enter="transition ease-out duration-500 transform"
+            x-transition:enter-start="translate-y-full sm:translate-y-8 sm:scale-95 opacity-0"
+            x-transition:enter-end="translate-y-0 sm:scale-100 opacity-100"
+            x-transition:leave="transition ease-in duration-500 transform"
+            x-transition:leave-start="translate-y-0 sm:scale-100 opacity-100"
+            x-transition:leave-end="translate-y-full sm:translate-y-8 sm:scale-95 opacity-0" @click.stop
+            class="relative bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl dark:shadow-2xl">
+            <div class="p-6">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                        </svg>
+                        <span>Select a Memo</span>
+                    </h3>
+                    <button @click="closeMemoModal()"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    Choose which memo to print
+                </p>
+
+                <div class="space-y-3 mb-6">
+                    <!-- Loading state -->
+                    <template x-if="memosLoading">
+                        <div class="text-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600">
+                            </div>
+                            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading memos...</p>
+                        </div>
+                    </template>
+
+                    <!-- Memo buttons (only show when loaded) -->
+                    <template x-if="memosLoaded && !memosLoading">
+                        <div class="space-y-3">
+                            <template x-for="memoNum in [1, 2, 3, 4]" :key="memoNum">
+                                <button @click="printMemo(memoNum)"
+                                    class="w-full p-3 text-left bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/40 rounded-lg border border-pink-200 dark:border-pink-700 transition-colors"
+                                    :disabled="printing">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-pink-800 dark:text-pink-200">
+                                            Memo <span x-text="memoNum"></span>
+                                        </span>
+                                        <span class="text-xs text-pink-600 dark:text-pink-400">
+                                            <template x-if="memos && memos[memoNum - 1]">
+                                                <span
+                                                    x-text="memos[memoNum - 1].content.substring(0, 30) + (memos[memoNum - 1].content.length > 30 ? '...' : '')"></span>
+                                            </template>
+                                            <template x-if="!memos || !memos[memoNum - 1]">
+                                                <span class="text-gray-400">Empty</span>
+                                            </template>
+                                        </span>
+                                    </div>
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-show="true" x-transition:enter="transition ease-out duration-300 transform"
+                x-transition:enter-start="translate-x-full opacity-0" x-transition:enter-end="translate-x-0 opacity-100"
+                x-transition:leave="transition ease-in duration-200 transform"
+                x-transition:leave-start="translate-x-0 opacity-100" x-transition:leave-end="translate-x-full opacity-0"
+                :class="{
+                    'bg-green-100 text-green-800 border-green-200': toast.type === 'success',
+                    'bg-red-100 text-red-800 border-red-200': toast.type === 'error',
+                    'bg-blue-100 text-blue-800 border-blue-200': toast.type === 'info'
+                }" class="border p-4 rounded-lg shadow-lg max-w-sm">
+
+                <div class="flex items-center space-x-2">
+                    <span class="flex-1" x-text="toast.message"></span>
+                    <button @click="removeToast(toast.id)"
+                        class="ml-2 text-lg font-bold opacity-50 hover:opacity-100">×</button>
+                </div>
+            </div>
+        </template>
+    </div>
+</body>
+
+</html>

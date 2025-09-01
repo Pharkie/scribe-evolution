@@ -110,10 +110,10 @@
 - ✅ **Better caching** - 1-year cache for compressed assets
 - ✅ **Build integration** - automatically runs with `npm run build-prod`
 
-**ESP32 Implementation Ready**: 📋 Documentation provided
-- Simple file serving modification - check for `.gz` versions first
-- Add `Content-Encoding: gzip` header for compressed files
-- No client detection needed - GZIP support is universal
+**ESP32 Implementation Ready**: 📋 AsyncWebServer API confirmed
+- Use `server.serveStatic("/file", LittleFS, "/file.gz").setContentEncoding("gzip")`
+- Explicit `Content-Encoding: gzip` header setting (no auto-detection)
+- Long-term caching with `setCacheControl("max-age=31536000")`
 - Estimated ~2x SPIFFS storage usage (manageable on 4MB flash)
 
 **Next Steps**: ESP32 web server implementation when ready

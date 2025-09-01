@@ -41,48 +41,47 @@ Modify static file handler to serve compressed versions by default:
 3. If no compressed version, serve original (for files <1KB that weren't compressed)
 
 ```cpp
-// Pseudo-code for ESP32 implementation  
-void handleStaticFile(AsyncWebServerRequest *request, String filepath) {
-  String contentType = getContentType(filepath);
-  String gzipPath = filepath + ".gz";
+// ESP32 AsyncWebServer implementation using confirmed API
+void setupStaticFileRoutes(AsyncWebServer& server) {
+  // Serve compressed CSS
+  server.serveStatic("/css/app.css", LittleFS, "/css/app.css.gz")
+        .setCacheControl("max-age=31536000")
+        .setContentEncoding("gzip");
   
-  if (SPIFFS.exists(gzipPath)) {
-    // AsyncWebServer may auto-detect .gz files and add Content-Encoding header
-    // Check library documentation - it might handle this automatically
-    request->send(SPIFFS, gzipPath, contentType);
-    return;
-  }
+  // Serve compressed HTML pages
+  server.serveStatic("/", LittleFS, "/index.html.gz")
+        .setCacheControl("max-age=31536000")
+        .setContentEncoding("gzip");
+        
+  server.serveStatic("/settings.html", LittleFS, "/settings.html.gz")
+        .setCacheControl("max-age=31536000")
+        .setContentEncoding("gzip");
   
-  // No compressed version available (files <1KB), serve original
-  request->send(SPIFFS, filepath, contentType);
+  // Serve compressed JavaScript files
+  server.serveStatic("/js/alpine.js", LittleFS, "/js/alpine.js.gz")
+        .setCacheControl("max-age=31536000")
+        .setContentEncoding("gzip");
+        
+  server.serveStatic("/js/page-index.js", LittleFS, "/js/page-index.js.gz")
+        .setCacheControl("max-age=31536000")
+        .setContentEncoding("gzip");
+  
+  // Add routes for all other compressed assets...
 }
 
-// Alternative if manual headers needed:
-void handleStaticFileWithHeaders(AsyncWebServerRequest *request, String filepath) {
-  String contentType = getContentType(filepath);
-  String gzipPath = filepath + ".gz";
-  
-  if (SPIFFS.exists(gzipPath)) {
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, gzipPath, contentType);
-    response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Cache-Control", "public, max-age=31536000");
-    request->send(response);
-    return;
-  }
-  
-  request->send(SPIFFS, filepath, contentType);
-}
+// No fallback logic needed - all modern browsers support GZIP
+// Files <1KB are not compressed by build system (overhead > benefit)
 ```
 
 #### C. Header Handling
-**AsyncWebServer may auto-detect `.gz` files** and add `Content-Encoding: gzip` automatically.
+**AsyncWebServer API confirmed** - explicit header setting required.
 
-**Test first**: Try simple `request->send(SPIFFS, gzipPath, contentType)` - the library might handle compression headers automatically.
+**Required Configuration**:
+- `Content-Type`: Automatically determined by AsyncWebServer from URL extension
+- `Content-Encoding: gzip` - Set explicitly with `.setContentEncoding("gzip")`
+- `Cache-Control: public, max-age=31536000` - Set with `.setCacheControl("max-age=31536000")`
 
-**If manual headers needed**:
-- `Content-Type`: Original file MIME type (e.g., `text/css`)  
-- `Content-Encoding: gzip` (if not auto-added)
-- `Cache-Control: public, max-age=31536000` (optional - long cache for compressed assets)
+**No auto-detection** - headers must be set explicitly as shown in the implementation above.
 
 ### 3. Memory Considerations
 

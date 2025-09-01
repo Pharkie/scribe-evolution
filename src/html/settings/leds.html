@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" class="app-root">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LED Settings - Scribe Evolution</title>
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/app-common.js"></script>
+    <script src="/js/page-settings-leds.js"></script>
+    <script src="/js/alpine.js" defer></script>
+</head>
+
+<body 
+    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    x-data="$store.settingsLeds"
+    x-init="loadConfiguration()">
+    <main class="w-full max-w-4xl mx-auto flex-1">
+        <!-- Header -->
+        <header class="w-full max-w-6xl mx-auto flex items-center mb-8 gap-4">
+            <div class="flex-1 flex justify-start">
+                <button onclick="window.location.href='/settings/'" 
+                    class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span class="text-xs sm:text-sm font-medium">Settings</span>
+                </button>
+            </div>
+            <div class="flex-1 flex justify-center">
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2 whitespace-nowrap">
+                    <svg class="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                        </path>
+                    </svg>
+                    <span>LED Settings</span>
+                </h1>
+            </div>
+            <div class="flex-1"></div>
+        </header>
+
+        <!-- Error State -->
+        <div x-show="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6" x-transition>
+            <div class="text-center">
+                <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading LED Settings</h3>
+                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                <button @click="loadConfiguration()" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    Retry
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <template x-if="loaded && !error">
+            <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
+                 x-show="show" x-transition.opacity.duration.300ms>
+            <form @submit.prevent="saveConfiguration()" class="space-y-6">
+                <!-- LED Settings Card -->
+                <div class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-pink-600 transition-shadow duration-200">
+                    <h2 class="text-xl font-semibold text-pink-600 dark:text-pink-400 mb-6">
+                        LED Settings
+                    </h2>
+
+                    <!-- Hardware Settings Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- GPIO Pin (Read-only) -->
+                        <div class="space-y-2">
+                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                <span class="font-medium">LED GPIO Pin:</span> 
+                                <span x-text="config.leds?.gpio === -1 ? '-1 (Not connected)' : (config.leds?.gpio || 'Not configured')" class="font-mono"></span>
+                                <div class="text-xs text-gray-500 mt-1">Configured in Device Settings</div>
+                            </div>
+                        </div>
+
+                        <!-- LED Count -->
+                        <div class="space-y-2">
+                            <label for="led-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">LED Count:</label>
+                            <input 
+                                type="number" 
+                                id="led-count" 
+                                min="1" 
+                                max="300"
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                placeholder="Number of LEDs"
+                                x-model.number="config.leds.count">
+                        </div>
+                    </div>
+
+                    <!-- System Settings Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Brightness -->
+                        <div class="space-y-2">
+                            <label for="led-brightness" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Brightness: <span x-text="config.leds.brightness || 128" class="font-mono text-gray-700 dark:text-gray-300"></span>/255
+                            </label>
+                            <input 
+                                type="range" 
+                                id="led-brightness" 
+                                min="10" 
+                                max="255" 
+                                step="5"
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-pink"
+                                x-model.number="config.leds.brightness">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Lower values save power and reduce heat</p>
+                        </div>
+
+                        <!-- Refresh Rate -->
+                        <div class="space-y-2">
+                            <label for="led-refresh-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Refresh Rate: <span x-text="config.leds.refreshRate || 60" class="font-mono text-gray-700 dark:text-gray-300"></span> Hz
+                            </label>
+                            <input 
+                                type="range" 
+                                id="led-refresh-rate" 
+                                min="10" 
+                                max="120" 
+                                step="5"
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-pink"
+                                x-model.number="config.leds.refreshRate">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Higher values make animations smoother but use more CPU</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row justify-center gap-4 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <button type="submit" :disabled="!canSave"
+                            class="flex-1 bg-pink-600 hover:bg-pink-700 text-white font-bold text-lg py-3 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
+                            :class="{ 'opacity-50 cursor-not-allowed': !canSave }">
+                            <span x-show="!saving" class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Save LED Settings
+                            </span>
+                            <span x-show="saving" class="flex items-center justify-center space-x-2">
+                                <div
+                                    class="animate-spin rounded-full border-2 border-white border-t-transparent w-5 h-5">
+                                </div>
+                                <span>Saving...</span>
+                            </span>
+                        </button>
+                        <button type="button" @click="cancelConfiguration()"
+                            class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Effects Playground Card -->
+                <div class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-pink-600 transition-shadow duration-200">
+                    <h2 class="text-xl font-semibold text-pink-600 dark:text-pink-400 mb-3">
+                        Effects Playground
+                    </h2>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                        Try out different LED strip effects and parameters here. Settings are not saved.
+                    </p>
+
+                    <!-- Effect Selection -->
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <label for="led-effect" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Effect:</label>
+                            <select 
+                                id="led-effect"
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                x-model="effect"
+                                @change="updateEffectParams()">
+                                <option value="chase_single">Single Colour Chase</option>
+                                <option value="rainbow">Rainbow Wave</option>
+                                <option value="twinkle">Twinkle</option>
+                                <option value="chase_multi">Multicolour Chase</option>
+                                <option value="pulse">Pulse</option>
+                                <option value="matrix">Matrix</option>
+                            </select>
+                        </div>
+
+                        <!-- Effect Parameters - Separate Row -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Speed -->
+                            <div class="space-y-2">
+                                <label for="led-effect-speed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Speed: <span x-text="speed || 50" class="font-mono text-gray-700 dark:text-gray-300"></span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="led-effect-speed" 
+                                    min="1" 
+                                    max="100" 
+                                    step="1"
+                                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-pink"
+                                    x-model.number="speed">
+                            </div>
+
+                            <!-- Intensity -->
+                            <div class="space-y-2">
+                                <label for="led-effect-intensity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Intensity: <span x-text="intensity || 50" class="font-mono text-gray-700 dark:text-gray-300"></span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="led-effect-intensity" 
+                                    min="1" 
+                                    max="100" 
+                                    step="1"
+                                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-pink"
+                                    x-model.number="intensity">
+                            </div>
+
+                            <!-- Cycles -->
+                            <div class="space-y-2">
+                                <label for="led-effect-cycles" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Repeat Cycles: <span x-text="cycles || 3" class="font-mono text-gray-700 dark:text-gray-300"></span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="led-effect-cycles" 
+                                    min="1" 
+                                    max="10" 
+                                    step="1"
+                                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider-pink"
+                                    x-model.number="cycles">
+                            </div>
+                        </div>
+
+                        <!-- Colors Section -->
+                        <div x-show="showColorControls()" class="space-y-4">
+                            <h4 class="text-md font-medium text-gray-700 dark:text-gray-300">Colors</h4>
+                            
+                            <!-- Single Color (chase_single, matrix, twinkle, pulse) -->
+                            <template x-if="effect === 'chase_single' || effect === 'matrix' || effect === 'twinkle' || effect === 'pulse'">
+                                <div class="space-y-3">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                                    <div class="grid grid-cols-7 gap-2">
+                                        <!-- 6 Preset Color Swatches -->
+                                        <template x-for="(preset, index) in colorPresets" :key="index">
+                                            <button type="button" 
+                                                    class="w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110"
+                                                    :style="`background-color: ${preset}`"
+                                                    :class="colors[0] === preset ? 'border-gray-900 dark:border-gray-100 shadow-lg scale-110' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'"
+                                                    @click="colors[0] = preset"
+                                                    :title="preset">
+                                            </button>
+                                        </template>
+                                        
+                                        <!-- Custom Color Picker -->
+                                        <div class="text-center">
+                                            <input type="color" 
+                                                   class="w-10 h-10 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:scale-110 mb-1"
+                                                   :class="!colorPresets.includes(colors[0]) ? 'border-gray-900 dark:border-gray-100 shadow-lg scale-110' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'"
+                                                   :value="colors[0]"
+                                                   @input="colors[0] = $event.target.value"
+                                                   title="Custom color">
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Custom</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Three Colors (chase_multi) -->
+                            <template x-if="effect === 'chase_multi'">
+                                <div class="space-y-4">
+                                    <template x-for="(colorName, colorIndex) in ['Color 1', 'Color 2', 'Color 3']" :key="colorIndex">
+                                        <div class="space-y-3">
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" x-text="colorName"></label>
+                                            <div class="grid grid-cols-7 gap-2">
+                                                <!-- 6 Preset Color Swatches -->
+                                                <template x-for="(preset, presetIndex) in colorPresets" :key="presetIndex">
+                                                    <button type="button" 
+                                                            class="w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110"
+                                                            :style="`background-color: ${preset}`"
+                                                            :class="colors[colorIndex] === preset ? 'border-gray-900 dark:border-gray-100 shadow-lg scale-110' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'"
+                                                            @click="colors[colorIndex] = preset"
+                                                            :title="preset">
+                                                    </button>
+                                                </template>
+                                                
+                                                <!-- Custom Color Picker -->
+                                                <div class="text-center">
+                                                    <input type="color" 
+                                                           class="w-10 h-10 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:scale-110 mb-1"
+                                                           :class="!colorPresets.includes(colors[colorIndex]) ? 'border-gray-900 dark:border-gray-100 shadow-lg scale-110' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'"
+                                                           :value="colors[colorIndex]"
+                                                           @input="colors[colorIndex] = $event.target.value"
+                                                           title="Custom color">
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Custom</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Test Effect Section -->
+                    <div class="flex flex-col sm:flex-row justify-center gap-4 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <button 
+                            type="button" 
+                            @click="testLedEffect()" 
+                            class="flex-1 border-2 border-pink-600 text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-900/20 font-bold text-lg py-3 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg">
+                            <span class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"></path>
+                                </svg>
+                                Test LED Effect
+                            </span>
+                        </button>
+                        <button 
+                            type="button" 
+                            @click="turnOffLeds()" 
+                            class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600">
+                            Stop Test
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        </template>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" class="app-root">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Device Setup - Scribe Evolution</title>
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/js/app-common.js"></script>
+    <script src="/js/page-setup.js"></script>
+    <script src="/js/alpine.js" defer></script>
+</head>
+
+<body class="page-body" x-data="setupPage">
+    <main class="page-main">
+        <!-- Header -->
+        <header class="page-header">
+            <!-- Logo -->
+            <div class="text-center mb-6">
+                <!-- Dark mode logo (white) -->
+                <img src="/images/ScribeLogoMain-white.svg" alt="Scribe Evolution" x-show="!loading"
+                    x-transition:enter="transition-none" x-transition:enter-start="" x-transition:enter-end=""
+                    class="slide-in-bck-center h-20 sm:h-24 md:h-28 lg:h-32 w-auto mx-auto dark:block hidden"
+                    style="display: none;" />
+                <!-- Light mode logo (dark) -->
+                <img src="/images/ScribeLogoMain-black.svg" alt="Scribe Evolution" x-show="!loading"
+                    x-transition:enter="transition-none" x-transition:enter-start="" x-transition:enter-end=""
+                    class="slide-in-bck-center h-20 sm:h-24 md:h-28 lg:h-32 w-auto mx-auto dark:hidden block"
+                    style="display: none;" />
+            </div>
+        </header>
+
+        <!-- Error State -->
+        <div x-show="error" class="setup-card bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800" x-transition>
+            <div class="text-center">
+                <svg class="w-10 h-10 mb-4 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Setup Error</h3>
+                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                <button @click="window.location.reload()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                    Retry
+                </button>
+            </div>
+        </div>
+
+        <!-- Setup Form -->
+        <template x-if="!loading && !error">
+            <div x-data="{ 
+                ready: false, 
+                init() {
+                    this.$nextTick(() => {
+                        // Use requestAnimationFrame for smooth animation timing
+                        requestAnimationFrame(() => {
+                            this.ready = true;
+                        });
+                    });
+                }
+            }" x-show="ready" x-transition:enter="transition ease-out duration-600 transform" 
+                x-transition:enter-start="translate-y-4 opacity-0" 
+                x-transition:enter-end="translate-y-0 opacity-100">
+                <form @submit.prevent="saveAndRestart" class="space-y-6">
+                
+                <!-- Device Configuration Card -->
+                <div class="setup-card">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                        Device Information
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Device Owner -->
+                        <div>
+                            <label for="device-owner" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Device Owner
+                            </label>
+                            <input type="text" id="device-owner" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                x-model="config.device.owner"
+                                placeholder="Enter your device name">
+                        </div>
+
+                        <!-- Timezone -->
+                        <div>
+                            <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Timezone
+                            </label>
+                            <input id="timezone" type="text" required
+                                placeholder="Enter IANA timezone (e.g., America/New_York)"
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                x-model="config.device.timezone">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Enter a valid IANA timezone identifier. Examples: America/New_York, Europe/London, Asia/Tokyo, Australia/Sydney
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WiFi Configuration Card -->
+                <div class="setup-card">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+                        </svg>
+                        WiFi Network
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Initial WiFi Scan (shown before first scan) -->
+                        <div x-show="availableNetworks.length === 0 && config.device.wifi.ssid !== '__manual__'" class="text-center">
+                            <button type="button" @click="scanWiFi" :disabled="scanning" 
+                                class="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center mx-auto">
+                                <svg x-show="!scanning" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <div x-show="scanning" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                <span x-text="scanning ? 'Scanning...' : 'Scan for WiFi'"></span>
+                            </button>
+                        </div>
+
+                        <!-- WiFi SSID with Rescan (shown after scan) -->
+                        <div x-show="availableNetworks.length > 0 || config.device.wifi.ssid === '__manual__'" x-transition>
+                            <label for="wifi-ssid" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                WiFi Network (SSID)
+                            </label>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <select id="wifi-ssid" required :disabled="scanning"
+                                    class="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    x-model="config.device.wifi.ssid">
+                                    <option value="">Select network...</option>
+                                    <template x-for="(network, index) in availableNetworks" :key="network.ssid + '-' + index">
+                                        <option :value="network.ssid">
+                                            <span x-text="network.ssid"></span>
+                                            <span x-text="network.signal_strength ? ` (${network.signal_strength})` : ''"></span>
+                                        </option>
+                                    </template>
+                                    <option value="__manual__">Enter network name manually...</option>
+                                </select>
+                                <button type="button" @click="scanWiFi" :disabled="scanning"
+                                    class="px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-xl transition-colors flex items-center justify-center text-sm whitespace-nowrap">
+                                    <svg x-show="!scanning" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    <div x-show="scanning" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    <span x-text="scanning ? 'Scanning...' : 'Rescan'"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Manual SSID Input (shown when manual option selected) -->
+                        <div x-show="config.device.wifi.ssid === '__manual__'" x-transition>
+                            <label for="manual-ssid" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Manual Network Name
+                            </label>
+                            <input type="text" id="manual-ssid"
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                x-model="manualSsid"
+                                placeholder="Enter WiFi network name">
+                        </div>
+
+                        <!-- WiFi Password -->
+                        <div>
+                            <label for="wifi-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                WiFi Password
+                            </label>
+                            <input type="password" id="wifi-password" required
+                                class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                x-model="config.device.wifi.password"
+                                placeholder="Enter WiFi password">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-center pt-6">
+                    <button type="submit" :disabled="saving || !canSave" class="btn-primary px-8 py-4 text-lg"
+                        :class="{ 'opacity-50 cursor-not-allowed': saving || !canSave }"
+                        :title="!canSave ? 'Please fill in all required fields' : ''">
+                        <span x-show="!saving" class="flex items-center">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                            Save + Restart
+                        </span>
+                        <span x-show="saving" class="flex items-center">
+                            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                            Saving & Restarting...
+                        </span>
+                    </button>
+                </div>
+                
+                <!-- Post-restart instructions (only show when ready to save) -->
+                <div x-show="canSave" x-transition class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="text-sm">
+                            <h4 class="font-semibold text-amber-800 dark:text-amber-200 mb-2">After Restart:</h4>
+                            <ol class="text-amber-700 dark:text-amber-300 space-y-1 list-decimal list-inside">
+                                <li>Scribe Evolution will restart and connect to the new WiFi network</li>
+                                <li>Rejoin your normal WiFi network</li>
+                                <li>Visit <strong>scribe-<span x-text="config.device.owner.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local</strong></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </template>
+
+        <!-- Full-screen restart overlay -->
+        <div x-show="saving" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-50 flex items-center justify-center">
+            <div class="text-center px-6 max-w-md">
+                <h1 class="text-4xl md:text-5xl font-light text-white mb-8">Restarting...</h1>
+                <div class="text-gray-200 space-y-3">
+                    <p class="text-lg mb-4">Next steps:</p>
+                    <div class="space-y-2 text-left">
+                        <p class="text-base">1. Rejoin your normal WiFi network</p>
+                        <p class="text-base">2. Visit <span class="font-medium text-white">scribe-<span x-text="config.device.owner.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
