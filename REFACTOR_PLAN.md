@@ -165,7 +165,9 @@ Each follows same 5-step conversion process above
 
 Apply proven settings patterns to remaining pages
 
-- **5.0 Setup.html in AP mode** - Bring up to speed with settings > wifi.html
+- **5.0 Setup.html (only accessible in AP mode)** 
+  - Already uses "the Alpine Load Flag process". 
+  - But bring up to speed with UX in settings > wifi.html
 - **5.1 Index Page** - Extract to `page-index.js`, modular architecture
 - **5.2 Diagnostics** - Split sections into proper pages like settings (Overview + Microcontroller, Logging, Routes, Config, NVS)
 - **5.3 404 Page** - Polish and align with architecture
