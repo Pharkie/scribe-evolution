@@ -1,63 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="app-root">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page not found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>404 - Paper Jam - Scribe Evolution</title>
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="/css/app.css">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 </head>
-<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-    <header class="absolute top-4 left-4">
-        <a href="javascript:history.back()" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
-            Back
-        </a>
-    </header>
+<body class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <main class="w-full max-w-4xl mx-auto flex-1">
+        <header class="w-full max-w-6xl mx-auto flex items-center mb-8 gap-4">
+            <div class="flex-1 flex justify-start">
+                <button onclick="window.location.href='/'" 
+                    class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                    <span class="text-xs sm:text-sm font-medium">Back</span>
+                </button>
+            </div>
 
-    <main class="min-h-screen flex items-center justify-center p-4" role="main">
-        <div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-8 text-center">
-            <svg class="mx-auto mb-6 w-12 h-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">404</h1>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Page not found</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-8">The page you're looking for doesn't exist or has been moved.</p>
-            
-            <div class="space-y-4">
+            <div class="flex-2 flex justify-center">
+                <h1 class="flex items-center space-x-2 text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
+                    <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 7-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Paper Jam</span>
+                </h1>
+            </div>
+
+            <div class="flex-1"></div>
+        </header>
+
+        <div class="flex items-center justify-center flex-1 p-4 sm:p-8 lg:p-16">
+            <div class="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-3xl shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 p-8 sm:p-12 lg:p-16 text-center">
+                <h2 class="text-8xl sm:text-9xl lg:text-[12rem] font-bold text-gray-900 dark:text-gray-100 mb-6 lg:mb-8">404</h2>
+                <h3 class="text-2xl sm:text-3xl lg:text-4xl font-medium text-gray-900 dark:text-gray-100 mb-6 lg:mb-8">Page not found</h3>
+                <p class="text-lg sm:text-xl lg:text-2xl text-gray-600 dark:text-gray-400 mb-8 lg:mb-12 leading-relaxed">Looks like that page got tangled up in the rollers.</p>
+                
                 <a href="/" 
-                   class="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                   aria-current="page">
+                   class="inline-flex items-center justify-center w-full px-8 py-4 lg:px-12 lg:py-6 bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white text-lg lg:text-xl font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                     Home
                 </a>
-                
-                <div class="flex items-center justify-center space-x-6 text-xs">
-                    <a href="mailto:support@example.com?subject=404 Error Report" 
-                       class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
-                        Report issue
-                    </a>
-                    <button onclick="navigator.clipboard?.writeText(window.location.href)" 
-                            class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
-                        Copy URL
-                    </button>
-                </div>
             </div>
-            
-            <details class="mt-8 text-left">
-                <summary class="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
-                    Details
-                </summary>
-                <div class="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-xs text-gray-600 dark:text-gray-400 font-mono">
-                    <div>Path: <span id="path">/unknown</span></div>
-                    <div>Time: <span id="timestamp"></span></div>
-                </div>
-            </details>
         </div>
     </main>
-
-    <script>
-        document.getElementById('path').textContent = window.location.pathname;
-        document.getElementById('timestamp').textContent = new Date().toLocaleString();
-    </script>
 </body>
 </html>
