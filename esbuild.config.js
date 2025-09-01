@@ -170,19 +170,13 @@ const buildConfigs = {
 
   // Device settings page
   device: {
-    input: [
-      'src/data/js/settings-api.js',
-      'src/data/js/page-settings-device.js'
-    ],
+    input: ['src/js/pages/settings-device.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-device.js',
     minify: false,
   },
 
   deviceProd: {
-    input: [
-      'src/data/js/settings-api.js',
-      'src/data/js/page-settings-device.js'
-    ],
+    input: ['src/js/pages/settings-device.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-device.js',
     minify: true,
   },
