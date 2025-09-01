@@ -262,7 +262,8 @@ const mimeTypes = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain',
-  '.webmanifest': 'application/manifest+json'
+  '.webmanifest': 'application/manifest+json',
+  '.woff2': 'font/woff2'
 };
 
 function formatUptime(ms) {
@@ -939,6 +940,8 @@ function createRequestHandler() {
         // If file doesn't exist, serve 404
         if (!fs.existsSync(filePath) && !fs.existsSync(filePath + '.gz')) {
           filePath = path.join(__dirname, '..', 'data', '404.html');
+          serveFile(res, filePath, 404);
+          return;
         }
       }
       
