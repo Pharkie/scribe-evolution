@@ -38,7 +38,7 @@ function initializeDeviceSettingsStore() {
 
         // ================== DEVICE CONFIGURATION API ==================
         // Load configuration data from server
-        async loadConfiguration() {
+        async loadData() {
             // Prevent duplicate initialization
             if (this.initialized) {
                 console.log('⚙️ Device Settings: Already initialized, skipping');

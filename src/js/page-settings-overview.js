@@ -23,7 +23,7 @@ function initializeSettingsOverviewStore() {
         error: null,
 
         // ================== INITIALIZATION ==================
-        init() {
+        loadData() {
             this.checkSaveSuccess();
             // Set loaded state (no async data to load for overview page)
             this.loaded = true;

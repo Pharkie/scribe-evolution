@@ -139,6 +139,8 @@ document.addEventListener('alpine:init', () => {
 </body>
 ```
 
+**Method Naming**: Use consistent `loadData()` method name across all pages for the Simple Loading Flag Pattern.
+
 ### Simple Loading Flag Pattern
 **Replace complex pre-initialized structures with simple pattern:**
 
