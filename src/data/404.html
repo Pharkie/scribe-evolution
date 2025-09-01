@@ -1,100 +1,63 @@
 <!DOCTYPE html>
-<html lang="en" class="app-root">
-
+<html lang="en">
 <head>
-        <title>404 - Paper Jam - Scribe Evolution</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="shortcut icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/site.webmanifest" />
-        <link rel="stylesheet" href="/css/app.css">
-        <script src="/js/app-common.js"></script>
-        <script src="/js/page-404.js"></script>
-        <script src="/js/alpine.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page not found</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 </head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <header class="absolute top-4 left-4">
+        <a href="javascript:history.back()" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
+            Back
+        </a>
+    </header>
 
-<body class="page-body" x-data="window.errorStoreInstance || {}">
-        <main class="page-main">
-                <!-- Header with title and back button -->
-                <header class="page-header">
-                        <!-- Back button -->
-                        <div class="header-spacer">
-                                <button onclick="window.location.href='/'" class="back-button">
-                                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M15 19l-7-7 7-7"></path>
-                                        </svg>
-                                        <span class="text-xs sm:text-sm font-medium">Back</span>
-                                </button>
-                        </div>
-
-                        <!-- Centered title -->
-                        <div class="header-center">
-                                <h1 class="page-title">
-                                        <svg class="w-10 h-10 sm:w-12 sm:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" :class="errorIconClass">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 7-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16"></path>
-                                        </svg>
-                                        <span>Paper Jam</span>
-                                </h1>
-                        </div>
-
-                        <!-- Right spacer -->
-                        <div class="header-spacer"></div>
-                </header>
-
-                <!-- Main Error Content -->
-                <div x-show="showContent" x-transition:enter="transition ease-out duration-600 transform"
-                        x-transition:enter-start="translate-y-8 opacity-0"
-                        x-transition:enter-end="translate-y-0 opacity-100" class="error-container">
-
-                        <div class="error-card">
-                                <div class="error-code">404 Not Found</div>
-                                <p class="error-message" x-text="errorMessage"></p>
-
-                                <!-- Request Details -->
-                                <div class="error-details">
-                                        <strong class="error-details-title">Request Details:</strong><br>
-                                        <div class="error-details-content">
-                                                <div>
-                                                        Time:
-                                                        <span class="error-details-item"
-                                                                x-text="new Date().toLocaleString()"></span>
-                                                </div>
-                                        </div>
-                                </div>
-
-                                <!-- Action Buttons -->
-                                <div class="error-actions">
-                                        <button @click="goHome()" class="error-home-button flex items-center">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 12 2-2m0 0 7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m0 0a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1m0 0h3a1 1 0 0 0 1-1V10M9 21v-6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6"></path>
-                                                </svg>
-                                                Home
-                                        </button>
-                                </div>
-                        </div>
+    <main class="min-h-screen flex items-center justify-center p-4" role="main">
+        <div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-8 text-center">
+            <svg class="mx-auto mb-6 w-12 h-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">404</h1>
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Page not found</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-8">The page you're looking for doesn't exist or has been moved.</p>
+            
+            <div class="space-y-4">
+                <a href="/" 
+                   class="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                   aria-current="page">
+                    Home
+                </a>
+                
+                <div class="flex items-center justify-center space-x-6 text-xs">
+                    <a href="mailto:support@example.com?subject=404 Error Report" 
+                       class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
+                        Report issue
+                    </a>
+                    <button onclick="navigator.clipboard?.writeText(window.location.href)" 
+                            class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
+                        Copy URL
+                    </button>
                 </div>
-
-
-        </main>
-
-        <!-- Easter Egg: Hidden Konami Code -->
-        <div x-data="{ konamiCode: '', konamiSequence: 'ArrowUpArrowUpArrowDownArrowDownArrowLeftArrowRightArrowLeftArrowRightKeyBKeyA' }"
-                @keydown.window="
-            konamiCode += $event.code;
-            if (konamiCode.length > konamiSequence.length) {
-                konamiCode = konamiCode.slice(-konamiSequence.length);
-            }
-            if (konamiCode === konamiSequence) {
-                alert('🎉 Konami Code activated! The printer has gained sentience...');
-                konamiCode = '';
-            }
-         ">
+            </div>
+            
+            <details class="mt-8 text-left">
+                <summary class="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm">
+                    Details
+                </summary>
+                <div class="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-xs text-gray-600 dark:text-gray-400 font-mono">
+                    <div>Path: <span id="path">/unknown</span></div>
+                    <div>Time: <span id="timestamp"></span></div>
+                </div>
+            </details>
         </div>
-</body>
+    </main>
 
+    <script>
+        document.getElementById('path').textContent = window.location.pathname;
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    </script>
+</body>
 </html>

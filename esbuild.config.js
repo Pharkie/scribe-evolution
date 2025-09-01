@@ -157,13 +157,13 @@ const buildConfigs = {
   },
 
   '404': {
-    input: ['src/data/js/404-alpine-store.js'],
+    input: ['src/js/pages/404.js'], // Single ES6 module entry point
     output: 'data/js/page-404.js',
     minify: false,
   },
 
   '404Prod': {
-    input: ['src/data/js/404-alpine-store.js'],
+    input: ['src/js/pages/404.js'], // Single ES6 module entry point
     output: 'data/js/page-404.js',
     minify: true,
   },

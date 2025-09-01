@@ -4,10 +4,18 @@ This document provides detailed instructions for building and deploying the Scri
 
 ## Build System Overview
 
-This project uses npm for asset building and PlatformIO for firmware compilation. The build process consists of two main phases:
+This project uses a simplified npm build system for web assets and PlatformIO for firmware compilation. The build process consists of two main phases:
 
-1. **Frontend Assets**: CSS and JavaScript compilation using npm and Tailwind
+1. **Web Assets**: HTML, CSS, and JavaScript bundling with ES6 modules and GZIP compression
 2. **Firmware**: ESP32-C3 firmware compilation using PlatformIO
+
+### Available Build Commands
+
+The build system has been simplified to 3 essential commands:
+
+- **`npm run build`** - Production build (minified CSS + minified JS + GZIP compression)
+- **`npm run dev`** - Development build (unminified CSS + unminified JS + GZIP compression)  
+- **`npm run test`** - Run PlatformIO unit tests
 
 ## Prerequisites
 
@@ -56,34 +64,38 @@ Edit `src/config.h` with your specific settings:
 
 **Important:** The `config.h` file is ignored by git to keep your credentials safe.
 
-## Frontend Asset Building
+## Web Asset Building
 
-### CSS & JavaScript Assets
+### Quick Start
 
-The web interface uses Tailwind CSS and minified JavaScript:
+The web interface uses Tailwind CSS and ES6 modules bundled with esbuild:
 
 ```bash
 npm install                # Install build dependencies
-npm run build             # Build CSS + JS (with source maps)
-npm run build-prod        # Production build (no source maps)
+npm run dev               # Development build (unminified)
+npm run build             # Production build (minified)
 ```
 
-### Individual Asset Commands
+### Build Process Details
 
-For development, you can build specific assets:
+Each build command performs the following steps automatically:
 
-```bash
-# CSS only
-npm run build-css
-npm run build-css-prod     # Production (no source maps)
-npm run watch-css          # Watch mode for development
+1. **Copy HTML & Assets** - Copies HTML, PNG, ICO, SVG, and webmanifest files to `/data`
+2. **Build CSS** - Compiles Tailwind CSS (minified in production)
+3. **Bundle JavaScript** - Uses esbuild to bundle ES6 modules into IIFE format for ESP32
+4. **GZIP Compression** - Compresses all assets (average 76% reduction)
+5. **Clean Uncompressed** - Removes original files, keeping only `.gz` versions
 
-# JavaScript only  
-npm run build-js
-npm run build-js-prod      # Production (no source maps)
-```
+### ES6 Module Architecture
 
-**Note:** The minified files (`data/css/*.min.css` and `data/js/*.min.js`) are committed to the repository for users who don't have Node.js installed. If you modify CSS or JS files, rebuild the assets before committing.
+The JavaScript uses modern ES6 modules in development:
+
+- **Source:** `src/js/pages/*.js` - Entry points for each page
+- **Stores:** `src/js/stores/*.js` - Alpine.js store factories
+- **APIs:** `src/js/api/*.js` - API service modules
+- **Output:** `data/js/page-*.js` - Bundled IIFE format for ESP32
+
+**Note:** The ESP32 serves compressed `.gz` files automatically. Uncompressed files are removed to save flash storage space.
 
 ## Firmware Building
 
