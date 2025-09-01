@@ -140,7 +140,7 @@ document.addEventListener('alpine:init', () => {
                 this.originalConfig.leds.refreshRate = this.config.leds.refreshRate;
                 
                 // Redirect to settings overview with success parameter (no timeout)
-                window.location.href = '/settings.html?saved=leds';
+                window.location.href = '/settings/?saved=leds';
 
             } catch (error) {
                 console.error('Error saving configuration:', error);
@@ -151,7 +151,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         cancelConfiguration() {
-            window.location.href = '/settings.html';
+            window.location.href = '/settings/';
         },
 
         // COLOR CONTROL FUNCTIONS

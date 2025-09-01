@@ -375,7 +375,7 @@ function initializeWiFiSettingsStore() {
                 console.log('📡 WiFi: Configuration saved successfully');
                 
                 // Redirect immediately with success parameter
-                window.location.href = '/settings.html?saved=wifi';
+                window.location.href = '/settings/?saved=wifi';
                 
             } catch (error) {
                 console.error('📡 WiFi: Failed to save configuration:', error);
@@ -387,7 +387,7 @@ function initializeWiFiSettingsStore() {
         // Cancel configuration changes
         cancelConfiguration() {
             // Navigate back to settings
-            window.location.href = '/settings.html';
+            window.location.href = '/settings/';
         },
         
         // ================== SYSTEM/PRINTING API ==================

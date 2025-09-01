@@ -618,7 +618,7 @@ function initializeIndexStore() {
     
     // Navigation
     goToSettings() {
-      window.location.href = '/settings.html'; // New modular settings overview page
+      window.location.href = '/settings/'; // New modular settings overview page
     },
     
     // === Memo Functions ===

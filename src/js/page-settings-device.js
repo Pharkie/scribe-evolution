@@ -587,7 +587,7 @@ function initializeDeviceSettingsStore() {
                 console.log('Alpine Device Store: Configuration saved successfully');
                 
                 // Redirect immediately with success parameter
-                window.location.href = '/settings.html?saved=device';
+                window.location.href = '/settings/?saved=device';
                 
             } catch (error) {
                 console.error('Alpine Device Store: Failed to save configuration:', error);
@@ -599,7 +599,7 @@ function initializeDeviceSettingsStore() {
         // Cancel configuration changes
         cancelConfiguration() {
             // Navigate back to settings
-            window.location.href = '/settings.html';
+            window.location.href = '/settings/';
         },
 
         // ================== GPIO MANAGEMENT ==================

@@ -140,7 +140,7 @@ function createMemosStore() {
                 this.hasUnsavedChanges = false;
                 
                 // Redirect immediately back to settings with success indicator
-                window.location.href = '/settings.html?saved=memos';
+                window.location.href = '/settings/?saved=memos';
                 
             } catch (error) {
                 console.error('Error saving memos:', error);

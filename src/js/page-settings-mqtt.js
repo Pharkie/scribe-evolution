@@ -306,7 +306,7 @@ function initializeMqttSettingsStore() {
                 
                 if (response.ok) {
                     // Redirect immediately with success parameter (don't reset saving state)
-                    window.location.href = '/settings.html?saved=mqtt';
+                    window.location.href = '/settings/?saved=mqtt';
                     return; // Exit without resetting saving state
                 } else {
                     // Parse error response for error message
@@ -323,7 +323,7 @@ function initializeMqttSettingsStore() {
         // Cancel configuration changes
         cancelConfiguration() {
             // Navigate back to settings
-            window.location.href = '/settings.html';
+            window.location.href = '/settings/';
         }
     };
 

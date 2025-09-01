@@ -96,7 +96,7 @@ document.addEventListener('alpine:init', () => {
                 }
                 
                 // Redirect immediately with success parameter
-                window.location.href = '/settings.html?saved=unbiddenInk';
+                window.location.href = '/settings/?saved=unbiddenInk';
             } catch (error) {
                 console.error('Failed to save configuration:', error);
                 this.error = error.message;
@@ -105,7 +105,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         cancelConfiguration() {
-            window.location.href = '/settings.html';
+            window.location.href = '/settings/';
         },
 
         // Change Detection

@@ -849,6 +849,9 @@ function createRequestHandler() {
           return;
         }
         filePath = path.join(__dirname, '..', 'data', pathname.substring(1));
+      } else if (pathname.endsWith('/')) {
+        // Handle directory requests by serving index.html from that directory
+        filePath = path.join(__dirname, '..', 'data', pathname.substring(1), 'index.html');
       } else {
         filePath = path.join(__dirname, '..', 'data', '404.html');
       }

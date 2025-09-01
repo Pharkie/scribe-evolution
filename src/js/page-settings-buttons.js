@@ -136,7 +136,7 @@ document.addEventListener('alpine:init', () => {
                 this.originalConfig.buttons = JSON.parse(JSON.stringify(this.config.buttons));
                 
                 // Redirect immediately to settings overview with success parameter
-                window.location.href = '/settings.html?saved=buttons';
+                window.location.href = '/settings/?saved=buttons';
 
             } catch (error) {
                 console.error('Error saving configuration:', error);
@@ -147,7 +147,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         cancelConfiguration() {
-            window.location.href = '/settings.html';
+            window.location.href = '/settings/';
         },
 
         // VALIDATION FUNCTIONS

@@ -41,12 +41,36 @@
             "description": "Main printer interface"
         },
         {
-            "path": "/settings.html",
-            "description": "Configuration settings"
+            "path": "/settings/",
+            "description": "Configuration settings overview (serves /settings/index.html)"
         },
         {
             "path": "/settings/device.html",
             "description": "Device settings"
+        },
+        {
+            "path": "/settings/wifi.html",
+            "description": "WiFi settings"
+        },
+        {
+            "path": "/settings/mqtt.html",
+            "description": "MQTT settings"
+        },
+        {
+            "path": "/settings/buttons.html",
+            "description": "Button settings"
+        },
+        {
+            "path": "/settings/leds.html",
+            "description": "LED settings"
+        },
+        {
+            "path": "/settings/memos.html",
+            "description": "Memo settings"
+        },
+        {
+            "path": "/settings/unbidden-ink.html",
+            "description": "Unbidden Ink (AI content) settings"
         },
         {
             "path": "/diagnostics.html",
@@ -185,13 +209,13 @@
         },
         {
             "method": "POST",
-            "path": "/api/led-effect",
-            "description": "Trigger LED Effect"
+            "path": "/api/leds/test",
+            "description": "Test LED effects with parameters"
         },
         {
             "method": "POST",
-            "path": "/api/leds-off",
-            "description": "Turn LEDs Off"
+            "path": "/api/leds/off",
+            "description": "Turn LEDs off"
         }
     ]
 }

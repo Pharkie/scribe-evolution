@@ -95,7 +95,7 @@ function initializeErrorStore() {
     },
     
     goToSettings() {
-      window.location.href = '/settings.html';
+      window.location.href = '/settings/';
     },
     
     goToDiagnostics() {
