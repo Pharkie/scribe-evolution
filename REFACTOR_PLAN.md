@@ -120,59 +120,47 @@
 
 ### 4.5: ES6 Module System
 
-**Revised Approach**: ES6 modules in source → IIFE bundles for ESP32
-- **Source**: Modern `import`/`export` syntax with explicit dependencies
-- **Output**: Single-file IIFE bundles per page (same ESP32 delivery as now)
-- **Key Insight**: Source modularity ≠ runtime delivery format
+**Conversion Process**: ES6 modules in source → IIFE bundles for ESP32
 
-**Current Architecture** (19 source → 15 bundled files):
-- `initializeIndexStore()` → global function calls (where is this defined?)
-- esbuild concatenates files with custom multi-entry plugin
-- Hidden dependencies and mysterious global function origins
+**Per-Page Conversion Steps**:
+1. **Create API module**: Move API functions to `src/js/api/{page}.js` with ES6 exports
+2. **Create store module**: Convert Alpine store to `src/js/stores/{page}.js` factory function  
+3. **Create page entry**: Import and register store in `src/js/pages/{page}.js`
+4. **Update esbuild config**: Point to single ES6 entry point instead of concatenation
+5. **Test build**: Verify IIFE output works with Alpine.js and mock server
 
-**Proposed Module System**:
-```javascript
-// Source: src/js/stores/index.js (ES6 module)
-export const indexStore = {
-  messages: [],
-  loaded: false,
-  // ...
-};
+**Completed Pages**: 
+- **✅ Index page** - Full ES6 conversion completed
+  - `src/js/api/index.js`: 6 exported API functions
+  - `src/js/stores/index.js`: `createIndexStore()` factory with explicit imports
+  - `src/js/pages/index.js`: Alpine registration entry point  
+  - Build output: `data/js/page-index.js` (28KB dev, 14KB prod)
 
-// Source: src/js/pages/index.js (ES6 module) 
-import { indexStore } from '../stores/index.js';
-import { apiClient } from '../utils/api.js';
+**Benefits Realized**:
+- **Explicit dependencies**: Clear `import` statements replace mysterious globals
+- **Superior IDE support**: IntelliSense, go-to-definition, refactoring all work
+- **Self-documenting architecture**: Dependencies visible in source code
+- **Zero runtime changes**: Same IIFE output, Alpine patterns, ESP32 serving
 
-// Register with Alpine (identical to current)
-Alpine.store('indexStore', indexStore);
-```
+**Next Steps - Individual Pages to Convert**:
+4.5.1. **Convert shared settings API** (`settings-api.js` → `src/js/api/settings.js`) - **Convert first, used by 8+ pages**
+4.5.2. **Diagnostics page** (`diagnostics-alpine-store.js` + `diagnostics-api.js`)
+4.5.3. **Setup page** (`setup-alpine-store.js` + `setup-api.js`)
+4.5.4. **404 page** (`404-alpine-store.js`)
+4.5.5. **Settings overview page** (`page-settings-overview.js`) 
+4.5.6. **Device settings page** (`page-settings-device.js` + imports shared settings API)
+4.5.7. **WiFi settings page** (`page-settings-wifi.js` + imports shared settings API)
+4.5.8. **MQTT settings page** (`page-settings-mqtt.js` + imports shared settings API)
+4.5.9. **Memos settings page** (`page-settings-memos.js`)
+4.5.10. **Buttons settings page** (`page-settings-buttons.js` + imports shared settings API)
+4.5.11. **LEDs settings page** (`page-settings-leds.js` + imports shared settings API)
+4.5.12. **Unbidden Ink settings page** (`page-settings-unbidden-ink.js` + imports shared settings API)
 
-**esbuild Output**: Single IIFE per page (ESP32 compatibility unchanged)
+**Cleanup after conversion**:
+- Remove unused `settings-alpine-store.js` (if any remaining references)
+- Remove `settings`/`settingsProd` build targets from esbuild config
 
-**Real Benefits**:
-- **High**: Explicit dependencies replace mysterious globals
-- **High**: Superior IDE support (IntelliSense, go-to-definition, refactoring)
-- **Medium**: Self-documenting architecture - imports show relationships
-- **Medium**: Future TypeScript compatibility path
-- **Low**: Tree-shaking elimination of unused code (5-10% savings)
-
-**Minimal Risks with IIFE Bundling**:
-- **ESP32 compatibility**: Zero change - still serves single `.js` files
-- **Alpine.js**: Works perfectly - store registration identical  
-- **Browser support**: No native modules served, only IIFE bundles
-- **Debugging**: Source maps maintain clarity
-- **Build complexity**: esbuild handles ES6→IIFE natively
-
-**Implementation Strategy**:
-- **Gradual conversion**: Convert one page at a time
-- **Same output format**: `format: 'iife'` in esbuild config
-- **Preserve Alpine patterns**: Store registration unchanged
-- **Dev builds**: Can expose globals on `window` if needed
-
-**Updated Assessment**: **APPROVED** - Architecture benefits with minimal risk
-- Source code gains modern module structure and explicit dependencies
-- ESP32 deployment remains simple and broadly compatible
-- Developer experience significantly improved without runtime complexity
+Each follows same 5-step conversion process above
 
 ---
 
