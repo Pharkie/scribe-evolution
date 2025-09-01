@@ -159,10 +159,18 @@ function initializeMqttSettingsStore() {
         },
 
         // ================== PASSWORD HANDLING ==================
+        clearPasswordFieldOnFocus() {
+            // Clear password field on focus (standard UX pattern)
+            if (this.config.mqtt.password) {
+                this.config.mqtt.password = '';
+                this.mqttPasswordModified = true;
+                this.resetMqttTestState();
+            }
+        },
+
         trackMqttPasswordChange(newValue) {
-            const isMasked = newValue && newValue.includes('●');
             const hasChanged = newValue !== this.originalMaskedPassword;
-            this.mqttPasswordModified = hasChanged && !isMasked;
+            this.mqttPasswordModified = hasChanged;
         },
 
         // ================== MQTT TEST FUNCTIONALITY ==================

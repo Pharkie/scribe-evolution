@@ -121,11 +121,18 @@ document.addEventListener('alpine:init', () => {
                    this.passwordModified;
         },
 
+        // Clear API token field on focus (standard UX pattern)
+        clearChatgptTokenFieldOnFocus() {
+            if (this.config.unbiddenInk.chatgptApiToken) {
+                this.config.unbiddenInk.chatgptApiToken = '';
+                this.passwordModified = true;
+            }
+        },
+
         // Password Tracking
         trackChatgptTokenChange(newValue) {
-            const isMasked = newValue && newValue.includes('●');
             const hasChanged = newValue !== this.originalValues.chatgptApiToken;
-            this.passwordModified = hasChanged && !isMasked;
+            this.passwordModified = hasChanged;
         },
 
         // Time Range Management - Dual Handle Slider Logic

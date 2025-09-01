@@ -168,11 +168,18 @@ function initializeWiFiSettingsStore() {
             this.originalConfig.connectTimeout = this.config.device.wifi.connect_timeout || 15000;
         },
         
+        // Clear password field on focus (standard UX pattern)
+        clearWifiPasswordFieldOnFocus() {
+            if (this.config.device.wifi.password) {
+                this.config.device.wifi.password = '';
+                this.passwordsModified.wifiPassword = true;
+            }
+        },
+
         // Track password modifications (called from templates)
         trackWifiPasswordChange(newValue) {
-            const isMasked = newValue && newValue.includes('●');
             const hasChanged = newValue !== this.originalMaskedValues.wifiPassword;
-            this.passwordsModified.wifiPassword = hasChanged && !isMasked;
+            this.passwordsModified.wifiPassword = hasChanged;
         },
         
         // Initialize WiFi state - simplified
