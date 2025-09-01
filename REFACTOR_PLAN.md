@@ -20,6 +20,13 @@
 
 ## Phase 3: Complete Page Architecture ✅
 
+**Key Features**:
+- Color-coded themes per section
+- Partial config updates (send only relevant fields)
+- Consistent Alpine.js patterns and error handling
+- Mock server testing + live ESP32 verification
+- Navigation hierarchy: Home → Settings → Individual Pages
+
 **Status**: All individual settings pages complete, ready for cleanup
 
 ### Completed Settings Pages (3.1-3.8)
@@ -32,18 +39,6 @@
 - **Unbidden Ink** (purple) - AI prompts, scheduling, API settings
 
 **Testing Status**: Steps 3.1-3.8 need live ESP32 verification before proceeding to 3.9
-
-**Key Features Delivered**:
-- Color-coded themes per section
-- Partial config updates (send only relevant fields)
-- Consistent Alpine.js patterns and error handling
-- Mock server testing + live ESP32 verification
-- Navigation hierarchy: Home → Settings → Individual Pages
-
-### Step 3.8: Unbidden Ink Settings [NEEDS LIVE TEST]
-- [x] Purple theme, AI content configuration
-- [x] Prompts, scheduling, API settings
-- [ ] Live ESP32 testing pending
 
 ### Step 3.9: Legacy Cleanup [READY]
 - [ ] Remove `settings-old.html` (legacy monolithic file)
