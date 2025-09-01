@@ -6,49 +6,32 @@
 document.addEventListener('alpine:init', () => {
     Alpine.store('settingsUnbiddenInk', {
         // State
-        loading: true,  // Start as loading for fade-in effect
+        loaded: false,  // Simple loading flag (starts false)
         saving: false,
         error: null,
         initialized: false,
-        config: {
-            unbiddenInk: {
-                enabled: null,
-                startHour: null,
-                endHour: null,
-                frequencyMinutes: null,
-                prompt: null,
-                chatgptApiToken: null,
-                promptPresets: null
-            }
-        },
-        originalValues: {
-            enabled: null,
-            startHour: null,
-            endHour: null,
-            frequencyMinutes: null,
-            prompt: null,
-            chatgptApiToken: null
-        },
+        
+        // Configuration data (empty object populated on load)
+        config: {},
+        
+        originalValues: {},
         passwordModified: false,
 
         // API Operations
         async loadConfiguration() {
-            // Prevent duplicate initialization
+            // Duplicate initialization guard (failsafe)
             if (this.initialized) {
-                console.log('🎭 Unbidden Ink Settings: Already initialized, skipping');
                 return;
             }
             this.initialized = true;
             
-            console.log('🎭 Initializing Unbidden Ink Settings...');
-            this.loading = true;
+            this.loaded = false;
             this.error = null;
 
             try {
                 const config = await window.SettingsAPI.loadConfiguration();
-                console.log('📥 Loaded configuration:', config);
                 
-                // Store config values with fallbacks
+                // ✅ CRITICAL: Direct assignment to config object
                 this.config.unbiddenInk = {
                     enabled: config.unbiddenInk?.enabled || false,
                     startHour: config.unbiddenInk?.startHour || 8,
@@ -69,12 +52,10 @@ document.addEventListener('alpine:init', () => {
                     chatgptApiToken: this.config.unbiddenInk.chatgptApiToken
                 };
 
-                console.log('🎭 Unbidden Ink prompts loaded:', Object.keys(this.config.unbiddenInk.promptPresets).length, 'presets');
+                this.loaded = true;  // Mark as loaded AFTER data assignment
             } catch (error) {
-                console.error('❌ Failed to load configuration:', error);
+                console.error('Failed to load configuration:', error);
                 this.error = error.message;
-            } finally {
-                this.loading = false;
             }
         },
 
@@ -96,10 +77,8 @@ document.addEventListener('alpine:init', () => {
                 // Only include ChatGPT API token if it was modified
                 if (this.passwordModified) {
                     payload.unbiddenInk.chatgptApiToken = this.config.unbiddenInk.chatgptApiToken;
-                    console.log('Including modified ChatGPT API token in config submission');
                 }
 
-                console.log('📤 Saving Unbidden Ink configuration:', payload);
                 await window.SettingsAPI.saveConfiguration(payload);
                 
                 // Update original values to reflect saved state
@@ -115,13 +94,11 @@ document.addEventListener('alpine:init', () => {
                     this.originalValues.chatgptApiToken = this.config.unbiddenInk.chatgptApiToken;
                     this.passwordModified = false;
                 }
-
-                console.log('✅ Unbidden Ink settings saved successfully');
                 
                 // Redirect immediately with success parameter
                 window.location.href = '/settings.html?saved=unbiddenInk';
             } catch (error) {
-                console.error('❌ Failed to save configuration:', error);
+                console.error('Failed to save configuration:', error);
                 this.error = error.message;
                 this.saving = false; // Only reset on error
             }
