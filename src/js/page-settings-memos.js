@@ -9,19 +9,16 @@
  */
 async function loadMemos() {
     try {
-        console.log('API: Loading memos from server...');
-        
         const response = await fetch('/api/memos');
         if (!response.ok) {
             throw new Error(`Memos API returned ${response.status}: ${response.statusText}`);
         }
         
         const memos = await response.json();
-        console.log('API: Memos loaded successfully');
         return memos;
         
     } catch (error) {
-        console.error('API: Error loading memos:', error);
+        console.error('Error loading memos:', error);
         throw error;
     }
 }
@@ -33,8 +30,6 @@ async function loadMemos() {
  */
 async function saveMemos(memosData) {
     try {
-        console.log('API: Sending memos to server...');
-        
         const response = await fetch('/api/memos', {
             method: 'POST',
             headers: {
@@ -48,10 +43,8 @@ async function saveMemos(memosData) {
             throw new Error(`Memos API returned ${response.status}: ${errorText}`);
         }
         
-        console.log('API: Memos saved successfully');
-        
     } catch (error) {
-        console.error('API: Error saving memos:', error);
+        console.error('Error saving memos:', error);
         throw error;
     }
 }
@@ -83,52 +76,45 @@ function showErrorMessage(message, duration = 5000) {
 function createMemosStore() {
     const store = {
         // =================== STATE ===================
-        loading: true,  // Start as loading for fade-in effect
+        loaded: false,  // Simple loading flag (starts false)
         saving: false,
         error: null,
-        ready: false,
+        initialized: false,
         hasUnsavedChanges: false,
         
-        // Memo data
-        memos: {
-            memo1: '',
-            memo2: '',
-            memo3: '',
-            memo4: ''
-        },
+        // Configuration data (empty object populated on load)
+        memos: {},
 
-        // =================== MEMO LOADING ===================
+        // =================== MEMO CONFIGURATION API ===================
         
-        async loadMemos() {
-            this.loading = true;
+        async loadConfiguration() {
+            // Duplicate initialization guard (failsafe)
+            if (this.initialized) {
+                return;
+            }
+            this.initialized = true;
+            
+            this.loaded = false;
             this.error = null;
             
             try {
-                console.log('🔧 Loading memos...');
                 const memosData = await loadMemos();
                 
-                console.log('🔧 Loading memos:', memosData);
-                
-                if (memosData) {
-                    this.memos.memo1 = memosData.memo1 || '';
-                    this.memos.memo2 = memosData.memo2 || '';
-                    this.memos.memo3 = memosData.memo3 || '';
-                    this.memos.memo4 = memosData.memo4 || '';
-                    console.log('✅ Memos loaded successfully');
-                } else {
-                    console.warn('⚠️ No memos data provided');
-                }
+                // ✅ CRITICAL: Direct assignment to memos object
+                this.memos = {
+                    memo1: memosData?.memo1 || '',
+                    memo2: memosData?.memo2 || '',
+                    memo3: memosData?.memo3 || '',
+                    memo4: memosData?.memo4 || ''
+                };
                 
                 this.hasUnsavedChanges = false;
-                this.ready = true;
-                console.log('✅ Memos Store initialized');
+                this.loaded = true;  // Mark as loaded AFTER data assignment
                 
             } catch (error) {
-                console.error('❌ Error loading memos:', error);
+                console.error('Error loading memos:', error);
                 this.error = `Failed to load memo settings: ${error.message}`;
                 showErrorMessage(this.error);
-            } finally {
-                this.loading = false;
             }
         },
 
@@ -136,7 +122,6 @@ function createMemosStore() {
         
         async saveMemos() {
             if (!this.hasUnsavedChanges) {
-                console.log('🔧 No unsaved changes, skipping save');
                 return;
             }
             
@@ -144,8 +129,6 @@ function createMemosStore() {
             this.error = null;
             
             try {
-                console.log('🔧 Saving memos...');
-                
                 const cleanMemos = {
                     memo1: this.memos.memo1,
                     memo2: this.memos.memo2,
@@ -153,19 +136,14 @@ function createMemosStore() {
                     memo4: this.memos.memo4
                 };
                 
-                console.log('🔧 Clean memos for server:', cleanMemos);
-                
-                const result = await saveMemos(cleanMemos);
-                console.log('✅ Memos saved successfully:', result);
-                
+                await saveMemos(cleanMemos);
                 this.hasUnsavedChanges = false;
                 
                 // Redirect immediately back to settings with success indicator
-                console.log('🔧 Redirecting to settings with success indicator...');
                 window.location.href = '/settings.html?saved=memos';
                 
             } catch (error) {
-                console.error('❌ Error saving memos:', error);
+                console.error('Error saving memos:', error);
                 this.error = `Failed to save memo settings: ${error.message}`;
                 showErrorMessage(this.error);
                 this.saving = false;
@@ -300,8 +278,8 @@ function createMemosStore() {
 
         // Check if save button should be enabled (following wifi.js pattern)
         get canSave() {
-            // Don't allow save while loading, saving, or with errors
-            if (this.loading || this.saving || this.error) {
+            // Don't allow save while not loaded, saving, or with errors
+            if (!this.loaded || this.saving || this.error) {
                 return false;
             }
             
@@ -316,9 +294,6 @@ function createMemosStore() {
 // =================== ALPINE STORE REGISTRATION ===================
 
 document.addEventListener('alpine:init', () => {
-    console.log('🔧 Registering Memos Alpine store...');
     const memosStore = createMemosStore();
     Alpine.store('settingsMemos', memosStore);
-    
-    console.log('✅ Memos Store registered successfully');
 });
