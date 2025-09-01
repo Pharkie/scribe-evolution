@@ -118,153 +118,153 @@ const buildConfigs = {
 
   // Page-specific bundles  
   index: {
-    input: ['src/js/pages/index.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/index.js'], // Single ES6 module entry point
     output: 'data/js/page-index.js',
     minify: false,
   },
 
   indexProd: {
-    input: ['src/js/pages/index.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/index.js'], // Single ES6 module entry point
     output: 'data/js/page-index.js', 
     minify: true,
   },
 
 
   diagnostics: {
-    input: ['src/js/pages/diagnostics.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/diagnostics.js'], // Single ES6 module entry point
     output: 'data/js/page-diagnostics.js',
     minify: false,
   },
 
   diagnosticsProd: {
-    input: ['src/js/pages/diagnostics.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/diagnostics.js'], // Single ES6 module entry point
     output: 'data/js/page-diagnostics.js',
     minify: true,
   },
 
   setup: {
-    input: ['src/js/pages/setup.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/setup.js'], // Single ES6 module entry point
     output: 'data/js/page-setup.js',
     minify: false,
   },
 
   setupProd: {
-    input: ['src/js/pages/setup.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/setup.js'], // Single ES6 module entry point
     output: 'data/js/page-setup.js',
     minify: true,
   },
 
   '404': {
-    input: ['src/js/pages/404.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/404.js'], // Single ES6 module entry point
     output: 'data/js/page-404.js',
     minify: false,
   },
 
   '404Prod': {
-    input: ['src/js/pages/404.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/404.js'], // Single ES6 module entry point
     output: 'data/js/page-404.js',
     minify: true,
   },
 
   // Device settings page
   device: {
-    input: ['src/js/pages/settings-device.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-device.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-device.js',
     minify: false,
   },
 
   deviceProd: {
-    input: ['src/js/pages/settings-device.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-device.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-device.js',
     minify: true,
   },
 
   // WiFi settings page
   wifi: {
-    input: ['src/js/pages/settings-wifi.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-wifi.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-wifi.js',
     minify: false,
   },
 
   wifiProd: {
-    input: ['src/js/pages/settings-wifi.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-wifi.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-wifi.js',
     minify: true,
   },
 
   // MQTT settings page
   mqtt: {
-    input: ['src/js/pages/settings-mqtt.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-mqtt.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-mqtt.js',
     minify: false,
   },
 
   mqttProd: {
-    input: ['src/js/pages/settings-mqtt.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-mqtt.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-mqtt.js',
     minify: true,
   },
 
   // Settings overview page
   overview: {
-    input: ['src/js/pages/settings-overview.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-overview.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-overview.js',
     minify: false,
   },
 
   overviewProd: {
-    input: ['src/js/pages/settings-overview.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-overview.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-overview.js',
     minify: true,
   },
 
   // Memos settings page
   memos: {
-    input: ['src/js/pages/settings-memos.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-memos.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-memos.js',
     minify: false,
   },
 
   memosProd: {
-    input: ['src/js/pages/settings-memos.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-memos.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-memos.js',
     minify: true,
   },
 
   // Buttons settings page
   buttons: {
-    input: ['src/js/pages/settings-buttons.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-buttons.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-buttons.js',
     minify: false,
   },
 
   buttonsProd: {
-    input: ['src/js/pages/settings-buttons.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-buttons.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-buttons.js',
     minify: true,
   },
 
   leds: {
-    input: ['src/js/pages/settings-leds.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-leds.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-leds.js',
     minify: false,
   },
 
   ledsProd: {
-    input: ['src/js/pages/settings-leds.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-leds.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-leds.js',
     minify: true,
   },
 
   // Unbidden Ink settings page
   'unbidden-ink': {
-    input: ['src/js/pages/settings-unbidden-ink.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-unbidden-ink.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-unbidden-ink.js',
     minify: false,
   },
 
   'unbidden-inkProd': {
-    input: ['src/js/pages/settings-unbidden-ink.js'], // Single ES6 module entry point
+    input: ['src/data/js/pages/settings-unbidden-ink.js'], // Single ES6 module entry point
     output: 'data/js/page-settings-unbidden-ink.js',
     minify: true,
   },
