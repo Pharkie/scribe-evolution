@@ -15,7 +15,7 @@ document.addEventListener('alpine:init', () => {
     // Create Alpine data component for setup page
     Alpine.data('setupPage', () => ({
         // Expose all store properties as computed getters
-        get loading() { return this.$store.setup.loading; },
+        get loaded() { return this.$store.setup.loaded; },
         get error() { return this.$store.setup.error; },
         get saving() { return this.$store.setup.saving; },
         get scanning() { return this.$store.setup.scanning; },
@@ -37,7 +37,7 @@ document.addEventListener('alpine:init', () => {
     
     // Make setup store instance available globally for the HTML (legacy compatibility)
     window.setupStoreInstance = {
-        get loading() { return Alpine.store('setup').loading; },
+        get loaded() { return Alpine.store('setup').loaded; },
         get error() { return Alpine.store('setup').error; },
         get saving() { return Alpine.store('setup').saving; },
         get scanning() { return Alpine.store('setup').scanning; },

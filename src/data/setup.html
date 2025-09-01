@@ -23,12 +23,12 @@
             <!-- Logo -->
             <div class="text-center mb-6">
                 <!-- Dark mode logo (white) -->
-                <img src="/images/ScribeLogoMain-white.svg" alt="Scribe Evolution" x-show="!loading"
+                <img src="/images/ScribeLogoMain-white.svg" alt="Scribe Evolution" x-show="loaded"
                     x-transition:enter="transition-none" x-transition:enter-start="" x-transition:enter-end=""
                     class="slide-in-bck-center h-20 sm:h-24 md:h-28 lg:h-32 w-auto mx-auto dark:block hidden"
                     style="display: none;" />
                 <!-- Light mode logo (dark) -->
-                <img src="/images/ScribeLogoMain-black.svg" alt="Scribe Evolution" x-show="!loading"
+                <img src="/images/ScribeLogoMain-black.svg" alt="Scribe Evolution" x-show="loaded"
                     x-transition:enter="transition-none" x-transition:enter-start="" x-transition:enter-end=""
                     class="slide-in-bck-center h-20 sm:h-24 md:h-28 lg:h-32 w-auto mx-auto dark:hidden block"
                     style="display: none;" />
@@ -50,7 +50,7 @@
         </div>
 
         <!-- Setup Form -->
-        <template x-if="!loading && !error">
+        <template x-if="loaded && !error">
             <div x-data="{ 
                 ready: false, 
                 init() {
@@ -114,7 +114,7 @@
                     
                     <div class="space-y-4">
                         <!-- Initial WiFi Scan (shown before first scan) -->
-                        <div x-show="availableNetworks.length === 0 && config.device.wifi.ssid !== '__manual__'" class="text-center">
+                        <div x-show="availableNetworks.length === 0 && config.device?.wifi?.ssid !== '__manual__'" class="text-center">
                             <button type="button" @click="scanWiFi" :disabled="scanning" 
                                 class="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center mx-auto">
                                 <svg x-show="!scanning" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@
                         </div>
 
                         <!-- WiFi SSID with Rescan (shown after scan) -->
-                        <div x-show="availableNetworks.length > 0 || config.device.wifi.ssid === '__manual__'" x-transition>
+                        <div x-show="availableNetworks.length > 0 || config.device?.wifi?.ssid === '__manual__'" x-transition>
                             <label for="wifi-ssid" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 WiFi Network (SSID)
                             </label>
@@ -155,7 +155,7 @@
                         </div>
 
                         <!-- Manual SSID Input (shown when manual option selected) -->
-                        <div x-show="config.device.wifi.ssid === '__manual__'" x-transition>
+                        <div x-show="config.device?.wifi?.ssid === '__manual__'" x-transition>
                             <label for="manual-ssid" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Manual Network Name
                             </label>
@@ -207,7 +207,7 @@
                             <ol class="text-amber-700 dark:text-amber-300 space-y-1 list-decimal list-inside">
                                 <li>Scribe Evolution will restart and connect to the new WiFi network</li>
                                 <li>Rejoin your normal WiFi network</li>
-                                <li>Visit <strong>scribe-<span x-text="config.device.owner.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local</strong></li>
+                                <li>Visit <strong>scribe-<span x-text="config.device?.owner?.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local</strong></li>
                             </ol>
                         </div>
                     </div>
@@ -224,7 +224,7 @@
                     <p class="text-lg mb-4">Next steps:</p>
                     <div class="space-y-2 text-left">
                         <p class="text-base">1. Rejoin your normal WiFi network</p>
-                        <p class="text-base">2. Visit <span class="font-medium text-white">scribe-<span x-text="config.device.owner.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local</span></p>
+                        <p class="text-base">2. Visit <span class="font-medium text-white">scribe-<span x-text="config.device?.owner?.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local</span></p>
                     </div>
                 </div>
             </div>

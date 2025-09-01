@@ -8,29 +8,21 @@ import { loadConfiguration, saveConfiguration, scanWiFiNetworks } from '../api/s
 export function createSetupStore() {
     return {
         // Basic state
-        loading: true,
+        loaded: false,  // Simple loading flag (starts false)
         error: null,
         saving: false,
         scanning: false,
         initialized: false,
         
-        // Minimal config structure for setup
-        config: {
-            device: {
-                owner: '',  // Start blank
-                timezone: '',
-                wifi: {
-                    ssid: '',
-                    password: ''
-                }
-            }
-        },
+        // CRITICAL: Empty object (NO pre-initialized nulls)
+        config: {},
         
         // Manual SSID entry state
         manualSsid: '',
         
-        // WiFi networks (reuse from settings)
+        // WiFi networks
         availableNetworks: [],
+        
         
         // Load configuration on initialization
         async init() {
@@ -42,25 +34,28 @@ export function createSetupStore() {
             } catch (error) {
                 console.error('Setup: Initialization error:', error);
             } finally {
-                this.loading = false;
+                this.loaded = true;  // Mark as loaded AFTER data assignment
             }
         },
         
         // Load configuration from server
         async loadConfiguration() {
+            this.loaded = false;
+            this.error = null;
             try {
                 const response = await loadConfiguration();
                 
-                this.config.device.owner = response.device?.owner || '';
-                this.config.device.timezone = response.device?.timezone || '';
-                this.config.device.wifi.ssid = response.device?.wifi?.ssid || '';
-                this.config.device.wifi.password = response.device?.wifi?.password || '';
+                // ✅ CRITICAL: Direct assignment to config object
+                this.config.device = {
+                    owner: response.device?.owner || '',
+                    timezone: response.device?.timezone || '',
+                    wifi: {
+                        ssid: response.device?.wifi?.ssid || '',
+                        password: response.device?.wifi?.password || ''
+                    }
+                };
             } catch (error) {
-                console.warn('Setup: Using defaults:', error.message);
-                this.config.device.owner = '';
-                this.config.device.timezone = '';
-                this.config.device.wifi.ssid = '';
-                this.config.device.wifi.password = '';
+                this.error = `Failed to load configuration: ${error.message}`;
             }
         },
         
@@ -82,6 +77,8 @@ export function createSetupStore() {
         
         // Validation for setup form
         get canSave() {
+            if (!this.loaded || !this.config.device) return false;
+            
             // Check if "Select network..." is still selected
             if (this.config.device.wifi.ssid === '') {
                 return false;
@@ -101,6 +98,7 @@ export function createSetupStore() {
         
         // Get the effective SSID (either selected or manual)
         getEffectiveSSID() {
+            if (!this.config.device?.wifi) return '';
             if (this.config.device.wifi.ssid === '__manual__') {
                 return this.manualSsid;
             }
@@ -116,6 +114,10 @@ export function createSetupStore() {
             
             this.saving = true;
             try {
+                if (!this.config.device) {
+                    throw new Error('Configuration not loaded');
+                }
+                
                 // Prepare config with effective SSID
                 const configToSave = {
                     device: {
