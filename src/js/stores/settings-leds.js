@@ -1,9 +1,15 @@
-// LED Settings Alpine.js Store
-// Follows established patterns from page-settings-buttons.js
+/**
+ * @file settings-leds.js
+ * @brief Alpine.js store factory for LED settings page
+ * @description Focused Alpine store for LED-specific configuration
+ * Converted from legacy JavaScript to ES6 modules following established patterns
+ */
 
-document.addEventListener('alpine:init', () => {
-    Alpine.store('settingsLeds', {
-        // State
+import { loadConfiguration, saveConfiguration, triggerLedEffect, turnOffLeds } from '../api/settings.js';
+
+export function createSettingsLedsStore() {
+    return {
+        // ================== STATE MANAGEMENT ==================
         loaded: false,  // Simple loading flag (starts false)
         error: null,
         saving: false,
@@ -29,7 +35,7 @@ document.addEventListener('alpine:init', () => {
             '#00ffff'  // Cyan
         ],
 
-        // Reactive computed properties
+        // ================== COMPUTED PROPERTIES ==================
         get canSave() {
             return !this.saving && this.loaded && !this.error && this.hasChanges;
         },
@@ -49,7 +55,7 @@ document.addEventListener('alpine:init', () => {
             return JSON.stringify(currentSystemSettings) !== JSON.stringify(originalSystemSettings);
         },
 
-        // LED CONFIGURATION API
+        // ================== LED CONFIGURATION API ==================
         async loadConfiguration() {
             // Duplicate initialization guard (failsafe)
             if (this.initialized) {
@@ -60,12 +66,7 @@ document.addEventListener('alpine:init', () => {
             this.loaded = false;
             this.error = null;
             try {
-                const response = await fetch('/api/config');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
+                const data = await loadConfiguration();
                 
                 // ✅ CRITICAL: Direct assignment to config object
                 this.config.leds = {
@@ -113,25 +114,7 @@ document.addEventListener('alpine:init', () => {
                 };
 
                 console.log('Saving partial LED configuration:', partialConfig);
-                const response = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(partialConfig)
-                });
-
-                if (!response.ok) {
-                    // Try to parse error response
-                    let errorMessage = 'Failed to save configuration';
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorMessage;
-                    } catch (parseError) {
-                        // Ignore parse error, use default message
-                    }
-                    throw new Error(errorMessage);
-                }
+                const message = await saveConfiguration(partialConfig);
 
                 // Success - update original config for system settings only (not playground effects)
                 this.originalConfig.leds = this.originalConfig.leds || {};
@@ -154,7 +137,7 @@ document.addEventListener('alpine:init', () => {
             window.location.href = '/settings/';
         },
 
-        // COLOR CONTROL FUNCTIONS
+        // ================== COLOR CONTROL FUNCTIONS ==================
         showColorControls() {
             return this.config.leds && 
                    (this.effect === 'chase_single' || 
@@ -182,7 +165,7 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        // LED EFFECT TESTING
+        // ================== LED EFFECT TESTING ==================
         async testLedEffect() {
             if (this.testingEffect) return;
             
@@ -216,18 +199,8 @@ document.addEventListener('alpine:init', () => {
 
                 console.log('Testing LED effect:', effectParams);
                 
-                // Use fetch to test LED effect with JSON body
-                const response = await fetch('/api/leds/test', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(effectParams)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`LED test failed: ${response.status}`);
-                }
+                // Use triggerLedEffect from API
+                await triggerLedEffect(effectParams);
 
             } catch (error) {
                 console.error('Failed to test LED effect:', error);
@@ -240,26 +213,14 @@ document.addEventListener('alpine:init', () => {
         async turnOffLeds() {
             try {
                 console.log('Turning off LEDs');
-                
-                // Use fetch to turn off LEDs
-                const response = await fetch('/api/leds/off', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`LED turn off failed: ${response.status}`);
-                }
-
+                await turnOffLeds();
             } catch (error) {
                 console.error('Failed to turn off LEDs:', error);
                 this.showErrorMessage('Failed to turn off LEDs: ' + error.message);
             }
         },
 
-        // UTILITY FUNCTIONS
+        // ================== UTILITY FUNCTIONS ==================
         showErrorMessage(message) {
             // Create and show error notification
             const notification = document.createElement('div');
@@ -277,7 +238,5 @@ document.addEventListener('alpine:init', () => {
                 }, 300);
             }, 5000);
         }
-    });
-});
-
-// Settings LEDs store registered above with Alpine.store()
+    };
+}

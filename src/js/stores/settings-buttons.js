@@ -1,9 +1,15 @@
-// Button Settings Alpine.js Store
-// Follows established patterns from page-settings-device.js
+/**
+ * @file settings-buttons.js
+ * @brief Alpine.js store factory for button settings page
+ * @description Focused Alpine store for button-specific configuration
+ * Converted from legacy JavaScript to ES6 modules following established patterns
+ */
 
-document.addEventListener('alpine:init', () => {
-    Alpine.store('settingsButtons', {
-        // State
+import { loadConfiguration, saveConfiguration } from '../api/settings.js';
+
+export function createSettingsButtonsStore() {
+    return {
+        // ================== STATE MANAGEMENT ==================
         loaded: false,  // Simple loading flag (starts false)
         error: null,
         saving: false,
@@ -12,7 +18,7 @@ document.addEventListener('alpine:init', () => {
         originalConfig: {},
         validationErrors: {},
 
-        // Reactive computed properties
+        // ================== COMPUTED PROPERTIES ==================
         get canSave() {
             return !this.saving && this.loaded && !this.error && this.hasChanges && !this.hasValidationErrors;
         },
@@ -25,7 +31,7 @@ document.addEventListener('alpine:init', () => {
             return this.validationErrors && Object.keys(this.validationErrors).length > 0;
         },
 
-        // BUTTON CONFIGURATION API
+        // ================== BUTTON CONFIGURATION API ==================
         async loadConfiguration() {
             // Duplicate initialization guard (failsafe)
             if (this.initialized) {
@@ -36,12 +42,7 @@ document.addEventListener('alpine:init', () => {
             this.loaded = false;
             this.error = null;
             try {
-                const response = await fetch('/api/config');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
+                const data = await loadConfiguration();
                 
                 // ✅ CRITICAL: Direct assignment to config object
                 this.config.buttons = {
@@ -112,25 +113,7 @@ document.addEventListener('alpine:init', () => {
                 };
 
                 console.log('Saving partial button configuration:', partialConfig);
-                const response = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(partialConfig)
-                });
-
-                if (!response.ok) {
-                    // Try to parse error response
-                    let errorMessage = 'Failed to save configuration';
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorMessage;
-                    } catch (parseError) {
-                        // Ignore parse error, use default message
-                    }
-                    throw new Error(errorMessage);
-                }
+                const message = await saveConfiguration(partialConfig);
 
                 // Success - update original config for buttons section only
                 this.originalConfig.buttons = JSON.parse(JSON.stringify(this.config.buttons));
@@ -150,7 +133,7 @@ document.addEventListener('alpine:init', () => {
             window.location.href = '/settings/';
         },
 
-        // VALIDATION FUNCTIONS
+        // ================== VALIDATION FUNCTIONS ==================
         isValidMqttTopic(topic) {
             if (!topic) return true; // Empty is valid (means local printing)
             if (topic.length > 65535) return false; // Too long
@@ -177,7 +160,7 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        // UTILITY FUNCTIONS
+        // ================== UTILITY FUNCTIONS ==================
         showErrorMessage(message) {
             // Create and show error notification
             const notification = document.createElement('div');
@@ -195,7 +178,5 @@ document.addEventListener('alpine:init', () => {
                 }, 300);
             }, 5000);
         }
-    });
-});
-
-// Settings buttons store registered above with Alpine.store()
+    };
+}

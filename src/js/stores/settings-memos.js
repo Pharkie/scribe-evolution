@@ -1,81 +1,15 @@
-// page-settings-memos.js
-// Memo Settings Page - Standalone Alpine store for managing memo configurations
-
-// =================== MEMOS API FUNCTIONS ===================
-
 /**
- * Load memos from server
- * @returns {Promise<Object>} Memos object from server
+ * @file settings-memos.js
+ * @brief Alpine.js store factory for memos settings page
+ * @description Focused Alpine store for memo-specific configuration
+ * Converted from legacy JavaScript to ES6 modules following established patterns
  */
-async function loadMemos() {
-    try {
-        const response = await fetch('/api/memos');
-        if (!response.ok) {
-            throw new Error(`Memos API returned ${response.status}: ${response.statusText}`);
-        }
-        
-        const memos = await response.json();
-        return memos;
-        
-    } catch (error) {
-        console.error('Error loading memos:', error);
-        throw error;
-    }
-}
 
-/**
- * Save memos to server
- * @param {Object} memosData - The memos data to save
- * @returns {Promise<string>} Server response message
- */
-async function saveMemos(memosData) {
-    try {
-        const response = await fetch('/api/memos', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(memosData)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Memos API returned ${response.status}: ${errorText}`);
-        }
-        
-    } catch (error) {
-        console.error('Error saving memos:', error);
-        throw error;
-    }
-}
+import { loadMemos, saveMemos } from '../api/settings.js';
 
-// =================== UTILITY FUNCTIONS ===================
-
-/**
- * Show error message with consistent styling
- * @param {string} message - Error message to display
- * @param {number} duration - Duration in ms to show message (default: 5000)
- */
-function showErrorMessage(message, duration = 5000) {
-    console.error('Error:', message);
-    // Create error toast - could be enhanced with a toast library
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
-    errorDiv.textContent = message;
-    document.body.appendChild(errorDiv);
-    
-    setTimeout(() => {
-        if (errorDiv.parentNode) {
-            errorDiv.parentNode.removeChild(errorDiv);
-        }
-    }, duration);
-}
-
-// =================== MAIN ALPINE STORE ===================
-
-function createMemosStore() {
-    const store = {
-        // =================== STATE ===================
+export function createSettingsMemosStore() {
+    return {
+        // ================== STATE ==================
         loaded: false,  // Simple loading flag (starts false)
         saving: false,
         error: null,
@@ -85,7 +19,7 @@ function createMemosStore() {
         // Configuration data (empty object populated on load)
         memos: {},
 
-        // =================== MEMO CONFIGURATION API ===================
+        // ================== MEMO CONFIGURATION API ==================
         
         async loadConfiguration() {
             // Duplicate initialization guard (failsafe)
@@ -114,11 +48,11 @@ function createMemosStore() {
             } catch (error) {
                 console.error('Error loading memos:', error);
                 this.error = `Failed to load memo settings: ${error.message}`;
-                showErrorMessage(this.error);
+                this.showErrorMessage(this.error);
             }
         },
 
-        // =================== MEMO SAVING ===================
+        // ================== MEMO SAVING ==================
         
         async saveMemos() {
             if (!this.hasUnsavedChanges) {
@@ -145,12 +79,12 @@ function createMemosStore() {
             } catch (error) {
                 console.error('Error saving memos:', error);
                 this.error = `Failed to save memo settings: ${error.message}`;
-                showErrorMessage(this.error);
+                this.showErrorMessage(this.error);
                 this.saving = false;
             }
         },
 
-        // =================== CHARACTER COUNT FUNCTIONS ===================
+        // ================== CHARACTER COUNT FUNCTIONS ==================
         
         // Character count getters for each memo (500 character limit)
         get memo1CharacterCount() {
@@ -265,7 +199,7 @@ function createMemosStore() {
             }
         },
 
-        // =================== VALIDATION ===================
+        // ================== VALIDATION ==================
         
         // Check if any memo exceeds character limit
         get hasCharacterLimitExceeded() {
@@ -285,15 +219,34 @@ function createMemosStore() {
             
             // Don't allow save if no changes or character limit exceeded
             return this.hasUnsavedChanges && !this.hasCharacterLimitExceeded;
+        },
+
+        // ================== UTILITY FUNCTIONS ==================
+        
+        // Cancel configuration changes
+        cancelConfiguration() {
+            // Navigate back to settings
+            window.location.href = '/settings/';
+        },
+
+        /**
+         * Show error message with consistent styling
+         * @param {string} message - Error message to display
+         * @param {number} duration - Duration in ms to show message (default: 5000)
+         */
+        showErrorMessage(message, duration = 5000) {
+            console.error('Error:', message);
+            // Create error toast - could be enhanced with a toast library
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50';
+            errorDiv.textContent = message;
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, duration);
         }
     };
-    
-    return store;
 }
-
-// =================== ALPINE STORE REGISTRATION ===================
-
-document.addEventListener('alpine:init', () => {
-    const memosStore = createMemosStore();
-    Alpine.store('settingsMemos', memosStore);
-});

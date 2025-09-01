@@ -1,16 +1,14 @@
 /**
- * @file page-settings-wifi.js
- * @brief Alpine.js store for WiFi settings page
+ * @file settings-wifi.js
+ * @brief Alpine.js store factory for WiFi settings page
  * @description Focused Alpine store for WiFi-specific configuration
- * Copies organized WiFi API functions from main settings store
+ * Converted from legacy JavaScript to ES6 modules following established patterns
  */
 
-/**
- * Initialize WiFi Settings Alpine Store
- * Contains only WiFi-related functionality and API calls
- */
-function initializeWiFiSettingsStore() {
-    const store = {
+import { loadConfiguration, saveConfiguration, scanWiFiNetworks, printLocalContent } from '../api/settings.js';
+
+export function createSettingsWifiStore() {
+    return {
         // ================== UTILITY FUNCTIONS ==================
         // Simple utility function extracted from repeated showMessage patterns
         showErrorMessage(message) {
@@ -138,7 +136,7 @@ function initializeWiFiSettingsStore() {
             this.error = null;
             try {
                 // Load configuration from API
-                const serverConfig = await window.SettingsAPI.loadConfiguration();
+                const serverConfig = await loadConfiguration();
                 
                 // Direct assignment to config object
                 this.config = serverConfig;
@@ -202,7 +200,7 @@ function initializeWiFiSettingsStore() {
             this.wifiScan.error = null;
             
             try {
-                const networks = await window.SettingsAPI.scanWiFiNetworks();
+                const networks = await scanWiFiNetworks();
                 
                 // Filter valid networks and dedupe by SSID (keep strongest signal only)
                 const networksBySSID = {};
@@ -377,7 +375,7 @@ function initializeWiFiSettingsStore() {
                 }
                 
                 console.log('📡 WiFi: Saving configuration');
-                const message = await window.SettingsAPI.saveConfiguration(partialConfig);
+                const message = await saveConfiguration(partialConfig);
                 
                 console.log('📡 WiFi: Configuration saved successfully');
                 
@@ -442,7 +440,7 @@ http://192.168.4.1
 
 This memo printed from Settings → WiFi`;
                 
-                await window.SettingsAPI.printLocalContent(content);
+                await printLocalContent(content);
                 
                 console.log('📡 WiFi: AP details printed');
                 
@@ -465,23 +463,4 @@ This memo printed from Settings → WiFi`;
             }
         }
     };
-    
-    return store;
 }
-
-// Auto-register the WiFi store when this script loads
-document.addEventListener('alpine:init', () => {
-    // Create and register WiFi settings store
-    const wifiStore = initializeWiFiSettingsStore();
-    Alpine.store('settingsWifi', wifiStore);
-    
-    // No manual init() - let HTML handle initialization timing with x-init
-    
-    // Setup Alpine watchers for reactive updates
-    Alpine.effect(() => {
-        // Update SSID whenever mode or selection changes
-        wifiStore.updateSSID();
-    });
-    
-    console.log('📡 WiFi: Store registered');
-});

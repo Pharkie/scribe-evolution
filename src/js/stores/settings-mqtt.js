@@ -1,16 +1,14 @@
 /**
- * @file page-settings-mqtt.js
- * @brief Alpine.js store for MQTT settings page
+ * @file settings-mqtt.js
+ * @brief Alpine.js store factory for MQTT settings page
  * @description Focused Alpine store for MQTT-specific configuration
- * Copies organized API functions from main settings store
+ * Converted from legacy JavaScript to ES6 modules following established patterns
  */
 
-/**
- * Initialize MQTT Settings Alpine Store
- * Contains only MQTT-related functionality and API calls
- */
-function initializeMqttSettingsStore() {
-    const store = {
+import { loadConfiguration, saveConfiguration } from '../api/settings.js';
+
+export function createSettingsMqttStore() {
+    return {
         // ================== UTILITY FUNCTIONS ==================
         showErrorMessage(message) {
             window.showMessage(message, 'error');
@@ -249,12 +247,7 @@ function initializeMqttSettingsStore() {
             this.loaded = false;
             this.error = null;
             try {
-                const response = await fetch('/api/config');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
+                const data = await loadConfiguration();
                 
                 // Extract MQTT configuration - Direct assignment
                 this.config.mqtt = {
@@ -304,23 +297,12 @@ function initializeMqttSettingsStore() {
                     }
                 }
                 
-                const response = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(configUpdate)
-                });
+                const message = await saveConfiguration(configUpdate);
                 
-                if (response.ok) {
-                    // Redirect immediately with success parameter (don't reset saving state)
-                    window.location.href = '/settings/?saved=mqtt';
-                    return; // Exit without resetting saving state
-                } else {
-                    // Parse error response for error message
-                    const result = await response.json().catch(() => ({}));
-                    throw new Error(result.error || 'Unknown error occurred');
-                }
+                // Redirect immediately with success parameter (don't reset saving state)
+                window.location.href = '/settings/?saved=mqtt';
+                return; // Exit without resetting saving state
+                
             } catch (error) {
                 console.error('Error saving MQTT config:', error);
                 this.showErrorMessage(`Failed to save MQTT settings: ${error.message}`);
@@ -334,26 +316,4 @@ function initializeMqttSettingsStore() {
             window.location.href = '/settings/';
         }
     };
-
-    return store;
 }
-
-// Auto-register the MQTT store when this script loads
-document.addEventListener('alpine:init', () => {
-    // Create and register MQTT settings store
-    const mqttStore = initializeMqttSettingsStore();
-    Alpine.store('settingsMqtt', mqttStore);
-    
-    // No manual init() - let HTML handle initialization timing with x-init
-    
-    // Setup Alpine watchers for reactive updates
-    Alpine.effect(() => {
-        // Clear validation errors and reset test state when MQTT is disabled
-        if (mqttStore.config?.mqtt?.enabled === false) {
-            mqttStore.validation.errors = {};
-            mqttStore.resetMqttTestState();
-        }
-    });
-    
-    console.log('✅ MQTT Settings Store registered and initialized');
-});

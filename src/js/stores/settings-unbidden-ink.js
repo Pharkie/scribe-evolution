@@ -1,11 +1,15 @@
 /**
- * Alpine.js store for Unbidden Ink Settings page
- * Handles AI content scheduling, dual-handle slider, frequency settings
+ * @file settings-unbidden-ink.js
+ * @brief Alpine.js store factory for Unbidden Ink settings page
+ * @description Handles AI content scheduling, dual-handle slider, frequency settings
+ * Converted from legacy JavaScript to ES6 modules following established patterns
  */
 
-document.addEventListener('alpine:init', () => {
-    Alpine.store('settingsUnbiddenInk', {
-        // State
+import { loadConfiguration, saveConfiguration } from '../api/settings.js';
+
+export function createSettingsUnbiddenInkStore() {
+    return {
+        // ================== STATE MANAGEMENT ==================
         loaded: false,  // Simple loading flag (starts false)
         saving: false,
         error: null,
@@ -22,7 +26,7 @@ document.addEventListener('alpine:init', () => {
             errors: {}
         },
 
-        // API Operations
+        // ================== API OPERATIONS ==================
         async loadConfiguration() {
             // Duplicate initialization guard (failsafe)
             if (this.initialized) {
@@ -34,7 +38,7 @@ document.addEventListener('alpine:init', () => {
             this.error = null;
 
             try {
-                const config = await window.SettingsAPI.loadConfiguration();
+                const config = await loadConfiguration();
                 
                 // ✅ CRITICAL: Direct assignment to config object
                 this.config.unbiddenInk = {
@@ -84,7 +88,7 @@ document.addEventListener('alpine:init', () => {
                     payload.unbiddenInk.chatgptApiToken = this.config.unbiddenInk.chatgptApiToken;
                 }
 
-                await window.SettingsAPI.saveConfiguration(payload);
+                await saveConfiguration(payload);
                 
                 // Update original values to reflect saved state
                 Object.assign(this.originalValues, {
@@ -113,7 +117,7 @@ document.addEventListener('alpine:init', () => {
             window.location.href = '/settings/';
         },
 
-        // Change Detection
+        // ================== CHANGE DETECTION ==================
         get canSave() {
             const current = this.config.unbiddenInk;
             const original = this.originalValues;
@@ -132,6 +136,7 @@ document.addEventListener('alpine:init', () => {
             return hasChanges && !hasValidationErrors;
         },
 
+        // ================== PASSWORD HANDLING ==================
         // Clear API token field on focus (standard UX pattern)
         clearChatgptTokenFieldOnFocus() {
             if (this.config.unbiddenInk.chatgptApiToken) {
@@ -147,7 +152,7 @@ document.addEventListener('alpine:init', () => {
             this.validateChatgptToken(newValue);
         },
 
-        // Validation
+        // ================== VALIDATION ==================
         validateChatgptToken(value) {
             if (this.config.unbiddenInk.enabled && (!value || value.trim() === '')) {
                 this.validation.errors['unbiddenInk.chatgptApiToken'] = 'API Token cannot be blank when Unbidden Ink is enabled';
@@ -163,7 +168,7 @@ document.addEventListener('alpine:init', () => {
             this.validateChatgptToken(this.config.unbiddenInk.chatgptApiToken);
         },
 
-        // Time Range Management - Dual Handle Slider Logic
+        // ================== TIME RANGE MANAGEMENT - DUAL HANDLE SLIDER LOGIC ==================
         get timeRangeDisplay() {
             const start = this.config.unbiddenInk.startHour || 0;
             const end = this.config.unbiddenInk.endHour || 24;
@@ -236,7 +241,7 @@ document.addEventListener('alpine:init', () => {
             this.config.unbiddenInk.endHour = newValue;
         },
 
-        // Time Formatting
+        // ================== TIME FORMATTING ==================
         formatHour(hour) {
             if (hour === null || hour === undefined) return '--:--';
             if (hour === 0) return '00:00';
@@ -252,7 +257,7 @@ document.addEventListener('alpine:init', () => {
             return `${hour - 12} pm`;
         },
 
-        // Frequency Management
+        // ================== FREQUENCY MANAGEMENT ==================
         get frequencyOptions() {
             return [15, 30, 60, 120, 240, 360, 480]; // minutes
         },
@@ -304,7 +309,7 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        // Quick Prompt Management
+        // ================== QUICK PROMPT MANAGEMENT ==================
         setQuickPrompt(type) {
             const presets = this.config.unbiddenInk.promptPresets || {};
             if (presets[type]) {
@@ -318,11 +323,9 @@ document.addEventListener('alpine:init', () => {
             return currentPrompt.trim() === (presets[type] || '').trim();
         },
 
-        // Utility Functions
+        // ================== UTILITY FUNCTIONS ==================
         showErrorMessage(message) {
             this.error = message;
         }
-    });
-    
-    console.log('✅ Unbidden Ink Settings Store registered');
-});
+    };
+}
