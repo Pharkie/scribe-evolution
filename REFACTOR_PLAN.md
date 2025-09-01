@@ -234,7 +234,6 @@ Future enhancement: 4 x configurable AI prompts with hardware button integration
 
 ## Key Patterns & Guidelines 📝
 
-### Loading Flag Pattern and Alpine.js init order
 **Core Principle**: Replace complex pre-initialized structures with simple `loaded: false` flag + Alpine store pattern. Eliminate pre-initialized null structures.
 
 **⚠️ CRITICAL: This is a TWO-STEP process - both JavaScript AND HTML must be updated together or Alpine will crash!**
@@ -305,6 +304,7 @@ function createMyStore() {
 
 <!-- ✅ CORRECT: Template safety prevents crashes -->
 <body x-data="$store.myStore" x-init="loadConfiguration()">
+    <!-- Main Content -->
     <template x-if="loaded && !error">
         <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
              x-show="show" x-transition.opacity.duration.300ms>
@@ -312,10 +312,29 @@ function createMyStore() {
         </div>
     </template>
 </body>
+
+<!-- ✅ CORRECT: Way to do error card -->
+    <!-- Error State -->
+    <template x-if="loaded && error">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
+            <div class="text-center">
+                <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Settings</h3>
+                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                <button @click="loadData()" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    Retry
+                </button>
+            </div>
+        </div>
+    </template>
 ```
 
 **Critical Rules**:
-- **Template Safety**: ALWAYS use `x-if="loaded && !error"` when config starts empty
+- **Template Safety**: ALWAYS use `x-if` for both error and main content templates 
+  - Error: `<template x-if="loaded && error">` (only show errors after loading)
+  - Main: `<template x-if="loaded && !error">` (prevent crashes with empty config)
 - **Method Names**: Keep existing method names (`loadConfiguration`, not `loadData`)
 - **Property Names**: Keep existing property structure (`config.mqtt.*` not `data.config.*`)
 - **Initialization**: Direct `x-init="loadConfiguration()"` calls
