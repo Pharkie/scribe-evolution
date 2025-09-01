@@ -131,23 +131,6 @@ const buildConfigs = {
     minify: true,
   },
 
-  settings: {
-    input: [
-      'src/data/js/settings-alpine-store.js',
-      'src/data/js/settings-api.js'
-    ],
-    output: 'data/js/page-settings.js',
-    minify: false,
-  },
-
-  settingsProd: {
-    input: [
-      'src/data/js/settings-alpine-store.js',
-      'src/data/js/settings-api.js'
-    ],
-    output: 'data/js/page-settings.js',
-    minify: true,
-  },
 
   diagnostics: {
     input: [
@@ -383,7 +366,6 @@ async function buildAll(production = false) {
     `alpine${suffix}`,
     `common${suffix}`,
     `index${suffix}`,
-    `settings${suffix}`,
     `diagnostics${suffix}`, 
     `setup${suffix}`,
     `404${suffix}`,

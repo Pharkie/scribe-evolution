@@ -143,22 +143,19 @@
 - **Zero runtime changes**: Same IIFE output, Alpine patterns, ESP32 serving
 
 **Next Steps - Individual Pages to Convert**:
-4.5.1. **Convert shared settings API** (`settings-api.js` → `src/js/api/settings.js`) - **Convert first, used by 8+ pages**
-4.5.2. **Diagnostics page** (`diagnostics-alpine-store.js` + `diagnostics-api.js`)
-4.5.3. **Setup page** (`setup-alpine-store.js` + `setup-api.js`)
-4.5.4. **404 page** (`404-alpine-store.js`)
-4.5.5. **Settings overview page** (`page-settings-overview.js`) 
-4.5.6. **Device settings page** (`page-settings-device.js` + imports shared settings API)
-4.5.7. **WiFi settings page** (`page-settings-wifi.js` + imports shared settings API)
-4.5.8. **MQTT settings page** (`page-settings-mqtt.js` + imports shared settings API)
-4.5.9. **Memos settings page** (`page-settings-memos.js`)
-4.5.10. **Buttons settings page** (`page-settings-buttons.js` + imports shared settings API)
-4.5.11. **LEDs settings page** (`page-settings-leds.js` + imports shared settings API)
-4.5.12. **Unbidden Ink settings page** (`page-settings-unbidden-ink.js` + imports shared settings API)
-
-**Cleanup after conversion**:
-- Remove unused `settings-alpine-store.js` (if any remaining references)
-- Remove `settings`/`settingsProd` build targets from esbuild config
+4.5.1. ✅ **Convert shared settings API** (`settings-api.js` → `src/js/api/settings.js`) - **COMPLETED**
+4.5.2. ✅ **Remove orphaned legacy files** (`settings-alpine-store.js` + esbuild configs) - **COMPLETED**
+4.5.3. **Diagnostics page** (`diagnostics-alpine-store.js` + `diagnostics-api.js`)
+4.5.4. **Setup page** (`setup-alpine-store.js` + `setup-api.js`)
+4.5.5. **404 page** (`404-alpine-store.js`)
+4.5.6. **Settings overview page** (`page-settings-overview.js`) 
+4.5.7. **Device settings page** (`page-settings-device.js` + imports shared settings API)
+4.5.8. **WiFi settings page** (`page-settings-wifi.js` + imports shared settings API)
+4.5.9. **MQTT settings page** (`page-settings-mqtt.js` + imports shared settings API)
+4.5.10. **Memos settings page** (`page-settings-memos.js`)
+4.5.11. **Buttons settings page** (`page-settings-buttons.js` + imports shared settings API)
+4.5.12. **LEDs settings page** (`page-settings-leds.js` + imports shared settings API)
+4.5.13. **Unbidden Ink settings page** (`page-settings-unbidden-ink.js` + imports shared settings API)
 
 Each follows same 5-step conversion process above
 
