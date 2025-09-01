@@ -321,40 +321,51 @@ function serveFile(res, filePath, statusCode = 200) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = mimeTypes[ext] || 'application/octet-stream';
   
-  // Try compressed version first, fall back to uncompressed for binary files
-  const gzipPath = filePath + '.gz';
-  fs.readFile(gzipPath, (err, data) => {
-    if (err) {
-      // Try uncompressed version for binary files (png, ico, webmanifest)
-      fs.readFile(filePath, (err2, data2) => {
-        if (err2) {
-          res.writeHead(404, {
-            'Content-Type': 'text/html',
-            'Access-Control-Allow-Origin': '*'
-          });
-          res.end('<h1>404 Not Found</h1>');
-          return;
-        }
-        
-        // Serve uncompressed binary file
-        res.writeHead(statusCode, {
-          'Content-Type': contentType,
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=31536000'
+  // Determine which files should be served compressed
+  const compressibleTypes = ['.html', '.css', '.js', '.json', '.svg', '.txt', '.md'];
+  const shouldCompress = compressibleTypes.includes(ext);
+  
+  if (shouldCompress) {
+    // Serve compressed version for text files
+    const gzipPath = filePath + '.gz';
+    fs.readFile(gzipPath, (err, data) => {
+      if (err) {
+        res.writeHead(404, {
+          'Content-Type': 'text/html',
+          'Access-Control-Allow-Origin': '*'
         });
-        res.end(data2);
+        res.end('<h1>404 Not Found</h1>');
+        return;
+      }
+      
+      res.writeHead(statusCode, {
+        'Content-Type': contentType,
+        'Content-Encoding': 'gzip',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=31536000'
       });
-      return;
-    }
-    
-    res.writeHead(statusCode, {
-      'Content-Type': contentType,
-      'Content-Encoding': 'gzip',
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'public, max-age=31536000' // Cache for 1 year
+      res.end(data);
     });
-    res.end(data);
-  });
+  } else {
+    // Serve uncompressed version for binary files (png, ico, webmanifest)
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404, {
+          'Content-Type': 'text/html',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end('<h1>404 Not Found</h1>');
+        return;
+      }
+      
+      res.writeHead(statusCode, {
+        'Content-Type': contentType,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=31536000'
+      });
+      res.end(data);
+    });
+  }
 }
 
 // DRY function for server startup messages
