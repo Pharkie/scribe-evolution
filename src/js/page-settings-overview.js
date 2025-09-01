@@ -24,6 +24,7 @@ function initializeSettingsOverviewStore() {
 
         // ================== INITIALIZATION ==================
         loadData() {
+            // Check for save success first (before setting loaded)
             this.checkSaveSuccess();
             // Set loaded state (no async data to load for overview page)
             this.loaded = true;
@@ -35,7 +36,10 @@ function initializeSettingsOverviewStore() {
             const urlParams = new URLSearchParams(window.location.search);
             const saved = urlParams.get('saved');
             
-            if (saved && this.hasOwnProperty(saved + 'Saved')) {
+            // List of valid saved types
+            const validSavedTypes = ['device', 'wifi', 'mqtt', 'memos', 'buttons', 'leds', 'unbiddenInk'];
+            
+            if (saved && validSavedTypes.includes(saved)) {
                 this.showSuccessFeedback(saved);
             }
         },
