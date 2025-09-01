@@ -66,13 +66,13 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
 
     // Rate limit ALL requests except static assets
     bool isStaticAsset = (uri.startsWith("/css/") ||
-                         uri.startsWith("/js/") ||
-                         uri.startsWith("/images/") ||
-                         uri == "/favicon.ico" ||
-                         uri == "/favicon.svg" ||
-                         uri == "/favicon-96x96.png" ||
-                         uri == "/apple-touch-icon.png" ||
-                         uri == "/site.webmanifest");
+                          uri.startsWith("/js/") ||
+                          uri.startsWith("/images/") ||
+                          uri == "/favicon.ico" ||
+                          uri == "/favicon.svg" ||
+                          uri == "/favicon-96x96.png" ||
+                          uri == "/apple-touch-icon.png" ||
+                          uri == "/site.webmanifest");
 
     if (!isStaticAsset)
     {
@@ -126,17 +126,20 @@ String getRequestBody(AsyncWebServerRequest *request)
 // Helper function for chunked upload handling (DRY principle)
 void handleChunkedUpload(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
-    String *bodyPtr = static_cast<String*>(request->_tempObject);
-    if (index == 0) {
+    String *bodyPtr = static_cast<String *>(request->_tempObject);
+    if (index == 0)
+    {
         // First chunk - create new string
-        if (bodyPtr) delete bodyPtr;
+        if (bodyPtr)
+            delete bodyPtr;
         bodyPtr = new String();
         request->_tempObject = bodyPtr;
         bodyPtr->reserve(total); // Reserve space for entire body
     }
-    
+
     // Append this chunk
-    for (size_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++)
+    {
         *bodyPtr += (char)data[i];
     }
 }
@@ -219,8 +222,8 @@ void setupStaticRoutes()
 {
     // Single route for entire static filesystem - AsyncWebServer handles everything automatically
     server.serveStatic("/", LittleFS, "/")
-          .setDefaultFile("index.html")
-          .setCacheControl("max-age=31536000");
+        .setDefaultFile("index.html")
+        .setCacheControl("max-age=31536000");
 }
 
 void setupWebServerRoutes(int maxChars)
@@ -255,7 +258,6 @@ void setupWebServerRoutes(int maxChars)
         server.on("/api/setup", HTTP_GET, handleSetupGet);
         server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request)
                   { handleSetupPost(request); }, NULL, handleChunkedUpload);
-
 
         // WiFi scanning endpoint (needed for setup)
         server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
@@ -325,7 +327,10 @@ void setupWebServerRoutes(int maxChars)
         registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
         registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
         registerRoute("POST", "/api/test-mqtt", "Test MQTT connection", handleTestMQTT, true);
-        registerRoute("GET", "/api/timezones", "Get IANA timezone data", handleTimezonesGet, true);
+        // Timezone data: serve static file with proper caching (24 hours)
+        server.serveStatic("/api/timezones", LittleFS, "/resources/timezones.json")
+              .setCacheControl("public, max-age=86400");
+        registeredRoutes.push_back({"GET", "/api/timezones", "Get IANA timezone data (static file)", true});
         registerRoute("GET", "/api/memos", "Get all memos", handleMemosGet, true);
         registerRoute("POST", "/api/memos", "Update all memos", handleMemosPost, true);
         registerRoute("GET", "/api/wifi-scan", "Scan WiFi networks", handleWiFiScan, true);
@@ -355,11 +360,14 @@ void setupWebServerRoutes(int maxChars)
 
         // Favicons/icons: already-compressed formats → disable .gz lookup
         server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
-              .setGzip(false).setCacheControl("max-age=604800");
+            .setTryGzipFirst(false)
+            .setCacheControl("max-age=604800");
         server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png")
-              .setGzip(false).setCacheControl("max-age=604800");
+            .setTryGzipFirst(false)
+            .setCacheControl("max-age=604800");
         server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png")
-              .setGzip(false).setCacheControl("max-age=604800");
+            .setTryGzipFirst(false)
+            .setCacheControl("max-age=604800");
 
         // CRITICAL: Setup static file serving AFTER all API routes AND explicit favicon routes
         // This ensures API endpoints and explicit routes are matched before the catch-all static handler

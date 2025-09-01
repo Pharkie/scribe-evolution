@@ -289,7 +289,7 @@ static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
 // Default memo content for first boot
 static const char *defaultMemo1 = "Good morning! Today is [weekday], [date]. Current time: [time]";
 static const char *defaultMemo2 = "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]";
-static const char *defaultMemo3 = "Next week's winning Lotto numbers: [dice:59], [dice:59], [dice:59], [dice:59], [dice:59], [dice:59]. Dice roll: [dice:6]. Coin toss: [coin]";
-static const char *defaultMemo4 = "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]";
+static const char *defaultMemo3 = "Next week's winning UK Lotto numbers: [dice:59], [dice:59], [dice:59], [dice:59], [dice:59], [dice:59]. Dice roll: [dice:6]. Coin toss: [coin]";
+static const char *defaultMemo4 = "Guest WiFi SSID: chumbawumba. Password: igetupagain. Scribe Evolution Uptime: [uptime], mDNS: [mdns], IP: [ip].";
 
 #endif

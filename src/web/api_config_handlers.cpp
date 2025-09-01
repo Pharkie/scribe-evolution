@@ -114,18 +114,21 @@ void handleConfigGet(AsyncWebServerRequest *request)
     device["printer_name"] = getLocalPrinterName();
     device["mqtt_topic"] = getLocalPrinterTopic();
     device["type"] = "local";
-    
+
     // Hardware GPIO configuration
     device["printerTxPin"] = config.printerTxPin;
 
     // WiFi configuration - nested under device to match settings structure
     JsonObject wifi = device.createNestedObject("wifi");
-    
+
     // In AP mode, encourage fresh setup by showing generic placeholders
-    if (isAPMode()) {
+    if (isAPMode())
+    {
         wifi["ssid"] = "AP_MODE";
         wifi["password"] = ""; // Blank to encourage manual entry
-    } else {
+    }
+    else
+    {
         wifi["ssid"] = config.wifiSSID;
         wifi["password"] = maskSecret(config.wifiPassword);
     }
@@ -259,7 +262,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
 #if ENABLE_LEDS
     // LEDs configuration - top-level section matching settings.html
     JsonObject leds = configDoc.createNestedObject("leds");
-    leds["enabled"] = true;  // LED support is compiled in
+    leds["enabled"] = true; // LED support is compiled in
     leds["pin"] = config.ledPin;
     leds["count"] = config.ledCount;
     leds["brightness"] = config.ledBrightness;
@@ -267,7 +270,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     // Add effectDefaults structure for frontend LED playground (10-100 scale)
     JsonObject effectDefaults = leds.createNestedObject("effectDefaults");
-    
+
     // Chase Single defaults
     JsonObject chaseSingle = effectDefaults.createNestedObject("chase_single");
     chaseSingle["speed"] = 50;
@@ -275,8 +278,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
     chaseSingle["cycles"] = 3;
     JsonArray chaseSingleColors = chaseSingle.createNestedArray("colors");
     chaseSingleColors.add(config.ledEffects.chaseSingle.defaultColor);
-    
-    // Chase Multi defaults  
+
+    // Chase Multi defaults
     JsonObject chaseMulti = effectDefaults.createNestedObject("chase_multi");
     chaseMulti["speed"] = 50;
     chaseMulti["intensity"] = 50;
@@ -285,7 +288,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     chaseMultiColors.add(config.ledEffects.chaseMulti.color1);
     chaseMultiColors.add(config.ledEffects.chaseMulti.color2);
     chaseMultiColors.add(config.ledEffects.chaseMulti.color3);
-    
+
     // Matrix defaults
     JsonObject matrix = effectDefaults.createNestedObject("matrix");
     matrix["speed"] = 50;
@@ -293,7 +296,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     matrix["cycles"] = 3;
     JsonArray matrixColors = matrix.createNestedArray("colors");
     matrixColors.add(config.ledEffects.matrix.defaultColor);
-    
+
     // Twinkle defaults
     JsonObject twinkle = effectDefaults.createNestedObject("twinkle");
     twinkle["speed"] = 50;
@@ -301,7 +304,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     twinkle["cycles"] = 3;
     JsonArray twinkleColors = twinkle.createNestedArray("colors");
     twinkleColors.add(config.ledEffects.twinkle.defaultColor);
-    
+
     // Pulse defaults
     JsonObject pulse = effectDefaults.createNestedObject("pulse");
     pulse["speed"] = 50;
@@ -309,8 +312,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
     pulse["cycles"] = 3;
     JsonArray pulseColors = pulse.createNestedArray("colors");
     pulseColors.add(config.ledEffects.pulse.defaultColor);
-    
-    // Rainbow defaults  
+
+    // Rainbow defaults
     JsonObject rainbow = effectDefaults.createNestedObject("rainbow");
     rainbow["speed"] = 50;
     rainbow["intensity"] = 50;
@@ -320,7 +323,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
 #else
     // LEDs disabled at compile time - provide minimal config to inform frontend
     JsonObject leds = configDoc.createNestedObject("leds");
-    leds["enabled"] = false;  // LED support is NOT compiled in
+    leds["enabled"] = false; // LED support is NOT compiled in
 #endif
 
     // GPIO information for frontend validation
@@ -328,26 +331,29 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonArray availablePins = gpio.createNestedArray("availablePins");
     JsonArray safePins = gpio.createNestedArray("safePins");
     JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
-    
+
     LOG_VERBOSE("CONFIG", "Adding GPIO info, ESP32C3_GPIO_COUNT: %d", ESP32C3_GPIO_COUNT);
-    
+
     // Add all ESP32-C3 GPIO information
-    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++) {
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    {
         int pin = ESP32C3_GPIO_MAP[i].pin;
         availablePins.add(pin);
         pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
-        
-        if (isSafeGPIO(pin)) {
+
+        if (isSafeGPIO(pin))
+        {
             safePins.add(pin);
             LOG_VERBOSE("CONFIG", "Added safe GPIO pin: %d", pin);
         }
     }
-    
+
     LOG_VERBOSE("CONFIG", "GPIO info complete - %d available pins, %d safe pins", availablePins.size(), safePins.size());
 
     // Check if JSON document has overflowed before serialization
-    if (configDoc.overflowed()) {
-        LOG_ERROR("CONFIG", "JSON document overflow detected! Size: %d bytes, Capacity: %d bytes", 
+    if (configDoc.overflowed())
+    {
+        LOG_ERROR("CONFIG", "JSON document overflow detected! Size: %d bytes, Capacity: %d bytes",
                   configDoc.memoryUsage(), configDoc.capacity());
         sendErrorResponse(request, 500, "Configuration too large for buffer - increase largeJsonDocumentSize");
         return;
@@ -358,8 +364,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     String configString;
     size_t jsonSize = serializeJson(configDoc, configString);
-    
-    LOG_VERBOSE("CONFIG", "JSON serialized: %d bytes, buffer usage: %d/%d bytes", 
+
+    LOG_VERBOSE("CONFIG", "JSON serialized: %d bytes, buffer usage: %d/%d bytes",
                 jsonSize, configDoc.memoryUsage(), configDoc.capacity());
 
     if (jsonSize == 0)
@@ -398,10 +404,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // Parse JSON to validate structure
     DynamicJsonDocument doc(largeJsonDocumentSize);
-    
+
     LOG_VERBOSE("WEB", "Config POST body length: %d", body.length());
     LOG_VERBOSE("WEB", "Config POST body (first 200 chars): %s", body.substring(0, 200).c_str());
-    
+
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
@@ -416,23 +422,28 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // Data-driven configuration processing - handles ALL fields generically
     String errorMsg;
-    if (!processJsonObject("", doc.as<JsonObject>(), newConfig, errorMsg)) {
+    if (!processJsonObject("", doc.as<JsonObject>(), newConfig, errorMsg))
+    {
         sendValidationError(request, ValidationResult(false, errorMsg));
         return;
     }
-    
+
     // Debug: Check MQTT password before and after processing
     LOG_VERBOSE("WEB", "MQTT Debug - Current password length: %d", newConfig.mqttPassword.length());
     LOG_VERBOSE("WEB", "MQTT Debug - NewConfig password length after processing: %d", newConfig.mqttPassword.length());
-    
+
     // MQTT password fix: If frontend didn't send password, preserve existing one
-    if (doc.containsKey("mqtt") && doc["mqtt"].is<JsonObject>()) {
+    if (doc.containsKey("mqtt") && doc["mqtt"].is<JsonObject>())
+    {
         JsonObject mqttObj = doc["mqtt"];
-        if (!mqttObj.containsKey("password")) {
+        if (!mqttObj.containsKey("password"))
+        {
             const RuntimeConfig &currentConfig = getRuntimeConfig();
             LOG_VERBOSE("WEB", "MQTT password not in request, preserving existing stored password (length: %d)", currentConfig.mqttPassword.length());
             newConfig.mqttPassword = currentConfig.mqttPassword;
-        } else {
+        }
+        else
+        {
             LOG_NOTICE("WEB", "MQTT password provided in request");
         }
     }
@@ -445,7 +456,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.betterStackToken = betterStackToken;
     newConfig.betterStackEndpoint = betterStackEndpoint;
     newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
-    
+
     // maxCharacters remains hardcoded from config.h
     newConfig.maxCharacters = maxCharacters;
 
@@ -457,10 +468,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
     // Check if MQTT enabled state changed
     const RuntimeConfig &currentConfig = getRuntimeConfig();
     bool mqttStateChanged = (currentConfig.mqttEnabled != newConfig.mqttEnabled);
-    
+
     // Update global runtime configuration
     setRuntimeConfig(newConfig);
-    
+
     // Save to NVS for persistence
     if (!saveNVSConfig(newConfig))
     {
@@ -526,32 +537,34 @@ void handleMemosGet(AsyncWebServerRequest *request)
 
     // Create JSON response with all memos
     DynamicJsonDocument memosDoc(2048);
-    
+
     // Get memo values from centralized config system
     const RuntimeConfig &config = getRuntimeConfig();
-    
+
     memosDoc["memo1"] = config.memos[0];
     memosDoc["memo2"] = config.memos[1];
     memosDoc["memo3"] = config.memos[2];
     memosDoc["memo4"] = config.memos[3];
-    
+
     // Check for overflow
-    if (memosDoc.overflowed()) {
+    if (memosDoc.overflowed())
+    {
         LOG_ERROR("MEMOS", "Memos JSON document overflow detected!");
         sendErrorResponse(request, 500, "Memos too large for buffer");
         return;
     }
-    
+
     // Serialize and send
     String memosString;
     size_t jsonSize = serializeJson(memosDoc, memosString);
-    
-    if (jsonSize == 0) {
+
+    if (jsonSize == 0)
+    {
         LOG_ERROR("WEB", "Failed to serialize memos JSON");
         sendErrorResponse(request, 500, "Failed to serialize memos");
         return;
     }
-    
+
     LOG_VERBOSE("WEB", "Memos sent to client (%zu bytes)", jsonSize);
     request->send(200, "application/json", memosString);
 }
@@ -559,56 +572,62 @@ void handleMemosGet(AsyncWebServerRequest *request)
 void handleMemosPost(AsyncWebServerRequest *request)
 {
     extern String getRequestBody(AsyncWebServerRequest * request);
-    
+
     LOG_VERBOSE("WEB", "handleMemosPost() called");
-    
+
     // Get request body
     String body = getRequestBody(request);
-    if (body.length() == 0) {
+    if (body.length() == 0)
+    {
         sendErrorResponse(request, 400, "No JSON body provided");
         return;
     }
-    
+
     // Parse JSON
     DynamicJsonDocument memosDoc(2048);
     DeserializationError error = deserializeJson(memosDoc, body);
-    if (error) {
+    if (error)
+    {
         LOG_ERROR("WEB", "Failed to parse memos JSON: %s", error.c_str());
         sendErrorResponse(request, 400, "Invalid JSON format");
         return;
     }
-    
+
     // Get current config and update memo fields
     RuntimeConfig currentConfig = getRuntimeConfig();
-    const char* memoNames[] = {"memo1", "memo2", "memo3", "memo4"};
-    
+    const char *memoNames[] = {"memo1", "memo2", "memo3", "memo4"};
+
     // Update each memo with validation
-    for (int i = 0; i < 4; i++) {
-        if (memosDoc.containsKey(memoNames[i])) {
+    for (int i = 0; i < 4; i++)
+    {
+        if (memosDoc.containsKey(memoNames[i]))
+        {
             String memoContent = memosDoc[memoNames[i]].as<String>();
-            
+
             // Validate memo length
-            if (memoContent.length() > MEMO_MAX_LENGTH) {
-                sendErrorResponse(request, 400, 
-                    String("Memo ") + String(i+1) + " exceeds maximum length of " + String(MEMO_MAX_LENGTH) + " characters");
+            if (memoContent.length() > MEMO_MAX_LENGTH)
+            {
+                sendErrorResponse(request, 400,
+                                  String("Memo ") + String(i + 1) + " exceeds maximum length of " + String(MEMO_MAX_LENGTH) + " characters");
                 return;
             }
-            
+
             currentConfig.memos[i] = memoContent;
-            LOG_VERBOSE("WEB", "Updated memo %d (%d characters)", i+1, memoContent.length());
+            LOG_VERBOSE("WEB", "Updated memo %d (%d characters)", i + 1, memoContent.length());
         }
     }
-    
+
     // Save updated config to NVS through centralized system
-    if (!saveNVSConfig(currentConfig)) {
+    if (!saveNVSConfig(currentConfig))
+    {
         LOG_ERROR("WEB", "Failed to save memo configuration to NVS");
         sendErrorResponse(request, 500, "Failed to save memo configuration");
         return;
     }
-    
+
     // Update runtime config
     setRuntimeConfig(currentConfig);
-    
+
     request->send(200);
     LOG_NOTICE("WEB", "All memos saved successfully");
 }
@@ -630,9 +649,9 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
     // Parse JSON - minimal buffer since setup only has device config
     DynamicJsonDocument doc(1024);
-    
+
     LOG_VERBOSE("WEB", "Setup POST body: %s", body.c_str());
-    
+
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
@@ -671,7 +690,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
     String timezone = device["timezone"];
     String ssid = device["wifi"]["ssid"];
     String password = device["wifi"]["password"];
-    
+
     // Validate non-empty values
     if (owner.length() == 0 || timezone.length() == 0 || ssid.length() == 0 || password.length() == 0)
     {
@@ -686,9 +705,11 @@ void handleSetupPost(AsyncWebServerRequest *request)
     newConfig.wifiPassword = password;
 
     // Parse optional printer TX GPIO (preserve default if not provided)
-    if (device.containsKey("printerTxPin")) {
+    if (device.containsKey("printerTxPin"))
+    {
         int printerTxPin = device["printerTxPin"];
-        if (!isValidGPIO(printerTxPin) || !isSafeGPIO(printerTxPin)) {
+        if (!isValidGPIO(printerTxPin) || !isSafeGPIO(printerTxPin))
+        {
             sendValidationError(request, ValidationResult(false, "Invalid printer TX GPIO pin"));
             return;
         }
@@ -697,7 +718,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
     // Save the updated configuration
     setRuntimeConfig(newConfig);
-    
+
     // Save to NVS for persistence
     if (!saveNVSConfig(newConfig))
     {
@@ -707,7 +728,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
     }
 
     LOG_NOTICE("WEB", "Setup configuration saved successfully");
-    
+
     request->send(200);
 
     // In AP mode, reboot after short delay to connect to new WiFi
@@ -715,10 +736,9 @@ void handleSetupPost(AsyncWebServerRequest *request)
     {
         LOG_NOTICE("WEB", "Device in AP mode - rebooting to connect to new WiFi configuration");
         // Use async callback instead of blocking delay
-        static WiFiEventId_t eventId = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
-            ESP.restart();
-        }, ARDUINO_EVENT_WIFI_AP_STOP);
-        
+        static WiFiEventId_t eventId = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+                                                    { ESP.restart(); }, ARDUINO_EVENT_WIFI_AP_STOP);
+
         // Schedule restart in next loop iteration
         WiFi.mode(WIFI_STA); // This will trigger AP stop and restart
     }
@@ -733,14 +753,14 @@ void handleSetupGet(AsyncWebServerRequest *request)
 
     // Device section with minimal defaults
     JsonObject device = setupDoc.createNestedObject("device");
-    device["owner"] = "";  // Always blank in setup mode
-    device["timezone"] = defaultTimezone;  // Default from config.h
+    device["owner"] = "";                 // Always blank in setup mode
+    device["timezone"] = defaultTimezone; // Default from config.h
 
     // WiFi section with blanks for user input
     JsonObject wifi = device.createNestedObject("wifi");
     wifi["ssid"] = "";
     wifi["password"] = "";
-    
+
     // Optional printer settings with current runtime config default
     const RuntimeConfig &config = getRuntimeConfig();
     device["printerTxPin"] = config.printerTxPin;
@@ -749,11 +769,13 @@ void handleSetupGet(AsyncWebServerRequest *request)
     JsonObject gpio = setupDoc.createNestedObject("gpio");
     JsonArray safePins = gpio.createNestedArray("safePins");
     JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
-    
+
     // Only include safe pins for setup
-    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++) {
+    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    {
         int pin = ESP32C3_GPIO_MAP[i].pin;
-        if (isSafeGPIO(pin)) {
+        if (isSafeGPIO(pin))
+        {
             safePins.add(pin);
             pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
         }
@@ -761,18 +783,18 @@ void handleSetupGet(AsyncWebServerRequest *request)
 
     String response;
     serializeJson(setupDoc, response);
-    
+
     AsyncWebServerResponse *res = request->beginResponse(200, "application/json", response);
     res->addHeader("Access-Control-Allow-Origin", "*");
     request->send(res);
-    
+
     LOG_VERBOSE("WEB", "Setup configuration sent (minimal for AP mode)");
 }
 
 void handleTestMQTT(AsyncWebServerRequest *request)
 {
     extern String getRequestBody(AsyncWebServerRequest * request);
-    
+
     LOG_VERBOSE("WEB", "handleTestMQTT() called - testing MQTT connection");
 
     // Get request body
@@ -786,9 +808,9 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 
     // Parse JSON - small buffer for test data
     DynamicJsonDocument doc(512);
-    
+
     LOG_VERBOSE("WEB", "MQTT test POST body: %s", body.c_str());
-    
+
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
@@ -808,9 +830,10 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     int port = doc["port"];
     String username = doc["username"];
     String password = doc["password"] | "";
-    
+
     // If no password provided in test request, use stored password from config
-    if (password.length() == 0) {
+    if (password.length() == 0)
+    {
         const RuntimeConfig &config = getRuntimeConfig();
         password = config.mqttPassword;
     }
@@ -825,43 +848,45 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 
     // Create temporary MQTT client for testing with proper certificate verification
     WiFiClientSecure testWifiClient;
-    
+
     // Load same CA certificate as main MQTT client
     LOG_VERBOSE("WEB", "TEST: Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
-    if (!certFile) {
+    if (!certFile)
+    {
         LOG_ERROR("WEB", "TEST: Failed to open CA certificate file for MQTT test");
         AsyncWebServerResponse *res = request->beginResponse(500, "application/json", "{\"success\":false,\"message\":\"CA certificate file not found\"}");
         res->addHeader("Access-Control-Allow-Origin", "*");
         request->send(res);
         return;
     }
-    
+
     String certContent = certFile.readString();
     certFile.close();
-    
+
     LOG_VERBOSE("WEB", "TEST: CA certificate loaded, length: %d bytes", certContent.length());
-    
-    if (certContent.length() == 0) {
+
+    if (certContent.length() == 0)
+    {
         LOG_ERROR("WEB", "TEST: CA certificate file is empty for MQTT test");
         AsyncWebServerResponse *res = request->beginResponse(500, "application/json", "{\"success\":false,\"message\":\"CA certificate file is empty\"}");
         res->addHeader("Access-Control-Allow-Origin", "*");
         request->send(res);
         return;
     }
-    
+
     LOG_VERBOSE("WEB", "TEST: Configuring test WiFiClientSecure with CA certificate");
-    
+
     testWifiClient.setCACert(certContent.c_str());
     testWifiClient.setHandshakeTimeout(10000); // 10 second timeout for proper certificate verification
-    
+
     PubSubClient testMqttClient(testWifiClient);
     testMqttClient.setServer(server.c_str(), port);
     testMqttClient.setBufferSize(4096); // Match main client buffer size
-    
+
     // Generate unique client ID for test
     String clientId = "ScribeTest_" + String(random(0xffff), HEX);
-    
+
     // Attempt connection (match main startup code - no LWT for test)
     bool connected = false;
     if (password.length() > 0)
@@ -872,26 +897,26 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     {
         connected = testMqttClient.connect(clientId.c_str(), username.c_str(), "");
     }
-    
+
     DynamicJsonDocument response(256);
-    
+
     // Always clean up test client resources regardless of success/failure
-    testMqttClient.disconnect(); // Clean disconnect
-    testWifiClient.stop(); // Explicitly close SSL connection
+    testMqttClient.disconnect();    // Clean disconnect
+    testWifiClient.stop();          // Explicitly close SSL connection
     testWifiClient.setCACert(NULL); // Clear certificate to avoid state pollution
-    
+
     // Add delay to ensure socket resources are completely released
     delay(300); // 300ms delay to prevent socket reuse/racing with main MQTT connection
-    
+
     if (connected)
     {
         LOG_NOTICE("WEB", "MQTT test connection successful");
         response["success"] = true;
         response["message"] = "Successfully connected to MQTT broker";
-        
+
         String responseStr;
         serializeJson(response, responseStr);
-        
+
         AsyncWebServerResponse *res = request->beginResponse(200, "application/json", responseStr);
         res->addHeader("Access-Control-Allow-Origin", "*");
         request->send(res);
@@ -900,61 +925,39 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     {
         int state = testMqttClient.state();
         String errorMsg = "Connection failed (code: " + String(state) + ")";
-        
-        switch(state)
+
+        switch (state)
         {
-            case MQTT_CONNECTION_TIMEOUT:
-                errorMsg = "Connection timeout - check server address and port";
-                break;
-            case MQTT_CONNECTION_LOST:
-                errorMsg = "Connection lost during handshake";
-                break;
-            case MQTT_CONNECT_FAILED:
-                errorMsg = "Network connection failed";
-                break;
-            case MQTT_DISCONNECTED:
-                errorMsg = "Disconnected - check network connectivity";
-                break;
-            case MQTT_CONNECT_BAD_PROTOCOL:
-                errorMsg = "Bad protocol version";
-                break;
-            case MQTT_CONNECT_BAD_CLIENT_ID:
-                errorMsg = "Bad client ID";
-                break;
-            case MQTT_CONNECT_UNAVAILABLE:
-                errorMsg = "Server unavailable";
-                break;
-            case MQTT_CONNECT_BAD_CREDENTIALS:
-                errorMsg = "Invalid username or password";
-                break;
-            case MQTT_CONNECT_UNAUTHORIZED:
-                errorMsg = "Client not authorized";
-                break;
+        case MQTT_CONNECTION_TIMEOUT:
+            errorMsg = "Connection timeout - check server address and port";
+            break;
+        case MQTT_CONNECTION_LOST:
+            errorMsg = "Connection lost during handshake";
+            break;
+        case MQTT_CONNECT_FAILED:
+            errorMsg = "Network connection failed";
+            break;
+        case MQTT_DISCONNECTED:
+            errorMsg = "Disconnected - check network connectivity";
+            break;
+        case MQTT_CONNECT_BAD_PROTOCOL:
+            errorMsg = "Bad protocol version";
+            break;
+        case MQTT_CONNECT_BAD_CLIENT_ID:
+            errorMsg = "Bad client ID";
+            break;
+        case MQTT_CONNECT_UNAVAILABLE:
+            errorMsg = "Server unavailable";
+            break;
+        case MQTT_CONNECT_BAD_CREDENTIALS:
+            errorMsg = "Invalid username or password";
+            break;
+        case MQTT_CONNECT_UNAUTHORIZED:
+            errorMsg = "Client not authorized";
+            break;
         }
-        
+
         LOG_WARNING("WEB", "MQTT test connection failed: %s", errorMsg.c_str());
         sendErrorResponse(request, 400, errorMsg);
     }
-}
-
-void handleTimezonesGet(AsyncWebServerRequest *request)
-{
-    LOG_VERBOSE("WEB", "handleTimezonesGet() called - serving static file");
-
-    // Serve timezone data directly from filesystem
-    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/resources/timezones.json", "application/json");
-    
-    if (!response) {
-        LOG_ERROR("WEB", "Failed to create response for /resources/timezones.json");
-        sendErrorResponse(request, 500, "Timezone data not available");
-        return;
-    }
-    
-    // Add caching headers (24 hours)
-    response->addHeader("Cache-Control", "public, max-age=86400");
-    response->addHeader("Access-Control-Allow-Origin", "*");
-    
-    request->send(response);
-    
-    LOG_VERBOSE("WEB", "Timezone data served directly from filesystem");
 }

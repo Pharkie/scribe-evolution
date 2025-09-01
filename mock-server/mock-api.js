@@ -460,6 +460,31 @@ function createRequestHandler() {
       return;
     }
     
+    // Explicit favicon/icon handling (mirrors ESP32 serveStatic with setGzip(false))
+    if (pathname === '/favicon.ico' || pathname === '/favicon-96x96.png' || pathname === '/apple-touch-icon.png') {
+      const filePath = path.join(__dirname, '..', 'data', pathname);
+      
+      // Set appropriate MIME type and cache headers (7 days like ESP32)
+      let contentType = 'image/png';
+      if (pathname.endsWith('.ico')) contentType = 'image/x-icon';
+      
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(404, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+          res.end('Favicon not found');
+          return;
+        }
+        
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=604800', // 7 days (mirrors ESP32)
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(data);
+      });
+      return;
+    }
+    
     // API Routes
     if (pathname.startsWith('/api/')) {
       if (pathname === '/api/config' && req.method === 'GET') {
@@ -679,22 +704,9 @@ function createRequestHandler() {
         setTimeout(() => sendJSON(res, mockWifiScan), 800);
         
       } else if (pathname === '/api/timezones') {
-        console.log('🌍 Timezone data requested');
-        // Serve timezone data from the compressed file
-        const fs = require('fs');
-        const path = require('path');
-        const zlib = require('zlib');
-        try {
-          const timezonePath = path.join(__dirname, '..', 'data', 'resources', 'timezones.json.gz');
-          const compressedData = fs.readFileSync(timezonePath);
-          const decompressedData = zlib.gunzipSync(compressedData);
-          const timezoneData = JSON.parse(decompressedData.toString('utf8'));
-          res.setHeader('Cache-Control', 'public, max-age=86400');
-          setTimeout(() => sendJSON(res, timezoneData), 100);
-        } catch (error) {
-          console.error('Failed to load timezone data:', error);
-          setTimeout(() => sendJSON(res, { error: "Timezone data not available" }, 500), 100);
-        }
+        console.log('🌍 Timezone data requested - serving via static file handler');
+        // Let this fall through to static file serving (mirrors ESP32 serveStatic approach)
+        // The timezone file will be handled by the unified static serving logic below
         
       } else if (pathname === '/api/joke' && req.method === 'GET') {
         console.log('😄 Joke requested');
