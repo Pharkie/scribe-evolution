@@ -8,8 +8,8 @@ function initializeIndexStore() {
   const store = {
     // Core state
     error: null,
-    initialized: false, // Flag to prevent duplicate initialization
-    loaded: false, // Flag to indicate data has been loaded
+    loaded: false, // Simple loading flag
+    initialized: false, // Failsafe guard to prevent multiple inits
     data: {},
     
     // Form state
@@ -96,13 +96,14 @@ function initializeIndexStore() {
     },
     
     // Initialize store
-    async init() {
-      // Prevent duplicate initialization
+    async loadData() {
+      // Duplicate initialization guard (failsafe)
       if (this.initialized) {
         console.log('📋 Index: Already initialized, skipping');
         return;
       }
       this.initialized = true;
+      
       this.loaded = false;
       this.error = null;
       
@@ -111,21 +112,18 @@ function initializeIndexStore() {
       try {
         await this.loadConfig();
         
-        // Always initialize local printer, conditionally initialize remote (MQTT) discovery  
+        // Always initialize local printer, conditionally initialize remote (MQTT) discovery
         this.initializeLocalPrinter();
-        
         if (this.data.config?.mqtt?.enabled === true) {
           this.initializeRemotePrinterDiscovery();
         }
         
+        this.setupEventListeners();
         this.loaded = true;
       } catch (error) {
         console.error('📋 Index: Config loading failed:', error);
-        // Set error state - Alpine.js standard pattern
         this.error = error.message;
       }
-
-      this.setupEventListeners();
     },
     
     // Load configuration

@@ -104,8 +104,16 @@ function createMyStore() {
     return {
         loaded: false,  // Simple loading flag
         data: {},       // Empty data object
+        initialized: false, // Failsafe guard to prevent multiple inits
         
         async loadData() {
+            // Duplicate initialization guard (failsafe)
+            if (this.initialized) {
+                console.log('Already initialized, skipping');
+                return;
+            }
+            this.initialized = true;
+            
             this.loaded = false;
             try {
                 this.data.someApi = await fetchData();
