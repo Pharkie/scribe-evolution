@@ -100,9 +100,9 @@ const buildConfigs = {
   // Common app bundle 
   common: {
     input: [
-      'src/js/config.js',
-      'src/js/icons.js', 
-      'src/js/app-common.js'
+      'src/data/js/config.js',
+      'src/data/js/icons.js', 
+      'src/data/js/app-common.js'
     ],
     output: 'data/js/app-common.js',
     minify: false,
@@ -110,9 +110,9 @@ const buildConfigs = {
 
   commonProd: {
     input: [
-      'src/js/config.js',
-      'src/js/icons.js',
-      'src/js/app-common.js'
+      'src/data/js/config.js',
+      'src/data/js/icons.js',
+      'src/data/js/app-common.js'
     ],
     output: 'data/js/app-common.js',
     minify: true,
@@ -121,8 +121,8 @@ const buildConfigs = {
   // Page-specific bundles
   index: {
     input: [
-      'src/js/index-alpine-store.js',
-      'src/js/index-api.js'
+      'src/data/js/index-alpine-store.js',
+      'src/data/js/index-api.js'
     ],
     output: 'data/js/page-index.js',
     minify: false,
@@ -130,8 +130,8 @@ const buildConfigs = {
 
   indexProd: {
     input: [
-      'src/js/index-alpine-store.js', 
-      'src/js/index-api.js'
+      'src/data/js/index-alpine-store.js', 
+      'src/data/js/index-api.js'
     ],
     output: 'data/js/page-index.js',
     minify: true,
@@ -139,8 +139,8 @@ const buildConfigs = {
 
   settings: {
     input: [
-      'src/js/settings-alpine-store.js',
-      'src/js/settings-api.js'
+      'src/data/js/settings-alpine-store.js',
+      'src/data/js/settings-api.js'
     ],
     output: 'data/js/page-settings.js',
     minify: false,
@@ -148,8 +148,8 @@ const buildConfigs = {
 
   settingsProd: {
     input: [
-      'src/js/settings-alpine-store.js',
-      'src/js/settings-api.js'
+      'src/data/js/settings-alpine-store.js',
+      'src/data/js/settings-api.js'
     ],
     output: 'data/js/page-settings.js',
     minify: true,
@@ -157,8 +157,8 @@ const buildConfigs = {
 
   diagnostics: {
     input: [
-      'src/js/diagnostics-alpine-store.js',
-      'src/js/diagnostics-api.js'
+      'src/data/js/diagnostics-alpine-store.js',
+      'src/data/js/diagnostics-api.js'
     ],
     output: 'data/js/page-diagnostics.js',
     minify: false,
@@ -166,8 +166,8 @@ const buildConfigs = {
 
   diagnosticsProd: {
     input: [
-      'src/js/diagnostics-alpine-store.js',
-      'src/js/diagnostics-api.js'
+      'src/data/js/diagnostics-alpine-store.js',
+      'src/data/js/diagnostics-api.js'
     ],
     output: 'data/js/page-diagnostics.js',
     minify: true,
@@ -175,8 +175,8 @@ const buildConfigs = {
 
   setup: {
     input: [
-      'src/js/setup-alpine-store.js',
-      'src/js/setup-api.js'
+      'src/data/js/setup-alpine-store.js',
+      'src/data/js/setup-api.js'
     ],
     output: 'data/js/page-setup.js',
     minify: false,
@@ -184,21 +184,21 @@ const buildConfigs = {
 
   setupProd: {
     input: [
-      'src/js/setup-alpine-store.js',
-      'src/js/setup-api.js'
+      'src/data/js/setup-alpine-store.js',
+      'src/data/js/setup-api.js'
     ],
     output: 'data/js/page-setup.js',
     minify: true,
   },
 
   '404': {
-    input: ['src/js/404-alpine-store.js'],
+    input: ['src/data/js/404-alpine-store.js'],
     output: 'data/js/page-404.js',
     minify: false,
   },
 
   '404Prod': {
-    input: ['src/js/404-alpine-store.js'],
+    input: ['src/data/js/404-alpine-store.js'],
     output: 'data/js/page-404.js',
     minify: true,
   },
@@ -206,8 +206,8 @@ const buildConfigs = {
   // Device settings page
   device: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-device.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-device.js'
     ],
     output: 'data/js/page-settings-device.js',
     minify: false,
@@ -215,8 +215,8 @@ const buildConfigs = {
 
   deviceProd: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-device.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-device.js'
     ],
     output: 'data/js/page-settings-device.js',
     minify: true,
@@ -225,8 +225,8 @@ const buildConfigs = {
   // WiFi settings page
   wifi: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-wifi.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-wifi.js'
     ],
     output: 'data/js/page-settings-wifi.js',
     minify: false,
@@ -234,8 +234,8 @@ const buildConfigs = {
 
   wifiProd: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-wifi.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-wifi.js'
     ],
     output: 'data/js/page-settings-wifi.js',
     minify: true,
@@ -244,8 +244,8 @@ const buildConfigs = {
   // MQTT settings page
   mqtt: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-mqtt.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-mqtt.js'
     ],
     output: 'data/js/page-settings-mqtt.js',
     minify: false,
@@ -253,8 +253,8 @@ const buildConfigs = {
 
   mqttProd: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-mqtt.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-mqtt.js'
     ],
     output: 'data/js/page-settings-mqtt.js',
     minify: true,
@@ -263,7 +263,7 @@ const buildConfigs = {
   // Settings overview page
   overview: {
     input: [
-      'src/js/page-settings-overview.js'
+      'src/data/js/page-settings-overview.js'
     ],
     output: 'data/js/page-settings-overview.js',
     minify: false,
@@ -271,7 +271,7 @@ const buildConfigs = {
 
   overviewProd: {
     input: [
-      'src/js/page-settings-overview.js'
+      'src/data/js/page-settings-overview.js'
     ],
     output: 'data/js/page-settings-overview.js',
     minify: true,
@@ -280,7 +280,7 @@ const buildConfigs = {
   // Memos settings page
   memos: {
     input: [
-      'src/js/page-settings-memos.js'
+      'src/data/js/page-settings-memos.js'
     ],
     output: 'data/js/page-settings-memos.js',
     minify: false,
@@ -288,7 +288,7 @@ const buildConfigs = {
 
   memosProd: {
     input: [
-      'src/js/page-settings-memos.js'
+      'src/data/js/page-settings-memos.js'
     ],
     output: 'data/js/page-settings-memos.js',
     minify: true,
@@ -297,8 +297,8 @@ const buildConfigs = {
   // Buttons settings page
   buttons: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-buttons.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-buttons.js'
     ],
     output: 'data/js/page-settings-buttons.js',
     minify: false,
@@ -306,8 +306,8 @@ const buildConfigs = {
 
   buttonsProd: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-buttons.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-buttons.js'
     ],
     output: 'data/js/page-settings-buttons.js',
     minify: true,
@@ -315,8 +315,8 @@ const buildConfigs = {
 
   leds: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-leds.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-leds.js'
     ],
     output: 'data/js/page-settings-leds.js',
     minify: false,
@@ -324,8 +324,8 @@ const buildConfigs = {
 
   ledsProd: {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-leds.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-leds.js'
     ],
     output: 'data/js/page-settings-leds.js',
     minify: true,
@@ -334,8 +334,8 @@ const buildConfigs = {
   // Unbidden Ink settings page
   'unbidden-ink': {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-unbidden-ink.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-unbidden-ink.js'
     ],
     output: 'data/js/page-settings-unbidden-ink.js',
     minify: false,
@@ -343,8 +343,8 @@ const buildConfigs = {
 
   'unbidden-inkProd': {
     input: [
-      'src/js/settings-api.js',
-      'src/js/page-settings-unbidden-ink.js'
+      'src/data/js/settings-api.js',
+      'src/data/js/page-settings-unbidden-ink.js'
     ],
     output: 'data/js/page-settings-unbidden-ink.js',
     minify: true,

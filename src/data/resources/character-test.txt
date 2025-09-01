@@ -1,0 +1,33 @@
+ASCII: Hello World 123!@#
+
+A variants: À Á Â Ã Ä Å
+a variants: à á â ã ä å
+E variants: È É Ê Ë
+e variants: è é ê ë
+I variants: Ì Í Î Ï
+i variants: ì í î ï
+O variants: Ò Ó Ô Õ Ö
+o variants: ò ó ô õ ö
+U variants: Ù Ú Û Ü
+u variants: ù ú û ü
+
+Special: Ñ ñ Ç ç
+Nordic: Æ æ Ø ø Å å
+German: ß Ü ü Ö ö Ä ä
+French: É é È è Ê ê
+
+Quotes: "double" and 'single' quotes
+Dashes: en–dash em—dash
+Apostrophes: don't won't
+
+Examples:
+* Za'atar (Arabic spice)
+* Café au lait
+* Naïve approach
+* Piñata party
+* Müller family
+* Björk concert
+* Señorita María
+* Crème brûlée
+* Jalapeño peppers
+* São Paulo
