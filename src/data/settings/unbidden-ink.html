@@ -47,18 +47,20 @@
         </header>
 
         <!-- Error State -->
-        <div x-show="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6" x-transition>
-            <div class="text-center">
-                <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Unbidden Ink Settings</h3>
-                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
-                <button @click="loadConfiguration()" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                    Retry
-                </button>
+        <template x-if="loaded && error">
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
+                <div class="text-center">
+                    <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Unbidden Ink Settings</h3>
+                    <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                    <button @click="loadConfiguration()" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                        Retry
+                    </button>
+                </div>
             </div>
-        </div>
+        </template>
 
         <!-- Main Content -->
         <template x-if="loaded && !error">

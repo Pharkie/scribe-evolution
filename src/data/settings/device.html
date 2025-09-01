@@ -60,22 +60,24 @@
         </header>
 
         <!-- Error State -->
-        <div x-show="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6" x-transition>
-            <div class="text-center">
-                <svg class="w-10 h-10 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z">
-                    </path>
-                </svg>
-                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Loading Error</h3>
-                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
-                <p class="text-sm text-red-500 dark:text-red-400">Please check the system and try refreshing the page.
-                </p>
-                <button @click="window.location.reload()" class="error-retry-button">
-                    Retry
-                </button>
+        <template x-if="loaded && error">
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
+                <div class="text-center">
+                    <svg class="w-10 h-10 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z">
+                        </path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Loading Error</h3>
+                    <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                    <p class="text-sm text-red-500 dark:text-red-400">Please check the system and try refreshing the page.
+                    </p>
+                    <button @click="window.location.reload()" class="error-retry-button">
+                        Retry
+                    </button>
+                </div>
             </div>
-        </div>
+        </template>
 
         <!-- Device Settings Form -->
         <template x-if="loaded && !error">

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Button Settings - Scribe Evolution</title>
 
-    
+
     <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-variable.woff2" crossorigin>
 
     <!-- CSS Assets -->
@@ -24,8 +24,7 @@
 
 <body
     class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
-    x-data="$store.settingsButtons"
-    x-init="loadConfiguration()">
+    x-data="$store.settingsButtons" x-init="loadConfiguration()">
     <main class="w-full max-w-4xl mx-auto flex-1">
         <!-- Header with title and back button -->
         <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
@@ -45,9 +44,9 @@
             <div class="flex-1 flex justify-center">
                 <h1
                     class="text-2xl sm:text-3xl lg:text-4xl font-normal text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2 whitespace-nowrap">
-                    <svg class="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z">
+                    <svg class="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z">
                         </path>
                     </svg>
                     <span>Button Settings</span>
@@ -59,27 +58,31 @@
         </header>
 
         <!-- Error State -->
-        <div x-show="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6" x-transition>
-            <div class="text-center">
-                <svg class="w-10 h-10 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z">
-                    </path>
-                </svg>
-                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Loading Error</h3>
-                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
-                <p class="text-sm text-red-500 dark:text-red-400">Please check the system and try refreshing the page.
-                </p>
-                <button @click="window.location.reload()" class="error-retry-button">
-                    Retry
-                </button>
+        <template x-if="loaded && error">
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
+                <div class="text-center">
+                    <svg class="w-10 h-10 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z">
+                        </path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Configuration Loading Error
+                    </h3>
+                    <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+                    <p class="text-sm text-red-500 dark:text-red-400">Please check the system and try refreshing the
+                        page.
+                    </p>
+                    <button @click="window.location.reload()" class="error-retry-button">
+                        Retry
+                    </button>
+                </div>
             </div>
-        </div>
+        </template>
 
         <!-- Button Settings Form -->
         <template x-if="loaded && !error">
-            <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
-                 x-show="show" x-transition.opacity.duration.300ms class="space-y-6">
+            <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" x-show="show"
+                x-transition.opacity.duration.300ms class="space-y-6">
                 <form @submit.prevent="saveConfiguration" class="space-y-8">
 
                     <!-- Button Actions Section -->
@@ -102,13 +105,17 @@
 
                                     <!-- Short Press Section -->
                                     <div class="mb-6">
-                                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
-                                            <svg class="w-4 h-4 mr-2 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"></path>
+                                        <h4
+                                            class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
+                                            <svg class="w-4 h-4 mr-2 text-cyan-700 dark:text-cyan-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="m19.5 8.25-7.5 7.5-7.5-7.5"></path>
                                             </svg>
                                             Short Press
                                         </h4>
-                                        <div class="grid grid-cols-1 gap-4" :class="config?.leds?.enabled ? 'md:grid-cols-3' : 'md:grid-cols-2'">
+                                        <div class="grid grid-cols-1 gap-4"
+                                            :class="config?.leds?.enabled ? 'md:grid-cols-3' : 'md:grid-cols-2'">
                                             <!-- Action -->
                                             <div class="space-y-2">
                                                 <label :for="`button${buttonNum}-short`"
@@ -145,9 +152,9 @@
                                                     :class="validationErrors[`mqtt-${buttonNum}-short`] ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 'border-gray-200 dark:border-gray-600 focus:ring-cyan-400 focus:border-transparent'"
                                                     x-model="config.buttons[`button${buttonNum}`].shortMqttTopic"
                                                     @blur="validateMqttTopic($event.target.value, buttonNum, 'short')">
-                                                <p x-show="validationErrors[`mqtt-${buttonNum}-short`]" 
-                                                   class="text-xs text-red-600 dark:text-red-400 mt-1"
-                                                   x-text="validationErrors[`mqtt-${buttonNum}-short`]"></p>
+                                                <p x-show="validationErrors[`mqtt-${buttonNum}-short`]"
+                                                    class="text-xs text-red-600 dark:text-red-400 mt-1"
+                                                    x-text="validationErrors[`mqtt-${buttonNum}-short`]"></p>
                                             </div>
 
                                             <!-- LED Effect (only show if LEDs enabled) -->
@@ -173,13 +180,17 @@
 
                                     <!-- Long Press Section -->
                                     <div>
-                                        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
-                                            <svg class="w-4 h-4 mr-2 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5"></path>
+                                        <h4
+                                            class="text-md font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
+                                            <svg class="w-4 h-4 mr-2 text-cyan-700 dark:text-cyan-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5"></path>
                                             </svg>
                                             Long Press
                                         </h4>
-                                        <div class="grid grid-cols-1 gap-4" :class="config?.leds?.enabled ? 'md:grid-cols-3' : 'md:grid-cols-2'">
+                                        <div class="grid grid-cols-1 gap-4"
+                                            :class="config?.leds?.enabled ? 'md:grid-cols-3' : 'md:grid-cols-2'">
                                             <!-- Action -->
                                             <div class="space-y-2">
                                                 <label :for="`button${buttonNum}-long`"
@@ -216,9 +227,9 @@
                                                     :class="validationErrors[`mqtt-${buttonNum}-long`] ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 'border-gray-200 dark:border-gray-600 focus:ring-cyan-400 focus:border-transparent'"
                                                     x-model="config.buttons[`button${buttonNum}`].longMqttTopic"
                                                     @blur="validateMqttTopic($event.target.value, buttonNum, 'long')">
-                                                <p x-show="validationErrors[`mqtt-${buttonNum}-long`]" 
-                                                   class="text-xs text-red-600 dark:text-red-400 mt-1"
-                                                   x-text="validationErrors[`mqtt-${buttonNum}-long`]"></p>
+                                                <p x-show="validationErrors[`mqtt-${buttonNum}-long`]"
+                                                    class="text-xs text-red-600 dark:text-red-400 mt-1"
+                                                    x-text="validationErrors[`mqtt-${buttonNum}-long`]"></p>
                                             </div>
 
                                             <!-- LED Effect (only show if LEDs enabled) -->
@@ -248,9 +259,13 @@
                             <div
                                 class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                                 <div class="flex items-center mb-4">
-                                    <svg class="w-6 h-6 mr-2 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.867 19.125h.008v.008h-.008v-.008Z"></path>
+                                    <svg class="w-6 h-6 mr-2 text-gray-600 dark:text-gray-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z">
+                                        </path>
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M4.867 19.125h.008v.008h-.008v-.008Z"></path>
                                     </svg>
                                     <span class="text-lg font-semibold text-gray-800 dark:text-gray-100">Button
                                         Technicals</span>
@@ -292,7 +307,8 @@
                                                 x-text="(config.buttons?.min_interval || '-') + (config.buttons?.min_interval ? ' ms' : '')"></span>
                                         </div>
                                         <div>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300">Maximum presses per
+                                            <span class="font-medium text-gray-700 dark:text-gray-300">Maximum presses
+                                                per
                                                 minute:</span>
                                             <span class="text-gray-800 dark:text-gray-200"
                                                 x-text="config.buttons?.max_per_minute || '-'"></span>
