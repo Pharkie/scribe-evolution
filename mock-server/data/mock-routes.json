@@ -1,84 +1,12 @@
 {
     "web_pages": [
         {
-            "path": "/css/*",
-            "description": "CSS static files"
-        },
-        {
-            "path": "/js/*",
-            "description": "JavaScript static files"
-        },
-        {
-            "path": "/images/*",
-            "description": "Image static files"
-        },
-        {
-            "path": "/html/*",
-            "description": "HTML partial files"
-        },
-        {
-            "path": "/favicon.ico",
-            "description": "Site favicon (ICO)"
-        },
-        {
-            "path": "/favicon.svg",
-            "description": "Site favicon (SVG)"
-        },
-        {
-            "path": "/favicon-96x96.png",
-            "description": "Site favicon (PNG 96x96)"
-        },
-        {
-            "path": "/apple-touch-icon.png",
-            "description": "Apple touch icon"
-        },
-        {
-            "path": "/site.webmanifest",
-            "description": "Web app manifest"
-        },
-        {
-            "path": "/",
-            "description": "Main printer interface"
-        },
-        {
-            "path": "/settings/",
-            "description": "Configuration settings overview (serves /settings/index.html)"
-        },
-        {
-            "path": "/settings/device.html",
-            "description": "Device settings"
-        },
-        {
-            "path": "/settings/wifi.html",
-            "description": "WiFi settings"
-        },
-        {
-            "path": "/settings/mqtt.html",
-            "description": "MQTT settings"
-        },
-        {
-            "path": "/settings/buttons.html",
-            "description": "Button settings"
-        },
-        {
-            "path": "/settings/leds.html",
-            "description": "LED settings"
-        },
-        {
-            "path": "/settings/memos.html",
-            "description": "Memo settings"
-        },
-        {
-            "path": "/settings/unbidden-ink.html",
-            "description": "Unbidden Ink (AI content) settings"
-        },
-        {
-            "path": "/diagnostics.html",
-            "description": "System diagnostics"
+            "path": "/*",
+            "description": "All static files (HTML, CSS, JS, images, favicon)"
         },
         {
             "path": "(unmatched routes)",
-            "description": "404 Not Found handler (serves /html/404.html)"
+            "description": "404 Not Found handler (serves /404.html)"
         }
     ],
     "api_endpoints": [
@@ -103,44 +31,44 @@
             "description": "Print character test pattern"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/riddle",
-            "description": "Print random riddle"
+            "description": "Generate random riddle"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/joke",
-            "description": "Print random joke"
+            "description": "Generate random joke"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/quote",
-            "description": "Print random quote"
+            "description": "Generate random quote"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/quiz",
-            "description": "Print random quiz"
+            "description": "Generate random quiz"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/news",
-            "description": "Print BBC news headlines"
+            "description": "Generate BBC news headlines"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/poke",
-            "description": "Send poke message"
+            "description": "Generate poke message"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/unbidden-ink",
-            "description": "Trigger unbidden ink"
+            "description": "Generate unbidden ink content"
         },
         {
-            "method": "POST",
+            "method": "GET",
             "path": "/api/user-message",
-            "description": "Send user message"
+            "description": "Generate user message"
         },
         {
             "method": "GET",
@@ -210,12 +138,17 @@
         {
             "method": "POST",
             "path": "/api/leds/test",
-            "description": "Test LED effects with parameters"
+            "description": "Trigger LED Effect"
         },
         {
             "method": "POST",
             "path": "/api/leds/off",
-            "description": "Turn LEDs off"
+            "description": "Turn LEDs Off"
+        },
+        {
+            "method": "GET",
+            "path": "/debug/filesystem",
+            "description": "LittleFS debug info"
         }
     ]
 }
