@@ -10,8 +10,9 @@ const path = require('path');
 const { createGzip } = require('zlib');
 const { pipeline } = require('stream/promises');
 
-// Assets to compress (extensions that benefit from compression)
-const COMPRESS_EXTENSIONS = ['.html', '.css', '.js', '.json', '.svg', '.txt', '.md'];
+// Assets to compress (web-served files only)
+const COMPRESS_EXTENSIONS = ['.html', '.css', '.js', '.json', '.svg', '.md'];
+// Excluded: .ndjson, .txt, .pem (C++ code resources - never web-served)
 const MIN_SIZE_BYTES = 1024; // Don't compress files smaller than 1KB (overhead > benefit)
 
 async function gzipFile(filePath) {

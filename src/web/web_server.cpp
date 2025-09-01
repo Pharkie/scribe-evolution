@@ -353,12 +353,25 @@ void setupWebServerRoutes(int maxChars)
             
             request->send(200, "text/plain", output); }, true);
 
-        // CRITICAL: Setup static file serving AFTER all API routes
-        // This ensures API endpoints are matched before the catch-all static handler
+        // Favicons/icons: already-compressed formats → disable .gz lookup
+        server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
+              .setGzip(false).setCacheControl("max-age=604800");
+        server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png")
+              .setGzip(false).setCacheControl("max-age=604800");
+        server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png")
+              .setGzip(false).setCacheControl("max-age=604800");
+
+        // CRITICAL: Setup static file serving AFTER all API routes AND explicit favicon routes
+        // This ensures API endpoints and explicit routes are matched before the catch-all static handler
         setupStaticRoutes();
 
+        // Track explicit favicon routes for diagnostics
+        registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Favicon PNG file", false});
+        registeredRoutes.push_back({"GET", "/favicon.ico", "Favicon ICO file", false});
+        registeredRoutes.push_back({"GET", "/apple-touch-icon.png", "Apple touch icon", false});
+
         // Track static routes for diagnostics
-        registeredRoutes.push_back({"GET", "/*", "All static files (HTML, CSS, JS, images, favicon)", false});
+        registeredRoutes.push_back({"GET", "/*", "All other static files (HTML, CSS, JS, images)", false});
 
         // 404 handler for STA mode (must be LAST)
         server.onNotFound(handleNotFound);
