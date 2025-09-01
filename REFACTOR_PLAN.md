@@ -1,10 +1,6 @@
 # App Refactor Plan 🎯
 
-**Goal:** Modernize and modularize the settings system without breaking functionality.
-
-**Current Status**: Phase 3 nearly complete (3.1-3.8), Currentl adding Simple Loading Flag Pattern applied to all pages.
-
-## ✅ COMPLETED PHASES 1-2
+**Goal:** Modernize and modularize the app without breaking functionality.
 
 ### Phase 1: Build System Modernization ⚡
 - [x] esbuild integration (3x faster builds)
@@ -16,9 +12,7 @@
 - [x] API function organization within main store
 - [x] Utility structure preparation
 
----
-
-## Phase 3: Complete Page Architecture ✅
+## Phase 3: Settings refactor ✅
 
 **Key Features**:
 - Color-coded themes per section
@@ -29,7 +23,7 @@
 
 **Status**: All individual settings pages complete, ready for cleanup
 
-### Completed Settings Pages (3.1-3.8)
+### Settings Pages (3.1-3.8) - Completed
 - **Device** (blue) - Owner, timezone, GPIO pins, data-driven config system
 - **WiFi** (green) - Network credentials, connection status, Simple Loading Flag Pattern ✅  
 - **MQTT** (red) - Server config, connection testing, enable/disable
@@ -40,11 +34,11 @@
 
 **Testing Status**: Steps 3.1-3.8 need live ESP32 verification before proceeding to 3.9
 
-### Step 3.9: Legacy Cleanup [READY]
-- [ ] Remove `settings-old.html` (legacy monolithic file)
-- [ ] Clean up unused partials in `/partials/settings/`
-- [ ] Verify no broken internal links remain
-- [ ] Final end-to-end testing of complete settings workflow
+### Step 3.9: Legacy Cleanup - Completed
+- [X] Remove `settings-old.html` (legacy monolithic file)
+- [X] Clean up unused partials in `/partials/settings/`
+- [X] Verify no broken internal links remain
+- [X] Final end-to-end testing of complete settings workflow
 
 ---
 
@@ -53,12 +47,15 @@
 ### Completed
 - **REST API Standardization**  - Success: HTTP 200 + empty body, Error: Non-200 + JSON
 - **Partial Config Pattern**  - Settings pages send only relevant sections
-- PATCH and PUT instead of just GET and POST?
 
-### Remaining  
-- **4.1 Module System** - Fix esbuild imports, enable code splitting
-- **4.2 CSS Optimization** - Address 60-80KB Tailwind files (consider gzip/shared builds)
-- **4.3 Resource Optimization** - Large files: `timezones.json` (174KB), `riddles.ndjson` (111KB)
+### 4.1: Large File Analysis - COMPLETED ✅
+- **timezones.json (174KB)**: Required as-is - contains essential IANA timezone data for device settings
+- **riddles.ndjson (111KB)**: Required as-is - complete content library needed for functionality  
+- **Assessment**: Large files are necessary and optimally structured
+
+### Remaining Tasks (Risk-Ordered)
+- **4.2 CSS Optimization** (MEDIUM RISK) - Address 60-80KB Tailwind files, analyze unused classes
+- **4.3 Module System** (HIGH RISK) - Fix esbuild imports, enable code splitting - DEFER until critical need
 
 ---
 
