@@ -16,6 +16,11 @@ document.addEventListener('alpine:init', () => {
         
         originalValues: {},
         passwordModified: false,
+        
+        // Validation state
+        validation: {
+            errors: {}
+        },
 
         // API Operations
         async loadConfiguration() {
@@ -112,13 +117,19 @@ document.addEventListener('alpine:init', () => {
         get canSave() {
             const current = this.config.unbiddenInk;
             const original = this.originalValues;
+            
+            // Must have no validation errors
+            const hasValidationErrors = Object.keys(this.validation.errors).length > 0;
+            
+            // Must have changes
+            const hasChanges = current.enabled !== original.enabled ||
+                              current.startHour !== original.startHour ||
+                              current.endHour !== original.endHour ||
+                              current.frequencyMinutes !== original.frequencyMinutes ||
+                              current.prompt !== original.prompt ||
+                              this.passwordModified;
 
-            return current.enabled !== original.enabled ||
-                   current.startHour !== original.startHour ||
-                   current.endHour !== original.endHour ||
-                   current.frequencyMinutes !== original.frequencyMinutes ||
-                   current.prompt !== original.prompt ||
-                   this.passwordModified;
+            return hasChanges && !hasValidationErrors;
         },
 
         // Clear API token field on focus (standard UX pattern)
@@ -133,6 +144,23 @@ document.addEventListener('alpine:init', () => {
         trackChatgptTokenChange(newValue) {
             const hasChanged = newValue !== this.originalValues.chatgptApiToken;
             this.passwordModified = hasChanged;
+            this.validateChatgptToken(newValue);
+        },
+
+        // Validation
+        validateChatgptToken(value) {
+            if (this.config.unbiddenInk.enabled && (!value || value.trim() === '')) {
+                this.validation.errors['unbiddenInk.chatgptApiToken'] = 'API Token cannot be blank when Unbidden Ink is enabled';
+            } else {
+                if (this.validation.errors['unbiddenInk.chatgptApiToken']) {
+                    delete this.validation.errors['unbiddenInk.chatgptApiToken'];
+                }
+            }
+        },
+
+        // Validate all fields when enabled state changes
+        validateAll() {
+            this.validateChatgptToken(this.config.unbiddenInk.chatgptApiToken);
         },
 
         // Time Range Management - Dual Handle Slider Logic
