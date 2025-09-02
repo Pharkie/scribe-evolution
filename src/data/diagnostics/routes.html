@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Routes - Diagnostics - Scribe Evolution</title>
+
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/outfit-variable.woff2"
+      crossorigin
+    />
+
+    <!-- CSS Assets -->
+    <link rel="stylesheet" href="/css/app.css" />
+
+    <!-- Common JS -->
+    <script src="/js/app-common.js"></script>
+
+    <!-- Diagnostics routes page bundle -->
+    <script src="/js/page-diagnostics-routes.js"></script>
+
+    <!-- Alpine.js (load last) -->
+    <script defer src="/js/alpine.js"></script>
+  </head>
+
+  <body
+    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    x-data="$store.diagnosticsRoutes"
+    x-init="loadData()"
+  >
+    <main class="w-full max-w-4xl mx-auto flex-1">
+      <!-- Header with title and back button -->
+      <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
+        <!-- Back button -->
+        <div class="flex-1 flex justify-start">
+          <a
+            href="/diagnostics/"
+            class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md"
+          >
+            <svg
+              class="w-3 h-3 sm:w-4 sm:h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span class="text-xs sm:text-sm font-medium">Diagnostics</span>
+          </a>
+        </div>
+
+        <!-- Centered title -->
+        <div class="flex-1 flex justify-center">
+          <h1
+            class="text-3xl sm:text-4xl font-normal text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2"
+          >
+            <svg
+              class="w-7 h-7 sm:w-8 sm:h-8 text-yellow-600 dark:text-yellow-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <span>Routes</span>
+          </h1>
+        </div>
+
+        <!-- Right spacer -->
+        <div class="flex-1"></div>
+      </header>
+
+      <!-- Error State -->
+      <template x-if="loaded && error">
+        <div
+          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6"
+        >
+          <div class="text-center">
+            <svg
+              class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M6 18 18 6M6 6l12 12"
+              />
+            </svg>
+            <h3
+              class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2"
+            >
+              Error Loading Routes Data
+            </h3>
+            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+            <button
+              @click="loadData()"
+              class="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Main Content -->
+      <template x-if="loaded && !error">
+        <div
+          x-data="{ show: false }"
+          x-init="$nextTick(() => show = true)"
+          x-show="show"
+          x-transition.opacity.duration.300ms
+        >
+          <div
+            class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-yellow-600 transition-shadow duration-200"
+          >
+            <!-- Routes Overview -->
+            <div class="mb-8">
+              <h3
+                class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  ></path>
+                </svg>
+                <span>Routes Overview</span>
+              </h3>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-yellow-600 dark:text-yellow-400"
+                    x-text="routes?.totalRoutes || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Total Routes
+                  </div>
+                </div>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-green-600 dark:text-green-400"
+                    x-text="routes?.staticRoutes || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Static Routes
+                  </div>
+                </div>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                    x-text="routes?.apiRoutes || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    API Routes
+                  </div>
+                </div>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-purple-600 dark:text-purple-400"
+                    x-text="routes?.totalRequests || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Total Requests
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- API Endpoints -->
+            <div class="mb-8">
+              <h3
+                class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  ></path>
+                </svg>
+                <span>API Endpoints</span>
+              </h3>
+              <div class="space-y-3">
+                <template
+                  x-for="endpoint in routes?.endpoints || []"
+                  :key="endpoint.path"
+                >
+                  <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center space-x-3">
+                        <span
+                          class="inline-block px-2 py-1 text-xs font-semibold rounded"
+                          :class="getMethodClass(endpoint.method)"
+                          x-text="endpoint.method"
+                        ></span>
+                        <span
+                          class="text-gray-900 dark:text-gray-100 font-mono font-medium"
+                          x-text="endpoint.path"
+                        ></span>
+                      </div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400">
+                        <span x-text="endpoint.requestCount || 0"></span>
+                        requests
+                      </div>
+                    </div>
+                    <template x-if="endpoint.description">
+                      <p
+                        class="text-sm text-gray-600 dark:text-gray-400"
+                        x-text="endpoint.description"
+                      ></p>
+                    </template>
+                    <template x-if="endpoint.averageResponseTime">
+                      <div
+                        class="mt-2 text-xs text-gray-500 dark:text-gray-500"
+                      >
+                        Avg response:
+                        <span x-text="endpoint.averageResponseTime"></span>ms
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="!routes?.endpoints?.length">
+                  <div class="text-center py-8">
+                    <svg
+                      class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      ></path>
+                    </svg>
+                    <p class="text-gray-500 dark:text-gray-400">
+                      No API endpoints data available
+                    </p>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Request Statistics -->
+            <div>
+              <h3
+                class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+                <span>Request Statistics</span>
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-green-600 dark:text-green-400"
+                    x-text="routes?.statistics?.successfulRequests || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Successful (2xx)
+                  </div>
+                </div>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-yellow-600 dark:text-yellow-400"
+                    x-text="routes?.statistics?.clientErrors || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Client Errors (4xx)
+                  </div>
+                </div>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-red-600 dark:text-red-400"
+                    x-text="routes?.statistics?.serverErrors || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Server Errors (5xx)
+                  </div>
+                </div>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                    x-text="routes?.statistics?.averageResponseTime || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Avg Response (ms)
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </main>
+  </body>
+</html>

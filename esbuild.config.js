@@ -276,6 +276,71 @@ const buildConfigs = {
     output: "data/js/page-diagnostics-overview.js",
     minify: true,
   },
+
+  // Diagnostics microcontroller page
+  "diagnostics-microcontroller": {
+    input: ["src/data/js/pages/diagnostics-microcontroller.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-microcontroller.js",
+    minify: false,
+  },
+
+  "diagnostics-microcontrollerProd": {
+    input: ["src/data/js/pages/diagnostics-microcontroller.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-microcontroller.js",
+    minify: true,
+  },
+
+  // Diagnostics logging page
+  "diagnostics-logging": {
+    input: ["src/data/js/pages/diagnostics-logging.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-logging.js",
+    minify: false,
+  },
+
+  "diagnostics-loggingProd": {
+    input: ["src/data/js/pages/diagnostics-logging.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-logging.js",
+    minify: true,
+  },
+
+  // Diagnostics routes page
+  "diagnostics-routes": {
+    input: ["src/data/js/pages/diagnostics-routes.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-routes.js",
+    minify: false,
+  },
+
+  "diagnostics-routesProd": {
+    input: ["src/data/js/pages/diagnostics-routes.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-routes.js",
+    minify: true,
+  },
+
+  // Diagnostics runtime config page
+  "diagnostics-runtime-config": {
+    input: ["src/data/js/pages/diagnostics-runtime-config.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-runtime-config.js",
+    minify: false,
+  },
+
+  "diagnostics-runtime-configProd": {
+    input: ["src/data/js/pages/diagnostics-runtime-config.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-runtime-config.js",
+    minify: true,
+  },
+
+  // Diagnostics NVS page
+  "diagnostics-nvs": {
+    input: ["src/data/js/pages/diagnostics-nvs.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-nvs.js",
+    minify: false,
+  },
+
+  "diagnostics-nvsProd": {
+    input: ["src/data/js/pages/diagnostics-nvs.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-nvs.js",
+    minify: true,
+  },
 };
 
 // Build functions
@@ -328,6 +393,11 @@ async function buildAll(production = false) {
     `leds${suffix}`,
     `unbidden-ink${suffix}`,
     `diagnostics-overview${suffix}`,
+    `diagnostics-microcontroller${suffix}`,
+    `diagnostics-logging${suffix}`,
+    `diagnostics-routes${suffix}`,
+    `diagnostics-runtime-config${suffix}`,
+    `diagnostics-nvs${suffix}`,
   ];
 
   console.log(`Building all configs (production: ${production})...`);
