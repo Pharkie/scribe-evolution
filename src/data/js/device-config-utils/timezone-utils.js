@@ -1,0 +1,256 @@
+/**
+ * @file timezone-utils.js
+ * @brief Shared timezone utilities for device configuration pages
+ * @description Common timezone loading, search, and display logic
+ * shared between setup.html and settings/wifi.html pages
+ */
+
+/**
+ * Popular timezone defaults (shown first when no search query)
+ */
+const POPULAR_TIMEZONES = [
+  "Europe/London",
+  "America/New_York",
+  "America/Sao_Paulo",
+  "Australia/Sydney",
+  "Asia/Tokyo",
+];
+
+/**
+ * Transform raw timezone data from API into frontend format
+ * @param {Array} zones - Raw timezone data from API
+ * @returns {Array} Transformed timezone objects
+ */
+export function transformTimezoneData(zones) {
+  return zones.map((zone) => {
+    try {
+      // Extract city name from IANA ID (after last '/')
+      const parts = zone.id ? zone.id.split("/") : ["Unknown"];
+      const city = parts[parts.length - 1].replace(/_/g, " ");
+
+      // Parse the offset (handle different formats)
+      let offset = "";
+      if (zone.currentOffset) {
+        const match = zone.currentOffset.match(/([+-]\d{2})/);
+        offset = match ? match[1] : zone.currentOffset;
+      }
+
+      return {
+        id: zone.id || "Unknown",
+        displayName: zone.location?.countryName
+          ? `${city} - ${zone.location.countryName}`
+          : city,
+        countryName: zone.location?.countryName || "",
+        comment: zone.location?.comment || "",
+        aliases: zone.aliases || [],
+        offset,
+      };
+    } catch (transformError) {
+      console.error("Error transforming timezone:", zone, transformError);
+      return {
+        id: zone.id || "Unknown",
+        displayName: zone.id || "Unknown",
+        countryName: "",
+        comment: "",
+        aliases: [],
+        offset: "",
+      };
+    }
+  });
+}
+
+/**
+ * Create timezone picker state object
+ * @returns {Object} Timezone picker state
+ */
+export function createTimezoneState() {
+  return {
+    timezones: [],
+    loading: false,
+    error: null,
+    initialized: false,
+  };
+}
+
+/**
+ * Load timezone data from API
+ * @param {Object} timezoneState - Timezone state object to update
+ * @returns {Promise<void>}
+ */
+export async function loadTimezones(timezoneState) {
+  if (timezoneState.initialized) return;
+
+  timezoneState.loading = true;
+  timezoneState.error = null;
+
+  try {
+    const response = await fetch("/api/timezones");
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (!data.zones || !Array.isArray(data.zones)) {
+      throw new Error("Invalid timezone data format");
+    }
+
+    // Transform timezone data for frontend use
+    timezoneState.timezones = transformTimezoneData(data.zones);
+    timezoneState.initialized = true;
+
+    console.log(
+      `Timezone Utils: Loaded ${timezoneState.timezones.length} timezones`,
+    );
+  } catch (error) {
+    timezoneState.error = `Failed to load timezones: ${error.message}`;
+    console.error("Timezone Utils: Loading failed:", error);
+  } finally {
+    timezoneState.loading = false;
+  }
+}
+
+/**
+ * Get display name for a timezone ID
+ * @param {string} timezoneId - Timezone IANA ID
+ * @param {Array} timezones - Array of timezone objects
+ * @returns {string} Formatted display name
+ */
+export function getTimezoneDisplayName(timezoneId, timezones) {
+  if (!timezoneId) return "";
+
+  const timezone = timezones.find((tz) => tz.id === timezoneId);
+  if (timezone) {
+    return `${timezone.displayName} (${timezone.offset})`;
+  }
+  return timezoneId; // Fallback to raw ID
+}
+
+/**
+ * Get timezone offset for display
+ * @param {string} timezoneId - Timezone IANA ID
+ * @param {Array} timezones - Array of timezone objects
+ * @returns {string} Timezone offset
+ */
+export function getTimezoneOffset(timezoneId, timezones) {
+  if (!timezoneId) return "";
+
+  const timezone = timezones.find((tz) => tz.id === timezoneId);
+  return timezone ? timezone.offset : "";
+}
+
+/**
+ * Filter and search timezones based on query
+ * @param {Array} timezones - Array of timezone objects
+ * @param {string} searchQuery - Search query string
+ * @returns {Array} Filtered and sorted timezone results
+ */
+export function filterTimezones(timezones, searchQuery = "") {
+  if (!Array.isArray(timezones) || timezones.length === 0) {
+    return [];
+  }
+
+  const query = (searchQuery || "").toLowerCase().trim();
+
+  if (!query) {
+    // Show top 5 popular timezones when no search query
+    const popular = [];
+    const others = [];
+
+    timezones.forEach((timezone) => {
+      if (POPULAR_TIMEZONES.includes(timezone.id)) {
+        popular.push(timezone);
+      } else {
+        others.push(timezone);
+      }
+    });
+
+    // Sort popular by the order in POPULAR_TIMEZONES array
+    popular.sort((a, b) => {
+      const aIndex = POPULAR_TIMEZONES.indexOf(a.id);
+      const bIndex = POPULAR_TIMEZONES.indexOf(b.id);
+      return aIndex - bIndex;
+    });
+
+    return [...popular, ...others.slice(0, 5 - popular.length)];
+  }
+
+  // Search and score results by field priority
+  const results = [];
+
+  timezones.forEach((timezone) => {
+    let priority = null;
+
+    // Priority 1: City name (extracted from IANA ID)
+    const parts = timezone.id.split("/");
+    const city = parts[parts.length - 1].replace(/_/g, " ").toLowerCase();
+    if (city.includes(query)) {
+      priority = 1;
+    }
+    // Priority 2: Display name
+    else if (timezone.displayName.toLowerCase().includes(query)) {
+      priority = 2;
+    }
+    // Priority 3: Timezone ID
+    else if (timezone.id.toLowerCase().includes(query)) {
+      priority = 3;
+    }
+    // Priority 4: Country name
+    else if (
+      timezone.countryName &&
+      timezone.countryName.toLowerCase().includes(query)
+    ) {
+      priority = 4;
+    }
+    // Priority 5: Comments
+    else if (
+      timezone.comment &&
+      timezone.comment.toLowerCase().includes(query)
+    ) {
+      priority = 5;
+    }
+
+    if (priority !== null) {
+      results.push({ timezone, priority });
+    }
+  });
+
+  // Sort by priority first, then alphabetically by display name
+  return results
+    .sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
+      return a.timezone.displayName.localeCompare(b.timezone.displayName);
+    })
+    .map((result) => result.timezone);
+}
+
+/**
+ * Create timezone picker functionality for a store
+ * @param {string} searchQuery - Current search query
+ * @param {Object} timezoneState - Timezone state object
+ * @returns {Object} Timezone picker methods and computed properties
+ */
+export function createTimezonePicker(searchQuery, timezoneState) {
+  return {
+    // Load timezones if not already loaded
+    async loadTimezones() {
+      await loadTimezones(timezoneState);
+    },
+
+    // Get display name for a timezone
+    getTimezoneDisplayName(timezoneId) {
+      return getTimezoneDisplayName(timezoneId, timezoneState.timezones);
+    },
+
+    // Get timezone offset
+    getTimezoneOffset(timezoneId) {
+      return getTimezoneOffset(timezoneId, timezoneState.timezones);
+    },
+
+    // Computed property for filtered timezones
+    get filteredTimezones() {
+      return filterTimezones(timezoneState.timezones, searchQuery);
+    },
+  };
+}

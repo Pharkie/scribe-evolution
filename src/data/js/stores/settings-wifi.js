@@ -11,6 +11,12 @@ import {
   scanWiFiNetworks,
   printLocalContent,
 } from "../api/settings.js";
+import {
+  createWiFiState,
+  performWiFiScan,
+  getEffectiveSSID,
+  validateWiFiConfig,
+} from "../device-config-utils/wifi-utils.js";
 
 export function createSettingsWifiStore() {
   return {
@@ -35,10 +41,7 @@ export function createSettingsWifiStore() {
         return false;
       }
 
-      const selectedSSID =
-        this.wifiScan.mode === "manual"
-          ? this.wifiScan.manualSSID
-          : this.wifiScan.selectedNetwork;
+      const selectedSSID = getEffectiveSSID(this.wifiScan);
       const hasValidSSID = selectedSSID && selectedSSID.trim() !== "";
 
       // Must have valid SSID
@@ -80,44 +83,8 @@ export function createSettingsWifiStore() {
       connectTimeout: null,
     },
 
-    // WiFi network scanning state using Alpine reactive patterns
-    wifiScan: {
-      // Core state
-      networks: [],
-      currentSSID: null,
-      selectedNetwork: null,
-      manualSSID: "",
-      mode: "scan", // 'scan' or 'manual'
-      isScanning: false,
-      error: null,
-      hasScanned: false,
-      passwordVisible: false,
-
-      // Computed properties (Alpine getters)
-      get sortedNetworks() {
-        if (!this.networks || this.networks.length === 0) return [];
-
-        // Convert RSSI to signal strength and add unique keys
-        // Networks are already deduped and sorted from the scan function
-        const networksWithSignal = this.networks.map((network, index) => ({
-          ...network,
-          signal_strength: this.formatSignalStrength(network.rssi),
-          signal_display: `${this.formatSignalStrength(network.rssi)} (${network.rssi} dBm)`,
-          uniqueKey: `${network.ssid}-${network.rssi}-${index}`, // Unique key for Alpine rendering
-        }));
-
-        return networksWithSignal;
-      },
-
-      // Format RSSI to signal strength description
-      formatSignalStrength(rssi) {
-        if (rssi > -30) return "Excellent";
-        if (rssi > -50) return "Very Good";
-        if (rssi > -60) return "Good";
-        if (rssi > -70) return "Fair";
-        return "Poor";
-      },
-    },
+    // WiFi network scanning state using shared utilities
+    wifiScan: createWiFiState(),
 
     // Validation state
     validation: {
@@ -195,87 +162,27 @@ export function createSettingsWifiStore() {
 
     // Initialize WiFi state - simplified
     initializeWiFiState() {
-      this.wifiScan.currentSSID = this.config?.device?.wifi?.ssid || null;
-      this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
-      this.wifiScan.manualSSID = "";
-      this.wifiScan.mode = "scan";
-      this.wifiScan.networks = [];
-      this.wifiScan.isScanning = false;
-      this.wifiScan.hasScanned = false;
-      this.wifiScan.error = null;
-      this.wifiScan.passwordVisible = false;
+      const currentSSID = this.config?.device?.wifi?.ssid || null;
+      // Replace existing state with fresh state initialized with current SSID
+      this.wifiScan = createWiFiState(currentSSID);
     },
 
     // ================== WIFI API ==================
-    // WiFi scanning - simplified with reactive updates
+    // WiFi scanning using shared utility
     async scanWiFiNetworks() {
-      this.wifiScan.isScanning = true;
-      this.wifiScan.error = null;
-
-      try {
-        const networks = await scanWiFiNetworks();
-
-        // Filter valid networks and dedupe by SSID (keep strongest signal only)
-        const networksBySSID = {};
-
-        networks
-          .filter((network) => network.ssid && network.ssid.trim())
-          .forEach((network) => {
-            const ssid = network.ssid.trim();
-            if (
-              !networksBySSID[ssid] ||
-              network.rssi > networksBySSID[ssid].rssi
-            ) {
-              networksBySSID[ssid] = network;
-            }
-          });
-
-        // Convert to array and sort by signal strength (strongest first), then alphabetically
-        const validNetworks = Object.values(networksBySSID).sort((a, b) => {
-          if (b.rssi !== a.rssi) {
-            return b.rssi - a.rssi;
-          }
-          return a.ssid.localeCompare(b.ssid);
-        });
-
-        // Update state - Alpine reactivity handles UI updates
-        this.wifiScan.networks = validNetworks;
-        this.wifiScan.hasScanned = true;
-
-        // Switch to scan mode and auto-select current network if found
-        this.wifiScan.mode = "scan";
-        if (this.wifiScan.currentSSID) {
-          const currentNetwork = validNetworks.find(
-            (n) => n.ssid === this.wifiScan.currentSSID,
-          );
-          if (currentNetwork) {
-            this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
-            console.log(
-              "📡 WiFi: Auto-selected current network:",
-              this.wifiScan.currentSSID,
-            );
-          }
-        }
-
-        console.log("📡 WiFi: Scan found", validNetworks.length, "networks");
-      } catch (error) {
-        console.error("📡 WiFi: Scan failed:", error);
-        this.wifiScan.error = error.message;
-        this.showErrorMessage(`WiFi scan failed: ${error.message}`);
-      } finally {
-        this.wifiScan.isScanning = false;
-      }
+      await performWiFiScan(
+        this.wifiScan,
+        this.showErrorMessage,
+        scanWiFiNetworks,
+      );
     },
 
-    // Update SSID based on current mode and selection
+    // Update SSID based on current mode and selection using shared utility
     updateSSID() {
       // Only update if config is loaded
       if (!this.config?.device?.wifi) return;
 
-      const selectedSSID =
-        this.wifiScan.mode === "manual"
-          ? this.wifiScan.manualSSID
-          : this.wifiScan.selectedNetwork;
+      const selectedSSID = getEffectiveSSID(this.wifiScan);
       this.config.device.wifi.ssid = selectedSSID || "";
 
       // Clear validation errors when SSID changes
@@ -314,30 +221,17 @@ export function createSettingsWifiStore() {
       }
     },
 
-    // Validate current configuration
+    // Validate current configuration using shared utility
     validateConfiguration() {
-      const errors = {};
+      const wifiValidation = validateWiFiConfig(
+        this.wifiScan,
+        this.passwordsModified,
+        this.config.device.wifi.password,
+      );
 
-      // Get selected SSID based on current mode
-      const selectedSSID =
-        this.wifiScan.mode === "manual"
-          ? this.wifiScan.manualSSID
-          : this.wifiScan.selectedNetwork;
+      const errors = { ...wifiValidation.errors };
 
-      // SSID validation
-      if (!selectedSSID || selectedSSID.trim() === "") {
-        if (this.wifiScan.mode === "scan") {
-          errors["wifi.ssid"] = "Please select a network";
-        } else {
-          errors["wifi.ssid"] = "Network name cannot be empty";
-        }
-      }
-
-      // Password validation (if network requires it)
-      // Note: We can't determine if a network requires a password in scan mode
-      // without additional API data, so we'll be lenient here
-
-      // Timeout validation
+      // Additional timeout validation specific to settings page
       const timeoutSeconds = Math.floor(
         this.config.device.wifi.connect_timeout / 1000,
       );
@@ -349,12 +243,9 @@ export function createSettingsWifiStore() {
       return Object.keys(errors).length === 0;
     },
 
-    // Check if configuration has meaningful changes
+    // Check if configuration has meaningful changes using shared utility
     hasChanges() {
-      const selectedSSID =
-        this.wifiScan.mode === "manual"
-          ? this.wifiScan.manualSSID
-          : this.wifiScan.selectedNetwork;
+      const selectedSSID = getEffectiveSSID(this.wifiScan);
       const currentSSID = this.wifiScan.currentSSID;
 
       // SSID changed
