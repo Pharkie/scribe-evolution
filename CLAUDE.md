@@ -182,7 +182,7 @@ The project uses a two-layer configuration architecture:
 - Single source of truth for all configuration values
 - Extract common functionality to utilities
 - **No backwards compatibility** - exactly one way to do things
-
+ 
 ### Frontend Error Handling
 
 - Frontend should NOT mask backend errors with fallback values
