@@ -290,6 +290,7 @@ This codebase emphasizes modularity, safety, and maintainability. Follow the est
 - Emerging best practices in the codebase
 
 # Analysis Process:
+
 - Compare new code with existing rules
 - Identify patterns that should be standardized
 - Look for references to external documentation
@@ -316,7 +317,7 @@ This codebase emphasizes modularity, safety, and maintainability. Follow the est
   // If you see repeated patterns like:
   const data = await prisma.user.findMany({
     select: { id: true, email: true },
-    where: { status: 'ACTIVE' }
+    where: { status: "ACTIVE" },
   });
 
   // Consider adding to [prisma.mdc](mdc:shipixen/.cursor/rules/prisma.mdc):

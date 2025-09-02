@@ -27,6 +27,17 @@ export function createSetupStore() {
     // WiFi networks
     availableNetworks: [],
 
+    // Timezone picker state (imported from settings-device.js)
+    timezonePicker: {
+      timezones: [],
+      loading: false,
+      error: null,
+      initialized: false,
+    },
+
+    // Search query for timezone picker
+    searchQuery: "",
+
     // Load configuration on initialization
     async init() {
       if (this.initialized) return;
@@ -109,6 +120,74 @@ export function createSetupStore() {
       return this.config.device.wifi.ssid;
     },
 
+    // ================== TIMEZONE FUNCTIONALITY ==================
+    // Timezone functionality imported from settings-device.js
+    async loadTimezones() {
+      if (this.timezonePicker.initialized) return;
+      this.timezonePicker.loading = true;
+      this.timezonePicker.error = null;
+      try {
+        const response = await fetch("/api/timezones");
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        this.timezonePicker.timezones = data.timezones || [];
+        this.timezonePicker.initialized = true;
+        console.log(
+          `Setup: Loaded ${this.timezonePicker.timezones.length} timezones`,
+        );
+      } catch (error) {
+        this.timezonePicker.error = `Failed to load timezones: ${error.message}`;
+        console.error("Setup: Timezone loading failed:", error);
+      } finally {
+        this.timezonePicker.loading = false;
+      }
+    },
+
+    // Get display name for a timezone ID (for dropdown)
+    getTimezoneDisplayName(timezoneId) {
+      if (!timezoneId) return "";
+      const timezone = this.timezonePicker.timezones.find(
+        (tz) => tz.id === timezoneId,
+      );
+      if (timezone) {
+        return `${timezone.displayName} (${timezone.offset})`;
+      }
+      return timezoneId; // Fallback to raw ID
+    },
+
+    // Get timezone offset for display
+    getTimezoneOffset(timezoneId) {
+      if (!timezoneId) return "";
+      const timezone = this.timezonePicker.timezones.find(
+        (tz) => tz.id === timezoneId,
+      );
+      return timezone ? timezone.offset : "";
+    },
+
+    // Filter timezones based on search query
+    get filteredTimezones() {
+      if (!this.searchQuery) return this.timezonePicker.timezones.slice(0, 5);
+      const query = this.searchQuery.toLowerCase();
+      return this.timezonePicker.timezones
+        .filter(
+          (timezone) =>
+            timezone.displayName.toLowerCase().includes(query) ||
+            timezone.id.toLowerCase().includes(query) ||
+            timezone.offset.toLowerCase().includes(query),
+        )
+        .slice(0, 5);
+    },
+
+    // Select timezone from dropdown
+    selectTimezone(timezone) {
+      this.config.device.timezone = timezone.id;
+      this.searchQuery = ""; // Clear search
+      console.log("Setup: Selected timezone:", timezone.id);
+    },
+
+    // ================== SAVE FUNCTIONALITY ==================
     // Save configuration and restart (setup-specific behavior)
     async saveAndRestart() {
       if (!this.canSave) {

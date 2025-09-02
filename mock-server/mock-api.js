@@ -1190,6 +1190,7 @@ function createRequestHandler() {
           "/css/",
           "/js/",
           "/images/",
+          "/fonts/",
           "/site.webmanifest",
           "/favicon.ico",
           "/favicon.svg",
