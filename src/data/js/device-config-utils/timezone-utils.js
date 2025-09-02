@@ -305,34 +305,34 @@ export function createTimezonePicker(searchQuery, timezoneState) {
  * @param {Object} store - Store object with timezone picker state
  * @returns {Object} UI interaction methods for timezone picker
  */
-export function createTimezonePickerUI(store) {
+export function createTimezonePickerUI() {
   return {
     // Load timezones and open dropdown
     async loadTimezonesAndOpen() {
-      if (!store.timezonePicker.initialized && !store.timezonePicker.loading) {
-        await loadTimezones(store.timezonePicker);
+      if (!this.timezonePicker.initialized && !this.timezonePicker.loading) {
+        await loadTimezones(this.timezonePicker);
       }
-      store.isOpen = true;
+      this.isOpen = true;
     },
 
     // Open timezone picker (clear search on click/focus)
     async openTimezonePicker() {
-      if (!store.timezonePicker.initialized && !store.timezonePicker.loading) {
-        await loadTimezones(store.timezonePicker);
+      if (!this.timezonePicker.initialized && !this.timezonePicker.loading) {
+        await loadTimezones(this.timezonePicker);
       }
-      store.searchQuery = "";
-      store.isOpen = true;
+      this.searchQuery = "";
+      this.isOpen = true;
     },
 
     // Reset focus index
     resetTimezoneFocus() {
-      store.focusedIndex = -1;
+      this.focusedIndex = -1;
     },
 
     // Handle global keydown to capture typing when dropdown is open
     handleGlobalKeydown(event, refs) {
       // Only handle when dropdown is open and not already focused on search input
-      if (!store.isOpen || document.activeElement === refs.searchInput) {
+      if (!this.isOpen || document.activeElement === refs.searchInput) {
         return;
       }
 
@@ -354,8 +354,8 @@ export function createTimezonePickerUI(store) {
         event.preventDefault();
         refs.searchInput.focus();
         // Clear last character if search query exists
-        if (store.searchQuery.length > 0) {
-          store.searchQuery = store.searchQuery.slice(0, -1);
+        if (this.searchQuery.length > 0) {
+          this.searchQuery = this.searchQuery.slice(0, -1);
           this.onSearchInputWithReset();
         }
       }
@@ -363,38 +363,38 @@ export function createTimezonePickerUI(store) {
 
     // Close timezone picker
     closeTimezonePicker() {
-      store.isOpen = false;
-      store.focusedIndex = -1;
+      this.isOpen = false;
+      this.focusedIndex = -1;
     },
 
     // Navigate up in timezone list (Alpine context version)
     navigateTimezoneUp(refs, nextTick) {
-      store.focusedIndex = store.focusedIndex > 0 ? store.focusedIndex - 1 : -1;
-      if (store.focusedIndex === -1) {
+      this.focusedIndex = this.focusedIndex > 0 ? this.focusedIndex - 1 : -1;
+      if (this.focusedIndex === -1) {
         refs.searchInput.focus();
       } else {
         nextTick(() => {
           const options = refs.dropdown.querySelectorAll(".timezone-option");
-          options[store.focusedIndex]?.focus();
+          options[this.focusedIndex]?.focus();
         });
       }
     },
 
     // Navigate down in timezone list (Alpine context version)
     navigateTimezoneDown(refs, nextTick) {
-      const maxIndex = Math.min(store.filteredTimezones.length - 1, 4);
-      store.focusedIndex =
-        store.focusedIndex < maxIndex ? store.focusedIndex + 1 : 0;
+      const maxIndex = Math.min(this.filteredTimezones.length - 1, 4);
+      this.focusedIndex =
+        this.focusedIndex < maxIndex ? this.focusedIndex + 1 : 0;
       nextTick(() => {
         const options = refs.dropdown.querySelectorAll(".timezone-option");
-        options[store.focusedIndex]?.focus();
+        options[this.focusedIndex]?.focus();
       });
     },
 
     // Navigate to first timezone option from input
     navigateToFirstTimezone(refs, nextTick) {
-      if (store.isOpen && store.filteredTimezones.length > 0) {
-        store.focusedIndex = 0;
+      if (this.isOpen && this.filteredTimezones.length > 0) {
+        this.focusedIndex = 0;
         nextTick(() => {
           const options = refs.dropdown.querySelectorAll(".timezone-option");
           options[0]?.focus();
@@ -404,11 +404,11 @@ export function createTimezonePickerUI(store) {
 
     // Navigate to last timezone option from input
     navigateToLastTimezone(refs, nextTick) {
-      if (store.isOpen && store.filteredTimezones.length > 0) {
-        store.focusedIndex = Math.min(store.filteredTimezones.length - 1, 4);
+      if (this.isOpen && this.filteredTimezones.length > 0) {
+        this.focusedIndex = Math.min(this.filteredTimezones.length - 1, 4);
         nextTick(() => {
           const options = refs.dropdown.querySelectorAll(".timezone-option");
-          options[store.focusedIndex]?.focus();
+          options[this.focusedIndex]?.focus();
         });
       }
     },
@@ -416,8 +416,8 @@ export function createTimezonePickerUI(store) {
     // Handle search input changes
     onSearchInput() {
       // Ensure dropdown stays open when typing
-      if (!store.isOpen && store.timezonePicker.initialized) {
-        store.isOpen = true;
+      if (!this.isOpen && this.timezonePicker.initialized) {
+        this.isOpen = true;
       }
     },
 
@@ -430,16 +430,16 @@ export function createTimezonePickerUI(store) {
     // Select a timezone
     selectTimezone(timezone) {
       // Set timezone in config - this is store-specific behavior
-      if (store.config?.device) {
-        store.config.device.timezone = timezone.id;
+      if (this.config?.device) {
+        this.config.device.timezone = timezone.id;
       }
 
-      store.searchQuery = timezone.displayName;
-      store.isOpen = false;
+      this.searchQuery = timezone.displayName;
+      this.isOpen = false;
 
       // Clear validation errors if they exist
-      if (store.validation?.errors?.["device.timezone"]) {
-        delete store.validation.errors["device.timezone"];
+      if (this.validation?.errors?.["device.timezone"]) {
+        delete this.validation.errors["device.timezone"];
       }
 
       console.log("Selected timezone:", timezone.id);

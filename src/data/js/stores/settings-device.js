@@ -171,7 +171,7 @@ export function createSettingsDeviceStore() {
     },
 
     // Include shared timezone UI methods
-    ...createTimezonePickerUI(this),
+    ...createTimezonePickerUI(),
 
     // Get display name for a timezone ID (for dropdown)
     getTimezoneDisplayName(timezoneId) {

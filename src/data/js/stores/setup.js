@@ -148,7 +148,7 @@ export function createSetupStore() {
     },
 
     // Include shared timezone UI methods
-    ...createTimezonePickerUI(this),
+    ...createTimezonePickerUI(),
 
     // Get display name for a timezone ID using shared utility
     getTimezoneDisplayName(timezoneId) {
