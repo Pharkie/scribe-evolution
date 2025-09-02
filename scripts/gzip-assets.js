@@ -14,7 +14,7 @@ const { pipeline } = require("stream/promises");
 const COMPRESS_EXTENSIONS = [".html", ".css", ".js", ".json", ".svg", ".md"];
 // Excluded: .ndjson, .txt, .pem (C++ code resources - never web-served)
 // Excluded: .woff2 (already compressed format - gzipping adds overhead)
-const MIN_SIZE_BYTES = 1024; // Don't compress files smaller than 1KB (overhead > benefit)
+const MIN_SIZE_BYTES = 0; // Compress all files regardless of size for consistency
 
 async function gzipFile(filePath) {
   const gzipPath = filePath + ".gz";
