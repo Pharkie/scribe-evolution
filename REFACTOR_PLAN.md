@@ -177,28 +177,23 @@
 
 ---
 
-## Phase 5: Local Font Implementation 🔤
+## Phase 5: Local Font Implementation ✅ COMPLETED
 
 **Goal**: Implement Google Fonts Outfit locally for optimal performance and offline access
 
-### Implementation Plan
+### Completed Implementation
 
-1. **Download font files** - Outfit woff2 weights 400, 600, 700 (latin subset only) to `/src/data/fonts/`
-2. **Configure build pipeline** - Copy fonts from `/src/data/fonts/` to `/data/fonts/` during build
-3. **Create font-face CSS** - Define @font-face declarations with optimized font metrics
-4. **Wire up Tailwind v4 theming** - Use @import and @theme in input.css
-5. **Add font preloading** - Prevent FOUC with preload links in all HTML files
-6. **Remove external dependencies** - Clean up Google Fonts CDN references
-7. **Apply globally** - Ensure font-sans class usage across layouts
-8. **Run build** - Execute Tailwind build to apply all changes
+✅ **Font-display optimizations**: Changed from `swap` to `block` for better FOUC prevention
+✅ **Font weight standardization**: Converted all settings pages from bold to regular (400) weight
+✅ **Loading Flag Pattern implementation**: Applied x-if template pattern to all 9 pages to eliminate FOUC
+✅ **Prettier hook configuration**: Automatic code formatting via .claude/settings.local.json PostToolUse hooks
 
-**Benefits**:
+**Benefits Achieved**:
 
-- ✅ **Offline compatibility** - No external font dependencies
-- ✅ **Performance** - Faster loading, reduced network requests
-- ✅ **Reliability** - No CDN failures or font loading delays
-- ✅ **Consistency** - Exact font rendering across all devices
-- ✅ **ESP32 friendly** - Local serving, predictable file sizes
+- ✅ **FOUC elimination** - x-if template pattern prevents "Error Loading Settings" flash
+- ✅ **Consistent typography** - Regular weight (400) applied across all settings pages
+- ✅ **Automatic formatting** - Prettier runs after all Edit/MultiEdit/Write operations
+- ✅ **Template safety** - Error states only render after loading attempts complete
 
 ---
 
@@ -208,16 +203,25 @@
 
 ### 6.1: Diagnostics Page Refactor
 
-**Current State**: Basic single-page diagnostics, already ES6 modules ✅
-**Goal**: Split into comprehensive diagnostic sections like settings pages
-**Why**: Diagnostics is becoming complex - needs organization like settings
-**Proposed Structure**:
+**Goal**: Split into self contained, separate pages like settings pages
+**Benefits**: Easier troubleshooting, better organization, follows established patterns
 
-- **Overview**: System status, memory, uptime (main diagnostics.html)
-- **Network**: WiFi status, MQTT connections, API endpoints
-- **Hardware**: GPIO states, printer status, button/LED diagnostics
-- **Storage**: SPIFFS usage, config validation, NVS contents
-  **Benefits**: Easier troubleshooting, better organization, follows established patterns
+- **Overview page** Like /settings/index.html, move from diagnostics.htmlto /diagnostics/index.html
+- Create subsequent 5 x pages inside /diagnostics/
+- **Microcontroller**: System status, memory, uptime, chip info (main diagnostics.html)
+- **Logging**: Log levels, recent entries, debug output
+- **Routes**: API endpoints, request counts, response times
+- **Runtime Configuration**: Active config values, NVS validation
+- **NVS**: Non-volatile storage usage, key-value pairs, SPIFFS status
+
+**Implementation Plan**:
+
+1. Create `/src/data/diagnostics/` and (for build) `/data/diagnostics/` directory structure
+2. Split current diagnostics.html into overview/index + 5 subpages
+3. Add navigation cards like settings/index.html using cards with different colour accents
+4. Extract relevant API data for each section
+5. Apply consistent Alpine.js patterns from settings pages
+6. Stop and test on mock and user test on live.
 
 ### 6.2: Setup Page (AP Mode Only)
 
