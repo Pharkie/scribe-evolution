@@ -6,6 +6,13 @@
  */
 
 import { loadConfiguration, saveConfiguration } from "../api/settings.js";
+import {
+  createTimezoneState,
+  loadTimezones,
+  getTimezoneDisplayName,
+  getTimezoneOffset,
+  filterTimezones,
+} from "../device-config-utils/timezone-utils.js";
 
 export function createSettingsDeviceStore() {
   return {
@@ -150,222 +157,16 @@ export function createSettingsDeviceStore() {
     },
 
     // TIMEZONE PICKER FUNCTIONALITY
-    timezonePicker: {
-      loading: false,
-      error: null,
-      timezones: [],
-      initialized: false,
-    },
+    timezonePicker: createTimezoneState(),
 
     // Computed property for filtered timezones
     get filteredTimezones() {
-      if (
-        !Array.isArray(this.timezonePicker.timezones) ||
-        this.timezonePicker.timezones.length === 0
-      ) {
-        return [];
-      }
-
-      const query = (this.searchQuery || "").toLowerCase().trim();
-      if (!query) {
-        // Show top 5 popular timezones when no search query (alphabetical by city)
-        const popularTimezones = [
-          "Europe/London",
-          "America/New_York",
-          "America/Sao_Paulo",
-          "Australia/Sydney",
-          "Asia/Tokyo",
-        ];
-
-        const popular = [];
-        const others = [];
-
-        this.timezonePicker.timezones.forEach((timezone) => {
-          if (popularTimezones.includes(timezone.id)) {
-            popular.push(timezone);
-          } else {
-            others.push(timezone);
-          }
-        });
-
-        // Sort popular by the order in popularTimezones array
-        popular.sort((a, b) => {
-          const aIndex = popularTimezones.indexOf(a.id);
-          const bIndex = popularTimezones.indexOf(b.id);
-          return aIndex - bIndex;
-        });
-
-        // Return popular first, then fill with others if needed
-        return [...popular, ...others.slice(0, 5 - popular.length)].slice(0, 5);
-      }
-
-      // Search and score results by field priority
-      const results = [];
-
-      this.timezonePicker.timezones.forEach((timezone) => {
-        let priority = null;
-
-        // Priority 1: City name (extracted from IANA ID)
-        const parts = timezone.id.split("/");
-        const city = parts[parts.length - 1].replace(/_/g, " ").toLowerCase();
-        if (city.includes(query)) {
-          priority = 1;
-        }
-        // Priority 2: Display name
-        else if (timezone.displayName.toLowerCase().includes(query)) {
-          priority = 2;
-        }
-        // Priority 3: Timezone ID
-        else if (timezone.id.toLowerCase().includes(query)) {
-          priority = 3;
-        }
-        // Priority 4: Country name
-        else if (
-          timezone.countryName &&
-          timezone.countryName.toLowerCase().includes(query)
-        ) {
-          priority = 4;
-        }
-        // Priority 5: Comments
-        else if (
-          timezone.comment &&
-          timezone.comment.toLowerCase().includes(query)
-        ) {
-          priority = 5;
-        }
-
-        if (priority !== null) {
-          results.push({ timezone, priority });
-        }
-      });
-
-      // Sort by priority first, then alphabetically by display name
-      return results
-        .sort((a, b) => {
-          if (a.priority !== b.priority) {
-            return a.priority - b.priority;
-          }
-          return a.timezone.displayName.localeCompare(b.timezone.displayName);
-        })
-        .map((result) => result.timezone);
+      return filterTimezones(this.timezonePicker.timezones, this.searchQuery);
     },
 
     // Load timezone data from API
     async loadTimezones() {
-      if (this.timezonePicker.initialized) return;
-
-      this.timezonePicker.loading = true;
-      this.timezonePicker.error = null;
-
-      try {
-        const response = await fetch("/api/timezones");
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        if (!data.zones || !Array.isArray(data.zones)) {
-          throw new Error("Invalid timezone data format");
-        }
-
-        // Transform timezone data for frontend use
-        this.timezonePicker.timezones = data.zones.map((zone) => {
-          try {
-            // Extract city name from IANA ID (after last '/')
-            const parts = zone.id ? zone.id.split("/") : ["Unknown"];
-            const city = parts[parts.length - 1].replace(/_/g, " ");
-
-            // Create enhanced display name with comment and DST info
-            const countryName =
-              zone.location && zone.location.countryName
-                ? zone.location.countryName
-                : null;
-            const comment =
-              zone.location && zone.location.comment
-                ? zone.location.comment.trim()
-                : "";
-
-            let displayName;
-            let offset = "";
-
-            if (
-              zone.offsets &&
-              Array.isArray(zone.offsets) &&
-              zone.offsets.length > 0
-            ) {
-              // Format offsets with :00 suffix for clarity
-              const formatOffset = (o) => {
-                const cleaned = o
-                  .replace(/^\+/, "+")
-                  .replace(/^-/, "-")
-                  .replace(/^00/, "+00");
-                return cleaned + ":00";
-              };
-
-              if (zone.offsets.length === 1) {
-                // Single offset (no DST)
-                offset = "UTC" + formatOffset(zone.offsets[0]);
-                displayName = countryName
-                  ? `${city}, ${countryName}`
-                  : zone.id || "Unknown";
-                if (comment) {
-                  displayName += ` — ${comment}`;
-                }
-              } else {
-                // Multiple offsets (DST zone) - first is standard, second is DST
-                const standardOffset = formatOffset(zone.offsets[0]);
-                const dstOffset = formatOffset(zone.offsets[1]);
-                offset = `UTC${standardOffset} / ${dstOffset} DST`;
-
-                displayName = countryName
-                  ? `${city}, ${countryName}`
-                  : zone.id || "Unknown";
-                if (comment) {
-                  displayName += ` — ${comment}`;
-                }
-              }
-            } else {
-              // Fallback if no offsets available
-              displayName = countryName
-                ? `${city}, ${countryName}`
-                : zone.id || "Unknown";
-            }
-
-            return {
-              id: zone.id || "Unknown",
-              displayName,
-              countryName: countryName,
-              comment:
-                zone.location && zone.location.comment
-                  ? zone.location.comment
-                  : "",
-              aliases: zone.aliases || [],
-              offset,
-            };
-          } catch (transformError) {
-            console.error("Error transforming timezone:", zone, transformError);
-            return {
-              id: zone.id || "Unknown",
-              displayName: zone.id || "Unknown",
-              countryName: "",
-              comment: "",
-              aliases: [],
-              offset: "",
-            };
-          }
-        });
-
-        this.timezonePicker.initialized = true;
-        console.log(`Loaded ${this.timezonePicker.timezones.length} timezones`);
-      } catch (error) {
-        console.error("Failed to load timezone data:", error);
-        console.error("Error details:", error.message, error.stack);
-        this.timezonePicker.error = `Failed to load timezone data: ${error.message}`;
-      } finally {
-        this.timezonePicker.loading = false;
-      }
+      await loadTimezones(this.timezonePicker);
     },
 
     // Load timezones and open dropdown
@@ -504,19 +305,7 @@ export function createSettingsDeviceStore() {
 
     // Get display name for a timezone ID (for dropdown)
     getTimezoneDisplayName(timezoneId) {
-      if (!timezoneId) return "";
-
-      const timezone = this.timezonePicker.timezones.find(
-        (tz) => tz.id === timezoneId,
-      );
-      if (timezone) {
-        return `${timezone.displayName} (${timezone.offset})`;
-      }
-
-      // Fallback: convert IANA ID to readable format
-      const parts = timezoneId.split("/");
-      const city = parts[parts.length - 1].replace(/_/g, " ");
-      return `${city} (${timezoneId})`;
+      return getTimezoneDisplayName(timezoneId, this.timezonePicker.timezones);
     },
 
     // Get display name for selected timezone (without offset)
@@ -527,8 +316,11 @@ export function createSettingsDeviceStore() {
 
     // Get offset display for selected timezone
     getSelectedTimezoneOffset(timezoneId) {
-      const timezone = this.getSelectedTimezone(timezoneId);
-      return timezone ? `(${timezone.offset})` : "";
+      const offset = getTimezoneOffset(
+        timezoneId,
+        this.timezonePicker.timezones,
+      );
+      return offset ? `(${offset})` : "";
     },
 
     // Helper to find selected timezone
