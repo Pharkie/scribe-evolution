@@ -1,77 +1,77 @@
 {
-    "count": 9,
-    "networks": [
-        {
-            "ssid": "MockWiFi-Network",
-            "rssi": -45,
-            "channel": 6,
-            "secure": true,
-            "encryption": "WPA2",
-            "signal_strength": "Good"
-        },
-        {
-            "ssid": "MooseCave",
-            "rssi": -60,
-            "channel": 5,
-            "secure": true,
-            "encryption": "Unknown",
-            "signal_strength": "Good"
-        },
-        {
-            "ssid": "VM7279940",
-            "rssi": -70,
-            "channel": 6,
-            "secure": true,
-            "encryption": "WPA2",
-            "signal_strength": "Fair"
-        },
-        {
-            "ssid": "Hyperoptic Fibre 42E3 2.4G",
-            "rssi": -71,
-            "channel": 10,
-            "secure": true,
-            "encryption": "Unknown",
-            "signal_strength": "Weak"
-        },
-        {
-            "ssid": "MooseCave",
-            "rssi": -72,
-            "channel": 5,
-            "secure": true,
-            "encryption": "Unknown",
-            "signal_strength": "Weak"
-        },
-        {
-            "ssid": "VM7205911",
-            "rssi": -74,
-            "channel": 1,
-            "secure": true,
-            "encryption": "WPA2",
-            "signal_strength": "Weak"
-        },
-        {
-            "ssid": "Hyperoptic Fibre 6BE3",
-            "rssi": -81,
-            "channel": 10,
-            "secure": true,
-            "encryption": "Unknown",
-            "signal_strength": "Weak"
-        },
-        {
-            "ssid": "Vodafone 2",
-            "rssi": -82,
-            "channel": 6,
-            "secure": true,
-            "encryption": "WPA2",
-            "signal_strength": "Weak"
-        },
-        {
-            "ssid": "VM8550338",
-            "rssi": -91,
-            "channel": 6,
-            "secure": true,
-            "encryption": "WPA2",
-            "signal_strength": "Weak"
-        }
-    ]
+  "count": 9,
+  "networks": [
+    {
+      "ssid": "MockWiFi-Network",
+      "rssi": -45,
+      "channel": 6,
+      "secure": true,
+      "encryption": "WPA2",
+      "signal_strength": "Good"
+    },
+    {
+      "ssid": "MooseCave",
+      "rssi": -60,
+      "channel": 5,
+      "secure": true,
+      "encryption": "Unknown",
+      "signal_strength": "Good"
+    },
+    {
+      "ssid": "VM7279940",
+      "rssi": -70,
+      "channel": 6,
+      "secure": true,
+      "encryption": "WPA2",
+      "signal_strength": "Fair"
+    },
+    {
+      "ssid": "Hyperoptic Fibre 42E3 2.4G",
+      "rssi": -71,
+      "channel": 10,
+      "secure": true,
+      "encryption": "Unknown",
+      "signal_strength": "Weak"
+    },
+    {
+      "ssid": "MooseCave",
+      "rssi": -72,
+      "channel": 5,
+      "secure": true,
+      "encryption": "Unknown",
+      "signal_strength": "Weak"
+    },
+    {
+      "ssid": "VM7205911",
+      "rssi": -74,
+      "channel": 1,
+      "secure": true,
+      "encryption": "WPA2",
+      "signal_strength": "Weak"
+    },
+    {
+      "ssid": "Hyperoptic Fibre 6BE3",
+      "rssi": -81,
+      "channel": 10,
+      "secure": true,
+      "encryption": "Unknown",
+      "signal_strength": "Weak"
+    },
+    {
+      "ssid": "Vodafone 2",
+      "rssi": -82,
+      "channel": 6,
+      "secure": true,
+      "encryption": "WPA2",
+      "signal_strength": "Weak"
+    },
+    {
+      "ssid": "VM8550338",
+      "rssi": -91,
+      "channel": 6,
+      "secure": true,
+      "encryption": "WPA2",
+      "signal_strength": "Weak"
+    }
+  ]
 }

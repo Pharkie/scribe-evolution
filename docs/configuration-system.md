@@ -121,14 +121,12 @@ As noted in `config.h`:
 ## Best Practices
 
 1. **New Configuration Values**:
-
    - Add `default*` value in `config.h`
    - Add getter/setter methods in `ConfigManager`
    - Update web interface to allow user modification
    - Always access via `ConfigManager` in application code
 
 2. **Constants vs Defaults**:
-
    - If users should be able to change it → Make it a `default*` value
    - If it's hardware-dependent or system critical → Make it a constant
 

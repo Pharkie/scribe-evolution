@@ -3,11 +3,13 @@
 **Goal:** Modernize and modularize the app without breaking functionality.
 
 ### Phase 1: Build System Modernization ⚡
+
 - [x] esbuild integration (3x faster builds)
 - [x] Dev/prod file naming (`.js`/`.min.js`)
 - [x] Mock server support
 
-### Phase 2: Internal Organization 🏗️  
+### Phase 2: Internal Organization 🏗️
+
 - [x] Section separation (Device/WiFi partials)
 - [x] API function organization within main store
 - [x] Utility structure preparation
@@ -15,6 +17,7 @@
 ## Phase 3: Settings refactor ✅
 
 **Key Features**:
+
 - Color-coded themes per section
 - Partial config updates (send only relevant fields)
 - Consistent Alpine.js patterns and error handling
@@ -24,21 +27,23 @@
 **Status**: All individual settings pages complete, ready for cleanup
 
 ### Settings Pages (3.1-3.8) - Completed
+
 - **Device** (blue) - Owner, timezone, GPIO pins, data-driven config system
-- **WiFi** (green) - Network credentials, connection status, Simple Loading Flag Pattern ✅  
+- **WiFi** (green) - Network credentials, connection status, Simple Loading Flag Pattern ✅
 - **MQTT** (red) - Server config, connection testing, enable/disable
 - **Memo** (orange) - Content editor, placeholders, character counter
-- **Button** (cyan) - Hardware actions, short/long press, MQTT integration  
+- **Button** (cyan) - Hardware actions, short/long press, MQTT integration
 - **LED** (pink) - Effects config, playground testing, C++ alignment
 - **Unbidden Ink** (purple) - AI prompts, scheduling, API settings
 
 **Testing Status**: Live ESP32 tested and working ✅ All routing, compression, and API fixes verified in production
 
 ### Step 3.9: Legacy Cleanup - Completed
-- [X] Remove `settings-old.html` (legacy monolithic file)
-- [X] Clean up unused partials in `/partials/settings/`
-- [X] Verify no broken internal links remain
-- [X] Final end-to-end testing of complete settings workflow
+
+- [x] Remove `settings-old.html` (legacy monolithic file)
+- [x] Clean up unused partials in `/partials/settings/`
+- [x] Verify no broken internal links remain
+- [x] Final end-to-end testing of complete settings workflow
 
 ---
 
@@ -47,27 +52,33 @@
 **Summary**: Major optimization opportunity identified in CSS architecture.
 
 ### Completed Optimizations
+
 - **REST API Standardization** ✅ - Success: HTTP 200 + empty body, Error: Non-200 + JSON
 - **Partial Config Pattern** ✅ - Settings pages send only relevant sections
 
 ### 4.1: Large File Analysis ✅
+
 - **timezones.json (174KB)**: Required as-is - contains essential IANA timezone data
 - **riddles.ndjson (111KB)**: Required as-is - complete content library needed
 - **Assessment**: Large files are necessary and optimally structured
 
-### 4.2: CSS Purging Investigation ✅  
+### 4.2: CSS Purging Investigation ✅
+
 - **Fixed Tailwind content paths**: `./data/html/**/*.html` → `./data/**/*.html`
 - **Confirmed purging works**: Tested with unused classes, purging active and functional
 - **Assessment**: CSS classes are already optimally purged - no unused classes found
 
 ### 4.3: CSS Architecture Improvement - ✅ COMPLETED
+
 **Problem Discovered**: Each page duplicates full Tailwind base (~90KB)
+
 - `settings.css`: 123KB (90KB base + 33KB components)
-- `diagnostics.css`: 121KB (90KB base + 31KB components)  
+- `diagnostics.css`: 121KB (90KB base + 31KB components)
 - `index.css`: 103KB (90KB base + 13KB components)
 - **Total**: 541KB with ~300KB duplication
 
 **Solution Implemented**: ✅ Single comprehensive `app.css` file
+
 - Created `src/css/app.css` with `@import "tailwindcss";` and all component styles
 - Consolidated all custom styles from 5 CSS files into organized sections
 - Updated build process: `npm run build-css` → single CSS build
@@ -75,15 +86,17 @@
 - Updated package.json build scripts
 
 **Results Achieved**: 🎯 **76.9% size reduction**
+
 - **Original**: 541KB total (5 separate files)
-- **New unminified**: 171KB (single app.css) 
+- **New unminified**: 171KB (single app.css)
 - **New minified**: 125KB (production app.css)
 - **Final savings**: 417KB reduction from original
 
 **Benefits Realized**:
+
 - ✅ Single cached file - browser caches once, benefits all pages
 - ✅ Eliminated duplication - no repeated Tailwind base
-- ✅ Faster builds - one CSS build instead of 5 parallel builds  
+- ✅ Faster builds - one CSS build instead of 5 parallel builds
 - ✅ Better performance - 77% smaller CSS payload
 - ✅ Easier maintenance - all styles centrally organized
 - ✅ Proper Tailwind architecture - content scanning across all files
@@ -91,26 +104,30 @@
 ### 4.4: GZIP Compression - ✅ COMPLETED
 
 **Results Achieved**: 🎯 **76.3% average bandwidth reduction**
+
 - **app.css**: 125KB → 17KB (86% reduction)
-- **index.html**: 42KB → 7KB (83% reduction) 
+- **index.html**: 42KB → 7KB (83% reduction)
 - **page-index.js**: 29KB → 6KB (79% reduction)
 - **alpine.js**: 45KB → 16KB (64% reduction)
 - **Total assets**: 1.7MB → 288KB (83% reduction!)
 
 **Implementation Completed**: ✅ Pre-compressed assets with simplified serving
+
 - **Build system**: `npm run gzip-assets` creates `.gz` versions (46 files compressed)
 - **Mock server**: Serves compressed files with `Content-Encoding: gzip` headers
 - **No fallbacks**: All modern browsers support GZIP (universal since IE6+)
 - **Smart compression**: Files <1KB skipped (overhead > benefit)
 
 **Benefits Realized**:
-- ✅ **Massive bandwidth savings** - 83% reduction across all web assets  
+
+- ✅ **Massive bandwidth savings** - 83% reduction across all web assets
 - ✅ **Faster page loads** - especially beneficial over slower WiFi
 - ✅ **Reduced ESP32 power usage** for WiFi transmission
 - ✅ **Better caching** - 1-year cache for compressed assets
 - ✅ **Build integration** - automatically runs with `npm run build-prod`
 
 **ESP32 Implementation Ready**: 📋 AsyncWebServer API confirmed
+
 - Use `server.serveStatic("/file", LittleFS, "/file.gz").setContentEncoding("gzip")`
 - Explicit `Content-Encoding: gzip` header setting (no auto-detection)
 - Long-term caching with `setCacheControl("max-age=31536000")`
@@ -123,8 +140,9 @@
 **Conversion Process**: ES6 modules in source → IIFE bundles for ESP32
 
 **Per-Page Conversion Steps**:
+
 1. **Create API module**: Move API functions to `src/js/api/{page}.js` with ES6 exports
-2. **Create store module**: Convert Alpine store to `src/js/stores/{page}.js` factory function  
+2. **Create store module**: Convert Alpine store to `src/js/stores/{page}.js` factory function
 3. **Create page entry**: Import and register store in `src/js/pages/{page}.js`
 4. **Update esbuild config**: Point to single ES6 entry point instead of concatenation
 5. **Test build**: Verify IIFE output works with Alpine.js and mock server
@@ -148,6 +166,7 @@
 **ES6 Module Conversion Complete!** 🎉
 
 **Phase 4.5 Results Achieved:**
+
 - ✅ **13 pages converted** from legacy JavaScript to modern ES6 modules
 - ✅ **Smaller bundle sizes** - Average 25% reduction in file sizes
 - ✅ **Modern architecture** - Explicit imports/exports replace global dependencies
@@ -166,7 +185,7 @@
 
 1. **Download font files** - Outfit woff2 weights 400, 600, 700 (latin subset only) to `/src/data/fonts/`
 2. **Configure build pipeline** - Copy fonts from `/src/data/fonts/` to `/data/fonts/` during build
-3. **Create font-face CSS** - Define @font-face declarations with optimized font metrics  
+3. **Create font-face CSS** - Define @font-face declarations with optimized font metrics
 4. **Wire up Tailwind v4 theming** - Use @import and @theme in input.css
 5. **Add font preloading** - Prevent FOUC with preload links in all HTML files
 6. **Remove external dependencies** - Clean up Google Fonts CDN references
@@ -174,8 +193,9 @@
 8. **Run build** - Execute Tailwind build to apply all changes
 
 **Benefits**:
+
 - ✅ **Offline compatibility** - No external font dependencies
-- ✅ **Performance** - Faster loading, reduced network requests  
+- ✅ **Performance** - Faster loading, reduced network requests
 - ✅ **Reliability** - No CDN failures or font loading delays
 - ✅ **Consistency** - Exact font rendering across all devices
 - ✅ **ESP32 friendly** - Local serving, predictable file sizes
@@ -187,27 +207,32 @@
 **What's Next**: Apply proven patterns to remaining non-settings pages for consistency
 
 ### 6.1: Diagnostics Page Refactor
+
 **Current State**: Basic single-page diagnostics, already ES6 modules ✅
 **Goal**: Split into comprehensive diagnostic sections like settings pages
 **Why**: Diagnostics is becoming complex - needs organization like settings
 **Proposed Structure**:
+
 - **Overview**: System status, memory, uptime (main diagnostics.html)
 - **Network**: WiFi status, MQTT connections, API endpoints
 - **Hardware**: GPIO states, printer status, button/LED diagnostics
 - **Storage**: SPIFFS usage, config validation, NVS contents
-**Benefits**: Easier troubleshooting, better organization, follows established patterns
+  **Benefits**: Easier troubleshooting, better organization, follows established patterns
 
 ### 6.2: Setup Page (AP Mode Only)
+
 **Current State**: Already uses Simple Loading Flag Pattern ✅
 **Goal**: Bring WiFi scanning UX up to speed with settings/wifi.html
 **Why**: Setup page has basic WiFi form, but settings/wifi.html has advanced network scanning, signal strength display, and better UX
 **Tasks**:
+
 - Import modern WiFi scanning functionality from settings-wifi.js
 - Add signal strength indicators and network selection dropdown
 - Improve error handling and loading states
 - Maintain AP mode compatibility (no dependencies on STA mode)
 
 ### 6.3: 404 Page
+
 **Current State**: Already converted to ES6 modules ✅
 **Goal**: Align with overall design system and add helpful navigation
 **Why**: Error pages should be as polished as the rest of the app
@@ -221,13 +246,15 @@ Future enhancement: 4 x configurable AI prompts with hardware button integration
 ---
 
 ## Phase 8: Documentation & Test Harness
+
 **Goal**: Document established patterns for future development. Ensure unit tests work.
 
 ## Development Guidelines 🛠️
 
 **Workflow**: Create → Build → Mock test → Live ESP32 test → Commit
 
-**Principles**: 
+**Principles**:
+
 - One step at a time, ask before major changes
 - Alpine.js patterns only, no custom reactivity
 - Fail fast, test everything, preserve ESP32 memory limits
@@ -239,54 +266,56 @@ Future enhancement: 4 x configurable AI prompts with hardware button integration
 **⚠️ CRITICAL: This is a TWO-STEP process - both JavaScript AND HTML must be updated together or Alpine will crash!**
 
 We want:
-  - ✅ Simple loaded: false flag
-  - ✅ Empty config: {} object on settings pages, rather than a brittle list of pre-initialized nulls
-  - ✅ Direct assignment from API response
-  - ✅ Proper error handling without fallback structures
-  - ✅ Template safety guards to prevent Alpine expression crashes
+
+- ✅ Simple loaded: false flag
+- ✅ Empty config: {} object on settings pages, rather than a brittle list of pre-initialized nulls
+- ✅ Direct assignment from API response
+- ✅ Proper error handling without fallback structures
+- ✅ Template safety guards to prevent Alpine expression crashes
 
 ## STEP 1: JavaScript Store Changes
 
 ```javascript
 // ✅ CORRECT: Complete Alpine.js + Simple Loading Flag Pattern
 function createMyStore() {
-    return {
-        loaded: false,  // Simple loading flag (starts false)
-        config: {},     // CRITICAL: Empty object (NO pre-initialized nulls)
-        initialized: false, // Failsafe guard to prevent multiple inits
-        error: null,    // Error state
-        
-        async loadConfiguration() {  // Use existing method names, don't rename
-            // Duplicate initialization guard (failsafe)
-            if (this.initialized) {
-                return;  // No console.log needed
-            }
-            this.initialized = true;
-            
-            this.loaded = false;
-            this.error = null;
-            try {
-                const response = await fetch('/api/config');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                const data = await response.json();
-                
-                // ✅ CRITICAL: Direct assignment to config object (not this.data.config)
-                this.config.mqtt = {
-                    enabled: data.mqtt?.enabled ?? false,
-                    server: data.mqtt?.server ?? '',
-                    port: data.mqtt?.port ?? 1883,
-                    username: data.mqtt?.username ?? '',
-                    password: data.mqtt?.password ?? ''
-                };
-                
-                this.loaded = true;  // Mark as loaded AFTER data assignment
-            } catch (error) {
-                this.error = `Failed to load configuration: ${error.message}`;
-            }
+  return {
+    loaded: false, // Simple loading flag (starts false)
+    config: {}, // CRITICAL: Empty object (NO pre-initialized nulls)
+    initialized: false, // Failsafe guard to prevent multiple inits
+    error: null, // Error state
+
+    async loadConfiguration() {
+      // Use existing method names, don't rename
+      // Duplicate initialization guard (failsafe)
+      if (this.initialized) {
+        return; // No console.log needed
+      }
+      this.initialized = true;
+
+      this.loaded = false;
+      this.error = null;
+      try {
+        const response = await fetch("/api/config");
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-    };
+        const data = await response.json();
+
+        // ✅ CRITICAL: Direct assignment to config object (not this.data.config)
+        this.config.mqtt = {
+          enabled: data.mqtt?.enabled ?? false,
+          server: data.mqtt?.server ?? "",
+          port: data.mqtt?.port ?? 1883,
+          username: data.mqtt?.username ?? "",
+          password: data.mqtt?.password ?? "",
+        };
+
+        this.loaded = true; // Mark as loaded AFTER data assignment
+      } catch (error) {
+        this.error = `Failed to load configuration: ${error.message}`;
+      }
+    },
+  };
 }
 ```
 
@@ -297,42 +326,66 @@ function createMyStore() {
 ```html
 <!-- ❌ BROKEN: Will crash with "Cannot read properties of undefined" -->
 <body x-data="$store.myStore" x-init="loadConfiguration()">
-    <div x-show="loaded && !error">
-        <input x-model="config.mqtt.enabled"> <!-- CRASHES: config.mqtt is undefined -->
-    </div>
+  <div x-show="loaded && !error">
+    <input x-model="config.mqtt.enabled" />
+    <!-- CRASHES: config.mqtt is undefined -->
+  </div>
 </body>
 
 <!-- ✅ CORRECT: Template safety prevents crashes -->
 <body x-data="$store.myStore" x-init="loadConfiguration()">
-    <!-- Main Content -->
-    <template x-if="loaded && !error">
-        <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
-             x-show="show" x-transition.opacity.duration.300ms>
-            <input x-model="config.mqtt.enabled"> <!-- SAFE: only evaluates when loaded -->
-        </div>
-    </template>
+  <!-- Main Content -->
+  <template x-if="loaded && !error">
+    <div
+      x-data="{ show: false }"
+      x-init="$nextTick(() => show = true)"
+      x-show="show"
+      x-transition.opacity.duration.300ms
+    >
+      <input x-model="config.mqtt.enabled" />
+      <!-- SAFE: only evaluates when loaded -->
+    </div>
+  </template>
 </body>
 
 <!-- ✅ CORRECT: Way to do error card -->
-    <!-- Error State -->
-    <template x-if="loaded && error">
-        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
-            <div class="text-center">
-                <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-                <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Settings</h3>
-                <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
-                <button @click="loadData()" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                    Retry
-                </button>
-            </div>
-        </div>
-    </template>
+<!-- Error State -->
+<template x-if="loaded && error">
+  <div
+    class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6"
+  >
+    <div class="text-center">
+      <svg
+        class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          d="M6 18 18 6M6 6l12 12"
+        />
+      </svg>
+      <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+        Error Loading Settings
+      </h3>
+      <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+      <button
+        @click="loadData()"
+        class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+      >
+        Retry
+      </button>
+    </div>
+  </div>
+</template>
 ```
 
 **Critical Rules**:
-- **Template Safety**: ALWAYS use `x-if` for both error and main content templates 
+
+- **Template Safety**: ALWAYS use `x-if` for both error and main content templates
   - Error: `<template x-if="loaded && error">` (only show errors after loading)
   - Main: `<template x-if="loaded && !error">` (prevent crashes with empty config)
 - **Method Names**: Keep existing method names (`loadConfiguration`, not `loadData`)
@@ -353,7 +406,7 @@ async loadData() {
     this.loaded = true;
 }
 
-// ❌ DOESN'T WORK: Complex pre-initialized null structures  
+// ❌ DOESN'T WORK: Complex pre-initialized null structures
 config: {
     buttons: { button1: { gpio: null, shortAction: null } }  // Brittle, breaks on API changes
 }
@@ -362,32 +415,41 @@ config: {
 ```html
 <!-- ✅ WORKS: x-if + x-show for data safety + smooth animations -->
 <template x-if="loaded && !error">
-    <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" 
-         x-show="show" x-transition.opacity.duration.300ms>
-        <input x-model="config.device.owner"> <!-- Normal access once loaded -->
-    </div>
+  <div
+    x-data="{ show: false }"
+    x-init="$nextTick(() => show = true)"
+    x-show="show"
+    x-transition.opacity.duration.300ms
+  >
+    <input x-model="config.device.owner" />
+    <!-- Normal access once loaded -->
+  </div>
 </template>
 
 <!-- ❌ DOESN'T WORK: x-show alone - Alpine evaluates expressions immediately -->
 <div x-show="loaded && !error">
-    <input x-model="config.device.owner"> <!-- Crashes: cannot read 'owner' of undefined -->
+  <input x-model="config.device.owner" />
+  <!-- Crashes: cannot read 'owner' of undefined -->
 </div>
 ```
 
-**Key Rules**: 
+**Key Rules**:
+
 - `x-if` prevents DOM creation and expression evaluation until condition is true
 - `x-show` only toggles visibility but Alpine evaluates all expressions immediately for reactivity
 - **Combine both**: `x-if` for data safety + inner `x-show` for smooth fade-in transitions
 
 Key insight: You need BOTH for the full solution:
-  1. x-if="loaded && !error" prevents crashes
-  2. Inner x-show="show" x-transition provides smooth UX
+
+1. x-if="loaded && !error" prevents crashes
+2. Inner x-show="show" x-transition provides smooth UX
 
 **Benefits**: No crashes, backend flexible, ~30 lines vs ~100 lines of pre-init, future-proof
 
 ### Loading Flag Pattern Pitfalls to Avoid ❌
 
 **❌ DEADLY ERROR: Changing JavaScript without HTML**
+
 ```javascript
 // ❌ If you do this change...
 config: {
@@ -402,18 +464,21 @@ config: {},  // Empty object...
 ```
 
 **✅ SOLUTION: Both changes together**
+
 ```javascript
 // Step 1: Change JavaScript
 config: {},  // Empty object
 ```
+
 ```html
 <!-- Step 2: Add template safety immediately -->
 <template x-if="loaded && !error">
-    <div><!-- Form content --></div>
+  <div><!-- Form content --></div>
 </template>
 ```
 
 **❌ WRONG: Multiple initialization methods**
+
 ```javascript
 // Don't have both loadConfiguration() AND init() methods
 async loadConfiguration() { /* ... */ },
@@ -421,36 +486,43 @@ async init() { /* calls loadConfiguration */ }  // REMOVE THIS
 ```
 
 **❌ WRONG: Using x-show alone with empty config**
+
 ```html
 <!-- ❌ This crashes when config is empty {} -->
 <div x-show="loaded && !error">
-    <input x-model="config.mqtt.enabled"> <!-- CRASHES: mqtt undefined -->
+  <input x-model="config.mqtt.enabled" />
+  <!-- CRASHES: mqtt undefined -->
 </div>
 
 <!-- ✅ This works - x-if prevents evaluation until loaded -->
 <template x-if="loaded && !error">
-    <div x-show="show" x-transition>
-        <input x-model="config.mqtt.enabled"> <!-- SAFE -->
-    </div>
+  <div x-show="show" x-transition>
+    <input x-model="config.mqtt.enabled" />
+    <!-- SAFE -->
+  </div>
 </template>
 ```
 
 **❌ WRONG: Changing property names unnecessarily**
+
 ```javascript
 // Don't force massive HTML changes
 config: {...}  →  data: { config: {...} }  // Breaks all HTML x-model references
 ```
 
 **✅ CORRECT: Use x-if for data safety + x-show for animations**
+
 ```html
 <template x-if="loaded && !error">
-    <div x-show="show" x-transition>
-        <input x-model="config.device.owner"> <!-- SAFE: only evaluates when loaded -->
-    </div>
+  <div x-show="show" x-transition>
+    <input x-model="config.device.owner" />
+    <!-- SAFE: only evaluates when loaded -->
+  </div>
 </template>
 ```
 
 **✅ CORRECT: Keep existing property names when possible**
+
 ```javascript
 // Settings pages: Keep existing config property, just make it empty initially
 config: {},  // Empty object populated on load (avoid massive HTML changes)
@@ -458,13 +530,14 @@ config: {},  // Empty object populated on load (avoid massive HTML changes)
 ```
 
 ### FOUC Prevention & Transitions
+
 ```html
 <!-- ✅ CORRECT: x-show + x-transition + style="display: none" -->
 <div x-show="loaded && !error" x-transition style="display: none">
-    <form><!-- Content --></form>
+  <form><!-- Content --></form>
 </div>
 ```
 
 - **Use `x-show`** (toggles visibility) NOT `x-if` (removes DOM elements)
-- **Start with `loaded: false`** to hide content initially  
+- **Start with `loaded: false`** to hide content initially
 - **`style="display: none"`** prevents Flash of Unstyled Content (FOUC)

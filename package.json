@@ -1,25 +1,25 @@
 {
-    "name": "scribe-css-build",
-    "version": "1.0.0",
-    "description": "Build tools for Scribe ESP32-C3 Thermal Printer CSS",
-    "private": true,
-    "scripts": {
-        "build": "cp src/data/*.html data/ && cp src/data/*.png data/ && cp src/data/*.ico data/ && cp src/data/*.webmanifest data/ && cp src/data/*.svg data/ && cp -r src/data/settings data/ && mkdir -p data/fonts && cp src/data/fonts/outfit-variable.woff2 data/fonts/ && npx @tailwindcss/cli --input ./src/css/input.css --output ./data/css/app.css --minify && node esbuild.config.js prod && node scripts/gzip-assets.js && find data -type f ! -name '*.gz' ! -name '*.png' ! -name '*.jpg' ! -name '*.ico' ! -name '*.webmanifest' ! -name '*.ndjson' ! -name '*.txt' ! -name '*.pem' ! -name '*.woff2' -delete",
-        "dev": "cp src/data/*.html data/ && cp src/data/*.png data/ && cp src/data/*.ico data/ && cp src/data/*.webmanifest data/ && cp src/data/*.svg data/ && cp -r src/data/settings data/ && mkdir -p data/fonts && cp src/data/fonts/outfit-variable.woff2 data/fonts/ && npx @tailwindcss/cli --input ./src/css/input.css --output ./data/css/app.css && node esbuild.config.js all && node scripts/gzip-assets.js && find data -type f ! -name '*.gz' ! -name '*.png' ! -name '*.jpg' ! -name '*.ico' ! -name '*.webmanifest' ! -name '*.ndjson' ! -name '*.txt' ! -name '*.pem' ! -name '*.woff2' -delete",
-        "test": "pio test -e esp32c3-test",
-        "firmware": "python3 scripts/build_firmware_release.py",
-        "firmware:recover": "python3 scripts/build_firmware_release.py --recover",
-        "firmware:esp32c3": "pio run -e esp32c3",
-        "firmware:lolin32lite": "pio run -e lolin32lite"
-    },
-    "dependencies": {
-        "@tailwindcss/cli": "^4.1.12",
-        "alpinejs": "^3.14.9",
-        "cors": "^2.8.5",
-        "express": "^5.1.0",
-        "tailwindcss": "^4.1.12"
-    },
-    "devDependencies": {
-        "esbuild": "^0.25.9"
-    }
+  "name": "scribe-css-build",
+  "version": "1.0.0",
+  "description": "Build tools for Scribe ESP32-C3 Thermal Printer CSS",
+  "private": true,
+  "scripts": {
+    "build": "cp src/data/*.html data/ && cp src/data/*.png data/ && cp src/data/*.ico data/ && cp src/data/*.webmanifest data/ && cp src/data/*.svg data/ && cp -r src/data/settings data/ && mkdir -p data/fonts && cp src/data/fonts/outfit-variable.woff2 data/fonts/ && npx @tailwindcss/cli --input ./src/css/input.css --output ./data/css/app.css --minify && node esbuild.config.js prod && node scripts/gzip-assets.js && find data -type f ! -name '*.gz' ! -name '*.png' ! -name '*.jpg' ! -name '*.ico' ! -name '*.webmanifest' ! -name '*.ndjson' ! -name '*.txt' ! -name '*.pem' ! -name '*.woff2' -delete",
+    "dev": "cp src/data/*.html data/ && cp src/data/*.png data/ && cp src/data/*.ico data/ && cp src/data/*.webmanifest data/ && cp src/data/*.svg data/ && cp -r src/data/settings data/ && mkdir -p data/fonts && cp src/data/fonts/outfit-variable.woff2 data/fonts/ && npx @tailwindcss/cli --input ./src/css/input.css --output ./data/css/app.css && node esbuild.config.js all && node scripts/gzip-assets.js && find data -type f ! -name '*.gz' ! -name '*.png' ! -name '*.jpg' ! -name '*.ico' ! -name '*.webmanifest' ! -name '*.ndjson' ! -name '*.txt' ! -name '*.pem' ! -name '*.woff2' -delete",
+    "test": "pio test -e esp32c3-test",
+    "firmware": "python3 scripts/build_firmware_release.py",
+    "firmware:recover": "python3 scripts/build_firmware_release.py --recover",
+    "firmware:esp32c3": "pio run -e esp32c3",
+    "firmware:lolin32lite": "pio run -e lolin32lite"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.12",
+    "alpinejs": "^3.14.9",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "tailwindcss": "^4.1.12"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
 }

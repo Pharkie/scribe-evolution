@@ -1,154 +1,154 @@
 {
-    "web_pages": [
-        {
-            "path": "/*",
-            "description": "All static files (HTML, CSS, JS, images, favicon)"
-        },
-        {
-            "path": "(unmatched routes)",
-            "description": "404 Not Found handler (serves /404.html)"
-        }
-    ],
-    "api_endpoints": [
-        {
-            "method": "GET",
-            "path": "/events",
-            "description": "Server-sent events"
-        },
-        {
-            "method": "POST",
-            "path": "/api/print-local",
-            "description": "Print custom message"
-        },
-        {
-            "method": "GET",
-            "path": "/api/print-local",
-            "description": "Print custom message"
-        },
-        {
-            "method": "POST",
-            "path": "/api/character-test",
-            "description": "Print character test pattern"
-        },
-        {
-            "method": "GET",
-            "path": "/api/riddle",
-            "description": "Generate random riddle"
-        },
-        {
-            "method": "GET",
-            "path": "/api/joke",
-            "description": "Generate random joke"
-        },
-        {
-            "method": "GET",
-            "path": "/api/quote",
-            "description": "Generate random quote"
-        },
-        {
-            "method": "GET",
-            "path": "/api/quiz",
-            "description": "Generate random quiz"
-        },
-        {
-            "method": "GET",
-            "path": "/api/news",
-            "description": "Generate BBC news headlines"
-        },
-        {
-            "method": "GET",
-            "path": "/api/poke",
-            "description": "Generate poke message"
-        },
-        {
-            "method": "GET",
-            "path": "/api/unbidden-ink",
-            "description": "Generate unbidden ink content"
-        },
-        {
-            "method": "GET",
-            "path": "/api/user-message",
-            "description": "Generate user message"
-        },
-        {
-            "method": "GET",
-            "path": "/api/memo/{id}",
-            "description": "Get processed memo content"
-        },
-        {
-            "method": "POST",
-            "path": "/api/memo/{id}",
-            "description": "Update specific memo"
-        },
-        {
-            "method": "GET",
-            "path": "/api/diagnostics",
-            "description": "System diagnostics"
-        },
-        {
-            "method": "GET",
-            "path": "/api/routes",
-            "description": "List all routes and endpoints"
-        },
-        {
-            "method": "GET",
-            "path": "/api/nvs-dump",
-            "description": "Raw NVS storage dump"
-        },
-        {
-            "method": "POST",
-            "path": "/api/print-mqtt",
-            "description": "Send MQTT message"
-        },
-        {
-            "method": "GET",
-            "path": "/api/config",
-            "description": "Get configuration"
-        },
-        {
-            "method": "POST",
-            "path": "/api/config",
-            "description": "Update configuration"
-        },
-        {
-            "method": "POST",
-            "path": "/api/test-mqtt",
-            "description": "Test MQTT connection"
-        },
-        {
-            "method": "GET",
-            "path": "/api/timezones",
-            "description": "Get IANA timezone data"
-        },
-        {
-            "method": "GET",
-            "path": "/api/memos",
-            "description": "Get all memos"
-        },
-        {
-            "method": "POST",
-            "path": "/api/memos",
-            "description": "Update all memos"
-        },
-        {
-            "method": "GET",
-            "path": "/api/wifi-scan",
-            "description": "Scan WiFi networks"
-        },
-        {
-            "method": "POST",
-            "path": "/api/leds/test",
-            "description": "Trigger LED Effect"
-        },
-        {
-            "method": "POST",
-            "path": "/api/leds/off",
-            "description": "Turn LEDs Off"
-        },
-        {
-            "method": "GET",
-            "path": "/debug/filesystem",
-            "description": "LittleFS debug info"
-        }
-    ]
+  "web_pages": [
+    {
+      "path": "/*",
+      "description": "All static files (HTML, CSS, JS, images, favicon)"
+    },
+    {
+      "path": "(unmatched routes)",
+      "description": "404 Not Found handler (serves /404.html)"
+    }
+  ],
+  "api_endpoints": [
+    {
+      "method": "GET",
+      "path": "/events",
+      "description": "Server-sent events"
+    },
+    {
+      "method": "POST",
+      "path": "/api/print-local",
+      "description": "Print custom message"
+    },
+    {
+      "method": "GET",
+      "path": "/api/print-local",
+      "description": "Print custom message"
+    },
+    {
+      "method": "POST",
+      "path": "/api/character-test",
+      "description": "Print character test pattern"
+    },
+    {
+      "method": "GET",
+      "path": "/api/riddle",
+      "description": "Generate random riddle"
+    },
+    {
+      "method": "GET",
+      "path": "/api/joke",
+      "description": "Generate random joke"
+    },
+    {
+      "method": "GET",
+      "path": "/api/quote",
+      "description": "Generate random quote"
+    },
+    {
+      "method": "GET",
+      "path": "/api/quiz",
+      "description": "Generate random quiz"
+    },
+    {
+      "method": "GET",
+      "path": "/api/news",
+      "description": "Generate BBC news headlines"
+    },
+    {
+      "method": "GET",
+      "path": "/api/poke",
+      "description": "Generate poke message"
+    },
+    {
+      "method": "GET",
+      "path": "/api/unbidden-ink",
+      "description": "Generate unbidden ink content"
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-message",
+      "description": "Generate user message"
+    },
+    {
+      "method": "GET",
+      "path": "/api/memo/{id}",
+      "description": "Get processed memo content"
+    },
+    {
+      "method": "POST",
+      "path": "/api/memo/{id}",
+      "description": "Update specific memo"
+    },
+    {
+      "method": "GET",
+      "path": "/api/diagnostics",
+      "description": "System diagnostics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/routes",
+      "description": "List all routes and endpoints"
+    },
+    {
+      "method": "GET",
+      "path": "/api/nvs-dump",
+      "description": "Raw NVS storage dump"
+    },
+    {
+      "method": "POST",
+      "path": "/api/print-mqtt",
+      "description": "Send MQTT message"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config",
+      "description": "Get configuration"
+    },
+    {
+      "method": "POST",
+      "path": "/api/config",
+      "description": "Update configuration"
+    },
+    {
+      "method": "POST",
+      "path": "/api/test-mqtt",
+      "description": "Test MQTT connection"
+    },
+    {
+      "method": "GET",
+      "path": "/api/timezones",
+      "description": "Get IANA timezone data"
+    },
+    {
+      "method": "GET",
+      "path": "/api/memos",
+      "description": "Get all memos"
+    },
+    {
+      "method": "POST",
+      "path": "/api/memos",
+      "description": "Update all memos"
+    },
+    {
+      "method": "GET",
+      "path": "/api/wifi-scan",
+      "description": "Scan WiFi networks"
+    },
+    {
+      "method": "POST",
+      "path": "/api/leds/test",
+      "description": "Trigger LED Effect"
+    },
+    {
+      "method": "POST",
+      "path": "/api/leds/off",
+      "description": "Turn LEDs Off"
+    },
+    {
+      "method": "GET",
+      "path": "/debug/filesystem",
+      "description": "LittleFS debug info"
+    }
+  ]
 }

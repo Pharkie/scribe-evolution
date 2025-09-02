@@ -14,7 +14,7 @@ This project uses a simplified npm build system for web assets and PlatformIO fo
 The build system has been simplified to 3 essential commands:
 
 - **`npm run build`** - Production build (minified CSS + minified JS + GZIP compression)
-- **`npm run dev`** - Development build (unminified CSS + unminified JS + GZIP compression)  
+- **`npm run dev`** - Development build (unminified CSS + unminified JS + GZIP compression)
 - **`npm run test`** - Run PlatformIO unit tests
 
 ## Prerequisites
@@ -55,6 +55,7 @@ cp src/config.h.example src/config.h
 ```
 
 Edit `src/config.h` with your specific settings:
+
 - WiFi credentials (SSID and password)
 - Timezone settings
 - mDNS hostname
@@ -103,13 +104,13 @@ The JavaScript uses modern ES6 modules in development:
 
 ```bash
 # Build firmware only
-pio run                    
+pio run
 
 # Upload firmware only
-pio run --target upload    
+pio run --target upload
 
 # Monitor serial output
-pio device monitor         
+pio device monitor
 
 # Clean build files
 pio run --target clean
@@ -143,6 +144,7 @@ node mock-api.js
 ```
 
 The mock server provides:
+
 - **Complete API simulation**: All `/api/*` endpoints with realistic responses
 - **Static file serving**: HTML, CSS, JS, and image assets
 - **Live data updates**: Dynamic uptime, memory usage, and temperature
@@ -151,8 +153,9 @@ The mock server provides:
 - **Real ESP32 behavior**: Proper delays, SSE events, and response formats
 
 **Perfect for:**
+
 - Frontend CSS/JavaScript development
-- UI/UX testing and iteration  
+- UI/UX testing and iteration
 - API integration testing
 - Logo animation and responsive design work
 
@@ -200,22 +203,26 @@ pio test -e test           # Run all tests
 ### Common Build Issues
 
 **PlatformIO not found:**
+
 ```bash
 pip install platformio
 # Or use python -m platformio instead of pio
 ```
 
 **Node.js dependencies missing:**
+
 ```bash
 npm install
 ```
 
 **Upload failures:**
+
 - Check that the ESP32-C3 is connected via USB
 - Ensure no other programs are using the serial port
 - Try resetting the device before upload
 
 **Asset building failures:**
+
 - Ensure Node.js version is v16 or later
 - Delete `node_modules` and run `npm install` again
 - Check that source files in `src/css/` and `src/js/` are valid
@@ -223,6 +230,7 @@ npm install
 ### Build Configuration
 
 The project uses specific build flags optimized for the ESP32-C3:
+
 - C++17 standard
 - Optimized size (`-Os`)
 - FastLED support (`-DENABLE_LEDS=1`)

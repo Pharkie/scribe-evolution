@@ -5,6 +5,7 @@ The Scribe project includes a comprehensive logging system built on the ArduinoL
 ## Overview
 
 The logging system provides detailed information about:
+
 - System operations and boot sequences
 - WiFi connectivity and network status
 - MQTT message handling and broker connections
@@ -25,15 +26,15 @@ The logging system provides detailed information about:
 
 The system uses ArduinoLog's standard severity levels:
 
-| Level | Value | Description | Includes |
-|-------|-------|-------------|----------|
-| `LOG_LEVEL_SILENT` | 0 | No output | Nothing |
-| `LOG_LEVEL_FATAL` | 1 | Fatal errors only | System crashes, critical failures |
-| `LOG_LEVEL_ERROR` | 2 | Errors and fatals | Connection failures, API errors |
-| `LOG_LEVEL_WARNING` | 3 | Warnings, errors, fatals | Configuration issues, retry attempts |
-| `LOG_LEVEL_NOTICE` | 4 | Notice, warnings, errors, fatals | Important state changes, successful operations |
-| `LOG_LEVEL_TRACE` | 5 | Trace, notice, warnings, errors, fatals | Function entry/exit, detailed flow |
-| `LOG_LEVEL_VERBOSE` | 6 | All output | Debug details, variable values |
+| Level               | Value | Description                             | Includes                                       |
+| ------------------- | ----- | --------------------------------------- | ---------------------------------------------- |
+| `LOG_LEVEL_SILENT`  | 0     | No output                               | Nothing                                        |
+| `LOG_LEVEL_FATAL`   | 1     | Fatal errors only                       | System crashes, critical failures              |
+| `LOG_LEVEL_ERROR`   | 2     | Errors and fatals                       | Connection failures, API errors                |
+| `LOG_LEVEL_WARNING` | 3     | Warnings, errors, fatals                | Configuration issues, retry attempts           |
+| `LOG_LEVEL_NOTICE`  | 4     | Notice, warnings, errors, fatals        | Important state changes, successful operations |
+| `LOG_LEVEL_TRACE`   | 5     | Trace, notice, warnings, errors, fatals | Function entry/exit, detailed flow             |
+| `LOG_LEVEL_VERBOSE` | 6     | All output                              | Debug details, variable values                 |
 
 ### Structured Logging
 
@@ -68,6 +69,7 @@ static const char *betterStackUrl = "https://in.logs.betterstack.com/http/";
 ### Development vs Production Settings
 
 **Development Configuration**:
+
 ```cpp
 static const int logLevel = LOG_LEVEL_VERBOSE;
 static const bool logToSerial = true;
@@ -77,6 +79,7 @@ static const bool logToBetterStack = false;
 ```
 
 **Production Configuration**:
+
 ```cpp
 static const int logLevel = LOG_LEVEL_NOTICE;
 static const bool logToSerial = false;
@@ -110,7 +113,7 @@ The system uses consistent component tags:
 LOG_NOTICE("WIFI", "Connected to network: %s", ssid);
 LOG_ERROR("MQTT", "Broker connection failed: %s", broker);
 
-// Hardware components  
+// Hardware components
 LOG_NOTICE("PRINTER", "Character mapping: %c -> %c", input, output);
 LOG_WARNING("HARDWARE", "Button press detected on GPIO %d", pin);
 
@@ -125,8 +128,8 @@ For complex logging scenarios:
 
 ```cpp
 // Use structured logging helper
-structuredLog("COMPONENT", LOG_LEVEL_ERROR, 
-              "Operation failed: %s (code=%d, retries=%d)", 
+structuredLog("COMPONENT", LOG_LEVEL_ERROR,
+              "Operation failed: %s (code=%d, retries=%d)",
               operation, errorCode, retryCount);
 ```
 
@@ -136,13 +139,15 @@ structuredLog("COMPONENT", LOG_LEVEL_ERROR,
 
 **Purpose**: Development debugging and real-time monitoring
 **Access**: Connect via USB and use serial monitor at 115200 baud
-**Format**: 
+**Format**:
+
 ```
 [2025-01-15 14:30:15] [NOTICE] WiFi connected to MyNetwork
 [2025-01-15 14:30:16] [ERROR] MQTT connection failed: timeout
 ```
 
 **Commands**:
+
 ```bash
 # PlatformIO
 pio device monitor
@@ -159,6 +164,7 @@ Tools → Serial Monitor (115200 baud)
 **Access**: Download via web interface or direct filesystem access
 
 **File Management**:
+
 - Current log: `/logs/scribe.log`
 - Backup log: `/logs/scribe.log.old` (previous rotation)
 - Automatic rotation prevents storage exhaustion
@@ -171,6 +177,7 @@ Tools → Serial Monitor (115200 baud)
 **Format**: JSON messages with structured data
 
 **Message Structure**:
+
 ```json
 {
   "timestamp": "2025-01-15T14:30:15Z",
@@ -182,6 +189,7 @@ Tools → Serial Monitor (115200 baud)
 ```
 
 **Monitoring**:
+
 ```bash
 # Subscribe to log messages
 mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/log"
@@ -191,13 +199,15 @@ mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/log"
 
 **Purpose**: Professional cloud log aggregation and analysis
 **Service**: [BetterStack Logs](https://betterstack.com/logs)
-**Features**: 
+**Features**:
+
 - Web dashboard for log analysis
 - Alerting and notifications
 - Search and filtering
 - Long-term retention
 
 **Setup**:
+
 1. Create BetterStack account
 2. Create HTTP source and get token
 3. Add token to `config.h`
@@ -208,6 +218,7 @@ mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/log"
 ### Common Log Patterns
 
 **Boot Sequence**:
+
 ```
 [INFO] SYSTEM: Boot started, firmware v1.0.0
 [INFO] WIFI: Connecting to network...
@@ -219,6 +230,7 @@ mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/log"
 ```
 
 **Error Conditions**:
+
 ```
 [ERROR] WIFI: Connection timeout after 30s
 [WARNING] WIFI: Retrying connection (attempt 2/3)
@@ -227,6 +239,7 @@ mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/log"
 ```
 
 **Normal Operations**:
+
 ```
 [NOTICE] API: Processing joke request from 192.168.1.50
 [TRACE] CONTENT: Fetching from icanhazdadjoke.com
@@ -237,7 +250,7 @@ mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/log"
 
 ### Debugging Workflow
 
-1. **Set appropriate log level**: 
+1. **Set appropriate log level**:
    - `VERBOSE` for detailed debugging
    - `NOTICE` for normal operation monitoring
    - `ERROR` for production error tracking
@@ -286,21 +299,25 @@ mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/log"
 ### Common Issues
 
 **No log output**:
+
 - Check log level is not `LOG_LEVEL_SILENT`
 - Verify output destinations are enabled
 - Confirm serial baud rate (115200)
 
 **File logging not working**:
+
 - Check LittleFS is properly initialized
 - Verify sufficient storage space
 - Confirm file path is correct (`/logs/scribe.log`)
 
 **MQTT logging fails**:
+
 - Verify MQTT broker connection is established
 - Check MQTT credentials and permissions
 - Ensure log topic is allowed for publishing
 
 **BetterStack not receiving logs**:
+
 - Verify token is correct
 - Check internet connectivity
 - Monitor HTTP request success in debug logs

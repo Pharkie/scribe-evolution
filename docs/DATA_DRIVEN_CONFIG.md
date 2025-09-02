@@ -7,6 +7,7 @@ The Scribe project uses a **data-driven configuration system** that eliminates h
 ## Architecture
 
 ### Single Source of Truth
+
 All configuration fields are defined once in the `CONFIG_FIELDS[]` array:
 
 ```cpp
@@ -19,6 +20,7 @@ const ConfigFieldDef CONFIG_FIELDS[] = {
 ```
 
 ### Validation Types
+
 - `STRING` - Any string value (including empty)
 - `NON_EMPTY_STRING` - String that cannot be empty
 - `GPIO` - GPIO pin number (validates safety using `isValidGPIO()` and `isSafeGPIO()`)
@@ -28,6 +30,7 @@ const ConfigFieldDef CONFIG_FIELDS[] = {
 - `ENUM_STRING` - String that must match one of provided options
 
 ### Automatic Processing
+
 The config handler uses **8 lines** to process all fields:
 
 ```cpp
@@ -45,6 +48,7 @@ if (!processJsonObject("", doc.as<JsonObject>(), newConfig, errorMsg)) {
 ## Adding New Configuration Fields
 
 ### Step 1: Add to RuntimeConfig struct
+
 ```cpp
 // In src/core/runtime_config.h
 struct RuntimeConfig {
@@ -55,6 +59,7 @@ struct RuntimeConfig {
 ```
 
 ### Step 2: Add to CONFIG_FIELDS registry
+
 ```cpp
 // In src/web/config_field_registry.cpp
 const ConfigFieldDef CONFIG_FIELDS[] = {
@@ -65,11 +70,13 @@ const ConfigFieldDef CONFIG_FIELDS[] = {
 ```
 
 ### Step 3: Update CONFIG_FIELDS_COUNT (automatic)
+
 The count is calculated automatically: `sizeof(CONFIG_FIELDS) / sizeof(CONFIG_FIELDS[0])`
 
 ## Field Path Convention
 
 Use **dot notation** to represent nested JSON structure:
+
 - `"device.owner"` → `{ "device": { "owner": "value" } }`
 - `"buttons.button1.gpio"` → `{ "buttons": { "button1": { "gpio": 4 } } }`
 - `"leds.brightness"` → `{ "leds": { "brightness": 128 } }`
@@ -77,23 +84,29 @@ Use **dot notation** to represent nested JSON structure:
 ## Validation Examples
 
 ### GPIO Validation
+
 ```cpp
 {"device.printerTxPin", ValidationType::GPIO, offsetof(RuntimeConfig, printerTxPin), 0, 0, nullptr, 0}
 ```
+
 - Automatically calls `isValidGPIO()` and `isSafeGPIO()`
 - Generates error: `"device.printerTxPin invalid GPIO pin: 6 - GPIO 6 is used for flash memory"`
 
 ### Range Validation
+
 ```cpp
 {"leds.brightness", ValidationType::RANGE_INT, offsetof(RuntimeConfig, ledBrightness), 0, 255, nullptr, 0}
 ```
+
 - Validates value is between 0-255
 - Generates error: `"leds.brightness must be between 0 and 255"`
 
 ### Enum Validation
+
 ```cpp
 {"buttons.button1.shortAction", ValidationType::ENUM_STRING, offsetof(RuntimeConfig, buttonShortActions[0]), 0, 0, VALID_BUTTON_ACTIONS, VALID_BUTTON_ACTIONS_COUNT}
 ```
+
 - Validates against predefined string array
 - Generates error: `"buttons.button1.shortAction invalid value: INVALID_ACTION"`
 
@@ -105,7 +118,7 @@ The system automatically handles any combination of fields:
 // Update single field
 POST /api/config { "device": { "owner": "NewName" } }
 
-// Update multiple fields across sections  
+// Update multiple fields across sections
 POST /api/config {
     "device": { "timezone": "America/New_York" },
     "leds": { "brightness": 128 },
@@ -119,6 +132,7 @@ POST /api/config { "buttons": { "button2": { "shortAction": "JOKE" } } }
 ## Benefits Over Hardcoded Approach
 
 ### Before (200+ lines per handler)
+
 ```cpp
 if (doc.containsKey("device")) {
     if (!device.containsKey("owner")) {
@@ -136,6 +150,7 @@ if (doc.containsKey("device")) {
 ```
 
 ### After (8 lines total)
+
 ```cpp
 String errorMsg;
 if (!processJsonObject("", doc.as<JsonObject>(), newConfig, errorMsg)) {
@@ -145,6 +160,7 @@ if (!processJsonObject("", doc.as<JsonObject>(), newConfig, errorMsg)) {
 ```
 
 ### Advantages
+
 - ✅ **DRY**: Single field definition, no duplication
 - ✅ **Type Safe**: Compile-time field offsets using `offsetof`
 - ✅ **Maintainable**: Add field = 1 line, not 20+ lines
@@ -156,8 +172,9 @@ if (!processJsonObject("", doc.as<JsonObject>(), newConfig, errorMsg)) {
 ## Error Handling
 
 The system provides detailed, consistent error messages:
+
 - `"Unknown configuration field: invalid.field"`
-- `"device.owner cannot be empty"`  
+- `"device.owner cannot be empty"`
 - `"leds.brightness must be between 0 and 255"`
 - `"buttons.button1.gpio invalid GPIO pin: 6 - GPIO 6 is used for flash memory"`
 
@@ -171,7 +188,7 @@ The system provides detailed, consistent error messages:
 ## Future Enhancements
 
 1. **LED Effects**: Make LED effect configuration data-driven
-2. **Validation Parameters**: Support more complex validation rules  
+2. **Validation Parameters**: Support more complex validation rules
 3. **Conditional Fields**: Fields that depend on other field values
 4. **Array Handling**: Better support for dynamic arrays
 5. **Schema Export**: Generate JSON schema from field definitions

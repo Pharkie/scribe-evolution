@@ -1,6 +1,5 @@
 /* Comprehensive app.css - Single CSS file for entire application */
 
-
 @import "tailwindcss";
 
 /* Tailwind v4 CSS-first configuration */
@@ -588,7 +587,8 @@
 
   /* Scribe Evolution logo entrance animation - inspired by Animata */
   .slide-in-bck-center {
-    animation: scribe-logo-entrance 2s cubic-bezier(0.55, 0.085, 0.68, 0.53) both !important;
+    animation: scribe-logo-entrance 2s cubic-bezier(0.55, 0.085, 0.68, 0.53)
+      both !important;
     /* Ensure animation runs from the beginning */
     animation-delay: 0s !important;
     animation-fill-mode: both !important;
@@ -596,14 +596,14 @@
   }
 
   /* Enhanced form inputs for setup */
-  input[type="text"], 
-  input[type="password"], 
+  input[type="text"],
+  input[type="password"],
   select {
     @apply transition-all duration-200;
   }
 
-  input[type="text"]:focus, 
-  input[type="password"]:focus, 
+  input[type="text"]:focus,
+  input[type="password"]:focus,
   select:focus {
     @apply ring-2 ring-blue-500 border-blue-500 shadow-md;
   }
@@ -778,31 +778,81 @@
     @apply absolute;
   }
 
-  .time-marker-0 { left: 0%; }
-  .time-marker-1 { left: 4.17%; }
-  .time-marker-2 { left: 8.33%; }
-  .time-marker-3 { left: 12.5%; }
-  .time-marker-4 { left: 16.67%; }
-  .time-marker-5 { left: 20.83%; }
-  .time-marker-6 { left: 25%; }
-  .time-marker-7 { left: 29.17%; }
-  .time-marker-8 { left: 33.33%; }
-  .time-marker-9 { left: 37.5%; }
-  .time-marker-10 { left: 41.67%; }
-  .time-marker-11 { left: 45.83%; }
-  .time-marker-12 { left: 50%; }
-  .time-marker-13 { left: 54.17%; }
-  .time-marker-14 { left: 58.33%; }
-  .time-marker-15 { left: 62.5%; }
-  .time-marker-16 { left: 66.67%; }
-  .time-marker-17 { left: 70.83%; }
-  .time-marker-18 { left: 75%; }
-  .time-marker-19 { left: 79.17%; }
-  .time-marker-20 { left: 83.33%; }
-  .time-marker-21 { left: 87.5%; }
-  .time-marker-22 { left: 91.67%; }
-  .time-marker-23 { left: 95.83%; }
-  .time-marker-24 { left: 100%; }
+  .time-marker-0 {
+    left: 0%;
+  }
+  .time-marker-1 {
+    left: 4.17%;
+  }
+  .time-marker-2 {
+    left: 8.33%;
+  }
+  .time-marker-3 {
+    left: 12.5%;
+  }
+  .time-marker-4 {
+    left: 16.67%;
+  }
+  .time-marker-5 {
+    left: 20.83%;
+  }
+  .time-marker-6 {
+    left: 25%;
+  }
+  .time-marker-7 {
+    left: 29.17%;
+  }
+  .time-marker-8 {
+    left: 33.33%;
+  }
+  .time-marker-9 {
+    left: 37.5%;
+  }
+  .time-marker-10 {
+    left: 41.67%;
+  }
+  .time-marker-11 {
+    left: 45.83%;
+  }
+  .time-marker-12 {
+    left: 50%;
+  }
+  .time-marker-13 {
+    left: 54.17%;
+  }
+  .time-marker-14 {
+    left: 58.33%;
+  }
+  .time-marker-15 {
+    left: 62.5%;
+  }
+  .time-marker-16 {
+    left: 66.67%;
+  }
+  .time-marker-17 {
+    left: 70.83%;
+  }
+  .time-marker-18 {
+    left: 75%;
+  }
+  .time-marker-19 {
+    left: 79.17%;
+  }
+  .time-marker-20 {
+    left: 83.33%;
+  }
+  .time-marker-21 {
+    left: 87.5%;
+  }
+  .time-marker-22 {
+    left: 91.67%;
+  }
+  .time-marker-23 {
+    left: 95.83%;
+  }
+  .time-marker-24 {
+    left: 100%;
+  }
 
   /* ========================================
    * ANIMATION UTILITIES - Custom animations
@@ -814,37 +864,37 @@
       transform: translateY(30px) scale(0.8) rotate(-2deg);
       opacity: 0;
     }
-    
+
     20% {
       transform: translateY(10px) scale(1.1) rotate(1deg);
       opacity: 0.6;
     }
-    
+
     30% {
       transform: translateY(-3px) scale(1.4) rotate(-3deg);
       opacity: 0.8;
     }
-    
+
     35% {
       transform: translateY(-3px) scale(1.4) rotate(3deg);
       opacity: 0.8;
     }
-    
+
     40% {
       transform: translateY(-3px) scale(1.4) rotate(-2deg);
       opacity: 0.8;
     }
-    
+
     60% {
       transform: translateY(1px) scale(0.95) rotate(0deg);
       opacity: 0.95;
     }
-    
+
     80% {
       transform: translateY(-0.5px) scale(1.02) rotate(0deg);
       opacity: 1;
     }
-    
+
     100% {
       transform: translateY(0px) scale(1) rotate(0deg);
       opacity: 1;
@@ -914,7 +964,9 @@
 
   /* Settings container transition */
   #unbidden-ink-settings {
-    transition: opacity 0.3s ease, pointer-events 0.3s ease;
+    transition:
+      opacity 0.3s ease,
+      pointer-events 0.3s ease;
   }
 
   /* Disabled state styling */
@@ -1264,7 +1316,7 @@
       border-radius: 1rem 1rem 0 0;
       max-height: 85vh;
     }
-    
+
     #printer-info-overlay {
       padding: 0;
     }
@@ -1279,7 +1331,10 @@
 
   /* Smooth transitions for printer options */
   .printer-option {
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
   }
 
   /* Ensure info icon doesn't interfere with hover effects on desktop */
@@ -1297,7 +1352,9 @@
   .settings-button-container {
     @apply absolute top-0 right-4;
     /* Position to the right of the main content, vertically centered with title */
-    margin-top: calc(1.5rem + 0.5rem); /* Adjust to align with main content top */
+    margin-top: calc(
+      1.5rem + 0.5rem
+    ); /* Adjust to align with main content top */
   }
 
   /* Hide settings button on smaller screens to prevent overlap */

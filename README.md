@@ -17,30 +17,34 @@ It has pressable buttons to save your favourite actions for quick access, and li
 
 ![Scribe Evolution Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
 
-
 ### 🔑 **Features**
+
 - **Physical Buttons**: Dedicated hardware controls for instant content generation
 - **Content Library**: Curated collections of jokes, riddles, quotes, and trivia
 - **LED Effects**: Add an LED strip for lighting awesomeness.
 - **Apple Shortcuts Ready**: Print anything from your iPhone with a tap
 
 ### 🕸️ **Network-First Design**
+
 - **MQTT Integration**: Network multiple printers, print from anywhere in the world
 - **mDNS Discovery**: Access via `http://scribe-[devicename].local` - no IP hunting
 - **Remote Control**: Print from iOS shortcuts, web services, or custom applications
 - **Multi-Device Orchestration**: Coordinate content across multiple Scribe Evolution printers
 
 ### 🤖 **AI-Powered Content Generation**
+
 - **Quick Fun Actions**: Instant jokes, quotes, riddles, weather reports, and daily news briefings
 - **Unbidden Ink**: Scheduled AI-generated content that appears automatically throughout your day
 
 ### 🎛️ **Solid Build**
+
 - **Web-Based Interface**: Responsive design works on phones, tablets, and desktops
 - **Persistent Settings**: NVS storage preserves all configurations across firmware updates
 - **Real-Time Diagnostics**: Monitor system health, memory usage, network status, and hardware
 - **Comprehensive Logging**: Multiple output destinations including BetterStack integration
 
 ### 🛠️ **Developer Experience**
+
 - **Modern Architecture**: Modular C++ codebase with proper separation of concerns
 - **Build Automation**: Integrated npm and PlatformIO workflows
 - **Mock Server**: Local development server for frontend testing without ESP32 rebuilds
@@ -62,24 +66,28 @@ Get your Scribe printer running in minutes with pre-built firmware. No developme
 Building from source? Follow these steps:
 
 #### 1. Hardware Setup
+
 Build your Scribe Evolution printer following the [Hardware Guide](docs/hardware.md). You'll need:
+
 - ESP32-C3 development board
-- CSN-A4L thermal printer  
+- CSN-A4L thermal printer
 - 3D printed enclosure ([download files](https://makerworld.com/en/models/1577165-project-scribe))
 - 5V power supply (2.4A+ recommended)
 
 #### 2. Software Configuration
+
 ```bash
 # Create your configuration file
 cp src/core/config.h.example src/core/config.h
 
 # Edit src/core/config.h with your settings:
 # - WiFi credentials
-# - MQTT broker (optional)  
+# - MQTT broker (optional)
 # - Timezone preferences
 ```
 
 #### 3. Build and Deploy
+
 ```bash
 # Install dependencies
 npm install
@@ -89,12 +97,14 @@ npm run build && pio run --target upload -e main && pio run --target uploadfs -e
 ```
 
 #### 4. Build Firmware for Distribution
+
 ```bash
 # Build clean firmware releases for both board types
 npm run firmware
 ```
 
 ### 4. Access Your Printer
+
 - **Local**: http://scribe-[devicename].local or use IP address from boot message
 - **Remote**: Configure MQTT for printing from anywhere
 
@@ -103,21 +113,25 @@ npm run firmware
 ## 📚 Documentation
 
 ### Getting Started
+
 - **[Build Instructions](docs/build-instructions.md)** - Complete setup guide: PlatformIO, npm, dependencies
 - **[Hardware Guide](docs/hardware.md)** - BOM, wiring, assembly, and 3D printing
 - **[Microcontroller Firmware](docs/microcontroller-firmware.md)** - Development environment and code architecture
 
-### Integration & Automation  
+### Integration & Automation
+
 - **[MQTT Integration](docs/mqtt-integration.md)** - Multi-printer networking and remote control
 - **[Pipedream Integration](docs/pipedream-integration.md)** - Serverless HTTP-to-MQTT bridge
 - **[Apple Shortcuts](docs/apple-shortcuts.md)** - Print from iOS using HTTP-to-MQTT bridges
 
 ### System Administration
-- **[Logging System](docs/logging-system.md)** - Multi-destination logging and monitoring  
+
+- **[Logging System](docs/logging-system.md)** - Multi-destination logging and monitoring
 - **[Configuration System](docs/configuration-system.md)** - Dual-layer config architecture
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues, diagnostics, and solutions
 
 ### Development & Customization
+
 - **[Code Structure](docs/code-structure.md)** - Modular architecture and development guidelines
 - **[LED Effects](docs/led-effects.md)** - Optional LED system with cycle-based effects
 - **[Testing Guide](docs/testing.md)** - Unit testing and validation procedures
@@ -144,12 +158,14 @@ The user interface icons throughout the application are sourced from high-qualit
 open source icon libraries:
 
 **Heroicons** - Modern SVG icons crafted by the makers of Tailwind CSS
+
 - **Repository:** https://github.com/tailwindlabs/heroicons
 - **Authors:** Steve Schoger and Adam Wathan (Refactoring UI Inc.)
 - **License:** MIT License
 - **Copyright:** © 2020 Refactoring UI Inc.
 
 **Sidekick Icons** - Carefully designed outline icons for modern applications
+
 - **Repository:** https://github.com/ndri/sidekickicons
 - **Author:** Andrea Debnar (@ndri)
 - **License:** MIT License

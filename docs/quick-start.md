@@ -5,10 +5,12 @@ Get your Scribe Evolution thermal printer up and running in minutes! This guide 
 ## What You'll Need
 
 ### Required Hardware
+
 - **ESP32-C3 Supermini** or **Lolin32 Lite** board and USB cable
 - **Thermal printer**
 
 ### Optional Hardware (can be added later)
+
 - **Hardware buttons** (for quick actions like printing jokes/riddles)
 - **WS2812B LED strip** (for visual feedback)
 
@@ -30,16 +32,19 @@ Get your Scribe Evolution thermal printer up and running in minutes! This guide 
 You'll need `esptool` to flash the firmware. Choose your preferred method:
 
 ### Option A: Using pip (Recommended)
+
 ```bash
 pip install esptool
 ```
 
 ### Option B: Using Homebrew (macOS)
+
 ```bash
 brew install esptool
 ```
 
 ### Option C: Download binary
+
 Download from [espressif/esptool releases](https://github.com/espressif/esptool/releases)
 
 ## Step 3: Connect Your Board
@@ -49,13 +54,15 @@ Download from [espressif/esptool releases](https://github.com/espressif/esptool/
 
 **Windows**: Check Device Manager → Ports (COM & LPT) → look for something like `COM3`
 
-**macOS**: 
+**macOS**:
+
 ```bash
 ls /dev/cu.*
 # Look for something like /dev/cu.usbserial-0001 or /dev/cu.usbmodem1101
 ```
 
-**Linux**: 
+**Linux**:
+
 ```bash
 ls /dev/ttyUSB* /dev/ttyACM*
 # Usually /dev/ttyUSB0 or /dev/ttyACM0
@@ -68,11 +75,13 @@ ls /dev/ttyUSB* /dev/ttyACM*
 Replace `/dev/ttyUSB0` with your actual port from Step 3.
 
 ### Step 1: Erase flash
+
 ```bash
 esptool --port /dev/ttyUSB0 erase-flash
 ```
 
 ### Step 2: Flash complete firmware
+
 ```bash
 esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-{board}-complete.bin
 ```
@@ -80,18 +89,23 @@ esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-{board}-complet
 Replace `{board}` with either `esp32c3` or `lolin32lite` depending on your hardware.
 
 **Examples:**
+
 - ESP32-C3: `esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-esp32c3-complete.bin`
 - Lolin32: `esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-lolin32lite-complete.bin`
 
 ### Windows Users
+
 Use `COM3` (or your port) instead of `/dev/ttyUSB0`:
+
 ```cmd
 esptool --port COM3 erase-flash
 esptool --port COM3 --baud 460800 write-flash 0x0 scribe-esp32c3-complete.bin
 ```
 
-### macOS Users  
+### macOS Users
+
 Use your specific port (like `/dev/cu.usbserial-0001`) instead of `/dev/ttyUSB0`:
+
 ```bash
 esptool --port /dev/cu.usbserial-0001 erase-flash
 esptool --port /dev/cu.usbserial-0001 --baud 460800 write-flash 0x0 scribe-esp32c3-complete.bin
@@ -141,6 +155,7 @@ Once you find your Scribe Evolution's IP address, bookmark it for easy access!
 **MQTT is optional** - your Scribe Evolution works perfectly fine without it using just the web interface. However, setting up a free private MQTT server unlocks powerful remote capabilities:
 
 ### What MQTT Enables:
+
 - **📱 Remote printing** via Apple Shortcuts, Zapier, or any automation tool
 - **🌍 Print from anywhere in the world** - send a message to your home printer from your office
 - **🖨️ Multi-printer networks** - connect multiple Scribe Evolution devices to share messages
@@ -160,8 +175,9 @@ Once you find your Scribe Evolution's IP address, bookmark it for easy access!
    - Save settings
 
 ### Example Use Cases:
+
 - **Apple Shortcuts**: Create a shortcut that sends your current location to your kitchen printer when you leave work
-- **Multi-printer setup**: Send a grocery list to your kitchen printer AND your spouse's office printer simultaneously  
+- **Multi-printer setup**: Send a grocery list to your kitchen printer AND your spouse's office printer simultaneously
 - **Remote messaging**: Send a "good morning" note to your partner's bedside printer from across the world
 - **Smart home**: Have your security system print alerts to your front hall printer
 
@@ -172,17 +188,21 @@ Each Scribe Evolution can both send messages to other printers AND receive messa
 Your Scribe Evolution is ready! Try these features:
 
 ### Web Interface
+
 - **Home page**: Quick actions (Joke, Riddle, Quote, News, etc.)
 - **Settings page**: Configure everything
 - **Diagnostics page**: View logs and system info
 
 ### Physical Buttons (if connected)
+
 - **Short press**: Quick action (joke, riddle, etc.)
 - **Long press**: Different action (configurable)
 - **LED feedback**: Visual confirmation (if LED strip connected)
 
 ### MQTT Control (if configured)
+
 Send JSON messages to your device's topic:
+
 ```json
 {
   "message": "Hello from the internet!",
@@ -193,28 +213,33 @@ Send JSON messages to your device's topic:
 ## Troubleshooting
 
 ### Device Won't Boot
+
 - Check power supply (thermal printer needs 5V)
 - Verify wiring connections
 - Try re-flashing firmware with `erase_flash` first
 
 ### Can't Connect to Setup Network
+
 - Wait 60 seconds after power-on for setup mode
 - Look for network `Scribe-Setup-XXXXXX`
 - Try restarting the device (power cycle)
 
 ### Printer Not Responding
+
 - Check thermal printer power (needs 5V, not 3.3V)
 - Verify TX/RX wiring (ESP32 TX → Printer RX)
 - Test with a different printer if available
 - Check Settings → Printer for correct GPIO pin
 
 ### Web Interface Not Loading
+
 - Verify device IP address
 - Try `http://scribe-XXXXXX.local` instead of IP
 - Check if device is connected to your WiFi
 - Try accessing via setup mode (Step 6)
 
 ### MQTT Not Working
+
 - Test connection in Settings → MQTT
 - Verify server URL, port, credentials
 - Check firewall settings
@@ -223,22 +248,27 @@ Send JSON messages to your device's topic:
 ## Advanced Usage
 
 ### Custom Content
+
 - **Memos**: Store up to 4 custom messages with placeholder support (`{TIME}`, `{DATE}`)
 - **Unbidden Ink**: AI-generated content on schedule
 - **Custom Actions**: Use hardware buttons for personalized quick actions
 
 ### Hardware Buttons
+
 GPIO pins can be configured for buttons with customizable actions:
+
 - Print specific content types
 - Send MQTT messages
 - Trigger LED effects
 - Custom memo printing
 
 ### LED Effects
+
 WS2812B LED strips can provide visual feedback:
+
 - Rainbow patterns
 - Pulse effects
-- Chase animations  
+- Chase animations
 - Status indicators
 
 ## Advanced: Individual Component Flashing
@@ -246,6 +276,7 @@ WS2812B LED strips can provide visual feedback:
 If you need to flash individual components (for development or troubleshooting), you can use the separate binary files.
 
 ### ESP32-C3 Supermini
+
 ```bash
 # Erase flash first
 esptool --port /dev/ttyUSB0 erase-flash
@@ -259,6 +290,7 @@ esptool --port /dev/ttyUSB0 --baud 460800 write-flash \
 ```
 
 ### Lolin32 Lite
+
 ```bash
 # Erase flash first
 esptool --port /dev/ttyUSB0 erase-flash

@@ -31,6 +31,7 @@ Apple Shortcuts can't send MQTT messages directly, and exposing your Scribe Evol
 ### Pipedream (Recommended)
 
 **Why Pipedream?**
+
 - **Free tier**: 10,000 executions/month (generous for typical usage)
 - **No infrastructure**: Fully serverless
 - **Easy setup**: Simple HTTP webhook configuration
@@ -42,18 +43,21 @@ Apple Shortcuts can't send MQTT messages directly, and exposing your Scribe Evol
 ### Alternative Bridge Services
 
 **n8n**
+
 - More complex setup requiring hosting
 - Better for complex automation workflows
 - Higher ongoing costs ($5-20+/month)
 - Full workflow automation capabilities
 
 **Make.com (formerly Integromat)**
+
 - Visual automation interface
 - 1,000 operations/month on free tier
 - Good for non-technical users
 - More limited free tier
 
 **Zapier**
+
 - Popular automation platform
 - Only 100 tasks/month on free tier
 - Easy setup but limited free usage
@@ -102,6 +106,7 @@ Once you have a bridge service configured, create shortcuts to send messages:
 Create multiple shortcuts for common messages:
 
 **"Print Shopping List"**:
+
 ```json
 {
   "remote_printer": "KitchenPrinter",
@@ -112,9 +117,10 @@ Create multiple shortcuts for common messages:
 ```
 
 **"Print Daily Reminder"**:
+
 ```json
 {
-  "remote_printer": "BedroomPrinter", 
+  "remote_printer": "BedroomPrinter",
   "message": "Good morning! Today's goals:\n- Exercise 30min\n- Read 20min\n- Call family",
   "timestamp": "[Current Date]",
   "sender": "shortcuts_reminder"
@@ -144,31 +150,35 @@ All messages to the bridge service must include:
 ```json
 {
   "remote_printer": "string", // Target printer name (must match config)
-  "timestamp": "string",      // Message timestamp 
-  "message": "string",        // Message content to print
-  "sender": "string"          // Identifier for message source
+  "timestamp": "string", // Message timestamp
+  "message": "string", // Message content to print
+  "sender": "string" // Identifier for message source
 }
 ```
 
 ### Field Specifications
 
 **remote_printer**:
+
 - Must match the printer name configured in your Scribe Evolution's `config.h`
 - Case-sensitive
 - Examples: "KitchenPrinter", "OfficeScribe", "BedroomPrinter"
 
 **timestamp**:
+
 - ISO 8601 format recommended: "2025-01-15T15:30:00"
-- Alternative format: "2025-01-15 15:30:00" 
+- Alternative format: "2025-01-15 15:30:00"
 - Used for message header on printed output
 
 **message**:
+
 - UTF-8 text content to print
 - Line breaks supported with `\n`
 - Maximum length depends on printer paper width
 - Special characters automatically mapped for thermal printing
 
 **sender**:
+
 - Identifier for tracking message source
 - Examples: "shortcuts", "siri", "automation", "ios_app"
 - Helps with debugging and message source tracking
@@ -178,6 +188,7 @@ All messages to the bridge service must include:
 Use Shortcuts variables for dynamic content:
 
 **Current Date/Time**:
+
 ```json
 {
   "timestamp": "[Current Date formatted as 'yyyy-MM-dd HH:mm:ss']"
@@ -185,6 +196,7 @@ Use Shortcuts variables for dynamic content:
 ```
 
 **User Input**:
+
 ```json
 {
   "message": "[Provided Input from Ask for Input action]"
@@ -192,6 +204,7 @@ Use Shortcuts variables for dynamic content:
 ```
 
 **Location Data**:
+
 ```json
 {
   "message": "Location update: [Current Address]"
@@ -203,21 +216,25 @@ Use Shortcuts variables for dynamic content:
 ### Common Issues
 
 **❌ Message not printing**:
+
 - Verify printer name matches configuration exactly
 - Check MQTT broker connectivity
 - Confirm printer is powered on and has paper
 
 **❌ HTTP request fails**:
+
 - Check webhook URL is correct
 - Verify authentication token
 - Ensure Content-Type header is set to application/json
 
 **❌ Invalid JSON error**:
+
 - Validate JSON syntax using a JSON validator
 - Check for missing commas or quotes
 - Ensure all required fields are present
 
 **❌ Authentication errors**:
+
 - Verify Bearer token in Authorization header
 - Check token matches bridge service configuration
 - Ensure token doesn't contain extra spaces
@@ -225,6 +242,7 @@ Use Shortcuts variables for dynamic content:
 ### Testing
 
 **Test from Shortcuts**:
+
 1. Create a simple test shortcut with fixed values
 2. Run manually to verify basic functionality
 3. Check bridge service logs for error messages
@@ -247,6 +265,7 @@ curl -X POST https://your-bridge-webhook-url \
 
 **Monitor MQTT traffic**:
 Use an MQTT client to monitor messages:
+
 ```bash
 mosquitto_sub -h your-mqtt-broker.com -p 8883 \
   -u username -P password \
@@ -256,18 +275,21 @@ mosquitto_sub -h your-mqtt-broker.com -p 8883 \
 ## Security Considerations
 
 ### Token Security
+
 - Use long, random authentication tokens
 - Don't share tokens in screenshots or documentation
 - Rotate tokens periodically
 - Store tokens securely in Shortcuts
 
 ### Network Security
+
 - Bridge services use HTTPS for encrypted communication
 - MQTT broker connections use TLS encryption
 - No direct exposure of your home network required
 - Printer remains on local network only
 
 ### Access Control
+
 - Limit who has access to authentication tokens
 - Monitor bridge service logs for unusual activity
 - Consider IP restrictions if supported by bridge service
@@ -276,24 +298,28 @@ mosquitto_sub -h your-mqtt-broker.com -p 8883 \
 ## Best Practices
 
 ### Shortcut Organization
+
 - Use descriptive names for shortcuts
 - Group related shortcuts in folders
 - Add icons and colors for easy identification
 - Document shortcut purposes in comments
 
 ### Message Content
+
 - Keep messages concise for thermal paper width
 - Use line breaks (`\n`) for readability
 - Include timestamps for context
 - Avoid very long messages that waste paper
 
 ### Error Handling
+
 - Add notification actions to confirm successful sending
 - Include error handling for failed requests
 - Test shortcuts regularly to ensure they still work
 - Have fallback options for critical messages
 
 ### Usage Monitoring
+
 - Monitor bridge service usage against free tier limits
 - Track which shortcuts are used most frequently
 - Review and clean up unused shortcuts regularly

@@ -1,16 +1,20 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings - Scribe Evolution</title>
 
-
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-variable.woff2" crossorigin>
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/outfit-variable.woff2"
+      crossorigin
+    />
 
     <!-- CSS Assets -->
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css" />
 
     <!-- Common JS -->
     <script src="/js/app-common.js"></script>
@@ -20,350 +24,563 @@
 
     <!-- Alpine.js (load last) -->
     <script defer src="/js/alpine.js"></script>
-</head>
+  </head>
 
-<body
+  <body
     class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
-    x-data="$store.settingsOverview" x-init="loadData()">
+    x-data="$store.settingsOverview"
+    x-init="loadData()"
+  >
     <main class="w-full max-w-4xl mx-auto flex-1">
-        <!-- Header with title and back button -->
-        <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
-            <!-- Back button -->
-            <div class="flex-1 flex justify-start">
-                <a href="/"
-                    class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md">
-                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                        </path>
+      <!-- Header with title and back button -->
+      <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
+        <!-- Back button -->
+        <div class="flex-1 flex justify-start">
+          <a
+            href="/"
+            class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md"
+          >
+            <svg
+              class="w-3 h-3 sm:w-4 sm:h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span class="text-xs sm:text-sm font-medium">Home</span>
+          </a>
+        </div>
+
+        <!-- Centered title -->
+        <div class="flex-1 flex justify-center">
+          <h1
+            class="text-3xl sm:text-4xl font-normal text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2"
+          >
+            <svg
+              class="w-7 h-7 sm:w-8 sm:h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              ></path>
+            </svg>
+            <span>Settings</span>
+          </h1>
+        </div>
+
+        <!-- Right spacer -->
+        <div class="flex-1"></div>
+      </header>
+
+      <!-- Error State -->
+      <template x-if="loaded && error">
+        <div
+          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6"
+        >
+          <div class="text-center">
+            <svg
+              class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M6 18 18 6M6 6l12 12"
+              />
+            </svg>
+            <h3
+              class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2"
+            >
+              Error Loading Settings
+            </h3>
+            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+            <button
+              @click="loadData()"
+              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Main Content -->
+      <template x-if="loaded && !error">
+        <div
+          x-data="{ show: false }"
+          x-init="$nextTick(() => show = true)"
+          x-show="show"
+          x-transition.opacity.duration.300ms
+        >
+          <!-- Settings Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Device Settings -->
+            <a
+              href="/settings/device.html"
+              class="block transition-all duration-300 group"
+              :class="deviceSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-blue-600'"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 relative">
+                  <!-- Success checkmark icon -->
+                  <svg
+                    class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
+                    :class="deviceSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <div
+                    class="transition-all duration-300"
+                    :class="deviceSaved ? 'opacity-0' : 'opacity-100'"
+                  >
+                    <!-- Default CPU icon -->
+                    <svg
+                      class="w-8 h-8 text-blue-600 dark:text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-16.5 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z"
+                      ></path>
                     </svg>
-                    <span class="text-xs sm:text-sm font-medium">Home</span>
-                </a>
-            </div>
+                  </div>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold transition-colors duration-300"
+                    :class="deviceSaved ? 'text-white' : 'text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300'"
+                    x-text="deviceSaved ? 'Device settings saved' : 'Device'"
+                  ></h3>
+                  <p
+                    class="text-sm transition-colors duration-300"
+                    :class="deviceSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'"
+                  >
+                    Owner, timezone, hardware GPIO pins
+                  </p>
+                </div>
+              </div>
+            </a>
 
-            <!-- Centered title -->
-            <div class="flex-1 flex justify-center">
-                <h1
-                    class="text-3xl sm:text-4xl font-normal text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2">
-                    <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                        </path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <!-- WiFi Settings -->
+            <a
+              href="/settings/wifi.html"
+              class="block transition-all duration-300 group"
+              :class="wifiSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-green-600'"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 relative">
+                  <!-- Success checkmark icon -->
+                  <svg
+                    class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
+                    :class="wifiSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <div
+                    class="transition-all duration-300"
+                    :class="wifiSaved ? 'opacity-0' : 'opacity-100'"
+                  >
+                    <!-- WiFi icon -->
+                    <svg
+                      class="w-8 h-8 text-green-600 dark:text-green-400"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z"
+                      />
                     </svg>
-                    <span>Settings</span>
-                </h1>
-            </div>
+                  </div>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold transition-colors duration-300"
+                    :class="wifiSaved ? 'text-white' : 'text-green-600 dark:text-green-400 group-hover:text-green-700 dark:group-hover:text-green-300'"
+                    x-text="wifiSaved ? 'WiFi settings saved' : 'WiFi'"
+                  ></h3>
+                  <p
+                    class="text-sm transition-colors duration-300"
+                    :class="wifiSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'"
+                  >
+                    Network configuration and scanning
+                  </p>
+                </div>
+              </div>
+            </a>
 
-            <!-- Right spacer -->
-            <div class="flex-1"></div>
-        </header>
-
-        <!-- Error State -->
-        <template x-if="loaded && error">
-            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
-                <div class="text-center">
-                    <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M6 18 18 6M6 6l12 12" />
+            <!-- MQTT Settings -->
+            <a
+              href="/settings/mqtt.html"
+              class="block transition-all duration-300 group"
+              :class="mqttSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-yellow-600'"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 relative">
+                  <!-- Success checkmark icon -->
+                  <svg
+                    class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
+                    :class="mqttSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <div
+                    class="transition-all duration-300"
+                    :class="mqttSaved ? 'opacity-0' : 'opacity-100'"
+                  >
+                    <!-- MQTT megaphone icon -->
+                    <svg
+                      class="w-8 h-8 text-yellow-600 dark:text-yellow-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46"
+                      ></path>
                     </svg>
-                    <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Settings</h3>
-                    <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
-                    <button @click="loadData()"
-                        class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                        Retry
-                    </button>
+                  </div>
                 </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold transition-colors duration-300"
+                    :class="mqttSaved ? 'text-white' : 'text-yellow-600 dark:text-yellow-400 group-hover:text-yellow-700 dark:group-hover:text-yellow-300'"
+                    x-text="mqttSaved ? 'MQTT settings saved' : 'MQTT'"
+                  ></h3>
+                  <p
+                    class="text-sm transition-colors duration-300"
+                    :class="mqttSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'"
+                  >
+                    Remote printing and device discovery
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- Buttons Settings -->
+            <a
+              href="/settings/buttons.html"
+              class="block transition-all duration-300 group"
+              :class="buttonsSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-cyan-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-cyan-600'"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 relative">
+                  <!-- Success checkmark icon -->
+                  <svg
+                    class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
+                    :class="buttonsSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <div
+                    class="transition-all duration-300"
+                    :class="buttonsSaved ? 'opacity-0' : 'opacity-100'"
+                  >
+                    <!-- Default button icon -->
+                    <svg
+                      class="w-8 h-8 text-cyan-600 dark:text-cyan-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold transition-colors duration-300"
+                    :class="buttonsSaved ? 'text-white' : 'text-cyan-600 dark:text-cyan-400 group-hover:text-cyan-700 dark:group-hover:text-cyan-300'"
+                    x-text="buttonsSaved ? 'Button settings saved' : 'Buttons'"
+                  ></h3>
+                  <p
+                    class="text-sm transition-colors duration-300"
+                    :class="buttonsSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'"
+                  >
+                    Hardware button actions and mappings
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- LED Settings -->
+            <a
+              href="/settings/leds.html"
+              class="block transition-all duration-300 group"
+              :class="ledsSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-pink-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-pink-600'"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 relative">
+                  <!-- Success checkmark icon -->
+                  <svg
+                    class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
+                    :class="ledsSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <div
+                    class="transition-all duration-300"
+                    :class="ledsSaved ? 'opacity-0' : 'opacity-100'"
+                  >
+                    <!-- LED lightbulb icon -->
+                    <svg
+                      class="w-8 h-8 text-pink-600 dark:text-pink-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold transition-colors duration-300"
+                    :class="ledsSaved ? 'text-white' : 'text-pink-600 dark:text-pink-400 group-hover:text-pink-700 dark:group-hover:text-pink-300'"
+                    x-text="ledsSaved ? 'LED settings saved' : 'LEDs'"
+                  ></h3>
+                  <p
+                    class="text-sm transition-colors duration-300"
+                    :class="ledsSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'"
+                  >
+                    Light effects and colors configuration
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- Memos Settings -->
+            <a
+              href="/settings/memos.html"
+              class="block transition-all duration-300 group"
+              :class="memosSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-orange-600'"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 relative">
+                  <!-- Success checkmark icon -->
+                  <svg
+                    class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
+                    :class="memosSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <div
+                    class="transition-all duration-300"
+                    :class="memosSaved ? 'opacity-0' : 'opacity-100'"
+                  >
+                    <!-- Memo/pencil icon -->
+                    <svg
+                      class="w-8 h-8 text-orange-600 dark:text-orange-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold transition-colors duration-300"
+                    :class="memosSaved ? 'text-white' : 'text-orange-600 dark:text-orange-400 group-hover:text-orange-700 dark:group-hover:text-orange-300'"
+                    x-text="memosSaved ? 'Memo settings saved' : 'Memos'"
+                  ></h3>
+                  <p
+                    class="text-sm transition-colors duration-300"
+                    :class="memosSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'"
+                  >
+                    Saved content management with placeholders
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- Unbidden Ink Settings -->
+            <a
+              href="/settings/unbidden-ink.html"
+              class="block transition-all duration-300 group"
+              :class="unbiddenInkSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-purple-600'"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 relative">
+                  <!-- Success checkmark icon -->
+                  <svg
+                    class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
+                    :class="unbiddenInkSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <div
+                    class="transition-all duration-300"
+                    :class="unbiddenInkSaved ? 'opacity-0' : 'opacity-100'"
+                  >
+                    <!-- Robot icon -->
+                    <svg
+                      class="w-8 h-8 text-purple-600 dark:text-purple-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M8 17.75h8m3.5-5.5h.75a1.5 1.5 0 0 1 1.5 1.5v2a1.5 1.5 0 0 1-1.5 1.5h-.75m-15-5h-.75a1.5 1.5 0 0 0-1.5 1.5v2a1.5 1.5 0 0 0 1.5 1.5h.75M12 8V6m1.5-1.5A1.5 1.5 0 0 1 12 6a1.5 1.5 0 0 1-1.5-1.5A1.5 1.5 0 0 1 12 3a1.5 1.5 0 0 1 1.5 1.5zm2.75 8.75a1.5 1.5 0 0 1-1.5 1.5 1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5zm-5.5 0a1.5 1.5 0 0 1-1.5 1.5 1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5zM8.25 8.5h7.5a3.742 3.742 0 0 1 3.75 3.75v5A3.742 3.742 0 0 1 15.75 21h-7.5a3.742 3.742 0 0 1-3.75-3.75v-5A3.742 3.742 0 0 1 8.25 8.5z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold transition-colors duration-300"
+                    :class="unbiddenInkSaved ? 'text-white' : 'text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300'"
+                    x-text="unbiddenInkSaved ? 'Unbidden Ink settings saved' : 'Unbidden Ink'"
+                  ></h3>
+                  <p
+                    class="text-sm transition-colors duration-300"
+                    :class="unbiddenInkSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'"
+                  >
+                    AI-generated content scheduling
+                  </p>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <!-- System Actions -->
+          <div class="mt-12 md:mt-10">
+            <h3
+              class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 text-center"
+            >
+              System Actions
+            </h3>
+            <div class="flex flex-wrap justify-center gap-4">
+              <button
+                class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 opacity-50 cursor-not-allowed"
+              >
+                Restart Device
+              </button>
+              <button
+                class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 opacity-50 cursor-not-allowed"
+              >
+                Factory Reset
+              </button>
+              <button
+                class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 opacity-50 cursor-not-allowed"
+              >
+                Clear NVS Storage
+              </button>
             </div>
-        </template>
-
-        <!-- Main Content -->
-        <template x-if="loaded && !error">
-            <div x-data="{ show: false }" x-init="$nextTick(() => show = true)" x-show="show"
-                x-transition.opacity.duration.300ms>
-                <!-- Settings Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                    <!-- Device Settings -->
-                    <a href="/settings/device.html" class="block transition-all duration-300 group"
-                        :class="deviceSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-blue-600'">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 relative">
-                                <!-- Success checkmark icon -->
-                                <svg class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
-                                    :class="deviceSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <div class="transition-all duration-300"
-                                    :class="deviceSaved ? 'opacity-0' : 'opacity-100'">
-                                    <!-- Default CPU icon -->
-                                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-16.5 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z">
-                                        </path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold transition-colors duration-300"
-                                    :class="deviceSaved ? 'text-white' : 'text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300'"
-                                    x-text="deviceSaved ? 'Device settings saved' : 'Device'">
-                                </h3>
-                                <p class="text-sm transition-colors duration-300"
-                                    :class="deviceSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'">
-                                    Owner, timezone, hardware GPIO pins
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- WiFi Settings -->
-                    <a href="/settings/wifi.html" class="block transition-all duration-300 group"
-                        :class="wifiSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-green-600'">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 relative">
-                                <!-- Success checkmark icon -->
-                                <svg class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
-                                    :class="wifiSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <div class="transition-all duration-300"
-                                    :class="wifiSaved ? 'opacity-0' : 'opacity-100'">
-                                    <!-- WiFi icon -->
-                                    <svg class="w-8 h-8 text-green-600 dark:text-green-400"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold transition-colors duration-300"
-                                    :class="wifiSaved ? 'text-white' : 'text-green-600 dark:text-green-400 group-hover:text-green-700 dark:group-hover:text-green-300'"
-                                    x-text="wifiSaved ? 'WiFi settings saved' : 'WiFi'">
-                                </h3>
-                                <p class="text-sm transition-colors duration-300"
-                                    :class="wifiSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'">
-                                    Network configuration and scanning
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- MQTT Settings -->
-                    <a href="/settings/mqtt.html" class="block transition-all duration-300 group"
-                        :class="mqttSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-yellow-600'">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 relative">
-                                <!-- Success checkmark icon -->
-                                <svg class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
-                                    :class="mqttSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <div class="transition-all duration-300"
-                                    :class="mqttSaved ? 'opacity-0' : 'opacity-100'">
-                                    <!-- MQTT megaphone icon -->
-                                    <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46">
-                                        </path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold transition-colors duration-300"
-                                    :class="mqttSaved ? 'text-white' : 'text-yellow-600 dark:text-yellow-400 group-hover:text-yellow-700 dark:group-hover:text-yellow-300'"
-                                    x-text="mqttSaved ? 'MQTT settings saved' : 'MQTT'">
-                                </h3>
-                                <p class="text-sm transition-colors duration-300"
-                                    :class="mqttSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'">
-                                    Remote printing and device discovery
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Buttons Settings -->
-                    <a href="/settings/buttons.html" class="block transition-all duration-300 group"
-                        :class="buttonsSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-cyan-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-cyan-600'">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 relative">
-                                <!-- Success checkmark icon -->
-                                <svg class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
-                                    :class="buttonsSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <div class="transition-all duration-300"
-                                    :class="buttonsSaved ? 'opacity-0' : 'opacity-100'">
-                                    <!-- Default button icon -->
-                                    <svg class="w-8 h-8 text-cyan-600 dark:text-cyan-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z">
-                                        </path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold transition-colors duration-300"
-                                    :class="buttonsSaved ? 'text-white' : 'text-cyan-600 dark:text-cyan-400 group-hover:text-cyan-700 dark:group-hover:text-cyan-300'"
-                                    x-text="buttonsSaved ? 'Button settings saved' : 'Buttons'">
-                                </h3>
-                                <p class="text-sm transition-colors duration-300"
-                                    :class="buttonsSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'">
-                                    Hardware button actions and mappings
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- LED Settings -->
-                    <a href="/settings/leds.html" class="block transition-all duration-300 group"
-                        :class="ledsSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-pink-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-pink-600'">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 relative">
-                                <!-- Success checkmark icon -->
-                                <svg class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
-                                    :class="ledsSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <div class="transition-all duration-300"
-                                    :class="ledsSaved ? 'opacity-0' : 'opacity-100'">
-                                    <!-- LED lightbulb icon -->
-                                    <svg class="w-8 h-8 text-pink-600 dark:text-pink-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
-                                        </path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold transition-colors duration-300"
-                                    :class="ledsSaved ? 'text-white' : 'text-pink-600 dark:text-pink-400 group-hover:text-pink-700 dark:group-hover:text-pink-300'"
-                                    x-text="ledsSaved ? 'LED settings saved' : 'LEDs'">
-                                </h3>
-                                <p class="text-sm transition-colors duration-300"
-                                    :class="ledsSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'">
-                                    Light effects and colors configuration
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Memos Settings -->
-                    <a href="/settings/memos.html" class="block transition-all duration-300 group"
-                        :class="memosSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-orange-600'">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 relative">
-                                <!-- Success checkmark icon -->
-                                <svg class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
-                                    :class="memosSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <div class="transition-all duration-300"
-                                    :class="memosSaved ? 'opacity-0' : 'opacity-100'">
-                                    <!-- Memo/pencil icon -->
-                                    <svg class="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10">
-                                        </path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold transition-colors duration-300"
-                                    :class="memosSaved ? 'text-white' : 'text-orange-600 dark:text-orange-400 group-hover:text-orange-700 dark:group-hover:text-orange-300'"
-                                    x-text="memosSaved ? 'Memo settings saved' : 'Memos'">
-                                </h3>
-                                <p class="text-sm transition-colors duration-300"
-                                    :class="memosSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'">
-                                    Saved content management with placeholders
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Unbidden Ink Settings -->
-                    <a href="/settings/unbidden-ink.html" class="block transition-all duration-300 group"
-                        :class="unbiddenInkSaved ? 'bg-green-600 hover:bg-green-500 shadow-2xl rounded-3xl p-6' : 'bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-purple-600'">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0 relative">
-                                <!-- Success checkmark icon -->
-                                <svg class="w-8 h-8 text-white absolute inset-0 transition-all duration-300"
-                                    :class="unbiddenInkSaved ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <div class="transition-all duration-300"
-                                    :class="unbiddenInkSaved ? 'opacity-0' : 'opacity-100'">
-                                    <!-- Robot icon -->
-                                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M8 17.75h8m3.5-5.5h.75a1.5 1.5 0 0 1 1.5 1.5v2a1.5 1.5 0 0 1-1.5 1.5h-.75m-15-5h-.75a1.5 1.5 0 0 0-1.5 1.5v2a1.5 1.5 0 0 0 1.5 1.5h.75M12 8V6m1.5-1.5A1.5 1.5 0 0 1 12 6a1.5 1.5 0 0 1-1.5-1.5A1.5 1.5 0 0 1 12 3a1.5 1.5 0 0 1 1.5 1.5zm2.75 8.75a1.5 1.5 0 0 1-1.5 1.5 1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5zm-5.5 0a1.5 1.5 0 0 1-1.5 1.5 1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5zM8.25 8.5h7.5a3.742 3.742 0 0 1 3.75 3.75v5A3.742 3.742 0 0 1 15.75 21h-7.5a3.742 3.742 0 0 1-3.75-3.75v-5A3.742 3.742 0 0 1 8.25 8.5z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold transition-colors duration-300"
-                                    :class="unbiddenInkSaved ? 'text-white' : 'text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300'"
-                                    x-text="unbiddenInkSaved ? 'Unbidden Ink settings saved' : 'Unbidden Ink'">
-                                </h3>
-                                <p class="text-sm transition-colors duration-300"
-                                    :class="unbiddenInkSaved ? 'text-green-100' : 'text-gray-600 dark:text-gray-400'">
-                                    AI-generated content scheduling
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                </div>
-
-                <!-- System Actions -->
-                <div class="mt-12 md:mt-10">
-                    <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 text-center">System Actions
-                    </h3>
-                    <div class="flex flex-wrap justify-center gap-4">
-                        <button
-                            class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 opacity-50 cursor-not-allowed">
-                            Restart Device
-                        </button>
-                        <button
-                            class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 opacity-50 cursor-not-allowed">
-                            Factory Reset
-                        </button>
-                        <button
-                            class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 opacity-50 cursor-not-allowed">
-                            Clear NVS Storage
-                        </button>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">System actions coming soon</p>
-                </div>
-            </div>
-        </template>
-
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center"
+            >
+              System actions coming soon
+            </p>
+          </div>
+        </div>
+      </template>
     </main>
-
-
-</body>
-
+  </body>
 </html>

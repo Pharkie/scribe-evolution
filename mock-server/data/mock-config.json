@@ -1,165 +1,165 @@
 {
-    "device": {
-        "owner": "MockUser",
-        "timezone": "Europe/London",
-        "maxCharacters": 1000,
-        "firmware_version": "1.0.1-dev",
-        "boot_time": "2025-08-21T12:50:47Z",
-        "mdns": "scribe-mockuser.local",
+  "device": {
+    "owner": "MockUser",
+    "timezone": "Europe/London",
+    "maxCharacters": 1000,
+    "firmware_version": "1.0.1-dev",
+    "boot_time": "2025-08-21T12:50:47Z",
+    "mdns": "scribe-mockuser.local",
+    "ip_address": "192.168.1.100",
+    "printer_name": "Mock Scribe Printer",
+    "mqtt_topic": "scribe/MockUser/print",
+    "printerTxPin": 21,
+    "type": "local",
+    "wifi": {
+      "ssid": "MockWiFi-Network",
+      "password": "mo●●●●●●●●en",
+      "connect_timeout": 15000,
+      "fallback_ap_ssid": "Scribe-setup",
+      "fallback_ap_password": "scribe123",
+      "fallback_ap_mdns": "scribe-mockuser.local",
+      "fallback_ap_ip": "192.168.4.1",
+      "status": {
+        "connected": true,
+        "ap_mode": false,
         "ip_address": "192.168.1.100",
-        "printer_name": "Mock Scribe Printer",
-        "mqtt_topic": "scribe/MockUser/print",
-        "printerTxPin": 21,
-        "type": "local",
-        "wifi": {
-            "ssid": "MockWiFi-Network",
-            "password": "mo●●●●●●●●en",
-            "connect_timeout": 15000,
-            "fallback_ap_ssid": "Scribe-setup",
-            "fallback_ap_password": "scribe123",
-            "fallback_ap_mdns": "scribe-mockuser.local",
-            "fallback_ap_ip": "192.168.4.1",
-            "status": {
-                "connected": true,
-                "ap_mode": false,
-                "ip_address": "192.168.1.100",
-                "mac_address": "AA:BB:CC:DD:EE:FF",
-                "gateway": "192.168.1.1",
-                "dns": "192.168.1.1",
-                "signal_strength": "-45 dBm (Good)"
-            }
-        }
-    },
-    "mqtt": {
-        "enabled": true,
-        "server": "mock-mqtt.example.com",
-        "port": 1883,
-        "username": "mock_user",
-        "password": "mo●●●●●●●●rd",
-        "connected": true
-    },
-    "unbiddenInk": {
-        "enabled": true,
-        "startHour": 10,
-        "endHour": 16,
-        "frequencyMinutes": 60,
-        "prompt": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
-        "chatgptApiToken": "sk●●●●●●●●ty",
-        "nextScheduled": "< 1 min",
-        "promptPresets": {
-            "creative": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
-            "wisdom": "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
-            "humor": "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining.",
-            "doctorwho": "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone."
-        }
-    },
-    "buttons": {
-        "count": 4,
-        "debounce_time": 50,
-        "long_press_time": 2000,
-        "active_low": true,
-        "min_interval": 3000,
-        "max_per_minute": 20,
-        "button1": {
-            "gpio": 5,
-            "shortAction": "JOKE",
-            "shortMqttTopic": "",
-            "longAction": "CHARACTER_TEST",
-            "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
-        },
-        "button2": {
-            "gpio": 6,
-            "shortAction": "RIDDLE",
-            "shortMqttTopic": "",
-            "longAction": "",
-            "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
-        },
-        "button3": {
-            "gpio": 7,
-            "shortAction": "QUOTE",
-            "shortMqttTopic": "",
-            "longAction": "",
-            "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
-        },
-        "button4": {
-            "gpio": -1,
-            "shortAction": "QUIZ",
-            "shortMqttTopic": "",
-            "longAction": "",
-            "longMqttTopic": "",
-            "shortLedEffect": "chase_single",
-            "longLedEffect": "pulse"
-        }
-    },
-    "leds": {
-        "enabled": true,
-        "pin": 20,
-        "count": 30,
-        "brightness": 100,
-        "refreshRate": 60,
-        "effectDefaults": {
-            "chase_single": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#0062ff"]
-            },
-            "chase_multi": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#ff0000", "#00ff00", "#0000ff"]
-            },
-            "matrix": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#00ff00"]
-            },
-            "twinkle": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#ffff00"]
-            },
-            "pulse": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#800080"]
-            },
-            "rainbow": {
-                "speed": 50,
-                "intensity": 50,
-                "cycles": 3,
-                "colors": ["#ff0000"]
-            }
-        }
-    },
-    "gpio": {
-        "availablePins": [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
-        "safePins": [-1, 2, 4, 5, 6, 7, 10, 20, 21],
-        "pinDescriptions": {
-            "-1": "Not connected",
-            "0": "Strapping pin at boot, avoid",
-            "1": "TX for UART0 (USB-Serial), avoid",
-            "2": "Safe",
-            "3": "RX for UART0 (USB-Serial), avoid",
-            "4": "Safe",
-            "5": "Safe",
-            "6": "Safe",
-            "7": "Safe",
-            "8": "Onboard LED, avoid",
-            "9": "Strapping pin, avoid",
-            "10": "Safe",
-            "20": "UART1 TX - Safe",
-            "21": "UART1 RX - Safe"
-        }
+        "mac_address": "AA:BB:CC:DD:EE:FF",
+        "gateway": "192.168.1.1",
+        "dns": "192.168.1.1",
+        "signal_strength": "-45 dBm (Good)"
+      }
     }
+  },
+  "mqtt": {
+    "enabled": true,
+    "server": "mock-mqtt.example.com",
+    "port": 1883,
+    "username": "mock_user",
+    "password": "mo●●●●●●●●rd",
+    "connected": true
+  },
+  "unbiddenInk": {
+    "enabled": true,
+    "startHour": 10,
+    "endHour": 16,
+    "frequencyMinutes": 60,
+    "prompt": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+    "chatgptApiToken": "sk●●●●●●●●ty",
+    "nextScheduled": "< 1 min",
+    "promptPresets": {
+      "creative": "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.",
+      "wisdom": "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.",
+      "humor": "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining.",
+      "doctorwho": "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone."
+    }
+  },
+  "buttons": {
+    "count": 4,
+    "debounce_time": 50,
+    "long_press_time": 2000,
+    "active_low": true,
+    "min_interval": 3000,
+    "max_per_minute": 20,
+    "button1": {
+      "gpio": 5,
+      "shortAction": "JOKE",
+      "shortMqttTopic": "",
+      "longAction": "CHARACTER_TEST",
+      "longMqttTopic": "",
+      "shortLedEffect": "chase_single",
+      "longLedEffect": "pulse"
+    },
+    "button2": {
+      "gpio": 6,
+      "shortAction": "RIDDLE",
+      "shortMqttTopic": "",
+      "longAction": "",
+      "longMqttTopic": "",
+      "shortLedEffect": "chase_single",
+      "longLedEffect": "pulse"
+    },
+    "button3": {
+      "gpio": 7,
+      "shortAction": "QUOTE",
+      "shortMqttTopic": "",
+      "longAction": "",
+      "longMqttTopic": "",
+      "shortLedEffect": "chase_single",
+      "longLedEffect": "pulse"
+    },
+    "button4": {
+      "gpio": -1,
+      "shortAction": "QUIZ",
+      "shortMqttTopic": "",
+      "longAction": "",
+      "longMqttTopic": "",
+      "shortLedEffect": "chase_single",
+      "longLedEffect": "pulse"
+    }
+  },
+  "leds": {
+    "enabled": true,
+    "pin": 20,
+    "count": 30,
+    "brightness": 100,
+    "refreshRate": 60,
+    "effectDefaults": {
+      "chase_single": {
+        "speed": 50,
+        "intensity": 50,
+        "cycles": 3,
+        "colors": ["#0062ff"]
+      },
+      "chase_multi": {
+        "speed": 50,
+        "intensity": 50,
+        "cycles": 3,
+        "colors": ["#ff0000", "#00ff00", "#0000ff"]
+      },
+      "matrix": {
+        "speed": 50,
+        "intensity": 50,
+        "cycles": 3,
+        "colors": ["#00ff00"]
+      },
+      "twinkle": {
+        "speed": 50,
+        "intensity": 50,
+        "cycles": 3,
+        "colors": ["#ffff00"]
+      },
+      "pulse": {
+        "speed": 50,
+        "intensity": 50,
+        "cycles": 3,
+        "colors": ["#800080"]
+      },
+      "rainbow": {
+        "speed": 50,
+        "intensity": 50,
+        "cycles": 3,
+        "colors": ["#ff0000"]
+      }
+    }
+  },
+  "gpio": {
+    "availablePins": [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21],
+    "safePins": [-1, 2, 4, 5, 6, 7, 10, 20, 21],
+    "pinDescriptions": {
+      "-1": "Not connected",
+      "0": "Strapping pin at boot, avoid",
+      "1": "TX for UART0 (USB-Serial), avoid",
+      "2": "Safe",
+      "3": "RX for UART0 (USB-Serial), avoid",
+      "4": "Safe",
+      "5": "Safe",
+      "6": "Safe",
+      "7": "Safe",
+      "8": "Onboard LED, avoid",
+      "9": "Strapping pin, avoid",
+      "10": "Safe",
+      "20": "UART1 TX - Safe",
+      "21": "UART1 RX - Safe"
+    }
+  }
 }

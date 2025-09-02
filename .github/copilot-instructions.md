@@ -28,12 +28,14 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 ## Build System
 
 ### Pre-commit Requirements
-- `npm run build-css && npm run build-js-prod` 
+
+- `npm run build-css && npm run build-js-prod`
 - Ensure `config.h` exists (copy from `config.h.example`)
 - `pio check` for static analysis
 - `pio test` for unit tests
 
 ### Key Commands
+
 - **Build**: `pio run -e main`
 - **Upload**: `pio run --target upload_main -e main`
 - **Test**: `pio test -e test`
@@ -42,6 +44,7 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 ## Core Principles
 
 ### DRY (Don't Repeat Yourself) - CRITICAL
+
 - Define shared values once in headers (nvs_keys.h, shared_types.h)
 - Use constants for strings used in multiple files
 - Extract common functionality to utilities
@@ -50,6 +53,7 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 - No "backwards compatibility". There must only be one and exactly one way of doing things, consistent across the whole app.
 
 ### Code Standards
+
 - **Files**: Keep under 800 lines, use modular architecture
 - **Naming**: camelCase functions, PascalCase classes
 - **Memory**: Minimize heap allocations, prefer stack/static
@@ -60,12 +64,14 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 ## Hardware & Features
 
 ### ESP32-C3 Configuration
+
 - Target: `esp32-c3-devkitc-02`
 - GPIO 0-21
 - 4MB flash with LittleFS
 - Thermal printer via UART
 
 ### Key Features
+
 - **Web Interface**: Responsive design, dark mode, toast feedback
 - **LED Effects**: 6 effects (simple_chase, rainbow, twinkle, chase, pulse, matrix)
 - **Content Generation**: ChatGPT integration, quick actions, Unbidden Ink scheduling
@@ -74,7 +80,9 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 ## Testing & Development
 
 ### Task Suitability
+
 **Good for Copilot:**
+
 - Bug fixes with clear reproduction steps
 - UI improvements and responsive design fixes
 - Feature additions with well-defined requirements
@@ -82,6 +90,7 @@ ESP32-C3 thermal printer with web interface, LED effects, and MQTT integration.
 - Unit test additions
 
 **Handle Manually:**
+
 - Hardware debugging and printer communication
 - WiFi/network environment setup
 - Major architecture changes

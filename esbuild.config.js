@@ -1,80 +1,82 @@
-const esbuild = require('esbuild');
-const fs = require('fs');
-const path = require('path');
+const esbuild = require("esbuild");
+const fs = require("fs");
+const path = require("path");
 
 // esbuild plugins for proper bundling
 const multiEntryPlugin = {
-  name: 'multi-entry',
+  name: "multi-entry",
   setup(build) {
     build.onResolve({ filter: /^multi-entry:/ }, (args) => {
-      const files = args.path.replace('multi-entry:', '').split(',');
+      const files = args.path.replace("multi-entry:", "").split(",");
       return {
         path: args.path,
-        namespace: 'multi-entry',
-        pluginData: { files }
+        namespace: "multi-entry",
+        pluginData: { files },
       };
     });
 
-    build.onLoad({ filter: /.*/, namespace: 'multi-entry' }, (args) => {
+    build.onLoad({ filter: /.*/, namespace: "multi-entry" }, (args) => {
       const files = args.pluginData.files;
-      const contents = files.map((file, index) => {
-        const filePath = file.trim();
-        // Check if file exists and read it directly
-        if (fs.existsSync(filePath)) {
-          return fs.readFileSync(filePath, 'utf8');
-        } else {
-          console.warn(`Warning: File not found: ${filePath}`);
-          return `// File not found: ${filePath}`;
-        }
-      }).join('\n\n');
-      
+      const contents = files
+        .map((file, index) => {
+          const filePath = file.trim();
+          // Check if file exists and read it directly
+          if (fs.existsSync(filePath)) {
+            return fs.readFileSync(filePath, "utf8");
+          } else {
+            console.warn(`Warning: File not found: ${filePath}`);
+            return `// File not found: ${filePath}`;
+          }
+        })
+        .join("\n\n");
+
       return {
         contents,
-        loader: 'js'
+        loader: "js",
       };
     });
-  }
+  },
 };
 
 // Enhanced bundling function
 async function buildWithEsbuild(config) {
   const { input, output, minify = false } = config;
-  
-  console.log(`🚀 Bundling: ${input.join(', ')} -> ${output}`);
-  
+
+  console.log(`🚀 Bundling: ${input.join(", ")} -> ${output}`);
+
   try {
     let entryPoint;
     if (input.length === 1) {
       entryPoint = input[0];
     } else {
       // Use virtual multi-entry for multiple files
-      entryPoint = `multi-entry:${input.join(',')}`;
+      entryPoint = `multi-entry:${input.join(",")}`;
     }
-    
+
     const result = await esbuild.build({
       entryPoints: [entryPoint],
       bundle: true,
       minify: minify,
       treeShaking: true,
-      target: 'es2017',
-      format: 'iife',
-      platform: 'browser',
+      target: "es2017",
+      format: "iife",
+      platform: "browser",
       outfile: output,
       sourcemap: false,
       plugins: input.length > 1 ? [multiEntryPlugin] : [], // Only use multi-entry for legacy concatenation
       // Optimize for browser
-      legalComments: 'none',
+      legalComments: "none",
       // Don't bundle external dependencies (Alpine.js etc)
       external: [], // We'll handle Alpine separately
       // Better minification
       keepNames: false,
       write: true,
-      logLevel: 'silent'
+      logLevel: "silent",
     });
-    
+
     const stats = fs.statSync(output);
     console.log(`✅ ${output} (${stats.size} bytes)`);
-    
+
     return result;
   } catch (error) {
     console.error(`❌ Failed to bundle ${output}:`, error.message);
@@ -86,186 +88,179 @@ async function buildWithEsbuild(config) {
 const buildConfigs = {
   // Alpine.js library - just copy the file
   alpine: {
-    input: ['node_modules/alpinejs/dist/cdn.min.js'],
-    output: 'data/js/alpine.js',
+    input: ["node_modules/alpinejs/dist/cdn.min.js"],
+    output: "data/js/alpine.js",
     minify: false, // Already minified
   },
 
   alpineProd: {
-    input: ['node_modules/alpinejs/dist/cdn.min.js'],
-    output: 'data/js/alpine.js',
+    input: ["node_modules/alpinejs/dist/cdn.min.js"],
+    output: "data/js/alpine.js",
     minify: false, // Already minified
   },
 
-  // Common app bundle 
+  // Common app bundle
   common: {
-    input: [
-      'src/data/js/icons.js', 
-      'src/data/js/app-common.js'
-    ],
-    output: 'data/js/app-common.js',
+    input: ["src/data/js/icons.js", "src/data/js/app-common.js"],
+    output: "data/js/app-common.js",
     minify: false,
   },
 
   commonProd: {
-    input: [
-      'src/data/js/icons.js',
-      'src/data/js/app-common.js'
-    ],
-    output: 'data/js/app-common.js',
+    input: ["src/data/js/icons.js", "src/data/js/app-common.js"],
+    output: "data/js/app-common.js",
     minify: true,
   },
 
-  // Page-specific bundles  
+  // Page-specific bundles
   index: {
-    input: ['src/data/js/pages/index.js'], // Single ES6 module entry point
-    output: 'data/js/page-index.js',
+    input: ["src/data/js/pages/index.js"], // Single ES6 module entry point
+    output: "data/js/page-index.js",
     minify: false,
   },
 
   indexProd: {
-    input: ['src/data/js/pages/index.js'], // Single ES6 module entry point
-    output: 'data/js/page-index.js', 
+    input: ["src/data/js/pages/index.js"], // Single ES6 module entry point
+    output: "data/js/page-index.js",
     minify: true,
   },
 
-
   diagnostics: {
-    input: ['src/data/js/pages/diagnostics.js'], // Single ES6 module entry point
-    output: 'data/js/page-diagnostics.js',
+    input: ["src/data/js/pages/diagnostics.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics.js",
     minify: false,
   },
 
   diagnosticsProd: {
-    input: ['src/data/js/pages/diagnostics.js'], // Single ES6 module entry point
-    output: 'data/js/page-diagnostics.js',
+    input: ["src/data/js/pages/diagnostics.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics.js",
     minify: true,
   },
 
   setup: {
-    input: ['src/data/js/pages/setup.js'], // Single ES6 module entry point
-    output: 'data/js/page-setup.js',
+    input: ["src/data/js/pages/setup.js"], // Single ES6 module entry point
+    output: "data/js/page-setup.js",
     minify: false,
   },
 
   setupProd: {
-    input: ['src/data/js/pages/setup.js'], // Single ES6 module entry point
-    output: 'data/js/page-setup.js',
+    input: ["src/data/js/pages/setup.js"], // Single ES6 module entry point
+    output: "data/js/page-setup.js",
     minify: true,
   },
 
-  '404': {
-    input: ['src/data/js/pages/404.js'], // Single ES6 module entry point
-    output: 'data/js/page-404.js',
+  404: {
+    input: ["src/data/js/pages/404.js"], // Single ES6 module entry point
+    output: "data/js/page-404.js",
     minify: false,
   },
 
-  '404Prod': {
-    input: ['src/data/js/pages/404.js'], // Single ES6 module entry point
-    output: 'data/js/page-404.js',
+  "404Prod": {
+    input: ["src/data/js/pages/404.js"], // Single ES6 module entry point
+    output: "data/js/page-404.js",
     minify: true,
   },
 
   // Device settings page
   device: {
-    input: ['src/data/js/pages/settings-device.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-device.js',
+    input: ["src/data/js/pages/settings-device.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-device.js",
     minify: false,
   },
 
   deviceProd: {
-    input: ['src/data/js/pages/settings-device.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-device.js',
+    input: ["src/data/js/pages/settings-device.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-device.js",
     minify: true,
   },
 
   // WiFi settings page
   wifi: {
-    input: ['src/data/js/pages/settings-wifi.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-wifi.js',
+    input: ["src/data/js/pages/settings-wifi.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-wifi.js",
     minify: false,
   },
 
   wifiProd: {
-    input: ['src/data/js/pages/settings-wifi.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-wifi.js',
+    input: ["src/data/js/pages/settings-wifi.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-wifi.js",
     minify: true,
   },
 
   // MQTT settings page
   mqtt: {
-    input: ['src/data/js/pages/settings-mqtt.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-mqtt.js',
+    input: ["src/data/js/pages/settings-mqtt.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-mqtt.js",
     minify: false,
   },
 
   mqttProd: {
-    input: ['src/data/js/pages/settings-mqtt.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-mqtt.js',
+    input: ["src/data/js/pages/settings-mqtt.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-mqtt.js",
     minify: true,
   },
 
   // Settings overview page
   overview: {
-    input: ['src/data/js/pages/settings-overview.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-overview.js',
+    input: ["src/data/js/pages/settings-overview.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-overview.js",
     minify: false,
   },
 
   overviewProd: {
-    input: ['src/data/js/pages/settings-overview.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-overview.js',
+    input: ["src/data/js/pages/settings-overview.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-overview.js",
     minify: true,
   },
 
   // Memos settings page
   memos: {
-    input: ['src/data/js/pages/settings-memos.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-memos.js',
+    input: ["src/data/js/pages/settings-memos.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-memos.js",
     minify: false,
   },
 
   memosProd: {
-    input: ['src/data/js/pages/settings-memos.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-memos.js',
+    input: ["src/data/js/pages/settings-memos.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-memos.js",
     minify: true,
   },
 
   // Buttons settings page
   buttons: {
-    input: ['src/data/js/pages/settings-buttons.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-buttons.js',
+    input: ["src/data/js/pages/settings-buttons.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-buttons.js",
     minify: false,
   },
 
   buttonsProd: {
-    input: ['src/data/js/pages/settings-buttons.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-buttons.js',
+    input: ["src/data/js/pages/settings-buttons.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-buttons.js",
     minify: true,
   },
 
   leds: {
-    input: ['src/data/js/pages/settings-leds.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-leds.js',
+    input: ["src/data/js/pages/settings-leds.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-leds.js",
     minify: false,
   },
 
   ledsProd: {
-    input: ['src/data/js/pages/settings-leds.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-leds.js',
+    input: ["src/data/js/pages/settings-leds.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-leds.js",
     minify: true,
   },
 
   // Unbidden Ink settings page
-  'unbidden-ink': {
-    input: ['src/data/js/pages/settings-unbidden-ink.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-unbidden-ink.js',
+  "unbidden-ink": {
+    input: ["src/data/js/pages/settings-unbidden-ink.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-unbidden-ink.js",
     minify: false,
   },
 
-  'unbidden-inkProd': {
-    input: ['src/data/js/pages/settings-unbidden-ink.js'], // Single ES6 module entry point
-    output: 'data/js/page-settings-unbidden-ink.js',
+  "unbidden-inkProd": {
+    input: ["src/data/js/pages/settings-unbidden-ink.js"], // Single ES6 module entry point
+    output: "data/js/page-settings-unbidden-ink.js",
     minify: true,
   },
 };
@@ -280,12 +275,12 @@ async function build(configName) {
 
   try {
     console.log(`Building ${configName}...`);
-    
+
     // Special handling for Alpine.js bundle - just copy
-    if (configName === 'alpine') {
+    if (configName === "alpine") {
       const sourceFile = config.input[0];
       const targetFile = config.output;
-      
+
       if (fs.existsSync(sourceFile)) {
         fs.copyFileSync(sourceFile, targetFile);
         const stats = fs.statSync(targetFile);
@@ -303,12 +298,12 @@ async function build(configName) {
 }
 
 async function buildAll(production = false) {
-  const suffix = production ? 'Prod' : '';
+  const suffix = production ? "Prod" : "";
   const configs = [
     `alpine${suffix}`,
     `common${suffix}`,
     `index${suffix}`,
-    `diagnostics${suffix}`, 
+    `diagnostics${suffix}`,
     `setup${suffix}`,
     `404${suffix}`,
     `device${suffix}`,
@@ -318,16 +313,16 @@ async function buildAll(production = false) {
     `memos${suffix}`,
     `buttons${suffix}`,
     `leds${suffix}`,
-    `unbidden-ink${suffix}`
+    `unbidden-ink${suffix}`,
   ];
 
   console.log(`Building all configs (production: ${production})...`);
-  
+
   for (const config of configs) {
     await build(config);
   }
-  
-  console.log('🎉 All builds completed successfully!');
+
+  console.log("🎉 All builds completed successfully!");
 }
 
 // Command line interface
@@ -335,19 +330,21 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const command = args[0];
 
-  if (command === 'all') {
+  if (command === "all") {
     buildAll(false);
-  } else if (command === 'prod') {
-    buildAll(true);  
+  } else if (command === "prod") {
+    buildAll(true);
   } else if (command && buildConfigs[command]) {
     build(command);
   } else {
-    console.log('Usage:');
-    console.log('  node esbuild.config.js all     # Build all configs (dev)');
-    console.log('  node esbuild.config.js prod    # Build all configs (production)');
-    console.log('  node esbuild.config.js <name>  # Build specific config');
-    console.log('');
-    console.log('Available configs:', Object.keys(buildConfigs).join(', '));
+    console.log("Usage:");
+    console.log("  node esbuild.config.js all     # Build all configs (dev)");
+    console.log(
+      "  node esbuild.config.js prod    # Build all configs (production)",
+    );
+    console.log("  node esbuild.config.js <name>  # Build specific config");
+    console.log("");
+    console.log("Available configs:", Object.keys(buildConfigs).join(", "));
   }
 }
 

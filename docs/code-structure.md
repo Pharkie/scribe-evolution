@@ -328,7 +328,6 @@ settings:
 ### Adding New Features
 
 1. **Identify the Appropriate Directory**:
-
    - Core system functionality → `src/core/`
    - Web endpoints or HTTP handling → `src/web/`
    - Content generation → `src/content/`
@@ -336,14 +335,12 @@ settings:
    - Shared utilities → `src/utils/`
 
 2. **Follow Naming Conventions**:
-
    - Use descriptive file names that match functionality
    - Header files (`.h`) contain declarations
    - Source files (`.cpp`) contain implementations
    - Match header and source file names
 
 3. **Include Path Structure**:
-
    - Use relative paths from `src/` directory
    - Example: `#include "core/config.h"` from main.cpp
    - Example: `#include "../core/logging.h"` from subdirectories
@@ -364,21 +361,18 @@ settings:
 ### Web Asset Development
 
 1. **File Organization**:
-
    - Place CSS files in `/data/css/`
    - Place HTML files in `/data/html/`
    - Place JavaScript files in `/data/js/`
    - Place resources in `/data/resources/`
 
 2. **JavaScript Modularity**:
-
    - Keep modules focused and under 300 lines when possible
    - Use clear, descriptive function names
    - Avoid global variables; use module-specific scoping
    - Document function purposes with JSDoc comments
 
 3. **HTML Templates**:
-
    - Use semantic HTML with proper accessibility
    - Include `data-field` attributes for dynamic content
    - Maintain consistent CSS class usage

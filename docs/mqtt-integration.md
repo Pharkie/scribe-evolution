@@ -5,6 +5,7 @@ This document covers MQTT configuration, remote printing setup, and message form
 ## Overview
 
 The Scribe Evolution MQTT integration enables:
+
 - **Remote printing** between multiple Scribe Evolution devices
 - **Unified web interface** for local and remote printer control
 - **Secure TLS communication** via cloud MQTT brokers
@@ -14,18 +15,21 @@ The Scribe Evolution MQTT integration enables:
 ## Features
 
 ### Multi-Printer Support
+
 - Configure multiple remote Scribe Evolution printers in `config.h`
 - Single web interface controls all configured printers
 - Printer selection in web UI
 - Automatic printer discovery and status monitoring
 
 ### Secure Communication
+
 - TLS encryption (port 8883) for secure MQTT communication
 - Anonymous TLS mode (no certificate verification required)
 - Compatible with cloud MQTT brokers like HiveMQ Cloud
 - 4096-byte message buffer for large content
 
 ### Content Distribution
+
 - All quick action buttons work with remote printers
 - Unified endpoint system processes both local and MQTT requests
 - Watchdog timer integration prevents system crashes during content generation
@@ -66,10 +70,11 @@ static const int numOtherPrinters = 3;
 ### Topic Naming Convention
 
 Use a consistent topic structure:
+
 - **Pattern**: `scribeprinter/{unique-id}/inbox`
 - **Examples**:
   - `scribeprinter/alice/inbox`
-  - `scribeprinter/office-main/inbox` 
+  - `scribeprinter/office-main/inbox`
   - `scribeprinter/kitchen-home/inbox`
 
 This ensures topics are unique and organized for easy management.
@@ -82,14 +87,15 @@ For direct text printing:
 
 ```json
 {
-    "message": "Your text content to print"
+  "message": "Your text content to print"
 }
 ```
 
 **Example**:
+
 ```json
 {
-    "message": "Remember to pick up groceries: milk, bread, eggs"
+  "message": "Remember to pick up groceries: milk, bread, eggs"
 }
 ```
 
@@ -119,6 +125,7 @@ These endpoints trigger the same functionality as the web interface quick action
 ### Printer Selection
 
 The web interface includes a printer selection dropdown:
+
 - **Local Direct** - Print directly to local printer (bypasses MQTT)
 - **Local via MQTT** - Print to local printer via MQTT (useful for testing)
 - **Remote Printers** - All configured remote printers from `config.h`
@@ -126,9 +133,10 @@ The web interface includes a printer selection dropdown:
 ### Quick Action Buttons
 
 All quick actions work with any selected printer:
+
 - **🧩 Riddle** - Random riddle from built-in collection (545+ riddles)
 - **😂 Joke** - Dad joke from icanhazdadjoke.com API
-- **💭 Quote** - Inspirational quote from ZenQuotes.io API  
+- **💭 Quote** - Inspirational quote from ZenQuotes.io API
 - **🧠 Quiz** - Trivia question from The Trivia API
 - **🔤 Test Print** - Comprehensive character set test for calibration
 
@@ -144,12 +152,14 @@ All quick actions work with any selected printer:
 ### HiveMQ Cloud (Recommended)
 
 **Free Tier Features**:
+
 - 100 MQTT connections
 - 1GB data transfer/month
 - TLS encryption included
 - Web dashboard for monitoring
 
 **Setup Steps**:
+
 1. Create account at [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/)
 2. Create cluster and note connection details
 3. Create credentials for your devices
@@ -158,16 +168,19 @@ All quick actions work with any selected printer:
 ### Other Cloud Brokers
 
 **AWS IoT Core**:
+
 - Part of AWS ecosystem
 - Certificate-based authentication
 - Pay-per-use pricing
 
 **Azure IoT Hub**:
+
 - Microsoft's IoT platform
 - Device management features
 - Free tier available
 
 **Self-Hosted Options**:
+
 - **Mosquitto** - Lightweight, popular choice
 - **EMQX** - High-performance, web dashboard
 - **VerneMQ** - Distributed, scalable
@@ -179,6 +192,7 @@ All quick actions work with any selected printer:
 Test your setup with MQTT client tools:
 
 **Command line (mosquitto_pub)**:
+
 ```bash
 mosquitto_pub -h your-broker.hivemq.cloud -p 8883 \
   -u your-username -P your-password \
@@ -187,6 +201,7 @@ mosquitto_pub -h your-broker.hivemq.cloud -p 8883 \
 ```
 
 **GUI Clients**:
+
 - **MQTT Explorer** - Visual topic browser
 - **MQTTX** - Cross-platform client
 - **HiveMQ Web Client** - Browser-based testing
@@ -194,6 +209,7 @@ mosquitto_pub -h your-broker.hivemq.cloud -p 8883 \
 ### Diagnostic Information
 
 The Scribe Evolution web interface provides MQTT diagnostic information:
+
 - Connection status
 - Subscribed topics
 - Last message timestamp
@@ -202,18 +218,21 @@ The Scribe Evolution web interface provides MQTT diagnostic information:
 ## Security Considerations
 
 ### Network Security
+
 - Always use TLS encryption (port 8883)
 - Avoid plain MQTT (port 1883) for production
 - Use strong, unique passwords for MQTT credentials
 - Consider firewall rules for self-hosted brokers
 
 ### Topic Security
+
 - Use unique, non-guessable topic names
 - Consider topic-based access control if supported by broker
 - Monitor for unauthorized access in broker logs
 - Rotate credentials periodically
 
 ### Content Security
+
 - Validate message content before printing
 - Consider message size limits to prevent abuse
 - Monitor for spam or inappropriate content
@@ -224,12 +243,14 @@ The Scribe Evolution web interface provides MQTT diagnostic information:
 ### Connection Issues
 
 **Can't connect to MQTT broker**:
+
 - Check network connectivity
 - Verify broker hostname and port
 - Confirm credentials are correct
 - Check TLS certificate issues
 
 **Frequent disconnections**:
+
 - Check network stability
 - Verify broker connection limits
 - Monitor broker logs for errors
@@ -238,12 +259,14 @@ The Scribe Evolution web interface provides MQTT diagnostic information:
 ### Message Issues
 
 **Messages not printing**:
+
 - Verify topic name matches configuration
 - Check JSON format validity
 - Monitor for MQTT delivery confirmation
 - Check printer hardware and paper
 
 **Delayed messages**:
+
 - Check broker message queue
 - Verify network latency
 - Monitor broker performance
@@ -252,6 +275,7 @@ The Scribe Evolution web interface provides MQTT diagnostic information:
 ### Debugging Commands
 
 Enable verbose logging in `config.h`:
+
 ```cpp
 static const int logLevel = LOG_LEVEL_VERBOSE;
 ```
@@ -263,6 +287,7 @@ Monitor serial output for detailed MQTT connection and message processing logs.
 ### Home Automation
 
 **Home Assistant**:
+
 ```yaml
 mqtt:
   - name: "Scribe Evolution Kitchen Printer"
@@ -272,6 +297,7 @@ mqtt:
 
 **Node-RED**:
 Create flows that trigger printing based on:
+
 - Weather alerts
 - Calendar events
 - Sensor readings
@@ -280,6 +306,7 @@ Create flows that trigger printing based on:
 ### External Services
 
 See the dedicated guides for specific integrations:
+
 - [Apple Shortcuts Integration](apple-shortcuts.md)
 - [Pipedream Integration](pipedream-integration.md) (Recommended HTTP-to-MQTT bridge)
 

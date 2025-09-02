@@ -257,19 +257,16 @@ mosquitto_pub -h your-mqtt-broker.com -p 8883 -u username -P password \
 ## 🔐 **Security Best Practices**
 
 1. **Strong Bearer Token**
-
    - Use long, random tokens (20+ characters)
    - Include numbers, letters, and symbols
    - Rotate tokens periodically
 
 2. **Environment Variables**
-
    - Never hardcode MQTT credentials
    - Use Pipedream's secure environment variables
    - Restrict MQTT user permissions to minimum required
 
 3. **Network Security**
-
    - Use MQTTS (TLS encryption) only
    - Consider IP whitelisting on MQTT broker
    - Monitor unusual traffic patterns

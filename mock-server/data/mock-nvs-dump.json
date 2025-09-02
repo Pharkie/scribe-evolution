@@ -1,317 +1,317 @@
 {
-    "namespace": "scribe-app",
-    "timestamp": "Thu 21 Aug 2025 13:48",
-    "keys": {
-        "device_owner": {
-            "type": "string",
-            "description": "Device owner name",
-            "exists": true,
-            "value": "MockUser",
-            "status": "valid",
-            "validation": "✅",
-            "length": 8
-        },
-        "device_timezone": {
-            "type": "string",
-            "description": "Device timezone",
-            "exists": true,
-            "value": "America/New_York",
-            "status": "valid",
-            "validation": "✅",
-            "length": 16
-        },
-        "wifi_ssid": {
-            "type": "string",
-            "description": "WiFi network SSID",
-            "exists": true,
-            "value": "MockWiFi",
-            "status": "valid",
-            "validation": "✅",
-            "length": 8
-        },
-        "wifi_password": {
-            "type": "string",
-            "description": "WiFi network password",
-            "exists": true,
-            "value": "kall●●●●●●rd",
-            "status": "valid",
-            "validation": "✅",
-            "length": 12
-        },
-        "wifi_timeout": {
-            "type": "int",
-            "description": "WiFi connect timeout (ms)",
-            "exists": true,
-            "value": 15000,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "mqtt_server": {
-            "type": "string",
-            "description": "MQTT broker server",
-            "exists": true,
-            "value": "mock-mqtt-broker.example.com",
-            "status": "valid",
-            "validation": "✅",
-            "length": 29
-        },
-        "mqtt_port": {
-            "type": "int",
-            "description": "MQTT broker port",
-            "exists": true,
-            "value": 8883,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "mqtt_username": {
-            "type": "string",
-            "description": "MQTT username",
-            "exists": true,
-            "value": "mockuser",
-            "status": "valid",
-            "validation": "✅",
-            "length": 8
-        },
-        "mqtt_password": {
-            "type": "string",
-            "description": "MQTT password",
-            "exists": true,
-            "value": "mo●●●●●●ss",
-            "status": "valid",
-            "validation": "✅",
-            "length": 12
-        },
-        "chatgpt_token": {
-            "type": "string",
-            "description": "ChatGPT API token",
-            "exists": true,
-            "value": "sk●●●●●●●●en",
-            "status": "valid",
-            "validation": "✅",
-            "length": 51
-        },
-        "unbid_enabled": {
-            "type": "bool",
-            "description": "Unbidden Ink enabled",
-            "exists": true,
-            "value": true,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "unbid_freq_min": {
-            "type": "int",
-            "description": "Unbidden Ink frequency (minutes)",
-            "exists": true,
-            "value": 60,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "unbid_start_hr": {
-            "type": "int",
-            "description": "Unbidden Ink start hour",
-            "exists": true,
-            "value": 8,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "unbid_end_hr": {
-            "type": "int",
-            "description": "Unbidden Ink end hour",
-            "exists": true,
-            "value": 22,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "unbidden_prompt": {
-            "type": "string",
-            "description": "Unbidden Ink prompt template",
-            "exists": true,
-            "value": "Generate creative, family-friendly content - poetry, short stories, or fun facts. Keep it engaging and printable.",
-            "status": "valid",
-            "validation": "✅",
-            "length": 110
-        },
-        "btn1_short_act": {
-            "type": "string",
-            "description": "Button 1 short press action",
-            "exists": true,
-            "value": "JOKE",
-            "status": "valid",
-            "validation": "✅",
-            "length": 4
-        },
-        "btn1_short_mq": {
-            "type": "string",
-            "description": "Button 1 short press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn1_long_act": {
-            "type": "string",
-            "description": "Button 1 long press action",
-            "exists": true,
-            "value": "CHARACTER_TEST",
-            "status": "valid",
-            "validation": "✅",
-            "length": 14
-        },
-        "btn1_long_mq": {
-            "type": "string",
-            "description": "Button 1 long press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn2_short_act": {
-            "type": "string",
-            "description": "Button 2 short press action",
-            "exists": true,
-            "value": "RIDDLE",
-            "status": "valid",
-            "validation": "✅",
-            "length": 6
-        },
-        "btn2_short_mq": {
-            "type": "string",
-            "description": "Button 2 short press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn2_long_act": {
-            "type": "string",
-            "description": "Button 2 long press action",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn2_long_mq": {
-            "type": "string",
-            "description": "Button 2 long press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn3_short_act": {
-            "type": "string",
-            "description": "Button 3 short press action",
-            "exists": true,
-            "value": "QUOTE",
-            "status": "valid",
-            "validation": "✅",
-            "length": 5
-        },
-        "btn3_short_mq": {
-            "type": "string",
-            "description": "Button 3 short press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn3_long_act": {
-            "type": "string",
-            "description": "Button 3 long press action",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn3_long_mq": {
-            "type": "string",
-            "description": "Button 3 long press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn4_short_act": {
-            "type": "string",
-            "description": "Button 4 short press action",
-            "exists": true,
-            "value": "QUIZ",
-            "status": "valid",
-            "validation": "✅",
-            "length": 4
-        },
-        "btn4_short_mq": {
-            "type": "string",
-            "description": "Button 4 short press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn4_long_act": {
-            "type": "string",
-            "description": "Button 4 long press action",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "btn4_long_mq": {
-            "type": "string",
-            "description": "Button 4 long press MQTT topic",
-            "exists": true,
-            "value": "",
-            "status": "valid",
-            "validation": "✅",
-            "length": 0
-        },
-        "led_pin": {
-            "type": "int",
-            "description": "LED strip GPIO pin",
-            "exists": true,
-            "value": 4,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "led_count": {
-            "type": "int",
-            "description": "Number of LEDs",
-            "exists": true,
-            "value": 30,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "led_brightness": {
-            "type": "int",
-            "description": "LED brightness",
-            "exists": true,
-            "value": 64,
-            "status": "valid",
-            "validation": "✅"
-        },
-        "led_refresh": {
-            "type": "int",
-            "description": "LED refresh rate",
-            "exists": true,
-            "value": 60,
-            "status": "valid",
-            "validation": "✅"
-        }
+  "namespace": "scribe-app",
+  "timestamp": "Thu 21 Aug 2025 13:48",
+  "keys": {
+    "device_owner": {
+      "type": "string",
+      "description": "Device owner name",
+      "exists": true,
+      "value": "MockUser",
+      "status": "valid",
+      "validation": "✅",
+      "length": 8
     },
-    "summary": {
-        "totalKeys": 35,
-        "validKeys": 35,
-        "correctedKeys": 0,
-        "invalidKeys": 0
+    "device_timezone": {
+      "type": "string",
+      "description": "Device timezone",
+      "exists": true,
+      "value": "America/New_York",
+      "status": "valid",
+      "validation": "✅",
+      "length": 16
+    },
+    "wifi_ssid": {
+      "type": "string",
+      "description": "WiFi network SSID",
+      "exists": true,
+      "value": "MockWiFi",
+      "status": "valid",
+      "validation": "✅",
+      "length": 8
+    },
+    "wifi_password": {
+      "type": "string",
+      "description": "WiFi network password",
+      "exists": true,
+      "value": "kall●●●●●●rd",
+      "status": "valid",
+      "validation": "✅",
+      "length": 12
+    },
+    "wifi_timeout": {
+      "type": "int",
+      "description": "WiFi connect timeout (ms)",
+      "exists": true,
+      "value": 15000,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "mqtt_server": {
+      "type": "string",
+      "description": "MQTT broker server",
+      "exists": true,
+      "value": "mock-mqtt-broker.example.com",
+      "status": "valid",
+      "validation": "✅",
+      "length": 29
+    },
+    "mqtt_port": {
+      "type": "int",
+      "description": "MQTT broker port",
+      "exists": true,
+      "value": 8883,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "mqtt_username": {
+      "type": "string",
+      "description": "MQTT username",
+      "exists": true,
+      "value": "mockuser",
+      "status": "valid",
+      "validation": "✅",
+      "length": 8
+    },
+    "mqtt_password": {
+      "type": "string",
+      "description": "MQTT password",
+      "exists": true,
+      "value": "mo●●●●●●ss",
+      "status": "valid",
+      "validation": "✅",
+      "length": 12
+    },
+    "chatgpt_token": {
+      "type": "string",
+      "description": "ChatGPT API token",
+      "exists": true,
+      "value": "sk●●●●●●●●en",
+      "status": "valid",
+      "validation": "✅",
+      "length": 51
+    },
+    "unbid_enabled": {
+      "type": "bool",
+      "description": "Unbidden Ink enabled",
+      "exists": true,
+      "value": true,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "unbid_freq_min": {
+      "type": "int",
+      "description": "Unbidden Ink frequency (minutes)",
+      "exists": true,
+      "value": 60,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "unbid_start_hr": {
+      "type": "int",
+      "description": "Unbidden Ink start hour",
+      "exists": true,
+      "value": 8,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "unbid_end_hr": {
+      "type": "int",
+      "description": "Unbidden Ink end hour",
+      "exists": true,
+      "value": 22,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "unbidden_prompt": {
+      "type": "string",
+      "description": "Unbidden Ink prompt template",
+      "exists": true,
+      "value": "Generate creative, family-friendly content - poetry, short stories, or fun facts. Keep it engaging and printable.",
+      "status": "valid",
+      "validation": "✅",
+      "length": 110
+    },
+    "btn1_short_act": {
+      "type": "string",
+      "description": "Button 1 short press action",
+      "exists": true,
+      "value": "JOKE",
+      "status": "valid",
+      "validation": "✅",
+      "length": 4
+    },
+    "btn1_short_mq": {
+      "type": "string",
+      "description": "Button 1 short press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn1_long_act": {
+      "type": "string",
+      "description": "Button 1 long press action",
+      "exists": true,
+      "value": "CHARACTER_TEST",
+      "status": "valid",
+      "validation": "✅",
+      "length": 14
+    },
+    "btn1_long_mq": {
+      "type": "string",
+      "description": "Button 1 long press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn2_short_act": {
+      "type": "string",
+      "description": "Button 2 short press action",
+      "exists": true,
+      "value": "RIDDLE",
+      "status": "valid",
+      "validation": "✅",
+      "length": 6
+    },
+    "btn2_short_mq": {
+      "type": "string",
+      "description": "Button 2 short press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn2_long_act": {
+      "type": "string",
+      "description": "Button 2 long press action",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn2_long_mq": {
+      "type": "string",
+      "description": "Button 2 long press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn3_short_act": {
+      "type": "string",
+      "description": "Button 3 short press action",
+      "exists": true,
+      "value": "QUOTE",
+      "status": "valid",
+      "validation": "✅",
+      "length": 5
+    },
+    "btn3_short_mq": {
+      "type": "string",
+      "description": "Button 3 short press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn3_long_act": {
+      "type": "string",
+      "description": "Button 3 long press action",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn3_long_mq": {
+      "type": "string",
+      "description": "Button 3 long press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn4_short_act": {
+      "type": "string",
+      "description": "Button 4 short press action",
+      "exists": true,
+      "value": "QUIZ",
+      "status": "valid",
+      "validation": "✅",
+      "length": 4
+    },
+    "btn4_short_mq": {
+      "type": "string",
+      "description": "Button 4 short press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn4_long_act": {
+      "type": "string",
+      "description": "Button 4 long press action",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "btn4_long_mq": {
+      "type": "string",
+      "description": "Button 4 long press MQTT topic",
+      "exists": true,
+      "value": "",
+      "status": "valid",
+      "validation": "✅",
+      "length": 0
+    },
+    "led_pin": {
+      "type": "int",
+      "description": "LED strip GPIO pin",
+      "exists": true,
+      "value": 4,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "led_count": {
+      "type": "int",
+      "description": "Number of LEDs",
+      "exists": true,
+      "value": 30,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "led_brightness": {
+      "type": "int",
+      "description": "LED brightness",
+      "exists": true,
+      "value": 64,
+      "status": "valid",
+      "validation": "✅"
+    },
+    "led_refresh": {
+      "type": "int",
+      "description": "LED refresh rate",
+      "exists": true,
+      "value": 60,
+      "status": "valid",
+      "validation": "✅"
     }
+  },
+  "summary": {
+    "totalKeys": 35,
+    "validKeys": 35,
+    "correctedKeys": 0,
+    "invalidKeys": 0
+  }
 }

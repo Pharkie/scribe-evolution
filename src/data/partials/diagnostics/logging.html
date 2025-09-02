@@ -1,31 +1,47 @@
 <div class="diag-section indigo">
-    <div class="diag-header">
-        <h4 class="diag-title indigo">
-<span x-html="window.renderSectionIcon ? window.renderSectionIcon('clipboardDocumentList') : '📋'"></span>
-            Logging
-        </h4>
+  <div class="diag-header">
+    <h4 class="diag-title indigo">
+      <span
+        x-html="window.renderSectionIcon ? window.renderSectionIcon('clipboardDocumentList') : '📋'"
+      ></span>
+      Logging
+    </h4>
+  </div>
+  <div class="space-y-2">
+    <div class="diag-row">
+      <span class="diag-label">Log Level:</span>
+      <span
+        class="diag-value"
+        x-text="$store.diagnostics.loggingInfo.level"
+      ></span>
     </div>
-    <div class="space-y-2">
-        <div class="diag-row">
-            <span class="diag-label">Log Level:</span>
-            <span class="diag-value" x-text="$store.diagnostics.loggingInfo.level"></span>
-        </div>
-        <div class="diag-row">
-            <span class="diag-label">Serial Logging:</span>
-            <span class="diag-value" x-text="$store.diagnostics.loggingInfo.serialLogging"></span>
-        </div>
-        <div class="diag-row">
-            <span class="diag-label">Web Logging:</span>
-            <span class="diag-value" x-text="$store.diagnostics.loggingInfo.webLogging"></span>
-        </div>
-        <div class="diag-row">
-            <span class="diag-label">File Logging:</span>
-            <span class="diag-value" x-text="$store.diagnostics.loggingInfo.fileLogging"></span>
-        </div>
-        <div class="diag-row">
-            <span class="diag-label">MQTT Logging:</span>
-            <span class="diag-value" x-text="$store.diagnostics.loggingInfo.mqttLogging"></span>
-        </div>
+    <div class="diag-row">
+      <span class="diag-label">Serial Logging:</span>
+      <span
+        class="diag-value"
+        x-text="$store.diagnostics.loggingInfo.serialLogging"
+      ></span>
     </div>
+    <div class="diag-row">
+      <span class="diag-label">Web Logging:</span>
+      <span
+        class="diag-value"
+        x-text="$store.diagnostics.loggingInfo.webLogging"
+      ></span>
+    </div>
+    <div class="diag-row">
+      <span class="diag-label">File Logging:</span>
+      <span
+        class="diag-value"
+        x-text="$store.diagnostics.loggingInfo.fileLogging"
+      ></span>
+    </div>
+    <div class="diag-row">
+      <span class="diag-label">MQTT Logging:</span>
+      <span
+        class="diag-value"
+        x-text="$store.diagnostics.loggingInfo.mqttLogging"
+      ></span>
+    </div>
+  </div>
 </div>
-

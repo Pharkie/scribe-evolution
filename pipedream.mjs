@@ -4,21 +4,21 @@
  * A Pipedream component for sending messages to Scribe Evolution thermal printers via MQTT.
  * This component receives HTTP requests and forwards them as MQTT messages to
  * specified remote printers.
- * 
+ *
  * Author: Adam Knowles
  * License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
- * 
+ *
  * You are free to:
  * - Share — copy and redistribute the material in any medium or format
  * - Adapt — remix, transform, and build upon the material
- * 
+ *
  * Under the following terms:
  * - Attribution — You must give appropriate credit, provide a link to the license,
  *   and indicate if changes were made.
  * - NonCommercial — You may not use the material for commercial purposes.
  * - ShareAlike — If you remix, transform, or build upon the material, you must
  *   distribute your contributions under the same license as the original.
- * 
+ *
  * For full license text, see: https://creativecommons.org/licenses/by-nc-sa/4.0/
  */
 
@@ -56,7 +56,7 @@ export default defineComponent({
       if (!port) missingEnvVars.push("MQTT_port");
       if (!username) missingEnvVars.push("MQTT_username");
       if (!password) missingEnvVars.push("MQTT_password");
-      
+
       await $.respond({
         status: 500,
         body: {
@@ -72,7 +72,7 @@ export default defineComponent({
 
     // Extract data from HTTP POST body (steps.trigger.event is already an object)
     const data = steps.trigger.event || {};
-    
+
     const remote_printer = data.remote_printer;
     const message = data.message;
     const timestamp = data.timestamp;
@@ -107,7 +107,9 @@ export default defineComponent({
       });
 
       await mqttPublishAsync(client, topic, payload);
-      console.log(`MQTT message published with broker confirmation to topic: ${topic} (${payload.length} bytes)`);
+      console.log(
+        `MQTT message published with broker confirmation to topic: ${topic} (${payload.length} bytes)`,
+      );
 
       await new Promise((resolve) => {
         client.end(true, () => {

@@ -3,14 +3,14 @@
  * @brief Alpine.js reactive store for index page functionality (ES6 module)
  */
 
-import { 
-    loadConfiguration, 
-    loadMemos, 
-    generateUserMessage, 
-    printLocalContent, 
-    printMQTTContent, 
-    executeQuickAction 
-} from '../api/index.js';
+import {
+  loadConfiguration,
+  loadMemos,
+  generateUserMessage,
+  printLocalContent,
+  printMQTTContent,
+  executeQuickAction,
+} from "../api/index.js";
 
 /**
  * Create Alpine.js index store with data loading
@@ -23,53 +23,53 @@ export function createIndexStore() {
     loaded: false, // Simple loading flag
     initialized: false, // Failsafe guard to prevent multiple inits
     data: {},
-    
+
     // Form state
-    message: '',
-    selectedPrinter: 'local-direct',
+    message: "",
+    selectedPrinter: "local-direct",
     submitting: false,
     buttonTextOverride: null,
-    
+
     // Printer state
     printers: [],
-    localPrinterName: 'Unknown',
-    
+    localPrinterName: "Unknown",
+
     // UI state
     overlayVisible: false,
     overlayPrinterData: null,
-    overlayPrinterName: '',
-    overlayPrinterType: 'mqtt',
-    
+    overlayPrinterName: "",
+    overlayPrinterType: "mqtt",
+
     // Settings stashed indicator
     settingsStashed: false,
-    
+
     // Toast state
     toasts: [],
-    
+
     // Active quick action (only one can be active at a time)
     activeQuickAction: null,
-    
+
     // Memo state
     memoModalVisible: false,
     memos: [],
     memosLoading: false,
     memosLoaded: false,
     printing: false,
-    
+
     // Character limits - updated path for new structure
     get maxChars() {
       if (!this.loaded) return 384; // Default while loading
-      
+
       if (!this.data.config?.device?.maxCharacters) {
         return 384; // Default fallback to prevent errors during initialization
       }
       return this.data.config.device.maxCharacters;
     },
-    
+
     get charCount() {
       return this.message.length;
     },
-    
+
     get charCountText() {
       const count = this.charCount;
       const max = this.maxChars;
@@ -79,223 +79,230 @@ export function createIndexStore() {
       }
       return `${count}/${max} characters`;
     },
-    
+
     get charCountClass() {
       const count = this.charCount;
       const max = this.maxChars;
       const percentage = count / max;
-      
+
       if (count > max) {
         // Over 100% - red and bold
-        return 'text-red-600 dark:text-red-400 font-semibold';
+        return "text-red-600 dark:text-red-400 font-semibold";
       } else if (percentage >= 0.9) {
-        // 90-100% - yellow warning  
-        return 'text-yellow-700 dark:text-yellow-300 font-medium';
+        // 90-100% - yellow warning
+        return "text-yellow-700 dark:text-yellow-300 font-medium";
       } else {
         // Under 90% - normal gray
-        return 'text-gray-500 dark:text-gray-400';
+        return "text-gray-500 dark:text-gray-400";
       }
     },
-    
+
     get canSubmit() {
-      return this.message.trim().length > 0 && 
-             this.charCount <= this.maxChars && 
-             !this.isLoading;
+      return (
+        this.message.trim().length > 0 &&
+        this.charCount <= this.maxChars &&
+        !this.isLoading
+      );
     },
-    
+
     get isConfigReady() {
-      return this.loaded && !this.error && this.data.config?.device?.maxCharacters;
+      return (
+        this.loaded && !this.error && this.data.config?.device?.maxCharacters
+      );
     },
-    
+
     // Initialize store
     async loadData() {
       // Duplicate initialization guard (failsafe)
       if (this.initialized) {
-        console.log('📋 Index: Already initialized, skipping');
+        console.log("📋 Index: Already initialized, skipping");
         return;
       }
       this.initialized = true;
-      
+
       this.loaded = false;
       this.error = null;
-      
+
       this.checkForSettingsSuccess();
-      
+
       try {
         await this.loadConfig();
-        
+
         // Always initialize local printer, conditionally initialize remote (MQTT) discovery
         this.initializeLocalPrinter();
         if (this.data.config?.mqtt?.enabled === true) {
           this.initializeRemotePrinterDiscovery();
         }
-        
+
         this.setupEventListeners();
         this.loaded = true;
       } catch (error) {
-        console.error('📋 Index: Config loading failed:', error);
+        console.error("📋 Index: Config loading failed:", error);
         this.error = error.message;
       }
     },
-    
+
     // Load configuration
     async loadConfig() {
       try {
         // Use ES6 imported API function instead of window.IndexAPI
         this.data.config = await loadConfiguration();
-        
+
         if (this.data.config?.device?.printer_name === undefined) {
-          throw new Error('Printer name configuration is missing from server');
+          throw new Error("Printer name configuration is missing from server");
         }
         if (this.data.config?.device?.maxCharacters === undefined) {
-          throw new Error('Maximum characters validation configuration is missing from server');
+          throw new Error(
+            "Maximum characters validation configuration is missing from server",
+          );
         }
         if (this.data.config?.device === undefined) {
-          throw new Error('Device configuration is missing from server');
+          throw new Error("Device configuration is missing from server");
         }
-        
+
         this.localPrinterName = this.data.config.device.printer_name;
-        
+
         // Load memos from separate API endpoint
         await this.loadMemosFromAPI();
-        
+
         // Clear any previous error on success
         this.error = null;
-        
+
         return this.data.config;
       } catch (error) {
-        console.error('📋 Index: Failed to load config:', error);
+        console.error("📋 Index: Failed to load config:", error);
         this.error = error.message;
         throw error; // Re-throw to ensure proper error handling
       }
     },
-    
+
     // Initialize local printer (always available)
     initializeLocalPrinter() {
       this.updatePrinterList();
     },
-    
+
     // Initialize remote printer (MQTT) discovery
     initializeRemotePrinterDiscovery() {
       this.setupSSEConnection();
     },
-    
+
     // Update printer list from discovered printers
     updatePrinterList(discoveredPrinters = []) {
       this.printers = [
         {
-          value: 'local-direct',
-          icon: 'home',
-          name: 'Local direct',
+          value: "local-direct",
+          icon: "home",
+          name: "Local direct",
           isLocal: true,
-          selected: this.selectedPrinter === 'local-direct'
-        }
+          selected: this.selectedPrinter === "local-direct",
+        },
       ];
-      
+
       // Add remote printers from discovered list
-      discoveredPrinters.forEach(printer => {
+      discoveredPrinters.forEach((printer) => {
         const topic = `scribe/${printer.name}/print`;
         this.printers.push({
           value: topic,
-          icon: 'megaphone',
+          icon: "megaphone",
           name: printer.name,
           isLocal: false,
           data: printer,
-          selected: this.selectedPrinter === topic
+          selected: this.selectedPrinter === topic,
         });
       });
     },
-    
+
     // Setup event listeners
     setupEventListeners() {
       // Listen for printer updates from SSE
-      document.addEventListener('printersUpdated', (event) => {
+      document.addEventListener("printersUpdated", (event) => {
         this.updatePrinterList(event.detail.printers || []);
       });
     },
-    
+
     // Select printer
     selectPrinter(value) {
       this.selectedPrinter = value;
       // Update selection status for existing printers instead of rebuilding the list
-      this.printers.forEach(printer => {
+      this.printers.forEach((printer) => {
         printer.selected = printer.value === value;
       });
     },
-    
+
     // Submit form
     async handleSubmit(event) {
       if (event) event.preventDefault();
-      
+
       if (!this.canSubmit) return;
-      
+
       this.submitting = true;
-      
+
       try {
         const message = this.message.trim();
-        
+
         // Step 1: Generate formatted content with MESSAGE header using user-message endpoint
-        const contentResult = await generateUserMessage(message, this.selectedPrinter);
-        
+        const contentResult = await generateUserMessage(
+          message,
+          this.selectedPrinter,
+        );
+
         if (!contentResult.content) {
-          throw new Error('Failed to generate message content');
+          throw new Error("Failed to generate message content");
         }
-        
+
         // Step 2: Print the formatted content
-        if (this.selectedPrinter === 'local-direct') {
+        if (this.selectedPrinter === "local-direct") {
           await printLocalContent(contentResult.content);
         } else {
           await printMQTTContent(contentResult.content, this.selectedPrinter);
         }
-        
+
         // 🎊 Trigger confetti celebration for successful submission!
         this.triggerSubmitCelebration();
-        
+
         // Clear form on success
-        this.message = '';
-        
+        this.message = "";
       } catch (error) {
-        console.error('Submit error:', error);
-        this.showToast(`Error: ${error.message}`, 'error');
+        console.error("Submit error:", error);
+        this.showToast(`Error: ${error.message}`, "error");
       } finally {
         this.submitting = false;
       }
     },
-    
+
     // Quick actions
     async sendQuickAction(action) {
       // Prevent double-clicking while any action is in progress
       if (this.activeQuickAction) {
         return;
       }
-      
+
       try {
         // Set active action - Alpine.js will reactively update the UI
         this.activeQuickAction = action;
-        
+
         // Use ES6 imported API function for executing quick action
         const contentResult = await executeQuickAction(action);
-        
+
         if (!contentResult.content) {
-          this.showToast('No content received from server', 'error');
+          this.showToast("No content received from server", "error");
           return;
         }
 
         // Use ES6 imported API functions for printing content
-        if (this.selectedPrinter === 'local-direct') {
+        if (this.selectedPrinter === "local-direct") {
           await printLocalContent(contentResult.content);
         } else {
           await printMQTTContent(contentResult.content, this.selectedPrinter);
         }
-        
+
         // 🎊 Trigger confetti celebration for successful quick action!
         this.triggerQuickActionCelebration(action);
-        
+
         // Note: No success toast - button state change provides feedback
-        
       } catch (error) {
-        console.error('Error sending quick action:', error);
-        this.showToast(`Network error: ${error.message}`, 'error');
+        console.error("Error sending quick action:", error);
+        this.showToast(`Network error: ${error.message}`, "error");
       } finally {
         // Reset active action after 2 seconds - Alpine.js will reactively update UI
         setTimeout(() => {
@@ -303,100 +310,108 @@ export function createIndexStore() {
         }, 2000);
       }
     },
-    
+
     // Handle textarea keydown
     handleTextareaKeydown(event) {
       // Enter to submit (unless Shift is held for newline)
-      if (event.key === 'Enter' && !event.shiftKey) {
+      if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         if (this.canSubmit) {
           this.handleSubmit(event);
         }
       }
     },
-    
+
     // Printer info overlay
     showLocalPrinterInfo() {
       if (!this.data.config?.device) {
-        console.warn('Device configuration not loaded yet');
+        console.warn("Device configuration not loaded yet");
         return;
       }
-      
+
       const deviceConfig = this.data.config.device;
       const localPrinterData = {
         name: deviceConfig.printer_name || deviceConfig.owner,
         ip_address: deviceConfig.ip_address,
         mdns: deviceConfig.mdns,
-        status: 'online',
+        status: "online",
         firmware_version: deviceConfig.firmware_version,
         timezone: deviceConfig.timezone,
-        last_power_on: deviceConfig.boot_time
+        last_power_on: deviceConfig.boot_time,
       };
-      
-      this.showPrinterOverlay(localPrinterData, localPrinterData.name, 'local');
+
+      this.showPrinterOverlay(localPrinterData, localPrinterData.name, "local");
     },
-    
-    showPrinterOverlay(printerData, printerName, printerType = 'mqtt') {
+
+    showPrinterOverlay(printerData, printerName, printerType = "mqtt") {
       this.overlayPrinterData = printerData;
       this.overlayPrinterName = printerName;
       this.overlayPrinterType = printerType;
       this.overlayVisible = true;
     },
-    
+
     closePrinterOverlay() {
       this.overlayVisible = false;
       this.overlayPrinterData = null;
     },
-    
+
     // Get formatted printer overlay data
     get overlayData() {
       if (!this.overlayPrinterData) return null;
-      
+
       const printerData = this.overlayPrinterData;
       const printerType = this.overlayPrinterType;
-      
-      const topic = printerType === 'mqtt' ? `scribe/${this.overlayPrinterName}/print` : null;
+
+      const topic =
+        printerType === "mqtt"
+          ? `scribe/${this.overlayPrinterName}/print`
+          : null;
       const ipAddress = printerData.ip_address;
-      const mdns = printerData.mdns; 
+      const mdns = printerData.mdns;
       const firmwareVersion = printerData.firmware_version;
-      const printerIcon = printerType === 'local' ? window.getIcon('home', 'w-6 h-6') : window.getIcon('megaphone', 'w-6 h-6');
-      
+      const printerIcon =
+        printerType === "local"
+          ? window.getIcon("home", "w-6 h-6")
+          : window.getIcon("megaphone", "w-6 h-6");
+
       // Format last power on time
-      let lastPowerOnText = 'Not available';
+      let lastPowerOnText = "Not available";
       if (printerData.last_power_on) {
         try {
           let powerOnTime;
-          if (typeof printerData.last_power_on === 'string') {
+          if (typeof printerData.last_power_on === "string") {
             powerOnTime = new Date(printerData.last_power_on);
-          } else if (typeof printerData.last_power_on === 'number') {
-            const timestamp = printerData.last_power_on < 10000000000 ? 
-              printerData.last_power_on * 1000 : printerData.last_power_on;
+          } else if (typeof printerData.last_power_on === "number") {
+            const timestamp =
+              printerData.last_power_on < 10000000000
+                ? printerData.last_power_on * 1000
+                : printerData.last_power_on;
             powerOnTime = new Date(timestamp);
           } else {
             powerOnTime = new Date(printerData.last_power_on);
           }
-          
+
           const now = new Date();
           const diffMs = now.getTime() - powerOnTime.getTime();
           const lastPowerOnRelative = this.formatTimeDifference(diffMs);
           const lastPowerOnAbsolute = powerOnTime.toLocaleString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
           });
-          
-          lastPowerOnText = `${lastPowerOnRelative}${lastPowerOnAbsolute ? ` (${lastPowerOnAbsolute})` : ''}`;
+
+          lastPowerOnText = `${lastPowerOnRelative}${lastPowerOnAbsolute ? ` (${lastPowerOnAbsolute})` : ""}`;
         } catch (e) {
-          lastPowerOnText = 'Invalid date';
+          lastPowerOnText = "Invalid date";
         }
       }
-      
+
       const timezone = printerData.timezone;
-      
+
       return {
         topic,
         ipAddress,
@@ -404,10 +419,10 @@ export function createIndexStore() {
         firmwareVersion,
         printerIcon,
         lastPowerOnText,
-        timezone
+        timezone,
       };
     },
-    
+
     // Copy topic to clipboard
     async copyTopic(topic) {
       try {
@@ -415,79 +430,79 @@ export function createIndexStore() {
           await navigator.clipboard.writeText(topic);
         } else {
           // Fallback
-          const textarea = document.createElement('textarea');
+          const textarea = document.createElement("textarea");
           textarea.value = topic;
-          textarea.style.position = 'fixed';
-          textarea.style.left = '-999999px';
-          textarea.style.top = '-999999px';
+          textarea.style.position = "fixed";
+          textarea.style.left = "-999999px";
+          textarea.style.top = "-999999px";
           document.body.appendChild(textarea);
           textarea.focus();
           textarea.select();
-          document.execCommand('copy');
+          document.execCommand("copy");
           document.body.removeChild(textarea);
         }
         // Alpine will handle the visual feedback via $dispatch
       } catch (error) {
-        console.error('Failed to copy:', error);
-        this.showToast('Failed to copy topic', 'error');
+        console.error("Failed to copy:", error);
+        this.showToast("Failed to copy topic", "error");
       }
     },
-    
+
     // Format time difference
     formatTimeDifference(diffMs) {
       const diffSeconds = Math.floor(diffMs / 1000);
       const diffMinutes = Math.floor(diffSeconds / 60);
       const diffHours = Math.floor(diffMinutes / 60);
       const diffDays = Math.floor(diffHours / 24);
-      
+
       if (diffDays > 0) {
-        return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
       } else if (diffHours > 0) {
-        return `about ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        return `about ${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
       } else if (diffMinutes >= 2) {
         return `${diffMinutes} mins ago`;
       } else if (diffMinutes === 1) {
-        return 'A minute ago';
+        return "A minute ago";
       } else if (diffSeconds > 30) {
-        return '30 seconds ago';
+        return "30 seconds ago";
       } else {
-        return 'Just now';
+        return "Just now";
       }
     },
-    
+
     // Toast management
-    showToast(message, type = 'info') {
+    showToast(message, type = "info") {
       const id = Date.now();
       const toast = { id, message, type };
       this.toasts.push(toast);
-      
+
       setTimeout(() => {
         this.removeToast(id);
       }, 4000);
     },
-    
+
     removeToast(id) {
-      this.toasts = this.toasts.filter(toast => toast.id !== id);
+      this.toasts = this.toasts.filter((toast) => toast.id !== id);
     },
-    
+
     // Check for settings success
     checkForSettingsSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('settings') === 'stashed') {
+      if (urlParams.get("settings") === "stashed") {
         // Show "Stashed" indicator on settings button for 3 seconds with orange fade animation
         this.settingsStashed = true;
         setTimeout(() => {
           this.settingsStashed = false;
         }, 3000);
-        
+
         // Clean up URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
       }
       // Legacy support for old parameter
-      else if (urlParams.get('settings_saved') === 'true') {
-        this.showToast('💾 Settings saved', 'success');
-        
+      else if (urlParams.get("settings_saved") === "true") {
+        this.showToast("💾 Settings saved", "success");
+
         // Clean up URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
@@ -496,236 +511,285 @@ export function createIndexStore() {
 
     // Confetti Celebration Methods
     triggerQuickActionCelebration(action) {
-      if (typeof confetti !== 'undefined') {
-        const buttonElement = document.querySelector(`[data-action="${action}"]`);
+      if (typeof confetti !== "undefined") {
+        const buttonElement = document.querySelector(
+          `[data-action="${action}"]`,
+        );
         const buttonRect = buttonElement?.getBoundingClientRect();
-        
+
         // Different effects for different actions
-        switch(action) {
-          case 'riddle':
+        switch (action) {
+          case "riddle":
             // 🧩 Puzzle pieces effect for riddles
             confetti({
               particleCount: 100,
               spread: 70,
-              origin: buttonRect ? { 
-                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-              } : { y: 0.6 },
-              colors: ['#f59e0b', '#eab308', '#facc15', '#fde047'], // Yellow tones
-              shapes: ['square']
+              origin: buttonRect
+                ? {
+                    x:
+                      (buttonRect.left + buttonRect.width / 2) /
+                      window.innerWidth,
+                    y:
+                      (buttonRect.top + buttonRect.height / 2) /
+                      window.innerHeight,
+                  }
+                : { y: 0.6 },
+              colors: ["#f59e0b", "#eab308", "#facc15", "#fde047"], // Yellow tones
+              shapes: ["square"],
             });
             break;
-            
-          case 'joke':
+
+          case "joke":
             // 😄 Happy burst for jokes
             confetti({
               particleCount: 150,
               spread: 90,
-              origin: buttonRect ? { 
-                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-              } : { y: 0.6 },
-              colors: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0'], // Emerald tones
-              scalar: 1.2
+              origin: buttonRect
+                ? {
+                    x:
+                      (buttonRect.left + buttonRect.width / 2) /
+                      window.innerWidth,
+                    y:
+                      (buttonRect.top + buttonRect.height / 2) /
+                      window.innerHeight,
+                  }
+                : { y: 0.6 },
+              colors: ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0"], // Emerald tones
+              scalar: 1.2,
             });
             break;
-            
-          case 'quote':
+
+          case "quote":
             // ✨ Elegant sparkles for quotes
             confetti({
               particleCount: 80,
               spread: 45,
-              origin: buttonRect ? { 
-                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-              } : { y: 0.6 },
-              colors: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#e0e7ff'], // Purple tones
+              origin: buttonRect
+                ? {
+                    x:
+                      (buttonRect.left + buttonRect.width / 2) /
+                      window.innerWidth,
+                    y:
+                      (buttonRect.top + buttonRect.height / 2) /
+                      window.innerHeight,
+                  }
+                : { y: 0.6 },
+              colors: ["#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"], // Purple tones
               scalar: 0.8,
-              shapes: ['star']
+              shapes: ["star"],
             });
             break;
-            
-          case 'quiz':
+
+          case "quiz":
             // 🎯 Target burst for quiz
             confetti({
               particleCount: 120,
               spread: 360,
-              origin: buttonRect ? { 
-                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-              } : { y: 0.6 },
-              colors: ['#06b6d4', '#67e8f9', '#a5f3fc', '#cffafe'], // Cyan tones
+              origin: buttonRect
+                ? {
+                    x:
+                      (buttonRect.left + buttonRect.width / 2) /
+                      window.innerWidth,
+                    y:
+                      (buttonRect.top + buttonRect.height / 2) /
+                      window.innerHeight,
+                  }
+                : { y: 0.6 },
+              colors: ["#06b6d4", "#67e8f9", "#a5f3fc", "#cffafe"], // Cyan tones
               startVelocity: 45,
-              decay: 0.85
+              decay: 0.85,
             });
             break;
-            
-          case 'news':
+
+          case "news":
             // 📰 Newspaper effect - gray and white squares/rectangles to match gray button
             confetti({
               particleCount: 120,
               spread: 80,
-              origin: buttonRect ? { 
-                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-              } : { y: 0.6 },
-              colors: ['#6b7280', '#9ca3af', '#d1d5db', '#f3f4f6'], // Gray tones to match gray button
-              shapes: ['square'],
+              origin: buttonRect
+                ? {
+                    x:
+                      (buttonRect.left + buttonRect.width / 2) /
+                      window.innerWidth,
+                    y:
+                      (buttonRect.top + buttonRect.height / 2) /
+                      window.innerHeight,
+                  }
+                : { y: 0.6 },
+              colors: ["#6b7280", "#9ca3af", "#d1d5db", "#f3f4f6"], // Gray tones to match gray button
+              shapes: ["square"],
               scalar: 1.1,
               gravity: 0.9,
-              drift: 0.05
+              drift: 0.05,
             });
             break;
-            
-          case 'memo':
+
+          case "memo":
             // 📝 Pink sparkles for memos
             confetti({
               particleCount: 100,
               spread: 60,
-              origin: buttonRect ? { 
-                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-              } : { y: 0.6 },
-              colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
+              origin: buttonRect
+                ? {
+                    x:
+                      (buttonRect.left + buttonRect.width / 2) /
+                      window.innerWidth,
+                    y:
+                      (buttonRect.top + buttonRect.height / 2) /
+                      window.innerHeight,
+                  }
+                : { y: 0.6 },
+              colors: ["#ec4899", "#f472b6", "#f9a8d4", "#fce7f3"], // Pink tones to match pink button
               scalar: 0.9,
-              startVelocity: 30
+              startVelocity: 30,
             });
             break;
-            
+
           default:
             // Default celebration
             confetti({
               particleCount: 100,
               spread: 70,
-              origin: buttonRect ? { 
-                x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-                y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-              } : { y: 0.6 }
+              origin: buttonRect
+                ? {
+                    x:
+                      (buttonRect.left + buttonRect.width / 2) /
+                      window.innerWidth,
+                    y:
+                      (buttonRect.top + buttonRect.height / 2) /
+                      window.innerHeight,
+                  }
+                : { y: 0.6 },
             });
         }
       }
     },
 
     triggerSubmitCelebration() {
-      if (typeof confetti !== 'undefined') {
-        const submitButton = document.querySelector('#main-submit-btn');
+      if (typeof confetti !== "undefined") {
+        const submitButton = document.querySelector("#main-submit-btn");
         const buttonRect = submitButton?.getBoundingClientRect();
-        
+
         // 🖨️ Printer celebration with single blue burst
-        const origin = buttonRect ? { 
-          x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
-          y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
-        } : { y: 0.6 };
-        
+        const origin = buttonRect
+          ? {
+              x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+              y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight,
+            }
+          : { y: 0.6 };
+
         // Single blue burst celebration
         confetti({
           particleCount: 200,
           spread: 100,
           origin,
-          colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'], // Blue tones only
-          scalar: 1.5
+          colors: ["#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"], // Blue tones only
+          scalar: 1.5,
         });
       }
     },
-    
+
     // Navigation
     goToSettings() {
-      window.location.href = '/settings/'; // New modular settings overview page
+      window.location.href = "/settings/"; // New modular settings overview page
     },
-    
+
     // === Memo Functions ===
-    
+
     async loadMemosFromAPI() {
       // Don't reload if already loaded
       if (this.memosLoaded) return;
-      
+
       try {
         const memosData = await loadMemos();
-        
+
         // Convert API format to modal format
         this.memos = [
-          { id: 1, content: memosData.memo1 || '' },
-          { id: 2, content: memosData.memo2 || '' },
-          { id: 3, content: memosData.memo3 || '' },
-          { id: 4, content: memosData.memo4 || '' }
+          { id: 1, content: memosData.memo1 || "" },
+          { id: 2, content: memosData.memo2 || "" },
+          { id: 3, content: memosData.memo3 || "" },
+          { id: 4, content: memosData.memo4 || "" },
         ];
-        
+
         this.memosLoaded = true;
       } catch (error) {
-        console.error('📝 Failed to load memos:', error);
+        console.error("📝 Failed to load memos:", error);
         // Fallback to empty memos
         this.memos = [
-          { id: 1, content: '' },
-          { id: 2, content: '' },
-          { id: 3, content: '' },
-          { id: 4, content: '' }
+          { id: 1, content: "" },
+          { id: 2, content: "" },
+          { id: 3, content: "" },
+          { id: 4, content: "" },
         ];
         this.memosLoaded = true;
       }
     },
-    
+
     async showMemoModal() {
       this.memoModalVisible = true;
-      
+
       // Ensure memos are loaded
       if (!this.memosLoaded) {
         await this.loadMemosFromAPI();
       }
     },
-    
+
     closeMemoModal() {
       this.memoModalVisible = false;
     },
-    
+
     async printMemo(memoId) {
       if (this.printing) return;
-      
+
       try {
         this.printing = true;
-        
+
         // Step 1: Get processed memo content (clean GET request)
         const response = await fetch(`/api/memo/${memoId}`);
-        
+
         if (!response.ok) {
           throw new Error(`Failed to get memo: ${response.status}`);
         }
-        
+
         const memoData = await response.json();
         if (!memoData.content) {
-          throw new Error('No memo content received');
+          throw new Error("No memo content received");
         }
-        
+
         // Step 2: Print using the same method as other buttons
         let printResponse;
-        if (this.selectedPrinter === 'local-direct') {
+        if (this.selectedPrinter === "local-direct") {
           printResponse = await printLocalContent(memoData.content);
         } else {
-          printResponse = await printMQTTContent(memoData.content, this.selectedPrinter);
+          printResponse = await printMQTTContent(
+            memoData.content,
+            this.selectedPrinter,
+          );
         }
-        
+
         // HTTP 200 status indicates success - no need to check response body
         // Set active action to show "Scribed" on memo button
-        this.activeQuickAction = 'memo';
+        this.activeQuickAction = "memo";
         this.closeMemoModal();
-        
+
         // Pink sparkle confetti celebration (keep the confetti!)
         if (window.confetti) {
           confetti({
-            colors: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3'], // Pink tones to match pink button
+            colors: ["#ec4899", "#f472b6", "#f9a8d4", "#fce7f3"], // Pink tones to match pink button
             startVelocity: 30,
             spread: 360,
             ticks: 60,
-            zIndex: 0
+            zIndex: 0,
           });
         }
-        
+
         // Reset active action after 2 seconds like other quick actions
         setTimeout(() => {
           this.activeQuickAction = null;
         }, 2000);
       } catch (error) {
-        console.error('Failed to print memo:', error);
-        this.showToast(`Failed to print memo: ${error.message}`, 'error');
+        console.error("Failed to print memo:", error);
+        this.showToast(`Failed to print memo: ${error.message}`, "error");
       } finally {
         this.printing = false;
       }
@@ -733,58 +797,60 @@ export function createIndexStore() {
 
     // Setup SSE connection for remote printer (MQTT) discovery
     setupSSEConnection() {
-      
       let eventSource = null;
-      
+
       const connectSSE = () => {
         // Close existing connection if any
         if (eventSource) {
           eventSource.close();
         }
-        
+
         // Create new SSE connection
-        eventSource = new EventSource('/events');
-        
+        eventSource = new EventSource("/events");
+
         // Handle remote printer (MQTT) updates
-        eventSource.addEventListener('printer-update', (event) => {
+        eventSource.addEventListener("printer-update", (event) => {
           try {
             const data = JSON.parse(event.data);
             this.updatePrintersFromData(data);
           } catch (error) {
-            console.error('Error parsing remote printer (MQTT) update:', error);
+            console.error("Error parsing remote printer (MQTT) update:", error);
           }
         });
-        
+
         // Handle system status updates
-        eventSource.addEventListener('system-status', (event) => {
+        eventSource.addEventListener("system-status", (event) => {
           try {
             const data = JSON.parse(event.data);
             this.showSystemNotification(data.status, data.message);
           } catch (error) {
-            console.error('Error parsing system status:', error);
+            console.error("Error parsing system status:", error);
           }
         });
-        
+
         // Handle connection errors
         eventSource.onerror = (error) => {
-          console.error('SSE connection error for remote printer (MQTT) discovery:', error);
+          console.error(
+            "SSE connection error for remote printer (MQTT) discovery:",
+            error,
+          );
           // Attempt to reconnect after 5 seconds
           setTimeout(() => {
             connectSSE();
           }, 5000);
         };
-        
+
         // Handle successful connection
         eventSource.onopen = (event) => {
           // Connection established
         };
       };
-      
+
       // Start initial connection
       connectSSE();
-      
+
       // Clean up on page unload
-      window.addEventListener('beforeunload', () => {
+      window.addEventListener("beforeunload", () => {
         if (eventSource) {
           eventSource.close();
         }
@@ -795,12 +861,12 @@ export function createIndexStore() {
       if (data && data.discovered_printers) {
         // Update the store's printers array directly
         this.printers = data.discovered_printers;
-        
+
         // Also dispatch custom event for backward compatibility if needed
-        const event = new CustomEvent('printersUpdated', {
+        const event = new CustomEvent("printersUpdated", {
           detail: {
-            printers: data.discovered_printers
-          }
+            printers: data.discovered_printers,
+          },
         });
         document.dispatchEvent(event);
       }
@@ -808,12 +874,12 @@ export function createIndexStore() {
 
     showSystemNotification(status, message) {
       // Only show notifications for specific status types
-      if (!['connected', 'error', 'reconnecting'].includes(status)) {
+      if (!["connected", "error", "reconnecting"].includes(status)) {
         return;
       }
-      
+
       // Create notification element
-      const notification = document.createElement('div');
+      const notification = document.createElement("div");
       notification.className = `notification notification-${status}`;
       notification.style.cssText = `
         position: fixed;
@@ -827,39 +893,39 @@ export function createIndexStore() {
         opacity: 0;
         transition: opacity 0.3s ease;
       `;
-      
+
       // Set background color based on status
       switch (status) {
-        case 'connected':
-          notification.style.backgroundColor = '#10b981'; // Green
+        case "connected":
+          notification.style.backgroundColor = "#10b981"; // Green
           break;
-        case 'error':
-          notification.style.backgroundColor = '#ef4444'; // Red
+        case "error":
+          notification.style.backgroundColor = "#ef4444"; // Red
           break;
-        case 'reconnecting':
-          notification.style.backgroundColor = '#f59e0b'; // Yellow
+        case "reconnecting":
+          notification.style.backgroundColor = "#f59e0b"; // Yellow
           break;
       }
-      
+
       notification.textContent = message;
       document.body.appendChild(notification);
-      
+
       // Fade in
       requestAnimationFrame(() => {
-        notification.style.opacity = '1';
+        notification.style.opacity = "1";
       });
-      
+
       // Auto-remove after 3 seconds
       setTimeout(() => {
-        notification.style.opacity = '0';
+        notification.style.opacity = "0";
         setTimeout(() => {
           if (notification.parentNode) {
             notification.parentNode.removeChild(notification);
           }
         }, 300);
       }, 3000);
-    }
+    },
   };
-  
+
   return store;
 }

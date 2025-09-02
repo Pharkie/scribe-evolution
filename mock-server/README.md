@@ -21,7 +21,7 @@ A complete mock API server for local development and testing of the Scribe Evolu
   - **`mock-config.json`** - Normal mode configuration (matches `/api/config`)
   - **`mock-config-ap-mode.json`** - AP mode configuration for setup testing
   - **`mock-config-no-leds.json`** - No-LEDs build configuration
-  - **`mock-diagnostics.json`** - Mock diagnostics data (matches `/api/diagnostics`)  
+  - **`mock-diagnostics.json`** - Mock diagnostics data (matches `/api/diagnostics`)
   - **`mock-printer-discovery.json`** - Mock printer discovery data (matches `/events` SSE)
   - **`mock-nvs-dump.json`** - Mock NVS storage dump (matches `/api/nvs-dump`)
   - **`mock-wifi-scan.json`** - Mock WiFi network scan results
@@ -58,7 +58,7 @@ node mock-server/mock-api.js [--ap-mode|--no-leds]
 - **Static File Serving**: Complete web interface (HTML, CSS, JS, images, favicons)
 - **CORS Enabled**: Cross-origin requests for development tools
 - **Smart Port Conflict Resolution**: Automatically detects port 3001 conflicts and offers to kill conflicting processes
-- **Mode Switching**: `--ap-mode` for testing setup.html, `--no-leds` for LED-disabled builds  
+- **Mode Switching**: `--ap-mode` for testing setup.html, `--no-leds` for LED-disabled builds
 - **Live Keyboard Controls**:
   - Press **"r" + Enter** to reload server (picks up code changes)
   - Press **"d" + Enter** to reload JSON data files (picks up data changes)
@@ -69,7 +69,7 @@ node mock-server/mock-api.js [--ap-mode|--no-leds]
 All mock data matches the real ESP32 API responses exactly:
 
 - **Config**: Complete device settings, MQTT configuration, LED effects, button mappings, Unbidden Ink parameters
-- **Diagnostics**: ESP32-C3 hardware specifications, live memory usage, flash storage, temperature, endpoint listings  
+- **Diagnostics**: ESP32-C3 hardware specifications, live memory usage, flash storage, temperature, endpoint listings
 - **Printer Discovery**: SSE events with network printer discovery data and connection timestamps
 - **NVS Dump**: Complete non-volatile storage dump with all 35 configuration keys, validation status, and data types
 
@@ -79,23 +79,23 @@ All mock data matches the real ESP32 API responses exactly:
 2. **Access web interface**: http://localhost:3001/
 3. **Edit JSON files** to test different data scenarios
 4. **Press "d" + Enter** to reload data without restarting server
-5. **Edit mock-api.js** for API behavior changes  
+5. **Edit mock-api.js** for API behavior changes
 6. **Press "r" + Enter** to reload server completely
 7. **Frontend sees changes immediately** - no ESP32 rebuild required
 
 ## Available Endpoints
 
-| Endpoint | Method | Description | Live Data |
-|----------|---------|-------------|-----------|
-| `/` | GET | Main web interface | Static |
-| `/api/config` | GET | Device configuration | ✓ |
-| `/api/config` | POST | Config updates | Simulated |
-| `/api/diagnostics` | GET | System diagnostics | ✓ Memory, temperature |
-| `/api/nvs-dump` | GET | NVS storage dump | ✓ Timestamp |
-| `/api/status` | GET | System status | ✓ |
-| `/api/print` | POST | Print simulation | Random counts |
-| `/api/led-effect` | POST | LED effect trigger | Simulated |
-| `/events` | SSE | Printer discovery | ✓ Periodic updates |
+| Endpoint           | Method | Description          | Live Data             |
+| ------------------ | ------ | -------------------- | --------------------- |
+| `/`                | GET    | Main web interface   | Static                |
+| `/api/config`      | GET    | Device configuration | ✓                     |
+| `/api/config`      | POST   | Config updates       | Simulated             |
+| `/api/diagnostics` | GET    | System diagnostics   | ✓ Memory, temperature |
+| `/api/nvs-dump`    | GET    | NVS storage dump     | ✓ Timestamp           |
+| `/api/status`      | GET    | System status        | ✓                     |
+| `/api/print`       | POST   | Print simulation     | Random counts         |
+| `/api/led-effect`  | POST   | LED effect trigger   | Simulated             |
+| `/events`          | SSE    | Printer discovery    | ✓ Periodic updates    |
 
 ## Testing Scenarios
 
@@ -115,6 +115,6 @@ All mock data matches the real ESP32 API responses exactly:
 
 All sensitive data (passwords, API keys, real network info) has been replaced with safe mock values that demonstrate the new secret masking functionality:
 
-- WiFi passwords: `mo●●●●●●●●en` (shows first 2 and last 2 characters with masking)  
+- WiFi passwords: `mo●●●●●●●●en` (shows first 2 and last 2 characters with masking)
 - MQTT passwords: `mo●●●●●●●●rd` (demonstrates consistent masking pattern)
 - ChatGPT API tokens: `sk●●●●●●●●ty` (masks sensitive API key data)

@@ -180,12 +180,14 @@ All effects operate on a **cycle-based system** where 1 cycle = one complete pat
 ### Effect Parameters
 
 Each effect supports the following unified parameters:
+
 - **cycles**: Number of complete patterns to execute (1-10 in playground, unlimited via API)
 - **speed**: Animation speed (1-100, higher = faster)
 - **intensity**: Effect-specific intensity parameter (1-100)
 - **colors**: Array of colors (single color for most effects, 3 colors for chase_multi)
 
 Additional effect-specific parameters:
+
 - **Twinkle**: fadeSpeed, starCount
 - **Matrix**: trailLength, colorSpacing, drops
 - **Rainbow**: waveLength
@@ -243,29 +245,36 @@ The LED Settings section in the web interface (`/settings.html`) provides:
 The **Effect Playground** provides an interactive interface for testing LED effects with real-time parameter adjustment:
 
 #### Control Parameters
+
 - **Effect Selection**: Choose from 6 built-in effects (chase_single, rainbow, twinkle, chase_multi, pulse, matrix)
 - **Speed (1-100)**: Effect animation speed
 - **Intensity (1-100)**: Effect brightness/density parameter
 - **Number of Cycles (1-10)**: How many complete patterns to run during testing
 
 #### Color Controls
+
 - **Primary Color**: Color picker for single-color effects
 - **Multi-color Support**: Additional color pickers for chase_multi effect (supports 3 colors)
 
 #### Effect-Specific Parameters
+
 Each effect exposes custom parameters via additional sliders:
+
 - **Twinkle**: Fade Speed, Number of Stars
 - **Matrix**: Trail Length, Color Spacing, Number of Drops
 - **Rainbow**: Wave Length (affects pattern density)
 
 #### Testing Features
+
 - **🎨 Test Effect**: Runs the selected effect with current parameters
 - **💡 Turn Off LEDs**: Immediately stops all effects and turns off LEDs
 - **Dynamic Feedback**: Toast notifications show test status (e.g., "Testing chase_single effect for 3 cycles")
 - **Live Updates**: Parameter changes are reflected immediately when testing
 
 #### Cycle-Based Operation
+
 All effects in the playground operate on a **cycle-based system**:
+
 - **1 cycle** = One complete pattern execution
 - **Chase effects**: 1 cycle = one complete traversal from start to end
 - **Rainbow effects**: 1 cycle = one complete wave across the strip

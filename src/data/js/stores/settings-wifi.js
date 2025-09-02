@@ -5,417 +5,450 @@
  * Converted from legacy JavaScript to ES6 modules following established patterns
  */
 
-import { loadConfiguration, saveConfiguration, scanWiFiNetworks, printLocalContent } from '../api/settings.js';
+import {
+  loadConfiguration,
+  saveConfiguration,
+  scanWiFiNetworks,
+  printLocalContent,
+} from "../api/settings.js";
 
 export function createSettingsWifiStore() {
-    return {
-        // ================== UTILITY FUNCTIONS ==================
-        // Simple utility function extracted from repeated showMessage patterns
-        showErrorMessage(message) {
-            window.showMessage(message, 'error');
-        },
+  return {
+    // ================== UTILITY FUNCTIONS ==================
+    // Simple utility function extracted from repeated showMessage patterns
+    showErrorMessage(message) {
+      window.showMessage(message, "error");
+    },
 
-        // ================== STATE MANAGEMENT ==================
-        // Simple Loading Flag Pattern
-        loaded: false,  // Simple loading flag (starts false)
-        error: null,
-        saving: false,
-        initialized: false, // Failsafe guard to prevent multiple inits
-        apPrintStatus: 'normal', // 'normal', 'scribing'
-        
-        // Computed property to check if save should be enabled
-        get canSave() {
-            // Don't allow save while not loaded, saving, or with errors
-            if (!this.loaded || this.saving || this.error) {
-                return false;
-            }
-            
-            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
-            const hasValidSSID = selectedSSID && selectedSSID.trim() !== '';
-            
-            // Must have valid SSID
-            let formValid = false;
-            if (this.wifiScan.mode === 'scan') {
-                formValid = hasValidSSID && this.wifiScan.selectedNetwork;
-            } else if (this.wifiScan.mode === 'manual') {
-                formValid = hasValidSSID;
-            }
-            
-            if (!formValid) return false;
-            
-            // If password was modified, it must not be blank
-            if (this.passwordsModified.wifiPassword && (!this.config.device.wifi.password || this.config.device.wifi.password.trim() === '')) {
-                return false;
-            }
-            
-            // Must have changes to save
-            return this.hasChanges();
-        },
-        
-        // Configuration data (empty object populated on load)
-        config: {},
-        
-        // Password modification tracking for secure handling
-        passwordsModified: {
-            wifiPassword: false
-        },
-        originalMaskedValues: {
-            wifiPassword: ''
-        },
-        
-        // Store original config to detect changes
-        originalConfig: {
-            connectTimeout: null
-        },
-        
-        // WiFi network scanning state using Alpine reactive patterns
-        wifiScan: {
-            // Core state
-            networks: [],
-            currentSSID: null,
-            selectedNetwork: null,
-            manualSSID: '',
-            mode: 'scan', // 'scan' or 'manual'
-            isScanning: false,
-            error: null,
-            hasScanned: false,
-            passwordVisible: false,
-            
-            // Computed properties (Alpine getters)
-            get sortedNetworks() {
-                if (!this.networks || this.networks.length === 0) return [];
-                
-                // Convert RSSI to signal strength and add unique keys
-                // Networks are already deduped and sorted from the scan function
-                const networksWithSignal = this.networks.map((network, index) => ({
-                    ...network,
-                    signal_strength: this.formatSignalStrength(network.rssi),
-                    signal_display: `${this.formatSignalStrength(network.rssi)} (${network.rssi} dBm)`,
-                    uniqueKey: `${network.ssid}-${network.rssi}-${index}` // Unique key for Alpine rendering
-                }));
-                
-                return networksWithSignal;
-            },
-            
-            // Format RSSI to signal strength description
-            formatSignalStrength(rssi) {
-                if (rssi > -30) return 'Excellent';
-                if (rssi > -50) return 'Very Good';
-                if (rssi > -60) return 'Good';
-                if (rssi > -70) return 'Fair';
-                return 'Poor';
-            },
-            
-        },
-        
-        // Validation state
-        validation: {
-            errors: {}
-        },
-        
-        // Computed properties for complex UI states
-        get apPrintButtonText() {
-            return this.apPrintStatus === 'scribing' ? 'Scribing' : 'Scribe WiFi Fallback AP';
-        },
-        
-        get saveButtonText() {
-            return this.saving ? 'Saving...' : 'Save';
-        },
+    // ================== STATE MANAGEMENT ==================
+    // Simple Loading Flag Pattern
+    loaded: false, // Simple loading flag (starts false)
+    error: null,
+    saving: false,
+    initialized: false, // Failsafe guard to prevent multiple inits
+    apPrintStatus: "normal", // 'normal', 'scribing'
 
-        // ================== WIFI CONFIGURATION API ==================
-        // Load data from server
-        async loadConfiguration() {
-            // Duplicate initialization guard (failsafe)
-            if (this.initialized) {
-                console.log('📡 WiFi Settings: Already initialized, skipping');
-                return;
-            }
-            this.initialized = true;
-            
-            this.loaded = false;
-            this.error = null;
-            try {
-                // Load configuration from API
-                const serverConfig = await loadConfiguration();
-                
-                // Direct assignment to config object
-                this.config = serverConfig;
-                
-                // Initialize WiFi scanning state
-                this.initializeWiFiState();
-                
-                // Initialize password tracking
-                this.initializePasswordTracking();
-                
-                console.log('📡 WiFi: Configuration loaded');
-                this.loaded = true;
-                
-            } catch (error) {
-                console.error('📡 WiFi: Failed to load configuration:', error);
-                this.error = error.message;
-            }
-        },
+    // Computed property to check if save should be enabled
+    get canSave() {
+      // Don't allow save while not loaded, saving, or with errors
+      if (!this.loaded || this.saving || this.error) {
+        return false;
+      }
 
-        
+      const selectedSSID =
+        this.wifiScan.mode === "manual"
+          ? this.wifiScan.manualSSID
+          : this.wifiScan.selectedNetwork;
+      const hasValidSSID = selectedSSID && selectedSSID.trim() !== "";
+
+      // Must have valid SSID
+      let formValid = false;
+      if (this.wifiScan.mode === "scan") {
+        formValid = hasValidSSID && this.wifiScan.selectedNetwork;
+      } else if (this.wifiScan.mode === "manual") {
+        formValid = hasValidSSID;
+      }
+
+      if (!formValid) return false;
+
+      // If password was modified, it must not be blank
+      if (
+        this.passwordsModified.wifiPassword &&
+        (!this.config.device.wifi.password ||
+          this.config.device.wifi.password.trim() === "")
+      ) {
+        return false;
+      }
+
+      // Must have changes to save
+      return this.hasChanges();
+    },
+
+    // Configuration data (empty object populated on load)
+    config: {},
+
+    // Password modification tracking for secure handling
+    passwordsModified: {
+      wifiPassword: false,
+    },
+    originalMaskedValues: {
+      wifiPassword: "",
+    },
+
+    // Store original config to detect changes
+    originalConfig: {
+      connectTimeout: null,
+    },
+
+    // WiFi network scanning state using Alpine reactive patterns
+    wifiScan: {
+      // Core state
+      networks: [],
+      currentSSID: null,
+      selectedNetwork: null,
+      manualSSID: "",
+      mode: "scan", // 'scan' or 'manual'
+      isScanning: false,
+      error: null,
+      hasScanned: false,
+      passwordVisible: false,
+
+      // Computed properties (Alpine getters)
+      get sortedNetworks() {
+        if (!this.networks || this.networks.length === 0) return [];
+
+        // Convert RSSI to signal strength and add unique keys
+        // Networks are already deduped and sorted from the scan function
+        const networksWithSignal = this.networks.map((network, index) => ({
+          ...network,
+          signal_strength: this.formatSignalStrength(network.rssi),
+          signal_display: `${this.formatSignalStrength(network.rssi)} (${network.rssi} dBm)`,
+          uniqueKey: `${network.ssid}-${network.rssi}-${index}`, // Unique key for Alpine rendering
+        }));
+
+        return networksWithSignal;
+      },
+
+      // Format RSSI to signal strength description
+      formatSignalStrength(rssi) {
+        if (rssi > -30) return "Excellent";
+        if (rssi > -50) return "Very Good";
+        if (rssi > -60) return "Good";
+        if (rssi > -70) return "Fair";
+        return "Poor";
+      },
+    },
+
+    // Validation state
+    validation: {
+      errors: {},
+    },
+
+    // Computed properties for complex UI states
+    get apPrintButtonText() {
+      return this.apPrintStatus === "scribing"
+        ? "Scribing"
+        : "Scribe WiFi Fallback AP";
+    },
+
+    get saveButtonText() {
+      return this.saving ? "Saving..." : "Save";
+    },
+
+    // ================== WIFI CONFIGURATION API ==================
+    // Load data from server
+    async loadConfiguration() {
+      // Duplicate initialization guard (failsafe)
+      if (this.initialized) {
+        console.log("📡 WiFi Settings: Already initialized, skipping");
+        return;
+      }
+      this.initialized = true;
+
+      this.loaded = false;
+      this.error = null;
+      try {
+        // Load configuration from API
+        const serverConfig = await loadConfiguration();
+
+        // Direct assignment to config object
+        this.config = serverConfig;
+
+        // Initialize WiFi scanning state
+        this.initializeWiFiState();
+
         // Initialize password tracking
-        initializePasswordTracking() {
-            // Store original masked values for comparison
-            this.originalMaskedValues.wifiPassword = this.config.device.wifi.password || '';
-            
-            // Store original timeout for change detection
-            this.originalConfig.connectTimeout = this.config.device.wifi.connect_timeout || 15000;
-        },
-        
-        // Clear password field on focus (standard UX pattern)
-        clearWifiPasswordFieldOnFocus() {
-            if (this.config.device.wifi.password) {
-                this.config.device.wifi.password = '';
-                this.passwordsModified.wifiPassword = true;
-            }
-        },
+        this.initializePasswordTracking();
 
-        // Track password modifications (called from templates)
-        trackWifiPasswordChange(newValue) {
-            const hasChanged = newValue !== this.originalMaskedValues.wifiPassword;
-            this.passwordsModified.wifiPassword = hasChanged;
-        },
-        
-        // Initialize WiFi state - simplified
-        initializeWiFiState() {
-            this.wifiScan.currentSSID = this.config?.device?.wifi?.ssid || null;
+        console.log("📡 WiFi: Configuration loaded");
+        this.loaded = true;
+      } catch (error) {
+        console.error("📡 WiFi: Failed to load configuration:", error);
+        this.error = error.message;
+      }
+    },
+
+    // Initialize password tracking
+    initializePasswordTracking() {
+      // Store original masked values for comparison
+      this.originalMaskedValues.wifiPassword =
+        this.config.device.wifi.password || "";
+
+      // Store original timeout for change detection
+      this.originalConfig.connectTimeout =
+        this.config.device.wifi.connect_timeout || 15000;
+    },
+
+    // Clear password field on focus (standard UX pattern)
+    clearWifiPasswordFieldOnFocus() {
+      if (this.config.device.wifi.password) {
+        this.config.device.wifi.password = "";
+        this.passwordsModified.wifiPassword = true;
+      }
+    },
+
+    // Track password modifications (called from templates)
+    trackWifiPasswordChange(newValue) {
+      const hasChanged = newValue !== this.originalMaskedValues.wifiPassword;
+      this.passwordsModified.wifiPassword = hasChanged;
+    },
+
+    // Initialize WiFi state - simplified
+    initializeWiFiState() {
+      this.wifiScan.currentSSID = this.config?.device?.wifi?.ssid || null;
+      this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
+      this.wifiScan.manualSSID = "";
+      this.wifiScan.mode = "scan";
+      this.wifiScan.networks = [];
+      this.wifiScan.isScanning = false;
+      this.wifiScan.hasScanned = false;
+      this.wifiScan.error = null;
+      this.wifiScan.passwordVisible = false;
+    },
+
+    // ================== WIFI API ==================
+    // WiFi scanning - simplified with reactive updates
+    async scanWiFiNetworks() {
+      this.wifiScan.isScanning = true;
+      this.wifiScan.error = null;
+
+      try {
+        const networks = await scanWiFiNetworks();
+
+        // Filter valid networks and dedupe by SSID (keep strongest signal only)
+        const networksBySSID = {};
+
+        networks
+          .filter((network) => network.ssid && network.ssid.trim())
+          .forEach((network) => {
+            const ssid = network.ssid.trim();
+            if (
+              !networksBySSID[ssid] ||
+              network.rssi > networksBySSID[ssid].rssi
+            ) {
+              networksBySSID[ssid] = network;
+            }
+          });
+
+        // Convert to array and sort by signal strength (strongest first), then alphabetically
+        const validNetworks = Object.values(networksBySSID).sort((a, b) => {
+          if (b.rssi !== a.rssi) {
+            return b.rssi - a.rssi;
+          }
+          return a.ssid.localeCompare(b.ssid);
+        });
+
+        // Update state - Alpine reactivity handles UI updates
+        this.wifiScan.networks = validNetworks;
+        this.wifiScan.hasScanned = true;
+
+        // Switch to scan mode and auto-select current network if found
+        this.wifiScan.mode = "scan";
+        if (this.wifiScan.currentSSID) {
+          const currentNetwork = validNetworks.find(
+            (n) => n.ssid === this.wifiScan.currentSSID,
+          );
+          if (currentNetwork) {
             this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
-            this.wifiScan.manualSSID = '';
-            this.wifiScan.mode = 'scan';
-            this.wifiScan.networks = [];
-            this.wifiScan.isScanning = false;
-            this.wifiScan.hasScanned = false;
-            this.wifiScan.error = null;
-            this.wifiScan.passwordVisible = false;
-        },
+            console.log(
+              "📡 WiFi: Auto-selected current network:",
+              this.wifiScan.currentSSID,
+            );
+          }
+        }
 
-        // ================== WIFI API ==================
-        // WiFi scanning - simplified with reactive updates
-        async scanWiFiNetworks() {
-            this.wifiScan.isScanning = true;
-            this.wifiScan.error = null;
-            
-            try {
-                const networks = await scanWiFiNetworks();
-                
-                // Filter valid networks and dedupe by SSID (keep strongest signal only)
-                const networksBySSID = {};
-                
-                networks
-                    .filter(network => network.ssid && network.ssid.trim())
-                    .forEach(network => {
-                        const ssid = network.ssid.trim();
-                        if (!networksBySSID[ssid] || network.rssi > networksBySSID[ssid].rssi) {
-                            networksBySSID[ssid] = network;
-                        }
-                    });
-                
-                // Convert to array and sort by signal strength (strongest first), then alphabetically
-                const validNetworks = Object.values(networksBySSID)
-                    .sort((a, b) => {
-                        if (b.rssi !== a.rssi) {
-                            return b.rssi - a.rssi;
-                        }
-                        return a.ssid.localeCompare(b.ssid);
-                    });
-                
-                // Update state - Alpine reactivity handles UI updates
-                this.wifiScan.networks = validNetworks;
-                this.wifiScan.hasScanned = true;
-                
-                // Switch to scan mode and auto-select current network if found
-                this.wifiScan.mode = 'scan';
-                if (this.wifiScan.currentSSID) {
-                    const currentNetwork = validNetworks.find(n => n.ssid === this.wifiScan.currentSSID);
-                    if (currentNetwork) {
-                        this.wifiScan.selectedNetwork = this.wifiScan.currentSSID;
-                        console.log('📡 WiFi: Auto-selected current network:', this.wifiScan.currentSSID);
-                    }
-                }
-                
-                console.log('📡 WiFi: Scan found', validNetworks.length, 'networks');
-                
-            } catch (error) {
-                console.error('📡 WiFi: Scan failed:', error);
-                this.wifiScan.error = error.message;
-                this.showErrorMessage(`WiFi scan failed: ${error.message}`);
-            } finally {
-                this.wifiScan.isScanning = false;
-            }
-        },
-        
-        // Update SSID based on current mode and selection
-        updateSSID() {
-            // Only update if config is loaded
-            if (!this.config?.device?.wifi) return;
-            
-            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
-            this.config.device.wifi.ssid = selectedSSID || '';
-            
-            // Clear validation errors when SSID changes
-            if (this.validation.errors['wifi.ssid'] && selectedSSID) {
-                delete this.validation.errors['wifi.ssid'];
-            }
-        },
+        console.log("📡 WiFi: Scan found", validNetworks.length, "networks");
+      } catch (error) {
+        console.error("📡 WiFi: Scan failed:", error);
+        this.wifiScan.error = error.message;
+        this.showErrorMessage(`WiFi scan failed: ${error.message}`);
+      } finally {
+        this.wifiScan.isScanning = false;
+      }
+    },
 
-        // Validate password field specifically (called from UI)
-        validatePassword(value) {
-            // Only validate if password was modified (to avoid showing error on pre-filled masked passwords)
-            if (this.passwordsModified.wifiPassword && (!value || value.trim() === '')) {
-                this.validation.errors['wifi.password'] = 'Password cannot be blank';
-            } else {
-                // Clear the error if it was previously set
-                if (this.validation.errors['wifi.password']) {
-                    delete this.validation.errors['wifi.password'];
-                }
-            }
-        },
-        
-        // Validate timeout field specifically (called from UI)
-        validateTimeout(value) {
-            const timeoutSeconds = parseInt(value);
-            if (isNaN(timeoutSeconds) || timeoutSeconds < 5 || timeoutSeconds > 60) {
-                this.validation.errors['wifi.connect_timeout'] = 'Timeout must be between 5-60 seconds';
-            } else {
-                // Clear the error if it was previously set
-                if (this.validation.errors['wifi.connect_timeout']) {
-                    delete this.validation.errors['wifi.connect_timeout'];
-                }
-            }
-        },
-        
-        // Validate current configuration
-        validateConfiguration() {
-            const errors = {};
-            
-            // Get selected SSID based on current mode
-            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
-            
-            // SSID validation
-            if (!selectedSSID || selectedSSID.trim() === '') {
-                if (this.wifiScan.mode === 'scan') {
-                    errors['wifi.ssid'] = 'Please select a network';
-                } else {
-                    errors['wifi.ssid'] = 'Network name cannot be empty';
-                }
-            }
-            
-            // Password validation (if network requires it)
-            // Note: We can't determine if a network requires a password in scan mode
-            // without additional API data, so we'll be lenient here
-            
-            // Timeout validation
-            const timeoutSeconds = Math.floor(this.config.device.wifi.connect_timeout / 1000);
-            if (timeoutSeconds < 5 || timeoutSeconds > 60) {
-                errors['wifi.connect_timeout'] = 'Timeout must be between 5-60 seconds';
-            }
-            
-            this.validation.errors = errors;
-            return Object.keys(errors).length === 0;
-        },
-        
-        // Check if configuration has meaningful changes
-        hasChanges() {
-            const selectedSSID = this.wifiScan.mode === 'manual' ? this.wifiScan.manualSSID : this.wifiScan.selectedNetwork;
-            const currentSSID = this.wifiScan.currentSSID;
-            
-            // SSID changed
-            if (selectedSSID !== currentSSID) {
-                return true;
-            }
-            
-            // Password modified
-            if (this.passwordsModified.wifiPassword) {
-                return true;
-            }
-            
-            // Timeout changed (compare current timeout vs original)
-            const currentTimeout = this.config.device.wifi.connect_timeout || 15000;
-            const originalTimeout = this.originalConfig.connectTimeout || 15000;
-            if (currentTimeout !== originalTimeout) {
-                // Only consider it a valid change if the timeout is within valid range
-                const timeoutSeconds = Math.floor(currentTimeout / 1000);
-                if (timeoutSeconds >= 5 && timeoutSeconds <= 60) {
-                    return true;
-                }
-            }
-            
-            return false;
-        },
+    // Update SSID based on current mode and selection
+    updateSSID() {
+      // Only update if config is loaded
+      if (!this.config?.device?.wifi) return;
 
-        // Save WiFi configuration via API
-        async saveConfiguration() {
-            // Ensure SSID is up to date
-            this.updateSSID();
-            
-            // Validate before saving
-            if (!this.validateConfiguration()) {
-                this.showErrorMessage('Please fix the errors before saving');
-                return;
-            }
-            
-            
-            this.saving = true;
-            try {
-                // Create partial WiFi config for server submission - flat structure
-                const partialConfig = {
-                    wifi: {
-                        ssid: this.config.device.wifi.ssid,
-                        connect_timeout: this.config.device.wifi.connect_timeout
-                    }
-                };
-                
-                // Only include password if it was modified by user (not masked)
-                if (this.passwordsModified.wifiPassword) {
-                    partialConfig.wifi.password = this.config.device.wifi.password;
-                }
-                
-                console.log('📡 WiFi: Saving configuration');
-                const message = await saveConfiguration(partialConfig);
-                
-                console.log('📡 WiFi: Configuration saved successfully');
-                
-                // Redirect immediately with success parameter
-                window.location.href = '/settings/?saved=wifi';
-                
-            } catch (error) {
-                console.error('📡 WiFi: Failed to save configuration:', error);
-                this.showErrorMessage('Failed to save WiFi settings: ' + error.message);
-                this.saving = false; // Only reset on error
-            }
-        },
+      const selectedSSID =
+        this.wifiScan.mode === "manual"
+          ? this.wifiScan.manualSSID
+          : this.wifiScan.selectedNetwork;
+      this.config.device.wifi.ssid = selectedSSID || "";
 
-        // Cancel configuration changes
-        cancelConfiguration() {
-            // Navigate back to settings
-            window.location.href = '/settings/';
-        },
-        
-        // ================== SYSTEM/PRINTING API ==================
-        // Print AP details to thermal printer
-        async printAPDetails() {
-            try {
-                // Set scribing state
-                this.apPrintStatus = 'scribing';
-                
-                // Get fallback AP details from configuration - error if not available
-                const fallbackSSID = this.config?.device?.wifi?.fallback_ap_ssid;
-                const fallbackPassword = this.config?.device?.wifi?.fallback_ap_password;
-                
-                if (!fallbackSSID || !fallbackPassword) {
-                    throw new Error('WiFi fallback AP credentials not configured');
-                }
-                
-                // Create print request with AP details
-                const printRequest = {
-                    content_type: "memo",
-                    content: {
-                        title: "WiFi Fallback AP",
-                        text: `Network: ${fallbackSSID}
+      // Clear validation errors when SSID changes
+      if (this.validation.errors["wifi.ssid"] && selectedSSID) {
+        delete this.validation.errors["wifi.ssid"];
+      }
+    },
+
+    // Validate password field specifically (called from UI)
+    validatePassword(value) {
+      // Only validate if password was modified (to avoid showing error on pre-filled masked passwords)
+      if (
+        this.passwordsModified.wifiPassword &&
+        (!value || value.trim() === "")
+      ) {
+        this.validation.errors["wifi.password"] = "Password cannot be blank";
+      } else {
+        // Clear the error if it was previously set
+        if (this.validation.errors["wifi.password"]) {
+          delete this.validation.errors["wifi.password"];
+        }
+      }
+    },
+
+    // Validate timeout field specifically (called from UI)
+    validateTimeout(value) {
+      const timeoutSeconds = parseInt(value);
+      if (isNaN(timeoutSeconds) || timeoutSeconds < 5 || timeoutSeconds > 60) {
+        this.validation.errors["wifi.connect_timeout"] =
+          "Timeout must be between 5-60 seconds";
+      } else {
+        // Clear the error if it was previously set
+        if (this.validation.errors["wifi.connect_timeout"]) {
+          delete this.validation.errors["wifi.connect_timeout"];
+        }
+      }
+    },
+
+    // Validate current configuration
+    validateConfiguration() {
+      const errors = {};
+
+      // Get selected SSID based on current mode
+      const selectedSSID =
+        this.wifiScan.mode === "manual"
+          ? this.wifiScan.manualSSID
+          : this.wifiScan.selectedNetwork;
+
+      // SSID validation
+      if (!selectedSSID || selectedSSID.trim() === "") {
+        if (this.wifiScan.mode === "scan") {
+          errors["wifi.ssid"] = "Please select a network";
+        } else {
+          errors["wifi.ssid"] = "Network name cannot be empty";
+        }
+      }
+
+      // Password validation (if network requires it)
+      // Note: We can't determine if a network requires a password in scan mode
+      // without additional API data, so we'll be lenient here
+
+      // Timeout validation
+      const timeoutSeconds = Math.floor(
+        this.config.device.wifi.connect_timeout / 1000,
+      );
+      if (timeoutSeconds < 5 || timeoutSeconds > 60) {
+        errors["wifi.connect_timeout"] = "Timeout must be between 5-60 seconds";
+      }
+
+      this.validation.errors = errors;
+      return Object.keys(errors).length === 0;
+    },
+
+    // Check if configuration has meaningful changes
+    hasChanges() {
+      const selectedSSID =
+        this.wifiScan.mode === "manual"
+          ? this.wifiScan.manualSSID
+          : this.wifiScan.selectedNetwork;
+      const currentSSID = this.wifiScan.currentSSID;
+
+      // SSID changed
+      if (selectedSSID !== currentSSID) {
+        return true;
+      }
+
+      // Password modified
+      if (this.passwordsModified.wifiPassword) {
+        return true;
+      }
+
+      // Timeout changed (compare current timeout vs original)
+      const currentTimeout = this.config.device.wifi.connect_timeout || 15000;
+      const originalTimeout = this.originalConfig.connectTimeout || 15000;
+      if (currentTimeout !== originalTimeout) {
+        // Only consider it a valid change if the timeout is within valid range
+        const timeoutSeconds = Math.floor(currentTimeout / 1000);
+        if (timeoutSeconds >= 5 && timeoutSeconds <= 60) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+
+    // Save WiFi configuration via API
+    async saveConfiguration() {
+      // Ensure SSID is up to date
+      this.updateSSID();
+
+      // Validate before saving
+      if (!this.validateConfiguration()) {
+        this.showErrorMessage("Please fix the errors before saving");
+        return;
+      }
+
+      this.saving = true;
+      try {
+        // Create partial WiFi config for server submission - flat structure
+        const partialConfig = {
+          wifi: {
+            ssid: this.config.device.wifi.ssid,
+            connect_timeout: this.config.device.wifi.connect_timeout,
+          },
+        };
+
+        // Only include password if it was modified by user (not masked)
+        if (this.passwordsModified.wifiPassword) {
+          partialConfig.wifi.password = this.config.device.wifi.password;
+        }
+
+        console.log("📡 WiFi: Saving configuration");
+        const message = await saveConfiguration(partialConfig);
+
+        console.log("📡 WiFi: Configuration saved successfully");
+
+        // Redirect immediately with success parameter
+        window.location.href = "/settings/?saved=wifi";
+      } catch (error) {
+        console.error("📡 WiFi: Failed to save configuration:", error);
+        this.showErrorMessage("Failed to save WiFi settings: " + error.message);
+        this.saving = false; // Only reset on error
+      }
+    },
+
+    // Cancel configuration changes
+    cancelConfiguration() {
+      // Navigate back to settings
+      window.location.href = "/settings/";
+    },
+
+    // ================== SYSTEM/PRINTING API ==================
+    // Print AP details to thermal printer
+    async printAPDetails() {
+      try {
+        // Set scribing state
+        this.apPrintStatus = "scribing";
+
+        // Get fallback AP details from configuration - error if not available
+        const fallbackSSID = this.config?.device?.wifi?.fallback_ap_ssid;
+        const fallbackPassword =
+          this.config?.device?.wifi?.fallback_ap_password;
+
+        if (!fallbackSSID || !fallbackPassword) {
+          throw new Error("WiFi fallback AP credentials not configured");
+        }
+
+        // Create print request with AP details
+        const printRequest = {
+          content_type: "memo",
+          content: {
+            title: "WiFi Fallback AP",
+            text: `Network: ${fallbackSSID}
 Password: ${fallbackPassword}
 
 Connect to this network if device WiFi fails.
@@ -423,12 +456,12 @@ Connect to this network if device WiFi fails.
 Device will be available at:
 http://192.168.4.1
 
-This memo printed from Settings → WiFi`
-                    }
-                };
-                
-                // Submit print request using local content
-                const content = `WiFi Fallback AP
+This memo printed from Settings → WiFi`,
+          },
+        };
+
+        // Submit print request using local content
+        const content = `WiFi Fallback AP
                 
 Network: ${fallbackSSID}
 Password: ${fallbackPassword}
@@ -439,28 +472,30 @@ Device will be available at:
 http://192.168.4.1
 
 This memo printed from Settings → WiFi`;
-                
-                await printLocalContent(content);
-                
-                console.log('📡 WiFi: AP details printed');
-                
-                // Show "Scribing" for 2 seconds then revert to normal
-                setTimeout(() => {
-                    this.apPrintStatus = 'normal';
-                }, 2000);
-                
-            } catch (error) {
-                console.error('📡 WiFi: Failed to print AP details:', error);
-                // Reset to normal state and show error to user
-                this.apPrintStatus = 'normal';
-                
-                // Use fallback if showMessage is not available
-                if (typeof window.showMessage === 'function') {
-                    window.showMessage(`Failed to print AP details: ${error.message}`, 'error');
-                } else {
-                    alert(`Failed to print AP details: ${error.message}`);
-                }
-            }
+
+        await printLocalContent(content);
+
+        console.log("📡 WiFi: AP details printed");
+
+        // Show "Scribing" for 2 seconds then revert to normal
+        setTimeout(() => {
+          this.apPrintStatus = "normal";
+        }, 2000);
+      } catch (error) {
+        console.error("📡 WiFi: Failed to print AP details:", error);
+        // Reset to normal state and show error to user
+        this.apPrintStatus = "normal";
+
+        // Use fallback if showMessage is not available
+        if (typeof window.showMessage === "function") {
+          window.showMessage(
+            `Failed to print AP details: ${error.message}`,
+            "error",
+          );
+        } else {
+          alert(`Failed to print AP details: ${error.message}`);
         }
-    };
+      }
+    },
+  };
 }

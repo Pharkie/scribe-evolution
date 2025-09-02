@@ -19,6 +19,7 @@ This document covers the hardware requirements, wiring, assembly, and printer-sp
 #### 3D Printed Components
 
 The printed components are available on:
+
 - [Maker World](https://makerworld.com/en/models/1577165-project-scribe#profileId-1670812)
 - [Printables](https://www.printables.com/model/1346462-project-scribe/files)
 
@@ -37,16 +38,17 @@ If you don't have a 3D printer, consider using the PCBWay affiliate link: https:
 ### Thermal Paper Safety
 
 > [!IMPORTANT] **BPA-Free Paper Recommended**
-> 
+>
 > Standard thermal paper (like grocery receipts) contains BPA. For this project, choose BPA-free paper for health safety. The linked products are BPA-free.
-> 
+>
 > For maximum safety, look for "phenol-free" paper. Safe alternatives contain:
+>
 > - Ascorbic acid (vitamin C)
 > - Urea-based Pergafast 201
 > - Blue4est technology (no developers)
 
 > [!NOTE] **Archival Considerations**
-> 
+>
 > Some thermal paper is treated against fading and can last 35+ years. If using Scribe for archival purposes, consider ink longevity when selecting paper rolls.
 
 ## Pin-out and Wiring
@@ -64,6 +66,7 @@ The project uses UART1 to communicate with the printer:
 | Power GND   | GND          | GND              | Printer GND              |
 
 **Unused connections:**
+
 - TTL NC (Not Connected)
 - TTL DTR (Data Terminal Ready)
 
@@ -72,7 +75,7 @@ These wires can be removed to reduce clutter during assembly.
 ### Power Requirements
 
 > [!IMPORTANT] **Power Safety**
-> 
+>
 > - **Never power the printer directly from the ESP32-C3** - you may damage the microcontroller
 > - **Only power the ESP32-C3 via one source** - either USB (during programming) OR via the 5V pin (during operation)
 > - Use a dedicated 5V power supply capable of 2.4A+ for the shared power rail
@@ -123,11 +126,13 @@ Before assembly, test your printer:
 ### Print Settings
 
 **Head Unit:**
+
 - Requires supports due to fillets and overhangs
 - Use smaller layer heights (0.1-0.2mm) for better surface finish
 - Print orientation: electronics cavity facing up
 
 **Neck/Leg:**
+
 - Can be printed upright without supports
 - Standard layer heights acceptable (0.2-0.3mm)
 - Ensure cable channel is properly formed
@@ -192,11 +197,13 @@ Before assembly, test your printer:
 ### Power Issues
 
 **Printer not powering on:**
+
 - Check 5V supply capacity (needs 2.4A+)
 - Verify power connector wiring
 - Test power supply voltage under load
 
 **ESP32 not responding:**
+
 - Ensure only one power source is connected
 - Check USB cable and connection
 - Try different USB port or power supply
@@ -204,11 +211,13 @@ Before assembly, test your printer:
 ### Communication Issues
 
 **No printing output:**
+
 - Verify GPIO20 to TTL RX connection
 - Check baud rate configuration (115200)
 - Test with serial monitor for communication
 
 **Garbled output:**
+
 - Check ground connections
 - Verify 5V/3.3V logic level compatibility
 - Inspect for loose connections
@@ -216,11 +225,13 @@ Before assembly, test your printer:
 ### Mechanical Issues
 
 **Paper feeding problems:**
+
 - Check for obstructions in paper path
 - Verify paper roll orientation
 - Ensure proper paper tension
 
 **Assembly fit issues:**
+
 - Check 3D print quality and dimensional accuracy
 - File or sand contact surfaces for better fit
 - Consider reprinting problematic parts
