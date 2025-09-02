@@ -210,16 +210,84 @@ export function createSetupStore() {
 
     // Filter timezones based on search query
     get filteredTimezones() {
-      if (!this.searchQuery) return this.timezonePicker.timezones.slice(0, 5);
-      const query = this.searchQuery.toLowerCase();
-      return this.timezonePicker.timezones
-        .filter(
-          (timezone) =>
-            timezone.displayName.toLowerCase().includes(query) ||
-            timezone.id.toLowerCase().includes(query) ||
-            timezone.offset.toLowerCase().includes(query),
-        )
-        .slice(0, 5);
+      if (
+        !Array.isArray(this.timezonePicker.timezones) ||
+        this.timezonePicker.timezones.length === 0
+      ) {
+        return [];
+      }
+      const query = (this.searchQuery || "").toLowerCase().trim();
+      if (!query) {
+        // Show top 5 popular timezones when no search query (same as settings-device.js)
+        const popularTimezones = [
+          "Europe/London",
+          "America/New_York",
+          "America/Sao_Paulo",
+          "Australia/Sydney",
+          "Asia/Tokyo",
+        ];
+        const popular = [];
+        const others = [];
+        this.timezonePicker.timezones.forEach((timezone) => {
+          if (popularTimezones.includes(timezone.id)) {
+            popular.push(timezone);
+          } else {
+            others.push(timezone);
+          }
+        });
+        // Sort popular by the order in popularTimezones array
+        popular.sort((a, b) => {
+          const aIndex = popularTimezones.indexOf(a.id);
+          const bIndex = popularTimezones.indexOf(b.id);
+          return aIndex - bIndex;
+        });
+        return [...popular, ...others.slice(0, 5 - popular.length)];
+      }
+      // Search and score results by field priority (same as settings-device.js)
+      const results = [];
+      this.timezonePicker.timezones.forEach((timezone) => {
+        let priority = null;
+        // Priority 1: City name (extracted from IANA ID)
+        const parts = timezone.id.split("/");
+        const city = parts[parts.length - 1].replace(/_/g, " ").toLowerCase();
+        if (city.includes(query)) {
+          priority = 1;
+        }
+        // Priority 2: Display name
+        else if (timezone.displayName.toLowerCase().includes(query)) {
+          priority = 2;
+        }
+        // Priority 3: Timezone ID
+        else if (timezone.id.toLowerCase().includes(query)) {
+          priority = 3;
+        }
+        // Priority 4: Country name
+        else if (
+          timezone.countryName &&
+          timezone.countryName.toLowerCase().includes(query)
+        ) {
+          priority = 4;
+        }
+        // Priority 5: Comments
+        else if (
+          timezone.comment &&
+          timezone.comment.toLowerCase().includes(query)
+        ) {
+          priority = 5;
+        }
+        if (priority !== null) {
+          results.push({ timezone, priority });
+        }
+      });
+      // Sort by priority first, then alphabetically by display name
+      return results
+        .sort((a, b) => {
+          if (a.priority !== b.priority) {
+            return a.priority - b.priority;
+          }
+          return a.timezone.displayName.localeCompare(b.timezone.displayName);
+        })
+        .map((result) => result.timezone);
     },
 
     // Select timezone from dropdown
