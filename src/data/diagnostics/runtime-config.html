@@ -111,12 +111,12 @@
             <h3
               class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2"
             >
-              Error Loading Configuration Data
+              Error Loading Configuration
             </h3>
             <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
             <button
               @click="loadData()"
-              class="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              class="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
             >
               Retry
             </button>
@@ -133,12 +133,12 @@
           x-transition.opacity.duration.300ms
         >
           <div class="space-y-6">
-            <!-- Device Configuration -->
+            <!-- Configuration Overview -->
             <div
-              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-blue-600 transition-shadow duration-200"
+              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-purple-600 transition-shadow duration-200"
             >
               <h3
-                class="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center space-x-2"
+                class="text-xl font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center space-x-2"
               >
                 <svg
                   class="w-6 h-6"
@@ -150,61 +150,43 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-16.5 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   ></path>
                 </svg>
-                <span>Device Configuration</span>
+                <span>Configuration Overview</span>
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-3">
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >Device Owner:</span
-                    >
-                    <span
-                      class="text-gray-900 dark:text-gray-100 font-semibold"
-                      x-text="config?.device?.owner || 'Not configured'"
-                    ></span>
-                  </div>
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >Timezone:</span
-                    >
-                    <span
-                      class="text-gray-900 dark:text-gray-100 font-semibold"
-                      x-text="config?.device?.timezone || 'UTC'"
-                    ></span>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-purple-600 dark:text-purple-400"
+                    x-text="config?.statistics?.totalEntries || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Total Settings
                   </div>
                 </div>
-                <div class="space-y-3">
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >Printer GPIO:</span
-                    >
-                    <span
-                      class="text-gray-900 dark:text-gray-100 font-semibold"
-                      x-text="config?.hardware?.printerRxPin ? `GPIO ${config.hardware.printerRxPin}` : 'Not configured'"
-                    ></span>
-                  </div>
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >Button 1 GPIO:</span
-                    >
-                    <span
-                      class="text-gray-900 dark:text-gray-100 font-semibold"
-                      x-text="config?.hardware?.button1Pin ? `GPIO ${config.hardware.button1Pin}` : 'Not configured'"
-                    ></span>
+                <div
+                  class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center"
+                >
+                  <div
+                    class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                    x-text="config?.statistics?.configSections || '0'"
+                  ></div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Config Sections
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Network Configuration -->
+            <!-- Configuration Values -->
             <div
-              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-green-600 transition-shadow duration-200"
+              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-purple-600 transition-shadow duration-200"
             >
               <h3
-                class="text-xl font-semibold text-green-600 dark:text-green-400 mb-4 flex items-center space-x-2"
+                class="text-xl font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center space-x-2"
               >
                 <svg
                   class="w-6 h-6"
@@ -216,205 +198,60 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z"
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
                   ></path>
                 </svg>
-                <span>Network Configuration</span>
+                <span>Configuration Key-Value Pairs</span>
               </h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-3">
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >WiFi SSID:</span
-                    >
-                    <span
-                      class="text-gray-900 dark:text-gray-100 font-semibold"
-                      x-text="config?.wifi?.ssid || 'Not configured'"
-                    ></span>
+              <div class="space-y-2 max-h-96 overflow-y-auto">
+                <template
+                  x-for="entry in config?.entries || []"
+                  :key="entry.key"
+                >
+                  <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    <div class="flex items-center justify-between mb-1">
+                      <div class="flex items-center space-x-2">
+                        <span
+                          class="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100"
+                          x-text="entry.key"
+                        ></span>
+                        <span
+                          class="inline-block px-2 py-1 text-xs rounded bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                          x-text="entry.type"
+                        ></span>
+                      </div>
+                      <div
+                        class="text-xs text-gray-500 dark:text-gray-500"
+                        x-text="entry.section"
+                      ></div>
+                    </div>
+                    <div
+                      class="text-sm text-gray-600 dark:text-gray-400 font-mono break-all"
+                      x-text="entry.value"
+                    ></div>
                   </div>
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >WiFi Status:</span
+                </template>
+                <template x-if="!config?.entries?.length">
+                  <div class="text-center py-8">
+                    <svg
+                      class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                    <span
-                      :class="config?.wifi?.connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
-                      class="font-semibold"
-                      x-text="config?.wifi?.connected ? 'Connected' : 'Disconnected'"
-                    ></span>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                      ></path>
+                    </svg>
+                    <p class="text-gray-500 dark:text-gray-400">
+                      No configuration data available
+                    </p>
                   </div>
-                </div>
-                <div class="space-y-3">
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >IP Address:</span
-                    >
-                    <span
-                      class="text-gray-900 dark:text-gray-100 font-semibold font-mono"
-                      x-text="config?.wifi?.ipAddress || 'Not assigned'"
-                    ></span>
-                  </div>
-                  <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-600 dark:text-gray-400 font-medium"
-                      >Signal Strength:</span
-                    >
-                    <span
-                      class="text-gray-900 dark:text-gray-100 font-semibold"
-                      x-text="config?.wifi?.signalStrength ? `${config.wifi.signalStrength} dBm` : 'Unknown'"
-                    ></span>
-                  </div>
-                </div>
+                </template>
               </div>
-            </div>
-
-            <!-- MQTT Configuration -->
-            <div
-              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-yellow-600 transition-shadow duration-200"
-            >
-              <h3
-                class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46"
-                  ></path>
-                </svg>
-                <span>MQTT Configuration</span>
-              </h3>
-              <template x-if="!config?.mqtt?.enabled">
-                <div class="text-center py-8">
-                  <p class="text-gray-500 dark:text-gray-400">
-                    MQTT is disabled
-                  </p>
-                </div>
-              </template>
-              <template x-if="config?.mqtt?.enabled">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="space-y-3">
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >Server:</span
-                      >
-                      <span
-                        class="text-gray-900 dark:text-gray-100 font-semibold"
-                        x-text="config?.mqtt?.server || 'Not configured'"
-                      ></span>
-                    </div>
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >Port:</span
-                      >
-                      <span
-                        class="text-gray-900 dark:text-gray-100 font-semibold"
-                        x-text="config?.mqtt?.port || '1883'"
-                      ></span>
-                    </div>
-                  </div>
-                  <div class="space-y-3">
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >Connection Status:</span
-                      >
-                      <span
-                        :class="config?.mqtt?.connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
-                        class="font-semibold"
-                        x-text="config?.mqtt?.connected ? 'Connected' : 'Disconnected'"
-                      ></span>
-                    </div>
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >Username:</span
-                      >
-                      <span
-                        class="text-gray-900 dark:text-gray-100 font-semibold"
-                        x-text="config?.mqtt?.username ? '••••••••' : 'None'"
-                      ></span>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </div>
-
-            <!-- LED Configuration -->
-            <div
-              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-pink-600 transition-shadow duration-200"
-            >
-              <h3
-                class="text-xl font-semibold text-pink-600 dark:text-pink-400 mb-4 flex items-center space-x-2"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  ></path>
-                </svg>
-                <span>LED Configuration</span>
-              </h3>
-              <template x-if="!config?.leds?.enabled">
-                <div class="text-center py-8">
-                  <p class="text-gray-500 dark:text-gray-400">
-                    LEDs are disabled
-                  </p>
-                </div>
-              </template>
-              <template x-if="config?.leds?.enabled">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="space-y-3">
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >LED Count:</span
-                      >
-                      <span
-                        class="text-gray-900 dark:text-gray-100 font-semibold"
-                        x-text="config?.leds?.count || '0'"
-                      ></span>
-                    </div>
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >Data GPIO:</span
-                      >
-                      <span
-                        class="text-gray-900 dark:text-gray-100 font-semibold"
-                        x-text="config?.leds?.dataPin ? `GPIO ${config.leds.dataPin}` : 'Not configured'"
-                      ></span>
-                    </div>
-                  </div>
-                  <div class="space-y-3">
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >Current Effect:</span
-                      >
-                      <span
-                        class="text-gray-900 dark:text-gray-100 font-semibold"
-                        x-text="config?.leds?.currentEffect || 'None'"
-                      ></span>
-                    </div>
-                    <div class="flex justify-between items-center py-2">
-                      <span class="text-gray-600 dark:text-gray-400 font-medium"
-                        >Brightness:</span
-                      >
-                      <span
-                        class="text-gray-900 dark:text-gray-100 font-semibold"
-                        x-text="config?.leds?.brightness ? `${config.leds.brightness}%` : '0%'"
-                      ></span>
-                    </div>
-                  </div>
-                </div>
-              </template>
             </div>
           </div>
         </div>

@@ -23,7 +23,26 @@ export function createDiagnosticsRoutesStore() {
       this.error = null;
       try {
         const routes = await loadRoutes();
-        this.routes = routes;
+
+        // Transform the routes data to include computed properties expected by the template
+        const apiEndpoints = routes.api_endpoints || [];
+        const webPages = routes.web_pages || [];
+
+        this.routes = {
+          ...routes,
+          totalRoutes: apiEndpoints.length + webPages.length,
+          apiRoutes: apiEndpoints.length,
+          staticRoutes: webPages.length,
+          endpoints: apiEndpoints, // Use api_endpoints as endpoints for the template
+          totalRequests: 0, // ESP32 doesn't track this currently
+          statistics: {
+            successfulRequests: 0,
+            clientErrors: 0,
+            serverErrors: 0,
+            averageResponseTime: 0,
+          },
+        };
+
         this.loaded = true;
       } catch (error) {
         this.error = `Failed to load routes data: ${error.message}`;

@@ -38,12 +38,33 @@ export function createDiagnosticsMicrocontrollerStore() {
           cpuFrequency: `${mc.cpu_frequency_mhz} MHz`,
           sdkVersion: mc.sdk_version,
           resetReason: mc.reset_reason,
-          temperature: `${mc.temperature?.toFixed(1)}°C`,
+          temperature: mc.temperature
+            ? `${mc.temperature.toFixed(1)}°C`
+            : "Not available",
           uptime: this.formatUptime(mc.uptime_ms),
           flashSize: this.formatBytes(mc.flash?.total_chip_size),
           firmwareVersion: mc.sdk_version,
         };
-        this.memoryUsage = mc.memory || {};
+
+        // Calculate memory usage percentages and formatted text
+        const memory = mc.memory || {};
+        const flashUsed =
+          (mc.flash?.app_partition?.used || 0) +
+          (mc.flash?.filesystem?.used || 0);
+        const flashTotal = mc.flash?.total_chip_size || 1;
+        const flashUsagePercent = (flashUsed / flashTotal) * 100;
+
+        const heapUsagePercent = memory.total_heap
+          ? ((memory.used_heap || 0) / memory.total_heap) * 100
+          : 0;
+
+        this.memoryUsage = {
+          ...memory,
+          flashUsageText: `${this.formatBytes(flashUsed)} / ${this.formatBytes(flashTotal)}`,
+          flashUsagePercent,
+          heapUsageText: `${this.formatBytes(memory.used_heap)} / ${this.formatBytes(memory.total_heap)}`,
+          heapUsagePercent,
+        };
         this.config = config;
 
         this.loaded = true;
