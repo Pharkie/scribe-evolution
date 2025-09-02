@@ -35,7 +35,11 @@ export function transformTimezoneData(zones) {
       let displayName;
       let offset = "";
 
-      if (zone.offsets && Array.isArray(zone.offsets) && zone.offsets.length > 0) {
+      if (
+        zone.offsets &&
+        Array.isArray(zone.offsets) &&
+        zone.offsets.length > 0
+      ) {
         // Format offsets with :00 suffix for clarity
         const formatOffset = (o) => {
           const cleaned = o
