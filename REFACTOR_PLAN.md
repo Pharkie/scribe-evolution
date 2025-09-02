@@ -201,21 +201,28 @@
 
 **What's Next**: Apply proven patterns to remaining non-settings pages for consistency
 
-### 6.1: Diagnostics Page Refactor
+### 6.0: 404 Page done ✅
+
+**Current State**: Already converted to ES6 modules ✅
+**Goal**: Align with overall design system and add helpful navigation
+**Why**: Error pages should be as polished as the rest of the app
+Done ✅
+
+### 6.1: Diagnostics Page Refactor - done ✅
 
 **Goal**: Split into self contained, separate pages like settings pages
 **Benefits**: Easier troubleshooting, better organization, follows established patterns
 
 - **6.1.1 Overview page** Like /settings/index.html, move from diagnostics.htmlto /diagnostics/index.html.
-- Stop and test on mock. Approved ✅
+- Stop and test on mock. Done.
 - Now Create subsequent 5 x pages inside /diagnostics/
-- **6.1.2 Microcontroller**: System status, memory, uptime, chip info (main diagnostics.html)
-- **6.1.3 Logging**: Log levels, recent entries, debug output
-- **6.1.4 Routes**: API endpoints, request counts, response times
-- **6.1.5 Runtime Configuration**: Active config values, NVS validation
-- **6.1.6 NVS**: Non-volatile storage usage, key-value pairs, SPIFFS status
+- **6.1.2 Device**: System status, memory, uptime, chip info, logging config
+- **6.1.3 Routes**: Pages and API endpoints
+- **6.1.4 Runtime Configuration**: Active config values
+- **6.1.5 NVS**: Non-volatile storage
+- All done ✅
 
-**Implementation Plan**:
+**Implementation Plan (for future reference)**:
 
 1. Create `/src/data/diagnostics/` and (for build) `/data/diagnostics/` directory structure
 2. Split current diagnostics.html into overview/index + 5 subpages
@@ -236,21 +243,9 @@
 - Improve error handling and loading states
 - Maintain AP mode compatibility (no dependencies on STA mode)
 
-### 6.3: 404 Page
-
-**Current State**: Already converted to ES6 modules ✅
-**Goal**: Align with overall design system and add helpful navigation
-**Why**: Error pages should be as polished as the rest of the app
-
 ---
 
-## Phase 7: AI Memos 🤖
-
-Future enhancement: 4 x configurable AI prompts with hardware button integration
-
----
-
-## Phase 8: Documentation & Test Harness
+## Phase 7: Documentation & Test Harness
 
 **Goal**: Document established patterns for future development. Ensure unit tests work.
 

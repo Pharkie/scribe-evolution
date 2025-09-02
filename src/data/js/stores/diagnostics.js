@@ -661,38 +661,3 @@ export function createDiagnosticsStore() {
 
   return store;
 }
-
-// Alpine.js store for loading diagnostics partials (clean version)
-export function createDiagnosticsPartialsStore() {
-  return {
-    cache: {},
-    loading: {},
-    load(name) {
-      if (this.cache[name]) return this.cache[name];
-      if (this.loading[name])
-        return '<div class="p-4 text-center text-gray-500">Loading...</div>';
-
-      this.loading[name] = true;
-      fetch(`/partials/diagnostics/${name}.html`)
-        .then((response) => {
-          if (!response.ok) throw new Error(`Failed to load partial: ${name}`);
-          return response.text();
-        })
-        .then((html) => {
-          this.loading[name] = false;
-          this.cache[name] = html;
-          // Trigger reactivity by updating the store
-          Alpine.store("diagnosticsPartials", { ...this });
-        })
-        .catch((error) => {
-          console.error("Error loading partial:", error);
-          this.cache[name] =
-            `<div class="p-4 text-center text-red-500">Error loading ${name}</div>`;
-          this.loading[name] = false;
-          Alpine.store("diagnosticsPartials", { ...this });
-        });
-
-      return '<div class="p-4 text-center text-gray-500">Loading...</div>';
-    },
-  };
-}
