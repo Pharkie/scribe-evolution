@@ -38,6 +38,10 @@ export function createSetupStore() {
     // Search query for timezone picker
     searchQuery: "",
 
+    // Timezone picker UI state
+    isOpen: false,
+    focusedIndex: -1,
+
     // Load configuration on initialization
     async init() {
       if (this.initialized) return;

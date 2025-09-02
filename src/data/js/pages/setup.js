@@ -43,9 +43,47 @@ document.addEventListener("alpine:init", () => {
       return this.$store.setup.canSave;
     },
 
+    // Timezone picker properties
+    get timezonePicker() {
+      return this.$store.setup.timezonePicker;
+    },
+    get searchQuery() {
+      return this.$store.setup.searchQuery;
+    },
+    set searchQuery(value) {
+      this.$store.setup.searchQuery = value;
+    },
+    get isOpen() {
+      return this.$store.setup.isOpen;
+    },
+    set isOpen(value) {
+      this.$store.setup.isOpen = value;
+    },
+    get focusedIndex() {
+      return this.$store.setup.focusedIndex;
+    },
+    set focusedIndex(value) {
+      this.$store.setup.focusedIndex = value;
+    },
+    get filteredTimezones() {
+      return this.$store.setup.filteredTimezones;
+    },
+
     // Expose store methods
     scanWiFi() {
       return this.$store.setup.scanWiFi();
+    },
+    loadTimezones() {
+      return this.$store.setup.loadTimezones();
+    },
+    getTimezoneDisplayName(timezoneId) {
+      return this.$store.setup.getTimezoneDisplayName(timezoneId);
+    },
+    getTimezoneOffset(timezoneId) {
+      return this.$store.setup.getTimezoneOffset(timezoneId);
+    },
+    selectTimezone(timezone) {
+      return this.$store.setup.selectTimezone(timezone);
     },
     saveAndRestart() {
       return this.$store.setup.saveAndRestart();
@@ -86,8 +124,47 @@ document.addEventListener("alpine:init", () => {
     get canSave() {
       return Alpine.store("setup").canSave;
     },
+
+    // Timezone picker properties
+    get timezonePicker() {
+      return Alpine.store("setup").timezonePicker;
+    },
+    get searchQuery() {
+      return Alpine.store("setup").searchQuery;
+    },
+    set searchQuery(value) {
+      Alpine.store("setup").searchQuery = value;
+    },
+    get isOpen() {
+      return Alpine.store("setup").isOpen;
+    },
+    set isOpen(value) {
+      Alpine.store("setup").isOpen = value;
+    },
+    get focusedIndex() {
+      return Alpine.store("setup").focusedIndex;
+    },
+    set focusedIndex(value) {
+      Alpine.store("setup").focusedIndex = value;
+    },
+    get filteredTimezones() {
+      return Alpine.store("setup").filteredTimezones;
+    },
+
     scanWiFi() {
       return Alpine.store("setup").scanWiFi();
+    },
+    loadTimezones() {
+      return Alpine.store("setup").loadTimezones();
+    },
+    getTimezoneDisplayName(timezoneId) {
+      return Alpine.store("setup").getTimezoneDisplayName(timezoneId);
+    },
+    getTimezoneOffset(timezoneId) {
+      return Alpine.store("setup").getTimezoneOffset(timezoneId);
+    },
+    selectTimezone(timezone) {
+      return Alpine.store("setup").selectTimezone(timezone);
     },
     saveAndRestart() {
       return Alpine.store("setup").saveAndRestart();

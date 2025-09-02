@@ -139,7 +139,6 @@
 
                 <!-- Timezone Picker (imported from settings/device.html) -->
                 <div
-                  x-data="{ isOpen: false, focusedIndex: -1 }"
                   @timezone-picker-open="
                     if (!timezonePicker.initialized && !timezonePicker.loading) {
                       loadTimezones();

@@ -3,16 +3,16 @@
 const fs = require("fs");
 const path = require("path");
 
-// Find the .claude directory by traversing up from current directory
+// Find the .claude directory by traversing up from script location OR current working directory
 function findClaudeDir() {
+  // Try from script's directory first (when called with absolute path)
   let currentDir = __dirname;
-
-  // Already in .claude/scripts, go up to .claude
-  if (currentDir.endsWith(".claude/scripts")) {
+  if (currentDir.endsWith(".claude/hooks")) {
     return path.dirname(currentDir);
   }
 
-  // Look for .claude directory
+  // Try from current working directory (when called with relative path)
+  currentDir = process.cwd();
   while (currentDir !== path.dirname(currentDir)) {
     const claudeDir = path.join(currentDir, ".claude");
     if (fs.existsSync(claudeDir)) {
