@@ -1,12 +1,34 @@
 {
   "hooks": {
-    "Stop": [
+    "SessionStart": [
       {
-        "matcher": "",
+        "matcher": "startup",
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Funk.aiff"
+            "command": "nohup afplay .claude/sounds/good-to-go-sir.wav >/dev/null 2>&1 &"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sounds=(.claude/sounds/orders-received.wav .claude/sounds/affirmative.wav .claude/sounds/right-away-sir.wav .claude/sounds/read-you.wav .claude/sounds/cant-believe.wav .claude/sounds/this-too.wav); nohup afplay \"${sounds[$RANDOM % ${#sounds[@]}]}\" >/dev/null 2>&1 &"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sounds=(.claude/sounds/jobs-finished.wav .claude/sounds/orders-captain.wav .claude/sounds/reporting-for-duty.wav /System/Library/Sounds/Funk.aiff); nohup afplay \"${sounds[$RANDOM % ${#sounds[@]}]}\" >/dev/null 2>&1 &"
           }
         ]
       }

@@ -108,7 +108,6 @@ export function createSetupStore() {
         getEffectiveSSID(this.wifiScan),
         this.config.device.wifi.password,
       ];
-
       return requiredFields.every(
         (field) =>
           field && typeof field === "string" && field.trim().length > 0,
@@ -169,7 +168,7 @@ export function createSetupStore() {
     // Save configuration and restart (setup-specific behavior)
     async saveAndRestart() {
       if (!this.canSave) {
-        window.showMessage("Please fill in all required fields", "error");
+  window.showMessage("Please fill in all required fields", "error");
         return;
       }
 
@@ -206,5 +205,6 @@ export function createSetupStore() {
         this.saving = false;
       }
     },
+
   };
 }
