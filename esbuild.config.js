@@ -64,10 +64,12 @@ async function buildWithEsbuild(config) {
       outfile: output,
       sourcemap: false,
       plugins: input.length > 1 ? [multiEntryPlugin] : [], // Only use multi-entry for legacy concatenation
+      // Node modules resolution
+      resolveExtensions: [".js", ".jsx", ".ts", ".tsx"],
       // Optimize for browser
       legalComments: "none",
-      // Don't bundle external dependencies (Alpine.js etc)
-      external: [], // We'll handle Alpine separately
+      // Bundle all dependencies for Alpine.js builds
+      external: [],
       // Better minification
       keepNames: false,
       write: true,
@@ -86,17 +88,17 @@ async function buildWithEsbuild(config) {
 
 // Build configurations matching current package.json structure
 const buildConfigs = {
-  // Alpine.js library - just copy the file
+  // Alpine.js library with Collapse plugin
   alpine: {
-    input: ["node_modules/alpinejs/dist/cdn.min.js"],
+    input: ["src/data/js/alpine-with-collapse.js"],
     output: "data/js/alpine.js",
-    minify: false, // Already minified
+    minify: false,
   },
 
   alpineProd: {
-    input: ["node_modules/alpinejs/dist/cdn.min.js"],
+    input: ["src/data/js/alpine-with-collapse.js"],
     output: "data/js/alpine.js",
-    minify: false, // Already minified
+    minify: true,
   },
 
   // Common app bundle
@@ -341,21 +343,8 @@ async function build(configName) {
   try {
     console.log(`Building ${configName}...`);
 
-    // Special handling for Alpine.js bundle - just copy
-    if (configName === "alpine") {
-      const sourceFile = config.input[0];
-      const targetFile = config.output;
-
-      if (fs.existsSync(sourceFile)) {
-        fs.copyFileSync(sourceFile, targetFile);
-        const stats = fs.statSync(targetFile);
-        console.log(`✅ ${targetFile} (${stats.size} bytes) - copied`);
-      } else {
-        throw new Error(`Alpine.js file not found: ${sourceFile}`);
-      }
-    } else {
-      await buildWithEsbuild(config);
-    }
+    // Build all configs with esbuild now (including Alpine with plugins)
+    await buildWithEsbuild(config);
   } catch (error) {
     console.error(`❌ Error building ${configName}:`, error);
     process.exit(1);

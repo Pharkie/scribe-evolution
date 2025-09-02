@@ -13,6 +13,7 @@
     "firmware:lolin32lite": "pio run -e lolin32lite"
   },
   "dependencies": {
+    "@alpinejs/collapse": "^3.14.9",
     "@tailwindcss/cli": "^4.1.12",
     "alpinejs": "^3.14.9",
     "cors": "^2.8.5",
