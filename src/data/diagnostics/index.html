@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagnostics - Scribe Evolution</title>
+
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/outfit-variable.woff2"
+      crossorigin
+    />
+
+    <!-- CSS Assets -->
+    <link rel="stylesheet" href="/css/app.css" />
+
+    <!-- Common JS -->
+    <script src="/js/app-common.js"></script>
+
+    <!-- Diagnostics overview page bundle -->
+    <script src="/js/page-diagnostics-overview.js"></script>
+
+    <!-- Alpine.js (load last) -->
+    <script defer src="/js/alpine.js"></script>
+  </head>
+
+  <body
+    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    x-data="$store.diagnosticsOverview"
+    x-init="loadData()"
+  >
+    <main class="w-full max-w-4xl mx-auto flex-1">
+      <!-- Header with title and back button -->
+      <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
+        <!-- Back button -->
+        <div class="flex-1 flex justify-start">
+          <a
+            href="/"
+            class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md"
+          >
+            <svg
+              class="w-3 h-3 sm:w-4 sm:h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span class="text-xs sm:text-sm font-medium">Home</span>
+          </a>
+        </div>
+
+        <!-- Centered title -->
+        <div class="flex-1 flex justify-center">
+          <h1
+            class="text-3xl sm:text-4xl font-normal text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2"
+          >
+            <svg
+              class="w-7 h-7 sm:w-8 sm:h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z"
+              ></path>
+            </svg>
+            <span>Diagnostics</span>
+          </h1>
+        </div>
+
+        <!-- Right spacer -->
+        <div class="flex-1"></div>
+      </header>
+
+      <!-- Error State -->
+      <template x-if="loaded && error">
+        <div
+          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6"
+        >
+          <div class="text-center">
+            <svg
+              class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M6 18 18 6M6 6l12 12"
+              />
+            </svg>
+            <h3
+              class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2"
+            >
+              Error Loading Diagnostics
+            </h3>
+            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+            <button
+              @click="loadData()"
+              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Main Content -->
+      <template x-if="loaded && !error">
+        <div
+          x-data="{ show: false }"
+          x-init="$nextTick(() => show = true)"
+          x-show="show"
+          x-transition.opacity.duration.300ms
+        >
+          <!-- Diagnostics Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Microcontroller -->
+            <a
+              href="/diagnostics/microcontroller.html"
+              class="block transition-all duration-300 group bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-blue-600"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="w-8 h-8 text-blue-600 dark:text-blue-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-16.5 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z"
+                    ></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors duration-300"
+                  >
+                    Microcontroller
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    System status, memory, uptime, chip info
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- Logging -->
+            <a
+              href="/diagnostics/logging.html"
+              class="block transition-all duration-300 group bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-green-600"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="w-8 h-8 text-green-600 dark:text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold text-green-600 dark:text-green-400 group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors duration-300"
+                  >
+                    Logging
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Log levels, recent entries, debug output
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- Routes -->
+            <a
+              href="/diagnostics/routes.html"
+              class="block transition-all duration-300 group bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-yellow-600"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="w-8 h-8 text-yellow-600 dark:text-yellow-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold text-yellow-600 dark:text-yellow-400 group-hover:text-yellow-700 dark:group-hover:text-yellow-300 transition-colors duration-300"
+                  >
+                    Routes
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    API endpoints, request counts, response times
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- Runtime Configuration -->
+            <a
+              href="/diagnostics/runtime-config.html"
+              class="block transition-all duration-300 group bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-purple-600"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="w-8 h-8 text-purple-600 dark:text-purple-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    ></path>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors duration-300"
+                  >
+                    Runtime Configuration
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Active config values, NVS validation
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            <!-- NVS Storage -->
+            <a
+              href="/diagnostics/nvs.html"
+              class="block transition-all duration-300 group bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-red-600"
+            >
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="w-8 h-8 text-red-600 dark:text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                    ></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3
+                    class="text-lg font-semibold text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors duration-300"
+                  >
+                    NVS Storage
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Non-volatile storage usage, key-value pairs
+                  </p>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </template>
+    </main>
+  </body>
+</html>

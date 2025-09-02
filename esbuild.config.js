@@ -263,6 +263,19 @@ const buildConfigs = {
     output: "data/js/page-settings-unbidden-ink.js",
     minify: true,
   },
+
+  // Diagnostics overview page
+  "diagnostics-overview": {
+    input: ["src/data/js/pages/diagnostics-overview.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-overview.js",
+    minify: false,
+  },
+
+  "diagnostics-overviewProd": {
+    input: ["src/data/js/pages/diagnostics-overview.js"], // Single ES6 module entry point
+    output: "data/js/page-diagnostics-overview.js",
+    minify: true,
+  },
 };
 
 // Build functions
@@ -314,6 +327,7 @@ async function buildAll(production = false) {
     `buttons${suffix}`,
     `leds${suffix}`,
     `unbidden-ink${suffix}`,
+    `diagnostics-overview${suffix}`,
   ];
 
   console.log(`Building all configs (production: ${production})...`);

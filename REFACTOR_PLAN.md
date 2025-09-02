@@ -206,12 +206,17 @@
 **Goal**: Split into self contained, separate pages like settings pages
 **Benefits**: Easier troubleshooting, better organization, follows established patterns
 
-- **Overview page** Like /settings/index.html, move from diagnostics.htmlto /diagnostics/index.html
+- **Overview page** Like /settings/index.html, move from diagnostics.htmlto /diagnostics/index.html.
+- Stop and test on mock.
 - Create subsequent 5 x pages inside /diagnostics/
 - **Microcontroller**: System status, memory, uptime, chip info (main diagnostics.html)
+- Stop and test on mock.
 - **Logging**: Log levels, recent entries, debug output
+- Stop and test on mock.
 - **Routes**: API endpoints, request counts, response times
+- Stop and test on mock.
 - **Runtime Configuration**: Active config values, NVS validation
+- Stop and test on mock.
 - **NVS**: Non-volatile storage usage, key-value pairs, SPIFFS status
 
 **Implementation Plan**:
