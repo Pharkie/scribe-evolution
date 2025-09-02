@@ -334,8 +334,7 @@
               <div class="space-y-4">
                 <!-- Tab-style navigation (imported from settings/wifi.html) -->
                 <div
-                  x-data="{ wifiMode: 'scan', hasScanned: false, selectedNetwork: null }"
-                  x-init="hasScanned = availableNetworks.length > 0"
+                  x-init="wifiScan.hasScanned = availableNetworks.length > 0"
                   class="space-y-0"
                 >
                   <!-- Tab buttons with stronger visual connection -->
@@ -344,22 +343,22 @@
                   >
                     <button
                       type="button"
-                      @click="wifiMode = 'scan'"
+                      @click="wifiScan.mode = 'scan'"
                       :class="{
                         'px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 focus:outline-none focus:ring-0 focus:ring-transparent': true,
-                        'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400 bg-white dark:bg-gray-800': wifiMode === 'scan',
-                        'text-gray-500 dark:text-gray-400 border-transparent bg-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500': wifiMode !== 'scan'
+                        'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400 bg-white dark:bg-gray-800': wifiScan.mode === 'scan',
+                        'text-gray-500 dark:text-gray-400 border-transparent bg-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500': wifiScan.mode !== 'scan'
                       }"
                     >
                       Scan Networks
                     </button>
                     <button
                       type="button"
-                      @click="wifiMode = 'manual'"
+                      @click="wifiScan.mode = 'manual'"
                       :class="{
                         'px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 focus:outline-none focus:ring-0 focus:ring-transparent': true,
-                        'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400 bg-white dark:bg-gray-800': wifiMode === 'manual',
-                        'text-gray-500 dark:text-gray-400 border-transparent bg-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500': wifiMode !== 'manual'
+                        'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400 bg-white dark:bg-gray-800': wifiScan.mode === 'manual',
+                        'text-gray-500 dark:text-gray-400 border-transparent bg-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500': wifiScan.mode !== 'manual'
                       }"
                     >
                       Manual Entry
@@ -373,7 +372,7 @@
                     <!-- Tab content: changes by mode -->
                     <div class="min-h-[120px]">
                       <!-- Scan mode -->
-                      <div x-show="wifiMode === 'scan'" class="space-y-4">
+                      <div x-show="wifiScan.mode === 'scan'" class="space-y-4">
                         <!-- Initial scan button -->
                         <div
                           x-show="!hasScanned && !scanning"
@@ -457,8 +456,8 @@
                                 <input
                                   type="radio"
                                   :value="network.ssid"
-                                  x-model="config.device.wifi.ssid"
-                                  @change="selectedNetwork = network.ssid; config.device.wifi.password = ''"
+                                  x-model="wifiScan.selectedNetwork"
+                                  @change="config.device.wifi.ssid = network.ssid; config.device.wifi.password = ''"
                                   class="mr-3 text-green-600 focus:ring-green-500"
                                 />
                                 <div class="flex-1">
@@ -495,7 +494,10 @@
                       </div>
 
                       <!-- Manual mode -->
-                      <div x-show="wifiMode === 'manual'" class="space-y-4">
+                      <div
+                        x-show="wifiScan.mode === 'manual'"
+                        class="space-y-4"
+                      >
                         <div>
                           <label
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -506,8 +508,8 @@
                             type="text"
                             placeholder="Enter WiFi network name"
                             class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
-                            x-model="manualSsid"
-                            @input="config.device.wifi.ssid = '__manual__'; config.device.wifi.password = ''"
+                            x-model="wifiScan.manualSSID"
+                            @input="wifiScan.mode = 'manual'; config.device.wifi.password = ''"
                           />
                         </div>
                       </div>
@@ -583,7 +585,7 @@
               <button
                 type="submit"
                 :disabled="saving || !canSave"
-                class="btn-primary px-8 py-4 text-lg"
+                class="bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-4 px-8 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
                 :class="{ 'opacity-50 cursor-not-allowed': saving || !canSave }"
                 :title="!canSave ? 'Please fill in all required fields' : ''"
               >

@@ -3,23 +3,68 @@
 const fs = require("fs");
 const path = require("path");
 
-// Find the .claude directory by traversing up from script location OR current working directory
+// Find the .claude directory by traversing up from multiple starting points
 function findClaudeDir() {
-  // Try from script's directory first (when called with absolute path)
-  let currentDir = __dirname;
-  if (currentDir.endsWith(".claude/hooks")) {
-    return path.dirname(currentDir);
+  const searchPaths = [
+    // Script's directory
+    __dirname,
+    // Current working directory
+    process.cwd(),
+    // Environment variable if set
+    process.env.CLAUDE_DIR,
+    // Common project root patterns
+    path.resolve(process.cwd(), ".."),
+    path.resolve(process.cwd(), "../.."),
+    // If we're in a nested structure, try going up several levels
+    path.resolve(__dirname, ".."),
+    path.resolve(__dirname, "../.."),
+    path.resolve(__dirname, "../../.."),
+  ].filter(Boolean); // Remove undefined values
+
+  // First, check if we're already in a .claude directory structure
+  for (const startPath of searchPaths) {
+    let currentDir = startPath;
+
+    // Check if current path contains .claude
+    if (currentDir.includes(".claude")) {
+      const parts = currentDir.split(path.sep);
+      const claudeIndex = parts.findIndex((part) => part === ".claude");
+      if (claudeIndex !== -1) {
+        const claudeDir = parts.slice(0, claudeIndex + 1).join(path.sep);
+        if (fs.existsSync(claudeDir)) {
+          return claudeDir;
+        }
+      }
+    }
+
+    // Traverse up from each starting path
+    while (currentDir && currentDir !== path.dirname(currentDir)) {
+      const claudeDir = path.join(currentDir, ".claude");
+      if (fs.existsSync(claudeDir) && fs.statSync(claudeDir).isDirectory()) {
+        return claudeDir;
+      }
+      currentDir = path.dirname(currentDir);
+    }
   }
 
-  // Try from current working directory (when called with relative path)
-  currentDir = process.cwd();
-  while (currentDir !== path.dirname(currentDir)) {
-    const claudeDir = path.join(currentDir, ".claude");
-    if (fs.existsSync(claudeDir)) {
-      return claudeDir;
+  // Last resort: check common locations
+  const commonLocations = [
+    path.join(process.env.HOME || process.env.USERPROFILE || "", ".claude"),
+    "/tmp/.claude",
+    path.join(process.cwd(), ".claude"),
+  ].filter(Boolean);
+
+  for (const location of commonLocations) {
+    if (fs.existsSync(location) && fs.statSync(location).isDirectory()) {
+      return location;
     }
-    currentDir = path.dirname(currentDir);
   }
+
+  // If all else fails, create debug info
+  console.error("Debug info:");
+  console.error("__dirname:", __dirname);
+  console.error("process.cwd():", process.cwd());
+  console.error("Searched paths:", searchPaths);
 
   throw new Error("Could not find .claude directory");
 }
