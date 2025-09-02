@@ -33,7 +33,7 @@
   >
     <main class="w-full max-w-4xl mx-auto flex-1">
       <!-- Header with title and back button -->
-      <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
+      <header class="w-full max-w-4xl mx-auto flex items-center mb-6 gap-4">
         <!-- Back button -->
         <div class="flex-1 flex justify-start">
           <a
@@ -128,9 +128,9 @@
         >
           <!-- Diagnostics Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Microcontroller -->
+            <!-- Device -->
             <a
-              href="/diagnostics/microcontroller.html"
+              href="/diagnostics/device.html"
               class="block transition-all duration-300 group bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-blue-600"
             >
               <div class="flex items-center space-x-4">
@@ -145,7 +145,7 @@
                       stroke-linecap="round"
                       stroke-linejoin="round"
                       stroke-width="2"
-                      d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-16.5 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z"
+                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
                     ></path>
                   </svg>
                 </div>
@@ -153,44 +153,10 @@
                   <h3
                     class="text-lg font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors duration-300"
                   >
-                    Microcontroller
+                    Device
                   </h3>
                   <p class="text-sm text-gray-600 dark:text-gray-400">
-                    System status, memory, uptime, chip info
-                  </p>
-                </div>
-              </div>
-            </a>
-
-            <!-- Logging -->
-            <a
-              href="/diagnostics/logging.html"
-              class="block transition-all duration-300 group bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-green-600"
-            >
-              <div class="flex items-center space-x-4">
-                <div class="flex-shrink-0">
-                  <svg
-                    class="w-8 h-8 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    ></path>
-                  </svg>
-                </div>
-                <div>
-                  <h3
-                    class="text-lg font-semibold text-green-600 dark:text-green-400 group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors duration-300"
-                  >
-                    Logging
-                  </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Log levels, recent entries, debug output
+                    System status, memory, MQTT, logging
                   </p>
                 </div>
               </div>
@@ -224,7 +190,7 @@
                     Routes
                   </h3>
                   <p class="text-sm text-gray-600 dark:text-gray-400">
-                    API endpoints, request counts, response times
+                    Pages and API endpoints
                   </p>
                 </div>
               </div>
@@ -264,7 +230,7 @@
                     Runtime Configuration
                   </h3>
                   <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Active config values, NVS validation
+                    Current runtime configuration: key-value pairs
                   </p>
                 </div>
               </div>

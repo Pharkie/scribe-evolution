@@ -290,19 +290,6 @@ const buildConfigs = {
     minify: true,
   },
 
-  // Diagnostics logging page
-  "diagnostics-logging": {
-    input: ["src/data/js/pages/diagnostics-logging.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-logging.js",
-    minify: false,
-  },
-
-  "diagnostics-loggingProd": {
-    input: ["src/data/js/pages/diagnostics-logging.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-logging.js",
-    minify: true,
-  },
-
   // Diagnostics routes page
   "diagnostics-routes": {
     input: ["src/data/js/pages/diagnostics-routes.js"], // Single ES6 module entry point
@@ -394,7 +381,6 @@ async function buildAll(production = false) {
     `unbidden-ink${suffix}`,
     `diagnostics-overview${suffix}`,
     `diagnostics-microcontroller${suffix}`,
-    `diagnostics-logging${suffix}`,
     `diagnostics-routes${suffix}`,
     `diagnostics-runtime-config${suffix}`,
     `diagnostics-nvs${suffix}`,

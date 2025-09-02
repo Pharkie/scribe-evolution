@@ -28,12 +28,31 @@ export function createDiagnosticsRoutesStore() {
         const apiEndpoints = routes.api_endpoints || [];
         const webPages = routes.web_pages || [];
 
+        // Sort endpoints by method (GET first, then POST) and alphabetically within each group
+        const sortedEndpoints = [...apiEndpoints].sort((a, b) => {
+          const methodA = (a.method || "").toUpperCase();
+          const methodB = (b.method || "").toUpperCase();
+
+          // Define method priority (GET first, then POST, then others alphabetically)
+          const methodPriority = { GET: 1, POST: 2 };
+          const priorityA = methodPriority[methodA] || 999;
+          const priorityB = methodPriority[methodB] || 999;
+
+          // First sort by method priority
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB;
+          }
+
+          // If same method priority, sort alphabetically by path
+          return (a.path || "").localeCompare(b.path || "");
+        });
+
         this.routes = {
           ...routes,
           totalRoutes: apiEndpoints.length + webPages.length,
           apiRoutes: apiEndpoints.length,
           staticRoutes: webPages.length,
-          endpoints: apiEndpoints, // Use api_endpoints as endpoints for the template
+          endpoints: sortedEndpoints, // Use sorted endpoints for the template
           totalRequests: 0, // ESP32 doesn't track this currently
           statistics: {
             successfulRequests: 0,

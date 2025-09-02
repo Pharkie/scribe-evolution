@@ -33,7 +33,7 @@
   >
     <main class="w-full max-w-4xl mx-auto flex-1">
       <!-- Header with title and back button -->
-      <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
+      <header class="w-full max-w-4xl mx-auto flex items-center mb-6 gap-4">
         <!-- Back button -->
         <div class="flex-1 flex justify-start">
           <a
@@ -181,78 +181,88 @@
               </div>
             </div>
 
-            <!-- Configuration Values -->
-            <div
-              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-purple-600 transition-shadow duration-200"
+            <!-- Configuration Values Grouped by Section -->
+            <template
+              x-for="[sectionName, sectionEntries] in Object.entries(config?.entriesBySection || {})"
+              :key="sectionName"
             >
-              <h3
-                class="text-xl font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center space-x-2"
+              <div
+                class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-purple-600 transition-shadow duration-200"
               >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <h3
+                  class="text-xl font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center space-x-2"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                  ></path>
-                </svg>
-                <span>Configuration Key-Value Pairs</span>
-              </h3>
-              <div class="space-y-2 max-h-96 overflow-y-auto">
-                <template
-                  x-for="entry in config?.entries || []"
-                  :key="entry.key"
-                >
-                  <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <div class="flex items-center justify-between mb-1">
-                      <div class="flex items-center space-x-2">
-                        <span
-                          class="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100"
-                          x-text="entry.key"
-                        ></span>
-                        <span
-                          class="inline-block px-2 py-1 text-xs rounded bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                          x-text="entry.type"
-                        ></span>
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    ></path>
+                  </svg>
+                  <span x-text="sectionName + ' Configuration'"></span>
+                  <span
+                    class="inline-block px-2 py-1 text-xs rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                    x-text="sectionEntries.length + ' settings'"
+                  ></span>
+                </h3>
+                <div class="space-y-2">
+                  <template x-for="entry in sectionEntries" :key="entry.key">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                      <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-2">
+                          <span
+                            class="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100"
+                            x-text="entry.key"
+                          ></span>
+                          <span
+                            class="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            x-text="entry.type"
+                          ></span>
+                        </div>
                       </div>
                       <div
-                        class="text-xs text-gray-500 dark:text-gray-500"
-                        x-text="entry.section"
+                        class="text-sm text-gray-600 dark:text-gray-400 font-mono break-all"
+                        x-text="entry.value"
                       ></div>
                     </div>
-                    <div
-                      class="text-sm text-gray-600 dark:text-gray-400 font-mono break-all"
-                      x-text="entry.value"
-                    ></div>
-                  </div>
-                </template>
-                <template x-if="!config?.entries?.length">
-                  <div class="text-center py-8">
-                    <svg
-                      class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                      ></path>
-                    </svg>
-                    <p class="text-gray-500 dark:text-gray-400">
-                      No configuration data available
-                    </p>
-                  </div>
-                </template>
+                  </template>
+                </div>
               </div>
-            </div>
+            </template>
+
+            <!-- Empty state when no configuration data -->
+            <template
+              x-if="!config?.entriesBySection || Object.keys(config.entriesBySection).length === 0"
+            >
+              <div
+                class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-purple-600 transition-shadow duration-200"
+              >
+                <div class="text-center py-8">
+                  <svg
+                    class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    ></path>
+                  </svg>
+                  <p class="text-gray-500 dark:text-gray-400">
+                    No configuration data available
+                  </p>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </template>
