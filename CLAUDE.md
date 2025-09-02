@@ -50,6 +50,73 @@ pio device monitor
 - **JS only**: `npm run build-js` (all JS files + compression)
 - **CSS only**: `npm run build-css` (single app.css file)
 
+## EXTREMELY IMPORTANT: Code Quality Checks
+
+**ALWAYS run the following commands before completing any task:**
+
+Automatically use the IDE's built-in diagnostics tool to check for linting and type errors:
+
+- Run `mcp__ide__getDiagnostics` to check all files for diagnostics
+- Fix any linting or type errors before considering the task complete
+- Do this for any file you create or modify
+
+This is a CRITICAL step that must NEVER be skipped when working on any code-related task.
+
+## Git & Version Control
+
+- Add and commit automatically whenever an entire task is finished
+- Use descriptive commit messages that capture the full scope of changes
+
+## Look up documentation with Context7
+
+When code examples, setup or configuration steps, or library/API documentation are requested, use the Context7 mcp server to get the information.
+
+## Application Stack & Dependencies
+
+### Frontend Stack (package.json)
+
+**Core Framework & Styling:**
+
+- **Alpine.js 3.14.9** - Lightweight reactive framework for interactive components
+- **@alpinejs/collapse 3.14.9** - Official Alpine plugin for accordion/collapse functionality
+- **Tailwind CSS 4.1.12** - Latest major version with new engine, utility-first CSS framework
+- **@tailwindcss/cli 4.1.12** - Standalone Tailwind CLI for build processes
+
+**Build Tools:**
+
+- **esbuild 0.25.9** - Ultra-fast JavaScript bundler for production builds
+
+**Server Dependencies:**
+
+- **Express.js 5.1.0** - Latest major version, Node.js web framework for API endpoints
+- **CORS 2.8.5** - Cross-Origin Resource Sharing middleware
+
+### Version Notes & Best Practices
+
+**Tailwind CSS v4.1.12:**
+
+- New architecture with Rust-based engine for faster builds
+- Breaking changes from v3 - uses new config format and CSS layer system
+- Excellent choice for utility-first styling with improved performance
+
+**Alpine.js v3.14.9:**
+
+- Mature v3 branch with stable API
+- Perfect for ESP32 projects requiring lightweight reactivity
+- Use Alpine stores for state management, avoid custom solutions
+
+**Express v5.1.0:**
+
+- Latest major version with improved async/await support
+- Good for simple API endpoints serving JSON responses
+- Minimal overhead suitable for embedded device development
+
+**esbuild v0.25.9:**
+
+- Fast bundling essential for embedded device asset optimization
+- Excellent tree-shaking and minification for size-constrained environments
+- Current version with good ES6+ support
+
 ## Architecture Overview
 
 ### Project Structure
@@ -213,3 +280,75 @@ This codebase emphasizes modularity, safety, and maintainability. Follow the est
 
 - Adhere to the principle of failing fast
 - Always run npm run build after every CSS or JS change
+
+## Rule Improvement Triggers
+
+- New code patterns not covered by existing rules
+- Repeated similar implementations across files
+- Common error patterns that could be prevented
+- New libraries or tools being used consistently
+- Emerging best practices in the codebase
+
+# Analysis Process:
+- Compare new code with existing rules
+- Identify patterns that should be standardized
+- Look for references to external documentation
+- Check for consistent error handling patterns
+- Monitor test patterns and coverage
+
+# Rule Updates:
+
+- **Add New Rules When:**
+  - A new technology/pattern is used in 3+ files
+  - Common bugs could be prevented by a rule
+  - Code reviews repeatedly mention the same feedback
+  - New security or performance patterns emerge
+
+- **Modify Existing Rules When:**
+  - Better examples exist in the codebase
+  - Additional edge cases are discovered
+  - Related rules have been updated
+  - Implementation details have changed
+
+- **Example Pattern Recognition:**
+
+  ```typescript
+  // If you see repeated patterns like:
+  const data = await prisma.user.findMany({
+    select: { id: true, email: true },
+    where: { status: 'ACTIVE' }
+  });
+
+  // Consider adding to [prisma.mdc](mdc:shipixen/.cursor/rules/prisma.mdc):
+  // - Standard select fields
+  // - Common where conditions
+  // - Performance optimization patterns
+  ```
+
+- **Rule Quality Checks:**
+- Rules should be actionable and specific
+- Examples should come from actual code
+- References should be up to date
+- Patterns should be consistently enforced
+
+## Continuous Improvement:
+
+- Monitor code review comments
+- Track common development questions
+- Update rules after major refactors
+- Add links to relevant documentation
+- Cross-reference related rules
+
+## Rule Deprecation
+
+- Mark outdated patterns as deprecated
+- Remove rules that no longer apply
+- Update references to deprecated rules
+- Document migration paths for old patterns
+
+## Documentation Updates:
+
+- Keep examples synchronized with code
+- Update references to external docs
+- Maintain links between related rules
+- Document breaking changes

@@ -230,18 +230,19 @@ Done ✅
 4. Extract relevant API data for each section
 5. Apply consistent Alpine.js patterns from settings pages
 6. Stop and test on mock and user test on live.
+7. Clean up: delete files that are now used (done).
 
 ### 6.2: Setup Page (AP Mode Only)
 
 **Current State**: Already uses Simple Loading Flag Pattern ✅
 **Goal**: Bring WiFi scanning UX up to speed with settings/wifi.html
-**Why**: Setup page has basic WiFi form, but settings/wifi.html has advanced network scanning, signal strength display, and better UX
+**Why**: Setup page is a little outdated: settings/wifi.html has upgraded UX that we should mirror in part.
 **Tasks**:
 
-- Import modern WiFi scanning functionality from settings-wifi.js
-- Add signal strength indicators and network selection dropdown
-- Improve error handling and loading states
-- Maintain AP mode compatibility (no dependencies on STA mode)
+- Import UX pattern for WiFi scanning functionality from settings-wifi.js
+- Ensure uses new "loading flag" pattern with error card <template> and x-if, x-show
+- Maintain AP mode compatibility (no dependencies on STA mode, clean distinction)
+- Test on mock with node mock-api.js --ap-mode (AP mode has different routes to STA mode)
 
 ---
 
