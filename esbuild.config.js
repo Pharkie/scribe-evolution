@@ -127,18 +127,6 @@ const buildConfigs = {
     minify: true,
   },
 
-  diagnostics: {
-    input: ["src/data/js/pages/diagnostics.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics.js",
-    minify: false,
-  },
-
-  diagnosticsProd: {
-    input: ["src/data/js/pages/diagnostics.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics.js",
-    minify: true,
-  },
-
   setup: {
     input: ["src/data/js/pages/setup.js"], // Single ES6 module entry point
     output: "data/js/page-setup.js",
@@ -357,7 +345,6 @@ async function buildAll(production = false) {
     `alpine${suffix}`,
     `common${suffix}`,
     `index${suffix}`,
-    `diagnostics${suffix}`,
     `setup${suffix}`,
     `404${suffix}`,
     `device${suffix}`,
