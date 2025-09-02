@@ -12,6 +12,7 @@ import {
   getTimezoneDisplayName,
   getTimezoneOffset,
   filterTimezones,
+  createTimezonePickerUI,
 } from "../device-config-utils/timezone-utils.js";
 
 export function createSettingsDeviceStore() {
@@ -169,139 +170,8 @@ export function createSettingsDeviceStore() {
       await loadTimezones(this.timezonePicker);
     },
 
-    // Load timezones and open dropdown
-    async loadTimezonesAndOpen() {
-      if (!this.timezonePicker.initialized && !this.timezonePicker.loading) {
-        await this.loadTimezones();
-      }
-      this.isOpen = true;
-    },
-
-    // Open timezone picker (clear search on click/focus)
-    async openTimezonePicker() {
-      if (!this.timezonePicker.initialized && !this.timezonePicker.loading) {
-        await this.loadTimezones();
-      }
-      this.searchQuery = "";
-      this.isOpen = true;
-    },
-
-    // Reset focus index
-    resetTimezoneFocus() {
-      this.focusedIndex = -1;
-    },
-
-    // Handle global keydown to capture typing when dropdown is open
-    handleGlobalKeydown(event, refs) {
-      // Only handle when dropdown is open and not already focused on search input
-      if (!this.isOpen || document.activeElement === refs.searchInput) {
-        return;
-      }
-
-      // Handle printable characters (letters, numbers, space)
-      if (
-        event.key.length === 1 &&
-        !event.ctrlKey &&
-        !event.metaKey &&
-        !event.altKey
-      ) {
-        // Focus search input and add the character
-        refs.searchInput.focus();
-        // Let the input handle the character naturally
-        return;
-      }
-
-      // Handle backspace to focus input for editing
-      if (event.key === "Backspace") {
-        event.preventDefault();
-        refs.searchInput.focus();
-        // Clear last character if search query exists
-        if (this.searchQuery.length > 0) {
-          this.searchQuery = this.searchQuery.slice(0, -1);
-          this.onSearchInputWithReset();
-        }
-      }
-    },
-
-    // Close timezone picker
-    closeTimezonePicker() {
-      this.isOpen = false;
-      this.focusedIndex = -1;
-    },
-
-    // Navigate up in timezone list (Alpine context version)
-    navigateTimezoneUp(refs, nextTick) {
-      this.focusedIndex = this.focusedIndex > 0 ? this.focusedIndex - 1 : -1;
-      if (this.focusedIndex === -1) {
-        refs.searchInput.focus();
-      } else {
-        nextTick(() => {
-          const options = refs.dropdown.querySelectorAll(".timezone-option");
-          options[this.focusedIndex]?.focus();
-        });
-      }
-    },
-
-    // Navigate down in timezone list (Alpine context version)
-    navigateTimezoneDown(refs, nextTick) {
-      const maxIndex = Math.min(this.filteredTimezones.length - 1, 4);
-      this.focusedIndex =
-        this.focusedIndex < maxIndex ? this.focusedIndex + 1 : 0;
-      nextTick(() => {
-        const options = refs.dropdown.querySelectorAll(".timezone-option");
-        options[this.focusedIndex]?.focus();
-      });
-    },
-
-    // Navigate to first timezone option from input
-    navigateToFirstTimezone(refs, nextTick) {
-      if (this.isOpen && this.filteredTimezones.length > 0) {
-        this.focusedIndex = 0;
-        nextTick(() => {
-          const options = refs.dropdown.querySelectorAll(".timezone-option");
-          options[0]?.focus();
-        });
-      }
-    },
-
-    // Navigate to last timezone option from input
-    navigateToLastTimezone(refs, nextTick) {
-      if (this.isOpen && this.filteredTimezones.length > 0) {
-        this.focusedIndex = Math.min(this.filteredTimezones.length - 1, 4);
-        nextTick(() => {
-          const options = refs.dropdown.querySelectorAll(".timezone-option");
-          options[this.focusedIndex]?.focus();
-        });
-      }
-    },
-
-    // Handle search input changes
-    onSearchInput() {
-      // Ensure dropdown stays open when typing
-      if (!this.isOpen && this.timezonePicker.initialized) {
-        this.isOpen = true;
-      }
-    },
-
-    // Handle search input with focus reset (Alpine-native single method)
-    onSearchInputWithReset() {
-      this.onSearchInput();
-      this.resetTimezoneFocus();
-    },
-
-    // Select a timezone
-    selectTimezone(timezone) {
-      this.config.device.timezone = timezone.id;
-      this.searchQuery = timezone.displayName;
-      this.isOpen = false;
-
-      // Clear any validation errors
-      if (this.validation.errors["device.timezone"]) {
-        delete this.validation.errors["device.timezone"];
-      }
-
-      console.log("Selected timezone:", timezone.id);
-    },
+    // Include shared timezone UI methods
+    ...createTimezonePickerUI(this),
 
     // Get display name for a timezone ID (for dropdown)
     getTimezoneDisplayName(timezoneId) {

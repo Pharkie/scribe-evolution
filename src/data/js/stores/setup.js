@@ -20,6 +20,7 @@ import {
   getTimezoneDisplayName,
   getTimezoneOffset,
   filterTimezones,
+  createTimezonePickerUI,
 } from "../device-config-utils/timezone-utils.js";
 
 export function createSetupStore() {
@@ -146,6 +147,9 @@ export function createSetupStore() {
       await loadTimezones(this.timezonePicker);
     },
 
+    // Include shared timezone UI methods
+    ...createTimezonePickerUI(this),
+
     // Get display name for a timezone ID using shared utility
     getTimezoneDisplayName(timezoneId) {
       return getTimezoneDisplayName(timezoneId, this.timezonePicker.timezones);
@@ -159,13 +163,6 @@ export function createSetupStore() {
     // Filter timezones based on search query using shared utility
     get filteredTimezones() {
       return filterTimezones(this.timezonePicker.timezones, this.searchQuery);
-    },
-
-    // Select timezone from dropdown
-    selectTimezone(timezone) {
-      this.config.device.timezone = timezone.id;
-      this.searchQuery = ""; // Clear search
-      console.log("Setup: Selected timezone:", timezone.id);
     },
 
     // ================== SAVE FUNCTIONALITY ==================
