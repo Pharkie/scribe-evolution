@@ -136,7 +136,45 @@ export function createSetupStore() {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         const data = await response.json();
-        this.timezonePicker.timezones = data.timezones || [];
+        if (!data.zones || !Array.isArray(data.zones)) {
+          throw new Error("Invalid timezone data format");
+        }
+        // Transform timezone data for frontend use (same as settings-device.js)
+        this.timezonePicker.timezones = data.zones.map((zone) => {
+          try {
+            // Extract city name from IANA ID (after last '/')
+            const parts = zone.id ? zone.id.split("/") : ["Unknown"];
+            const city = parts[parts.length - 1].replace(/_/g, " ");
+
+            // Parse the offset (handle different formats)
+            let offset = "";
+            if (zone.currentOffset) {
+              const match = zone.currentOffset.match(/([+-]\d{2})/);
+              offset = match ? match[1] : zone.currentOffset;
+            }
+
+            return {
+              id: zone.id || "Unknown",
+              displayName: zone.location?.countryName
+                ? `${city} - ${zone.location.countryName}`
+                : city,
+              countryName: zone.location?.countryName || "",
+              comment: zone.location?.comment || "",
+              aliases: zone.aliases || [],
+              offset,
+            };
+          } catch (transformError) {
+            console.error("Error transforming timezone:", zone, transformError);
+            return {
+              id: zone.id || "Unknown",
+              displayName: zone.id || "Unknown",
+              countryName: "",
+              comment: "",
+              aliases: [],
+              offset: "",
+            };
+          }
+        });
         this.timezonePicker.initialized = true;
         console.log(
           `Setup: Loaded ${this.timezonePicker.timezones.length} timezones`,
