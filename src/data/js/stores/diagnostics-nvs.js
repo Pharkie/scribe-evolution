@@ -23,12 +23,50 @@ export function createDiagnosticsNvsStore() {
       this.error = null;
       try {
         const data = await loadNVSDump();
-        this.nvs = data;
+        // Transform NVS dump data into the expected structure
+        this.nvs = {
+          statistics: {
+            totalEntries: Object.keys(data.keys || {}).length,
+            usedSpace: this.calculateUsedSpace(data.keys || {}),
+            freeSpace: "Unknown KB",
+          },
+          namespaces: [
+            {
+              name: data.namespace || "scribe-app",
+              entryCount: Object.keys(data.keys || {}).length,
+              description: "Main application settings and configuration",
+              size: this.calculateUsedSpace(data.keys || {}),
+              lastModified: data.timestamp || "Unknown",
+            },
+          ],
+          entries: this.transformKeys(data.keys || {}),
+        };
         this.loaded = true;
       } catch (error) {
         this.error = `Failed to load NVS data: ${error.message}`;
         this.loaded = true;
       }
+    },
+
+    // ================== DATA TRANSFORMATION ==================
+    calculateUsedSpace(keys) {
+      const totalBytes = Object.values(keys).reduce(
+        (sum, key) => sum + (key.length || 0),
+        0,
+      );
+      return totalBytes < 1024
+        ? `${totalBytes} B`
+        : `${(totalBytes / 1024).toFixed(1)} KB`;
+    },
+
+    transformKeys(keys) {
+      return Object.entries(keys).map(([keyName, keyData]) => ({
+        key: keyName,
+        type: keyData.type,
+        value: keyData.value,
+        size: keyData.length,
+        namespace: "scribe-app",
+      }));
     },
 
     // ================== UTILITY METHODS ==================
