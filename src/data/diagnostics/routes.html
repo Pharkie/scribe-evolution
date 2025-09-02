@@ -186,78 +186,159 @@
               </div>
             </div>
 
-            <!-- API Endpoints -->
-            <div class="mb-8">
-              <h3
-                class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <!-- GET API Endpoints -->
+            <template x-if="routes?.getEndpoints?.length">
+              <div class="mb-8">
+                <h3
+                  class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  ></path>
-                </svg>
-                <span>API Endpoints</span>
-              </h3>
-              <div class="space-y-3">
-                <template
-                  x-for="(endpoint, index) in routes?.endpoints || []"
-                  :key="`endpoint-${index}-${endpoint.path}`"
-                >
-                  <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <div class="flex items-center justify-between mb-2">
-                      <div class="flex items-center space-x-3">
-                        <span
-                          class="inline-block px-2 py-1 text-xs font-semibold rounded"
-                          :class="getMethodClass(endpoint.method)"
-                          x-text="endpoint.method"
-                        ></span>
-                        <span
-                          class="text-gray-900 dark:text-gray-100 font-mono font-medium"
-                          x-text="endpoint.path"
-                        ></span>
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    ></path>
+                  </svg>
+                  <span>API Endpoints: GET</span>
+                </h3>
+                <div class="space-y-3">
+                  <template
+                    x-for="(endpoint, index) in routes?.getEndpoints || []"
+                    :key="`get-endpoint-${index}-${endpoint.path}`"
+                  >
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                          <span
+                            class="inline-block px-2 py-1 text-xs font-semibold rounded"
+                            :class="getMethodClass(endpoint.method)"
+                            x-text="endpoint.method"
+                          ></span>
+                          <span
+                            class="text-gray-900 dark:text-gray-100 font-mono font-medium"
+                            x-text="endpoint.path"
+                          ></span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                          API Endpoint
+                        </div>
                       </div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400">
-                        API Endpoint
-                      </div>
+                      <template x-if="endpoint.description">
+                        <p
+                          class="text-sm text-gray-600 dark:text-gray-400"
+                          x-text="endpoint.description"
+                        ></p>
+                      </template>
                     </div>
-                    <template x-if="endpoint.description">
-                      <p
-                        class="text-sm text-gray-600 dark:text-gray-400"
-                        x-text="endpoint.description"
-                      ></p>
-                    </template>
-                  </div>
-                </template>
-                <template x-if="!routes?.endpoints?.length">
-                  <div class="text-center py-8">
-                    <svg
-                      class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      ></path>
-                    </svg>
-                    <p class="text-gray-500 dark:text-gray-400">
-                      No API endpoints data available
-                    </p>
-                  </div>
-                </template>
+                  </template>
+                </div>
               </div>
-            </div>
+            </template>
+
+            <!-- POST API Endpoints -->
+            <template x-if="routes?.postEndpoints?.length">
+              <div class="mb-8">
+                <h3
+                  class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    ></path>
+                  </svg>
+                  <span>API Endpoints: POST</span>
+                </h3>
+                <div class="space-y-3">
+                  <template
+                    x-for="(endpoint, index) in routes?.postEndpoints || []"
+                    :key="`post-endpoint-${index}-${endpoint.path}`"
+                  >
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                          <span
+                            class="inline-block px-2 py-1 text-xs font-semibold rounded"
+                            :class="getMethodClass(endpoint.method)"
+                            x-text="endpoint.method"
+                          ></span>
+                          <span
+                            class="text-gray-900 dark:text-gray-100 font-mono font-medium"
+                            x-text="endpoint.path"
+                          ></span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                          API Endpoint
+                        </div>
+                      </div>
+                      <template x-if="endpoint.description">
+                        <p
+                          class="text-sm text-gray-600 dark:text-gray-400"
+                          x-text="endpoint.description"
+                        ></p>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- No API Endpoints -->
+            <template
+              x-if="!routes?.getEndpoints?.length && !routes?.postEndpoints?.length"
+            >
+              <div class="mb-8">
+                <h3
+                  class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4 flex items-center space-x-2"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    ></path>
+                  </svg>
+                  <span>API Endpoints</span>
+                </h3>
+                <div class="text-center py-8">
+                  <svg
+                    class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    ></path>
+                  </svg>
+                  <p class="text-gray-500 dark:text-gray-400">
+                    No API endpoints data available
+                  </p>
+                </div>
+              </div>
+            </template>
 
             <!-- Static Routes -->
             <div>

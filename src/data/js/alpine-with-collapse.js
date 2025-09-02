@@ -8,5 +8,8 @@ import collapse from "@alpinejs/collapse";
 // Register the collapse plugin
 Alpine.plugin(collapse);
 
-// Export for global access (Alpine will auto-start when page loads due to defer attribute)
+// Export for global access
 window.Alpine = Alpine;
+
+// Start Alpine (required when loading as ES module)
+Alpine.start();

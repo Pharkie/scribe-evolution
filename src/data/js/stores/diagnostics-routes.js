@@ -47,12 +47,22 @@ export function createDiagnosticsRoutesStore() {
           return (a.path || "").localeCompare(b.path || "");
         });
 
+        // Separate endpoints by method
+        const getEndpoints = sortedEndpoints.filter(
+          (endpoint) => (endpoint.method || "").toUpperCase() === "GET",
+        );
+        const postEndpoints = sortedEndpoints.filter(
+          (endpoint) => (endpoint.method || "").toUpperCase() === "POST",
+        );
+
         this.routes = {
           ...routes,
           totalRoutes: apiEndpoints.length + webPages.length,
           apiRoutes: apiEndpoints.length,
           staticRoutes: webPages.length,
-          endpoints: sortedEndpoints, // Use sorted endpoints for the template
+          endpoints: sortedEndpoints, // Keep for backwards compatibility
+          getEndpoints: getEndpoints,
+          postEndpoints: postEndpoints,
           totalRequests: 0, // ESP32 doesn't track this currently
           statistics: {
             successfulRequests: 0,
