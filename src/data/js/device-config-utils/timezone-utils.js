@@ -28,20 +28,61 @@ export function transformTimezoneData(zones) {
       const parts = zone.id ? zone.id.split("/") : ["Unknown"];
       const city = parts[parts.length - 1].replace(/_/g, " ");
 
-      // Parse the offset (handle different formats)
+      // Create enhanced display name and offset info matching settings-device.js format
+      const countryName = zone.location?.countryName;
+      const comment = zone.location?.comment?.trim();
+
+      let displayName;
       let offset = "";
-      if (zone.currentOffset) {
-        const match = zone.currentOffset.match(/([+-]\d{2})/);
-        offset = match ? match[1] : zone.currentOffset;
+
+      if (zone.offsets && Array.isArray(zone.offsets) && zone.offsets.length > 0) {
+        // Format offsets with :00 suffix for clarity
+        const formatOffset = (o) => {
+          const cleaned = o
+            .replace(/^\+/, "+")
+            .replace(/^-/, "-")
+            .replace(/^00/, "+00");
+          return cleaned + ":00";
+        };
+
+        if (zone.offsets.length === 1) {
+          // Single offset (no DST)
+          offset = "UTC" + formatOffset(zone.offsets[0]);
+          displayName = countryName
+            ? `${city}, ${countryName}`
+            : zone.id || "Unknown";
+          if (comment) {
+            displayName += ` — ${comment}`;
+          }
+        } else {
+          // Multiple offsets (DST zone) - first is standard, second is DST
+          const standardOffset = formatOffset(zone.offsets[0]);
+          const dstOffset = formatOffset(zone.offsets[1]);
+          offset = `UTC${standardOffset} / ${dstOffset} DST`;
+
+          displayName = countryName
+            ? `${city}, ${countryName}`
+            : zone.id || "Unknown";
+          if (comment) {
+            displayName += ` — ${comment}`;
+          }
+        }
+      } else {
+        // Fallback if no offsets available - use currentOffset
+        if (zone.currentOffset) {
+          const match = zone.currentOffset.match(/([+-]\d{2})/);
+          offset = match ? "UTC" + match[1] + ":00" : zone.currentOffset;
+        }
+        displayName = countryName
+          ? `${city}, ${countryName}`
+          : zone.id || "Unknown";
       }
 
       return {
         id: zone.id || "Unknown",
-        displayName: zone.location?.countryName
-          ? `${city} - ${zone.location.countryName}`
-          : city,
-        countryName: zone.location?.countryName || "",
-        comment: zone.location?.comment || "",
+        displayName,
+        countryName: countryName || "",
+        comment: comment || "",
         aliases: zone.aliases || [],
         offset,
       };
