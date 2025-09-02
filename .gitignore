@@ -46,3 +46,4 @@ __pycache__/
 
 # Environment variables with secrets
 .mqtt_secrets
+/.claude/sounds
