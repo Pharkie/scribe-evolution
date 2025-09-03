@@ -29,6 +29,14 @@ export function createSettingsLedsStore() {
     colors: [],
     originalConfig: {},
     testingEffect: false,
+    // Transient status for test button: 'started' | 'error' | null
+    testStatus: null,
+    // Disable initial fade-in on pressed state
+    testNoTransition: false,
+    // Transient status for stop button: 'stopped' | 'error' | null
+    stopStatus: null,
+    // Disable initial fade-in on pressed state for stop
+    stopNoTransition: false,
 
     // Color presets for swatch selection
     colorPresets: [
@@ -176,6 +184,19 @@ export function createSettingsLedsStore() {
     },
 
     // ================== LED EFFECT TESTING ==================
+    get testButtonLabel() {
+      // Two end states: started or error; default label otherwise
+      if (this.testStatus === "started") return "LED effect started";
+      if (this.testStatus === "error") return "Error";
+      return "Test LED Effect";
+    },
+
+    get stopButtonLabel() {
+      if (this.stopStatus === "stopped") return "Stopped";
+      if (this.stopStatus === "error") return "Error";
+      return "Stop Test";
+    },
+
     async testLedEffect() {
       if (this.testingEffect) return;
 
@@ -213,9 +234,27 @@ export function createSettingsLedsStore() {
 
         // Use triggerLedEffect from API
         await triggerLedEffect(effectParams);
+        // Success: show pressed state immediately, then fade back
+        this.testNoTransition = true;
+        this.testStatus = "started";
+        requestAnimationFrame(() => {
+          this.testNoTransition = false;
+        });
+        setTimeout(() => {
+          if (this.testStatus === "started") this.testStatus = null;
+        }, 2000);
       } catch (error) {
         console.error("Failed to test LED effect:", error);
         this.showErrorMessage("Failed to test LED effect: " + error.message);
+        // Error: show pressed error state immediately, then fade back
+        this.testNoTransition = true;
+        this.testStatus = "error";
+        requestAnimationFrame(() => {
+          this.testNoTransition = false;
+        });
+        setTimeout(() => {
+          if (this.testStatus === "error") this.testStatus = null;
+        }, 2000);
       } finally {
         this.testingEffect = false;
       }
@@ -225,9 +264,25 @@ export function createSettingsLedsStore() {
       try {
         console.log("Turning off LEDs");
         await turnOffLeds();
+        this.stopNoTransition = true;
+        this.stopStatus = "stopped";
+        requestAnimationFrame(() => {
+          this.stopNoTransition = false;
+        });
+        setTimeout(() => {
+          if (this.stopStatus === "stopped") this.stopStatus = null;
+        }, 2000);
       } catch (error) {
         console.error("Failed to turn off LEDs:", error);
         this.showErrorMessage("Failed to turn off LEDs: " + error.message);
+        this.stopNoTransition = true;
+        this.stopStatus = "error";
+        requestAnimationFrame(() => {
+          this.stopNoTransition = false;
+        });
+        setTimeout(() => {
+          if (this.stopStatus === "error") this.stopStatus = null;
+        }, 2000);
       }
     },
 
