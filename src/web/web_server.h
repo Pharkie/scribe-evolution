@@ -43,6 +43,15 @@ void setupWebServerRoutes(int maxChars);
 String getRequestBody(AsyncWebServerRequest *request);
 
 /**
+ * @brief Register a route for documentation purposes
+ * @param method HTTP method (GET, POST, etc.)
+ * @param path Route path 
+ * @param description Human-readable description
+ * @param isAPI Whether this is an API endpoint (vs web page)
+ */
+void registerRoute(const char* method, const char* path, const char* description, bool isAPI = true);
+
+/**
  * @brief Get registered routes as JSON for diagnostics
  * @return JSON object containing all registered web pages and API endpoints
  */

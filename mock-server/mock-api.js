@@ -708,7 +708,7 @@ function createRequestHandler() {
     }
 
     // Handle SSE endpoints that don't have /api/ prefix
-    if (pathname === "/events") {
+    if (pathname === "/mqtt-printers") {
       // Server-Sent Events for general events
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
@@ -718,7 +718,7 @@ function createRequestHandler() {
         "Access-Control-Allow-Headers": "Cache-Control",
       });
 
-      console.log("🔌 SSE: Events connection established");
+      console.log("🔌 SSE: MQTT printers SSE connection established");
 
       // Send initial printer discovery data with correct event type
       const printerDiscoveryData = { ...mockPrinterDiscovery };
@@ -741,7 +741,7 @@ function createRequestHandler() {
       }, 30000);
 
       req.on("close", () => {
-        console.log("🔌 SSE: Events connection closed");
+        console.log("🔌 SSE: MQTT printers SSE connection closed");
         clearInterval(interval);
       });
       return;
@@ -1387,11 +1387,20 @@ function createRequestHandler() {
           return;
         }
 
-        // Root path in AP mode goes to setup
+        // Root path in AP mode serves setup.html directly (matches live serveStatic default)
         if (pathname === "/") {
-          console.log("🔀 AP Mode: Root → /setup.html");
-          res.writeHead(302, { Location: "/setup.html" });
-          res.end();
+          const filePath = path.join(__dirname, "..", "data", "setup.html");
+          fs.readFile(filePath, (err, data) => {
+            if (err) {
+              return sendNotFound(res);
+            }
+            res.writeHead(200, {
+              "Content-Type": "text/html",
+              "Cache-Control": "no-cache",
+              "Access-Control-Allow-Origin": "*",
+            });
+            res.end(data);
+          });
           return;
         }
       }
@@ -1451,19 +1460,80 @@ function createRequestHandler() {
           return;
         }
         return sendNotFound(res);
-      } else {
-        // All other requests: try to serve the file directly from data/
-        const requestPath = pathname.substring(1); // Remove leading /
-        filePath = path.join(__dirname, "..", "data", requestPath);
-
-        // If file doesn't exist, serve 404
-        if (!fs.existsSync(filePath) && !fs.existsSync(filePath + ".gz")) {
-          return sendNotFound(res);
-        }
       }
-
-      serveFile(res, filePath);
     }
+
+    // Debug Routes
+    if (pathname.startsWith("/debug/")) {
+      if (pathname === "/debug/filesystem" && req.method === "GET") {
+        // Mock filesystem debug info (matches ESP32 output format)
+        const mockFilesystemData = `LittleFS Debug:
+
+Total space: 1966080 bytes
+Used space: 1234567 bytes
+Free space: 731513 bytes
+
+Files:
+[DIR] css/
+  [FILE] app.css (12345 bytes)
+  [FILE] app.css.gz (4567 bytes)
+[DIR] js/
+  [FILE] alpine.js (46500 bytes)
+  [FILE] alpine.js.gz (15678 bytes)
+  [FILE] app-common.js (18057 bytes)
+  [FILE] app-common.js.gz (6789 bytes)
+  [FILE] page-index.js (14514 bytes)
+  [FILE] page-index.js.gz (5234 bytes)
+[DIR] images/
+  [FILE] ScribeLogoMain-white.svg (2134 bytes)
+  [FILE] ScribeLogoMain-black.svg (2256 bytes)
+[DIR] settings/
+  [FILE] index.html (3456 bytes)
+  [FILE] device.html (4567 bytes)
+  [FILE] wifi.html (3789 bytes)
+[DIR] diagnostics/
+  [FILE] index.html (2345 bytes)
+  [FILE] routes.html (3456 bytes)
+[DIR] fonts/
+  [FILE] outfit-variable.woff2 (98765 bytes)
+[FILE] index.html (5678 bytes)
+[FILE] index.html.gz (1890 bytes)
+[FILE] setup.html (4321 bytes)
+[FILE] setup.html.gz (1456 bytes)
+[FILE] 404.html (1234 bytes)
+[FILE] 404.html.gz (567 bytes)
+[FILE] favicon.ico (1234 bytes)
+[FILE] favicon-96x96.png (2345 bytes)
+[FILE] apple-touch-icon.png (3456 bytes)`;
+
+        res.writeHead(200, {
+          "Content-Type": "text/plain",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(mockFilesystemData);
+        return;
+      } else {
+        // Unknown debug endpoint
+        return send404(res, `Debug endpoint not found: ${pathname}`);
+      }
+    }
+
+    // All other requests: try to serve the file directly from data/
+    let requestPath = pathname.substring(1); // Remove leading /
+
+    // Handle root path - serve index.html
+    if (requestPath === "") {
+      requestPath = "index.html";
+    }
+
+    filePath = path.join(__dirname, "..", "data", requestPath);
+
+    // If file doesn't exist, serve 404
+    if (!fs.existsSync(filePath) && !fs.existsSync(filePath + ".gz")) {
+      return sendNotFound(res);
+    }
+
+    serveFile(res, filePath);
   };
 }
 

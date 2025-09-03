@@ -62,7 +62,7 @@ Usage Examples:
 What to test after running:
 - Check your Scribe's index.html page - fake printers should appear in the remote printer choices
 - Visit /diagnostics.html to see discovery system status
-- Monitor /events (SSE) endpoint for real-time printer updates
+- Monitor /mqtt-printers (SSE) endpoint for real-time printer updates
 - Stop/start printers to see them disappear/appear in real-time
 
 Interactive Commands:

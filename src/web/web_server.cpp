@@ -43,7 +43,7 @@
 extern AsyncWebServer server;
 
 // SSE event source for real-time updates
-AsyncEventSource sseEvents("/events");
+AsyncEventSource sseEvents("/mqtt-printers");
 
 // Global message storage for printing
 Message currentMessage = {"", "", false};
@@ -101,30 +101,45 @@ void handleChunkedUpload(AsyncWebServerRequest *request, uint8_t *data, size_t l
 }
 
 // ========================================
-// Helper Functions
+// Lightweight Route Registry
 // ========================================
+
+struct RouteInfo {
+    String method;
+    String path;
+    String description;
+    bool isAPI;
+};
+
+static std::vector<RouteInfo> registeredRoutes;
+
+void registerRoute(const char* method, const char* path, const char* description, bool isAPI = true) {
+    RouteInfo route;
+    route.method = String(method);
+    route.path = String(path);
+    route.description = String(description);
+    route.isAPI = isAPI;
+    registeredRoutes.push_back(route);
+    LOG_VERBOSE("WEB", "Registered route: %s %s - %s", method, path, description);
+}
 
 void addRegisteredRoutesToJson(JsonObject &endpoints)
 {
-    // Simple static route list for diagnostics
     JsonArray webPages = endpoints.createNestedArray("web_pages");
     JsonArray apiEndpoints = endpoints.createNestedArray("api_endpoints");
     
-    // Add known API endpoints
-    JsonObject printApi = apiEndpoints.createNestedObject();
-    printApi["method"] = "POST";
-    printApi["path"] = "/api/print-local";
-    printApi["description"] = "Print custom message";
-    
-    JsonObject configApi = apiEndpoints.createNestedObject();
-    configApi["method"] = "GET";
-    configApi["path"] = "/api/config";
-    configApi["description"] = "Get configuration";
-    
-    // Add known web pages
-    JsonObject indexPage = webPages.createNestedObject();
-    indexPage["path"] = "/";
-    indexPage["description"] = "Main interface";
+    for (const auto &route : registeredRoutes) {
+        if (route.isAPI) {
+            JsonObject api = apiEndpoints.createNestedObject();
+            api["method"] = route.method;
+            api["path"] = route.path;
+            api["description"] = route.description;
+        } else {
+            JsonObject page = webPages.createNestedObject();
+            page["path"] = route.path;
+            page["description"] = route.description;
+        }
+    }
 }
 
 static void setupStaticFileServing(bool isAP)
@@ -194,12 +209,16 @@ void setupAPModeRoutes()
 
 void setupSTAModeRoutes()
 {
+    // Clear previous route registry for STA mode
+    registeredRoutes.clear();
+    
     // SSE for real-time updates
     sseEvents.onConnect([](AsyncEventSourceClient *client) {
         String printerData = getDiscoveredPrintersJson();
         client->send(printerData.c_str(), "printer-update", millis());
     });
     server.addHandler(&sseEvents);
+    registerRoute("GET", "/events", "Server-sent events");
     
     // Connectivity check endpoints (return success, not redirects)
     server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -214,6 +233,10 @@ void setupSTAModeRoutes()
     server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/plain", "Microsoft NCSI");
     });
+    registerRoute("GET", "/generate_204", "Connectivity check");
+    registerRoute("GET", "/hotspot-detect.html", "Captive portal detection");
+    registerRoute("GET", "/connectivity-check.html", "Network connectivity test");
+    registerRoute("GET", "/ncsi.txt", "Network connectivity status indicator");
     
     setupAPIRoutes();
     setupStaticAssets();
@@ -226,63 +249,107 @@ void setupAPIRoutes()
 {
     // Print endpoints
     server.on("/api/print-local", HTTP_GET, handlePrintContent);
+    registerRoute("GET", "/api/print-local", "Print custom message");
     server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request) {
         handlePrintContent(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/print-local", "Print custom message");
     server.on("/api/character-test", HTTP_POST, [](AsyncWebServerRequest *request) {
         handlePrintTest(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/character-test", "Print character test pattern");
     
     // Content generation
     server.on("/api/riddle", HTTP_GET, handleRiddle);
+    registerRoute("GET", "/api/riddle", "Generate random riddle");
     server.on("/api/joke", HTTP_GET, handleJoke);
+    registerRoute("GET", "/api/joke", "Generate random joke");
     server.on("/api/quote", HTTP_GET, handleQuote);
+    registerRoute("GET", "/api/quote", "Generate random quote");
     server.on("/api/quiz", HTTP_GET, handleQuiz);
+    registerRoute("GET", "/api/quiz", "Generate random quiz");
     server.on("/api/news", HTTP_GET, handleNews);
+    registerRoute("GET", "/api/news", "Generate BBC news headlines");
     server.on("/api/poke", HTTP_GET, handlePoke);
+    registerRoute("GET", "/api/poke", "Generate poke message");
     server.on("/api/unbidden-ink", HTTP_GET, handleUnbiddenInk);
+    registerRoute("GET", "/api/unbidden-ink", "Generate unbidden ink content");
     server.on("/api/user-message", HTTP_GET, handleUserMessage);
+    registerRoute("GET", "/api/user-message", "Generate user message");
     
     // Memo endpoints (regex for path parameters)
     server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, handleMemoGet);
+    registerRoute("GET", "/api/memo/{id}", "Get processed memo content");
     server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleMemoUpdate(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/memo/{id}", "Update specific memo");
     server.on("/api/memos", HTTP_GET, handleMemosGet);
+    registerRoute("GET", "/api/memos", "Get all memos");
     server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleMemosPost(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/memos", "Update all memos");
     
     // System endpoints
     server.on("/api/diagnostics", HTTP_GET, handleDiagnostics);
+    registerRoute("GET", "/api/diagnostics", "System diagnostics");
     server.on("/api/routes", HTTP_GET, handleRoutes);
+    registerRoute("GET", "/api/routes", "List all routes and endpoints");
     server.on("/api/nvs-dump", HTTP_GET, handleNVSDump);
+    registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump");
     server.on("/api/config", HTTP_GET, handleConfigGet);
+    registerRoute("GET", "/api/config", "Get configuration");
     server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleConfigPost(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/config", "Update configuration");
     server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
+    registerRoute("GET", "/api/wifi-scan", "Scan WiFi networks");
     
     // MQTT endpoints
     server.on("/api/print-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleMQTTSend(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/print-mqtt", "Send MQTT message");
     server.on("/api/test-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleTestMQTT(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/test-mqtt", "Test MQTT connection");
     
     // Static timezone data
     server.serveStatic("/api/timezones", LittleFS, "/resources/timezones.json")
           .setCacheControl("public, max-age=86400");
+    registerRoute("GET", "/api/timezones", "Get IANA timezone data (static file)");
           
 #if ENABLE_LEDS
     server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleLedEffect(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/leds/test", "Trigger LED Effect");
     server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request) {
         handleLedOff(request);
     }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/leds/off", "Turn LEDs Off");
 #endif
+
+    // Debug endpoint to list LittleFS contents (only in STA mode)
+    server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request) {
+        String output = "LittleFS Debug:\n\nTotal space: " + String(LittleFS.totalBytes()) + " bytes\n";
+        output += "Used space: " + String(LittleFS.usedBytes()) + " bytes\n";
+        output += "Free space: " + String(LittleFS.totalBytes() - LittleFS.usedBytes()) + " bytes\n\n";
+        output += "Files:\n";
+        
+        File root = LittleFS.open("/");
+        if (!root || !root.isDirectory()) {
+            output += "Failed to open root directory\n";
+        } else {
+            listDirectory(root, output, 0);
+        }
+        
+        request->send(200, "text/plain", output);
+    });
+    registerRoute("GET", "/debug/filesystem", "LittleFS debug info");
 }
 
 void setupStaticAssets()
@@ -291,15 +358,28 @@ void setupStaticAssets()
     server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
         .setTryGzipFirst(false)
         .setCacheControl("max-age=604800");
+    registerRoute("GET", "/favicon.ico", "Favicon ICO file", false);
     server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png")
         .setTryGzipFirst(false)
         .setCacheControl("max-age=604800");
+    registerRoute("GET", "/favicon-96x96.png", "Favicon PNG file", false);
     server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png")
         .setTryGzipFirst(false)
         .setCacheControl("max-age=604800");
+    registerRoute("GET", "/apple-touch-icon.png", "Apple touch icon", false);
     
     // All other static files
     setupStaticFileServing(false);
+    
+    // Register major static routes
+    registerRoute("GET", "/", "Main interface", false);
+    registerRoute("GET", "/index.html", "Main interface", false);
+    registerRoute("GET", "/setup.html", "Device setup (AP mode only)", false);
+    registerRoute("GET", "/settings/*", "Settings pages", false);
+    registerRoute("GET", "/diagnostics/*", "Diagnostics pages", false);
+    registerRoute("GET", "/css/*", "Stylesheets", false);
+    registerRoute("GET", "/js/*", "JavaScript files", false);
+    registerRoute("GET", "/images/*", "Image assets", false);
 }
 
 // Helper function to recursively list directory contents

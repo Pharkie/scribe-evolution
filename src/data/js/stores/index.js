@@ -806,7 +806,7 @@ export function createIndexStore() {
         }
 
         // Create new SSE connection
-        eventSource = new EventSource("/events");
+        eventSource = new EventSource("/mqtt-printers");
 
         // Handle remote printer (MQTT) updates
         eventSource.addEventListener("printer-update", (event) => {

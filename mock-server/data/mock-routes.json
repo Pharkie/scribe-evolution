@@ -1,27 +1,83 @@
 {
   "web_pages": [
     {
-      "path": "/*",
-      "description": "All static files (HTML, CSS, JS, images, favicon)"
+      "path": "/favicon.ico",
+      "description": "Favicon ICO file"
     },
     {
-      "path": "(unmatched routes)",
-      "description": "404 Not Found handler (serves /404.html)"
+      "path": "/favicon-96x96.png",
+      "description": "Favicon PNG file"
+    },
+    {
+      "path": "/apple-touch-icon.png",
+      "description": "Apple touch icon"
+    },
+    {
+      "path": "/",
+      "description": "Main interface"
+    },
+    {
+      "path": "/index.html",
+      "description": "Main interface"
+    },
+    {
+      "path": "/setup.html",
+      "description": "Device setup (AP mode only)"
+    },
+    {
+      "path": "/settings/*",
+      "description": "Settings pages"
+    },
+    {
+      "path": "/diagnostics/*",
+      "description": "Diagnostics pages"
+    },
+    {
+      "path": "/css/*",
+      "description": "Stylesheets"
+    },
+    {
+      "path": "/js/*",
+      "description": "JavaScript files"
+    },
+    {
+      "path": "/images/*",
+      "description": "Image assets"
     }
   ],
   "api_endpoints": [
     {
       "method": "GET",
-      "path": "/events",
+      "path": "/mqtt-printers",
       "description": "Server-sent events"
     },
     {
-      "method": "POST",
+      "method": "GET",
+      "path": "/generate_204",
+      "description": "Connectivity check"
+    },
+    {
+      "method": "GET",
+      "path": "/hotspot-detect.html",
+      "description": "Captive portal detection"
+    },
+    {
+      "method": "GET",
+      "path": "/connectivity-check.html",
+      "description": "Network connectivity test"
+    },
+    {
+      "method": "GET",
+      "path": "/ncsi.txt",
+      "description": "Network connectivity status indicator"
+    },
+    {
+      "method": "GET",
       "path": "/api/print-local",
       "description": "Print custom message"
     },
     {
-      "method": "GET",
+      "method": "POST",
       "path": "/api/print-local",
       "description": "Print custom message"
     },
@@ -82,6 +138,16 @@
     },
     {
       "method": "GET",
+      "path": "/api/memos",
+      "description": "Get all memos"
+    },
+    {
+      "method": "POST",
+      "path": "/api/memos",
+      "description": "Update all memos"
+    },
+    {
+      "method": "GET",
       "path": "/api/diagnostics",
       "description": "System diagnostics"
     },
@@ -96,11 +162,6 @@
       "description": "Raw NVS storage dump"
     },
     {
-      "method": "POST",
-      "path": "/api/print-mqtt",
-      "description": "Send MQTT message"
-    },
-    {
       "method": "GET",
       "path": "/api/config",
       "description": "Get configuration"
@@ -111,6 +172,16 @@
       "description": "Update configuration"
     },
     {
+      "method": "GET",
+      "path": "/api/wifi-scan",
+      "description": "Scan WiFi networks"
+    },
+    {
+      "method": "POST",
+      "path": "/api/print-mqtt",
+      "description": "Send MQTT message"
+    },
+    {
       "method": "POST",
       "path": "/api/test-mqtt",
       "description": "Test MQTT connection"
@@ -118,22 +189,7 @@
     {
       "method": "GET",
       "path": "/api/timezones",
-      "description": "Get IANA timezone data"
-    },
-    {
-      "method": "GET",
-      "path": "/api/memos",
-      "description": "Get all memos"
-    },
-    {
-      "method": "POST",
-      "path": "/api/memos",
-      "description": "Update all memos"
-    },
-    {
-      "method": "GET",
-      "path": "/api/wifi-scan",
-      "description": "Scan WiFi networks"
+      "description": "Get IANA timezone data (static file)"
     },
     {
       "method": "POST",

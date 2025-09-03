@@ -54,7 +54,7 @@ node mock-server/mock-api.js [--ap-mode|--no-leds]
   - `GET /api/status` - System status endpoint
   - `POST /api/print` - Print job simulation with character counts
   - `POST /api/led-effect` - LED effect triggering
-- **Server-Sent Events**: `/events` with proper `printer-update` events and discovery data
+- **Server-Sent Events**: `/mqtt-printers` with proper `printer-update` events and discovery data
 - **Static File Serving**: Complete web interface (HTML, CSS, JS, images, favicons)
 - **CORS Enabled**: Cross-origin requests for development tools
 - **Smart Port Conflict Resolution**: Automatically detects port 3001 conflicts and offers to kill conflicting processes
