@@ -87,11 +87,15 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
         lastCaptivePortalRequest = now;
     }
 
-    // Allow setup-related requests to proceed normally (but rate-limited)
+    // Allow setup-related requests and captive portal detection URLs to proceed normally (but rate-limited)
     if (uri == "/setup.html" ||
         uri == "/api/setup" ||
         uri == "/api/wifi-scan" ||
         uri == "/api/test-wifi" ||
+        uri == "/hotspot-detect.html" ||
+        uri == "/generate_204" ||
+        uri == "/connectivity-check.html" ||
+        uri == "/ncsi.txt" ||
         isStaticAsset)
     {
         return; // Let these proceed to their handlers
@@ -266,6 +270,32 @@ void setupWebServerRoutes(int maxChars)
         // WiFi test endpoint (AP mode provisioning)
         server.on("/api/test-wifi", HTTP_POST, [](AsyncWebServerRequest *request)
                   { handleTestWiFi(request); }, NULL, handleChunkedUpload);
+
+        // Captive portal detection URLs - redirect immediately to prevent file system access
+        // These handlers must come BEFORE setupStaticRoutes() to avoid 404 errors
+        server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+            response->addHeader("Location", "/setup.html");
+            request->send(response);
+        });
+        
+        server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+            response->addHeader("Location", "/setup.html");
+            request->send(response);
+        });
+        
+        server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+            response->addHeader("Location", "/setup.html");
+            request->send(response);
+        });
+        
+        server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
+            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
+            response->addHeader("Location", "/setup.html");
+            request->send(response);
+        });
 
         // Setup static file serving
         setupStaticRoutes();

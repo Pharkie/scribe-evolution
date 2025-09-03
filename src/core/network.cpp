@@ -157,6 +157,7 @@ void startFallbackAP()
         Serial.println("🔴 DEVICE STARTED IN AP-STA MODE");
         Serial.println("======================================");
         Serial.println("WiFi Network: " + String(fallbackAPSSID));
+        Serial.println("WiFi Password: " + String(fallbackAPPassword));
         Serial.println("Setup URL: http://" + apIP.toString() + "/settings/");
         Serial.println("1. Connect to WiFi: " + String(fallbackAPSSID));
         Serial.println("2. Open browser to: " + apIP.toString());

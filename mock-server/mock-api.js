@@ -705,6 +705,42 @@ function createRequestHandler() {
       return;
     }
 
+    // Captive portal detection URLs - handle in AP mode
+    if (
+      pathname === "/hotspot-detect.html" ||
+      pathname === "/generate_204" ||
+      pathname === "/connectivity-check.html" ||
+      pathname === "/ncsi.txt"
+    ) {
+      if (currentMode === "ap-mode") {
+        // In AP mode, redirect to setup.html
+        res.writeHead(302, {
+          Location: "/setup.html",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end("Redirecting to setup page...");
+        console.log(`🌐 Captive portal detection: ${pathname} -> /setup.html`);
+      } else {
+        // In normal mode, return appropriate responses
+        if (pathname === "/generate_204") {
+          // Android/Chrome expects 204 No Content for internet connectivity
+          res.writeHead(204, {
+            "Access-Control-Allow-Origin": "*",
+          });
+          res.end();
+        } else {
+          // Other platforms expect simple HTML responses
+          res.writeHead(200, {
+            "Content-Type": "text/html",
+            "Access-Control-Allow-Origin": "*",
+          });
+          res.end("<html><body>OK</body></html>");
+        }
+        console.log(`🌐 Captive portal detection: ${pathname} -> OK`);
+      }
+      return;
+    }
+
     // Explicit favicon/icon handling (mirrors ESP32 serveStatic with setGzip(false))
     if (
       pathname === "/favicon.ico" ||
