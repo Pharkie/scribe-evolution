@@ -16,16 +16,17 @@ const { handleAPI } = require("./handlers/api");
 
 const PORT = 3001;
 const startTime = Date.now();
+let server = null; // server instance for restart support
 
 // Determine mode from CLI args
 const args = process.argv.slice(2);
 const currentMode = args.includes("--ap-mode")
   ? "ap-mode"
   : args.includes("--no-leds")
-  ? "no-leds"
-  : args.includes("--disable-mqtt")
-  ? "disable-mqtt"
-  : "normal";
+    ? "no-leds"
+    : args.includes("--disable-mqtt")
+      ? "disable-mqtt"
+      : "normal";
 
 // =============================
 // Validation helpers
@@ -51,45 +52,91 @@ const VALID_LED_EFFECTS = [
   "none",
 ];
 
-const VALID_GPIOS = [ -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21 ];
-const SAFE_GPIOS  = [ -1, 2, 4, 5, 6, 7, 10, 20, 21 ];
+const VALID_GPIOS = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
+const SAFE_GPIOS = [-1, 2, 4, 5, 6, 7, 10, 20, 21];
 
 function validateField(fieldPath, value, fieldDef) {
   switch (fieldDef.type) {
     case VALIDATION_TYPES.STRING:
       return { valid: typeof value === "string" };
     case VALIDATION_TYPES.NON_EMPTY_STRING:
-      if (typeof value !== "string") return { valid: false, error: `${fieldPath} must be a string` };
-      if (!value.length) return { valid: false, error: `${fieldPath} cannot be empty` };
+      if (typeof value !== "string")
+        return { valid: false, error: `${fieldPath} must be a string` };
+      if (!value.length)
+        return { valid: false, error: `${fieldPath} cannot be empty` };
       return { valid: true };
     case VALIDATION_TYPES.IANA_TIMEZONE: {
       if (typeof value !== "string" || !value.length) {
-        return { valid: false, error: `${fieldPath} must be a non-empty string` };
+        return {
+          valid: false,
+          error: `${fieldPath} must be a non-empty string`,
+        };
       }
-      if (value.length > 50) return { valid: false, error: `${fieldPath} timezone name too long` };
-      const validPrefixes = ["Africa/","America/","Antarctica/","Asia/","Atlantic/","Australia/","Europe/","Indian/","Pacific/","Etc/"];
-      const ok = value === "UTC" || value === "GMT" || validPrefixes.some(p => value.startsWith(p));
-      if (!ok || value.startsWith("/") || value.endsWith("/") || value.includes(" ")) {
-        return { valid: false, error: `${fieldPath} invalid IANA timezone format: ${value}` };
+      if (value.length > 50)
+        return { valid: false, error: `${fieldPath} timezone name too long` };
+      const validPrefixes = [
+        "Africa/",
+        "America/",
+        "Antarctica/",
+        "Asia/",
+        "Atlantic/",
+        "Australia/",
+        "Europe/",
+        "Indian/",
+        "Pacific/",
+        "Etc/",
+      ];
+      const ok =
+        value === "UTC" ||
+        value === "GMT" ||
+        validPrefixes.some((p) => value.startsWith(p));
+      if (
+        !ok ||
+        value.startsWith("/") ||
+        value.endsWith("/") ||
+        value.includes(" ")
+      ) {
+        return {
+          valid: false,
+          error: `${fieldPath} invalid IANA timezone format: ${value}`,
+        };
       }
       return { valid: true };
     }
     case VALIDATION_TYPES.GPIO:
-      if (typeof value !== "number") return { valid: false, error: `${fieldPath} must be a number` };
-      if (!VALID_GPIOS.includes(value)) return { valid: false, error: `${fieldPath} invalid GPIO pin: ${value}` };
-      if (!SAFE_GPIOS.includes(value)) return { valid: false, error: `${fieldPath} GPIO ${value} is not safe to use` };
+      if (typeof value !== "number")
+        return { valid: false, error: `${fieldPath} must be a number` };
+      if (!VALID_GPIOS.includes(value))
+        return {
+          valid: false,
+          error: `${fieldPath} invalid GPIO pin: ${value}`,
+        };
+      if (!SAFE_GPIOS.includes(value))
+        return {
+          valid: false,
+          error: `${fieldPath} GPIO ${value} is not safe to use`,
+        };
       return { valid: true };
     case VALIDATION_TYPES.RANGE_INT:
-      if (typeof value !== "number") return { valid: false, error: `${fieldPath} must be a number` };
-      if (value < fieldDef.min || value > fieldDef.max) return { valid: false, error: `${fieldPath} must be between ${fieldDef.min} and ${fieldDef.max}` };
+      if (typeof value !== "number")
+        return { valid: false, error: `${fieldPath} must be a number` };
+      if (value < fieldDef.min || value > fieldDef.max)
+        return {
+          valid: false,
+          error: `${fieldPath} must be between ${fieldDef.min} and ${fieldDef.max}`,
+        };
       return { valid: true };
     case VALIDATION_TYPES.BOOLEAN:
       return { valid: typeof value === "boolean" };
     case VALIDATION_TYPES.ENUM_STRING:
-      if (typeof value !== "string") return { valid: false, error: `${fieldPath} must be a string` };
+      if (typeof value !== "string")
+        return { valid: false, error: `${fieldPath} must be a string` };
       return { valid: fieldDef.values.includes(value) };
     default:
-      return { valid: false, error: `${fieldPath} unsupported type: ${fieldDef.type}` };
+      return {
+        valid: false,
+        error: `${fieldPath} unsupported type: ${fieldDef.type}`,
+      };
   }
 }
 
@@ -111,22 +158,42 @@ function flattenObject(obj, prefix = "") {
 function validateConfigFields(configUpdate) {
   const flat = flattenObject(configUpdate);
   const rules = {
-    "device.owner":     { type: VALIDATION_TYPES.NON_EMPTY_STRING },
-    "device.timezone":  { type: VALIDATION_TYPES.IANA_TIMEZONE },
-    "device.maxCharacters": { type: VALIDATION_TYPES.RANGE_INT, min: 100, max: 10000 },
-    "device.printerTxPin":  { type: VALIDATION_TYPES.GPIO },
-    "wifi.ssid":        { type: VALIDATION_TYPES.NON_EMPTY_STRING },
-    "wifi.password":    { type: VALIDATION_TYPES.STRING },
-    "wifi.connect_timeout": { type: VALIDATION_TYPES.RANGE_INT, min: 1000, max: 30000 },
-    "mqtt.enabled":     { type: VALIDATION_TYPES.BOOLEAN },
-    "mqtt.server":      { type: VALIDATION_TYPES.STRING },
-    "mqtt.port":        { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 65535 },
-    "mqtt.username":    { type: VALIDATION_TYPES.STRING },
-    "mqtt.password":    { type: VALIDATION_TYPES.STRING },
+    "device.owner": { type: VALIDATION_TYPES.NON_EMPTY_STRING },
+    "device.timezone": { type: VALIDATION_TYPES.IANA_TIMEZONE },
+    "device.maxCharacters": {
+      type: VALIDATION_TYPES.RANGE_INT,
+      min: 100,
+      max: 10000,
+    },
+    "device.printerTxPin": { type: VALIDATION_TYPES.GPIO },
+    "wifi.ssid": { type: VALIDATION_TYPES.NON_EMPTY_STRING },
+    "wifi.password": { type: VALIDATION_TYPES.STRING },
+    "wifi.connect_timeout": {
+      type: VALIDATION_TYPES.RANGE_INT,
+      min: 1000,
+      max: 30000,
+    },
+    "mqtt.enabled": { type: VALIDATION_TYPES.BOOLEAN },
+    "mqtt.server": { type: VALIDATION_TYPES.STRING },
+    "mqtt.port": { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 65535 },
+    "mqtt.username": { type: VALIDATION_TYPES.STRING },
+    "mqtt.password": { type: VALIDATION_TYPES.STRING },
     "unbiddenInk.enabled": { type: VALIDATION_TYPES.BOOLEAN },
-    "unbiddenInk.startHour": { type: VALIDATION_TYPES.RANGE_INT, min: 0, max: 24 },
-    "unbiddenInk.endHour":   { type: VALIDATION_TYPES.RANGE_INT, min: 0, max: 24 },
-    "unbiddenInk.frequencyMinutes": { type: VALIDATION_TYPES.RANGE_INT, min: 1, max: 1440 },
+    "unbiddenInk.startHour": {
+      type: VALIDATION_TYPES.RANGE_INT,
+      min: 0,
+      max: 24,
+    },
+    "unbiddenInk.endHour": {
+      type: VALIDATION_TYPES.RANGE_INT,
+      min: 0,
+      max: 24,
+    },
+    "unbiddenInk.frequencyMinutes": {
+      type: VALIDATION_TYPES.RANGE_INT,
+      min: 1,
+      max: 1440,
+    },
   };
   for (const k in flat) {
     if (!rules[k]) continue;
@@ -140,7 +207,7 @@ function logProcessedFields(configUpdate) {
   const flat = flattenObject(configUpdate);
   const keys = Object.keys(flat);
   console.log(`✅ Processed ${keys.length} fields:`);
-  keys.forEach(k => console.log(`   • ${k}: ${JSON.stringify(flat[k])}`));
+  keys.forEach((k) => console.log(`   • ${k}: ${JSON.stringify(flat[k])}`));
 }
 
 // =============================
@@ -148,7 +215,8 @@ function logProcessedFields(configUpdate) {
 // =============================
 
 function loadMockData() {
-  const read = (p) => JSON.parse(fs.readFileSync(path.join(__dirname, "data", p), "utf8"));
+  const read = (p) =>
+    JSON.parse(fs.readFileSync(path.join(__dirname, "data", p), "utf8"));
   return {
     mockConfig: read("mock-config.json"),
     mockConfigAPMode: read("mock-config-ap-mode.json"),
@@ -178,10 +246,17 @@ let {
 // Handlers
 // =============================
 
-function isAPMode() { return currentMode === "ap-mode"; }
+function isAPMode() {
+  return currentMode === "ap-mode";
+}
 
 function handleConnectivityProbes(pathname) {
-  if (pathname === "/hotspot-detect.html" || pathname === "/generate_204" || pathname === "/connectivity-check.html" || pathname === "/ncsi.txt") {
+  if (
+    pathname === "/hotspot-detect.html" ||
+    pathname === "/generate_204" ||
+    pathname === "/connectivity-check.html" ||
+    pathname === "/ncsi.txt"
+  ) {
     return true;
   }
   return false;
@@ -189,7 +264,10 @@ function handleConnectivityProbes(pathname) {
 
 function serveConnectivity(req, res, pathname) {
   if (isAPMode()) {
-    res.writeHead(302, { Location: "/setup.html", "Access-Control-Allow-Origin": "*" });
+    res.writeHead(302, {
+      Location: "/setup.html",
+      "Access-Control-Allow-Origin": "*",
+    });
     res.end("Redirecting to setup page...");
     return;
   }
@@ -229,7 +307,18 @@ function handleAPStatic(pathname, res) {
     return serveFileOr404(res, p, { apMode: true });
   }
   // Allowlist; otherwise redirect handled by caller
-  const allowed = ["/setup.html","/css/","/js/","/images/","/fonts/","/site.webmanifest","/favicon.ico","/favicon.svg","/favicon-96x96.png","/apple-touch-icon.png"];
+  const allowed = [
+    "/setup.html",
+    "/css/",
+    "/js/",
+    "/images/",
+    "/fonts/",
+    "/site.webmanifest",
+    "/favicon.ico",
+    "/favicon.svg",
+    "/favicon-96x96.png",
+    "/apple-touch-icon.png",
+  ];
   const ok = allowed.some((p) => pathname === p || pathname.startsWith(p));
   if (!ok) {
     res.writeHead(302, { Location: "/setup.html" });
@@ -249,6 +338,12 @@ function handleSTAStatic(pathname, res) {
   }
   if (pathname === "/setup.html") {
     return sendNotFound(res);
+  }
+  // Directory request (trailing slash) -> serve that directory's index.html
+  if (pathname.endsWith("/")) {
+    const dir = pathname.substring(1, pathname.length - 1); // remove leading and trailing '/'
+    const indexPath = path.join(__dirname, "..", "data", dir, "index.html");
+    return serveFileOr404(res, indexPath);
   }
   const reqPath = pathname.substring(1) || "index.html";
   const filePath = path.join(__dirname, "..", "data", reqPath);
@@ -286,12 +381,22 @@ function createRequestHandler() {
     }
 
     // Favicon assets
-    if (pathname === "/favicon.ico" || pathname === "/favicon-96x96.png" || pathname === "/apple-touch-icon.png") {
+    if (
+      pathname === "/favicon.ico" ||
+      pathname === "/favicon-96x96.png" ||
+      pathname === "/apple-touch-icon.png"
+    ) {
       const filePath = path.join(__dirname, "..", "data", pathname);
       fs.readFile(filePath, (err, data) => {
         if (err) return sendNotFound(res);
-        const contentType = pathname.endsWith(".ico") ? "image/x-icon" : "image/png";
-        res.writeHead(200, { "Content-Type": contentType, "Cache-Control": "public, max-age=604800", "Access-Control-Allow-Origin": "*" });
+        const contentType = pathname.endsWith(".ico")
+          ? "image/x-icon"
+          : "image/png";
+        res.writeHead(200, {
+          "Content-Type": contentType,
+          "Cache-Control": "public, max-age=604800",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(data);
       });
       return;
@@ -321,7 +426,10 @@ function createRequestHandler() {
       const fsPath = path.join(__dirname, "data", "mock-filesystem.txt");
       fs.readFile(fsPath, "utf8", (err, data) => {
         if (err) return sendNotFound(res);
-        res.writeHead(200, { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" });
+        res.writeHead(200, {
+          "Content-Type": "text/plain",
+          "Access-Control-Allow-Origin": "*",
+        });
         res.end(data);
       });
       return;
@@ -337,11 +445,7 @@ function createRequestHandler() {
 }
 
 // Start server
-const server = http.createServer(createRequestHandler());
-server.listen(PORT, () => {
-  printStartupHelp();
-  setupKeyboardShortcuts(server);
-});
+startServer();
 
 function printStartupHelp() {
   console.log("===================================================");
@@ -352,17 +456,21 @@ function printStartupHelp() {
   console.log("  node mock-api.js             # STA-like mode");
   console.log("  node mock-api.js --ap-mode   # AP captive-portal mode");
   console.log("  node mock-api.js --no-leds   # STA mode with LEDs disabled");
-  console.log("  node mock-api.js --disable-mqtt # STA mode with MQTT disabled");
+  console.log(
+    "  node mock-api.js --disable-mqtt # STA mode with MQTT disabled",
+  );
   console.log("");
   console.log("Keyboard shortcuts:");
-  console.log("  r  Reload JSON data files (config, diagnostics, routes, etc.)");
-  console.log("  q  Quit (graceful)");
+  console.log(
+    "  r  Reload JSON data files (config, diagnostics, routes, etc.)",
+  );
+  console.log("  s  Restart server (close + rebind listener)");
   console.log("  x  Quit (graceful)");
   console.log("  Ctrl+C  Quit (graceful)");
   console.log("===================================================");
 }
 
-function setupKeyboardShortcuts(serverInstance) {
+function setupKeyboardShortcuts() {
   if (!process.stdin.isTTY) return;
   process.stdin.setEncoding("utf8");
   process.stdin.resume();
@@ -388,21 +496,55 @@ function setupKeyboardShortcuts(serverInstance) {
       }
       return;
     }
-    if (input === "q" || input === "x") {
-      gracefulShutdown(serverInstance);
+    if (input === "s") {
+      restartServer();
+      return;
+    }
+    if (input === "x") {
+      gracefulShutdown();
       return;
     }
   });
 
-  process.on("SIGINT", () => gracefulShutdown(serverInstance));
+  process.on("SIGINT", () => gracefulShutdown());
 }
 
-function gracefulShutdown(serverInstance) {
+function gracefulShutdown() {
   console.log("\nShutting down mock server...");
   const timeout = setTimeout(() => process.exit(0), 1000);
-  serverInstance.close(() => {
+  if (!server) {
+    clearTimeout(timeout);
+    process.exit(0);
+    return;
+  }
+  server.close(() => {
     clearTimeout(timeout);
     console.log("✅ Server stopped. Bye!");
     process.exit(0);
+  });
+}
+
+function startServer() {
+  server = http.createServer(createRequestHandler());
+  server.listen(PORT, () => {
+    printStartupHelp();
+    setupKeyboardShortcuts();
+  });
+}
+
+function restartServer() {
+  if (!server) {
+    console.log("No server instance; starting a new one...");
+    startServer();
+    return;
+  }
+  console.log("\n🔄 Restarting mock server...");
+  const timeout = setTimeout(() => {
+    console.warn("Force starting new server after close timeout...");
+    startServer();
+  }, 1000);
+  server.close(() => {
+    clearTimeout(timeout);
+    startServer();
   });
 }

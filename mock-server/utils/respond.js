@@ -77,7 +77,15 @@ function serveFile(res, filePath, statusCode = 200, opts = {}) {
   };
   const contentType = mimeTypes[ext] || "application/octet-stream";
 
-  const compressibleTypes = [".html", ".css", ".js", ".json", ".svg", ".txt", ".md"];
+  const compressibleTypes = [
+    ".html",
+    ".css",
+    ".js",
+    ".json",
+    ".svg",
+    ".txt",
+    ".md",
+  ];
   const isTextType = compressibleTypes.includes(ext);
   const isCoreWebAsset = ext === ".html" || ext === ".css" || ext === ".js";
   const apMode = !!opts.apMode;

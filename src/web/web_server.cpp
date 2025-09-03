@@ -43,7 +43,7 @@
 extern AsyncWebServer server;
 
 // SSE event source for real-time updates
-AsyncEventSource sseEvents("/mqtt-printers");
+AsyncEventSource sseEvents("/events");
 
 // Global message storage for printing
 Message currentMessage = {"", "", false};

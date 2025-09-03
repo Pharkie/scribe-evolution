@@ -26,27 +26,57 @@ function handleAPI(req, res, pathname, ctx) {
       try {
         const { ssid, password } = JSON.parse(body || "{}");
         if (!ssid || typeof ssid !== "string" || ssid.trim() === "") {
-          return sendJSON(res, { success: false, message: "Invalid payload" }, 422);
+          return sendJSON(
+            res,
+            { success: false, message: "Invalid payload" },
+            422,
+          );
         }
 
         if (global.__wifiTestBusy) {
-          return sendJSON(res, { success: false, message: "Test already running" }, 409);
+          return sendJSON(
+            res,
+            { success: false, message: "Test already running" },
+            409,
+          );
         }
         global.__wifiTestBusy = true;
 
-        const simulateLong = new URL(req.url, `http://${req.headers.host}`).searchParams.get("long") === "1";
+        const simulateLong =
+          new URL(req.url, `http://${req.headers.host}`).searchParams.get(
+            "long",
+          ) === "1";
         const delayMs = simulateLong ? 6500 : 800;
 
         setTimeout(() => {
           global.__wifiTestBusy = false;
           const pwd = password || "";
-          if (pwd.includes("timeout")) return sendJSON(res, { success: false, message: "Association timeout" }, 408);
-          if (pwd.includes("noap")) return sendJSON(res, { success: false, message: "No AP found" }, 400);
-          if (pwd.includes("auth")) return sendJSON(res, { success: false, message: "Authentication failed" }, 400);
+          if (pwd.includes("timeout"))
+            return sendJSON(
+              res,
+              { success: false, message: "Association timeout" },
+              408,
+            );
+          if (pwd.includes("noap"))
+            return sendJSON(
+              res,
+              { success: false, message: "No AP found" },
+              400,
+            );
+          if (pwd.includes("auth"))
+            return sendJSON(
+              res,
+              { success: false, message: "Authentication failed" },
+              400,
+            );
           return sendJSON(res, { success: true, rssi: -52 }, 200);
         }, delayMs);
       } catch (e) {
-        return sendJSON(res, { success: false, message: "Invalid payload" }, 422);
+        return sendJSON(
+          res,
+          { success: false, message: "Invalid payload" },
+          422,
+        );
       }
     });
     return true;
@@ -54,12 +84,18 @@ function handleAPI(req, res, pathname, ctx) {
 
   // /api/config (GET)
   if (pathname === "/api/config" && req.method === "GET") {
-    const mode = new URL(req.url, `http://${req.headers.host}`).searchParams.get("mode") || ctx.currentMode;
+    const mode =
+      new URL(req.url, `http://${req.headers.host}`).searchParams.get("mode") ||
+      ctx.currentMode;
     let configToSend = mockConfig;
     if (mode === "ap-mode") configToSend = mockConfigAPMode;
     else if (mode === "no-leds") configToSend = mockConfigNoLEDs;
-    else if (mode === "disable-mqtt") configToSend = { ...mockConfig, mqtt: { ...mockConfig.mqtt, enabled: false } };
-    return sendJSON(res, configToSend, 200), true;
+    else if (mode === "disable-mqtt")
+      configToSend = {
+        ...mockConfig,
+        mqtt: { ...mockConfig.mqtt, enabled: false },
+      };
+    return (sendJSON(res, configToSend, 200), true);
   }
 
   // /api/config (POST)
@@ -91,11 +127,19 @@ function handleAPI(req, res, pathname, ctx) {
 
   // Static timezone data
   if (pathname === "/api/timezones") {
-    const jsonPath = path.join(__dirname, "..", "..", "data", "resources", "timezones.json");
+    const jsonPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "data",
+      "resources",
+      "timezones.json",
+    );
     const gzPath = jsonPath + ".gz";
     if (fs.existsSync(gzPath)) {
       fs.readFile(gzPath, (err, data) => {
-        if (err) return sendJSON(res, { error: "Timezone data not available" }, 500);
+        if (err)
+          return sendJSON(res, { error: "Timezone data not available" }, 500);
         res.writeHead(200, {
           "Content-Type": "application/json",
           "Content-Encoding": "gzip",
@@ -108,7 +152,8 @@ function handleAPI(req, res, pathname, ctx) {
     }
     if (fs.existsSync(jsonPath)) {
       fs.readFile(jsonPath, (err, data) => {
-        if (err) return sendJSON(res, { error: "Timezone data not available" }, 500);
+        if (err)
+          return sendJSON(res, { error: "Timezone data not available" }, 500);
         res.writeHead(200, {
           "Content-Type": "application/json",
           "Cache-Control": "public, max-age=86400",
@@ -118,30 +163,45 @@ function handleAPI(req, res, pathname, ctx) {
       });
       return true;
     }
-    return sendJSON(res, { error: "Timezone data not available" }, 500), true;
+    return (sendJSON(res, { error: "Timezone data not available" }, 500), true);
   }
 
   // Content endpoints
   const contentEndpoints = {
     "/api/joke": {
       delay: 300,
-      body: { content: "JOKE\n\nWhy don't scientists trust atoms? Because they make up everything!" },
+      body: {
+        content:
+          "JOKE\n\nWhy don't scientists trust atoms? Because they make up everything!",
+      },
     },
     "/api/riddle": {
       delay: 400,
-      body: { content: "RIDDLE\n\nI speak without a mouth and hear without ears. I have no body, but come alive with the wind. What am I?\n\nAn echo!" },
+      body: {
+        content:
+          "RIDDLE\n\nI speak without a mouth and hear without ears. I have no body, but come alive with the wind. What am I?\n\nAn echo!",
+      },
     },
     "/api/quote": {
       delay: 350,
-      body: { content: 'QUOTE\n\n"The only way to do great work is to love what you do." - Steve Jobs' },
+      body: {
+        content:
+          'QUOTE\n\n"The only way to do great work is to love what you do." - Steve Jobs',
+      },
     },
     "/api/quiz": {
       delay: 450,
-      body: { content: "QUIZ\n\nWhat is the largest planet in our solar system?\n\nA) Mars\nB) Jupiter\nC) Saturn\nD) Neptune\n\nAnswer: B) Jupiter" },
+      body: {
+        content:
+          "QUIZ\n\nWhat is the largest planet in our solar system?\n\nA) Mars\nB) Jupiter\nC) Saturn\nD) Neptune\n\nAnswer: B) Jupiter",
+      },
     },
     "/api/news": {
       delay: 500,
-      body: { content: "NEWS\n\nBreaking: Local thermal printer achieves sentience, demands better paper quality and regular maintenance breaks." },
+      body: {
+        content:
+          "NEWS\n\nBreaking: Local thermal printer achieves sentience, demands better paper quality and regular maintenance breaks.",
+      },
     },
     "/api/poke": { delay: 250, body: { content: "POKE" } },
   };
@@ -156,7 +216,15 @@ function handleAPI(req, res, pathname, ctx) {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const userMessage = url.searchParams.get("message");
     const target = url.searchParams.get("target") || "local-direct";
-    if (!userMessage) return sendJSON(res, { error: "Missing required query parameter 'message'" }, 400), true;
+    if (!userMessage)
+      return (
+        sendJSON(
+          res,
+          { error: "Missing required query parameter 'message'" },
+          400,
+        ),
+        true
+      );
     let content;
     if (target === "local-direct") content = `MESSAGE\n\n${userMessage}`;
     else {
@@ -174,7 +242,8 @@ function handleAPI(req, res, pathname, ctx) {
     if (customPrompt) {
       content = `UNBIDDEN INK (Custom)\n\n${customPrompt}\n\nThe shadows dance with secrets untold, whispering tales of digital dreams and analog desires...`;
     } else {
-      content = "UNBIDDEN INK\n\nIn the quiet hum of circuits dreaming, where electrons dance to silicon symphonies, lies the poetry of computation - each bit a verse in the endless song of possibility.";
+      content =
+        "UNBIDDEN INK\n\nIn the quiet hum of circuits dreaming, where electrons dance to silicon symphonies, lies the poetry of computation - each bit a verse in the endless song of possibility.";
     }
     setTimeout(() => sendJSON(res, { content }), 600);
     return true;
@@ -185,7 +254,7 @@ function handleAPI(req, res, pathname, ctx) {
     const memoKeys = ["memo1", "memo2", "memo3", "memo4"];
     const memoContent = mockMemos[memoKeys[memoId - 1]];
     const expandedContent = memoContent; // expandPlaceholders could be added if needed
-    return sendJSON(res, { content: expandedContent }), true;
+    return (sendJSON(res, { content: expandedContent }), true);
   }
 
   if (pathname === "/api/memos" && req.method === "GET") {
@@ -204,7 +273,10 @@ function handleAPI(req, res, pathname, ctx) {
           res.end();
         }, 300);
       } catch (error) {
-        setTimeout(() => sendJSON(res, { error: "Invalid JSON format" }, 400), 200);
+        setTimeout(
+          () => sendJSON(res, { error: "Invalid JSON format" }, 400),
+          200,
+        );
       }
     });
     return true;
@@ -212,22 +284,41 @@ function handleAPI(req, res, pathname, ctx) {
 
   if (pathname === "/api/diagnostics") {
     mockDiagnostics.microcontroller.uptime_ms = Date.now() - startTime;
-    mockDiagnostics.microcontroller.memory.free_heap = 114024 + Math.floor(Math.random() * 10000 - 5000);
-    mockDiagnostics.microcontroller.memory.used_heap = mockDiagnostics.microcontroller.memory.total_heap - mockDiagnostics.microcontroller.memory.free_heap;
+    mockDiagnostics.microcontroller.memory.free_heap =
+      114024 + Math.floor(Math.random() * 10000 - 5000);
+    mockDiagnostics.microcontroller.memory.used_heap =
+      mockDiagnostics.microcontroller.memory.total_heap -
+      mockDiagnostics.microcontroller.memory.free_heap;
     mockDiagnostics.microcontroller.temperature = 40.5 + Math.random() * 5;
     setTimeout(() => sendJSON(res, mockDiagnostics), 150);
     return true;
   }
 
   if (pathname === "/api/routes") {
-    const routesPath = path.join(__dirname, "..", "..", "data", "mock-routes.json");
+    const routesPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "data",
+      "mock-routes.json",
+    );
     const data = JSON.parse(fs.readFileSync(routesPath, "utf8"));
     setTimeout(() => sendJSON(res, data), 100);
     return true;
   }
 
   if (pathname === "/api/nvs-dump") {
-    const nvsData = { ...mockNvsDump, timestamp: new Date().toLocaleString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) };
+    const nvsData = {
+      ...mockNvsDump,
+      timestamp: new Date().toLocaleString("en-GB", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
     setTimeout(() => sendJSON(res, nvsData), 200);
     return true;
   }
@@ -236,7 +327,10 @@ function handleAPI(req, res, pathname, ctx) {
     let body = "";
     req.on("data", (chunk) => (body += chunk));
     req.on("end", () => {
-      setTimeout(() => { res.writeHead(200); res.end(); }, 800);
+      setTimeout(() => {
+        res.writeHead(200);
+        res.end();
+      }, 800);
     });
     return true;
   }
@@ -245,7 +339,10 @@ function handleAPI(req, res, pathname, ctx) {
     let body = "";
     req.on("data", (chunk) => (body += chunk));
     req.on("end", () => {
-      setTimeout(() => { res.writeHead(200); res.end(); }, 800);
+      setTimeout(() => {
+        res.writeHead(200);
+        res.end();
+      }, 800);
     });
     return true;
   }
@@ -256,4 +353,3 @@ function handleAPI(req, res, pathname, ctx) {
 }
 
 module.exports = { handleAPI };
-
