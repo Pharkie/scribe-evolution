@@ -104,7 +104,8 @@ void handleChunkedUpload(AsyncWebServerRequest *request, uint8_t *data, size_t l
 // Lightweight Route Registry
 // ========================================
 
-struct RouteInfo {
+struct RouteInfo
+{
     String method;
     String path;
     String description;
@@ -113,7 +114,8 @@ struct RouteInfo {
 
 static std::vector<RouteInfo> registeredRoutes;
 
-void registerRoute(const char* method, const char* path, const char* description, bool isAPI) {
+void registerRoute(const char *method, const char *path, const char *description, bool isAPI)
+{
     RouteInfo route;
     route.method = String(method);
     route.path = String(path);
@@ -127,14 +129,18 @@ void addRegisteredRoutesToJson(JsonObject &endpoints)
 {
     JsonArray webPages = endpoints.createNestedArray("web_pages");
     JsonArray apiEndpoints = endpoints.createNestedArray("api_endpoints");
-    
-    for (const auto &route : registeredRoutes) {
-        if (route.isAPI) {
+
+    for (const auto &route : registeredRoutes)
+    {
+        if (route.isAPI)
+        {
             JsonObject api = apiEndpoints.createNestedObject();
             api["method"] = route.method;
             api["path"] = route.path;
             api["description"] = route.description;
-        } else {
+        }
+        else
+        {
             JsonObject page = webPages.createNestedObject();
             page["path"] = route.path;
             page["description"] = route.description;
@@ -144,13 +150,16 @@ void addRegisteredRoutesToJson(JsonObject &endpoints)
 
 static void setupStaticFileServing(bool isAP)
 {
-    if (isAP) {
+    if (isAP)
+    {
         // AP mode - serve files for captive portal
         server.serveStatic("/", LittleFS, "/")
             .setDefaultFile("setup.html")
             .setTryGzipFirst(false)
             .setCacheControl("no-cache");
-    } else {
+    }
+    else
+    {
         // STA mode - serve all static files with compression
         server.serveStatic("/", LittleFS, "/")
             .setDefaultFile("index.html")
@@ -163,54 +172,52 @@ void setupWebServerRoutes(int maxChars)
 {
     setMaxCharacters(maxChars);
     bool isAP = isAPMode();
-    
+
     LOG_NOTICE("WEB", "Setting up %s mode routes", isAP ? "AP (captive portal)" : "STA (full web interface)");
 
-    if (isAP) {
+    if (isAP)
+    {
         setupAPModeRoutes();
-    } else {
+    }
+    else
+    {
         setupSTAModeRoutes();
     }
-    
+
     LOG_VERBOSE("WEB", "Web server routes configured for %s mode", isAP ? "AP" : "STA");
 }
 
 void setupAPModeRoutes()
 {
     // Setup page - main captive portal entry point
-    server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(LittleFS, "/setup.html", "text/html");
-    });
-    
+    server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(LittleFS, "/setup.html", "text/html"); });
+
     // Setup API endpoints
     server.on("/api/setup", HTTP_GET, handleSetupGet);
-    server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleSetupPost(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleSetupPost(request); }, NULL, handleChunkedUpload);
     server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
-    server.on("/api/test-wifi", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleTestWiFi(request);
-    }, NULL, handleChunkedUpload);
-    
+    server.on("/api/test-wifi", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleTestWiFi(request); }, NULL, handleChunkedUpload);
+
     // Captive portal detection - redirect to setup
-    const char* captiveUrls[] = {"/hotspot-detect.html", "/generate_204", "/connectivity-check.html", "/ncsi.txt"};
-    for (const char* url : captiveUrls) {
-        server.on(url, HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->redirect("/setup.html");
-        });
+    const char *captiveUrls[] = {"/hotspot-detect.html", "/generate_204", "/connectivity-check.html", "/ncsi.txt"};
+    for (const char *url : captiveUrls)
+    {
+        server.on(url, HTTP_GET, [](AsyncWebServerRequest *request)
+                  { request->redirect("/setup.html"); });
     }
-    
+
     // Block diagnostics and settings pages in AP mode
-    server.on("^\\/diagnostics\\/.*", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->redirect("/setup.html");
-    });
-    server.on("^\\/settings\\/.*", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->redirect("/setup.html");
-    });
-    
+    server.on("^\\/diagnostics\\/.*", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->redirect("/setup.html"); });
+    server.on("^\\/settings\\/.*", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->redirect("/setup.html"); });
+
     // Static files with captive portal defaults
     setupStaticFileServing(true);
-    
+
     // Catch-all redirects to setup
     server.onNotFound(handleCaptivePortal);
 }
@@ -219,36 +226,32 @@ void setupSTAModeRoutes()
 {
     // Clear previous route registry for STA mode
     registeredRoutes.clear();
-    
+
     // SSE for real-time updates
-    sseEvents.onConnect([](AsyncEventSourceClient *client) {
+    sseEvents.onConnect([](AsyncEventSourceClient *client)
+                        {
         String printerData = getDiscoveredPrintersJson();
-        client->send(printerData.c_str(), "printer-update", millis());
-    });
+        client->send(printerData.c_str(), "printer-update", millis()); });
     server.addHandler(&sseEvents);
     registerRoute("GET", "/mqtt-printers", "Server-sent events");
-    
+
     // Connectivity check endpoints (return success, not redirects)
-    server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(204);
-    });
-    server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/html", "<html><body>OK</body></html>");
-    });
-    server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/html", "<html><body>OK</body></html>");
-    });
-    server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/plain", "Microsoft NCSI");
-    });
+    server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(204); });
+    server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(200, "text/html", "<html><body>OK</body></html>"); });
+    server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(200, "text/html", "<html><body>OK</body></html>"); });
+    server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(200, "text/plain", "Microsoft NCSI"); });
     registerRoute("GET", "/generate_204", "Connectivity check");
     registerRoute("GET", "/hotspot-detect.html", "Captive portal detection");
     registerRoute("GET", "/connectivity-check.html", "Network connectivity test");
     registerRoute("GET", "/ncsi.txt", "Network connectivity status indicator");
-    
+
     setupAPIRoutes();
     setupStaticAssets();
-    
+
     // 404 handler
     server.onNotFound(handleNotFound);
 }
@@ -258,15 +261,13 @@ void setupAPIRoutes()
     // Print endpoints
     server.on("/api/print-local", HTTP_GET, handlePrintContent);
     registerRoute("GET", "/api/print-local", "Print custom message");
-    server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handlePrintContent(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handlePrintContent(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-local", "Print custom message");
-    server.on("/api/character-test", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handlePrintTest(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/character-test", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handlePrintTest(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/character-test", "Print character test pattern");
-    
+
     // Content generation
     server.on("/api/riddle", HTTP_GET, handleRiddle);
     registerRoute("GET", "/api/riddle", "Generate random riddle");
@@ -284,21 +285,19 @@ void setupAPIRoutes()
     registerRoute("GET", "/api/unbidden-ink", "Generate unbidden ink content");
     server.on("/api/user-message", HTTP_GET, handleUserMessage);
     registerRoute("GET", "/api/user-message", "Generate user message");
-    
+
     // Memo endpoints (regex for path parameters)
     server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, handleMemoGet);
     registerRoute("GET", "/api/memo/{id}", "Get processed memo content");
-    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleMemoUpdate(request);
-    }, NULL, handleChunkedUpload);
+    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleMemoUpdate(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/memo/{id}", "Update specific memo");
     server.on("/api/memos", HTTP_GET, handleMemosGet);
     registerRoute("GET", "/api/memos", "Get all memos");
-    server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleMemosPost(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleMemosPost(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/memos", "Update all memos");
-    
+
     // System endpoints
     server.on("/api/diagnostics", HTTP_GET, handleDiagnostics);
     registerRoute("GET", "/api/diagnostics", "System diagnostics");
@@ -308,41 +307,37 @@ void setupAPIRoutes()
     registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump");
     server.on("/api/config", HTTP_GET, handleConfigGet);
     registerRoute("GET", "/api/config", "Get configuration");
-    server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleConfigPost(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleConfigPost(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/config", "Update configuration");
     server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
     registerRoute("GET", "/api/wifi-scan", "Scan WiFi networks");
-    
+
     // MQTT endpoints
-    server.on("/api/print-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleMQTTSend(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/print-mqtt", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleMQTTSend(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-mqtt", "Send MQTT message");
-    server.on("/api/test-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleTestMQTT(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/test-mqtt", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleTestMQTT(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/test-mqtt", "Test MQTT connection");
-    
+
     // Static timezone data
     server.serveStatic("/api/timezones", LittleFS, "/resources/timezones.json")
-          .setCacheControl("public, max-age=86400");
+        .setCacheControl("public, max-age=86400");
     registerRoute("GET", "/api/timezones", "Get IANA timezone data (static file)");
-          
+
 #if ENABLE_LEDS
-    server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleLedEffect(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleLedEffect(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/leds/test", "Trigger LED Effect");
-    server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request) {
-        handleLedOff(request);
-    }, NULL, handleChunkedUpload);
+    server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request)
+              { handleLedOff(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/leds/off", "Turn LEDs Off");
 #endif
 
     // Debug endpoint to list LittleFS contents (only in STA mode)
-    server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server.on("/debug/filesystem", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
         String output = "LittleFS Debug:\n\nTotal space: " + String(LittleFS.totalBytes()) + " bytes\n";
         output += "Used space: " + String(LittleFS.usedBytes()) + " bytes\n";
         output += "Free space: " + String(LittleFS.totalBytes() - LittleFS.usedBytes()) + " bytes\n\n";
@@ -355,8 +350,7 @@ void setupAPIRoutes()
             listDirectory(root, output, 0);
         }
         
-        request->send(200, "text/plain", output);
-    });
+        request->send(200, "text/plain", output); });
     registerRoute("GET", "/debug/filesystem", "LittleFS debug info");
 }
 
@@ -381,10 +375,10 @@ void setupStaticAssets()
         .setTryGzipFirst(false)
         .setCacheControl("max-age=31536000");
     registerRoute("GET", "/fonts/outfit-variable.woff2", "Outfit variable font", false);
-    
+
     // All other static files
     setupStaticFileServing(false);
-    
+
     // Register major static routes
     registerRoute("GET", "/", "Main interface", false);
     registerRoute("GET", "/index.html", "Main interface", false);

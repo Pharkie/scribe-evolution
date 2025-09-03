@@ -807,11 +807,19 @@ export function createIndexStore() {
           }
         });
 
-        // Handle system status updates
+        // Handle system status updates (pipe into inline error state)
         eventSource.addEventListener("system-status", (event) => {
           try {
             const data = JSON.parse(event.data);
-            this.showSystemNotification(data.status, data.message);
+            const status = data.status;
+            const message = data.message || "";
+            if (status === "connected") {
+              // Clear error on successful connection
+              this.error = null;
+            } else if (status === "error" || status === "reconnecting") {
+              // Show status message as inline error
+              this.error = message || (status === "reconnecting" ? "Reconnecting to printer service" : "System error");
+            }
           } catch (error) {
             console.error("Error parsing system status:", error);
           }
@@ -823,6 +831,8 @@ export function createIndexStore() {
             "SSE connection error for remote printer (MQTT) discovery:",
             error,
           );
+          // Surface as inline error
+          this.error = "Connection error: remote printer discovery";
           // Attempt to reconnect after 5 seconds
           setTimeout(() => {
             connectSSE();
@@ -861,59 +871,7 @@ export function createIndexStore() {
       }
     },
 
-    showSystemNotification(status, message) {
-      // Only show notifications for specific status types
-      if (!["connected", "error", "reconnecting"].includes(status)) {
-        return;
-      }
-
-      // Create notification element
-      const notification = document.createElement("div");
-      notification.className = `notification notification-${status}`;
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 10px 15px;
-        border-radius: 4px;
-        color: white;
-        font-size: 14px;
-        z-index: 10000;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      `;
-
-      // Set background color based on status
-      switch (status) {
-        case "connected":
-          notification.style.backgroundColor = "#10b981"; // Green
-          break;
-        case "error":
-          notification.style.backgroundColor = "#ef4444"; // Red
-          break;
-        case "reconnecting":
-          notification.style.backgroundColor = "#f59e0b"; // Yellow
-          break;
-      }
-
-      notification.textContent = message;
-      document.body.appendChild(notification);
-
-      // Fade in
-      requestAnimationFrame(() => {
-        notification.style.opacity = "1";
-      });
-
-      // Auto-remove after 3 seconds
-      setTimeout(() => {
-        notification.style.opacity = "0";
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-          }
-        }, 300);
-      }, 3000);
-    },
+    // Removed SSE notification popups; using inline error state instead
   };
 
   return store;

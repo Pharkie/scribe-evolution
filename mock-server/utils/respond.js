@@ -89,6 +89,18 @@ function serveFile(res, filePath, statusCode = 200, opts = {}) {
   const isTextType = compressibleTypes.includes(ext);
   const isCoreWebAsset = ext === ".html" || ext === ".css" || ext === ".js";
   const apMode = !!opts.apMode;
+  // Never attempt gzip resolution for font files (avoid .woff2.gz lookup or creation attempts)
+  if (ext === ".woff2") {
+    return fs.readFile(filePath, (err, data) => {
+      if (err) return sendNotFound(res);
+      res.writeHead(statusCode, {
+        "Content-Type": contentType,
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": apMode ? "no-cache" : "public, max-age=31536000",
+      });
+      res.end(data);
+    });
+  }
   const shouldCompress = isTextType && !(apMode && isCoreWebAsset);
 
   if (shouldCompress) {
