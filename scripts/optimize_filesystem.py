@@ -16,7 +16,7 @@ ap_essentials = [
 
 
 def build_optimized_filesystem(source, target, pio_env):
-    """Copy source files, compress, and remove unnecessary uncompressed versions.
+    """Optimize existing data directory: copy static assets, compress files, protect AP essentials.
 
     Args:
         source: Source file (unused, required by PlatformIO)
@@ -27,34 +27,37 @@ def build_optimized_filesystem(source, target, pio_env):
     del source, target
 
     data_dir = pio_env.get("PROJECT_DATA_DIR", "data")
-    src_dir = "src/data"
+    src_dir = "src/web-static"
     file_patterns = ["*.html", "*.png", "*.ico", "*.webmanifest", "*.svg"]
 
-    # Clean and create data directory
-    if os.path.exists(data_dir):
-        if os.path.isdir(data_dir):
-            shutil.rmtree(data_dir)
-        else:
-            os.remove(data_dir)  # Remove if it's a file
+    # Ensure data directory exists (but don't wipe it)
     os.makedirs(data_dir, exist_ok=True)
 
-    # Copy files from src/data to data
-    print("📂 Copying source files...")
+    # Copy/update static assets from src/web-static to data
+    print("📂 Copying static assets...")
 
     # Copy individual files
     for pattern in file_patterns:
         for src_file in glob.glob(f"{src_dir}/{pattern}"):
-            shutil.copy2(src_file, data_dir)
+            dest_file = os.path.join(data_dir, os.path.basename(src_file))
+            shutil.copy2(src_file, dest_file)
 
     # Copy all directories (dynamic discovery)
-    for item in os.listdir(src_dir):
-        src_path = f"{src_dir}/{item}"
-        if os.path.isdir(src_path):
-            dst_path = f"{data_dir}/{item}"
-            shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+    if os.path.exists(src_dir):
+        for item in os.listdir(src_dir):
+            src_path = os.path.join(src_dir, item)
+            if os.path.isdir(src_path):
+                dst_path = os.path.join(data_dir, item)
+                # Remove existing directory first to ensure clean copy
+                if os.path.exists(dst_path):
+                    shutil.rmtree(dst_path)
+                shutil.copytree(src_path, dst_path)
 
-    print("✓ Source files copied")
+    print("✓ Static assets copied")
 
+    # Now optimize the live directory: compress files and clean up
+    print("⚡ Optimizing filesystem...")
+    
     compressed_count = 0
     removed_count = 0
 
@@ -73,23 +76,36 @@ def build_optimized_filesystem(source, target, pio_env):
             # Check if file should be compressed based on extension
             file_ext = os.path.splitext(file_name)[1].lower()
             if file_ext in compressible_extensions:
-                # Compress the file
-                with open(file_path, "rb") as f_in:
-                    with gzip.open(f"{file_path}.gz", "wb", compresslevel=9) as f_out:
-                        f_out.write(f_in.read())
-                compressed_count += 1
+                # Create compressed version
+                gz_path = f"{file_path}.gz"
+                
+                # Only compress if .gz doesn't exist or source is newer
+                should_compress = True
+                if os.path.exists(gz_path):
+                    src_mtime = os.path.getmtime(file_path)
+                    gz_mtime = os.path.getmtime(gz_path)
+                    should_compress = src_mtime > gz_mtime
+                
+                if should_compress:
+                    with open(file_path, "rb") as f_in:
+                        with gzip.open(gz_path, "wb", compresslevel=9) as f_out:
+                            f_out.write(f_in.read())
+                    compressed_count += 1
 
-                # Remove uncompressed if not essential for AP
+                # Remove uncompressed version if not essential for AP mode
                 relative_path = os.path.relpath(file_path, data_dir)
-                if not any(
-                    relative_path.endswith(essential) for essential in ap_essentials
-                ):
+                is_ap_essential = any(
+                    relative_path == essential or relative_path.endswith(f"/{essential}")
+                    for essential in ap_essentials
+                )
+                
+                if not is_ap_essential:
                     os.remove(file_path)
                     removed_count += 1
                     print(f"  Removed: {relative_path}")
 
     print(f"✓ Compressed {compressed_count} files")
-    print(f"✓ Removed {removed_count} redundant files")
+    print(f"✓ Removed {removed_count} redundant uncompressed files")
     print(f"✓ Kept {len(ap_essentials)} AP essentials uncompressed")
 
 
