@@ -102,9 +102,7 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
     }
 
     // Redirect everything else to setup page
-    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
-    response->addHeader("Location", "http://192.168.4.1/setup.html");
-    request->send(response);
+    request->redirect("/setup.html");
 }
 
 // Helper functions for POST body handling using request's built-in storage
@@ -278,27 +276,19 @@ void setupWebServerRoutes(int maxChars)
         // Captive portal detection URLs - redirect immediately to prevent file system access
         // These handlers must come BEFORE setupStaticRoutes() to avoid 404 errors
         server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
-            response->addHeader("Location", "/setup.html");
-            request->send(response);
+            request->redirect("/setup.html");
         });
         
         server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
-            response->addHeader("Location", "/setup.html");
-            request->send(response);
+            request->redirect("/setup.html");
         });
         
         server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
-            response->addHeader("Location", "/setup.html");
-            request->send(response);
+            request->redirect("/setup.html");
         });
         
         server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
-            response->addHeader("Location", "/setup.html");
-            request->send(response);
+            request->redirect("/setup.html");
         });
 
         // Setup static file serving (serve setup.html by default in AP-STA) as catch‑all
@@ -311,9 +301,7 @@ void setupWebServerRoutes(int maxChars)
         // Redirect root to setup
         server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
-            AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Redirecting to setup page...");
-            response->addHeader("Location", "/setup.html");
-            request->send(response); });
+            request->redirect("/setup.html"); });
     }
     else
     {
@@ -333,6 +321,22 @@ void setupWebServerRoutes(int maxChars)
 
         // Track the SSE endpoint
         registeredRoutes.push_back({"GET", "/events", "Server-sent events", true});
+
+        // Connectivity check endpoints (avoid false 404s in STA mode)
+        server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
+            AsyncWebServerResponse *resp = request->beginResponse(204);
+            resp->addHeader("Cache-Control", "no-cache");
+            request->send(resp);
+        });
+        server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+            request->send(200, "text/html", "<html><body>OK</body></html>");
+        });
+        server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+            request->send(200, "text/html", "<html><body>OK</body></html>");
+        });
+        server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
+            request->send(200, "text/plain", "Microsoft NCSI");
+        });
 
         // Register API endpoints
         registerRoute("POST", "/api/print-local", "Print custom message", handlePrintContent, true);
@@ -409,7 +413,9 @@ void setupWebServerRoutes(int maxChars)
             .setTryGzipFirst(false)
             .setCacheControl("max-age=604800");
 
-        // CRITICAL: Setup static file serving AFTER all API routes
+        // Static assets are handled by serveStatic with .setTryGzipFirst(true)
+
+        // CRITICAL: Setup static file serving AFTER all API routes and explicit asset handlers
         // This ensures API endpoints and explicit favicon routes are matched before the catch-all static handler
         // In STA mode, serve index.html by default and prefer gzip versions
         setupStaticRoutes("index.html", /*tryGzipFirst=*/true);
