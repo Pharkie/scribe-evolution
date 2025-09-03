@@ -5,7 +5,9 @@ import gzip
 import glob
 import shutil
 
-# AP mode essential files that must remain uncompressed
+# Uncompressed files to keep on device filesystem
+# - AP essentials (captive portal needs uncompressed HTML/CSS/JS)
+# - GitHub-visible assets (README references uncompressed .svg logos)
 ap_essentials = [
     "setup.html",
     "js/page-setup.js",
@@ -13,6 +15,13 @@ ap_essentials = [
     "js/alpine.js",
     "css/app.css",
 ]
+
+readme_assets = [
+    "images/ScribeLogoMain-black.svg",
+    "images/ScribeLogoMain-white.svg",
+]
+
+keep_uncompressed = set(ap_essentials + readme_assets)
 
 
 def build_optimized_filesystem(source, target, pio_env):
@@ -94,19 +103,21 @@ def build_optimized_filesystem(source, target, pio_env):
 
                 # Remove uncompressed version if not essential for AP mode
                 relative_path = os.path.relpath(file_path, data_dir)
-                is_ap_essential = any(
+                is_protected = any(
                     relative_path == essential or relative_path.endswith(f"/{essential}")
-                    for essential in ap_essentials
+                    for essential in keep_uncompressed
                 )
                 
-                if not is_ap_essential:
+                if not is_protected:
                     os.remove(file_path)
                     removed_count += 1
                     print(f"  Removed: {relative_path}")
 
     print(f"✓ Compressed {compressed_count} files")
     print(f"✓ Removed {removed_count} redundant uncompressed files")
+    # Report kept groups
     print(f"✓ Kept {len(ap_essentials)} AP essentials uncompressed")
+    print(f"✓ Kept {len(readme_assets)} README assets uncompressed")
 
 
 # Can be called directly or from PlatformIO
