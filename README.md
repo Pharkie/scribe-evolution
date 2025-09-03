@@ -7,6 +7,11 @@
 <br>
 <br>
 
+<p align="center">
+  <img src="docs/assets/Scribe-evolution-demo.gif" alt="Scribe Evolution Demo" width="100%" />
+  
+</p>
+
 **Print Fast. Share Securely. Poke Friends.**
 
 Scribe Evolution is a small, AI-powered thermal printer that delights you with ink-free, super-fast, tear-and-go printing of quick notes, to-do lists, recipes, news summaries, or trivia. Share any of these instantly with those in your private network.
