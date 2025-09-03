@@ -11,6 +11,18 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
     """Build, Upload FS & Firmware, Monitor - complete workflow"""
     print("🚀 Starting build_upload_monitor workflow...")
 
+    # Resolve the active PlatformIO environment name
+    try:
+        env_name = env.get("PIOENV") or env.subst("$PIOENV")
+    except Exception:  # pylint: disable=broad-except
+        env_name = None
+
+    if not env_name:
+        print("❌ Could not determine current PlatformIO environment (PIOENV)")
+        return 1
+
+    print(f"🔧 Using PlatformIO env: {env_name}")
+
     # Step 1: Build frontend
     print("📦 Building frontend...")
     result = subprocess.run(["npm", "run", "build"], check=False)
@@ -21,7 +33,7 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
 
     # Step 2: Upload filesystem
     print("📁 Uploading filesystem...")
-    fs_result = env.Execute("pio run -e main -t uploadfs")
+    fs_result = env.Execute(f"pio run -e {env_name} -t uploadfs")
     if fs_result != 0:
         print(f"❌ Filesystem upload failed with exit code {fs_result}")
         return fs_result
@@ -29,7 +41,7 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
 
     # Step 3: Upload firmware (auto-builds if needed)
     print("💾 Building and uploading firmware...")
-    fw_result = env.Execute("pio run -e main -t upload")
+    fw_result = env.Execute(f"pio run -e {env_name} -t upload")
     if fw_result != 0:
         print(f"❌ Firmware upload failed with exit code {fw_result}")
         return fw_result
@@ -49,7 +61,7 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
 
     # Step 4: Start monitoring
     print("📺 Starting serial monitor...")
-    env.Execute("pio run -e main -t monitor")
+    env.Execute(f"pio run -e {env_name} -t monitor")
 
     return 0
 

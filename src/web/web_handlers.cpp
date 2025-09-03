@@ -72,8 +72,11 @@ void handleNotFound(AsyncWebServerRequest *request)
 
     LOG_WARNING("WEB", "%s", errorDetails.c_str());
 
-    // Serve static 404 page (request->send requires explicit .gz)
-    request->send(LittleFS, "/404.html.gz", "text/html", 404);
+    // Serve static 404 page (gzip) with proper encoding header
+    AsyncWebServerResponse *resp = request->beginResponse(LittleFS, "/404.html.gz", "text/html", 404);
+    resp->addHeader("Content-Encoding", "gzip");
+    resp->addHeader("Cache-Control", "no-cache");
+    request->send(resp);
 }
 
 // ========================================

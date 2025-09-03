@@ -563,7 +563,13 @@ function serveFile(res, filePath, statusCode = 200) {
     ".txt",
     ".md",
   ];
-  const shouldCompress = compressibleTypes.includes(ext);
+  // Mirror device behavior:
+  // - STA mode: prefer gzip for text assets
+  // - AP mode: serve uncompressed for HTML/CSS/JS to support captive portal mini-browsers
+  const isAPMode = currentMode === "ap-mode";
+  const isTextType = compressibleTypes.includes(ext);
+  const isCoreWebAsset = ext === ".html" || ext === ".css" || ext === ".js";
+  const shouldCompress = isTextType && !(isAPMode && isCoreWebAsset);
 
   if (shouldCompress) {
     // Serve compressed version for text files

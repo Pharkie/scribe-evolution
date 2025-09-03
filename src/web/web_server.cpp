@@ -232,6 +232,8 @@ static void setupStaticRoutes(const char *defaultFile, bool tryGzipFirst)
         .setCacheControl("max-age=31536000");
 }
 
+// (Removed explicit per-file serving; rely on serveStatic with setTryGzipFirst)
+
 void setupWebServerRoutes(int maxChars)
 {
     // Store the maxChars value for validation
@@ -299,8 +301,8 @@ void setupWebServerRoutes(int maxChars)
             request->send(response);
         });
 
-        // Setup static file serving (serve setup.html by default in AP-STA)
-        // Important: disable gzip preference for captive portal (iOS/Android) mini-browsers
+        // Setup static file serving (serve setup.html by default in AP-STA) as catch‑all
+        // Disable gzip preference for captive portal (iOS/Android) mini-browsers
         setupStaticRoutes("setup.html", /*tryGzipFirst=*/false);
 
         // Catch all other requests and redirect to setup
@@ -407,8 +409,8 @@ void setupWebServerRoutes(int maxChars)
             .setTryGzipFirst(false)
             .setCacheControl("max-age=604800");
 
-        // CRITICAL: Setup static file serving AFTER all API routes AND explicit favicon routes
-        // This ensures API endpoints and explicit routes are matched before the catch-all static handler
+        // CRITICAL: Setup static file serving AFTER all API routes
+        // This ensures API endpoints and explicit favicon routes are matched before the catch-all static handler
         // In STA mode, serve index.html by default and prefer gzip versions
         setupStaticRoutes("index.html", /*tryGzipFirst=*/true);
 
