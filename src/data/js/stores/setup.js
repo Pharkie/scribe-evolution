@@ -7,6 +7,7 @@ import {
   loadConfiguration,
   saveConfiguration,
   scanWiFiNetworks,
+  testWiFiConnection,
 } from "../api/setup.js";
 import {
   createWiFiState,
@@ -37,6 +38,12 @@ export function createSetupStore() {
 
     // WiFi scanning state using shared utilities
     wifiScan: createWiFiState(),
+
+    // WiFi test gating (setup only)
+    wifiTesting: false,
+    wifiTestResult: null, // { success, message?, rssi? }
+    wifiTestPassed: false,
+    dirtySinceLastTest: false,
 
     // Timezone picker state using shared utilities
     timezonePicker: createTimezoneState(),
@@ -89,6 +96,7 @@ export function createSetupStore() {
 
     // WiFi scanning using shared utility
     async scanWiFi() {
+      if (this.wifiTesting) return;
       await performWiFiScan(
         this.wifiScan,
         (message) => {
@@ -96,6 +104,7 @@ export function createSetupStore() {
         },
         scanWiFiNetworks,
       );
+      this.markDirtyOnCredentialChange();
     },
 
     // Validation for setup form
@@ -108,10 +117,12 @@ export function createSetupStore() {
         getEffectiveSSID(this.wifiScan),
         this.config.device.wifi.password,
       ];
-      return requiredFields.every(
+      const baseValid = requiredFields.every(
         (field) =>
           field && typeof field === "string" && field.trim().length > 0,
       );
+      if (!baseValid) return false;
+      return this.wifiTestPassed && !this.dirtySinceLastTest;
     },
 
     // Get the effective SSID using shared utility
@@ -138,6 +149,7 @@ export function createSetupStore() {
 
     set manualSsid(value) {
       this.wifiScan.manualSSID = value;
+      this.markDirtyOnCredentialChange();
     },
 
     // ================== TIMEZONE FUNCTIONALITY ==================
@@ -203,6 +215,53 @@ export function createSetupStore() {
           "error",
         );
         this.saving = false;
+      }
+    },
+
+    // ================== WIFI TEST GATING ==================
+    resetWifiTestState() {
+      this.wifiTesting = false;
+      this.wifiTestResult = null;
+      this.wifiTestPassed = false;
+      this.dirtySinceLastTest = false;
+    },
+
+    markDirtyOnCredentialChange() {
+      this.dirtySinceLastTest = true;
+      this.wifiTestPassed = false;
+      // keep last result visible until user changes something; clear on explicit calls if needed
+    },
+
+    async testWifiConnection() {
+      if (this.wifiTesting) return;
+
+      const ssid = getEffectiveSSID(this.wifiScan);
+      const password = this.config.device.wifi.password || "";
+
+      // Basic base form check
+      if (!ssid || !password) {
+        window.showMessage("Please fill in SSID and password first", "error");
+        return;
+      }
+
+      this.wifiTesting = true;
+      this.wifiTestResult = null;
+      try {
+        const result = await testWiFiConnection(ssid, password);
+        this.wifiTesting = false;
+        this.wifiTestResult = result;
+        if (result.success) {
+          this.wifiTestPassed = true;
+          this.dirtySinceLastTest = false;
+        } else {
+          this.wifiTestPassed = false;
+          this.dirtySinceLastTest = true;
+        }
+      } catch (err) {
+        this.wifiTesting = false;
+        this.wifiTestPassed = false;
+        this.dirtySinceLastTest = true;
+        this.wifiTestResult = { success: false, message: err.message };
       }
     },
   };

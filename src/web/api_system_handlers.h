@@ -51,5 +51,6 @@ void handleMQTTSend(AsyncWebServerRequest *request);
  * Endpoint: GET /api/scan-wifi
  */
 void handleWiFiScan(AsyncWebServerRequest *request);
+void handleTestWiFi(AsyncWebServerRequest *request);
 
 #endif // API_SYSTEM_HANDLERS_H

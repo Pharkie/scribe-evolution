@@ -739,6 +739,98 @@ function createRequestHandler() {
 
     // API Routes
     if (pathname.startsWith("/api/")) {
+      if (pathname === "/api/test-wifi" && req.method === "POST") {
+        console.log("📶 WiFi test requested (mock)");
+        let body = "";
+        req.on("data", (chunk) => (body += chunk));
+        req.on("end", () => {
+          try {
+            const { ssid, password } = JSON.parse(body || "{}");
+            if (!ssid || typeof ssid !== "string" || ssid.trim() === "") {
+              res.writeHead(422, {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              });
+              return res.end(
+                JSON.stringify({ success: false, message: "Invalid payload" }),
+              );
+            }
+
+            // Simple busy simulation via in-memory flag
+            if (global.__wifiTestBusy) {
+              res.writeHead(409, {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              });
+              return res.end(
+                JSON.stringify({
+                  success: false,
+                  message: "Test already running",
+                }),
+              );
+            }
+            global.__wifiTestBusy = true;
+
+            const simulateLong = reqUrl.searchParams.get("long") === "1";
+            const delayMs = simulateLong ? 6500 : 800;
+
+            setTimeout(() => {
+              global.__wifiTestBusy = false;
+
+              const pwd = password || "";
+              if (pwd.includes("timeout")) {
+                res.writeHead(408, {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                });
+                return res.end(
+                  JSON.stringify({
+                    success: false,
+                    message: "Association timeout",
+                  }),
+                );
+              }
+              if (pwd.includes("noap")) {
+                res.writeHead(400, {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                });
+                return res.end(
+                  JSON.stringify({ success: false, message: "No AP found" }),
+                );
+              }
+              if (pwd.includes("auth")) {
+                res.writeHead(400, {
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                });
+                return res.end(
+                  JSON.stringify({
+                    success: false,
+                    message: "Authentication failed",
+                  }),
+                );
+              }
+
+              // Success path
+              res.writeHead(200, {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              });
+              return res.end(JSON.stringify({ success: true, rssi: -52 }));
+            }, delayMs);
+          } catch (e) {
+            res.writeHead(422, {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            });
+            return res.end(
+              JSON.stringify({ success: false, message: "Invalid payload" }),
+            );
+          }
+        });
+        return; // do not fall through
+      }
       if (pathname === "/api/config" && req.method === "GET") {
         // Support different config modes via query parameters or default mode
         // ?mode=ap-mode or ?mode=no-leds, or use currentMode from command line

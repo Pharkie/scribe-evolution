@@ -20,6 +20,10 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <WiFi.h>
+#include <esp_task_wdt.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <WiFi.h>
 #include <esp_ota_ops.h>
 #include <esp_task_wdt.h>
 
@@ -398,4 +402,164 @@ void handleWiFiScan(AsyncWebServerRequest *request)
 
     // Clean up scan results to free memory
     WiFi.scanDelete();
+}
+
+// ========================================
+// WiFi Test Endpoint (blocking, AP mode provisioning)
+// ========================================
+
+static SemaphoreHandle_t wifiTestMutex = nullptr;
+static volatile int lastStaDisconnectReason = 0; // from WiFi event, if available
+
+void handleTestWiFi(AsyncWebServerRequest *request)
+{
+    LOG_VERBOSE("WEB", "WiFi test requested");
+
+    if (request->method() != HTTP_POST)
+    {
+        sendErrorResponse(request, 405, "Method not allowed");
+        return;
+    }
+
+    // Lazily init mutex
+    if (wifiTestMutex == nullptr)
+    {
+        wifiTestMutex = xSemaphoreCreateMutex();
+    }
+
+    // Try to take the mutex without waiting
+    if (wifiTestMutex && xSemaphoreTake(wifiTestMutex, 0) != pdTRUE)
+    {
+        sendErrorResponse(request, 409, "Test already running");
+        return;
+    }
+
+    // Ensure we release the mutex on all paths
+    auto releaseMutex = [&]() {
+        if (wifiTestMutex)
+        {
+            xSemaphoreGive(wifiTestMutex);
+        }
+    };
+
+    // Parse JSON body
+    extern String getRequestBody(AsyncWebServerRequest * request);
+    String body = getRequestBody(request);
+    if (body.length() == 0)
+    {
+        releaseMutex();
+        sendErrorResponse(request, 422, "No JSON body provided");
+        return;
+    }
+
+    DynamicJsonDocument doc(512);
+    DeserializationError err = deserializeJson(doc, body);
+    if (err)
+    {
+        releaseMutex();
+        sendErrorResponse(request, 422, "Invalid JSON payload");
+        return;
+    }
+
+    String ssid = doc["ssid"].as<String>();
+    String password = doc["password"].as<String>();
+    if (ssid.length() == 0)
+    {
+        releaseMutex();
+        sendErrorResponse(request, 422, "Invalid payload: ssid is required");
+        return;
+    }
+
+    // Basic password length validation using config constraint if available
+    if (password.length() > maxWifiPasswordLength)
+    {
+        releaseMutex();
+        sendErrorResponse(request, 422, "Invalid payload: password too long");
+        return;
+    }
+
+    // Install temporary WiFi event handler to classify failures
+    lastStaDisconnectReason = 0;
+    WiFiEventId_t evtId = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+                                       {
+                                           if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED)
+                                           {
+                                               lastStaDisconnectReason = info.wifi_sta_disconnected.reason;
+                                           }
+                                       });
+
+    // Ensure STA test runs while AP stays up (AP_STA expected in AP fallback)
+    // Begin connection attempt
+    WiFi.begin(ssid.c_str(), password.c_str());
+
+    const unsigned long maxDurationMs = 6500; // keep below watchdog
+    const unsigned long start = millis();
+
+    while ((millis() - start) < maxDurationMs && WiFi.status() != WL_CONNECTED)
+    {
+        esp_task_wdt_reset();
+        delay(75);
+        yield();
+    }
+
+    bool connected = (WiFi.status() == WL_CONNECTED);
+    int rssi = 0;
+    if (connected)
+    {
+        rssi = WiFi.RSSI();
+        // Disconnect STA only; preserve AP
+        WiFi.disconnect();
+    }
+    else
+    {
+        // If still not connected, also disconnect to reset state
+        WiFi.disconnect();
+    }
+
+    // Remove event handler
+    WiFi.removeEvent(evtId);
+
+    if (connected)
+    {
+        DynamicJsonDocument resp(128);
+        resp["success"] = true;
+        resp["rssi"] = rssi;
+        String out;
+        serializeJson(resp, out);
+        releaseMutex();
+        request->send(200, "application/json", out);
+        return;
+    }
+
+    // Classify error: timeout vs. event reasons
+    const char *message = "Association timeout";
+    int statusCode = 408;
+    if (lastStaDisconnectReason != 0)
+    {
+        // Map a few common reasons
+        switch (lastStaDisconnectReason)
+        {
+        case 201: // WIFI_REASON_NO_AP_FOUND
+            message = "No AP found";
+            statusCode = 400;
+            break;
+        case 202: // WIFI_REASON_AUTH_FAIL (common value; may vary by core)
+        case 15:  // WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT
+            message = "Authentication failed";
+            statusCode = 400;
+            break;
+        default:
+            message = "Network error";
+            statusCode = 400;
+            break;
+        }
+    }
+
+    DynamicJsonDocument resp(128);
+    resp["success"] = false;
+    resp["message"] = message;
+    String out;
+    serializeJson(resp, out);
+    releaseMutex();
+    request->send(statusCode, "application/json", out);
 }

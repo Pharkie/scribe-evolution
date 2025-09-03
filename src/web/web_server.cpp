@@ -91,6 +91,7 @@ void handleCaptivePortal(AsyncWebServerRequest *request)
     if (uri == "/setup.html" ||
         uri == "/api/setup" ||
         uri == "/api/wifi-scan" ||
+        uri == "/api/test-wifi" ||
         isStaticAsset)
     {
         return; // Let these proceed to their handlers
@@ -261,6 +262,10 @@ void setupWebServerRoutes(int maxChars)
 
         // WiFi scanning endpoint (needed for setup)
         server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
+
+        // WiFi test endpoint (AP mode provisioning)
+        server.on("/api/test-wifi", HTTP_POST, [](AsyncWebServerRequest *request)
+                  { handleTestWiFi(request); }, NULL, handleChunkedUpload);
 
         // Setup static file serving
         setupStaticRoutes();

@@ -131,7 +131,7 @@ WiFiConnectionMode connectToWiFi()
 // === Fallback AP Mode Setup ===
 void startFallbackAP()
 {
-    WiFi.mode(WIFI_AP);
+    WiFi.mode(WIFI_AP_STA);
     bool apStarted = WiFi.softAP(fallbackAPSSID, fallbackAPPassword);
 
     if (apStarted)

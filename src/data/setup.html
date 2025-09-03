@@ -381,6 +381,7 @@
                         >
                           <button
                             type="button"
+                            :disabled="wifiTesting"
                             @click="scanWiFi(); hasScanned = true"
                             class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center mx-auto"
                           >
@@ -422,6 +423,7 @@
                             </h3>
                             <button
                               type="button"
+                              :disabled="wifiTesting"
                               @click="scanWiFi()"
                               class="flex items-center px-3 py-1 text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
                             >
@@ -458,7 +460,7 @@
                                   type="radio"
                                   :value="network.ssid"
                                   x-model="wifiScan.selectedNetwork"
-                                  @change="config.device.wifi.ssid = network.ssid; config.device.wifi.password = ''"
+                                  @change="config.device.wifi.ssid = network.ssid; config.device.wifi.password = ''; markDirtyOnCredentialChange()"
                                   class="mr-3 text-green-600 focus:ring-green-500"
                                 />
                                 <div class="flex-1">
@@ -510,7 +512,7 @@
                             placeholder="Enter WiFi network name"
                             class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
                             x-model="wifiScan.manualSSID"
-                            @input="wifiScan.mode = 'manual'; config.device.wifi.password = ''"
+                            @input="wifiScan.mode = 'manual'; config.device.wifi.password = ''; markDirtyOnCredentialChange()"
                           />
                         </div>
                       </div>
@@ -529,6 +531,7 @@
                         :type="passwordVisible ? 'text' : 'password'"
                         class="w-full p-3 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
                         x-model="config.device.wifi.password"
+                        @input="markDirtyOnCredentialChange()"
                         placeholder="Enter WiFi password"
                         data-password-field
                         required
@@ -579,6 +582,68 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- WiFi Test Action and Status -->
+            <div class="mt-4">
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  @click="testWifiConnection()"
+                  :disabled="wifiTesting"
+                  class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <template x-if="!wifiTesting">
+                    <span>Test WiFi</span>
+                  </template>
+                  <template x-if="wifiTesting">
+                    <span class="flex items-center">
+                      <svg
+                        class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        ></path>
+                      </svg>
+                      Testing...
+                    </span>
+                  </template>
+                </button>
+
+                <template x-if="wifiTestResult && wifiTestResult.success">
+                  <span class="text-green-600 dark:text-green-400 text-sm"
+                    >WiFi connected (RSSI:
+                    <span x-text="wifiTestResult.rssi"></span> dBm)</span
+                  >
+                </template>
+                <template x-if="wifiTestResult && !wifiTestResult.success">
+                  <span
+                    class="text-red-600 dark:text-red-400 text-sm"
+                    x-text="wifiTestResult.message"
+                  ></span>
+                </template>
+              </div>
+
+              <template
+                x-if="!wifiTestPassed && !wifiTesting && config.device && config.device.owner && config.device.timezone && getEffectiveSSID() && config.device.wifi.password"
+              >
+                <div class="mt-2 text-amber-600 dark:text-amber-400 text-sm">
+                  Please test WiFi before saving.
+                </div>
+              </template>
             </div>
 
             <!-- Action Buttons -->

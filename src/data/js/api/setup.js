@@ -79,3 +79,37 @@ export async function scanWiFiNetworks() {
   const result = await response.json();
   return result.networks || [];
 }
+
+/**
+ * Test WiFi credentials without persisting them
+ * @param {string} ssid
+ * @param {string} password
+ * @returns {Promise<{success:boolean,rssi?:number,message?:string}>}
+ */
+export async function testWiFiConnection(ssid, password) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  const response = await fetch("/api/test-wifi", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ssid, password }),
+    signal: controller.signal,
+  });
+
+  clearTimeout(timeoutId);
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (_) {
+    // ignore JSON parse errors; handler should always send JSON
+  }
+
+  if (!response.ok) {
+    const message = data?.message || `WiFi test failed: ${response.status}`;
+    return { success: false, message };
+  }
+
+  return data || { success: true };
+}

@@ -102,9 +102,9 @@ export function createDiagnosticsMicrocontrollerStore() {
     },
 
     getProgressBarClass(percentage) {
-      if (percentage < 50) return "bg-green-500";
-      if (percentage < 80) return "bg-yellow-500";
-      return "bg-red-500";
+      if (percentage < 50) return "bg-green-500 dark:bg-green-400";
+      if (percentage < 80) return "bg-yellow-500 dark:bg-yellow-400";
+      return "bg-red-500 dark:bg-red-400";
     },
 
     getTemperatureStatus(tempCelsius) {
@@ -123,32 +123,32 @@ export function createDiagnosticsMicrocontrollerStore() {
     getLogLevelClass(level) {
       switch (level?.toLowerCase()) {
         case "error":
-          return "border-red-500";
+          return "border-red-500 dark:border-red-400";
         case "warning":
         case "warn":
-          return "border-yellow-500";
+          return "border-yellow-500 dark:border-yellow-400";
         case "info":
-          return "border-blue-500";
+          return "border-blue-500 dark:border-blue-400";
         case "debug":
-          return "border-gray-500";
+          return "border-gray-500 dark:border-gray-400";
         default:
-          return "border-gray-300";
+          return "border-gray-300 dark:border-gray-600";
       }
     },
 
     getLogLevelDot(level) {
       switch (level?.toLowerCase()) {
         case "error":
-          return "bg-red-500";
+          return "bg-red-500 dark:bg-red-400";
         case "warning":
         case "warn":
-          return "bg-yellow-500";
+          return "bg-yellow-500 dark:bg-yellow-400";
         case "info":
-          return "bg-blue-500";
+          return "bg-blue-500 dark:bg-blue-400";
         case "debug":
-          return "bg-gray-500";
+          return "bg-gray-500 dark:bg-gray-400";
         default:
-          return "bg-gray-300";
+          return "bg-gray-300 dark:bg-gray-600";
       }
     },
 

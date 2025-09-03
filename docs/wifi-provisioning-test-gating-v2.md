@@ -23,7 +23,6 @@ ESP32 Live Backend (Firmware + Web Server)
 - [ ] Docs: add a brief reference entry in `docs/frontend-patterns.md` describing the gating pattern and linking to this spec.
 - [ ] Shared utilities: do NOT split `src/data/js/device-config-utils/wifi-utils.js`. Keep it as the shared scan/state/validation layer used by both setup.html and wifi.html. Provisioning-specific logic lives in the setup store only.
 
-
 Mock Server (Node.js)
 
 - [ ] Implement `/api/test-wifi` in `mock-server/mock-api.js` under the `/api/*` block (before any captive-portal/static routing). Accept POST `{ ssid, password }`, simulate success/failure and 409 Busy with realistic delays, and return payloads identical to the firmware.
