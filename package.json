@@ -4,8 +4,8 @@
   "description": "Build tools for Scribe ESP32-C3 Thermal Printer CSS",
   "private": true,
   "scripts": {
-    "build": "rm -rf data && mkdir -p data/js data/css && cp src/data/*.html data/ && cp src/data/*.png data/ && cp src/data/*.ico data/ && cp src/data/*.webmanifest data/ && cp src/data/*.svg data/ && cp -r src/data/settings data/ && cp -r src/data/diagnostics data/ && cp -r src/data/fonts data/ && cp -r src/data/images data/ && cp -r src/data/resources data/ && npx @tailwindcss/cli --input ./src/source-css-files/input.css --output ./data/css/app.css --minify && node scripts/esbuild.config.js prod && node scripts/gzip-assets.js",
-    "dev": "rm -rf data && mkdir -p data/js data/css && cp src/data/*.html data/ && cp src/data/*.png data/ && cp src/data/*.ico data/ && cp src/data/*.webmanifest data/ && cp src/data/*.svg data/ && cp -r src/data/settings data/ && cp -r src/data/diagnostics data/ && cp -r src/data/fonts data/ && cp -r src/data/images data/ && cp -r src/data/resources data/ && npx @tailwindcss/cli --input ./src/source-css-files/input.css --output ./data/css/app.css && node scripts/esbuild.config.js all && node scripts/gzip-assets.js",
+    "build": "npx @tailwindcss/cli --input ./src/source-css-files/input.css --output ./src/data/css/app.css --minify && node scripts/esbuild.config.js prod && python3 scripts/optimize_filesystem.py",
+    "dev": "npx @tailwindcss/cli --input ./src/source-css-files/input.css --output ./src/data/css/app.css && node scripts/esbuild.config.js dev && python3 scripts/optimize_filesystem.py",
     "test": "pio test -e esp32c3-test",
     "firmware": "python3 scripts/build_firmware_release.py",
     "firmware:recover": "python3 scripts/build_firmware_release.py --recover",

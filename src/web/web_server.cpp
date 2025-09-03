@@ -43,7 +43,7 @@
 extern AsyncWebServer server;
 
 // SSE event source for real-time updates
-AsyncEventSource sseEvents("/events");
+AsyncEventSource sseEvents("/mqtt-printers");
 
 // Global message storage for printing
 Message currentMessage = {"", "", false};
@@ -113,7 +113,7 @@ struct RouteInfo {
 
 static std::vector<RouteInfo> registeredRoutes;
 
-void registerRoute(const char* method, const char* path, const char* description, bool isAPI = true) {
+void registerRoute(const char* method, const char* path, const char* description, bool isAPI) {
     RouteInfo route;
     route.method = String(method);
     route.path = String(path);
@@ -200,6 +200,14 @@ void setupAPModeRoutes()
         });
     }
     
+    // Block diagnostics and settings pages in AP mode
+    server.on("^\\/diagnostics\\/.*", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->redirect("/setup.html");
+    });
+    server.on("^\\/settings\\/.*", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->redirect("/setup.html");
+    });
+    
     // Static files with captive portal defaults
     setupStaticFileServing(true);
     
@@ -218,7 +226,7 @@ void setupSTAModeRoutes()
         client->send(printerData.c_str(), "printer-update", millis());
     });
     server.addHandler(&sseEvents);
-    registerRoute("GET", "/events", "Server-sent events");
+    registerRoute("GET", "/mqtt-printers", "Server-sent events");
     
     // Connectivity check endpoints (return success, not redirects)
     server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {

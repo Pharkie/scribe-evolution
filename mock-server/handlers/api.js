@@ -125,6 +125,34 @@ function handleAPI(req, res, pathname, ctx) {
     return true;
   }
 
+  // /api/setup (AP mode provisioning) - ONLY in AP mode
+  if (pathname === "/api/setup" && req.method === "GET") {
+    if (!ctx.isAPMode())
+      return (sendJSON(res, { error: "Not available in STA mode" }, 404), true);
+    const setupConfig = {
+      device: { owner: "", timezone: "" },
+      wifi: { ssid: "", password: "" },
+    };
+    return (sendJSON(res, setupConfig, 200), true);
+  }
+
+  if (pathname === "/api/setup" && req.method === "POST") {
+    if (!ctx.isAPMode())
+      return (sendJSON(res, { error: "Not available in STA mode" }, 404), true);
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        JSON.parse(body || "{}");
+        res.writeHead(200);
+        res.end();
+      } catch (e) {
+        return sendJSON(res, { error: "Invalid JSON format" }, 400);
+      }
+    });
+    return true;
+  }
+
   // Static timezone data
   if (pathname === "/api/timezones") {
     const jsonPath = path.join(

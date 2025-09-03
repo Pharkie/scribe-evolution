@@ -91,231 +91,231 @@ const buildConfigs = {
   // Alpine.js library with Collapse plugin
   alpine: {
     input: ["src/data/js/alpine-with-collapse.js"],
-    output: "data/js/alpine.js",
+    output: "src/data/js/alpine.js",
     minify: false,
   },
 
   alpineProd: {
     input: ["src/data/js/alpine-with-collapse.js"],
-    output: "data/js/alpine.js",
+    output: "src/data/js/alpine.js",
     minify: true,
   },
 
   // Common app bundle
   common: {
     input: ["src/data/js/icons.js", "src/data/js/app-common.js"],
-    output: "data/js/app-common.js",
+    output: "src/data/js/app-common.js",
     minify: false,
   },
 
   commonProd: {
     input: ["src/data/js/icons.js", "src/data/js/app-common.js"],
-    output: "data/js/app-common.js",
+    output: "src/data/js/app-common.js",
     minify: true,
   },
 
   // Page-specific bundles
   index: {
     input: ["src/data/js/pages/index.js"], // Single ES6 module entry point
-    output: "data/js/page-index.js",
+    output: "src/data/js/page-index.js",
     minify: false,
   },
 
   indexProd: {
     input: ["src/data/js/pages/index.js"], // Single ES6 module entry point
-    output: "data/js/page-index.js",
+    output: "src/data/js/page-index.js",
     minify: true,
   },
 
   setup: {
     input: ["src/data/js/pages/setup.js"], // Single ES6 module entry point
-    output: "data/js/page-setup.js",
+    output: "src/data/js/page-setup.js",
     minify: false,
   },
 
   setupProd: {
     input: ["src/data/js/pages/setup.js"], // Single ES6 module entry point
-    output: "data/js/page-setup.js",
+    output: "src/data/js/page-setup.js",
     minify: true,
   },
 
   404: {
     input: ["src/data/js/pages/404.js"], // Single ES6 module entry point
-    output: "data/js/page-404.js",
+    output: "src/data/js/page-404.js",
     minify: false,
   },
 
   "404Prod": {
     input: ["src/data/js/pages/404.js"], // Single ES6 module entry point
-    output: "data/js/page-404.js",
+    output: "src/data/js/page-404.js",
     minify: true,
   },
 
   // Device settings page
   device: {
     input: ["src/data/js/pages/settings-device.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-device.js",
+    output: "src/data/js/page-settings-device.js",
     minify: false,
   },
 
   deviceProd: {
     input: ["src/data/js/pages/settings-device.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-device.js",
+    output: "src/data/js/page-settings-device.js",
     minify: true,
   },
 
   // WiFi settings page
   wifi: {
     input: ["src/data/js/pages/settings-wifi.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-wifi.js",
+    output: "src/data/js/page-settings-wifi.js",
     minify: false,
   },
 
   wifiProd: {
     input: ["src/data/js/pages/settings-wifi.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-wifi.js",
+    output: "src/data/js/page-settings-wifi.js",
     minify: true,
   },
 
   // MQTT settings page
   mqtt: {
     input: ["src/data/js/pages/settings-mqtt.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-mqtt.js",
+    output: "src/data/js/page-settings-mqtt.js",
     minify: false,
   },
 
   mqttProd: {
     input: ["src/data/js/pages/settings-mqtt.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-mqtt.js",
+    output: "src/data/js/page-settings-mqtt.js",
     minify: true,
   },
 
   // Settings overview page
   overview: {
     input: ["src/data/js/pages/settings-overview.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-overview.js",
+    output: "src/data/js/page-settings-overview.js",
     minify: false,
   },
 
   overviewProd: {
     input: ["src/data/js/pages/settings-overview.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-overview.js",
+    output: "src/data/js/page-settings-overview.js",
     minify: true,
   },
 
   // Memos settings page
   memos: {
     input: ["src/data/js/pages/settings-memos.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-memos.js",
+    output: "src/data/js/page-settings-memos.js",
     minify: false,
   },
 
   memosProd: {
     input: ["src/data/js/pages/settings-memos.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-memos.js",
+    output: "src/data/js/page-settings-memos.js",
     minify: true,
   },
 
   // Buttons settings page
   buttons: {
     input: ["src/data/js/pages/settings-buttons.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-buttons.js",
+    output: "src/data/js/page-settings-buttons.js",
     minify: false,
   },
 
   buttonsProd: {
     input: ["src/data/js/pages/settings-buttons.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-buttons.js",
+    output: "src/data/js/page-settings-buttons.js",
     minify: true,
   },
 
   leds: {
     input: ["src/data/js/pages/settings-leds.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-leds.js",
+    output: "src/data/js/page-settings-leds.js",
     minify: false,
   },
 
   ledsProd: {
     input: ["src/data/js/pages/settings-leds.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-leds.js",
+    output: "src/data/js/page-settings-leds.js",
     minify: true,
   },
 
   // Unbidden Ink settings page
   "unbidden-ink": {
     input: ["src/data/js/pages/settings-unbidden-ink.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-unbidden-ink.js",
+    output: "src/data/js/page-settings-unbidden-ink.js",
     minify: false,
   },
 
   "unbidden-inkProd": {
     input: ["src/data/js/pages/settings-unbidden-ink.js"], // Single ES6 module entry point
-    output: "data/js/page-settings-unbidden-ink.js",
+    output: "src/data/js/page-settings-unbidden-ink.js",
     minify: true,
   },
 
   // Diagnostics overview page
   "diagnostics-overview": {
     input: ["src/data/js/pages/diagnostics-overview.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-overview.js",
+    output: "src/data/js/page-diagnostics-overview.js",
     minify: false,
   },
 
   "diagnostics-overviewProd": {
     input: ["src/data/js/pages/diagnostics-overview.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-overview.js",
+    output: "src/data/js/page-diagnostics-overview.js",
     minify: true,
   },
 
   // Diagnostics microcontroller page
   "diagnostics-microcontroller": {
     input: ["src/data/js/pages/diagnostics-microcontroller.js"], // Single ES6 module entry point
-    output: "data/js/page-diag-micro.js",
+    output: "src/data/js/page-diag-micro.js",
     minify: false,
   },
 
   "diagnostics-microcontrollerProd": {
     input: ["src/data/js/pages/diagnostics-microcontroller.js"], // Single ES6 module entry point
-    output: "data/js/page-diag-micro.js",
+    output: "src/data/js/page-diag-micro.js",
     minify: true,
   },
 
   // Diagnostics routes page
   "diagnostics-routes": {
     input: ["src/data/js/pages/diagnostics-routes.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-routes.js",
+    output: "src/data/js/page-diagnostics-routes.js",
     minify: false,
   },
 
   "diagnostics-routesProd": {
     input: ["src/data/js/pages/diagnostics-routes.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-routes.js",
+    output: "src/data/js/page-diagnostics-routes.js",
     minify: true,
   },
 
   // Diagnostics runtime config page
   "diagnostics-runtime-config": {
     input: ["src/data/js/pages/diagnostics-runtime-config.js"], // Single ES6 module entry point
-    output: "data/js/page-diag-config.js",
+    output: "src/data/js/page-diag-config.js",
     minify: false,
   },
 
   "diagnostics-runtime-configProd": {
     input: ["src/data/js/pages/diagnostics-runtime-config.js"], // Single ES6 module entry point
-    output: "data/js/page-diag-config.js",
+    output: "src/data/js/page-diag-config.js",
     minify: true,
   },
 
   // Diagnostics NVS page
   "diagnostics-nvs": {
     input: ["src/data/js/pages/diagnostics-nvs.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-nvs.js",
+    output: "src/data/js/page-diagnostics-nvs.js",
     minify: false,
   },
 
   "diagnostics-nvsProd": {
     input: ["src/data/js/pages/diagnostics-nvs.js"], // Single ES6 module entry point
-    output: "data/js/page-diagnostics-nvs.js",
+    output: "src/data/js/page-diagnostics-nvs.js",
     minify: true,
   },
 };

@@ -1,0 +1,188 @@
+(() => {
+  var $ = Object.defineProperty,
+    P = Object.defineProperties;
+  var A = Object.getOwnPropertyDescriptors;
+  var g = Object.getOwnPropertySymbols;
+  var I = Object.prototype.hasOwnProperty,
+    _ = Object.prototype.propertyIsEnumerable;
+  var f = (r, e, t) =>
+      e in r
+        ? $(r, e, { enumerable: !0, configurable: !0, writable: !0, value: t })
+        : (r[e] = t),
+    h = (r, e) => {
+      for (var t in e || (e = {})) I.call(e, t) && f(r, t, e[t]);
+      if (g) for (var t of g(e)) _.call(e, t) && f(r, t, e[t]);
+      return r;
+    },
+    p = (r, e) => P(r, A(e));
+  async function m() {
+    try {
+      console.log("API: Loading diagnostics from server...");
+      let r = await fetch("/api/diagnostics");
+      if (!r.ok)
+        throw new Error(
+          `Diagnostics API returned ${r.status}: ${r.statusText}`,
+        );
+      let e = await r.json();
+      return (console.log("API: Diagnostics loaded successfully"), e);
+    } catch (r) {
+      throw (console.error("API: Failed to load diagnostics:", r), r);
+    }
+  }
+  async function w() {
+    try {
+      console.log("API: Loading configuration from server...");
+      let r = await fetch("/api/config");
+      if (!r.ok)
+        throw new Error(`Config API returned ${r.status}: ${r.statusText}`);
+      let e = await r.json();
+      return (console.log("API: Configuration loaded successfully"), e);
+    } catch (r) {
+      throw (console.error("API: Failed to load configuration:", r), r);
+    }
+  }
+  function y() {
+    return {
+      loaded: !1,
+      error: null,
+      microcontrollerInfo: {},
+      memoryUsage: {},
+      config: {},
+      logging: {},
+      async loadData() {
+        var r, e, t, a, n, l;
+        ((this.loaded = !1), (this.error = null));
+        try {
+          let [i, b] = await Promise.all([m(), w()]),
+            o = i.microcontroller || {},
+            c = o.temperature;
+          this.microcontrollerInfo = {
+            chipModel: o.chip_model,
+            chipRevision: o.chip_revision,
+            cpuFrequency: `${o.cpu_frequency_mhz} MHz`,
+            sdkVersion: o.sdk_version,
+            resetReason: o.reset_reason,
+            temperature: c
+              ? `${c.toFixed(1)}\xB0C ${this.getTemperatureStatus(c)}`
+              : "Not available",
+            temperatureRaw: c,
+            uptime: this.formatUptime(o.uptime_ms),
+            flashSize: this.formatBytes(
+              (r = o.flash) == null ? void 0 : r.total_chip_size,
+            ),
+            firmwareVersion: o.sdk_version,
+          };
+          let s = o.memory || {},
+            u =
+              (((t = (e = o.flash) == null ? void 0 : e.app_partition) == null
+                ? void 0
+                : t.used) || 0) +
+              (((n = (a = o.flash) == null ? void 0 : a.filesystem) == null
+                ? void 0
+                : n.used) || 0),
+            d = ((l = o.flash) == null ? void 0 : l.total_chip_size) || 1,
+            k = (u / d) * 100,
+            x = s.total_heap ? ((s.used_heap || 0) / s.total_heap) * 100 : 0;
+          ((this.memoryUsage = p(h({}, s), {
+            flashUsageText: `${this.formatBytes(u)} / ${this.formatBytes(d)}`,
+            flashUsagePercent: k,
+            heapUsageText: `${this.formatBytes(s.used_heap)} / ${this.formatBytes(s.total_heap)}`,
+            heapUsagePercent: x,
+          })),
+            (this.config = b),
+            (this.logging = i.logging || {}),
+            (this.loaded = !0));
+        } catch (i) {
+          ((this.error = `Failed to load microcontroller data: ${i.message}`),
+            (this.loaded = !0));
+        }
+      },
+      formatUptime(r) {
+        if (!r) return "0ms";
+        let e = Math.floor(r / 1e3),
+          t = Math.floor(e / 60),
+          a = Math.floor(t / 60),
+          n = Math.floor(a / 24);
+        return n > 0
+          ? `${n}d ${a % 24}h`
+          : a > 0
+            ? `${a}h ${t % 60}m`
+            : t > 0
+              ? `${t}m ${e % 60}s`
+              : `${e}s`;
+      },
+      formatBytes(r) {
+        if (!r) return "0 B";
+        let e = 1024,
+          t = ["B", "KB", "MB", "GB"],
+          a = Math.floor(Math.log(r) / Math.log(e));
+        return parseFloat((r / Math.pow(e, a)).toFixed(1)) + " " + t[a];
+      },
+      getProgressBarClass(r) {
+        return r < 50
+          ? "bg-green-500 dark:bg-green-400"
+          : r < 80
+            ? "bg-yellow-500 dark:bg-yellow-400"
+            : "bg-red-500 dark:bg-red-400";
+      },
+      getTemperatureStatus(r) {
+        return r < 40 ? "(Low)" : r > 50 ? "(High)" : "(Normal)";
+      },
+      getTemperatureClass(r) {
+        return r < 40
+          ? "text-blue-600 dark:text-blue-400"
+          : r > 50
+            ? "text-red-600 dark:text-red-400"
+            : "text-green-600 dark:text-green-400";
+      },
+      getLogLevelClass(r) {
+        switch (r == null ? void 0 : r.toLowerCase()) {
+          case "error":
+            return "border-red-500 dark:border-red-400";
+          case "warning":
+          case "warn":
+            return "border-yellow-500 dark:border-yellow-400";
+          case "info":
+            return "border-blue-500 dark:border-blue-400";
+          case "debug":
+            return "border-gray-500 dark:border-gray-400";
+          default:
+            return "border-gray-300 dark:border-gray-600";
+        }
+      },
+      getLogLevelDot(r) {
+        switch (r == null ? void 0 : r.toLowerCase()) {
+          case "error":
+            return "bg-red-500 dark:bg-red-400";
+          case "warning":
+          case "warn":
+            return "bg-yellow-500 dark:bg-yellow-400";
+          case "info":
+            return "bg-blue-500 dark:bg-blue-400";
+          case "debug":
+            return "bg-gray-500 dark:bg-gray-400";
+          default:
+            return "bg-gray-300 dark:bg-gray-600";
+        }
+      },
+      getLogLevelText(r) {
+        switch (r == null ? void 0 : r.toLowerCase()) {
+          case "error":
+            return "text-red-600 dark:text-red-400";
+          case "warning":
+          case "warn":
+            return "text-yellow-600 dark:text-yellow-400";
+          case "info":
+            return "text-blue-600 dark:text-blue-400";
+          case "debug":
+            return "text-gray-600 dark:text-gray-400";
+          default:
+            return "text-gray-500 dark:text-gray-500";
+        }
+      },
+    };
+  }
+  document.addEventListener("alpine:init", () => {
+    Alpine.store("diagnosticsMicrocontroller", y());
+  });
+})();

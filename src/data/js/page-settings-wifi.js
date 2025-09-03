@@ -1,0 +1,422 @@
+(() => {
+  var F = Object.defineProperty,
+    I = Object.defineProperties;
+  var T = Object.getOwnPropertyDescriptors;
+  var u = Object.getOwnPropertySymbols;
+  var b = Object.prototype.hasOwnProperty,
+    W = Object.prototype.propertyIsEnumerable;
+  var w = (e, i, t) =>
+      i in e
+        ? F(e, i, { enumerable: !0, configurable: !0, writable: !0, value: t })
+        : (e[i] = t),
+    n = (e, i) => {
+      for (var t in i || (i = {})) b.call(i, t) && w(e, t, i[t]);
+      if (u) for (var t of u(i)) W.call(i, t) && w(e, t, i[t]);
+      return e;
+    },
+    h = (e, i) => I(e, T(i));
+  async function g() {
+    try {
+      let e = await fetch("/api/config");
+      if (!e.ok)
+        throw new Error(`Config API returned ${e.status}: ${e.statusText}`);
+      return await e.json();
+    } catch (e) {
+      throw (console.error("API: Failed to load configuration:", e), e);
+    }
+  }
+  async function p(e) {
+    try {
+      let i = await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(e),
+      });
+      if (!i.ok) {
+        let t = await i.text();
+        throw (
+          console.error("API: Server error response:", t),
+          new Error(`Server error: ${i.status} - ${t}`)
+        );
+      }
+      return "Configuration saved";
+    } catch (i) {
+      throw (console.error("API: Failed to save configuration:", i), i);
+    }
+  }
+  async function m(e) {
+    try {
+      let i = await fetch("/api/print-local", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: e }),
+      });
+      if (!i.ok) {
+        let t = await i.json().catch(() => ({}));
+        throw new Error(t.error || `Print failed: HTTP ${i.status}`);
+      }
+    } catch (i) {
+      throw (console.error("API: Failed to print content:", i), i);
+    }
+  }
+  async function S() {
+    try {
+      let e = new AbortController(),
+        i = setTimeout(() => e.abort(), 2e4),
+        t = await fetch("/api/wifi-scan", { signal: e.signal });
+      if ((clearTimeout(i), !t.ok))
+        throw new Error(`WiFi scan failed: ${t.status} - ${t.statusText}`);
+      let o = await t.json();
+      if (!o.networks || !Array.isArray(o.networks))
+        throw new Error("WiFi scan failed - no networks array in response");
+      return o.networks;
+    } catch (e) {
+      throw (console.error("API: Failed to scan WiFi networks:", e), e);
+    }
+  }
+  function d(e) {
+    return e > -30
+      ? "Excellent"
+      : e > -50
+        ? "Very Good"
+        : e > -60
+          ? "Good"
+          : e > -70
+            ? "Fair"
+            : "Poor";
+  }
+  function C(e) {
+    let i = {};
+    return (
+      e
+        .filter((t) => t.ssid && t.ssid.trim())
+        .forEach((t) => {
+          let o = t.ssid.trim();
+          (!i[o] || t.rssi > i[o].rssi) && (i[o] = t);
+        }),
+      Object.values(i)
+    );
+  }
+  function A(e) {
+    return e.sort((i, t) =>
+      t.rssi !== i.rssi ? t.rssi - i.rssi : i.ssid.localeCompare(t.ssid),
+    );
+  }
+  function x(e) {
+    let i = C(e);
+    return A(i).map((o, r) =>
+      h(n({}, o), {
+        signal_strength: d(o.rssi),
+        signal_display: `${d(o.rssi)} (${o.rssi} dBm)`,
+        uniqueKey: `${o.ssid}-${o.rssi}-${r}`,
+      }),
+    );
+  }
+  function f(e = null) {
+    return {
+      networks: [],
+      currentSSID: e,
+      selectedNetwork: e,
+      manualSSID: "",
+      mode: "scan",
+      isScanning: !1,
+      error: null,
+      hasScanned: !1,
+      passwordVisible: !1,
+      get sortedNetworks() {
+        return !this.networks || this.networks.length === 0
+          ? []
+          : this.networks;
+      },
+      formatSignalStrength: d,
+    };
+  }
+  async function v(e, i, t) {
+    ((e.isScanning = !0), (e.error = null));
+    try {
+      let o = await t(),
+        r = x(o);
+      ((e.networks = r),
+        (e.hasScanned = !0),
+        (e.mode = "scan"),
+        e.currentSSID &&
+          r.find((s) => s.ssid === e.currentSSID) &&
+          ((e.selectedNetwork = e.currentSSID),
+          console.log(
+            "\u{1F4E1} WiFi Utils: Auto-selected current network:",
+            e.currentSSID,
+          )),
+        console.log("\u{1F4E1} WiFi Utils: Scan found", r.length, "networks"));
+    } catch (o) {
+      (console.error("\u{1F4E1} WiFi Utils: Scan failed:", o),
+        (e.error = o.message),
+        i && i(`WiFi scan failed: ${o.message}`));
+    } finally {
+      e.isScanning = !1;
+    }
+  }
+  function a(e) {
+    return e.mode === "manual" ? e.manualSSID : e.selectedNetwork || "";
+  }
+  function P(e, i = null, t = null) {
+    let o = {},
+      r = a(e);
+    return (
+      (!r || r.trim() === "") &&
+        (e.mode === "scan"
+          ? (o["wifi.ssid"] = "Please select a network")
+          : (o["wifi.ssid"] = "Network name cannot be empty")),
+      i &&
+        i.wifiPassword &&
+        (!t || t.trim() === "") &&
+        (o["wifi.password"] = "Password cannot be blank"),
+      { isValid: Object.keys(o).length === 0, errors: o }
+    );
+  }
+  function k() {
+    return {
+      showErrorMessage(e) {
+        window.showMessage(e, "error");
+      },
+      loaded: !1,
+      error: null,
+      saving: !1,
+      initialized: !1,
+      apPrintStatus: "normal",
+      get canSave() {
+        if (!this.loaded || this.saving || this.error) return !1;
+        let e = a(this.wifiScan),
+          i = e && e.trim() !== "",
+          t = !1;
+        return (
+          this.wifiScan.mode === "scan"
+            ? (t = i && this.wifiScan.selectedNetwork)
+            : this.wifiScan.mode === "manual" && (t = i),
+          !t ||
+          (this.passwordsModified.wifiPassword &&
+            (!this.config.device.wifi.password ||
+              this.config.device.wifi.password.trim() === ""))
+            ? !1
+            : this.hasChanges()
+        );
+      },
+      config: {},
+      passwordsModified: { wifiPassword: !1 },
+      originalMaskedValues: { wifiPassword: "" },
+      originalConfig: { connectTimeout: null },
+      wifiScan: f(),
+      validation: { errors: {} },
+      get apPrintButtonText() {
+        return this.apPrintStatus === "scribing"
+          ? "Scribing"
+          : "Scribe WiFi Fallback AP";
+      },
+      get saveButtonText() {
+        return this.saving ? "Saving..." : "Save";
+      },
+      async loadConfiguration() {
+        if (this.initialized) {
+          console.log("\u{1F4E1} WiFi Settings: Already initialized, skipping");
+          return;
+        }
+        ((this.initialized = !0), (this.loaded = !1), (this.error = null));
+        try {
+          let e = await g();
+          ((this.config = e),
+            this.initializeWiFiState(),
+            this.initializePasswordTracking(),
+            console.log("\u{1F4E1} WiFi: Configuration loaded"),
+            (this.loaded = !0));
+        } catch (e) {
+          (console.error("\u{1F4E1} WiFi: Failed to load configuration:", e),
+            (this.error = e.message));
+        }
+      },
+      initializePasswordTracking() {
+        ((this.originalMaskedValues.wifiPassword =
+          this.config.device.wifi.password || ""),
+          (this.originalConfig.connectTimeout =
+            this.config.device.wifi.connect_timeout || 15e3));
+      },
+      clearWifiPasswordFieldOnFocus() {
+        this.config.device.wifi.password &&
+          ((this.config.device.wifi.password = ""),
+          (this.passwordsModified.wifiPassword = !0));
+      },
+      trackWifiPasswordChange(e) {
+        let i = e !== this.originalMaskedValues.wifiPassword;
+        this.passwordsModified.wifiPassword = i;
+      },
+      initializeWiFiState() {
+        var i, t, o;
+        let e =
+          ((o =
+            (t = (i = this.config) == null ? void 0 : i.device) == null
+              ? void 0
+              : t.wifi) == null
+            ? void 0
+            : o.ssid) || null;
+        this.wifiScan = f(e);
+      },
+      async scanWiFiNetworks() {
+        await v(this.wifiScan, this.showErrorMessage, S);
+      },
+      updateSSID() {
+        var i, t;
+        if (
+          !(
+            (t = (i = this.config) == null ? void 0 : i.device) != null &&
+            t.wifi
+          )
+        )
+          return;
+        let e = a(this.wifiScan);
+        ((this.config.device.wifi.ssid = e || ""),
+          this.validation.errors["wifi.ssid"] &&
+            e &&
+            delete this.validation.errors["wifi.ssid"]);
+      },
+      validatePassword(e) {
+        this.passwordsModified.wifiPassword && (!e || e.trim() === "")
+          ? (this.validation.errors["wifi.password"] =
+              "Password cannot be blank")
+          : this.validation.errors["wifi.password"] &&
+            delete this.validation.errors["wifi.password"];
+      },
+      validateTimeout(e) {
+        let i = parseInt(e);
+        isNaN(i) || i < 5 || i > 60
+          ? (this.validation.errors["wifi.connect_timeout"] =
+              "Timeout must be between 5-60 seconds")
+          : this.validation.errors["wifi.connect_timeout"] &&
+            delete this.validation.errors["wifi.connect_timeout"];
+      },
+      validateConfiguration() {
+        let e = P(
+            this.wifiScan,
+            this.passwordsModified,
+            this.config.device.wifi.password,
+          ),
+          i = n({}, e.errors),
+          t = Math.floor(this.config.device.wifi.connect_timeout / 1e3);
+        return (
+          (t < 5 || t > 60) &&
+            (i["wifi.connect_timeout"] =
+              "Timeout must be between 5-60 seconds"),
+          (this.validation.errors = i),
+          Object.keys(i).length === 0
+        );
+      },
+      hasChanges() {
+        let e = a(this.wifiScan),
+          i = this.wifiScan.currentSSID;
+        if (e !== i || this.passwordsModified.wifiPassword) return !0;
+        let t = this.config.device.wifi.connect_timeout || 15e3,
+          o = this.originalConfig.connectTimeout || 15e3;
+        if (t !== o) {
+          let r = Math.floor(t / 1e3);
+          if (r >= 5 && r <= 60) return !0;
+        }
+        return !1;
+      },
+      async saveConfiguration() {
+        if ((this.updateSSID(), !this.validateConfiguration())) {
+          this.showErrorMessage("Please fix the errors before saving");
+          return;
+        }
+        this.saving = !0;
+        try {
+          let e = {
+            wifi: {
+              ssid: this.config.device.wifi.ssid,
+              connect_timeout: this.config.device.wifi.connect_timeout,
+            },
+          };
+          (this.passwordsModified.wifiPassword &&
+            (e.wifi.password = this.config.device.wifi.password),
+            console.log("\u{1F4E1} WiFi: Saving configuration"));
+          let i = await p(e);
+          (console.log("\u{1F4E1} WiFi: Configuration saved successfully"),
+            (window.location.href = "/settings/?saved=wifi"));
+        } catch (e) {
+          (console.error("\u{1F4E1} WiFi: Failed to save configuration:", e),
+            this.showErrorMessage("Failed to save WiFi settings: " + e.message),
+            (this.saving = !1));
+        }
+      },
+      cancelConfiguration() {
+        window.location.href = "/settings/";
+      },
+      async printAPDetails() {
+        var e, i, t, o, r, c;
+        try {
+          this.apPrintStatus = "scribing";
+          let s =
+              (t =
+                (i = (e = this.config) == null ? void 0 : e.device) == null
+                  ? void 0
+                  : i.wifi) == null
+                ? void 0
+                : t.fallback_ap_ssid,
+            l =
+              (c =
+                (r = (o = this.config) == null ? void 0 : o.device) == null
+                  ? void 0
+                  : r.wifi) == null
+                ? void 0
+                : c.fallback_ap_password;
+          if (!s || !l)
+            throw new Error("WiFi fallback AP credentials not configured");
+          let D = {
+              content_type: "memo",
+              content: {
+                title: "WiFi Fallback AP",
+                text: `Network: ${s}
+Password: ${l}
+
+Connect to this network if device WiFi fails.
+
+Device will be available at:
+http://192.168.4.1
+
+This memo printed from Settings \u2192 WiFi`,
+              },
+            },
+            y = `WiFi Fallback AP
+                
+Network: ${s}
+Password: ${l}
+
+Connect to this network if device WiFi fails.
+
+Device will be available at:
+http://192.168.4.1
+
+This memo printed from Settings \u2192 WiFi`;
+          (await m(y),
+            console.log("\u{1F4E1} WiFi: AP details printed"),
+            setTimeout(() => {
+              this.apPrintStatus = "normal";
+            }, 2e3));
+        } catch (s) {
+          (console.error("\u{1F4E1} WiFi: Failed to print AP details:", s),
+            (this.apPrintStatus = "normal"),
+            typeof window.showMessage == "function"
+              ? window.showMessage(
+                  `Failed to print AP details: ${s.message}`,
+                  "error",
+                )
+              : alert(`Failed to print AP details: ${s.message}`));
+        }
+      },
+    };
+  }
+  document.addEventListener("alpine:init", () => {
+    let e = k();
+    (Alpine.store("settingsWifi", e),
+      Alpine.effect(() => {
+        e.updateSSID();
+      }),
+      console.log("\u{1F4E1} WiFi Settings Store registered with ES6 modules"));
+  });
+})();
