@@ -121,10 +121,11 @@
       <!-- Main Content -->
       <template x-if="loaded && !error">
         <div
-          x-data="{ show: false }"
-          x-init="$nextTick(() => show = true)"
+          x-data="{ show: false, animateBars: false }"
+          x-init="$nextTick(() => { show = true; setTimeout(() => { if (!animateBars) animateBars = true }, 600) })"
           x-show="show"
           x-transition.opacity.duration.300ms
+          @transitionend="if ($event.target === $el && $event.propertyName === 'opacity') animateBars = true"
         >
           <div
             class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-blue-600 transition-shadow duration-200"
@@ -239,13 +240,11 @@
                       x-text="memoryUsage?.flashUsageText || 'Loading...'"
                     ></span>
                   </div>
-                  <div
-                    class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3"
-                  >
+                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                     <div
-                      class="h-full rounded-full transition-all duration-1000 ease-out"
+                      class="h-full rounded-full transition-[width] duration-[500ms] ease-out"
                       :class="getProgressBarClass(memoryUsage?.flashUsagePercent || 0)"
-                      :style="`width: ${Math.min(Math.max(memoryUsage?.flashUsagePercent || 0, 0), 100)}%`"
+                      :style="`will-change: width; width: ${animateBars ? Math.min(Math.max(memoryUsage?.flashUsagePercent || 0, 0), 100) : 0}%`"
                     ></div>
                   </div>
                 </div>
@@ -259,13 +258,11 @@
                       x-text="memoryUsage?.heapUsageText || 'Loading...'"
                     ></span>
                   </div>
-                  <div
-                    class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3"
-                  >
+                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                     <div
-                      class="h-full rounded-full transition-all duration-1000 ease-out"
+                      class="h-full rounded-full transition-[width] duration-[500ms] ease-out"
                       :class="getProgressBarClass(memoryUsage?.heapUsagePercent || 0)"
-                      :style="`width: ${Math.min(Math.max(memoryUsage?.heapUsagePercent || 0, 0), 100)}%`"
+                      :style="`will-change: width; transition-delay: 50ms; width: ${animateBars ? Math.min(Math.max(memoryUsage?.heapUsagePercent || 0, 0), 100) : 0}%`"
                     ></div>
                   </div>
                 </div>

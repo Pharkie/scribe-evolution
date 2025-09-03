@@ -46,3 +46,16 @@
     opacity: 1;
   }
 }
+
+/* Gentle vertical bob for icons (motion-safe) */
+@keyframes gentle-bob {
+  0% {
+    transform: translateY(6px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  100% {
+    transform: translateY(6px);
+  }
+}

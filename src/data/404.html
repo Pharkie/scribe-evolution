@@ -18,10 +18,14 @@
       crossorigin
     />
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/app-common.js"></script>
+    <script src="/js/page-404.js"></script>
+    <script src="/js/alpine.js" defer></script>
   </head>
 
   <body
     class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    x-data="$store.error"
   >
     <main class="w-full max-w-4xl mx-auto flex-1">
       <header class="w-full max-w-6xl mx-auto flex items-center mb-8 gap-4">
@@ -52,8 +56,7 @@
             class="flex items-center space-x-3 text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap"
           >
             <svg
-              class="w-9 h-9 sm:w-12 sm:h-12 lg:w-15 lg:h-15 text-gray-600 dark:text-gray-300"
-              :style="errorIconClass"
+              class="w-9 h-9 sm:w-12 sm:h-12 lg:w-15 lg:h-15 text-gray-600 dark:text-gray-300 motion-safe:animate-[gentle-bob_2s_ease-in-out_infinite]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
