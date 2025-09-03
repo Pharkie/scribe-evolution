@@ -286,7 +286,7 @@ esptool --port /dev/ttyUSB0 --baud 460800 write-flash \
     0x0000 bootloader.bin \
     0x8000 partitions.bin \
     0x10000 firmware.bin \
-    0x2B0000 littlefs.bin
+    0x210000 littlefs.bin
 ```
 
 ### Lolin32 Lite
@@ -300,7 +300,7 @@ esptool --port /dev/ttyUSB0 --baud 460800 write-flash \
     0x1000 bootloader.bin \
     0x8000 partitions.bin \
     0x10000 firmware.bin \
-    0x2B0000 littlefs.bin
+    0x210000 littlefs.bin
 ```
 
 > **Note**: Individual component flashing is only recommended for advanced users. The single merged binary is easier and less error-prone. ESP32-C3 and Lolin32 have different bootloader addresses (0x0000 vs 0x1000).

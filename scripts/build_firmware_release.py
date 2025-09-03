@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import re
 from pathlib import Path
+import csv
 
 # Add scripts directory to path for importing config_cleaner
 sys.path.insert(0, str(Path(__file__).parent))
@@ -249,6 +250,51 @@ def copy_firmware(environment):
         return False
 
 
+def _get_partitions_file_for_env(environment: str) -> Path:
+    """Return the partitions CSV path for a given PlatformIO environment by reading platformio.ini.
+
+    Falls back to partitions_no_ota.csv if not found.
+    """
+    ini_path = Path("platformio.ini")
+    default = Path("partitions_no_ota.csv")
+    try:
+        content = ini_path.read_text(encoding="utf-8")
+        # crude parse: find section header then look for board_build.partitions = file
+        import re
+        pattern = rf"\[env:{re.escape(environment)}\][\s\S]*?board_build\.partitions\s*=\s*(.+)"
+        m = re.search(pattern, content)
+        if m:
+            candidate = Path(m.group(1).strip())
+            if candidate.exists():
+                return candidate
+    except Exception:
+        pass
+    return default
+
+
+def _get_fs_offset_from_partitions(csv_path: Path) -> str:
+    """Parse the partitions CSV and return the filesystem offset as hex string (e.g., '0x210000')."""
+    try:
+        with csv_path.open("r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if not row or row[0].strip().startswith("#"):
+                    continue
+                # Expect: name, type, subtype, offset, size
+                if len(row) >= 5:
+                    name = row[0].strip().lower()
+                    offset = row[3].strip()
+                    if name in ("spiffs", "littlefs", "fs"):
+                        # Normalize to 0x... string
+                        if not offset.startswith("0x"):
+                            offset = hex(int(offset, 0))
+                        return offset
+    except Exception as e:
+        log(f"Failed to parse partitions file {csv_path}: {e}", "WARNING")
+    # Fallback to previous default if parsing fails
+    return "0x2B0000"
+
+
 def create_merged_binary(environment):
     """Create a merged binary file containing all components for easy flashing."""
     bootloader_source = Path(f".pio/build/{environment}/bootloader.bin")
@@ -268,7 +314,7 @@ def create_merged_binary(environment):
     try:
         # Create merged binary using esptool merge-bin
         log(f"Creating complete merged binary for {environment}...", "INFO")
-        
+
         # Determine chip type and bootloader address for merge-bin command
         if environment.startswith("esp32c3"):
             chip_type = "ESP32C3"
@@ -276,7 +322,10 @@ def create_merged_binary(environment):
         else:
             chip_type = "ESP32" 
             bootloader_addr = "0x1000"  # Original ESP32 uses 0x1000
-        
+        # Determine filesystem offset from the environment's partitions file
+        partitions_csv = _get_partitions_file_for_env(environment)
+        fs_offset = _get_fs_offset_from_partitions(partitions_csv)
+
         merge_cmd = [
             "esptool", "--chip", chip_type, "merge-bin", 
             "-o", str(merged_dest),
@@ -284,7 +333,7 @@ def create_merged_binary(environment):
             bootloader_addr, str(bootloader_source),
             "0x8000", str(partitions_source), 
             "0x10000", str(firmware_source),
-            "0x2B0000", str(littlefs_source)
+            fs_offset, str(littlefs_source)
         ]
         
         result = subprocess.run(merge_cmd, capture_output=True, text=True, check=True)
@@ -302,9 +351,6 @@ def create_merged_binary(environment):
         return False
     except Exception as e:
         log(f"Failed to create merged binary: {e}", "ERROR")
-        return False
-    except Exception as e:
-        log(f"Failed to copy firmware for {environment}: {e}", "ERROR")
         return False
 
 
@@ -357,7 +403,7 @@ def create_release_info():
     # Format template with build date and environment
     build_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
-    for env in ["esp32c3-prod", "lolin32lite-no-leds"]:
+    for env in ["esp32c3-prod", "esp32c3-prod-no-leds", "lolin32lite-no-leds"]:
         # Format template for this specific environment
         release_info = template.format(build_date=build_date, environment=env)
         
@@ -421,7 +467,7 @@ def main():
         sys.exit(1)
 
     # Build targets
-    targets = ["esp32c3-prod", "lolin32lite-no-leds"]
+    targets = ["esp32c3-prod", "esp32c3-prod-no-leds", "lolin32lite-no-leds"]
 
     success = True
 
