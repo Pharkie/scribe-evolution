@@ -269,13 +269,13 @@ const buildConfigs = {
 
   // Diagnostics microcontroller page
   "diagnostics-microcontroller": {
-    input: ["src/data/js/pages/diagnostics-microcontroller.js"], // Single ES6 module entry point
+    input: ["src/data/js/pages/diag-micro.js"], // Single ES6 module entry point
     output: "src/data/js/page-diag-micro.js",
     minify: false,
   },
 
   "diagnostics-microcontrollerProd": {
-    input: ["src/data/js/pages/diagnostics-microcontroller.js"], // Single ES6 module entry point
+    input: ["src/data/js/pages/diag-micro.js"], // Single ES6 module entry point
     output: "src/data/js/page-diag-micro.js",
     minify: true,
   },
@@ -295,13 +295,13 @@ const buildConfigs = {
 
   // Diagnostics runtime config page
   "diagnostics-runtime-config": {
-    input: ["src/data/js/pages/diagnostics-runtime-config.js"], // Single ES6 module entry point
+    input: ["src/data/js/pages/diag-config.js"], // Single ES6 module entry point
     output: "src/data/js/page-diag-config.js",
     minify: false,
   },
 
   "diagnostics-runtime-configProd": {
-    input: ["src/data/js/pages/diagnostics-runtime-config.js"], // Single ES6 module entry point
+    input: ["src/data/js/pages/diag-config.js"], // Single ES6 module entry point
     output: "src/data/js/page-diag-config.js",
     minify: true,
   },

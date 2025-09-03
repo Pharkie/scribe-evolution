@@ -142,11 +142,18 @@ function printStartupHelp() {
 
 function setupKeyboardShortcuts() {
   if (!process.stdin.isTTY) return;
+  // React to single key presses without requiring Enter
+  process.stdin.setRawMode(true);
   process.stdin.setEncoding("utf8");
   process.stdin.resume();
   process.stdin.on("data", (chunk) => {
-    const input = (chunk || "").toString().trim().toLowerCase();
-    if (!input) return;
+    const key = (chunk || "").toString();
+    // Ctrl+C
+    if (key === "\u0003") {
+      gracefulShutdown();
+      return;
+    }
+    const input = key.toLowerCase();
     if (input === "r") {
       try {
         const reloaded = loadMockData();

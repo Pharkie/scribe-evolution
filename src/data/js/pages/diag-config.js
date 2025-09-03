@@ -4,7 +4,7 @@
  * @description Sets up Alpine stores for runtime config diagnostics
  */
 
-import { createDiagnosticsRuntimeConfigStore } from "../stores/diagnostics-runtime-config.js";
+import { createDiagnosticsRuntimeConfigStore } from "../stores/diag-config.js";
 
 // Register Alpine stores when DOM loads
 document.addEventListener("alpine:init", () => {

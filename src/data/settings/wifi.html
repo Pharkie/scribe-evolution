@@ -237,17 +237,16 @@
                           </div>
 
                           <!-- Scanning state -->
-                          <div
-                            x-show="wifiScan.isScanning"
-                            class="text-center py-8"
-                          >
-                            <div
-                              class="animate-spin rounded-full border-b-2 h-6 w-6 border-green-500 mx-auto mb-2"
-                            ></div>
-                            <p class="text-green-600 dark:text-green-400">
-                              Scanning the airwaves...
-                            </p>
-                          </div>
+                          <template x-if="wifiScan.isScanning">
+                            <div class="text-center py-8">
+                              <div
+                                class="animate-spin rounded-full border-b-2 h-6 w-6 border-green-500 mx-auto mb-2"
+                              ></div>
+                              <p class="text-green-600 dark:text-green-400">
+                                Sniffing the airwaves...
+                              </p>
+                            </div>
+                          </template>
 
                           <!-- Network results -->
                           <div

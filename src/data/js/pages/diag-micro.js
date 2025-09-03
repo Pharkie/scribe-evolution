@@ -4,7 +4,7 @@
  * @description Sets up Alpine stores for microcontroller diagnostics
  */
 
-import { createDiagnosticsMicrocontrollerStore } from "../stores/diagnostics-microcontroller.js";
+import { createDiagnosticsMicrocontrollerStore } from "../stores/diag-micro.js";
 
 // Register Alpine stores when DOM loads
 document.addEventListener("alpine:init", () => {

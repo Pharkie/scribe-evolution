@@ -29,14 +29,14 @@ def build_optimized_filesystem(source, target, pio_env):
     data_dir = pio_env.get("PROJECT_DATA_DIR", "data")
     src_dir = "src/data"
     file_patterns = ["*.html", "*.png", "*.ico", "*.webmanifest", "*.svg"]
-    subdirs = ["js", "css", "settings", "diagnostics", "fonts", "images", "resources"]
-    compress_patterns = ["*.html", "css/*.css", "js/*.js", "*.svg", "*.json"]
 
     # Clean and create data directory
     if os.path.exists(data_dir):
-        shutil.rmtree(data_dir)
-    os.makedirs(f"{data_dir}/js", exist_ok=True)
-    os.makedirs(f"{data_dir}/css", exist_ok=True)
+        if os.path.isdir(data_dir):
+            shutil.rmtree(data_dir)
+        else:
+            os.remove(data_dir)  # Remove if it's a file
+    os.makedirs(data_dir, exist_ok=True)
 
     # Copy files from src/data to data
     print("📂 Copying source files...")
@@ -46,11 +46,11 @@ def build_optimized_filesystem(source, target, pio_env):
         for src_file in glob.glob(f"{src_dir}/{pattern}"):
             shutil.copy2(src_file, data_dir)
 
-    # Copy directories
-    for subdir in subdirs:
-        src_path = f"{src_dir}/{subdir}"
-        dst_path = f"{data_dir}/{subdir}"
-        if os.path.exists(src_path):
+    # Copy all directories (dynamic discovery)
+    for item in os.listdir(src_dir):
+        src_path = f"{src_dir}/{item}"
+        if os.path.isdir(src_path):
+            dst_path = f"{data_dir}/{item}"
             shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
 
     print("✓ Source files copied")
@@ -58,27 +58,35 @@ def build_optimized_filesystem(source, target, pio_env):
     compressed_count = 0
     removed_count = 0
 
-    # Files to compress
-    for pattern in compress_patterns:
-        for file_path in glob.glob(f"{data_dir}/{pattern}", recursive=True):
+    # Compressible file extensions
+    compressible_extensions = {".html", ".css", ".js", ".svg", ".json"}
+
+    # Walk through all files recursively
+    for root, _, files in os.walk(data_dir):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            
             # Skip if already compressed
             if file_path.endswith(".gz"):
                 continue
+                
+            # Check if file should be compressed based on extension
+            file_ext = os.path.splitext(file_name)[1].lower()
+            if file_ext in compressible_extensions:
+                # Compress the file
+                with open(file_path, "rb") as f_in:
+                    with gzip.open(f"{file_path}.gz", "wb", compresslevel=9) as f_out:
+                        f_out.write(f_in.read())
+                compressed_count += 1
 
-            # Compress the file
-            with open(file_path, "rb") as f_in:
-                with gzip.open(f"{file_path}.gz", "wb", compresslevel=9) as f_out:
-                    f_out.write(f_in.read())
-            compressed_count += 1
-
-            # Remove uncompressed if not essential for AP
-            relative_path = os.path.relpath(file_path, data_dir)
-            if not any(
-                relative_path.endswith(essential) for essential in ap_essentials
-            ):
-                os.remove(file_path)
-                removed_count += 1
-                print(f"  Removed: {relative_path}")
+                # Remove uncompressed if not essential for AP
+                relative_path = os.path.relpath(file_path, data_dir)
+                if not any(
+                    relative_path.endswith(essential) for essential in ap_essentials
+                ):
+                    os.remove(file_path)
+                    removed_count += 1
+                    print(f"  Removed: {relative_path}")
 
     print(f"✓ Compressed {compressed_count} files")
     print(f"✓ Removed {removed_count} redundant files")
