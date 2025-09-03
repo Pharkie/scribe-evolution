@@ -40,7 +40,8 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
     try:
         # Play macOS "Glass" system sound
         subprocess.run(
-            ["/usr/bin/afplay", "/System/Library/Sounds/Glass.aiff"], check=False
+            ["/usr/bin/afplay", "-v", "0.2", "/System/Library/Sounds/Glass.aiff"],
+            check=False,
         )
         print("🎵 Success sound played")
     except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
