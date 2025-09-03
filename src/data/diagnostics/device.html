@@ -240,7 +240,9 @@
                       x-text="memoryUsage?.flashUsageText || 'Loading...'"
                     ></span>
                   </div>
-                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                  <div
+                    class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3"
+                  >
                     <div
                       class="h-full rounded-full transition-[width] duration-[500ms] ease-out"
                       :class="getProgressBarClass(memoryUsage?.flashUsagePercent || 0)"
@@ -258,7 +260,9 @@
                       x-text="memoryUsage?.heapUsageText || 'Loading...'"
                     ></span>
                   </div>
-                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                  <div
+                    class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3"
+                  >
                     <div
                       class="h-full rounded-full transition-[width] duration-[500ms] ease-out"
                       :class="getProgressBarClass(memoryUsage?.heapUsagePercent || 0)"

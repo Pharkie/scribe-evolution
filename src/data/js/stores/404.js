@@ -120,7 +120,10 @@ export function createErrorStore() {
     // Start floating animation for decorative elements
     startFloatingAnimation() {
       // Respect reduced motion preferences
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
         return;
       }
       // Add some visual interest with floating elements

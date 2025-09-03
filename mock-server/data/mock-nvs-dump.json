@@ -20,6 +20,14 @@
       "validation": "✅",
       "length": 16
     },
+    "printer_tx_pin": {
+      "type": "int",
+      "description": "Printer TX GPIO pin",
+      "exists": true,
+      "value": 20,
+      "status": "valid",
+      "validation": "✅"
+    },
     "wifi_ssid": {
       "type": "string",
       "description": "WiFi network SSID",
@@ -80,6 +88,14 @@
       "status": "valid",
       "validation": "✅",
       "length": 12
+    },
+    "mqtt_enabled": {
+      "type": "bool",
+      "description": "MQTT enabled",
+      "exists": true,
+      "value": true,
+      "status": "valid",
+      "validation": "✅"
     },
     "chatgpt_token": {
       "type": "string",
@@ -279,7 +295,7 @@
       "type": "int",
       "description": "LED strip GPIO pin",
       "exists": true,
-      "value": 4,
+      "value": 21,
       "status": "valid",
       "validation": "✅"
     },
@@ -309,8 +325,8 @@
     }
   },
   "summary": {
-    "totalKeys": 35,
-    "validKeys": 35,
+    "totalKeys": 37,
+    "validKeys": 37,
     "correctedKeys": 0,
     "invalidKeys": 0
   }

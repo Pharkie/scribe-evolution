@@ -9,7 +9,7 @@
     "ip_address": "192.168.1.100",
     "printer_name": "Mock Scribe Printer",
     "mqtt_topic": "scribe/MockUser/print",
-    "printerTxPin": 21,
+    "printerTxPin": 20,
     "type": "local",
     "wifi": {
       "ssid": "MockWiFi-Network",
@@ -99,7 +99,7 @@
   },
   "leds": {
     "enabled": true,
-    "pin": 20,
+    "pin": 21,
     "count": 30,
     "brightness": 100,
     "refreshRate": 60,
