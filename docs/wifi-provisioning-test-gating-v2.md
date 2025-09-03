@@ -15,14 +15,14 @@ ESP32 Live Backend (Firmware + Web Server)
 - [ ] Endpoint declaration: add `void handleTestWiFi(AsyncWebServerRequest *request);` to `src/web/api_system_handlers.h`.
 - [ ] Endpoint implementation: in `src/web/api_system_handlers.cpp` implement blocking test with mutex, 6.5s poll loop (`delay(75)` + `yield()` + `esp_task_wdt_reset()`), success RSSI, `WiFi.disconnect()`, and structured responses (200/400/408/409/422) with temporary WiFi event handlers for classification.
 
-Front-End (HTML/CSS/JS)
+- Front-End (HTML/CSS/JS)
 
 - [ ] API: add `testWiFiConnection(ssid, password)` (POST `/api/test-wifi`) to `src/data/js/api/setup.js`.
-- [ ] Store: in `src/data/js/stores/setup.js` add state (`wifiTesting`, `wifiTestResult`, `wifiTestPassed`, `lastTestFingerprint`), methods (`computeFingerprint`, `resetWifiTestState`, `invalidateWifiTestIfNeeded`, `testWifiConnection`), and update `canSave` to require `wifiTestPassed && !fingerprintChanged`.
+- [ ] Store: in `src/data/js/stores/setup.js` add state (`wifiTesting`, `wifiTestResult`, `wifiTestPassed`, `dirtySinceLastTest`), methods (`resetWifiTestState`, `markDirtyOnCredentialChange`, `testWifiConnection`), add Alpine `$watch` on SSID/password/mode changes to call `markDirtyOnCredentialChange`, and update `canSave` to require `wifiTestPassed && !dirtySinceLastTest`.
 - [ ] UI: in `src/data/setup.html` add a “Test WiFi” button with spinner, a status line, a gating banner, and disable scan while testing. Gate UI with `window.FEATURE_WIFI_TEST` (default true).
 - [ ] Docs: add a brief reference entry in `docs/frontend-patterns.md` describing the gating pattern and linking to this spec.
 - [ ] Shared utilities: do NOT split `src/data/js/device-config-utils/wifi-utils.js`. Keep it as the shared scan/state/validation layer used by both setup.html and wifi.html. Provisioning-specific logic lives in the setup store only.
-- [ ] Optional (pure helper): if desired, add `computeWifiFingerprint(effectiveSSID, password)` as a pure export in `wifi-utils.js` (or a new `device-config-utils/wifi-provisioning.js`) and consume it from the setup store. Avoid moving any stateful gating logic into shared utils.
+
 
 Mock Server (Node.js)
 
@@ -48,12 +48,12 @@ Ensure first-time WiFi credentials are **validated (association + auth)** before
 ## 1.1 Current vs Changes
 
 - Current: On boot with valid credentials, device connects as `WIFI_STA`; on failure or no credentials, enters AP fallback as `WIFI_AP` (AP-only) with captive portal and a minimal route set. `/api/wifi-scan` exists; the setup UI has no WiFi test gating. Saving in AP mode via `/api/setup` switches the device to `WIFI_STA` (AP stops).
-- Change (DO THIS): In AP fallback, use `WIFI_AP_STA` instead of `WIFI_AP`. Add a blocking `/api/test-wifi` endpoint. Allowlist (mock and live) and register `/api/test-wifi` in AP setup mode. Add FE test state + fingerprint-based gating on `setup.html`; disable scanning while testing. Protect the endpoint with a mutex. Use `WiFi.disconnect()` (not `true`). Add temporary WiFi event handlers for error classification. Add `window.FEATURE_WIFI_TEST` (default true). Update frontend patterns doc and the mock server with `/api/test-wifi`.
+- Change (DO THIS): In AP fallback, use `WIFI_AP_STA` instead of `WIFI_AP`. Add a blocking `/api/test-wifi` endpoint. Allowlist (mock and live) and register `/api/test-wifi` in AP setup mode. Add FE test state with a dirty-flag gating on `setup.html`; disable scanning while testing. Protect the endpoint with a mutex. Use `WiFi.disconnect()` (not `true`). Add temporary WiFi event handlers for error classification. Add `window.FEATURE_WIFI_TEST` (default true). Update frontend patterns doc and the mock server with `/api/test-wifi`.
 
 ## 2. Design Principles
 
 - **Boot behavior**: On boot, the device attempts normal STA connection if WiFi is configured. If STA connects, the device stays in `WIFI_STA` (no AP). If STA fails to connect (or credentials are missing), it enters AP fallback using `WIFI_AP_STA`.
-- **No duplication**: Reuse and modify existing shared scan + state logic in `wifi-utils.js`, which centralizes scanning/network processing - or split apart cleanly if neccessary due to this change.
+- **No duplication**: Reuse existing shared scan + state logic in `wifi-utils.js` (centralizes scanning/network processing). Do not split this module.
 - **Provisioning-only gating**: Gate saving on `setup.html` only. Do not gate the normal WiFi settings page (STA mode) to keep it fast and responsive.
 - **Non-persistent test**: Test does _not_ write to NVS; final save still goes through existing `/api/setup` POST.
 - **Minimal firmware footprint**: Start with a blocking endpoint. No async + polling.
@@ -89,18 +89,10 @@ New transient fields:
 wifiTesting: boolean
 wifiTestResult: { success: boolean, message: string } | null
 wifiTestPassed: boolean
-lastTestFingerprint: string | null
+dirtySinceLastTest: boolean
 ```
 
-Fingerprint strategy (fast + side-effect free):
-
-```
-fingerprint = `${effectiveSSID}::${password.length}:${simpleXorHash(password)}`
-```
-
-If current fingerprint != lastTestFingerprint ⇒ test invalid (must retest).
-
-Invalidation triggers:
+Invalidation triggers (set `dirtySinceLastTest = true` and `wifiTestPassed = false`):
 
 - SSID radio change (scan mode)
 - Switching to manual mode / editing manual SSID
@@ -111,7 +103,7 @@ Invalidation triggers:
 `canSave` logic (setup only):
 
 ```
-canSave = baseFormValid && wifiTestPassed && !fingerprintChanged
+canSave = baseFormValid && wifiTestPassed && !dirtySinceLastTest
 ```
 
 Base form validity = owner + timezone + effectiveSSID + password all non-empty (existing logic retained).
@@ -119,9 +111,8 @@ Base form validity = owner + timezone + effectiveSSID + password all non-empty (
 ### Methods to Add
 
 ```
-computeFingerprint() -> string
 resetWifiTestState()
-invalidateWifiTestIfNeeded()
+markDirtyOnCredentialChange()
 async testWifiConnection()  // calls POST /api/test-wifi
 ```
 
@@ -156,10 +147,13 @@ Process (with AP_STA already active):
 - Keep total blocking window < 8s (Arduino core WDT margin). Abort early if `WL_NO_SSID_AVAIL` or `WL_CONNECT_FAILED` occurs.
 
 4. Success if `WL_CONNECTED` reached; capture RSSI, then immediately call `WiFi.disconnect()` (without `true`) to disconnect STA only. This preserves AP service continuity and ensures credentials aren't considered “active” yet. Avoid `WiFi.disconnect(true)` which powers off WiFi on ESP32 and would kill the AP.
-5. Return JSON:
+5. Return JSON (status mapping):
 
-- 200 `{ success: true, rssi: -52 }`
-- 400 `{ success: false, message: "Association timeout" }`
+- 200 `{ success: true, rssi: -52 }` (connected within timeout)
+- 408 `{ success: false, message: "Association timeout" }` (no connection within 6.5s)
+- 400 `{ success: false, message: "Authentication failed" | "No AP found" | "Network error" }` (classified via events)
+- 409 `{ success: false, message: "Test already running" }` (concurrency guard)
+- 422 `{ success: false, message: "Invalid payload" }` (missing/invalid ssid/password)
 
 6. Zero out password buffer.
 
@@ -204,7 +198,7 @@ Implementation (DO THIS): Install temporary WiFi event handlers to classify fail
 
 | Case                             | Handling                                                                                     |
 | -------------------------------- | -------------------------------------------------------------------------------------------- |
-| Open network (no password)       | Allow; skip password length hash (still fingerprint on SSID)                                 |
+| Open network (no password)       | Allow; empty password handled normally; gating unaffected                                    |
 | Hidden SSID manual entry         | Treat like manual path; test as normal                                                       |
 | Rapid repeated clicks            | Disable button while `wifiTesting`                                                           |
 | Scan during test                 | Disable scan button while `wifiTesting`                                                      |
@@ -277,7 +271,7 @@ If the blocking test proves unreliable:
   - 400/408 `{ success: false, message: "Association timeout" | "Authentication failed" | "No AP found" | "Network error" }`
   - 409 `{ success: false, message: "Test already running" }`
   - 422 `{ success: false, message: "Invalid payload" }`
-- Use timeouts that reflect the device: keep under 2s for dev ergonomics but include a variant that mimics ~6.5s timeout path when needed.
+- Use timeouts that reflect the device: keep under 2s for dev ergonomics and provide a toggle to simulate a ~6.5s timeout path when testing long‑running behavior.
 
 ## 13. Front-End Module Boundaries (Shared vs Provisioning-only)
 
@@ -287,8 +281,7 @@ If the blocking test proves unreliable:
   - `getEffectiveSSID`, `validateWiFiConfig`
 - Do NOT add provisioning state or API calls to `wifi-utils.js`.
 - Implement provisioning-only logic in `src/data/js/stores/setup.js`:
-  - Gating state (`wifiTesting`, `wifiTestResult`, `wifiTestPassed`, `lastTestFingerprint`)
-  - Methods (`computeFingerprint`, `invalidateWifiTestIfNeeded`, `testWifiConnection`)
-  - `canSave` gating requiring a passed test and unchanged fingerprint
+  - Gating state (`wifiTesting`, `wifiTestResult`, `wifiTestPassed`, `dirtySinceLastTest`)
+  - Methods (`markDirtyOnCredentialChange`, `testWifiConnection`)
+  - `canSave` gating requiring a passed test and `!dirtySinceLastTest`
 - Settings page (`src/data/js/stores/settings-wifi.js`) remains focused on password masking, timeout validation, and save logic; no gating added.
-- Optional pure helper: expose `computeWifiFingerprint(effectiveSSID, password)` in `wifi-utils.js` (or a new `device-config-utils/wifi-provisioning.js`) if we want to reuse the fingerprint computation without moving state.
