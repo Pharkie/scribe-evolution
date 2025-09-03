@@ -230,41 +230,12 @@ static void setupStaticRoutes(const char *defaultFile = nullptr, bool tryGzipFir
             .setTryGzipFirst(tryGzipFirst)
             .setCacheControl("max-age=31536000");
     } else {
-        // STA mode - proper separation of directory and file handling
-        
-        // Root directory - serve index.html explicitly
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-            AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html.gz", "text/html");
-            if (response == nullptr) {
-                // Fallback to uncompressed version
-                response = request->beginResponse(LittleFS, "/index.html", "text/html");
-            } else {
-                response->addHeader("Content-Encoding", "gzip");
-            }
-            if (response != nullptr) {
-                response->addHeader("Cache-Control", "max-age=31536000");
-                request->send(response);
-            } else {
-                request->send(404, "text/html", "Index page not found");
-            }
-        });
-
-        // Settings directory with index behavior
-        server.serveStatic("/settings/", LittleFS, "/settings/")
-            .setDefaultFile("index.html")
-            .setTryGzipFirst(true)
-            .setCacheControl("max-age=31536000");
-
-        // Diagnostics directory with index behavior  
-        server.serveStatic("/diagnostics/", LittleFS, "/diagnostics/")
-            .setDefaultFile("index.html")
-            .setTryGzipFirst(true)
-            .setCacheControl("max-age=31536000");
-
-        // Catch-all for files - no setDefaultFile to prevent directory fallback
+        // STA mode - explicit file serving without setDefaultFile conflicts
+        LOG_NOTICE("WEB", "Setting up STA mode serveStatic route with setTryGzipFirst=true");
         server.serveStatic("/", LittleFS, "/")
             .setTryGzipFirst(true)
             .setCacheControl("max-age=31536000");
+        LOG_NOTICE("WEB", "STA mode serveStatic route registered successfully");
     }
 }
 
@@ -335,11 +306,6 @@ void setupWebServerRoutes(int maxChars)
 
         // Catch all other requests and redirect to setup
         server.onNotFound(handleCaptivePortal);
-
-        // Redirect root to setup
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-                  {
-            request->redirect("/setup.html"); });
     }
     else
     {
@@ -440,6 +406,37 @@ void setupWebServerRoutes(int maxChars)
             
             request->send(200, "text/plain", output); }, true);
 
+        // Debug endpoint to check specific file existence
+        registerRoute("GET", "/debug/file-check", "Check file existence", [](AsyncWebServerRequest *request)
+                      {
+            String output = "File Existence Check:\\n\\n";
+            
+            // Check the problem file
+            String testFile = "/js/app-common.js";
+            String testFileGz = "/js/app-common.js.gz";
+            
+            output += "Checking: " + testFile + "\\n";
+            output += "Exists: " + String(LittleFS.exists(testFile) ? "YES" : "NO") + "\\n";
+            if (LittleFS.exists(testFile)) {
+                File f = LittleFS.open(testFile, "r");
+                if (f) {
+                    output += "Size: " + String(f.size()) + " bytes\\n";
+                    f.close();
+                }
+            }
+            
+            output += "\\nChecking: " + testFileGz + "\\n";
+            output += "Exists: " + String(LittleFS.exists(testFileGz) ? "YES" : "NO") + "\\n";
+            if (LittleFS.exists(testFileGz)) {
+                File f = LittleFS.open(testFileGz, "r");
+                if (f) {
+                    output += "Size: " + String(f.size()) + " bytes\\n";
+                    f.close();
+                }
+            }
+            
+            request->send(200, "text/plain", output); }, true);
+
         // Favicons/icons: already-compressed formats → disable .gz lookup
         server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
             .setTryGzipFirst(false)
@@ -455,8 +452,14 @@ void setupWebServerRoutes(int maxChars)
 
         // CRITICAL: Setup static file serving AFTER all API routes and explicit asset handlers
         // This ensures API endpoints and explicit favicon routes are matched before the catch-all static handler
-        // In STA mode, serve index.html by default and prefer gzip versions
-        setupStaticRoutes("index.html", /*tryGzipFirst=*/true);
+        // In STA mode, use clean routing without setDefaultFile conflicts
+        setupStaticRoutes();
+        
+        // Handle root explicitly - must come AFTER setupStaticRoutes (exact match only)
+        server.on("^/$", HTTP_GET, [](AsyncWebServerRequest *request) {
+            LOG_NOTICE("WEB", "Root handler matched for URL: %s", request->url().c_str());
+            request->redirect("/index.html");
+        });
 
         // Track explicit favicon routes for diagnostics
         registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Favicon PNG file", false});

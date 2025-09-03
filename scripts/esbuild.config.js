@@ -42,7 +42,7 @@ const multiEntryPlugin = {
 async function buildWithEsbuild(config) {
   const { input, output, minify = false } = config;
 
-  console.log(`🚀 Bundling: ${input.join(", ")} -> ${output}`);
+  // console.log(`🚀 Bundling: ${input.join(", ")} -> ${output}`);
 
   try {
     let entryPoint;
@@ -77,7 +77,7 @@ async function buildWithEsbuild(config) {
     });
 
     const stats = fs.statSync(output);
-    console.log(`✅ ${output} (${stats.size} bytes)`);
+    // console.log(`✅ ${output} (${stats.size} bytes)`);
 
     return result;
   } catch (error) {
@@ -362,13 +362,13 @@ async function buildAll(production = false) {
     `diagnostics-nvs${suffix}`,
   ];
 
-  console.log(`Building all configs (production: ${production})...`);
+  // console.log(`Building all configs (production: ${production})...`);
 
   for (const config of configs) {
     await build(config);
   }
 
-  console.log("🎉 All builds completed successfully!");
+  console.log("🎉 esbuild success");
 }
 
 // Command line interface

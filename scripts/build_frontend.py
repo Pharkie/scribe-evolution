@@ -12,7 +12,7 @@ Import("env")  # pylint: disable=undefined-variable  # type: ignore
 
 def build_frontend(source, target, env):  # pylint: disable=unused-argument
     """Build frontend CSS and JavaScript assets"""
-    print("📦 Building frontend assets...")
+    print("Building frontend assets...")
 
     try:
         # Build frontend assets using npm (production builds for minified assets)
@@ -21,22 +21,18 @@ def build_frontend(source, target, env):  # pylint: disable=unused-argument
         )
 
         if result.returncode == 0:
-            print("✅ Frontend build completed successfully")
-            if result.stdout:
-                print(f"   Output: {result.stdout.strip()}")
+            print("Frontend build completed")
         else:
-            print(f"❌ Frontend build failed with exit code {result.returncode}")
+            print(f"Frontend build failed with exit code {result.returncode}")
             if result.stderr:
-                print(f"   Error: {result.stderr.strip()}")
-            if result.stdout:
-                print(f"   Output: {result.stdout.strip()}")
+                print(f"Error: {result.stderr.strip()}")
             sys.exit(1)
 
     except FileNotFoundError:
-        print("❌ npm not found. Please ensure Node.js and npm are installed.")
+        print("npm not found. Please ensure Node.js and npm are installed.")
         sys.exit(1)
     except subprocess.SubprocessError as e:
-        print(f"❌ Frontend build subprocess failed: {e}")
+        print(f"Frontend build subprocess failed: {e}")
         sys.exit(1)
 
 

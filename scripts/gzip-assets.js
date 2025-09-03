@@ -43,10 +43,7 @@ async function gzipFile(filePath) {
       100
     ).toFixed(1);
 
-    console.log(`✅ ${path.relative(process.cwd(), filePath)}`);
-    console.log(
-      `   ${stats.size.toLocaleString()} → ${gzipStats.size.toLocaleString()} bytes (${reduction}% reduction)`,
-    );
+    console.log(`${path.relative(process.cwd(), filePath)} (${reduction}%)`);
 
     return {
       original: stats.size,
@@ -86,26 +83,21 @@ async function findFiles(dir, extensions) {
 }
 
 async function main() {
-  console.log("🗜️  GZIP Assets Build Script\n");
-
   const dataDir = path.join(__dirname, "../data");
 
   // Check if data directory exists
   if (!fs.existsSync(dataDir)) {
-    console.error("❌ Data directory not found:", dataDir);
+    console.error("Data directory not found:", dataDir);
     process.exit(1);
   }
 
   // Find all compressible files
-  console.log("📁 Scanning for compressible assets...");
   const files = await findFiles(dataDir, COMPRESS_EXTENSIONS);
 
   if (files.length === 0) {
-    console.log("ℹ️  No compressible files found.");
+    console.log("No compressible files found.");
     return;
   }
-
-  console.log(`📦 Found ${files.length} files to compress\n`);
 
   // Compress all files
   const results = [];
@@ -118,24 +110,13 @@ async function main() {
 
   // Summary statistics
   if (results.length > 0) {
-    const totalOriginal = results.reduce((sum, r) => sum + r.original, 0);
-    const totalCompressed = results.reduce((sum, r) => sum + r.compressed, 0);
     const averageReduction =
       results.reduce((sum, r) => sum + r.reduction, 0) / results.length;
 
-    console.log("\n📊 Compression Summary:");
-    console.log(`   Original size: ${totalOriginal.toLocaleString()} bytes`);
     console.log(
-      `   Compressed size: ${totalCompressed.toLocaleString()} bytes`,
+      `\nCompressed ${results.length}/${files.length} files, ${averageReduction.toFixed(1)}% avg reduction`,
     );
-    console.log(
-      `   Total savings: ${(totalOriginal - totalCompressed).toLocaleString()} bytes`,
-    );
-    console.log(`   Average reduction: ${averageReduction.toFixed(1)}%`);
-    console.log(`   Files compressed: ${results.length}/${files.length}`);
   }
-
-  console.log("\n✅ GZIP compression complete!");
 }
 
 if (require.main === module) {
