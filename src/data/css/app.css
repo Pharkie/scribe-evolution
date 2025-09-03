@@ -585,16 +585,6 @@
     transform: translateZ(-400px) scale(0.5);
   }
 
-  /* Scribe Evolution logo entrance animation - inspired by Animata */
-  .slide-in-bck-center {
-    animation: scribe-logo-entrance 2s cubic-bezier(0.55, 0.085, 0.68, 0.53)
-      both !important;
-    /* Ensure animation runs from the beginning */
-    animation-delay: 0s !important;
-    animation-fill-mode: both !important;
-    animation-iteration-count: 1 !important;
-  }
-
   /* Enhanced form inputs for setup */
   input[type="text"],
   input[type="password"],

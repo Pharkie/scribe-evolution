@@ -374,7 +374,9 @@ export function createTimezonePickerUI() {
         refs.searchInput.focus();
       } else {
         nextTick(() => {
-          const options = refs.dropdown.querySelectorAll(".timezone-option");
+          const options = refs.dropdown.querySelectorAll(
+            "[data-timezone-option]",
+          );
           options[this.focusedIndex]?.focus();
         });
       }
@@ -396,7 +398,9 @@ export function createTimezonePickerUI() {
       if (this.isOpen && this.filteredTimezones.length > 0) {
         this.focusedIndex = 0;
         nextTick(() => {
-          const options = refs.dropdown.querySelectorAll(".timezone-option");
+          const options = refs.dropdown.querySelectorAll(
+            "[data-timezone-option]",
+          );
           options[0]?.focus();
         });
       }
@@ -407,7 +411,9 @@ export function createTimezonePickerUI() {
       if (this.isOpen && this.filteredTimezones.length > 0) {
         this.focusedIndex = Math.min(this.filteredTimezones.length - 1, 4);
         nextTick(() => {
-          const options = refs.dropdown.querySelectorAll(".timezone-option");
+          const options = refs.dropdown.querySelectorAll(
+            "[data-timezone-option]",
+          );
           options[this.focusedIndex]?.focus();
         });
       }

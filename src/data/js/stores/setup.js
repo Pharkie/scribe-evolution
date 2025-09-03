@@ -168,7 +168,7 @@ export function createSetupStore() {
     // Save configuration and restart (setup-specific behavior)
     async saveAndRestart() {
       if (!this.canSave) {
-  window.showMessage("Please fill in all required fields", "error");
+        window.showMessage("Please fill in all required fields", "error");
         return;
       }
 
@@ -205,6 +205,5 @@ export function createSetupStore() {
         this.saving = false;
       }
     },
-
   };
 }

@@ -113,7 +113,7 @@
             </p>
             <button
               @click="window.location.reload()"
-              class="error-retry-button"
+              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
             >
               Retry
             </button>
@@ -244,7 +244,8 @@
                       <button
                         type="button"
                         tabindex="0"
-                        class="timezone-option w-full text-left px-4 py-3 focus:outline-none transition-colors duration-150"
+                        data-timezone-option
+                        class="w-full text-left px-4 py-3 focus:outline-none transition-colors duration-150"
                         :class="{
                                                 'border-b border-gray-100 dark:border-gray-700': filteredTimezones.length > 1 && index < Math.min(filteredTimezones.length, 5) - 1,
                                                 'bg-blue-100 dark:bg-blue-900/50': focusedIndex === index

@@ -340,13 +340,17 @@
                     </div>
                   </div>
 
-                  <div class="dual-range-slider mx-2">
+                  <div class="relative h-8 mx-2">
                     <!-- Background track -->
-                    <div class="dual-range-track"></div>
+                    <div
+                      class="absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg"
+                      style="top: 12px"
+                    ></div>
 
                     <!-- Active time track (reactive) -->
                     <div
-                      class="dual-range-active"
+                      class="absolute h-2 bg-purple-500 rounded-lg"
+                      style="top: 12px"
                       :style="`left: ${timeRangeStyle.left}; width: ${timeRangeStyle.width};`"
                     ></div>
 
@@ -356,10 +360,38 @@
                       min="0"
                       max="24"
                       step="1"
-                      class="dual-range-input dual-range-start"
+                      class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer"
+                      style="
+                        top: 0;
+                        z-index: 24;
+                        -webkit-appearance: none;
+                        pointer-events: none;
+                      "
+                      onmousedown="this.style.zIndex = '25'"
+                      onmouseup="this.style.zIndex = '24'"
                       :value="startHourSafe"
                       @input="handleStartHourChange($event)"
                     />
+                    <style>
+                      input[type="range"]:nth-of-type(2)::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        pointer-events: auto;
+                        position: relative;
+                        background: rgb(168 85 247);
+                        border: 2px solid white;
+                        border-radius: 50%;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                        cursor: pointer;
+                        width: 18px;
+                        height: 18px;
+                        z-index: 24;
+                      }
+                      input[type="range"]:nth-of-type(
+                          2
+                        ):active::-webkit-slider-thumb {
+                        z-index: 25;
+                      }
+                    </style>
 
                     <!-- End time handle -->
                     <input
@@ -367,10 +399,33 @@
                       min="0"
                       max="24"
                       step="1"
-                      class="dual-range-input dual-range-end"
+                      class="absolute w-full h-8 bg-transparent rounded-lg appearance-none cursor-pointer"
+                      style="top: 0; z-index: 23; pointer-events: none"
+                      onmousedown="this.style.zIndex = '25'"
+                      onmouseup="this.style.zIndex = '23'"
                       :value="endHourSafe"
                       @input="handleEndHourChange($event)"
                     />
+                    <style>
+                      input[type="range"]:nth-of-type(3)::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        pointer-events: auto;
+                        position: relative;
+                        background: rgb(168 85 247);
+                        border: 2px solid white;
+                        border-radius: 50%;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                        cursor: pointer;
+                        width: 18px;
+                        height: 18px;
+                        z-index: 23;
+                      }
+                      input[type="range"]:nth-of-type(
+                          3
+                        ):active::-webkit-slider-thumb {
+                        z-index: 25;
+                      }
+                    </style>
                   </div>
 
                   <!-- Time display (reactive) -->
@@ -416,7 +471,7 @@
                       min="0"
                       max="6"
                       step="1"
-                      class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-purple mx-2"
+                      class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer mx-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-purple-600 [&::-webkit-slider-thumb]:shadow-sm hover:[&::-webkit-slider-thumb]:bg-purple-600 focus:[&::-webkit-slider-thumb]:ring-2 focus:[&::-webkit-slider-thumb]:ring-purple-500 focus:[&::-webkit-slider-thumb]:ring-offset-1 focus:outline-none"
                       x-model.number="frequencySliderValue"
                     />
 

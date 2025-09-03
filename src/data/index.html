@@ -89,8 +89,12 @@
                   x-transition:enter="transition-none"
                   x-transition:enter-start=""
                   x-transition:enter-end=""
-                  class="slide-in-bck-center h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:block hidden"
-                  style="display: none"
+                  class="h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:block hidden"
+                  style="
+                    display: none;
+                    animation: scribe-logo-entrance 2s
+                      cubic-bezier(0.55, 0.085, 0.68, 0.53) both;
+                  "
                 />
                 <!-- Light mode logo (dark) -->
                 <img
@@ -100,8 +104,12 @@
                   x-transition:enter="transition-none"
                   x-transition:enter-start=""
                   x-transition:enter-end=""
-                  class="slide-in-bck-center h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:hidden block"
-                  style="display: none"
+                  class="h-28 sm:h-32 md:h-36 lg:h-40 w-auto dark:hidden block"
+                  style="
+                    display: none;
+                    animation: scribe-logo-entrance 2s
+                      cubic-bezier(0.55, 0.085, 0.68, 0.53) both;
+                  "
                 />
               </h1>
             </div>
