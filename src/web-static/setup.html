@@ -1,97 +1,68 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Scribe Evolution: Setup</title>
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
 
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      href="/fonts/outfit-variable.woff2"
-      crossorigin
-    />
-    <link rel="stylesheet" href="/css/app.css" />
-    <script src="/js/app-common.js"></script>
-    <script src="/js/page-setup.js"></script>
-    <script src="/js/alpine.js" defer></script>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scribe Evolution: Setup</title>
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
 
-  <body
-    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
-    x-data="$store.setup"
-  >
-    <main class="w-full max-w-4xl mx-auto flex-1">
-      <!-- Header with title (like settings pages) -->
-      <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
-        <!-- Centered title with device setup icon -->
-        <div class="flex-1 flex justify-center">
-          <h1
-            class="text-2xl sm:text-3xl lg:text-4xl font-normal text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2 whitespace-nowrap"
-          >
-            <svg
-              class="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-              ></path>
-            </svg>
-            <span>Scribe Evolution: Setup</span>
-          </h1>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/outfit-variable.woff2" crossorigin />
+  <link rel="stylesheet" href="/css/app.css" />
+  <script src="/js/app-common.js"></script>
+  <script src="/js/page-setup.js"></script>
+  <script src="/js/alpine.js" defer></script>
+  <!-- Confetti library (same as index) for WiFi test success celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+</head>
+
+<body
+  class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+  x-data="$store.setup">
+  <main class="w-full max-w-4xl mx-auto flex-1">
+    <!-- Header with title (like settings pages) -->
+    <header class="w-full max-w-6xl mx-auto flex items-center mb-6 gap-4">
+      <!-- Centered title with device setup icon -->
+      <div class="flex-1 flex justify-center">
+        <h1
+          class="text-2xl sm:text-3xl lg:text-4xl font-normal text-gray-800 dark:text-gray-100 flex items-center space-x-1 sm:space-x-2 whitespace-nowrap">
+          <svg class="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+            </path>
+          </svg>
+          <span>Scribe Evolution: Setup</span>
+        </h1>
+      </div>
+    </header>
+
+    <!-- Error State -->
+    <template x-if="loaded && error">
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
+        <div class="text-center">
+          <svg class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+          <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+            Error Loading Settings
+          </h3>
+          <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
+          <button @click="window.location.reload()"
+            class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+            Retry
+          </button>
         </div>
-      </header>
+      </div>
+    </template>
 
-      <!-- Error State -->
-      <template x-if="loaded && error">
-        <div
-          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6"
-        >
-          <div class="text-center">
-            <svg
-              class="w-8 h-8 mx-auto mb-4 text-red-600 dark:text-red-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M6 18 18 6M6 6l12 12"
-              />
-            </svg>
-            <h3
-              class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2"
-            >
-              Error Loading Settings
-            </h3>
-            <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
-            <button
-              @click="window.location.reload()"
-              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </template>
-
-      <!-- Setup Form -->
-      <template x-if="loaded && !error">
-        <div
-          x-data="{ 
+    <!-- Setup Form -->
+    <template x-if="loaded && !error">
+      <div x-data="{ 
                 ready: false, 
                 init() {
                     this.$nextTick(() => {
@@ -101,667 +72,415 @@
                         });
                     });
                 }
-            }"
-          x-show="ready"
-          x-transition:enter="transition ease-out duration-600 transform"
-          x-transition:enter-start="translate-y-4 opacity-0"
-          x-transition:enter-end="translate-y-0 opacity-100"
-        >
-          <form @submit.prevent="saveAndRestart" class="space-y-8">
-            <!-- Device Configuration Card -->
-            <div
-              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-blue-600 transition-shadow duration-200"
-            >
-              <h2
-                class="text-2xl font-bold mb-6 text-blue-600 dark:text-blue-400"
-              >
-                Device Information
-              </h2>
+            }" x-show="ready" x-transition:enter="transition ease-out duration-600 transform"
+        x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100">
+        <form @submit.prevent="saveAndRestart" class="space-y-8">
+          <!-- Device Configuration Card -->
+          <div
+            class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-blue-600 transition-shadow duration-200">
+            <h2 class="text-2xl font-bold mb-6 text-blue-600 dark:text-blue-400">
+              Device Information
+            </h2>
 
-              <div class="space-y-4">
-                <!-- Device Owner -->
-                <div>
-                  <label
-                    for="device-owner"
-                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Device Owner
-                  </label>
-                  <input
-                    type="text"
-                    id="device-owner"
-                    required
-                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
-                    x-model="config.device.owner"
-                    placeholder="Enter your device name"
-                  />
-                </div>
+            <div class="space-y-4">
+              <!-- Device Owner -->
+              <div>
+                <label for="device-owner" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Device Owner
+                </label>
+                <input type="text" id="device-owner" required
+                  class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                  x-model="config.device.owner" placeholder="Enter your device name" />
+              </div>
 
-                <!-- Timezone Picker (imported from settings/device.html) -->
-                <div
-                  @timezone-picker-open="
+              <!-- Timezone Picker (imported from settings/device.html) -->
+              <div @timezone-picker-open="
                     if (!timezonePicker.initialized && !timezonePicker.loading) {
                       loadTimezones();
                     }
                     searchQuery = '';
                     isOpen = true;
-                  "
-                  @keydown.window="
+                  " @keydown.window="
                     if (isOpen && $event.key === 'Escape') {
                       isOpen = false;
                       focusedIndex = -1;
                     }
-                  "
-                  class="relative"
-                >
-                  <label
-                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                    >Timezone
-                  </label>
-                  <!-- Timezone Input/Dropdown Button -->
-                  <div class="relative">
-                    <input
-                      type="text"
-                      x-ref="searchInput"
-                      x-model="searchQuery"
-                      @click.stop="$dispatch('timezone-picker-open')"
-                      @focus.stop="$dispatch('timezone-picker-open')"
-                      @input="focusedIndex = -1"
-                      @keydown.escape="isOpen = false; focusedIndex = -1"
-                      @keydown.down.prevent="
+                  " class="relative">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timezone
+                </label>
+                <!-- Timezone Input/Dropdown Button -->
+                <div class="relative">
+                  <input type="text" x-ref="searchInput" x-model="searchQuery"
+                    @click.stop="$dispatch('timezone-picker-open')" @focus.stop="$dispatch('timezone-picker-open')"
+                    @input="focusedIndex = -1" @keydown.escape="isOpen = false; focusedIndex = -1"
+                    @keydown.down.prevent="
                         if (filteredTimezones.length > 0) {
                           focusedIndex = Math.min(focusedIndex + 1, filteredTimezones.length - 1);
                           if (focusedIndex >= 0) {
                             $refs.dropdown?.querySelector(`[data-index='${focusedIndex}']`)?.focus();
                           }
                         }
-                      "
-                      @keydown.up.prevent="
+                      " @keydown.up.prevent="
                         if (focusedIndex > 0) {
                           focusedIndex = Math.max(focusedIndex - 1, 0);
                           $refs.dropdown?.querySelector(`[data-index='${focusedIndex}']`)?.focus();
                         }
                       "
-                      class="w-full p-3 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
-                      placeholder="Search timezones (e.g., New York, London, UTC)"
-                      autocomplete="off"
-                    />
-                    <!-- Dropdown Arrow -->
-                    <div
-                      class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
-                    >
-                      <svg
-                        class="w-5 h-5 text-gray-400 dark:text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="m19 9-7 7-7-7"
-                        ></path>
-                      </svg>
+                    class="w-full p-3 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    placeholder="Search timezones (e.g., New York, London, UTC)" autocomplete="off" />
+                  <!-- Dropdown Arrow -->
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Loading State -->
+                <div x-show="timezonePicker.loading"
+                  class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl mt-1">
+                  <div
+                    class="p-3 text-center text-gray-500 dark:text-gray-400 text-sm flex items-center justify-center">
+                    <div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2">
                     </div>
+                    Loading timezones...
+                  </div>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div x-show="isOpen && !timezonePicker.loading" x-ref="dropdown"
+                  @click.away="isOpen = false; focusedIndex = -1"
+                  class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl mt-1">
+                  <!-- Error State -->
+                  <div x-show="timezonePicker.error" class="p-3 text-center text-red-500 dark:text-red-400 text-sm"
+                    x-text="timezonePicker.error"></div>
+
+                  <!-- No Results -->
+                  <div x-show="!timezonePicker.error && filteredTimezones.length === 0"
+                    class="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    No timezones found for "<span x-text="searchQuery"></span>"
                   </div>
 
-                  <!-- Loading State -->
-                  <div
-                    x-show="timezonePicker.loading"
-                    class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl mt-1"
-                  >
-                    <div
-                      class="p-3 text-center text-gray-500 dark:text-gray-400 text-sm flex items-center justify-center"
-                    >
-                      <div
-                        class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"
-                      ></div>
-                      Loading timezones...
-                    </div>
-                  </div>
-
-                  <!-- Dropdown Menu -->
-                  <div
-                    x-show="isOpen && !timezonePicker.loading"
-                    x-ref="dropdown"
-                    @click.away="isOpen = false; focusedIndex = -1"
-                    class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-xl mt-1"
-                  >
-                    <!-- Error State -->
-                    <div
-                      x-show="timezonePicker.error"
-                      class="p-3 text-center text-red-500 dark:text-red-400 text-sm"
-                      x-text="timezonePicker.error"
-                    ></div>
-
-                    <!-- No Results -->
-                    <div
-                      x-show="!timezonePicker.error && filteredTimezones.length === 0"
-                      class="p-3 text-center text-gray-500 dark:text-gray-400 text-sm"
-                    >
-                      No timezones found for "<span x-text="searchQuery"></span
-                      >"
-                    </div>
-
-                    <!-- Timezone Options -->
-                    <template
-                      x-for="(timezone, index) in filteredTimezones.slice(0, 5)"
-                      :key="timezone.id"
-                    >
-                      <button
-                        type="button"
-                        tabindex="0"
-                        :data-index="index"
-                        data-timezone-option
-                        class="w-full text-left px-4 py-3 focus:outline-none transition-colors duration-150"
-                        :class="{
+                  <!-- Timezone Options -->
+                  <template x-for="(timezone, index) in filteredTimezones.slice(0, 5)" :key="timezone.id">
+                    <button type="button" tabindex="0" :data-index="index" data-timezone-option
+                      class="w-full text-left px-4 py-3 focus:outline-none transition-colors duration-150" :class="{
                           'border-b border-gray-100 dark:border-gray-700': index < Math.min(filteredTimezones.length, 5) - 1,
                           'bg-blue-100 dark:bg-blue-900/50': focusedIndex === index
-                        }"
-                        @click="selectTimezone(timezone); isOpen = false; focusedIndex = -1"
-                        @mouseenter="focusedIndex = index"
-                        @mouseleave="focusedIndex = -1"
-                        @focus="focusedIndex = index"
-                        @keydown.escape="isOpen = false; focusedIndex = -1"
-                        @keydown.enter.prevent="selectTimezone(timezone); isOpen = false; focusedIndex = -1"
-                        @keydown.up.prevent="
+                        }" @click="selectTimezone(timezone); isOpen = false; focusedIndex = -1"
+                      @mouseenter="focusedIndex = index" @mouseleave="focusedIndex = -1" @focus="focusedIndex = index"
+                      @keydown.escape="isOpen = false; focusedIndex = -1"
+                      @keydown.enter.prevent="selectTimezone(timezone); isOpen = false; focusedIndex = -1"
+                      @keydown.up.prevent="
                           if (index > 0) {
                             focusedIndex = index - 1;
                             $refs.dropdown?.querySelector(`[data-index='${focusedIndex}']`)?.focus();
                           }
-                        "
-                        @keydown.down.prevent="
+                        " @keydown.down.prevent="
                           if (index < Math.min(filteredTimezones.length, 5) - 1) {
                             focusedIndex = index + 1;
                             $refs.dropdown?.querySelector(`[data-index='${focusedIndex}']`)?.focus();
                           }
-                        "
-                      >
-                        <div class="flex flex-col">
-                          <span
-                            class="font-medium text-gray-900 dark:text-gray-100"
-                            x-text="timezone.displayName"
-                          ></span>
-                          <div class="text-xs text-gray-500 dark:text-gray-400">
-                            <div x-text="timezone.id"></div>
-                            <div x-text="timezone.offset"></div>
-                          </div>
+                        ">
+                      <div class="flex flex-col">
+                        <span class="font-medium text-gray-900 dark:text-gray-100" x-text="timezone.displayName"></span>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                          <div x-text="timezone.id"></div>
+                          <div x-text="timezone.offset"></div>
                         </div>
-                      </button>
-                    </template>
+                      </div>
+                    </button>
+                  </template>
 
-                    <!-- Show More Results Indicator -->
-                    <div
-                      x-show="filteredTimezones.length > 5"
-                      class="p-3 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700"
-                    >
-                      Showing top 5 results. Continue typing to narrow search.
-                    </div>
+                  <!-- Show More Results Indicator -->
+                  <div x-show="filteredTimezones.length > 5"
+                    class="p-3 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
+                    Showing top 5 results. Continue typing to narrow search.
                   </div>
-
-                  <!-- Selected Timezone Display -->
-                  <div x-show="config.device.timezone && !isOpen" class="mt-2">
-                    <div class="text-sm text-gray-600 dark:text-gray-300">
-                      <div
-                        class="font-medium"
-                        x-text="getTimezoneDisplayName(config.device.timezone)"
-                      ></div>
-                      <div
-                        class="text-xs mt-1"
-                        x-text="getTimezoneOffset(config.device.timezone)"
-                      ></div>
-                    </div>
-                  </div>
-
-                  <!-- Help Text -->
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Search by city, country, or timezone name
-                  </p>
                 </div>
+
+                <!-- Selected Timezone Display -->
+                <div x-show="config.device.timezone && !isOpen" class="mt-2">
+                  <div class="text-sm text-gray-600 dark:text-gray-300">
+                    <div class="font-medium" x-text="getTimezoneDisplayName(config.device.timezone)"></div>
+                    <div class="text-xs mt-1" x-text="getTimezoneOffset(config.device.timezone)"></div>
+                  </div>
+                </div>
+
+                <!-- Help Text -->
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Search by city, country, or timezone name
+                </p>
               </div>
             </div>
+          </div>
 
-            <!-- WiFi Configuration Card -->
-            <div
-              class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-green-600 transition-shadow duration-200"
-            >
-              <h2
-                class="text-2xl font-bold mb-6 text-green-600 dark:text-green-400"
-              >
-                WiFi Network
-              </h2>
+          <!-- WiFi Configuration Card -->
+          <div
+            class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-3 border-green-600 transition-shadow duration-200">
+            <h2 class="text-2xl font-bold mb-6 text-green-600 dark:text-green-400">
+              WiFi Network
+            </h2>
 
-              <div class="space-y-4">
-                <!-- Tab-style navigation (imported from settings/wifi.html) -->
-                <div
-                  x-init="wifiScan.hasScanned = availableNetworks.length > 0"
-                  class="space-y-0"
-                >
-                  <!-- Tab buttons with stronger visual connection -->
-                  <div
-                    class="flex border-b border-gray-200 dark:border-gray-600"
-                  >
-                    <button
-                      type="button"
-                      @click="wifiScan.mode = 'scan'"
-                      :class="{
+            <div class="space-y-4">
+              <!-- Tab-style navigation (imported from settings/wifi.html) -->
+              <div x-init="wifiScan.hasScanned = availableNetworks.length > 0" class="space-y-0">
+                <!-- Tab buttons with stronger visual connection -->
+                <div class="flex border-b border-gray-200 dark:border-gray-600">
+                  <button type="button" @click="wifiScan.mode = 'scan'" :class="{
                         'px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 focus:outline-none focus:ring-0 focus:ring-transparent': true,
                         'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400 bg-white dark:bg-gray-800': wifiScan.mode === 'scan',
                         'text-gray-500 dark:text-gray-400 border-transparent bg-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500': wifiScan.mode !== 'scan'
-                      }"
-                    >
-                      Scan Networks
-                    </button>
-                    <button
-                      type="button"
-                      @click="wifiScan.mode = 'manual'"
-                      :class="{
+                      }">
+                    Scan Networks
+                  </button>
+                  <button type="button" @click="wifiScan.mode = 'manual'" :class="{
                         'px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 focus:outline-none focus:ring-0 focus:ring-transparent': true,
                         'text-green-600 dark:text-green-400 border-green-500 dark:border-green-400 bg-white dark:bg-gray-800': wifiScan.mode === 'manual',
                         'text-gray-500 dark:text-gray-400 border-transparent bg-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500': wifiScan.mode !== 'manual'
-                      }"
-                    >
-                      Manual Entry
-                    </button>
-                  </div>
+                      }">
+                    Manual Entry
+                  </button>
+                </div>
 
-                  <!-- Content area with clear tab association -->
-                  <div
-                    class="border border-gray-200 dark:border-gray-600 border-t-0 rounded-b-lg bg-white dark:bg-gray-800 p-4"
-                  >
-                    <!-- Tab content: changes by mode -->
-                    <div class="min-h-[120px]">
-                      <!-- Scan mode -->
-                      <div x-show="wifiScan.mode === 'scan'" class="space-y-4">
-                        <!-- Initial scan button -->
-                        <div
-                          x-show="!hasScanned && !scanning"
-                          class="text-center py-8"
-                        >
-                          <button
-                            type="button"
-                            :disabled="wifiTesting"
-                            @click="scanWiFi(); hasScanned = true"
-                            class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center mx-auto"
-                          >
-                            <svg
-                              class="w-5 h-5 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                              ></path>
+                <!-- Content area with clear tab association -->
+                <div
+                  class="border border-gray-200 dark:border-gray-600 border-t-0 rounded-b-lg bg-white dark:bg-gray-800 p-4">
+                  <!-- Tab content: changes by mode -->
+                  <div class="min-h-[120px]">
+                    <!-- Scan mode -->
+                    <div x-show="wifiScan.mode === 'scan'" class="space-y-4">
+                      <!-- Initial scan button -->
+                      <div x-show="!hasScanned && !scanning" class="text-center py-8">
+                        <button type="button" :disabled="wifiTesting" @click="scanWiFi(); hasScanned = true"
+                          class="px-6 py-3 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 rounded-xl font-medium transition-all duration-200 hover:scale-105 hover:shadow-md flex items-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                          </svg>
+                          Scan for Networks
+                        </button>
+                      </div>
+
+                      <!-- Scanning state (outer x-if) -->
+                      <template x-if="scanning">
+                        <div class="text-center py-8">
+                          <div class="animate-spin rounded-full border-b-2 h-6 w-6 border-green-500 mx-auto mb-2"></div>
+                          <p class="text-green-600 dark:text-green-400">
+                            Sniffing the airwaves...
+                          </p>
+                        </div>
+                      </template>
+
+                      <!-- Network results -->
+                      <div x-show="hasScanned && !scanning">
+                        <!-- Rescan button -->
+                        <div class="flex items-center justify-between mb-4">
+                          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                            Available Networks
+                          </h3>
+                          <button type="button" :disabled="wifiTesting" @click="scanWiFi()"
+                            class="flex items-center px-3 py-1 text-sm bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                              </path>
                             </svg>
-                            Scan for Networks
+                            Rescan
                           </button>
                         </div>
 
-                        <!-- Scanning state (outer x-if) -->
-                        <template x-if="scanning">
-                          <div class="text-center py-8">
-                            <div
-                              class="animate-spin rounded-full border-b-2 h-6 w-6 border-green-500 mx-auto mb-2"
-                            ></div>
-                            <p class="text-green-600 dark:text-green-400">
-                              Sniffing the airwaves...
-                            </p>
-                          </div>
-                        </template>
-
-                        <!-- Network results -->
-                        <div x-show="hasScanned && !scanning">
-                          <!-- Rescan button -->
-                          <div class="flex items-center justify-between mb-4">
-                            <h3
-                              class="text-lg font-medium text-gray-900 dark:text-gray-100"
-                            >
-                              Available Networks
-                            </h3>
-                            <button
-                              type="button"
-                              :disabled="wifiTesting"
-                              @click="scanWiFi()"
-                              class="flex items-center px-3 py-1 text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-                            >
-                              <svg
-                                class="w-4 h-4 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                ></path>
-                              </svg>
-                              Rescan
-                            </button>
-                          </div>
-
-                          <!-- Network list (radio buttons) -->
-                          <div
-                            x-show="availableNetworks.length > 0"
-                            class="space-y-2 max-h-64 overflow-y-auto"
-                          >
-                            <template
-                              x-for="(network, index) in availableNetworks"
-                              :key="network.ssid + '-' + index"
-                            >
-                              <label
-                                class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                              >
-                                <input
-                                  type="radio"
-                                  :value="network.ssid"
-                                  x-model="wifiScan.selectedNetwork"
-                                  @change="config.device.wifi.ssid = network.ssid; config.device.wifi.password = ''; markDirtyOnCredentialChange()"
-                                  class="mr-3 text-green-600 focus:ring-green-500"
-                                />
-                                <div class="flex-1">
-                                  <div
-                                    class="flex items-center justify-between"
-                                  >
-                                    <span
-                                      class="font-medium text-gray-900 dark:text-gray-100"
-                                      x-text="network.ssid"
-                                    ></span>
-                                    <div
-                                      class="flex items-center text-sm text-gray-500 dark:text-gray-400"
-                                    >
-                                      <span
-                                        x-text="network.signal_strength || 'Unknown'"
-                                      ></span>
-                                    </div>
+                        <!-- Network list (radio buttons) -->
+                        <div x-show="availableNetworks.length > 0" class="space-y-2 max-h-64 overflow-y-auto">
+                          <template x-for="(network, index) in availableNetworks" :key="network.ssid + '-' + index">
+                            <label
+                              class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                              <input type="radio" :value="network.ssid" x-model="wifiScan.selectedNetwork"
+                                @change="config.device.wifi.ssid = network.ssid; config.device.wifi.password = ''; onWiFiCredentialsChanged()"
+                                class="mr-3 text-green-600 focus:ring-green-500" />
+                              <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                  <span class="font-medium text-gray-900 dark:text-gray-100"
+                                    x-text="network.ssid"></span>
+                                  <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                    <span x-text="network.signal_strength || 'Unknown'"></span>
                                   </div>
                                 </div>
-                              </label>
-                            </template>
-                          </div>
-
-                          <!-- No networks found -->
-                          <div
-                            x-show="availableNetworks.length === 0"
-                            class="text-center py-4"
-                          >
-                            <p class="text-gray-500 dark:text-gray-400">
-                              No networks found. Try moving closer to networks.
-                            </p>
-                          </div>
+                              </div>
+                            </label>
+                          </template>
                         </div>
-                      </div>
 
-                      <!-- Manual mode -->
-                      <div
-                        x-show="wifiScan.mode === 'manual'"
-                        class="space-y-4"
-                      >
-                        <div>
-                          <label
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                          >
-                            Network Name (SSID)
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Enter WiFi network name"
-                            class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
-                            x-model="wifiScan.manualSSID"
-                            @input="wifiScan.mode = 'manual'; config.device.wifi.password = ''; markDirtyOnCredentialChange()"
-                          />
+                        <!-- No networks found -->
+                        <div x-show="availableNetworks.length === 0" class="text-center py-4">
+                          <p class="text-gray-500 dark:text-gray-400">
+                            No networks found. Try moving closer to networks.
+                          </p>
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  <!-- WiFi Password (outside tabs, always visible) -->
-                  <div class="space-y-2">
-                    <label
-                      class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      WiFi Password
-                    </label>
-                    <div x-data="{ passwordVisible: false }" class="relative">
-                      <input
-                        :type="passwordVisible ? 'text' : 'password'"
-                        class="w-full p-3 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
-                        x-model="config.device.wifi.password"
-                        @input="markDirtyOnCredentialChange()"
-                        placeholder="Enter WiFi password"
-                        data-password-field
-                        required
-                      />
-                      <button
-                        type="button"
-                        @click="passwordVisible = !passwordVisible"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                      >
-                        <!-- Eye open icon (show password) -->
-                        <svg
-                          x-show="!passwordVisible"
-                          class="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          ></path>
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          ></path>
-                        </svg>
-                        <!-- Eye closed icon (hide password) -->
-                        <svg
-                          x-show="passwordVisible"
-                          class="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 11-4.243-4.243m4.242 4.242L9.88 9.88"
-                          ></path>
-                        </svg>
-                      </button>
+                    conf
+                    <!-- Manual mode -->
+                    <div x-show="wifiScan.mode === 'manual'" class="space-y-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Network Name (SSID)
+                        </label>
+                        <input type="text" placeholder="Enter WiFi network name"
+                          class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                          x-model="wifiScan.manualSSID"
+                          @input="wifiScan.mode = 'manual'; config.device.wifi.password = ''; onWiFiCredentialsChanged()" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <!-- WiFi Test Action and Status -->
-            <div class="mt-4">
-              <div class="flex items-center gap-3">
-                <button
-                  type="button"
-                  @click="testWifiConnection()"
-                  :disabled="wifiTesting"
-                  class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                >
-                  <template x-if="!wifiTesting">
-                    <span>Test WiFi</span>
-                  </template>
-                  <template x-if="wifiTesting">
-                    <span class="flex items-center">
-                      <svg
-                        class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          class="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          stroke-width="4"
-                        ></circle>
-                        <path
-                          class="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        ></path>
+                <!-- WiFi Password (outside tabs, always visible) -->
+                <div class="space-y-2 mt-6">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    WiFi Password
+                  </label>
+                  <div x-data="{ passwordVisible: false }" class="relative">
+                    <input :type="passwordVisible ? 'text' : 'password'"
+                      class="w-full p-3 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                      x-model="config.device.wifi.password" @input="onWiFiCredentialsChanged()"
+                      placeholder="Enter WiFi password" data-password-field required />
+                    <button type="button" @click="passwordVisible = !passwordVisible"
+                      class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      <!-- Eye open icon (show password) -->
+                      <svg x-show="!passwordVisible" class="w-5 h-5" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                        </path>
                       </svg>
-                      Testing...
-                    </span>
+                      <!-- Eye closed icon (hide password) -->
+                      <svg x-show="passwordVisible" class="w-5 h-5" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 11-4.243-4.243m4.242 4.242L9.88 9.88">
+                        </path>
+                      </svg>
+                    </button>
+                  </div>
+                  <!-- Inline helper removed for simplified Alpine pattern -->
+                </div>
+
+                <!-- WiFi Test Action and Status (inside WiFi card) -->
+                <div class="mt-4">
+                  <div class="flex justify-center">
+                    <button type="button" id="test-wifi-button"
+                      class="px-6 py-3 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 rounded-xl font-medium transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      :disabled="wifiTesting || !config.device || !getEffectiveSSID() || !config.device.wifi.password || wifiTestPassed"
+                      @click="testWifiConnection()" x-text="testWifiButtonLabel"></button>
+                  </div>
+
+                  <div class="mt-3 text-center"></div>
+
+                  <template
+                    x-if="!wifiTestPassed && !wifiTesting && config.device && config.device.owner && config.device.timezone && getEffectiveSSID() && config.device.wifi.password">
+                    <div class="mt-2 text-amber-600 dark:text-amber-400 text-sm text-center">
+                      Please test WiFi before saving.
+                    </div>
                   </template>
-                </button>
-
-                <template x-if="wifiTestResult && wifiTestResult.success">
-                  <span class="text-green-600 dark:text-green-400 text-sm"
-                    >WiFi connected (RSSI:
-                    <span x-text="wifiTestResult.rssi"></span> dBm)</span
-                  >
-                </template>
-                <template x-if="wifiTestResult && !wifiTestResult.success">
-                  <span
-                    class="text-red-600 dark:text-red-400 text-sm"
-                    x-text="wifiTestResult.message"
-                  ></span>
-                </template>
-              </div>
-
-              <template
-                x-if="!wifiTestPassed && !wifiTesting && config.device && config.device.owner && config.device.timezone && getEffectiveSSID() && config.device.wifi.password"
-              >
-                <div class="mt-2 text-amber-600 dark:text-amber-400 text-sm">
-                  Please test WiFi before saving.
                 </div>
-              </template>
+              </div>
             </div>
+          </div>
 
-            <!-- Action Buttons -->
-            <div class="flex justify-center pt-6">
-              <button
-                type="submit"
-                :disabled="saving || !canSave"
-                class="bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-4 px-8 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
-                :class="{ 'opacity-50 cursor-not-allowed': saving || !canSave }"
-                :title="!canSave ? 'Please fill in all required fields' : ''"
-              >
-                <span x-show="!saving" class="flex items-center">
-                  <svg
-                    class="w-5 h-5 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    ></path>
-                  </svg>
-                  Save + Restart
-                </span>
-                <span x-show="saving" class="flex items-center">
-                  <div
-                    class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"
-                  ></div>
-                  Saving & Restarting...
-                </span>
-              </button>
-            </div>
+          <!-- WiFi Test Action and Status moved inside the WiFi card above -->
 
-            <!-- Post-restart instructions (only show when ready to save) -->
-            <div
-              x-show="canSave"
-              x-transition
-              class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl"
-            >
-              <div class="flex items-start">
-                <svg
-                  class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 mr-3 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  ></path>
+          <!-- Action Buttons -->
+          <div class="flex justify-center pt-6">
+            <button type="submit" :disabled="saving || !canSave"
+              class="bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-4 px-8 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
+              :class="{ 'opacity-50 cursor-not-allowed': saving || !canSave }"
+              :title="!canSave ? 'Please fill in all required fields' : ''">
+              <span x-show="!saving" class="flex items-center">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                 </svg>
-                <div class="text-sm">
-                  <h4
-                    class="font-semibold text-amber-800 dark:text-amber-200 mb-2"
-                  >
-                    After Restart:
-                  </h4>
-                  <ol
-                    class="text-amber-700 dark:text-amber-300 space-y-1 list-decimal list-inside"
-                  >
-                    <li>
-                      Scribe Evolution will restart and connect to the new WiFi
-                      network
-                    </li>
-                    <li>Rejoin your normal WiFi network</li>
-                    <li>
-                      Visit
-                      <strong
-                        >scribe-<span
-                          x-text="config.device?.owner?.toLowerCase().replace(/[^a-z0-9]/g, '')"
-                        ></span
-                        >.local</strong
-                      >
-                    </li>
-                  </ol>
-                </div>
+                Save + Restart
+              </span>
+              <span x-show="saving" class="flex items-center">
+                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                Saving & Restarting...
+              </span>
+            </button>
+          </div>
+
+          <!-- Post-restart instructions (only show when ready to save) -->
+          <div x-show="canSave" x-transition
+            class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+            <div class="flex items-start">
+              <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 mr-3 flex-shrink-0" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div class="text-sm">
+                <h4 class="font-semibold text-amber-800 dark:text-amber-200 mb-2">
+                  After Restart:
+                </h4>
+                <ol class="text-amber-700 dark:text-amber-300 space-y-1 list-decimal list-inside">
+                  <li>
+                    Scribe Evolution will restart and connect to the new WiFi
+                    network
+                  </li>
+                  <li>Rejoin your normal WiFi network</li>
+                  <li>
+                    Visit
+                    <strong>scribe-<span
+                        x-text="config.device?.owner?.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local</strong>
+                  </li>
+                </ol>
               </div>
             </div>
-          </form>
-        </div>
-      </template>
+          </div>
+        </form>
+      </div>
+    </template>
 
-      <!-- Full-screen restart overlay -->
-      <div
-        x-show="saving"
-        x-transition:enter="transition-opacity ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        class="fixed inset-0 bg-gray-900 bg-opacity-60 z-50 flex items-center justify-center"
-      >
-        <div class="text-center px-6 max-w-md">
-          <h1 class="text-4xl md:text-5xl font-light text-white mb-8">
-            Restarting...
-          </h1>
-          <div class="text-gray-200 space-y-3">
-            <p class="text-lg mb-4">Next steps:</p>
-            <div class="space-y-2 text-left">
-              <p class="text-base">1. Rejoin your normal WiFi network</p>
-              <p class="text-base">
-                2. Visit
-                <span class="font-medium text-white"
-                  >scribe-<span
-                    x-text="config.device?.owner?.toLowerCase().replace(/[^a-z0-9]/g, '')"
-                  ></span
-                  >.local</span
-                >
-              </p>
-            </div>
+    <!-- Full-screen restart overlay (FOUC-safe) -->
+    <template x-if="saving">
+      <div x-data="{show:false}" x-init="$nextTick(()=>show=true)" x-show="show" x-transition.opacity.duration.300ms
+        style="display:none"
+        class="fixed inset-0 bg-gray-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+          class="w-full max-w-lg bg-gray-900/60 border border-gray-700 rounded-2xl shadow-2xl px-8 py-10 text-gray-200 relative">
+          <ol class="space-y-6">
+            <li class="flex items-start gap-4">
+              <span
+                class="text-sm mt-1 w-6 h-6 flex items-center justify-center rounded-full bg-gray-700 text-gray-300 font-medium select-none">1</span>
+              <p class="text-base leading-relaxed">Rejoin the WiFi network you set.</p>
+            </li>
+            <li class="flex items-start gap-4">
+              <span
+                class="text-sm mt-1 w-6 h-6 flex items-center justify-center rounded-full bg-blue-600 text-white font-semibold shadow select-none">2</span>
+              <div class="flex-1">
+                <div class="text-xs uppercase tracking-wider text-blue-300/80 mb-2 font-medium">Visit</div>
+                <div
+                  class="bg-gradient-to-r from-blue-600/30 to-green-600/30 border border-blue-500/40 rounded-xl px-4 py-4 shadow-inner">
+                  <div class="text-lg md:text-xl font-semibold text-white break-all font-mono">
+                    scribe-<span x-text="config.device?.owner?.toLowerCase().replace(/[^a-z0-9]/g, '')"></span>.local
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+          <div class="mt-8 text-center text-sm text-gray-400">
+            Scribe Evolution is restarting.
+            <div class="mt-4 text-xs text-gray-500 leading-relaxed">This page will not reconnect automatically. After
+              Scribe Evolution joins your network, visit the address above and close this tab.</div>
           </div>
         </div>
       </div>
-    </main>
-  </body>
+    </template>
+  </main>
+</body>
+
 </html>

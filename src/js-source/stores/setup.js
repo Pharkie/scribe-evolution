@@ -15,6 +15,7 @@ import {
   getEffectiveSSID,
   validateWiFiConfig,
 } from "../device-config-utils/wifi-utils.js";
+import { formatSignalStrength } from "../device-config-utils/wifi-utils.js";
 import {
   createTimezoneState,
   loadTimezones,
@@ -39,11 +40,11 @@ export function createSetupStore() {
     // WiFi scanning state using shared utilities
     wifiScan: createWiFiState(),
 
-    // WiFi test gating (setup only)
-    wifiTesting: false,
-    wifiTestResult: null, // { success, message?, rssi? }
-    wifiTestPassed: false,
-    dirtySinceLastTest: false,
+  // WiFi test gating (simple: any credential change clears pass state)
+  wifiTesting: false,
+  wifiTestResult: null, // { success, message?, rssi?, ssid }
+  wifiTestPassed: false,
+  _confettiShown: false,
 
     // Timezone picker state using shared utilities
     timezonePicker: createTimezoneState(),
@@ -106,25 +107,18 @@ export function createSetupStore() {
         },
         scanWiFiNetworks,
       );
-      this.markDirtyOnCredentialChange();
+  this.onWiFiCredentialsChanged();
     },
 
     // Validation for setup form
     get canSave() {
       if (!this.loaded || !this.config.device) return false;
-
-      const requiredFields = [
-        this.config.device.owner,
-        this.config.device.timezone,
-        getEffectiveSSID(this.wifiScan),
-        this.config.device.wifi.password,
-      ];
-      const baseValid = requiredFields.every(
-        (field) =>
-          field && typeof field === "string" && field.trim().length > 0,
-      );
-      if (!baseValid) return false;
-      return this.wifiTestPassed && !this.dirtySinceLastTest;
+      const owner = this.config.device.owner;
+      const tz = this.config.device.timezone;
+      const ssid = getEffectiveSSID(this.wifiScan);
+      const pwd = this.config.device.wifi.password;
+      if (!owner || !owner.trim() || !tz || !ssid || !pwd || !pwd.trim()) return false;
+      return this.wifiTestPassed; // credentials change auto-clears pass
     },
 
     // Get the effective SSID using shared utility
@@ -151,7 +145,7 @@ export function createSetupStore() {
 
     set manualSsid(value) {
       this.wifiScan.manualSSID = value;
-      this.markDirtyOnCredentialChange();
+      this.onWiFiCredentialsChanged();
     },
 
     // ================== TIMEZONE FUNCTIONALITY ==================
@@ -218,24 +212,37 @@ export function createSetupStore() {
     },
 
     // ================== WIFI TEST GATING ==================
+    get testWifiButtonLabel() {
+      if (this.wifiTesting) return "Testing...";
+      if (this.wifiTestResult) {
+        if (this.wifiTestPassed) {
+          const rssi = this.wifiTestResult.rssi;
+          const signal = typeof rssi === "number" ? formatSignalStrength(rssi) : "OK";
+          return `WiFi connected (Signal: ${signal})`;
+        }
+        return "WiFi connection failed";
+      }
+      return "Test WiFi";
+    },
     resetWifiTestState() {
       this.wifiTesting = false;
       this.wifiTestResult = null;
       this.wifiTestPassed = false;
-      this.dirtySinceLastTest = false;
+      this._confettiShown = false;
     },
 
-    markDirtyOnCredentialChange() {
-      this.dirtySinceLastTest = true;
+    onWiFiCredentialsChanged() {
+      // Any change invalidates previous test
+      this.wifiTestResult = null;
       this.wifiTestPassed = false;
-      // keep last result visible until user changes something; clear on explicit calls if needed
+      this._confettiShown = false; // allow celebration again
     },
 
     async testWifiConnection() {
       if (this.wifiTesting) return;
 
-      const ssid = getEffectiveSSID(this.wifiScan);
-      const password = this.config.device.wifi.password || "";
+  const ssid = getEffectiveSSID(this.wifiScan);
+  const password = this.config.device.wifi.password || "";
 
       // Basic base form check
       if (!ssid || !password) {
@@ -251,15 +258,63 @@ export function createSetupStore() {
         this.wifiTestResult = result;
         if (result.success) {
           this.wifiTestPassed = true;
-          this.dirtySinceLastTest = false;
+          if (!this._confettiShown && typeof window !== 'undefined' && typeof window.confetti === 'function') {
+            // Register custom "wifi" shape once (three concentric arcs + dot)
+            if (typeof window.confetti.addShape === 'function' && !window._wifiShapeRegistered) {
+              try {
+                // tsParticles confetti expects a drawer function signature: (ctx, particle, radius)
+                window.confetti.addShape('wifi', (ctx, particle, radius) => {
+                  const r = radius || 12;
+                  ctx.lineWidth = 2;
+                  // Use particle color if available
+                  const stroke = (particle && particle.color && particle.color.value) || ctx.fillStyle || '#ffffff';
+                  ctx.strokeStyle = stroke;
+                  ctx.fillStyle = stroke;
+                  // Draw three arcs (quarter to three-quarter for a "fan" look)
+                  for (let i = 1; i <= 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, (r / 3) * i, Math.PI * 0.25, Math.PI * 0.75);
+                    ctx.stroke();
+                  }
+                  // Center dot
+                  ctx.beginPath();
+                  ctx.arc(0, 0, r / 6, 0, Math.PI * 2);
+                  ctx.fill();
+                });
+                window._wifiShapeRegistered = true;
+              } catch (e) {
+                // Silently ignore if registration fails
+              }
+            }
+            const btn = document.getElementById('test-wifi-button');
+            let origin = { x: 0.5, y: 0.5 };
+            if (btn) {
+              const rect = btn.getBoundingClientRect();
+              origin = {
+                x: (rect.left + rect.width / 2) / window.innerWidth,
+                y: (rect.top + rect.height / 2) / window.innerHeight,
+              };
+            }
+            this._confettiShown = true;
+            window.confetti({
+              particleCount: 160,
+              spread: 90,
+              startVelocity: 45,
+              gravity: 0.9,
+              decay: 0.92,
+              scalar: 1.05,
+              origin,
+              // Weight wifi shape heavier by listing it twice
+              shapes: ['wifi', 'wifi', 'star'],
+              colors: ['#16a34a', '#15803d', '#10b981', '#ffffff']
+            });
+          }
         } else {
           this.wifiTestPassed = false;
-          this.dirtySinceLastTest = true;
         }
       } catch (err) {
         this.wifiTesting = false;
         this.wifiTestPassed = false;
-        this.dirtySinceLastTest = true;
         this.wifiTestResult = { success: false, message: err.message };
       }
     },
