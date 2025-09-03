@@ -549,6 +549,52 @@ function sendJSON(res, data, statusCode = 200) {
   res.end(JSON.stringify(data, null, 2));
 }
 
+function sendNotFound(res) {
+  const baseDir = path.join(__dirname, "..", "data");
+  const gz404 = path.join(baseDir, "404.html.gz");
+  const html404 = path.join(baseDir, "404.html");
+  if (fs.existsSync(gz404)) {
+    fs.readFile(gz404, (err, data) => {
+      if (err) {
+        res.writeHead(404, {
+          "Content-Type": "text/html",
+          "Access-Control-Allow-Origin": "*",
+        });
+        return res.end("<h1>404 Not Found</h1>");
+      }
+      res.writeHead(404, {
+        "Content-Type": "text/html",
+        "Content-Encoding": "gzip",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-cache",
+      });
+      return res.end(data);
+    });
+  } else if (fs.existsSync(html404)) {
+    fs.readFile(html404, (err, data) => {
+      if (err) {
+        res.writeHead(404, {
+          "Content-Type": "text/html",
+          "Access-Control-Allow-Origin": "*",
+        });
+        return res.end("<h1>404 Not Found</h1>");
+      }
+      res.writeHead(404, {
+        "Content-Type": "text/html",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-cache",
+      });
+      return res.end(data);
+    });
+  } else {
+    res.writeHead(404, {
+      "Content-Type": "text/html",
+      "Access-Control-Allow-Origin": "*",
+    });
+    return res.end("<h1>404 Not Found</h1>");
+  }
+}
+
 function serveFile(res, filePath, statusCode = 200) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = mimeTypes[ext] || "application/octet-stream";
@@ -576,12 +622,7 @@ function serveFile(res, filePath, statusCode = 200) {
     const gzipPath = filePath + ".gz";
     fs.readFile(gzipPath, (err, data) => {
       if (err) {
-        res.writeHead(404, {
-          "Content-Type": "text/html",
-          "Access-Control-Allow-Origin": "*",
-        });
-        res.end("<h1>404 Not Found</h1>");
-        return;
+        return sendNotFound(res);
       }
 
       res.writeHead(statusCode, {
@@ -596,12 +637,7 @@ function serveFile(res, filePath, statusCode = 200) {
     // Serve uncompressed version for binary files (png, ico, webmanifest)
     fs.readFile(filePath, (err, data) => {
       if (err) {
-        res.writeHead(404, {
-          "Content-Type": "text/html",
-          "Access-Control-Allow-Origin": "*",
-        });
-        res.end("<h1>404 Not Found</h1>");
-        return;
+        return sendNotFound(res);
       }
 
       res.writeHead(statusCode, {
@@ -734,6 +770,13 @@ function createRequestHandler() {
             "Access-Control-Allow-Origin": "*",
           });
           res.end();
+        } else if (pathname === "/ncsi.txt") {
+          // Windows NCSI check expects specific plain text
+          res.writeHead(200, {
+            "Content-Type": "text/plain",
+            "Access-Control-Allow-Origin": "*",
+          });
+          res.end("Microsoft NCSI");
         } else {
           // Other platforms expect simple HTML responses
           res.writeHead(200, {
@@ -1372,6 +1415,42 @@ function createRequestHandler() {
           pathname.substring(1),
           "index.html",
         );
+      } else if (pathname === "/api/timezones") {
+        // Mirror device: serve static timezones file with gzip if present
+        const jsonPath = path.join(
+          __dirname,
+          "..",
+          "data",
+          "resources",
+          "timezones.json",
+        );
+        const gzPath = jsonPath + ".gz";
+        if (fs.existsSync(gzPath)) {
+          fs.readFile(gzPath, (err, data) => {
+            if (err) return sendNotFound(res);
+            res.writeHead(200, {
+              "Content-Type": "application/json",
+              "Content-Encoding": "gzip",
+              "Cache-Control": "public, max-age=86400",
+              "Access-Control-Allow-Origin": "*",
+            });
+            res.end(data);
+          });
+          return;
+        }
+        if (fs.existsSync(jsonPath)) {
+          fs.readFile(jsonPath, (err, data) => {
+            if (err) return sendNotFound(res);
+            res.writeHead(200, {
+              "Content-Type": "application/json",
+              "Cache-Control": "public, max-age=86400",
+              "Access-Control-Allow-Origin": "*",
+            });
+            res.end(data);
+          });
+          return;
+        }
+        return sendNotFound(res);
       } else {
         // All other requests: try to serve the file directly from data/
         const requestPath = pathname.substring(1); // Remove leading /
@@ -1379,9 +1458,7 @@ function createRequestHandler() {
 
         // If file doesn't exist, serve 404
         if (!fs.existsSync(filePath) && !fs.existsSync(filePath + ".gz")) {
-          filePath = path.join(__dirname, "..", "data", "404.html");
-          serveFile(res, filePath, 404);
-          return;
+          return sendNotFound(res);
         }
       }
 
