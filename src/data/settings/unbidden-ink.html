@@ -343,14 +343,12 @@
                   <div class="relative h-8 mx-2">
                     <!-- Background track -->
                     <div
-                      class="absolute w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg"
-                      style="top: 12px"
+                      class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg"
                     ></div>
 
                     <!-- Active time track (reactive) -->
                     <div
-                      class="absolute h-2 bg-purple-500 rounded-lg"
-                      style="top: 12px"
+                      class="absolute top-1/2 -translate-y-1/2 h-2 bg-purple-500 rounded-lg"
                       :style="`left: ${timeRangeStyle.left}; width: ${timeRangeStyle.width};`"
                     ></div>
 
