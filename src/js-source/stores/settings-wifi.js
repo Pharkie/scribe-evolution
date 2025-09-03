@@ -377,15 +377,10 @@ This memo printed from Settings → WiFi`;
         // Reset to normal state and show error to user
         this.apPrintStatus = "normal";
 
-        // Use fallback if showMessage is not available
-        if (typeof window.showMessage === "function") {
-          window.showMessage(
-            `Failed to print AP details: ${error.message}`,
-            "error",
-          );
-        } else {
-          alert(`Failed to print AP details: ${error.message}`);
-        }
+        window.showMessage(
+          `Failed to print AP details: ${error.message}`,
+          "error",
+        );
       }
     },
   };

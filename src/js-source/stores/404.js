@@ -108,9 +108,6 @@ export function createErrorStore() {
       window.location.href = "/diagnostics.html";
     },
 
-    goBack() {
-      window.goBack();
-    },
 
     // Try to reload the requested page
     tryAgain() {

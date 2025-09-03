@@ -5,7 +5,6 @@
  * Exposes a minimal global API via window for pages that are not wired
  * to a specific Alpine store (legacy compatibility):
  *  - window.showMessage(message, type = 'info')
- *  - window.goBack()
  */
 
 (function () {
@@ -93,20 +92,6 @@
     }
   }
 
-  function goBack() {
-    try {
-      if (window.history && window.history.length > 1) {
-        window.history.back();
-      } else {
-        // Heuristic: navigate to a sensible default
-        window.location.href = "/";
-      }
-    } catch {
-      window.location.href = "/";
-    }
-  }
-
   // Expose as globals for simple access from templates and stores
   if (!("showMessage" in window)) window.showMessage = showMessage;
-  if (!("goBack" in window)) window.goBack = goBack;
 })();
