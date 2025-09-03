@@ -5,10 +5,15 @@ const { handleSSE } = require("./handlers/sse");
 const { handleAPStatic, handleSTAStatic } = require("./handlers/static");
 const { handleConnectivity, isProbe } = require("./handlers/connectivity");
 const { handleDebug } = require("./handlers/debug");
+const { sendJSON } = require("./utils/respond");
 
 function createRequestHandler(ctx) {
   return (req, res) => {
-    const { pathname } = new URL(req.url, `http://${req.headers.host}`);
+    let pathname = "/";
+    try {
+      pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+    } catch {}
+    try {
 
     // Preflight
     if (req.method === "OPTIONS") {
@@ -63,6 +68,13 @@ function createRequestHandler(ctx) {
     // Static by mode
     if (ctx.isAPMode()) return handleAPStatic(pathname, res);
     return handleSTAStatic(pathname, res);
+    } catch (e) {
+      console.error("[mock] Unhandled error:", e?.message || e);
+      if ((req.url || "").startsWith("/api/")) {
+        return sendJSON(res, { error: "Internal mock error", details: String(e?.message || e) }, 500);
+      }
+      return ctx.sendNotFound(res);
+    }
   };
 }
 

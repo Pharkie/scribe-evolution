@@ -1,19 +1,24 @@
 const fs = require("fs");
 const path = require("path");
 
+// Fail fast: if any required mock file is missing or invalid, throw.
+function strictRead(file) {
+  const full = path.join(__dirname, "..", "data", file);
+  const text = fs.readFileSync(full, "utf8");
+  return JSON.parse(text);
+}
+
 function loadMockData() {
-  const read = (p) =>
-    JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", p), "utf8"));
   return {
-    mockConfig: read("mock-config.json"),
-    mockConfigAPMode: read("mock-config-ap-mode.json"),
-    mockConfigNoLEDs: read("mock-config-no-leds.json"),
-    mockDiagnostics: read("mock-diagnostics.json"),
-    mockPrinterDiscovery: read("mock-printer-discovery.json"),
-    mockNvsDump: read("mock-nvs-dump.json"),
-    mockWifiScan: read("mock-wifi-scan.json"),
-    mockMemos: read("mock-memos.json"),
-    mockRoutes: read("mock-routes.json"),
+    mockConfig: strictRead("mock-config.json"),
+    mockConfigAPMode: strictRead("mock-config-ap-mode.json"),
+    mockConfigNoLEDs: strictRead("mock-config-no-leds.json"),
+    mockDiagnostics: strictRead("mock-diagnostics.json"),
+    mockPrinterDiscovery: strictRead("mock-printer-discovery.json"),
+    mockNvsDump: strictRead("mock-nvs-dump.json"),
+    mockWifiScan: strictRead("mock-wifi-scan.json"),
+    mockMemos: strictRead("mock-memos.json"),
+    mockRoutes: strictRead("mock-routes.json"),
   };
 }
 

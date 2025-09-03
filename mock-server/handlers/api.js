@@ -119,6 +119,34 @@ function handleAPI(req, res, pathname, ctx) {
     return true;
   }
 
+  // /api/leds/test (POST)
+  if (pathname === "/api/leds/test" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        JSON.parse(body || "{}");
+      } catch (e) {
+        return sendJSON(res, { error: "Invalid JSON format" }, 400);
+      }
+      // Simulate short processing time
+      setTimeout(() => {
+        res.writeHead(200);
+        res.end();
+      }, 150);
+    });
+    return true;
+  }
+
+  // /api/leds/off (POST)
+  if (pathname === "/api/leds/off" && req.method === "POST") {
+    setTimeout(() => {
+      res.writeHead(200);
+      res.end();
+    }, 100);
+    return true;
+  }
+
   // /api/wifi-scan (GET)
   if (pathname === "/api/wifi-scan") {
     setTimeout(() => sendJSON(res, mockWifiScan), 800);
@@ -323,15 +351,16 @@ function handleAPI(req, res, pathname, ctx) {
   }
 
   if (pathname === "/api/routes") {
-    const routesPath = path.join(
-      __dirname,
-      "..",
-      "..",
-      "data",
-      "mock-routes.json",
-    );
-    const data = JSON.parse(fs.readFileSync(routesPath, "utf8"));
-    setTimeout(() => sendJSON(res, data), 100);
+    // Load mock routes from mock-server/data (not firmware data/)
+    const routesPath = path.join(__dirname, "..", "data", "mock-routes.json");
+    try {
+      const text = fs.readFileSync(routesPath, "utf8");
+      const data = JSON.parse(text);
+      setTimeout(() => sendJSON(res, data), 100);
+    } catch (e) {
+      // Fail fast: surface explicit error, do not fallback
+      return sendJSON(res, { error: "mock-routes.json not available" }, 500);
+    }
     return true;
   }
 
@@ -371,6 +400,57 @@ function handleAPI(req, res, pathname, ctx) {
         res.writeHead(200);
         res.end();
       }, 800);
+    });
+    return true;
+  }
+
+  // /api/test-mqtt (POST) — validate payload and simulate success/busy/long
+  if (pathname === "/api/test-mqtt" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      let payload;
+      try {
+        payload = JSON.parse(body || "{}");
+      } catch (e) {
+        return sendJSON(res, { error: "Invalid JSON format" }, 400);
+      }
+
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const simulateLong = url.searchParams.get("long") === "1";
+      const forceBusy = url.searchParams.get("busy") === "1";
+
+      const server = payload.server;
+      const port = Number(payload.port);
+      const username = payload.username;
+
+      if (!server || typeof server !== "string" || server.trim() === "") {
+        return sendJSON(res, { error: "MQTT server cannot be blank" }, 400);
+      }
+      if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        return sendJSON(res, { error: "Port must be between 1-65535" }, 400);
+      }
+      if (!username || typeof username !== "string" || username.trim() === "") {
+        return sendJSON(res, { error: "Username cannot be blank" }, 400);
+      }
+
+      if (forceBusy || global.__mqttTestBusy) {
+        return sendJSON(res, { error: "Test already running" }, 409);
+      }
+      global.__mqttTestBusy = true;
+
+      const delayMs = simulateLong ? 2000 : 300;
+      setTimeout(() => {
+        global.__mqttTestBusy = false;
+        // Failure triggers: server contains 'fail' OR username is 'baduser'
+        if (String(server).includes("fail")) {
+          return sendJSON(res, { error: "Connection test failed" }, 400);
+        }
+        if (String(username).toLowerCase() === "baduser") {
+          return sendJSON(res, { error: "Unauthorized" }, 401);
+        }
+        return sendJSON(res, { success: true }, 200);
+      }, delayMs);
     });
     return true;
   }

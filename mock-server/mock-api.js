@@ -9,16 +9,20 @@
 const http = require("http");
 const readline = require("readline");
 const { execSync } = require("child_process");
-const { createRequestHandler } = require("./router");
-const { loadMockData } = require("./utils/data");
-const {
-  validateConfigFields,
-  logProcessedFields,
-} = require("./utils/validation");
-const { sendNotFound } = require("./utils/respond");
+const path = require("path");
+
+// Lazily-required modules (so we can hot-reload on 's')
+let createRequestHandler = require("./router").createRequestHandler;
+let loadMockData = require("./utils/data").loadMockData;
+let validateConfigFields = require("./utils/validation").validateConfigFields;
+let logProcessedFields = require("./utils/validation").logProcessedFields;
+let sendNotFound = require("./utils/respond").sendNotFound;
 
 const startTime = Date.now();
 let server = null;
+let hasPrintedStartupHelp = false;
+let pendingRestartNotice = false;
+let keyboardBound = false;
 
 // Determine mode from CLI args
 const args = process.argv.slice(2);
@@ -49,8 +53,7 @@ const currentMode = args.includes("--ap-mode")
       : "normal";
 
 // Load data
-let {
-  mockConfig,
+let mockConfig,
   mockConfigAPMode,
   mockConfigNoLEDs,
   mockDiagnostics,
@@ -58,8 +61,20 @@ let {
   mockNvsDump,
   mockWifiScan,
   mockMemos,
-  mockRoutes,
-} = loadMockData();
+  mockRoutes;
+
+function loadDataIntoVars() {
+  const d = loadMockData();
+  mockConfig = d.mockConfig;
+  mockConfigAPMode = d.mockConfigAPMode;
+  mockConfigNoLEDs = d.mockConfigNoLEDs;
+  mockDiagnostics = d.mockDiagnostics;
+  mockPrinterDiscovery = d.mockPrinterDiscovery;
+  mockNvsDump = d.mockNvsDump;
+  mockWifiScan = d.mockWifiScan;
+  mockMemos = d.mockMemos;
+  mockRoutes = d.mockRoutes;
+}
 
 function startServer() {
   const ctx = {
@@ -84,7 +99,14 @@ function startServer() {
 
   server = http.createServer(createRequestHandler(ctx));
   server.listen(port, () => {
-    printStartupHelp();
+    if (!hasPrintedStartupHelp) {
+      printStartupHelp();
+      hasPrintedStartupHelp = true;
+    }
+    if (pendingRestartNotice && !quiet) {
+      console.log(`🔁 Server restarted on http://localhost:${port}`);
+      pendingRestartNotice = false;
+    }
     setupKeyboardShortcuts();
   });
 }
@@ -92,9 +114,28 @@ function startServer() {
 function restartServer() {
   if (!server) return startServer();
   console.log("\n🔄 Restarting mock server...");
-  const t = setTimeout(() => startServer(), 1000);
+  const t = setTimeout(() => {
+    // Failsafe start if close doesn't fire
+    reloadModules();
+    try {
+      loadDataIntoVars();
+    } catch (e) {
+      console.error("❌ Failed to reload mock data:", e?.message || e);
+      process.exit(1);
+    }
+    pendingRestartNotice = true;
+    startServer();
+  }, 1000);
   server.close(() => {
     clearTimeout(t);
+    reloadModules();
+    try {
+      loadDataIntoVars();
+    } catch (e) {
+      console.error("❌ Failed to reload mock data:", e?.message || e);
+      process.exit(1);
+    }
+    pendingRestartNotice = true;
     startServer();
   });
 }
@@ -132,16 +173,19 @@ function printStartupHelp() {
   console.log("");
   console.log("Keyboard shortcuts:");
   console.log(
-    "  r  Reload JSON data files (config, diagnostics, routes, etc.)",
+    "  r  Reload JSON data files only (config, diagnostics, routes, etc.)",
   );
-  console.log("  s  Restart server (close + rebind listener)");
+  console.log(
+    "  s  Restart server and hot-reload code + data",
+  );
   console.log("  x  Quit (graceful)");
   console.log("  Ctrl+C  Quit (graceful)");
   console.log("===================================================");
 }
 
 function setupKeyboardShortcuts() {
-  if (!process.stdin.isTTY) return;
+  if (!process.stdin.isTTY || keyboardBound) return;
+  keyboardBound = true;
   // React to single key presses without requiring Enter
   process.stdin.setRawMode(true);
   process.stdin.setEncoding("utf8");
@@ -156,16 +200,7 @@ function setupKeyboardShortcuts() {
     const input = key.toLowerCase();
     if (input === "r") {
       try {
-        const reloaded = loadMockData();
-        mockConfig = reloaded.mockConfig;
-        mockConfigAPMode = reloaded.mockConfigAPMode;
-        mockConfigNoLEDs = reloaded.mockConfigNoLEDs;
-        mockDiagnostics = reloaded.mockDiagnostics;
-        mockPrinterDiscovery = reloaded.mockPrinterDiscovery;
-        mockNvsDump = reloaded.mockNvsDump;
-        mockWifiScan = reloaded.mockWifiScan;
-        mockMemos = reloaded.mockMemos;
-        mockRoutes = reloaded.mockRoutes;
+        loadDataIntoVars();
         console.log("✅ Reloaded JSON data files\n");
       } catch (e) {
         console.error("❌ Failed to reload JSON data:", e?.message || e);
@@ -192,6 +227,12 @@ async function init() {
     await checkAndResolvePortInUse();
   } catch (e) {
     console.error(e?.message || e);
+    process.exit(1);
+  }
+  try {
+    loadDataIntoVars();
+  } catch (e) {
+    console.error("❌ Failed to load mock data:", e?.message || e);
     process.exit(1);
   }
   startServer();
@@ -258,4 +299,19 @@ async function checkAndResolvePortInUse() {
   if (killed === 0) throw new Error("Failed to kill processes using the port.");
   // Give OS a moment to release the socket
   await new Promise((r) => setTimeout(r, 300));
+}
+
+// Clear require cache for mock-server modules and re-require them
+function reloadModules() {
+  const baseDir = path.resolve(__dirname);
+  Object.keys(require.cache).forEach((id) => {
+    if (id.startsWith(baseDir)) {
+      delete require.cache[id];
+    }
+  });
+  // Re-require and update references
+  createRequestHandler = require("./router").createRequestHandler;
+  loadMockData = require("./utils/data").loadMockData;
+  ({ validateConfigFields, logProcessedFields } = require("./utils/validation"));
+  ({ sendNotFound } = require("./utils/respond"));
 }
