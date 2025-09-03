@@ -223,11 +223,12 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
 }
 
 // Helper function to setup static file serving (DRY principle)
-static void setupStaticRoutes(const char *defaultFile)
+static void setupStaticRoutes(const char *defaultFile, bool tryGzipFirst)
 {
     // Single route for entire static filesystem - AsyncWebServer handles everything automatically
     server.serveStatic("/", LittleFS, "/")
         .setDefaultFile(defaultFile)
+        .setTryGzipFirst(tryGzipFirst)
         .setCacheControl("max-age=31536000");
 }
 
@@ -250,14 +251,15 @@ void setupWebServerRoutes(int maxChars)
     {
         LOG_VERBOSE("WEB", "Setting up captive portal for AP-STA mode");
 
-        // Setup page (only available in AP mode) - request->send requires explicit .gz
+        // Setup page (only available in AP mode)
         server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
                   {
             if (!isAPMode()) {
                 request->send(LittleFS, "/404.html.gz", "text/html", 404);
                 return;
             }
-            request->send(LittleFS, "/setup.html.gz", "text/html"); });
+            // Serve uncompressed HTML to support captive portal mini-browsers
+            request->send(LittleFS, "/setup.html", "text/html"); });
 
         // Setup endpoints for AP mode initial configuration
         server.on("/api/setup", HTTP_GET, handleSetupGet);
@@ -298,7 +300,8 @@ void setupWebServerRoutes(int maxChars)
         });
 
         // Setup static file serving (serve setup.html by default in AP-STA)
-        setupStaticRoutes("setup.html");
+        // Important: disable gzip preference for captive portal (iOS/Android) mini-browsers
+        setupStaticRoutes("setup.html", /*tryGzipFirst=*/false);
 
         // Catch all other requests and redirect to setup
         server.onNotFound(handleCaptivePortal);
@@ -406,8 +409,8 @@ void setupWebServerRoutes(int maxChars)
 
         // CRITICAL: Setup static file serving AFTER all API routes AND explicit favicon routes
         // This ensures API endpoints and explicit routes are matched before the catch-all static handler
-        // In STA mode, serve index.html by default
-        setupStaticRoutes("index.html");
+        // In STA mode, serve index.html by default and prefer gzip versions
+        setupStaticRoutes("index.html", /*tryGzipFirst=*/true);
 
         // Track explicit favicon routes for diagnostics
         registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Favicon PNG file", false});
