@@ -52,56 +52,9 @@ Message currentMessage = {"", "", false};
 // CAPTIVE PORTAL HANDLER FOR AP MODE
 // ========================================
 
-/**
- * @brief Captive portal handler that redirects all non-setup requests to setup.html
- * Used when in AP fallback mode to force configuration
- */
-// Simple rate limiter for captive portal (AP mode only)
-static unsigned long lastCaptivePortalRequest = 0;
-static const unsigned long CAPTIVE_PORTAL_MIN_INTERVAL_MS = 100; // Max 10 requests per second
-
 void handleCaptivePortal(AsyncWebServerRequest *request)
 {
-    String uri = request->url();
-
-    // Rate limit ALL requests except static assets
-    bool isStaticAsset = (uri.startsWith("/css/") ||
-                          uri.startsWith("/js/") ||
-                          uri.startsWith("/images/") ||
-                          uri == "/favicon.ico" ||
-                          uri == "/favicon.svg" ||
-                          uri == "/favicon-96x96.png" ||
-                          uri == "/apple-touch-icon.png" ||
-                          uri == "/site.webmanifest");
-
-    if (!isStaticAsset)
-    {
-        // Rate limit all non-static requests to prevent system overload
-        unsigned long now = millis();
-        if (now - lastCaptivePortalRequest < CAPTIVE_PORTAL_MIN_INTERVAL_MS)
-        {
-            // Too many requests - send minimal response
-            request->send(429, "text/plain", "Rate limited");
-            return;
-        }
-        lastCaptivePortalRequest = now;
-    }
-
-    // Allow setup-related requests and captive portal detection URLs to proceed normally (but rate-limited)
-    if (uri == "/setup.html" ||
-        uri == "/api/setup" ||
-        uri == "/api/wifi-scan" ||
-        uri == "/api/test-wifi" ||
-        uri == "/hotspot-detect.html" ||
-        uri == "/generate_204" ||
-        uri == "/connectivity-check.html" ||
-        uri == "/ncsi.txt" ||
-        isStaticAsset)
-    {
-        return; // Let these proceed to their handlers
-    }
-
-    // Redirect everything else to setup page
+    // In AP mode, anything reaching onNotFound should redirect to setup
     request->redirect("/setup.html");
 }
 
@@ -148,340 +101,205 @@ void handleChunkedUpload(AsyncWebServerRequest *request, uint8_t *data, size_t l
 }
 
 // ========================================
-// Route Registration System
+// Helper Functions
 // ========================================
-
-struct RouteInfo
-{
-    String method;
-    String path;
-    String description;
-    bool isAPI;
-};
-
-static std::vector<RouteInfo> registeredRoutes;
-
-void registerRoute(const char *method, const char *path, const char *description, ArRequestHandlerFunction handler, bool isAPI)
-{
-    // Register with AsyncWebServer
-    if (strcmp(method, "GET") == 0)
-    {
-        server.on(path, HTTP_GET, handler);
-    }
-    else if (strcmp(method, "POST") == 0)
-    {
-        server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
-                  { handler(request); }, NULL, handleChunkedUpload);
-    }
-
-    // Track for diagnostics
-    RouteInfo route;
-    route.method = String(method);
-    route.path = String(path);
-    route.description = description ? String(description) : String("No description");
-    route.isAPI = isAPI;
-    registeredRoutes.push_back(route);
-
-    LOG_VERBOSE("WEB", "Registered route %d: %s %s - %s (API: %s)", registeredRoutes.size(), method, path, route.description.c_str(), isAPI ? "true" : "false");
-}
 
 void addRegisteredRoutesToJson(JsonObject &endpoints)
 {
+    // Simple static route list for diagnostics
     JsonArray webPages = endpoints.createNestedArray("web_pages");
     JsonArray apiEndpoints = endpoints.createNestedArray("api_endpoints");
-
-    LOG_VERBOSE("WEB", "Generating endpoints JSON - found %d registered routes", registeredRoutes.size());
-
-    for (size_t i = 0; i < registeredRoutes.size(); i++)
-    {
-        const auto &route = registeredRoutes[i];
-        LOG_VERBOSE("WEB", "Processing route %d: %s %s (isAPI: %s)", i, route.method.c_str(), route.path.c_str(), route.isAPI ? "true" : "false");
-
-        if (route.isAPI)
-        {
-            JsonObject api = apiEndpoints.createNestedObject();
-            api["method"] = route.method;
-            api["path"] = route.path;
-            api["description"] = route.description;
-        }
-        else
-        {
-            JsonObject page = webPages.createNestedObject();
-            page["path"] = route.path;
-            page["description"] = route.description;
-        }
-    }
+    
+    // Add known API endpoints
+    JsonObject printApi = apiEndpoints.createNestedObject();
+    printApi["method"] = "POST";
+    printApi["path"] = "/api/print-local";
+    printApi["description"] = "Print custom message";
+    
+    JsonObject configApi = apiEndpoints.createNestedObject();
+    configApi["method"] = "GET";
+    configApi["path"] = "/api/config";
+    configApi["description"] = "Get configuration";
+    
+    // Add known web pages
+    JsonObject indexPage = webPages.createNestedObject();
+    indexPage["path"] = "/";
+    indexPage["description"] = "Main interface";
 }
 
-// Helper function to register POST routes with body handling
-void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
+static void setupStaticFileServing(bool isAP)
 {
-    server.on(path, HTTP_POST, [handler](AsyncWebServerRequest *request)
-              { handler(request); }, NULL, handleChunkedUpload);
-}
-
-// Helper function to setup static file serving (DRY principle)
-static void setupStaticRoutes(const char *defaultFile = nullptr, bool tryGzipFirst = true)
-{
-    if (defaultFile != nullptr && String(defaultFile) == "setup.html") {
-        // AP mode - simple setup for captive portal
+    if (isAP) {
+        // AP mode - serve files for captive portal
         server.serveStatic("/", LittleFS, "/")
-            .setDefaultFile(defaultFile)
-            .setTryGzipFirst(tryGzipFirst)
-            .setCacheControl("max-age=31536000");
+            .setDefaultFile("setup.html")
+            .setTryGzipFirst(false)
+            .setCacheControl("no-cache");
     } else {
-        // STA mode - explicit file serving without setDefaultFile conflicts
-        LOG_NOTICE("WEB", "Setting up STA mode serveStatic route with setTryGzipFirst=true");
+        // STA mode - serve all static files with compression
         server.serveStatic("/", LittleFS, "/")
+            .setDefaultFile("index.html")
             .setTryGzipFirst(true)
             .setCacheControl("max-age=31536000");
-        LOG_NOTICE("WEB", "STA mode serveStatic route registered successfully");
     }
 }
-
-// (Removed explicit per-file serving; rely on serveStatic with setTryGzipFirst)
 
 void setupWebServerRoutes(int maxChars)
 {
-    // Store the maxChars value for validation
     setMaxCharacters(maxChars);
+    bool isAP = isAPMode();
+    
+    LOG_NOTICE("WEB", "Setting up %s mode routes", isAP ? "AP (captive portal)" : "STA (full web interface)");
 
-    if (isAPMode())
-    {
-        LOG_NOTICE("WEB", "Setting up captive portal for AP-STA mode setup");
+    if (isAP) {
+        setupAPModeRoutes();
+    } else {
+        setupSTAModeRoutes();
     }
-    else
-    {
-        LOG_NOTICE("WEB", "Setting up web server routes for WiFi mode");
+    
+    LOG_VERBOSE("WEB", "Web server routes configured for %s mode", isAP ? "AP" : "STA");
+}
+
+void setupAPModeRoutes()
+{
+    // Setup page - main captive portal entry point
+    server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(LittleFS, "/setup.html", "text/html");
+    });
+    
+    // Setup API endpoints
+    server.on("/api/setup", HTTP_GET, handleSetupGet);
+    server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleSetupPost(request);
+    }, NULL, handleChunkedUpload);
+    server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
+    server.on("/api/test-wifi", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleTestWiFi(request);
+    }, NULL, handleChunkedUpload);
+    
+    // Captive portal detection - redirect to setup
+    const char* captiveUrls[] = {"/hotspot-detect.html", "/generate_204", "/connectivity-check.html", "/ncsi.txt"};
+    for (const char* url : captiveUrls) {
+        server.on(url, HTTP_GET, [](AsyncWebServerRequest *request) {
+            request->redirect("/setup.html");
+        });
     }
+    
+    // Static files with captive portal defaults
+    setupStaticFileServing(true);
+    
+    // Catch-all redirects to setup
+    server.onNotFound(handleCaptivePortal);
+}
 
-    // In AP mode, set up minimal captive portal - no route tracking needed
-    if (isAPMode())
-    {
-        LOG_VERBOSE("WEB", "Setting up captive portal for AP-STA mode");
+void setupSTAModeRoutes()
+{
+    // SSE for real-time updates
+    sseEvents.onConnect([](AsyncEventSourceClient *client) {
+        String printerData = getDiscoveredPrintersJson();
+        client->send(printerData.c_str(), "printer-update", millis());
+    });
+    server.addHandler(&sseEvents);
+    
+    // Connectivity check endpoints (return success, not redirects)
+    server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(204);
+    });
+    server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(200, "text/html", "<html><body>OK</body></html>");
+    });
+    server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(200, "text/html", "<html><body>OK</body></html>");
+    });
+    server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(200, "text/plain", "Microsoft NCSI");
+    });
+    
+    setupAPIRoutes();
+    setupStaticAssets();
+    
+    // 404 handler
+    server.onNotFound(handleNotFound);
+}
 
-        // Setup page (only available in AP mode)
-        server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
-                  {
-            if (!isAPMode()) {
-                request->send(LittleFS, "/404.html.gz", "text/html", 404);
-                return;
-            }
-            // Serve uncompressed HTML to support captive portal mini-browsers
-            request->send(LittleFS, "/setup.html", "text/html"); });
-
-        // Setup endpoints for AP mode initial configuration
-        server.on("/api/setup", HTTP_GET, handleSetupGet);
-        server.on("/api/setup", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleSetupPost(request); }, NULL, handleChunkedUpload);
-
-        // WiFi scanning endpoint (needed for setup)
-        server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
-
-        // WiFi test endpoint (AP mode provisioning)
-        server.on("/api/test-wifi", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleTestWiFi(request); }, NULL, handleChunkedUpload);
-
-        // Captive portal detection URLs - redirect immediately to prevent file system access
-        // These handlers must come BEFORE setupStaticRoutes() to avoid 404 errors
-        server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->redirect("/setup.html");
-        });
-        
-        server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->redirect("/setup.html");
-        });
-        
-        server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->redirect("/setup.html");
-        });
-        
-        server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->redirect("/setup.html");
-        });
-
-        // Setup static file serving (serve setup.html by default in AP-STA) as catch‑all
-        // Disable gzip preference for captive portal (iOS/Android) mini-browsers
-        setupStaticRoutes("setup.html", /*tryGzipFirst=*/false);
-
-        // Catch all other requests and redirect to setup
-        server.onNotFound(handleCaptivePortal);
-    }
-    else
-    {
-        LOG_VERBOSE("WEB", "Setting up full routes for STA mode with route tracking");
-
-        // Initialize route tracking for STA mode only
-        registeredRoutes.clear();
-
-        // Add SSE endpoint for real-time updates
-        sseEvents.onConnect([](AsyncEventSourceClient *client)
-                            {
-            LOG_VERBOSE("WEB", "New SSE client connected - sending current printer data");
-            // Send current printer data immediately to new client
-            String printerData = getDiscoveredPrintersJson();
-            client->send(printerData.c_str(), "printer-update", millis()); });
-        server.addHandler(&sseEvents);
-
-        // Track the SSE endpoint
-        registeredRoutes.push_back({"GET", "/events", "Server-sent events", true});
-
-        // Connectivity check endpoints (avoid false 404s in STA mode)
-        server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request) {
-            AsyncWebServerResponse *resp = request->beginResponse(204);
-            resp->addHeader("Cache-Control", "no-cache");
-            request->send(resp);
-        });
-        server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->send(200, "text/html", "<html><body>OK</body></html>");
-        });
-        server.on("/connectivity-check.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->send(200, "text/html", "<html><body>OK</body></html>");
-        });
-        server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
-            request->send(200, "text/plain", "Microsoft NCSI");
-        });
-
-        // Register API endpoints
-        registerRoute("POST", "/api/print-local", "Print custom message", handlePrintContent, true);
-        registerRoute("GET", "/api/print-local", "Print custom message", handlePrintContent, true);
-
-        registerRoute("POST", "/api/character-test", "Print character test pattern", handlePrintTest, true);
-        registerRoute("GET", "/api/riddle", "Generate random riddle", handleRiddle, true);
-        registerRoute("GET", "/api/joke", "Generate random joke", handleJoke, true);
-        registerRoute("GET", "/api/quote", "Generate random quote", handleQuote, true);
-        registerRoute("GET", "/api/quiz", "Generate random quiz", handleQuiz, true);
-        registerRoute("GET", "/api/news", "Generate BBC news headlines", handleNews, true);
-        registerRoute("GET", "/api/poke", "Generate poke message", handlePoke, true);
-        registerRoute("GET", "/api/unbidden-ink", "Generate unbidden ink content", handleUnbiddenInk, true);
-        registerRoute("GET", "/api/user-message", "Generate user message", handleUserMessage, true);
-
-        // Memo API endpoints - registered later with other handlers
-
-        // Individual memo operations - using path parameters
-        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, [](AsyncWebServerRequest *request)
-                  { handleMemoGet(request); });
-        server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request)
-                  { handleMemoUpdate(request); }, NULL, handleChunkedUpload);
-
-        // Track memo routes for diagnostics
-        registeredRoutes.push_back({"GET", "/api/memo/{id}", "Get processed memo content", true});
-        registeredRoutes.push_back({"POST", "/api/memo/{id}", "Update specific memo", true});
-
-        registerRoute("GET", "/api/diagnostics", "System diagnostics", handleDiagnostics, true);
-        registerRoute("GET", "/api/routes", "List all routes and endpoints", handleRoutes, true);
-        registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump", handleNVSDump, true);
-        registerRoute("POST", "/api/print-mqtt", "Send MQTT message", handleMQTTSend, true);
-        registerRoute("GET", "/api/config", "Get configuration", handleConfigGet, true);
-        registerRoute("POST", "/api/config", "Update configuration", handleConfigPost, true);
-        registerRoute("POST", "/api/test-mqtt", "Test MQTT connection", handleTestMQTT, true);
-        // Timezone data: serve static file with proper caching (24 hours)
-        server.serveStatic("/api/timezones", LittleFS, "/resources/timezones.json")
-              .setCacheControl("public, max-age=86400");
-        registeredRoutes.push_back({"GET", "/api/timezones", "Get IANA timezone data (static file)", true});
-        registerRoute("GET", "/api/memos", "Get all memos", handleMemosGet, true);
-        registerRoute("POST", "/api/memos", "Update all memos", handleMemosPost, true);
-        registerRoute("GET", "/api/wifi-scan", "Scan WiFi networks", handleWiFiScan, true);
-
+void setupAPIRoutes()
+{
+    // Print endpoints
+    server.on("/api/print-local", HTTP_GET, handlePrintContent);
+    server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handlePrintContent(request);
+    }, NULL, handleChunkedUpload);
+    server.on("/api/character-test", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handlePrintTest(request);
+    }, NULL, handleChunkedUpload);
+    
+    // Content generation
+    server.on("/api/riddle", HTTP_GET, handleRiddle);
+    server.on("/api/joke", HTTP_GET, handleJoke);
+    server.on("/api/quote", HTTP_GET, handleQuote);
+    server.on("/api/quiz", HTTP_GET, handleQuiz);
+    server.on("/api/news", HTTP_GET, handleNews);
+    server.on("/api/poke", HTTP_GET, handlePoke);
+    server.on("/api/unbidden-ink", HTTP_GET, handleUnbiddenInk);
+    server.on("/api/user-message", HTTP_GET, handleUserMessage);
+    
+    // Memo endpoints (regex for path parameters)
+    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, handleMemoGet);
+    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleMemoUpdate(request);
+    }, NULL, handleChunkedUpload);
+    server.on("/api/memos", HTTP_GET, handleMemosGet);
+    server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleMemosPost(request);
+    }, NULL, handleChunkedUpload);
+    
+    // System endpoints
+    server.on("/api/diagnostics", HTTP_GET, handleDiagnostics);
+    server.on("/api/routes", HTTP_GET, handleRoutes);
+    server.on("/api/nvs-dump", HTTP_GET, handleNVSDump);
+    server.on("/api/config", HTTP_GET, handleConfigGet);
+    server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleConfigPost(request);
+    }, NULL, handleChunkedUpload);
+    server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
+    
+    // MQTT endpoints
+    server.on("/api/print-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleMQTTSend(request);
+    }, NULL, handleChunkedUpload);
+    server.on("/api/test-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleTestMQTT(request);
+    }, NULL, handleChunkedUpload);
+    
+    // Static timezone data
+    server.serveStatic("/api/timezones", LittleFS, "/resources/timezones.json")
+          .setCacheControl("public, max-age=86400");
+          
 #if ENABLE_LEDS
-        // Consolidated LED effect endpoints
-        registerRoute("POST", "/api/leds/test", "Trigger LED Effect", handleLedEffect, true);
-        registerRoute("POST", "/api/leds/off", "Turn LEDs Off", handleLedOff, true);
+    server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleLedEffect(request);
+    }, NULL, handleChunkedUpload);
+    server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request) {
+        handleLedOff(request);
+    }, NULL, handleChunkedUpload);
 #endif
+}
 
-        // Debug endpoint to list LittleFS contents (only in STA mode)
-        registerRoute("GET", "/debug/filesystem", "LittleFS debug info", [](AsyncWebServerRequest *request)
-                      {
-            String output = "LittleFS Debug:\n\nTotal space: " + String(LittleFS.totalBytes()) + " bytes\n";
-            output += "Used space: " + String(LittleFS.usedBytes()) + " bytes\n";
-            output += "Free space: " + String(LittleFS.totalBytes() - LittleFS.usedBytes()) + " bytes\n\n";
-            output += "Files:\n";
-            
-            File root = LittleFS.open("/");
-            if (!root || !root.isDirectory()) {
-                output += "Failed to open root directory\n";
-            } else {
-                listDirectory(root, output, 0);
-            }
-            
-            request->send(200, "text/plain", output); }, true);
-
-        // Debug endpoint to check specific file existence
-        registerRoute("GET", "/debug/file-check", "Check file existence", [](AsyncWebServerRequest *request)
-                      {
-            String output = "File Existence Check:\\n\\n";
-            
-            // Check the problem file
-            String testFile = "/js/app-common.js";
-            String testFileGz = "/js/app-common.js.gz";
-            
-            output += "Checking: " + testFile + "\\n";
-            output += "Exists: " + String(LittleFS.exists(testFile) ? "YES" : "NO") + "\\n";
-            if (LittleFS.exists(testFile)) {
-                File f = LittleFS.open(testFile, "r");
-                if (f) {
-                    output += "Size: " + String(f.size()) + " bytes\\n";
-                    f.close();
-                }
-            }
-            
-            output += "\\nChecking: " + testFileGz + "\\n";
-            output += "Exists: " + String(LittleFS.exists(testFileGz) ? "YES" : "NO") + "\\n";
-            if (LittleFS.exists(testFileGz)) {
-                File f = LittleFS.open(testFileGz, "r");
-                if (f) {
-                    output += "Size: " + String(f.size()) + " bytes\\n";
-                    f.close();
-                }
-            }
-            
-            request->send(200, "text/plain", output); }, true);
-
-        // Favicons/icons: already-compressed formats → disable .gz lookup
-        server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
-            .setTryGzipFirst(false)
-            .setCacheControl("max-age=604800");
-        server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png")
-            .setTryGzipFirst(false)
-            .setCacheControl("max-age=604800");
-        server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png")
-            .setTryGzipFirst(false)
-            .setCacheControl("max-age=604800");
-
-        // Static assets are handled by serveStatic with .setTryGzipFirst(true)
-
-        // CRITICAL: Setup static file serving AFTER all API routes and explicit asset handlers
-        // This ensures API endpoints and explicit favicon routes are matched before the catch-all static handler
-        // In STA mode, use clean routing without setDefaultFile conflicts
-        setupStaticRoutes();
-        
-        // Handle root explicitly - must come AFTER setupStaticRoutes (exact match only)
-        server.on("^/$", HTTP_GET, [](AsyncWebServerRequest *request) {
-            LOG_NOTICE("WEB", "Root handler matched for URL: %s", request->url().c_str());
-            request->redirect("/index.html");
-        });
-
-        // Track explicit favicon routes for diagnostics
-        registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Favicon PNG file", false});
-        registeredRoutes.push_back({"GET", "/favicon.ico", "Favicon ICO file", false});
-        registeredRoutes.push_back({"GET", "/apple-touch-icon.png", "Apple touch icon", false});
-
-        // Track static routes for diagnostics
-        registeredRoutes.push_back({"GET", "/*", "All other static files (HTML, CSS, JS, images)", false});
-
-        // 404 handler for STA mode (must be LAST)
-        server.onNotFound(handleNotFound);
-
-        // Add 404 handler to route tracking for diagnostics
-        RouteInfo notFoundRoute;
-        notFoundRoute.method = "ALL";
-        notFoundRoute.path = "(unmatched routes)";
-        notFoundRoute.description = "404 Not Found handler (serves /404.html)";
-        notFoundRoute.isAPI = false;
-        registeredRoutes.push_back(notFoundRoute);
-    }
-
-    LOG_VERBOSE("WEB", "Web server routes configured");
+void setupStaticAssets()
+{
+    // Explicit favicon handling (no compression needed)
+    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
+        .setTryGzipFirst(false)
+        .setCacheControl("max-age=604800");
+    server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png")
+        .setTryGzipFirst(false)
+        .setCacheControl("max-age=604800");
+    server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png")
+        .setTryGzipFirst(false)
+        .setCacheControl("max-age=604800");
+    
+    // All other static files
+    setupStaticFileServing(false);
 }
 
 // Helper function to recursively list directory contents
@@ -548,48 +366,7 @@ String getDiscoveredPrintersJson()
     return response;
 }
 
-void handlePrinterUpdates(AsyncWebServerRequest *request)
-{
-    // Get current printer list directly (already complete JSON)
-    String response = getDiscoveredPrintersJson();
-
-    // Calculate ETag on the complete response
-    uint32_t responseHash = 0;
-    for (int i = 0; i < response.length(); i++)
-    {
-        responseHash = responseHash * 31 + response.charAt(i);
-    }
-    String currentETag = String(responseHash);
-
-    // Check for If-None-Match header (ETag conditional request)
-    String clientETag = "";
-    if (request->hasHeader("If-None-Match"))
-    {
-        clientETag = request->header("If-None-Match");
-    }
-    LOG_VERBOSE("WEB", "ETag check - Client: %s, Current: %s", clientETag.c_str(), currentETag.c_str());
-
-    if (clientETag.length() > 0 && clientETag.equals("\"" + currentETag + "\""))
-    {
-        LOG_VERBOSE("WEB", "ETag match - sending 304 Not Modified");
-        // Response hasn't changed, send 304 Not Modified
-        AsyncWebServerResponse *response = request->beginResponse(304, "application/json", "");
-        response->addHeader("ETag", "\"" + currentETag + "\"");
-        response->addHeader("Cache-Control", "no-cache");
-        response->addHeader("Content-Length", "0");
-        request->send(response);
-        return;
-    }
-
-    LOG_VERBOSE("WEB", "ETag different - sending 200 with new data (length: %d)", response.length());
-    // Send response with ETag
-    AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
-    resp->addHeader("ETag", "\"" + currentETag + "\"");
-    resp->addHeader("Cache-Control", "no-cache");
-    resp->addHeader("Pragma", "no-cache");
-    resp->addHeader("Expires", "0");
-    request->send(resp);
-}
+// Removed handlePrinterUpdates (unused)
 
 // ========================================
 // SSE (Server-Sent Events) Functions

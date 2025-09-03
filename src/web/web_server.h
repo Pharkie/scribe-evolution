@@ -49,14 +49,24 @@ String getRequestBody(AsyncWebServerRequest *request);
 void addRegisteredRoutesToJson(JsonObject &endpoints);
 
 /**
- * @brief Register a route and track it for diagnostics
- * @param method HTTP method (GET, POST, etc.)
- * @param path Route path
- * @param description Human-readable description
- * @param handler Request handler function
- * @param isAPI Whether this is an API endpoint (vs web page)
+ * @brief Setup AP mode routes (captive portal)
  */
-void registerRoute(const char *method, const char *path, const char *description, ArRequestHandlerFunction handler, bool isAPI = true);
+void setupAPModeRoutes();
+
+/**
+ * @brief Setup STA mode routes (full web interface)
+ */
+void setupSTAModeRoutes();
+
+/**
+ * @brief Setup API endpoints for STA mode
+ */
+void setupAPIRoutes();
+
+/**
+ * @brief Setup static assets (favicons, etc.)
+ */
+void setupStaticAssets();
 
 /**
  * @brief Get JSON data for discovered printers (includes self via MQTT)
@@ -64,11 +74,7 @@ void registerRoute(const char *method, const char *path, const char *description
  */
 String getDiscoveredPrintersJson();
 
-/**
- * @brief Get printer discovery updates with change detection
- * Returns only changed data to minimize bandwidth
- */
-void handlePrinterUpdates(AsyncWebServerRequest *request);
+// Removed: handlePrinterUpdates (no longer used)
 
 /**
  * @brief Handle captive portal redirects in AP mode
