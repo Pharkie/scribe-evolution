@@ -17,6 +17,8 @@ esptool --port /dev/ttyUSB0 erase-flash
 
 **Step 2: Flash firmware**
 
+Change to the directory where you saved the .bin then
+
 ```bash
 esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-esp32c3-prod-complete.bin
 ```

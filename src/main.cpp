@@ -134,7 +134,7 @@ void setup()
   }
   else
   {
-    LOG_VERBOSE("BOOT", "Skipping NTP sync - no internet connection (AP mode)");
+    LOG_VERBOSE("BOOT", "Skipping NTP sync - no internet connection (AP-STA mode)");
   }
 
   // Record boot time for consistent reporting (after timezone is set)
@@ -166,7 +166,7 @@ void setup()
   }
   else
   {
-    LOG_NOTICE("BOOT", "Skipping hardware buttons setup (AP mode - configure WiFi first)");
+    LOG_NOTICE("BOOT", "Skipping hardware buttons setup (AP-STA mode - configure WiFi first)");
   }
 
 #if ENABLE_LEDS
@@ -220,7 +220,7 @@ void setup()
 
   if (isAPMode())
   {
-    LOG_NOTICE("BOOT", "=== Scribe Ready (AP Setup Mode) ===");
+    LOG_NOTICE("BOOT", "=== Scribe Ready (AP-STA Setup Mode) ===");
   }
   else
   {

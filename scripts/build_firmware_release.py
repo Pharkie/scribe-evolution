@@ -395,6 +395,8 @@ def create_release_info():
     try:
         with open(template_path, "r", encoding="utf-8") as f:
             template = f.read()
+        # Prefer macOS default port in README examples
+        template = template.replace("/dev/ttyUSB0", "/dev/cu.usbmodem1201")
     except FileNotFoundError:
         log(f"Warning: Template not found at {template_path}", "WARNING")
         log("Creating basic README without template", "WARNING")

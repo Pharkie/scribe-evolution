@@ -87,17 +87,31 @@ WiFiConnectionMode connectToWiFi()
     }
 
     currentWiFiMode = WIFI_MODE_CONNECTING;
-    
+
     WiFi.mode(WIFI_STA);
-    
-    // Force clean WiFi scan state before connecting
-    int scanState = WiFi.scanComplete();
-    if (scanState != WIFI_SCAN_RUNNING) {
-        LOG_NOTICE("NETWORK", "Cleaning WiFi scan state (%d) before connection", scanState);
-        WiFi.scanDelete();
-        delay(100); // Let WiFi stack reset
+
+    // Quick scan to avoid long blind wait if SSID isn't around
+    LOG_NOTICE("NETWORK", "Scanning for target SSID before connecting...");
+    // Blocking scan; typically a few seconds total, much less than a 15s timeout
+    int16_t foundCount = WiFi.scanNetworks();
+    bool ssidPresent = false;
+    for (int i = 0; i < foundCount; i++)
+    {
+        if (WiFi.SSID(i) == ssid)
+        {
+            ssidPresent = true;
+            break;
+        }
     }
-    
+    WiFi.scanDelete();
+
+    if (!ssidPresent)
+    {
+        Serial.println("📡 Target SSID not found in scan - starting AP-STA fallback immediately");
+        startFallbackAP();
+        return WIFI_MODE_AP_FALLBACK;
+    }
+
     WiFi.begin(ssid.c_str(), password.c_str());
 
     unsigned long startTime = millis();
@@ -122,7 +136,7 @@ WiFiConnectionMode connectToWiFi()
     }
     else
     {
-        // WiFi connection failed, starting AP mode
+        // WiFi connection failed, starting AP-STA fallback
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
@@ -140,7 +154,7 @@ void startFallbackAP()
         IPAddress apIP = WiFi.softAPIP();
         Serial.println();
         Serial.println("======================================");
-        Serial.println("🔴 DEVICE STARTED IN AP MODE");
+        Serial.println("🔴 DEVICE STARTED IN AP-STA MODE");
         Serial.println("======================================");
         Serial.println("WiFi Network: " + String(fallbackAPSSID));
         Serial.println("Setup URL: http://" + apIP.toString() + "/settings/");
@@ -157,7 +171,7 @@ void startFallbackAP()
     else
     {
         currentWiFiMode = WIFI_MODE_DISCONNECTED;
-        Serial.println("Failed to start AP mode!");
+        Serial.println("Failed to start AP-STA mode!");
     }
 }
 
