@@ -55,7 +55,7 @@ Dual Configuration System:
 Frontend Stack:
 
 - Alpine.js 3.14.9 (reactive framework)
-- Tailwind CSS 4.1.12 (utility-first styling)
+- Tailwind CSS 4.1.12 (utility-first styling; minimal custom CSS for fonts and a keyframes animation in `src/source-css-files`)
 - esbuild 0.25.9 (bundler)
 
 Backend Stack:

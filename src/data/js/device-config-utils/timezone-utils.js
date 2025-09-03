@@ -388,7 +388,9 @@ export function createTimezonePickerUI() {
       this.focusedIndex =
         this.focusedIndex < maxIndex ? this.focusedIndex + 1 : 0;
       nextTick(() => {
-        const options = refs.dropdown.querySelectorAll(".timezone-option");
+        const options = refs.dropdown.querySelectorAll(
+          "[data-timezone-option]",
+        );
         options[this.focusedIndex]?.focus();
       });
     },
