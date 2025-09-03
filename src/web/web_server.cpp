@@ -221,13 +221,51 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
 }
 
 // Helper function to setup static file serving (DRY principle)
-static void setupStaticRoutes(const char *defaultFile, bool tryGzipFirst)
+static void setupStaticRoutes(const char *defaultFile = nullptr, bool tryGzipFirst = true)
 {
-    // Single route for entire static filesystem - AsyncWebServer handles everything automatically
-    server.serveStatic("/", LittleFS, "/")
-        .setDefaultFile(defaultFile)
-        .setTryGzipFirst(tryGzipFirst)
-        .setCacheControl("max-age=31536000");
+    if (defaultFile != nullptr && String(defaultFile) == "setup.html") {
+        // AP mode - simple setup for captive portal
+        server.serveStatic("/", LittleFS, "/")
+            .setDefaultFile(defaultFile)
+            .setTryGzipFirst(tryGzipFirst)
+            .setCacheControl("max-age=31536000");
+    } else {
+        // STA mode - proper separation of directory and file handling
+        
+        // Root directory - serve index.html explicitly
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+            AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html.gz", "text/html");
+            if (response == nullptr) {
+                // Fallback to uncompressed version
+                response = request->beginResponse(LittleFS, "/index.html", "text/html");
+            } else {
+                response->addHeader("Content-Encoding", "gzip");
+            }
+            if (response != nullptr) {
+                response->addHeader("Cache-Control", "max-age=31536000");
+                request->send(response);
+            } else {
+                request->send(404, "text/html", "Index page not found");
+            }
+        });
+
+        // Settings directory with index behavior
+        server.serveStatic("/settings/", LittleFS, "/settings/")
+            .setDefaultFile("index.html")
+            .setTryGzipFirst(true)
+            .setCacheControl("max-age=31536000");
+
+        // Diagnostics directory with index behavior  
+        server.serveStatic("/diagnostics/", LittleFS, "/diagnostics/")
+            .setDefaultFile("index.html")
+            .setTryGzipFirst(true)
+            .setCacheControl("max-age=31536000");
+
+        // Catch-all for files - no setDefaultFile to prevent directory fallback
+        server.serveStatic("/", LittleFS, "/")
+            .setTryGzipFirst(true)
+            .setCacheControl("max-age=31536000");
+    }
 }
 
 // (Removed explicit per-file serving; rely on serveStatic with setTryGzipFirst)
