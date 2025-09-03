@@ -1,0 +1,38 @@
+LittleFS Debug:
+
+Total space: 1966080 bytes
+Used space: 1234567 bytes
+Free space: 731513 bytes
+
+Files:
+[DIR] css/
+  [FILE] app.css (12345 bytes)
+  [FILE] app.css.gz (4567 bytes)
+[DIR] js/
+  [FILE] alpine.js (46500 bytes)
+  [FILE] alpine.js.gz (15678 bytes)
+  [FILE] app-common.js (18057 bytes)
+  [FILE] app-common.js.gz (6789 bytes)
+  [FILE] page-index.js (14514 bytes)
+  [FILE] page-index.js.gz (5234 bytes)
+[DIR] images/
+  [FILE] ScribeLogoMain-white.svg (2134 bytes)
+  [FILE] ScribeLogoMain-black.svg (2256 bytes)
+[DIR] settings/
+  [FILE] index.html (3456 bytes)
+  [FILE] device.html (4567 bytes)
+  [FILE] wifi.html (3789 bytes)
+[DIR] diagnostics/
+  [FILE] index.html (2345 bytes)
+  [FILE] routes.html (3456 bytes)
+[DIR] fonts/
+  [FILE] outfit-variable.woff2 (98765 bytes)
+[FILE] index.html (5678 bytes)
+[FILE] index.html.gz (1890 bytes)
+[FILE] setup.html (4321 bytes)
+[FILE] setup.html.gz (1456 bytes)
+[FILE] 404.html (1234 bytes)
+[FILE] 404.html.gz (567 bytes)
+[FILE] favicon.ico (1234 bytes)
+[FILE] favicon-96x96.png (2345 bytes)
+[FILE] apple-touch-icon.png (3456 bytes)

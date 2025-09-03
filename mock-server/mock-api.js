@@ -43,6 +43,121 @@ function logSuccess(...args) {
   console.log(colors.green + args.join(" ") + colors.reset);
 }
 
+// =============================
+// Lightweight Router Helpers
+// =============================
+
+function isAPMode() {
+  return currentMode === "ap-mode";
+}
+
+function serveText(res, status, contentType, body) {
+  res.writeHead(status, {
+    "Content-Type": contentType,
+    "Access-Control-Allow-Origin": "*",
+  });
+  res.end(body);
+}
+
+function serveFileOr404(res, filePath) {
+  if (fs.existsSync(filePath) || fs.existsSync(filePath + ".gz")) {
+    return serveFile(res, filePath);
+  }
+  return sendNotFound(res);
+}
+
+function handleConnectivityProbes(req, res, pathname) {
+  // Captive portal probes
+  if (
+    pathname === "/hotspot-detect.html" ||
+    pathname === "/generate_204" ||
+    pathname === "/connectivity-check.html" ||
+    pathname === "/ncsi.txt"
+  ) {
+    if (isAPMode()) {
+      // In AP mode redirect to setup
+      res.writeHead(302, { Location: "/setup.html", "Access-Control-Allow-Origin": "*" });
+      res.end("Redirecting to setup page...");
+      return true;
+    }
+    // STA mode responses
+    if (pathname === "/generate_204") {
+      res.writeHead(204, { "Access-Control-Allow-Origin": "*" });
+      res.end();
+      return true;
+    }
+    if (pathname === "/ncsi.txt") {
+      serveText(res, 200, "text/plain", "Microsoft NCSI");
+      return true;
+    }
+    serveText(res, 200, "text/html", "<html><body>OK</body></html>");
+    return true;
+  }
+  return false;
+}
+
+function handleAPStatic(req, res, pathname) {
+  // Allow-list check to decide redirect vs serve
+  const allowed = [
+    "/setup.html",
+    "/css/",
+    "/js/",
+    "/images/",
+    "/fonts/",
+    "/site.webmanifest",
+    "/favicon.ico",
+    "/favicon.svg",
+    "/favicon-96x96.png",
+    "/apple-touch-icon.png",
+  ];
+
+  const isAllowed = allowed.some((p) => pathname === p || pathname.startsWith(p));
+
+  if (!isAllowed && pathname !== "/") {
+    res.writeHead(302, { Location: "/setup.html" });
+    res.end();
+    return;
+  }
+
+  if (pathname === "/") {
+    const setupPath = path.join(__dirname, "..", "data", "setup.html");
+    if (fs.existsSync(setupPath)) {
+      fs.readFile(setupPath, (err, data) => {
+        if (err) return sendNotFound(res);
+        res.writeHead(200, {
+          "Content-Type": "text/html",
+          "Cache-Control": "no-cache",
+          "Access-Control-Allow-Origin": "*",
+        });
+        res.end(data);
+      });
+      return;
+    }
+    return sendNotFound(res);
+  }
+
+  // Serve the file directly
+  const requestPath = pathname.substring(1);
+  const filePath = path.join(__dirname, "..", "data", requestPath);
+  serveFileOr404(res, filePath);
+}
+
+function handleSTAStatic(req, res, pathname) {
+  // Root defaults to index.html
+  if (pathname === "/") {
+    const indexPath = path.join(__dirname, "..", "data", "index.html");
+    return serveFileOr404(res, indexPath);
+  }
+  // Setup is not available in STA mode
+  if (pathname === "/setup.html") {
+    return sendNotFound(res);
+  }
+  // Direct static serve
+  const requestPath = pathname.substring(1) || "index.html";
+  const filePath = path.join(__dirname, "..", "data", requestPath);
+  serveFileOr404(res, filePath);
+}
+
 // Data-driven validation system - mirrors ESP32 CONFIG_FIELDS array
 const VALIDATION_TYPES = {
   STRING: "string",
@@ -1355,185 +1470,39 @@ function createRequestHandler() {
         sendJSON(res, { error: "API endpoint not found" }, 404);
       }
 
-      // Static file serving
-    } else {
-      // AP Mode captive portal behavior - redirect most requests to setup
-      if (currentMode === "ap-mode") {
-        // Allow essential files for setup page to work
-        const allowedPaths = [
-          "/setup.html",
+      // Done with API routing
+      return;
+    }
 
-          "/partials/settings/",
-          "/css/",
-          "/js/",
-          "/images/",
-          "/fonts/",
-          "/site.webmanifest",
-          "/favicon.ico",
-          "/favicon.svg",
-          "/favicon-96x96.png",
-          "/apple-touch-icon.png",
-        ];
-
-        const isAllowed = allowedPaths.some((path) =>
-          pathname.startsWith(path),
-        );
-
-        // Redirect everything else to setup (captive portal behavior)
-        if (!isAllowed && pathname !== "/") {
-          console.log(`🔀 AP Mode: Redirecting ${pathname} → /setup.html`);
-          res.writeHead(302, { Location: "/setup.html" });
-          res.end();
-          return;
-        }
-
-        // Root path in AP mode serves setup.html directly (matches live serveStatic default)
-        if (pathname === "/") {
-          const filePath = path.join(__dirname, "..", "data", "setup.html");
-          fs.readFile(filePath, (err, data) => {
-            if (err) {
-              return sendNotFound(res);
-            }
-            res.writeHead(200, {
-              "Content-Type": "text/html",
-              "Cache-Control": "no-cache",
-              "Access-Control-Allow-Origin": "*",
-            });
-            res.end(data);
-          });
-          return;
-        }
-      }
-
-      // Simple unified static file serving - like ESP32's single serveStatic route
-      let filePath;
-
-      if (pathname === "/") {
-        filePath = path.join(__dirname, "..", "data", "index.html");
-      } else if (pathname === "/setup.html" && currentMode !== "ap-mode") {
-        // Setup page only available in AP mode - serve 404 page
-        filePath = path.join(__dirname, "..", "data", "404.html");
-        serveFile(res, filePath, 404);
-        return;
-      } else if (pathname.endsWith("/")) {
-        // Directory requests serve index.html from that directory
-        filePath = path.join(
-          __dirname,
-          "..",
-          "data",
-          pathname.substring(1),
-          "index.html",
-        );
-      } else if (pathname === "/api/timezones") {
-        // Mirror device: serve static timezones file with gzip if present
-        const jsonPath = path.join(
-          __dirname,
-          "..",
-          "data",
-          "resources",
-          "timezones.json",
-        );
-        const gzPath = jsonPath + ".gz";
-        if (fs.existsSync(gzPath)) {
-          fs.readFile(gzPath, (err, data) => {
-            if (err) return sendNotFound(res);
-            res.writeHead(200, {
-              "Content-Type": "application/json",
-              "Content-Encoding": "gzip",
-              "Cache-Control": "public, max-age=86400",
-              "Access-Control-Allow-Origin": "*",
-            });
-            res.end(data);
-          });
-          return;
-        }
-        if (fs.existsSync(jsonPath)) {
-          fs.readFile(jsonPath, (err, data) => {
-            if (err) return sendNotFound(res);
-            res.writeHead(200, {
-              "Content-Type": "application/json",
-              "Cache-Control": "public, max-age=86400",
-              "Access-Control-Allow-Origin": "*",
-            });
-            res.end(data);
-          });
-          return;
-        }
-        return sendNotFound(res);
-      }
+    // Connectivity probes (handled for both modes)
+    if (handleConnectivityProbes(req, res, pathname)) {
+      return;
     }
 
     // Debug Routes
     if (pathname.startsWith("/debug/")) {
       if (pathname === "/debug/filesystem" && req.method === "GET") {
-        // Mock filesystem debug info (matches ESP32 output format)
-        const mockFilesystemData = `LittleFS Debug:
-
-Total space: 1966080 bytes
-Used space: 1234567 bytes
-Free space: 731513 bytes
-
-Files:
-[DIR] css/
-  [FILE] app.css (12345 bytes)
-  [FILE] app.css.gz (4567 bytes)
-[DIR] js/
-  [FILE] alpine.js (46500 bytes)
-  [FILE] alpine.js.gz (15678 bytes)
-  [FILE] app-common.js (18057 bytes)
-  [FILE] app-common.js.gz (6789 bytes)
-  [FILE] page-index.js (14514 bytes)
-  [FILE] page-index.js.gz (5234 bytes)
-[DIR] images/
-  [FILE] ScribeLogoMain-white.svg (2134 bytes)
-  [FILE] ScribeLogoMain-black.svg (2256 bytes)
-[DIR] settings/
-  [FILE] index.html (3456 bytes)
-  [FILE] device.html (4567 bytes)
-  [FILE] wifi.html (3789 bytes)
-[DIR] diagnostics/
-  [FILE] index.html (2345 bytes)
-  [FILE] routes.html (3456 bytes)
-[DIR] fonts/
-  [FILE] outfit-variable.woff2 (98765 bytes)
-[FILE] index.html (5678 bytes)
-[FILE] index.html.gz (1890 bytes)
-[FILE] setup.html (4321 bytes)
-[FILE] setup.html.gz (1456 bytes)
-[FILE] 404.html (1234 bytes)
-[FILE] 404.html.gz (567 bytes)
-[FILE] favicon.ico (1234 bytes)
-[FILE] favicon-96x96.png (2345 bytes)
-[FILE] apple-touch-icon.png (3456 bytes)`;
-
-        res.writeHead(200, {
-          "Content-Type": "text/plain",
-          "Access-Control-Allow-Origin": "*",
+        const fsPath = path.join(__dirname, "..", "data", "mock-filesystem.txt");
+        fs.readFile(fsPath, "utf8", (err, data) => {
+          if (err) return sendNotFound(res);
+          res.writeHead(200, {
+            "Content-Type": "text/plain",
+            "Access-Control-Allow-Origin": "*",
+          });
+          res.end(data);
         });
-        res.end(mockFilesystemData);
         return;
       } else {
         // Unknown debug endpoint
-        return send404(res, `Debug endpoint not found: ${pathname}`);
+        return sendNotFound(res);
       }
     }
 
-    // All other requests: try to serve the file directly from data/
-    let requestPath = pathname.substring(1); // Remove leading /
-
-    // Handle root path - serve index.html
-    if (requestPath === "") {
-      requestPath = "index.html";
+    // Static routing split by mode
+    if (isAPMode()) {
+      return handleAPStatic(req, res, pathname);
     }
-
-    filePath = path.join(__dirname, "..", "data", requestPath);
-
-    // If file doesn't exist, serve 404
-    if (!fs.existsSync(filePath) && !fs.existsSync(filePath + ".gz")) {
-      return sendNotFound(res);
-    }
-
-    serveFile(res, filePath);
+    return handleSTAStatic(req, res, pathname);
   };
 }
 
