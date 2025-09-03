@@ -1,7 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="data/images/ScribeLogoMain-white.svg.gz">
-  <source media="(prefers-color-scheme: light)" srcset="data/images/ScribeLogoMain-black.svg.gz">
-  <img alt="Scribe Evolution Logo" src="data/images/ScribeLogoMain-black.svg.gz">
+  <source media="(prefers-color-scheme: dark)" srcset="src/data/images/ScribeLogoMain-white.svg">
+  <source media="(prefers-color-scheme: light)" srcset="src/data/images/ScribeLogoMain-black.svg">
+  <img alt="Scribe Evolution Logo" src="src/data/images/ScribeLogoMain-black.svg">
 </picture>
 
 <br>
