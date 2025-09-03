@@ -175,9 +175,7 @@ function printStartupHelp() {
   console.log(
     "  r  Reload JSON data files only (config, diagnostics, routes, etc.)",
   );
-  console.log(
-    "  s  Restart server and hot-reload code + data",
-  );
+  console.log("  s  Restart server and hot-reload code + data");
   console.log("  x  Quit (graceful)");
   console.log("  Ctrl+C  Quit (graceful)");
   console.log("===================================================");
@@ -312,6 +310,9 @@ function reloadModules() {
   // Re-require and update references
   createRequestHandler = require("./router").createRequestHandler;
   loadMockData = require("./utils/data").loadMockData;
-  ({ validateConfigFields, logProcessedFields } = require("./utils/validation"));
+  ({
+    validateConfigFields,
+    logProcessedFields,
+  } = require("./utils/validation"));
   ({ sendNotFound } = require("./utils/respond"));
 }

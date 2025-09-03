@@ -14,64 +14,67 @@ function createRequestHandler(ctx) {
       pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
     } catch {}
     try {
-
-    // Preflight
-    if (req.method === "OPTIONS") {
-      res.writeHead(200, {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      });
-      res.end();
-      return;
-    }
-
-    // SSE
-    if (pathname === "/mqtt-printers") {
-      return handleSSE(req, res, ctx.mockPrinterDiscovery);
-    }
-
-    // Connectivity checks
-    if (handleConnectivity(pathname, req, res, ctx.isAPMode())) return;
-
-    // Favicon assets
-    if (
-      pathname === "/favicon.ico" ||
-      pathname === "/favicon-96x96.png" ||
-      pathname === "/apple-touch-icon.png"
-    ) {
-      const filePath = path.join(__dirname, "..", "data", pathname);
-      fs.readFile(filePath, (err, data) => {
-        if (err) return ctx.sendNotFound(res);
-        const contentType = pathname.endsWith(".ico")
-          ? "image/x-icon"
-          : "image/png";
+      // Preflight
+      if (req.method === "OPTIONS") {
         res.writeHead(200, {
-          "Content-Type": contentType,
-          "Cache-Control": "public, max-age=604800",
           "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
         });
-        res.end(data);
-      });
-      return;
-    }
+        res.end();
+        return;
+      }
 
-    // API
-    if (pathname.startsWith("/api/")) {
-      if (handleAPI(req, res, pathname, ctx)) return;
-      return;
-    }
+      // SSE
+      if (pathname === "/mqtt-printers") {
+        return handleSSE(req, res, ctx.mockPrinterDiscovery);
+      }
 
-    // Debug
-    if (handleDebug(pathname, res)) return;
+      // Connectivity checks
+      if (handleConnectivity(pathname, req, res, ctx.isAPMode())) return;
 
-    // Static by mode
-    if (ctx.isAPMode()) return handleAPStatic(pathname, res);
-    return handleSTAStatic(pathname, res);
+      // Favicon assets
+      if (
+        pathname === "/favicon.ico" ||
+        pathname === "/favicon-96x96.png" ||
+        pathname === "/apple-touch-icon.png"
+      ) {
+        const filePath = path.join(__dirname, "..", "data", pathname);
+        fs.readFile(filePath, (err, data) => {
+          if (err) return ctx.sendNotFound(res);
+          const contentType = pathname.endsWith(".ico")
+            ? "image/x-icon"
+            : "image/png";
+          res.writeHead(200, {
+            "Content-Type": contentType,
+            "Cache-Control": "public, max-age=604800",
+            "Access-Control-Allow-Origin": "*",
+          });
+          res.end(data);
+        });
+        return;
+      }
+
+      // API
+      if (pathname.startsWith("/api/")) {
+        if (handleAPI(req, res, pathname, ctx)) return;
+        return;
+      }
+
+      // Debug
+      if (handleDebug(pathname, res)) return;
+
+      // Static by mode
+      if (ctx.isAPMode()) return handleAPStatic(pathname, res);
+      return handleSTAStatic(pathname, res);
     } catch (e) {
       console.error("[mock] Unhandled error:", e?.message || e);
       if ((req.url || "").startsWith("/api/")) {
-        return sendJSON(res, { error: "Internal mock error", details: String(e?.message || e) }, 500);
+        return sendJSON(
+          res,
+          { error: "Internal mock error", details: String(e?.message || e) },
+          500,
+        );
       }
       return ctx.sendNotFound(res);
     }

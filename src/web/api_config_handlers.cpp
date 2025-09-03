@@ -496,8 +496,12 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
     else if (newConfig.mqttEnabled)
     {
-        // MQTT was already enabled, just update subscription
-        updateMQTTSubscription();
+        // MQTT was already enabled - restart client to avoid race conditions
+        // (especially after test connections that may leave client disconnected)
+        LOG_NOTICE("WEB", "MQTT config updated - restarting client to prevent race conditions");
+        stopMQTTClient();
+        delay(100); // Brief delay to ensure clean shutdown
+        startMQTTClient();
     }
 
 #if ENABLE_LEDS

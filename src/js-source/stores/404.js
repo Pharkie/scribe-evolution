@@ -108,7 +108,6 @@ export function createErrorStore() {
       window.location.href = "/diagnostics.html";
     },
 
-
     // Try to reload the requested page
     tryAgain() {
       window.location.reload();

@@ -188,30 +188,25 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
         return;
     }
 
-    if (!doc.containsKey("memos") || !doc["memos"].is<JsonArray>())
-    {
-        sendErrorResponse(request, 400, "Missing or invalid 'memos' array");
-        return;
-    }
+    // Expect individual memo fields: memo1, memo2, memo3, memo4
+    const char* memoFields[] = {"memo1", "memo2", "memo3", "memo4"};
+    String memoContents[MEMO_COUNT];
 
-    JsonArray memosArray = doc["memos"];
-    if (memosArray.size() != MEMO_COUNT)
-    {
-        sendErrorResponse(request, 400, "Must provide exactly 4 memos");
-        return;
-    }
-
-    // Validate all memos first
+    // Check that all memo fields are present
     for (int i = 0; i < MEMO_COUNT; i++)
     {
-        if (!memosArray[i].containsKey("content"))
+        if (!doc.containsKey(memoFields[i]))
         {
-            sendErrorResponse(request, 400, "Missing content for memo " + String(i + 1));
+            sendErrorResponse(request, 400, "Missing " + String(memoFields[i]));
             return;
         }
+        memoContents[i] = doc[memoFields[i]].as<String>();
+    }
 
-        String content = memosArray[i]["content"].as<String>();
-        ValidationResult validation = validateMessage(content, MEMO_MAX_LENGTH);
+    // Validate all memos
+    for (int i = 0; i < MEMO_COUNT; i++)
+    {
+        ValidationResult validation = validateMessage(memoContents[i], MEMO_MAX_LENGTH);
         if (!validation.isValid)
         {
             sendValidationError(request, validation, 400);
@@ -232,8 +227,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
 
     for (int i = 0; i < MEMO_COUNT; i++)
     {
-        String content = memosArray[i]["content"].as<String>();
-        if (!prefs.putString(memoKeys[i], content))
+        if (!prefs.putString(memoKeys[i], memoContents[i]))
         {
             allSuccess = false;
             break;

@@ -40,11 +40,11 @@ export function createSetupStore() {
     // WiFi scanning state using shared utilities
     wifiScan: createWiFiState(),
 
-  // WiFi test gating (simple: any credential change clears pass state)
-  wifiTesting: false,
-  wifiTestResult: null, // { success, message?, rssi?, ssid }
-  wifiTestPassed: false,
-  _confettiShown: false,
+    // WiFi test gating (simple: any credential change clears pass state)
+    wifiTesting: false,
+    wifiTestResult: null, // { success, message?, rssi?, ssid }
+    wifiTestPassed: false,
+    _confettiShown: false,
 
     // Timezone picker state using shared utilities
     timezonePicker: createTimezoneState(),
@@ -107,7 +107,7 @@ export function createSetupStore() {
         },
         scanWiFiNetworks,
       );
-  this.onWiFiCredentialsChanged();
+      this.onWiFiCredentialsChanged();
     },
 
     // Validation for setup form
@@ -117,7 +117,8 @@ export function createSetupStore() {
       const tz = this.config.device.timezone;
       const ssid = getEffectiveSSID(this.wifiScan);
       const pwd = this.config.device.wifi.password;
-      if (!owner || !owner.trim() || !tz || !ssid || !pwd || !pwd.trim()) return false;
+      if (!owner || !owner.trim() || !tz || !ssid || !pwd || !pwd.trim())
+        return false;
       return this.wifiTestPassed; // credentials change auto-clears pass
     },
 
@@ -217,7 +218,8 @@ export function createSetupStore() {
       if (this.wifiTestResult) {
         if (this.wifiTestPassed) {
           const rssi = this.wifiTestResult.rssi;
-          const signal = typeof rssi === "number" ? formatSignalStrength(rssi) : "OK";
+          const signal =
+            typeof rssi === "number" ? formatSignalStrength(rssi) : "OK";
           return `WiFi connected (Signal: ${signal})`;
         }
         return "WiFi connection failed";
@@ -241,8 +243,8 @@ export function createSetupStore() {
     async testWifiConnection() {
       if (this.wifiTesting) return;
 
-  const ssid = getEffectiveSSID(this.wifiScan);
-  const password = this.config.device.wifi.password || "";
+      const ssid = getEffectiveSSID(this.wifiScan);
+      const password = this.config.device.wifi.password || "";
 
       // Basic base form check
       if (!ssid || !password) {
@@ -258,18 +260,26 @@ export function createSetupStore() {
         this.wifiTestResult = result;
         if (result.success) {
           this.wifiTestPassed = true;
-          if (!this._confettiShown && typeof window !== 'undefined' && typeof window.confetti === 'function') {
+          if (
+            !this._confettiShown &&
+            typeof window !== "undefined" &&
+            typeof window.confetti === "function"
+          ) {
             // Inline SVG (Heroicons-style WiFi arcs) as image shape.
             // Decide color first, then bake it directly into the SVG stroke (no runtime recolor needed).
-            const isDark = document.documentElement.classList.contains('dark') ||
-              (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            const isDark =
+              document.documentElement.classList.contains("dark") ||
+              (window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches);
             // Bright pink in dark mode, dark green in light mode
-            const wifiColor = isDark ? '#ff2fae' : '#064e3b';
-            const rawWifiSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>" +
+            const wifiColor = isDark ? "#ff2fae" : "#064e3b";
+            const rawWifiSvg =
+              "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>" +
               `<path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' stroke='${wifiColor}' fill='none' d='M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z'/>` +
               "</svg>";
-            const wifiSvgDataUrl = "data:image/svg+xml;utf8," + encodeURIComponent(rawWifiSvg);
-            const btn = document.getElementById('test-wifi-button');
+            const wifiSvgDataUrl =
+              "data:image/svg+xml;utf8," + encodeURIComponent(rawWifiSvg);
+            const btn = document.getElementById("test-wifi-button");
             let origin = { x: 0.5, y: 0.5 };
             if (btn) {
               const rect = btn.getBoundingClientRect();
@@ -280,7 +290,7 @@ export function createSetupStore() {
             }
             this._confettiShown = true;
             const base = {
-              scalar: 2.4,            // Larger scalar (~2x original visual area)
+              scalar: 2.4, // Larger scalar (~2x original visual area)
               spread: 110,
               particleCount: 60,
               origin,
@@ -291,14 +301,16 @@ export function createSetupStore() {
             // Burst of WiFi icon shapes
             window.confetti({
               ...base,
-              shapes: ['image'],
+              shapes: ["image"],
               shapeOptions: {
-                image: [{
-                  src: wifiSvgDataUrl,
-                  replaceColor: false, // already baked color
-                  width: 24,
-                  height: 24,
-                }],
+                image: [
+                  {
+                    src: wifiSvgDataUrl,
+                    replaceColor: false, // already baked color
+                    width: 24,
+                    height: 24,
+                  },
+                ],
               },
               colors: [wifiColor], // not used for image now but harmless if future mix added
             });

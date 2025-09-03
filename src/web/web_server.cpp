@@ -333,6 +333,18 @@ void setupAPIRoutes()
     server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request)
               { handleLedOff(request); }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/leds/off", "Turn LEDs Off");
+#else
+    // Provide endpoints even when LEDs are disabled at build time
+    server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request)
+              {
+                  sendErrorResponse(request, 501, "LED functionality is disabled in this firmware build");
+              });
+    registerRoute("POST", "/api/leds/test", "Trigger LED Effect (disabled)");
+    server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request)
+              {
+                  sendErrorResponse(request, 501, "LED functionality is disabled in this firmware build");
+              });
+    registerRoute("POST", "/api/leds/off", "Turn LEDs Off (disabled)");
 #endif
 
     // Debug endpoint to list LittleFS contents (only in STA mode)

@@ -43,7 +43,6 @@ export function createIndexStore() {
     // Settings stashed indicator
     settingsStashed: false,
 
-
     // Active quick action (only one can be active at a time)
     activeQuickAction: null,
 
@@ -818,7 +817,11 @@ export function createIndexStore() {
               this.error = null;
             } else if (status === "error" || status === "reconnecting") {
               // Show status message as inline error
-              this.error = message || (status === "reconnecting" ? "Reconnecting to printer service" : "System error");
+              this.error =
+                message ||
+                (status === "reconnecting"
+                  ? "Reconnecting to printer service"
+                  : "System error");
             }
           } catch (error) {
             console.error("Error parsing system status:", error);
