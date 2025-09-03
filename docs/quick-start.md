@@ -18,7 +18,7 @@ Get your Scribe Evolution thermal printer up and running in minutes! This guide 
 
 ## Step 1: Download Firmware
 
-1. Go to the [Releases](https://github.com/YOUR_REPO/releases) page
+1. Go to the [Releases](https://github.com/Pharkie/scribe/releases) page
 2. Download the latest firmware for your board:
    - `scribe-esp32c3-vX.X.X.zip` for ESP32-C3 Supermini
    - `scribe-lolin32lite-vX.X.X.zip` for Lolin32 Lite
