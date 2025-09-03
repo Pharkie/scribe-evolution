@@ -259,33 +259,16 @@ export function createSetupStore() {
         if (result.success) {
           this.wifiTestPassed = true;
           if (!this._confettiShown && typeof window !== 'undefined' && typeof window.confetti === 'function') {
-            // Register custom "wifi" shape once (three concentric arcs + dot)
-            if (typeof window.confetti.addShape === 'function' && !window._wifiShapeRegistered) {
-              try {
-                // tsParticles confetti expects a drawer function signature: (ctx, particle, radius)
-                window.confetti.addShape('wifi', (ctx, particle, radius) => {
-                  const r = radius || 12;
-                  ctx.lineWidth = 2;
-                  // Use particle color if available
-                  const stroke = (particle && particle.color && particle.color.value) || ctx.fillStyle || '#ffffff';
-                  ctx.strokeStyle = stroke;
-                  ctx.fillStyle = stroke;
-                  // Draw three arcs (quarter to three-quarter for a "fan" look)
-                  for (let i = 1; i <= 3; i++) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, (r / 3) * i, Math.PI * 0.25, Math.PI * 0.75);
-                    ctx.stroke();
-                  }
-                  // Center dot
-                  ctx.beginPath();
-                  ctx.arc(0, 0, r / 6, 0, Math.PI * 2);
-                  ctx.fill();
-                });
-                window._wifiShapeRegistered = true;
-              } catch (e) {
-                // Silently ignore if registration fails
-              }
-            }
+            // Inline SVG (Heroicons-style WiFi arcs) as image shape.
+            // Decide color first, then bake it directly into the SVG stroke (no runtime recolor needed).
+            const isDark = document.documentElement.classList.contains('dark') ||
+              (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            // Bright pink in dark mode, dark green in light mode
+            const wifiColor = isDark ? '#ff2fae' : '#064e3b';
+            const rawWifiSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>" +
+              `<path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' stroke='${wifiColor}' fill='none' d='M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z'/>` +
+              "</svg>";
+            const wifiSvgDataUrl = "data:image/svg+xml;utf8," + encodeURIComponent(rawWifiSvg);
             const btn = document.getElementById('test-wifi-button');
             let origin = { x: 0.5, y: 0.5 };
             if (btn) {
@@ -296,17 +279,28 @@ export function createSetupStore() {
               };
             }
             this._confettiShown = true;
-            window.confetti({
-              particleCount: 160,
-              spread: 90,
-              startVelocity: 45,
+            const base = {
+              scalar: 2.4,            // Larger scalar (~2x original visual area)
+              spread: 110,
+              particleCount: 60,
+              origin,
+              startVelocity: 40,
               gravity: 0.9,
               decay: 0.92,
-              scalar: 1.05,
-              origin,
-              // Weight wifi shape heavier by listing it twice
-              shapes: ['wifi', 'wifi', 'star'],
-              colors: ['#16a34a', '#15803d', '#10b981', '#ffffff']
+            };
+            // Burst of WiFi icon shapes
+            window.confetti({
+              ...base,
+              shapes: ['image'],
+              shapeOptions: {
+                image: [{
+                  src: wifiSvgDataUrl,
+                  replaceColor: false, // already baked color
+                  width: 24,
+                  height: 24,
+                }],
+              },
+              colors: [wifiColor], // not used for image now but harmless if future mix added
             });
           }
         } else {
