@@ -143,7 +143,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // WiFi status information
     JsonObject wifiStatus = wifi.createNestedObject("status");
     wifiStatus["connected"] = (WiFi.status() == WL_CONNECTED);
-    wifiStatus["ap_mode"] = isAPMode(); // Indicate if device is in AP setup mode
+    wifiStatus["ap_sta_mode"] = isAPMode(); // Indicate if device is in AP-STA setup mode
     wifiStatus["ip_address"] = WiFi.localIP().toString();
     wifiStatus["mac_address"] = WiFi.macAddress();
     wifiStatus["gateway"] = WiFi.gatewayIP().toString();
@@ -521,7 +521,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     if (isAPMode())
     {
-        LOG_NOTICE("WEB", "Device in AP mode - rebooting to connect to new WiFi configuration");
+        LOG_NOTICE("WEB", "Device in AP-STA mode - rebooting to connect to new WiFi configuration");
         delay(1000);
         ESP.restart();
     }
@@ -731,10 +731,10 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
     request->send(200);
 
-    // In AP mode, reboot after short delay to connect to new WiFi
+    // In AP-STA mode, reboot after short delay to connect to new WiFi
     if (isAPMode())
     {
-        LOG_NOTICE("WEB", "Device in AP mode - rebooting to connect to new WiFi configuration");
+        LOG_NOTICE("WEB", "Device in AP-STA mode - rebooting to connect to new WiFi configuration");
         // Use async callback instead of blocking delay
         static WiFiEventId_t eventId = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
                                                     { ESP.restart(); }, ARDUINO_EVENT_WIFI_AP_STOP);
@@ -746,7 +746,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
 void handleSetupGet(AsyncWebServerRequest *request)
 {
-    LOG_VERBOSE("WEB", "handleSetupGet() called - AP mode setup configuration request");
+    LOG_VERBOSE("WEB", "handleSetupGet() called - AP-STA mode setup configuration request");
 
     // Create minimal configuration document for setup - only what's needed for initial configuration
     DynamicJsonDocument setupDoc(512);
@@ -788,7 +788,7 @@ void handleSetupGet(AsyncWebServerRequest *request)
     res->addHeader("Access-Control-Allow-Origin", "*");
     request->send(res);
 
-    LOG_VERBOSE("WEB", "Setup configuration sent (minimal for AP mode)");
+    LOG_VERBOSE("WEB", "Setup configuration sent (minimal for AP-STA mode)");
 }
 
 void handleTestMQTT(AsyncWebServerRequest *request)

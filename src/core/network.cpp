@@ -182,7 +182,7 @@ void setupmDNS()
     // Skip mDNS setup in AP mode - it's not useful and creates confusion
     if (isAPMode())
     {
-        Serial.println("Skipping mDNS setup (AP mode - use IP address instead)");
+        Serial.println("Skipping mDNS setup (AP-STA mode - use IP address instead)");
         return;
     }
 
@@ -253,6 +253,12 @@ void handleWiFiReconnection()
 bool isAPMode()
 {
     return currentWiFiMode == WIFI_MODE_AP_FALLBACK;
+}
+
+bool isAPSTAMode()
+{
+    // Currently AP-STA mode is represented by WIFI_MODE_AP_FALLBACK
+    return isAPMode();
 }
 
 void handleDNSServer()

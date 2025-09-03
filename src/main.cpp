@@ -158,7 +158,7 @@ void setup()
   initializePrinter();
 
   // Initialize hardware buttons (only in STA mode)
-  LOG_NOTICE("BOOT", "WiFi mode check: currentWiFiMode=%d, isAPMode()=%s", currentWiFiMode, isAPMode() ? "true" : "false");
+  LOG_NOTICE("BOOT", "WiFi mode check: currentWiFiMode=%d, isAPSTAMode()=%s", currentWiFiMode, isAPSTAMode() ? "true" : "false");
   if (!isAPMode())
   {
     LOG_NOTICE("BOOT", "Initializing hardware buttons (STA mode)");
@@ -196,7 +196,7 @@ void setup()
   {
     if (isAPMode())
     {
-      LOG_VERBOSE("BOOT", "Skipping MQTT setup (AP mode - configure WiFi first)");
+      LOG_VERBOSE("BOOT", "Skipping MQTT setup (AP-STA mode - configure WiFi first)");
     }
     else
     {

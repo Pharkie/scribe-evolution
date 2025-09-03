@@ -30,6 +30,8 @@ void handleWiFiReconnection();
 void updateStatusLED();
 void initializeStatusLED();
 bool isAPMode();
+// Alias for clarity in logs/UI when running softAP with STA: AP-STA mode
+bool isAPSTAMode();
 void handleDNSServer();
 void printAPDetailsOnStartup();
 

@@ -223,11 +223,11 @@ void registerPOSTRoute(const char *path, ArRequestHandlerFunction handler)
 }
 
 // Helper function to setup static file serving (DRY principle)
-void setupStaticRoutes()
+static void setupStaticRoutes(const char *defaultFile)
 {
     // Single route for entire static filesystem - AsyncWebServer handles everything automatically
     server.serveStatic("/", LittleFS, "/")
-        .setDefaultFile("index.html")
+        .setDefaultFile(defaultFile)
         .setCacheControl("max-age=31536000");
 }
 
@@ -238,7 +238,7 @@ void setupWebServerRoutes(int maxChars)
 
     if (isAPMode())
     {
-        LOG_NOTICE("WEB", "Setting up captive portal for AP mode setup");
+        LOG_NOTICE("WEB", "Setting up captive portal for AP-STA mode setup");
     }
     else
     {
@@ -248,7 +248,7 @@ void setupWebServerRoutes(int maxChars)
     // In AP mode, set up minimal captive portal - no route tracking needed
     if (isAPMode())
     {
-        LOG_VERBOSE("WEB", "Setting up captive portal for AP mode");
+        LOG_VERBOSE("WEB", "Setting up captive portal for AP-STA mode");
 
         // Setup page (only available in AP mode) - request->send requires explicit .gz
         server.on("/setup.html", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -297,8 +297,8 @@ void setupWebServerRoutes(int maxChars)
             request->send(response);
         });
 
-        // Setup static file serving
-        setupStaticRoutes();
+        // Setup static file serving (serve setup.html by default in AP-STA)
+        setupStaticRoutes("setup.html");
 
         // Catch all other requests and redirect to setup
         server.onNotFound(handleCaptivePortal);
@@ -406,7 +406,8 @@ void setupWebServerRoutes(int maxChars)
 
         // CRITICAL: Setup static file serving AFTER all API routes AND explicit favicon routes
         // This ensures API endpoints and explicit routes are matched before the catch-all static handler
-        setupStaticRoutes();
+        // In STA mode, serve index.html by default
+        setupStaticRoutes("index.html");
 
         // Track explicit favicon routes for diagnostics
         registeredRoutes.push_back({"GET", "/favicon-96x96.png", "Favicon PNG file", false});
