@@ -375,6 +375,12 @@ void setupStaticAssets()
         .setTryGzipFirst(false)
         .setCacheControl("max-age=604800");
     registerRoute("GET", "/apple-touch-icon.png", "Apple touch icon", false);
+
+    // Font: explicitly disable gzip fallback (no .woff2.gz present / immutable)
+    server.serveStatic("/fonts/outfit-variable.woff2", LittleFS, "/fonts/outfit-variable.woff2")
+        .setTryGzipFirst(false)
+        .setCacheControl("max-age=31536000");
+    registerRoute("GET", "/fonts/outfit-variable.woff2", "Outfit variable font", false);
     
     // All other static files
     setupStaticFileServing(false);

@@ -43,8 +43,6 @@ export function createIndexStore() {
     // Settings stashed indicator
     settingsStashed: false,
 
-    // Toast state
-    toasts: [],
 
     // Active quick action (only one can be active at a time)
     activeQuickAction: null,
@@ -264,7 +262,7 @@ export function createIndexStore() {
         this.message = "";
       } catch (error) {
         console.error("Submit error:", error);
-        this.showToast(`Error: ${error.message}`, "error");
+        this.error = `Error: ${error.message}`;
       } finally {
         this.submitting = false;
       }
@@ -285,7 +283,7 @@ export function createIndexStore() {
         const contentResult = await executeQuickAction(action);
 
         if (!contentResult.content) {
-          this.showToast("No content received from server", "error");
+          this.error = "No content received from server";
           return;
         }
 
@@ -302,7 +300,7 @@ export function createIndexStore() {
         // Note: No success toast - button state change provides feedback
       } catch (error) {
         console.error("Error sending quick action:", error);
-        this.showToast(`Network error: ${error.message}`, "error");
+        this.error = `Network error: ${error.message}`;
       } finally {
         // Reset active action after 2 seconds - Alpine.js will reactively update UI
         setTimeout(() => {
@@ -444,7 +442,7 @@ export function createIndexStore() {
         // Alpine will handle the visual feedback via $dispatch
       } catch (error) {
         console.error("Failed to copy:", error);
-        this.showToast("Failed to copy topic", "error");
+        this.error = "Failed to copy topic";
       }
     },
 
@@ -470,20 +468,7 @@ export function createIndexStore() {
       }
     },
 
-    // Toast management
-    showToast(message, type = "info") {
-      const id = Date.now();
-      const toast = { id, message, type };
-      this.toasts.push(toast);
-
-      setTimeout(() => {
-        this.removeToast(id);
-      }, 4000);
-    },
-
-    removeToast(id) {
-      this.toasts = this.toasts.filter((toast) => toast.id !== id);
-    },
+    // Toast management removed in favor of inline error state
 
     // Check for settings success
     checkForSettingsSuccess() {
@@ -501,7 +486,11 @@ export function createIndexStore() {
       }
       // Legacy support for old parameter
       else if (urlParams.get("settings_saved") === "true") {
-        this.showToast("💾 Settings saved", "success");
+        // Legacy param: map to settingsStashed indicator for consistency
+        this.settingsStashed = true;
+        setTimeout(() => {
+          this.settingsStashed = false;
+        }, 3000);
 
         // Clean up URL
         const cleanUrl = window.location.pathname;
@@ -789,7 +778,7 @@ export function createIndexStore() {
         }, 2000);
       } catch (error) {
         console.error("Failed to print memo:", error);
-        this.showToast(`Failed to print memo: ${error.message}`, "error");
+        this.error = `Failed to print memo: ${error.message}`;
       } finally {
         this.printing = false;
       }

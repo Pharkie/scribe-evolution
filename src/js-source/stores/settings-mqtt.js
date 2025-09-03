@@ -11,7 +11,7 @@ export function createSettingsMqttStore() {
   return {
     // ================== UTILITY FUNCTIONS ==================
     showErrorMessage(message) {
-      window.showMessage(message, "error");
+      this.error = message;
     },
 
     // ================== STATE MANAGEMENT ==================

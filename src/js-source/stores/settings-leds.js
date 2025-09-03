@@ -233,22 +233,7 @@ export function createSettingsLedsStore() {
 
     // ================== UTILITY FUNCTIONS ==================
     showErrorMessage(message) {
-      // Create and show error notification
-      const notification = document.createElement("div");
-      notification.className =
-        "fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300";
-      notification.textContent = message;
-      document.body.appendChild(notification);
-
-      // Auto-remove after 5 seconds
-      setTimeout(() => {
-        notification.style.opacity = "0";
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-          }
-        }, 300);
-      }, 5000);
+      this.error = message;
     },
   };
 }

@@ -21,9 +21,10 @@ import {
 export function createSettingsWifiStore() {
   return {
     // ================== UTILITY FUNCTIONS ==================
-    // Simple utility function extracted from repeated showMessage patterns
+    // Error helper: set inline reactive error state
     showErrorMessage(message) {
-      window.showMessage(message, "error");
+      this.error = message;
+      if (this.wifiScan) this.wifiScan.error = message;
     },
 
     // ================== STATE MANAGEMENT ==================
@@ -377,10 +378,7 @@ This memo printed from Settings → WiFi`;
         // Reset to normal state and show error to user
         this.apPrintStatus = "normal";
 
-        window.showMessage(
-          `Failed to print AP details: ${error.message}`,
-          "error",
-        );
+        this.error = `Failed to print AP details: ${error.message}`;
       }
     },
   };

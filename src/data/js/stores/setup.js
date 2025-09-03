@@ -100,9 +100,7 @@ export function createSetupStore() {
       await performWiFiScan(
         this.wifiScan,
         (message) => {
-          // Fail-fast: set reactive error state for inline banners
-          this.wifiScan.error = message;
-          this.error = message;
+          window.showMessage(message, "error");
         },
         scanWiFiNetworks,
       );
@@ -182,7 +180,7 @@ export function createSetupStore() {
     // Save configuration and restart (setup-specific behavior)
     async saveAndRestart() {
       if (!this.canSave) {
-        this.error = "Please fill in all required fields";
+        window.showMessage("Please fill in all required fields", "error");
         return;
       }
 
@@ -212,7 +210,10 @@ export function createSetupStore() {
         // Keep overlay showing for a few seconds, then device will restart anyway
       } catch (error) {
         console.error("Setup: Save failed:", error.message);
-        this.error = "Failed to save configuration: " + error.message;
+        window.showMessage(
+          "Failed to save configuration: " + error.message,
+          "error",
+        );
         this.saving = false;
       }
     },
@@ -239,7 +240,7 @@ export function createSetupStore() {
 
       // Basic base form check
       if (!ssid || !password) {
-        this.error = "Please fill in SSID and password first";
+        window.showMessage("Please fill in SSID and password first", "error");
         return;
       }
 

@@ -18,9 +18,9 @@ import {
 export function createSettingsDeviceStore() {
   return {
     // ================== UTILITY FUNCTIONS ==================
-    // Simple utility function extracted from repeated showMessage patterns
+    // Error helper: set inline reactive error state
     showErrorMessage(message) {
-      window.showMessage(message, "error");
+      this.error = message;
     },
 
     // ================== STATE MANAGEMENT ==================

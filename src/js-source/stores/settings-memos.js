@@ -230,24 +230,10 @@ export function createSettingsMemosStore() {
     },
 
     /**
-     * Show error message with consistent styling
-     * @param {string} message - Error message to display
-     * @param {number} duration - Duration in ms to show message (default: 5000)
+     * Show error message inline via reactive state
      */
-    showErrorMessage(message, duration = 5000) {
-      console.error("Error:", message);
-      // Create error toast - could be enhanced with a toast library
-      const errorDiv = document.createElement("div");
-      errorDiv.className =
-        "fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50";
-      errorDiv.textContent = message;
-      document.body.appendChild(errorDiv);
-
-      setTimeout(() => {
-        if (errorDiv.parentNode) {
-          errorDiv.parentNode.removeChild(errorDiv);
-        }
-      }, duration);
+    showErrorMessage(message) {
+      this.error = message;
     },
   };
 }
