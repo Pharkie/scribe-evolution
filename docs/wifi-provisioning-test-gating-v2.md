@@ -9,36 +9,38 @@ Execution checklist grouped by system:
 
 ESP32 Live Backend (Firmware + Web Server)
 
-- [ ] AP fallback mode: change `startFallbackAP()` in `src/core/network.cpp` to `WiFi.mode(WIFI_AP_STA)`; call `WiFi.softAP(...)` immediately after.
-- [ ] Routing allowlist: in `src/web/web_server.cpp` add `/api/test-wifi` to `handleCaptivePortal` allowlist (AP mode).
-- [ ] Route registration (AP mode): in `src/web/web_server.cpp` register `server.on("/api/test-wifi", HTTP_POST, handleTestWiFi)` inside the AP setup block.
-- [ ] Endpoint declaration: add `void handleTestWiFi(AsyncWebServerRequest *request);` to `src/web/api_system_handlers.h`.
-- [ ] Endpoint implementation: in `src/web/api_system_handlers.cpp` implement blocking test with mutex, 6.5s poll loop (`delay(75)` + `yield()` + `esp_task_wdt_reset()`), success RSSI, `WiFi.disconnect()`, and structured responses (200/400/408/409/422) with temporary WiFi event handlers for classification.
+- [x] AP fallback mode: change `startFallbackAP()` in `src/core/network.cpp` to `WiFi.mode(WIFI_AP_STA)`; call `WiFi.softAP(...)` immediately after.
+- [x] Routing allowlist: in `src/web/web_server.cpp` add `/api/test-wifi` to `handleCaptivePortal` allowlist (AP mode).
+- [x] Route registration (AP mode): in `src/web/web_server.cpp` register `server.on("/api/test-wifi", HTTP_POST, handleTestWiFi)` inside the AP setup block.
+- [x] Endpoint declaration: add `void handleTestWiFi(AsyncWebServerRequest *request);` to `src/web/api_system_handlers.h`.
+- [x] Endpoint implementation: in `src/web/api_system_handlers.cpp` implement blocking test with mutex, 6.5s poll loop (`delay(75)` + `yield()` + `esp_task_wdt_reset()`), success RSSI, `WiFi.disconnect()`, and structured responses (200/400/408/409/422) with temporary WiFi event handlers for classification.
 
 - Front-End (HTML/CSS/JS)
 
-- [ ] API: add `testWiFiConnection(ssid, password)` (POST `/api/test-wifi`) to `src/data/js/api/setup.js`.
-- [ ] Store: in `src/data/js/stores/setup.js` add state (`wifiTesting`, `wifiTestResult`, `wifiTestPassed`, `dirtySinceLastTest`), methods (`resetWifiTestState`, `markDirtyOnCredentialChange`, `testWifiConnection`), add Alpine `$watch` on SSID/password/mode changes to call `markDirtyOnCredentialChange`, and update `canSave` to require `wifiTestPassed && !dirtySinceLastTest`.
-- [ ] UI: in `src/data/setup.html` add a “Test WiFi” button with spinner, a status line, a gating banner, and disable scan while testing. Gate UI with `window.FEATURE_WIFI_TEST` (default true).
+- [x] API: add `testWiFiConnection(ssid, password)` (POST `/api/test-wifi`) to `src/data/js/api/setup.js`.
+- [x] Store: in `src/data/js/stores/setup.js` add state (`wifiTesting`, `wifiTestResult`, `wifiTestPassed`, `dirtySinceLastTest`), methods (`resetWifiTestState`, `markDirtyOnCredentialChange`, `testWifiConnection`), hook changes via input events, and update `canSave` to require `wifiTestPassed && !dirtySinceLastTest`.
+- [x] UI: in `src/data/setup.html` add a “Test WiFi” button with spinner, a status line, a gating banner, and disable scan while testing.
 - [ ] Docs: add a brief reference entry in `docs/frontend-patterns.md` describing the gating pattern and linking to this spec.
-- [ ] Shared utilities: do NOT split `src/data/js/device-config-utils/wifi-utils.js`. Keep it as the shared scan/state/validation layer used by both setup.html and wifi.html. Provisioning-specific logic lives in the setup store only.
+- [x] Shared utilities: do NOT split `src/data/js/device-config-utils/wifi-utils.js`. Keep it as the shared scan/state/validation layer used by both setup.html and wifi.html. Provisioning-specific logic lives in the setup store only.
 
 Mock Server (Node.js)
 
-- [ ] Implement `/api/test-wifi` in `mock-server/mock-api.js` under the `/api/*` block (before any captive-portal/static routing). Accept POST `{ ssid, password }`, simulate success/failure and 409 Busy with realistic delays, and return payloads identical to the firmware.
-- [ ] Preserve route precedence: ensure `/api/*` routes are processed before AP captive-portal redirects so `/api/test-wifi` works when running with `--ap-mode`.
+- [x] Implement `/api/test-wifi` in `mock-server/mock-api.js` under the `/api/*` block (before any captive-portal/static routing). Accept POST `{ ssid, password }`, simulate success/failure and 409 Busy with realistic delays, and return payloads identical to the firmware.
+- [x] Preserve route precedence: ensure `/api/*` routes are processed before AP captive-portal redirects so `/api/test-wifi` works when running with `--ap-mode`.
 
 Verification
 
-- [ ] Valid creds → Test → Success → Save enabled; mutate password → Save disabled until retest.
-- [ ] Invalid creds → Test → Fail → Save disabled.
-- [ ] Open network: blank password path works.
-- [ ] AP remains reachable during/after tests (disconnect does not drop AP).
+- [ ] Valid creds → Test → Success → Save enabled; mutate password → Save disabled until retest. (Live device)
+- [x] Invalid creds → Test → Fail → Proper error (mock verified: auth/no-AP/timeout)
+- [ ] Open network: blank password path works. (Live device)
+- [ ] AP remains reachable during/after tests (disconnect does not drop AP). (Live device)
 
-Rollback
+## Progress Summary
 
-- [ ] Toggle off UI: set `window.FEATURE_WIFI_TEST = false` to remove gating quickly.
-- [ ] Revert AP fallback change: switch `WIFI_AP_STA` back to `WIFI_AP` in `startFallbackAP()` if AP stability issues occur.
+- Firmware built successfully; AP fallback now uses AP+STA; new `/api/test-wifi` endpoint implemented with mutex and event-based error mapping.
+- Frontend gating implemented on setup.html with a dirty-flag. “Test WiFi” UI in place; Save gates on passed test with no changes.
+- Mock server endpoint `/api/test-wifi` added and verified for success, authentication failure, no AP, and timeout cases.
+- Next: Live device testing in AP setup flow to confirm STA test works under AP+STA, UI gating behavior, and AP remains reachable.
 
 ## 1. Objective
 
@@ -254,15 +256,7 @@ Implementation (DO THIS): Install temporary WiFi event handlers to classify fail
 | Mock                | `mock-server/mock-api.js`            | Add stub for `/api/test-wifi` to support FE development                  |
 | Docs                | `docs/frontend-patterns.md`          | Add reference section now                                                |
 
-## 11. UX Rollback Strategy
-
-If the blocking test proves unreliable:
-
-- Hide button & gating behind `window.FEATURE_WIFI_TEST` flag; default false to revert instantly.
-- Endpoint remains inert when unused; no data model changes to revert.
-- If AP stability issues are observed, revert AP fallback from `WIFI_AP_STA` back to `WIFI_AP` (single-line change) and disable test feature.
-
-## 12. Mock Server Parity Notes
+## 11. Mock Server Parity Notes
 
 - The mock server must mirror live routing behavior: all `/api/*` routes are handled before any AP-mode captive portal redirects. Keep this ordering intact so `/api/test-wifi` works in AP mode without extra allowlisting.
 - Return payloads that match firmware shapes exactly:
@@ -272,7 +266,7 @@ If the blocking test proves unreliable:
   - 422 `{ success: false, message: "Invalid payload" }`
 - Use timeouts that reflect the device: keep under 2s for dev ergonomics and provide a toggle to simulate a ~6.5s timeout path when testing long‑running behavior.
 
-## 13. Front-End Module Boundaries (Shared vs Provisioning-only)
+## 12. Front-End Module Boundaries (Shared vs Provisioning-only)
 
 - Keep `src/data/js/device-config-utils/wifi-utils.js` as the shared layer for:
   - `formatSignalStrength`, `deduplicateNetworks`, `sortNetworks`, `processNetworks`
