@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="src/data/images/ScribeLogoMain-white.svg">
-    <source media="(prefers-color-scheme: light)" srcset="src/data/images/ScribeLogoMain-black.svg">
-    <img alt="Scribe Evolution Logo" src="src/data/images/ScribeLogoMain-black.svg" width="80%" style="display:block;margin:0 auto;" />
+    <source media="(prefers-color-scheme: dark)" srcset="data/images/ScribeLogoMain-white.svg">
+    <source media="(prefers-color-scheme: light)" srcset="data/images/ScribeLogoMain-black.svg">
+    <img alt="Scribe Evolution Logo" src="data/images/ScribeLogoMain-black.svg" width="80%" style="display:block;margin:0 auto;" />
   </picture>
 </p>
 
