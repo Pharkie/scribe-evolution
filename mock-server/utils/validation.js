@@ -119,7 +119,6 @@ function validateConfigFields(configUpdate) {
     "device.printerTxPin": { type: T.GPIO },
     "wifi.ssid": { type: T.NON_EMPTY_STRING },
     "wifi.password": { type: T.STRING },
-    "wifi.connect_timeout": { type: T.RANGE_INT, min: 1000, max: 30000 },
     "mqtt.enabled": { type: T.BOOLEAN },
     "mqtt.server": { type: T.STRING },
     "mqtt.port": { type: T.RANGE_INT, min: 1, max: 65535 },

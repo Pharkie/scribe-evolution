@@ -28,7 +28,7 @@ export async function loadConfiguration() {
 /**
  * Save configuration to server API
  * @param {Object} configData - Configuration object to save
- * @returns {Promise<string>} Server response message
+ * @returns {Promise<Object|string>} Server response - object if JSON, string if text
  */
 export async function saveConfiguration(configData) {
   try {
@@ -46,7 +46,13 @@ export async function saveConfiguration(configData) {
       throw new Error(`Server error: ${response.status} - ${errorText}`);
     }
 
-    return "Configuration saved";
+    // Check if response is JSON (e.g., restart signal) or text
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return await response.json();
+    } else {
+      return "Configuration saved";
+    }
   } catch (error) {
     console.error("API: Failed to save configuration:", error);
     throw error;

@@ -34,6 +34,7 @@ export function createSettingsWifiStore() {
     saving: false,
     initialized: false, // Failsafe guard to prevent multiple inits
     apPrintStatus: "normal", // 'normal', 'scribing'
+    showRestartOverlay: false, // Show fullscreen restart overlay
 
     // Computed property to check if save should be enabled
     get canSave() {
@@ -77,11 +78,6 @@ export function createSettingsWifiStore() {
     },
     originalMaskedValues: {
       wifiPassword: "",
-    },
-
-    // Store original config to detect changes
-    originalConfig: {
-      connectTimeout: null,
     },
 
     // WiFi network scanning state using shared utilities
@@ -141,10 +137,6 @@ export function createSettingsWifiStore() {
       // Store original masked values for comparison
       this.originalMaskedValues.wifiPassword =
         this.config.device.wifi.password || "";
-
-      // Store original timeout for change detection
-      this.originalConfig.connectTimeout =
-        this.config.device.wifi.connect_timeout || 15000;
     },
 
     // Clear password field on focus (standard UX pattern)
@@ -208,20 +200,6 @@ export function createSettingsWifiStore() {
       }
     },
 
-    // Validate timeout field specifically (called from UI)
-    validateTimeout(value) {
-      const timeoutSeconds = parseInt(value);
-      if (isNaN(timeoutSeconds) || timeoutSeconds < 5 || timeoutSeconds > 60) {
-        this.validation.errors["wifi.connect_timeout"] =
-          "Timeout must be between 5-60 seconds";
-      } else {
-        // Clear the error if it was previously set
-        if (this.validation.errors["wifi.connect_timeout"]) {
-          delete this.validation.errors["wifi.connect_timeout"];
-        }
-      }
-    },
-
     // Validate current configuration using shared utility
     validateConfiguration() {
       const wifiValidation = validateWiFiConfig(
@@ -230,18 +208,8 @@ export function createSettingsWifiStore() {
         this.config.device.wifi.password,
       );
 
-      const errors = { ...wifiValidation.errors };
-
-      // Additional timeout validation specific to settings page
-      const timeoutSeconds = Math.floor(
-        this.config.device.wifi.connect_timeout / 1000,
-      );
-      if (timeoutSeconds < 5 || timeoutSeconds > 60) {
-        errors["wifi.connect_timeout"] = "Timeout must be between 5-60 seconds";
-      }
-
-      this.validation.errors = errors;
-      return Object.keys(errors).length === 0;
+      this.validation.errors = { ...wifiValidation.errors };
+      return Object.keys(this.validation.errors).length === 0;
     },
 
     // Check if configuration has meaningful changes using shared utility
@@ -257,17 +225,6 @@ export function createSettingsWifiStore() {
       // Password modified
       if (this.passwordsModified.wifiPassword) {
         return true;
-      }
-
-      // Timeout changed (compare current timeout vs original)
-      const currentTimeout = this.config.device.wifi.connect_timeout || 15000;
-      const originalTimeout = this.originalConfig.connectTimeout || 15000;
-      if (currentTimeout !== originalTimeout) {
-        // Only consider it a valid change if the timeout is within valid range
-        const timeoutSeconds = Math.floor(currentTimeout / 1000);
-        if (timeoutSeconds >= 5 && timeoutSeconds <= 60) {
-          return true;
-        }
       }
 
       return false;
@@ -290,7 +247,6 @@ export function createSettingsWifiStore() {
         const partialConfig = {
           wifi: {
             ssid: this.config.device.wifi.ssid,
-            connect_timeout: this.config.device.wifi.connect_timeout,
           },
         };
 
@@ -300,11 +256,19 @@ export function createSettingsWifiStore() {
         }
 
         console.log("📡 WiFi: Saving configuration");
-        const message = await saveConfiguration(partialConfig);
+        const response = await saveConfiguration(partialConfig);
+
+        // Check if response indicates restart is required
+        if (typeof response === "object" && response.restart) {
+          console.log("📡 WiFi: Device restarting to apply new settings");
+          this.showRestartOverlay = true;
+          // Don't redirect - let the overlay show
+          return;
+        }
 
         console.log("📡 WiFi: Configuration saved successfully");
 
-        // Redirect immediately with success parameter
+        // Normal save (no restart) - redirect to settings with success parameter
         window.location.href = "/settings/?saved=wifi";
       } catch (error) {
         console.error("📡 WiFi: Failed to save configuration:", error);

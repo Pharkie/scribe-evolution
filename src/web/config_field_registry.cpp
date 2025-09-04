@@ -80,7 +80,6 @@ const ConfigFieldDef CONFIG_FIELDS[] = {
     // WiFi configuration
     {"wifi.ssid", ValidationType::NON_EMPTY_STRING, offsetof(RuntimeConfig, wifiSSID), 0, 0, nullptr, 0},
     {"wifi.password", ValidationType::STRING, offsetof(RuntimeConfig, wifiPassword), 0, 0, nullptr, 0},
-    {"wifi.connect_timeout", ValidationType::RANGE_INT, offsetof(RuntimeConfig, wifiConnectTimeoutMs), 1000, 30000, nullptr, 0},
     
     // MQTT configuration
     {"mqtt.enabled", ValidationType::BOOLEAN, offsetof(RuntimeConfig, mqttEnabled), 0, 0, nullptr, 0},

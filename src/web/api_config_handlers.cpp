@@ -132,7 +132,6 @@ void handleConfigGet(AsyncWebServerRequest *request)
         wifi["ssid"] = config.wifiSSID;
         wifi["password"] = maskSecret(config.wifiPassword);
     }
-    wifi["connect_timeout"] = config.wifiConnectTimeoutMs;
 
     // Include fallback AP details for client use - always available regardless of current mode
     wifi["fallback_ap_ssid"] = fallbackAPSSID;
@@ -465,20 +464,45 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.ledEffects = getDefaultLedEffectsConfig();
 #endif
 
-    // Check if MQTT enabled state changed
+    // Check change states before saving (while currentConfig is still valid)
     const RuntimeConfig &currentConfig = getRuntimeConfig();
     bool mqttStateChanged = (currentConfig.mqttEnabled != newConfig.mqttEnabled);
+    
+    // Check if WiFi credentials changed
+    bool wifiCredentialsChanged = false;
+    if (doc.containsKey("wifi"))
+    {
+        JsonObject wifiObj = doc["wifi"];
+        
+        // Check if SSID changed
+        if (wifiObj.containsKey("ssid") && 
+            newConfig.wifiSSID != currentConfig.wifiSSID)
+        {
+            wifiCredentialsChanged = true;
+            LOG_NOTICE("WEB", "WiFi SSID changed from '%s' to '%s'", 
+                       currentConfig.wifiSSID.c_str(), 
+                       newConfig.wifiSSID.c_str());
+        }
+        
+        // Check if password changed (only if provided)
+        if (wifiObj.containsKey("password") && 
+            newConfig.wifiPassword != currentConfig.wifiPassword)
+        {
+            wifiCredentialsChanged = true;
+            LOG_NOTICE("WEB", "WiFi password changed");
+        }
+    }
 
-    // Update global runtime configuration
-    setRuntimeConfig(newConfig);
-
-    // Save to NVS for persistence
+    // FIRST: Save to NVS for persistence (fail-safe - don't update runtime if this fails)
     if (!saveNVSConfig(newConfig))
     {
         LOG_ERROR("WEB", "Failed to save configuration to NVS");
         sendErrorResponse(request, 500, "Failed to save configuration");
         return;
     }
+
+    // ONLY THEN: Update global runtime configuration (after successful NVS save)
+    setRuntimeConfig(newConfig);
 
     // Handle dynamic MQTT start/stop
     if (mqttStateChanged)
@@ -520,14 +544,39 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 #endif
 
-    request->send(200);
+    // Handle WiFi credential changes requiring restart
+    if (wifiCredentialsChanged && !isAPMode())
+    {
+        LOG_NOTICE("WEB", "WiFi credentials changed - device will restart to apply new settings");
+        
+        // Send response with restart flag
+        DynamicJsonDocument response(128);
+        response["restart"] = true;
+        response["reason"] = "wifi_change";
+        String jsonResponse;
+        serializeJson(response, jsonResponse);
+        request->send(200, "application/json", jsonResponse);
+        
+        // Schedule restart after response is sent
+        delay(2000);  // Give frontend time to show overlay
+        LOG_NOTICE("WEB", "Restarting to connect to new WiFi network: %s", 
+                   newConfig.wifiSSID.c_str());
+        ESP.restart();
+        return;
+    }
 
+    // Handle AP mode restart (existing logic)
     if (isAPMode())
     {
         LOG_NOTICE("WEB", "Device in AP-STA mode - rebooting to connect to new WiFi configuration");
+        request->send(200);
         delay(1000);
         ESP.restart();
+        return;
     }
+
+    // Normal success response (no restart needed)
+    request->send(200);
 }
 
 // ========================================

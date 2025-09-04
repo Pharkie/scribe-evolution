@@ -405,7 +405,7 @@
                   <!-- Close tabs container -->
 
                   <!-- Password field with eye toggle -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
                     <div class="space-y-2">
                       <label
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -470,34 +470,6 @@
                         class="text-xs text-red-600 dark:text-red-400"
                         x-text="validation.errors['wifi.password']"
                       ></p>
-                    </div>
-
-                    <!-- Connection Timeout -->
-                    <div class="space-y-2">
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Fallback delay (5–60s)</label
-                      >
-                      <input
-                        type="number"
-                        min="5"
-                        max="60"
-                        class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
-                        :value="Math.floor(config.device.wifi.connect_timeout / 1000)"
-                        @input="config.device.wifi.connect_timeout = parseInt($el.value) * 1000"
-                        @blur="validateTimeout($el.value)"
-                      />
-                      <p
-                        x-show="validation.errors['wifi.connect_timeout']"
-                        class="text-xs text-red-600 dark:text-red-400"
-                        x-text="validation.errors['wifi.connect_timeout']"
-                      ></p>
-                      <p
-                        x-show="!validation.errors['wifi.connect_timeout']"
-                        class="text-xs text-gray-500 dark:text-gray-400"
-                      >
-                        Connection timeout before fallback WiFi (AP) starts
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -731,6 +703,67 @@
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </template>
+
+      <!-- Full-screen restart overlay for WiFi changes -->
+      <template x-if="showRestartOverlay">
+        <div
+          x-data="{show:false}"
+          x-init="$nextTick(()=>show=true)"
+          x-show="show"
+          x-transition.opacity.duration.300ms
+          style="display: none"
+          class="fixed inset-0 bg-gray-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
+          <div
+            class="w-full max-w-lg bg-gray-900/60 border border-gray-700 rounded-2xl shadow-2xl px-8 py-10 text-gray-200 relative"
+          >
+            <ol class="space-y-6">
+              <li class="flex items-start gap-4">
+                <span
+                  class="text-sm mt-1 w-6 h-6 flex items-center justify-center rounded-full bg-gray-700 text-gray-300 font-medium select-none"
+                  >1</span
+                >
+                <p class="text-base leading-relaxed">
+                  Join the WiFi network you set.
+                </p>
+              </li>
+              <li class="flex items-start gap-4">
+                <span
+                  class="text-sm mt-1 w-6 h-6 flex items-center justify-center rounded-full bg-blue-600 text-white font-semibold shadow select-none"
+                  >2</span
+                >
+                <div class="flex-1">
+                  <div
+                    class="text-xs uppercase tracking-wider text-blue-300/80 mb-2 font-medium"
+                  >
+                    Visit
+                  </div>
+                  <div
+                    class="bg-gradient-to-r from-blue-600/30 to-green-600/30 border border-blue-500/40 rounded-xl px-4 py-4 shadow-inner"
+                  >
+                    <div
+                      class="text-lg md:text-xl font-semibold text-white break-all font-mono"
+                    >
+                      scribe-<span
+                        x-text="config.device?.owner?.toLowerCase().replace(/[^a-z0-9]/g, '')"
+                      ></span
+                      >.local
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ol>
+            <div class="mt-8 text-center text-sm text-gray-400">
+              Scribe Evolution is restarting.
+              <div class="mt-4 text-xs text-gray-500 leading-relaxed">
+                This page will not reconnect automatically. After Scribe
+                Evolution joins your network, visit the address above and close
+                this tab.
+              </div>
+            </div>
           </div>
         </div>
       </template>

@@ -14,7 +14,6 @@
     "wifi": {
       "ssid": "MockWiFi-Network",
       "password": "mo●●●●●●●●en",
-      "connect_timeout": 15000,
       "fallback_ap_ssid": "Scribe-setup",
       "fallback_ap_password": "scribe123",
       "fallback_ap_mdns": "scribe-mockuser.local",

@@ -110,6 +110,37 @@ function handleAPI(req, res, pathname, ctx) {
           return sendJSON(res, { error: validationResult.error }, 400);
         }
         logProcessedFields(configUpdate);
+
+        // Simulate WiFi credential change detection (in STA mode only)
+        if (!ctx.isAPMode() && configUpdate.wifi) {
+          const currentConfig = mockConfig; // Current mock config
+          let wifiCredentialsChanged = false;
+
+          // Check if SSID changed
+          if (
+            configUpdate.wifi.ssid &&
+            configUpdate.wifi.ssid !== currentConfig.device.wifi.ssid
+          ) {
+            wifiCredentialsChanged = true;
+            console.log(
+              `📡 Mock: WiFi SSID changed from '${currentConfig.device.wifi.ssid}' to '${configUpdate.wifi.ssid}'`,
+            );
+          }
+
+          // Check if password changed (if provided)
+          if (configUpdate.wifi.password) {
+            wifiCredentialsChanged = true;
+            console.log(`📡 Mock: WiFi password changed`);
+          }
+
+          // If WiFi credentials changed, return restart signal
+          if (wifiCredentialsChanged) {
+            console.log(`📡 Mock: Simulating device restart for WiFi changes`);
+            return sendJSON(res, { restart: true, reason: "wifi_change" }, 200);
+          }
+        }
+
+        // Normal config save (no restart)
         res.writeHead(200);
         res.end();
       } catch (error) {
