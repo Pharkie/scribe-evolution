@@ -52,7 +52,7 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
     try:
         # Play macOS "Glass" system sound
         subprocess.run(
-            ["/usr/bin/afplay", "-v", "0.2", "/System/Library/Sounds/Glass.aiff"],
+            ["/usr/bin/afplay", "-v", "0.8", "/System/Library/Sounds/Glass.aiff"],
             check=False,
         )
         print("🎵 Success sound played")
