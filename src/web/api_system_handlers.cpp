@@ -277,7 +277,7 @@ void handleMQTTSend(AsyncWebServerRequest *request)
     if (mqttClient.publish(topic.c_str(), payload.c_str()))
     {
         LOG_VERBOSE("WEB", "MQTT message sent to topic: %s (%d characters)", topic.c_str(), message.length());
-        request->send(200, "application/json", "{\"message\":\"Message scribed via MQTT\"}");
+        sendSuccessResponse(request, "Message scribed via MQTT");
     }
     else
     {

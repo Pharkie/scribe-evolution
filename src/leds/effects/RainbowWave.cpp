@@ -29,19 +29,15 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         leds[i] = wheel(hue);
     }
 
-    // Use frame counter for speed control - update phase only every few frames
-    frameCounter++;
-    if (frameCounter >= (8 - (int)config.speed)) // Faster speed = fewer frames to wait
-    {
-        frameCounter = 0;
-        effectPhase += 4.0f; // Speed of wave movement
+    // Advance the phase every update. config.speed is the phase increment per frame.
+    // Higher slider -> larger increment -> faster movement
+    effectPhase += max(0.1f, config.speed);
 
-        // Check if we completed a full rainbow cycle (0 -> 256 hue values)
-        if (effectPhase >= 256.0f)
-        {
-            effectPhase = 0.0f;
-            completedCycles++;
-        }
+    // Check if we completed a full rainbow cycle (0 -> 256 hue values)
+    if (effectPhase >= 256.0f)
+    {
+        effectPhase = 0.0f;
+        completedCycles++;
     }
 
     return true; // Continue running (cycle tracking handled by LedEffects manager)

@@ -35,10 +35,17 @@ String currentSubscribedTopic = "";
 // Persistent CA certificate buffer (must outlive wifiSecureClient)
 static String caCertificateBuffer;
 
+// Guard to prevent duplicate MQTT initialization
+static bool mqttSetupCompleted = false;
 
 // === MQTT Functions ===
 void setupMQTT()
 {
+    // Prevent duplicate initialization
+    if (mqttSetupCompleted) {
+        LOG_VERBOSE("MQTT", "MQTT already configured, skipping setup");
+        return;
+    }
     // Load CA certificate exactly like test - local String variable
     LOG_VERBOSE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
@@ -89,6 +96,9 @@ void setupMQTT()
 
     const char* tlsMode = mqttClient.connected() ? "Secure (TLS with CA verification)" : "Secure (TLS configured, connection pending)";
     LOG_NOTICE("MQTT", "MQTT server configured: %s:%d | Inbox topic: %s | TLS mode: %s | Buffer size: %d bytes", config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), tlsMode, mqttBufferSize);
+    
+    // Mark setup as completed
+    mqttSetupCompleted = true;
 }
 
 void connectToMQTT()
@@ -435,11 +445,6 @@ void updateMQTTSubscription()
     }
 }
 
-void setupMQTTWithDiscovery()
-{
-    setupMQTT();
-    setupPrinterDiscovery();
-}
 
 // Dynamic MQTT control functions
 bool isMQTTEnabled()

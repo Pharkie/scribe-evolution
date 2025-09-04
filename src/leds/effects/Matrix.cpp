@@ -57,9 +57,10 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         fadeToBlackBy(leds, i, config.backgroundFade);
     }
 
-    // Use frame counter for speed control - update only every few frames
+    // Use frame counter for speed control.
+    // config.speed represents a frame delay (smaller = faster)
     frameCounter++;
-    if (frameCounter >= 3) // Update every 3 frames for slower matrix effect
+    if (frameCounter >= config.speed)
     {
         frameCounter = 0;
 

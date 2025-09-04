@@ -468,6 +468,17 @@ void handleConfigPost(AsyncWebServerRequest *request)
     const RuntimeConfig &currentConfig = getRuntimeConfig();
     bool mqttStateChanged = (currentConfig.mqttEnabled != newConfig.mqttEnabled);
     
+    // Check if MQTT settings changed (only matters if MQTT is enabled)
+    bool mqttSettingsChanged = false;
+    if (doc.containsKey("mqtt") && newConfig.mqttEnabled) {
+        mqttSettingsChanged = (
+            currentConfig.mqttServer != newConfig.mqttServer ||
+            currentConfig.mqttPort != newConfig.mqttPort ||
+            currentConfig.mqttUsername != newConfig.mqttUsername ||
+            currentConfig.mqttPassword != newConfig.mqttPassword
+        );
+    }
+    
     // Check if WiFi credentials changed
     bool wifiCredentialsChanged = false;
     if (doc.containsKey("wifi"))
@@ -518,7 +529,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
             stopMQTTClient();
         }
     }
-    else if (newConfig.mqttEnabled)
+    else if (mqttSettingsChanged)
     {
         // MQTT settings changed but was already enabled - restart cleanly
         LOG_NOTICE("WEB", "MQTT settings updated - restarting client");
@@ -907,9 +918,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     if (!certFile)
     {
         LOG_ERROR("WEB", "TEST: Failed to open CA certificate file for MQTT test");
-        AsyncWebServerResponse *res = request->beginResponse(500, "application/json", "{\"success\":false,\"message\":\"CA certificate file not found\"}");
-        res->addHeader("Access-Control-Allow-Origin", "*");
-        request->send(res);
+        sendErrorResponse(request, 500, "CA certificate file not found");
         return;
     }
 
@@ -921,9 +930,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     if (certContent.length() == 0)
     {
         LOG_ERROR("WEB", "TEST: CA certificate file is empty for MQTT test");
-        AsyncWebServerResponse *res = request->beginResponse(500, "application/json", "{\"success\":false,\"message\":\"CA certificate file is empty\"}");
-        res->addHeader("Access-Control-Allow-Origin", "*");
-        request->send(res);
+        sendErrorResponse(request, 500, "CA certificate file is empty");
         return;
     }
 

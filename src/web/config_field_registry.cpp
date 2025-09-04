@@ -263,20 +263,56 @@ bool processConfigField(const char* jsonPath, JsonVariant value, RuntimeConfig& 
 }
 
 bool processJsonObject(const String& pathPrefix, JsonObject jsonObj, RuntimeConfig& config, String& errorMsg) {
+    // Use ArduinoJson's flat iteration to avoid stack overflow - no recursion!
+    // Process each key-value pair at current level only
+    
     for (JsonPair kv : jsonObj) {
-        String fieldPath = pathPrefix.length() > 0 ? pathPrefix + "." + kv.key().c_str() : String(kv.key().c_str());
+        const char* key = kv.key().c_str();
+        JsonVariant value = kv.value();
         
-        if (kv.value().is<JsonObject>()) {
-            // Recursive processing for nested objects
-            if (!processJsonObject(fieldPath, kv.value().as<JsonObject>(), config, errorMsg)) {
-                return false;
+        // Build path for this field
+        String fieldPath;
+        if (pathPrefix.length() > 0) {
+            fieldPath = pathPrefix + "." + key;
+        } else {
+            fieldPath = key;
+        }
+        
+        if (value.is<JsonObject>()) {
+            // For nested objects, we need to handle them differently
+            // Instead of recursion, process all known nested paths directly
+            JsonObject nestedObj = value.as<JsonObject>();
+            
+            // Process each nested key-value pair
+            for (JsonPair nestedKv : nestedObj) {
+                String nestedPath = fieldPath + "." + nestedKv.key().c_str();
+                
+                if (nestedKv.value().is<JsonObject>()) {
+                    // Handle double-nesting (like buttons.button1.*)
+                    JsonObject doubleNestedObj = nestedKv.value().as<JsonObject>();
+                    for (JsonPair doubleNestedKv : doubleNestedObj) {
+                        String doublePath = nestedPath + "." + doubleNestedKv.key().c_str();
+                        if (!processConfigField(doublePath.c_str(), doubleNestedKv.value(), config, errorMsg)) {
+                            return false;
+                        }
+                    }
+                } else {
+                    // Single-nested field
+                    if (!processConfigField(nestedPath.c_str(), nestedKv.value(), config, errorMsg)) {
+                        return false;
+                    }
+                }
             }
         } else {
-            // Process leaf field
-            if (!processConfigField(fieldPath.c_str(), kv.value(), config, errorMsg)) {
+            // Top-level field
+            if (!processConfigField(fieldPath.c_str(), value, config, errorMsg)) {
                 return false;
             }
         }
+        
+        // Feed watchdog every few iterations
+        yield();
     }
+    
     return true;
 }

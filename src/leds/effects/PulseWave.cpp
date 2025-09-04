@@ -38,12 +38,13 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
         leds[i] = color;
     }
 
-    // Use frame counter for speed control - update phase only every few frames
+    // Use frame counter for speed control.
+    // config.speed represents a frame delay (smaller = faster)
     frameCounter++;
-    if (frameCounter >= (10 - config.speed)) // Faster speed = fewer frames to wait
+    if (frameCounter >= config.speed)
     {
         frameCounter = 0;
-        effectPhase += 8.0f; // Increment phase
+        effectPhase += 8.0f; // Increment phase per update
 
         // Check if we completed a full cycle (0 -> 360 degrees)
         if (effectPhase >= 360.0f)

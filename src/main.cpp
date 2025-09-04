@@ -187,11 +187,10 @@ void setup()
   // Setup mDNS
   setupmDNS();
 
-  // Setup MQTT with printer discovery (only in STA mode and when MQTT enabled)
+  // Setup MQTT client (only in STA mode and when MQTT enabled)
   if (!isAPMode() && isMQTTEnabled())
   {
-    setupMQTTWithDiscovery();
-    startMQTTClient(true);   // true = immediate connection on boot (WiFi is already stable)
+    startMQTTClient(true);    // true = immediate connection on boot (WiFi is already stable)
   }
   else
   {
