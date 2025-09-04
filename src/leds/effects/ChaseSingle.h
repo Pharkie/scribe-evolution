@@ -18,6 +18,11 @@
 
 /**
  * @brief Single color chase effect with fading trail
+ *
+ * Parameters semantics:
+ * - speed (1..100): steps-per-frame ×100. 1 ≈ 0.30 spf (slow), 100 ≈ 1.20 spf (fast).
+ * - intensity (1..100): trail length from 2..20 LEDs, linearly mapped.
+ * - cycles: one cycle = head traverses strip and entire trail exits.
  */
 class ChaseSingle : public EffectBase
 {

@@ -156,6 +156,12 @@ private:
     // Modular effect system
     EffectBase *currentEffect;
     EffectRegistry *effectRegistry;
+
+    // Final fade management (manager-driven)
+    bool finalFadeActive;
+    unsigned long finalFadeStart;
+    static constexpr unsigned long finalFadeDurationMs = 3000; // 3s fade-out
+    CRGB *finalFadeBase = nullptr; // Snapshot of LEDs at fade start
 };
 
 extern LedEffects ledEffects;

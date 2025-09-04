@@ -17,6 +17,11 @@
 /**
  * @brief Rainbow wave effect that cycles through the color spectrum
  * Creates a moving rainbow pattern across the LED strip
+ *
+ * Parameters semantics:
+ * - speed (1..100): phase increment per frame (larger = faster).
+ * - intensity (1..100): hue step (wave density) mapping; higher = shorter waves.
+ * - cycles: one cycle = 0..255 hue traversal; includes 1s fade-in at start, ~1s fade-out near end.
  */
 class RainbowWave : public EffectBase
 {
@@ -51,6 +56,7 @@ public:
 private:
     RainbowConfig config; // Store the autonomous configuration
     int frameCounter;     // Frame counter for speed control
+    unsigned long startMillis = 0; // For fade-in timing
 
     /**
      * @brief Convert hue to RGB color (color wheel function)

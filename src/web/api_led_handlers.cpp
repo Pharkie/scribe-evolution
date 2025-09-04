@@ -68,7 +68,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
     LOG_VERBOSE("LEDS", "Full request body: %s", body.c_str());
 
     // Parse required parameters
-    int cycles = 1; // Default value
+    int cycles = DEFAULT_LED_EFFECT_CYCLES; // Default cycles from led_config.h
     if (doc.containsKey("cycles"))
     {
         if (doc["cycles"].is<int>())
@@ -81,7 +81,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
             String cyclesStr = doc["cycles"].as<String>();
             cycles = cyclesStr.toInt();
             if (cycles <= 0)
-                cycles = 1; // Ensure valid value
+                cycles = DEFAULT_LED_EFFECT_CYCLES; // Ensure valid value from defaults
         }
     }
 
@@ -247,15 +247,18 @@ void handleLedEffect(AsyncWebServerRequest *request)
     // This will be used for the playground without saving to permanent config
 #ifdef ENABLE_LEDS
     {
-        LedEffectsConfig playgroundConfig = {}; // Start with empty config
+        // Start from current runtime defaults so missing parameters keep defaults from led_config.h
+        LedEffectsConfig playgroundConfig = getRuntimeConfig().ledEffects;
 
         // Get LED configuration for calculations
         const RuntimeConfig &config = getRuntimeConfig();
         int ledCount = config.ledCount;
 
         // Map 1–100 speed/intensity to reasonable effect parameters (50 = ideal)
-        int speed = settings["speed"] | 50;         // Default to 50 if missing
-        int intensity = settings["intensity"] | 50; // Default to 50 if missing
+        bool speedProvided = doc.containsKey("speed");
+        bool intensityProvided = doc.containsKey("intensity");
+        int speed = speedProvided ? (int)doc["speed"] : 50;         // Only used if provided
+        int intensity = intensityProvided ? (int)doc["intensity"] : 50; // Only used if provided
         // Clamp to expected range (1..100)
         speed = max(1, min(100, speed));
         intensity = max(10, min(100, intensity));
@@ -280,19 +283,21 @@ void handleLedEffect(AsyncWebServerRequest *request)
         if (effectName.equalsIgnoreCase("chase_single"))
         {
             // Map slider to steps-per-frame (x100 fixed-point) for smooth speed
-            // Goal: compress previous fast range (95-100) into 1-100, with 100 ~20% faster than old max.
+            // 1 => 40% slower than previous minimum (0.30 spf), 100 keeps current max (1.20 spf)
             auto mapStepsPerFrameX100 = [&](int s)
             {
                 float t = (float)(s - 1) / 99.0f; // 0..1
-                float minStep = 0.50f;            // ~2 frames/step at low end (not sluggish)
-                float maxStep = 1.20f;            // ~20% faster than 1 step/frame
+                float minStep = 0.30f;            // ~40% slower than previous 0.50
+                float maxStep = 1.20f;            // keep current max
                 float spf = minStep + (maxStep - minStep) * powf(t, 1.7f);
                 return (int)(spf * 100.0f + 0.5f);
             };
 
-            playgroundConfig.chaseSingle.speed = mapStepsPerFrameX100(speed);
+            if (speedProvided)
+                playgroundConfig.chaseSingle.speed = mapStepsPerFrameX100(speed);
 
             // Intensity 1..100 -> trail length 2..20 (linear)
+            if (intensityProvided)
             {
                 int trailLen = (int)(2 + ((intensity - 1) * 18.0f / 99.0f) + 0.5f);
                 playgroundConfig.chaseSingle.trailLength = max(2, min(20, trailLen));
@@ -306,15 +311,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
             auto mapStepsPerFrameX100 = [&](int s)
             {
                 float t = (float)(s - 1) / 99.0f; // 0..1
-                float minStep = 0.50f;
+                float minStep = 0.30f;
                 float maxStep = 1.20f;
                 float spf = minStep + (maxStep - minStep) * powf(t, 1.7f);
                 return (int)(spf * 100.0f + 0.5f);
             };
-
-            playgroundConfig.chaseMulti.speed = mapStepsPerFrameX100(speed);
+            if (speedProvided)
+                playgroundConfig.chaseMulti.speed = mapStepsPerFrameX100(speed);
 
             // Intensity 1..100 -> trail length 2..20 (linear)
+            if (intensityProvided)
             {
                 int trailLen = (int)(2 + ((intensity - 1) * 18.0f / 99.0f) + 0.5f);
                 playgroundConfig.chaseMulti.trailLength = max(2, min(20, trailLen));
@@ -335,9 +341,12 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("matrix"))
         {
-            // Higher slider -> faster updates; keep movement smooth by limiting delay range
-            int frameDelay = mapFrameDelayExp(speed, /*min*/ 1, /*max*/ 6, /*exp*/ 2.0f);
-            playgroundConfig.matrix.speed = frameDelay;
+            // Speed controls droplet spawn target per cycle: 1->3, 100->10
+            if (speedProvided)
+            {
+                int targetDrops = (int)roundf(3.0f + (float)(speed - 1) * (10.0f - 3.0f) / 99.0f);
+                playgroundConfig.matrix.drops = max(1, targetDrops);
+            }
 
             // Intensity: 10-100 -> number of drops (50 = good density, scales with LED count)
             // For 30 LEDs: 50 intensity = ~6 drops, 10 = 1-2 drops, 100 = 10-12 drops
@@ -352,9 +361,9 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("twinkle"))
         {
-            // Higher slider -> faster twinkling: use larger fade step for faster fade
-            int fadeStep = mapRangeExp(speed, /*min*/ 1, /*max*/ 64, /*exp*/ 1.6f);
-
+            // Higher slider -> faster twinkling. Speed=1 is ~50% faster than previous minimum.
+            int fadeStep = mapRangeExp(speed, /*min*/ 2, /*max*/ 64, /*exp*/ 1.6f);
+            
             // Intensity: 1-100 -> number of active twinkles (50->10 twinkles ideal)
             int numTwinkles = max(1, (int)(intensity * 0.2)); // 50->10, 25->5, 100->20
 
@@ -367,8 +376,11 @@ void handleLedEffect(AsyncWebServerRequest *request)
         else if (effectName.equalsIgnoreCase("pulse"))
         {
             // Higher = faster; compress slow end so 1 isn't glacial
-            int frameDelay = mapFrameDelayExp(speed, /*min*/ 1, /*max*/ 8, /*exp*/ 2.2f);
-            playgroundConfig.pulse.speed = frameDelay;
+            if (speedProvided)
+            {
+                int frameDelay = mapFrameDelayExp(speed, /*min*/ 1, /*max*/ 8, /*exp*/ 2.2f);
+                playgroundConfig.pulse.speed = frameDelay;
+            }
 
             // Intensity: 1-100 -> brightness variation (50 = moderate variation)
             // Map intensity to min brightness: 50->64 (moderate), 25->128 (subtle), 100->0 (full range)
@@ -385,12 +397,14 @@ void handleLedEffect(AsyncWebServerRequest *request)
             float minSpeed = 0.5f, maxSpeed = 15.0f;
             // Quadratic growth toward maxSpeed as slider increases
             float rainbowSpeed = minSpeed + (maxSpeed - minSpeed) * (t * t);
-            playgroundConfig.rainbow.speed = rainbowSpeed;
+            if (speedProvided)
+                playgroundConfig.rainbow.speed = rainbowSpeed;
 
             // Intensity: 1-100 -> wave length/density (50->2.5 hue step ideal)
             // Lower intensity = longer waves (higher hue step), higher intensity = shorter waves
             float hueStep = max(0.5f, (float)(6.0 - (intensity * 0.08))); // 50->2.0, 25->4.0, 100->1.2
-            playgroundConfig.rainbow.hueStep = hueStep;
+            if (intensityProvided)
+                playgroundConfig.rainbow.hueStep = hueStep;
 
             // Fixed parameters
             playgroundConfig.rainbow.saturation = 255;

@@ -18,6 +18,11 @@
 
 /**
  * @brief Multi-color chase effect with autonomous per-effect configuration
+ *
+ * Parameters semantics:
+ * - speed (1..100): steps-per-frame ×100. 1 ≈ 0.30 spf (slow), 100 ≈ 1.20 spf (fast).
+ * - intensity (1..100): trail length from 2..20 LEDs, linearly mapped.
+ * - cycles: one cycle = all colors traverse strip and their trails exit.
  */
 class ChaseMulti : public EffectBase
 {

@@ -17,6 +17,11 @@
 /**
  * @brief Sine wave pulse effect
  * Creates a sine wave pattern that pulses across the LED strip
+ *
+ * Parameters semantics:
+ * - speed (1..100): frame delay for phase steps (smaller = faster).
+ * - intensity (1..100): brightness range (min brightness).
+ * - cycles: one cycle = OFF → peak → OFF (full sine wave 0..360 degrees).
  */
 class PulseWave : public EffectBase
 {

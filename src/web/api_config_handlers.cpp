@@ -274,7 +274,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonObject chaseSingle = effectDefaults.createNestedObject("chase_single");
     chaseSingle["speed"] = 50;
     chaseSingle["intensity"] = 50;
-    chaseSingle["cycles"] = 3;
+    chaseSingle["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
     JsonArray chaseSingleColors = chaseSingle.createNestedArray("colors");
     chaseSingleColors.add(config.ledEffects.chaseSingle.defaultColor);
 
@@ -282,7 +282,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonObject chaseMulti = effectDefaults.createNestedObject("chase_multi");
     chaseMulti["speed"] = 50;
     chaseMulti["intensity"] = 50;
-    chaseMulti["cycles"] = 3;
+    chaseMulti["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
     JsonArray chaseMultiColors = chaseMulti.createNestedArray("colors");
     chaseMultiColors.add(config.ledEffects.chaseMulti.color1);
     chaseMultiColors.add(config.ledEffects.chaseMulti.color2);
@@ -292,7 +292,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonObject matrix = effectDefaults.createNestedObject("matrix");
     matrix["speed"] = 50;
     matrix["intensity"] = 50;
-    matrix["cycles"] = 3;
+    matrix["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
     JsonArray matrixColors = matrix.createNestedArray("colors");
     matrixColors.add(config.ledEffects.matrix.defaultColor);
 
@@ -300,7 +300,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonObject twinkle = effectDefaults.createNestedObject("twinkle");
     twinkle["speed"] = 50;
     twinkle["intensity"] = 50;
-    twinkle["cycles"] = 3;
+    twinkle["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
     JsonArray twinkleColors = twinkle.createNestedArray("colors");
     twinkleColors.add(config.ledEffects.twinkle.defaultColor);
 
@@ -308,7 +308,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonObject pulse = effectDefaults.createNestedObject("pulse");
     pulse["speed"] = 50;
     pulse["intensity"] = 50;
-    pulse["cycles"] = 3;
+    pulse["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
     JsonArray pulseColors = pulse.createNestedArray("colors");
     pulseColors.add(config.ledEffects.pulse.defaultColor);
 
@@ -316,7 +316,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonObject rainbow = effectDefaults.createNestedObject("rainbow");
     rainbow["speed"] = 50;
     rainbow["intensity"] = 50;
-    rainbow["cycles"] = 3;
+    rainbow["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
     JsonArray rainbowColors = rainbow.createNestedArray("colors");
     rainbowColors.add("#ff0000"); // Rainbow doesn't use colors but needs array
 #else

@@ -17,6 +17,11 @@
 /**
  * @brief Twinkling stars effect with random sparkles
  * Creates random twinkling points of light across the LED strip
+ *
+ * Parameters semantics:
+ * - speed (1..100): fade step per frame (larger = faster) and update cadence; 1 is ~50% faster than prior baseline.
+ * - intensity (1..100): number of simultaneous twinkles (approx. 1..20).
+ * - cycles: not used; effect runs continuously until manager stops or cycles counted externally.
  */
 class TwinkleStars : public EffectBase
 {

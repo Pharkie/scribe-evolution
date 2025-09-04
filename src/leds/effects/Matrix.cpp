@@ -14,7 +14,7 @@
 #include "../../core/led_config.h"
 
 Matrix::Matrix(const MatrixConfig &config)
-    : config(config), matrixDrops(nullptr), initialized(false), frameCounter(0), hadActiveSinceCycleStart(false)
+    : config(config), matrixDrops(nullptr), initialized(false), frameCounter(0), hadActiveSinceCycleStart(false), spawnedThisCycle(0), allowSpawning(true)
 {
 }
 
@@ -40,6 +40,10 @@ void Matrix::initialize(int ledCount)
         }
         initialized = true;
     }
+    // Reset cycle tracking
+    spawnedThisCycle = 0;
+    allowSpawning = true;
+    hadActiveSinceCycleStart = false;
 }
 
 bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirection,
@@ -92,8 +96,8 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
             }
         }
 
-        // Randomly start new drops
-        if (random16(100) < 8)
+        // Randomly start new drops (only if we still have quota in this cycle)
+        if (allowSpawning && random16(100) < 8)
         { // 8% chance per update (increased from 5% for more activity)
             for (int i = 0; i < config.drops; i++)
             {
@@ -104,6 +108,11 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                     matrixDrops[i].length = random16(8) + 3; // 3-10 LEDs long
                     matrixDrops[i].speed = random16(3) + 1;  // 1-3 pixels per update
                     matrixDrops[i].completedCycle = false;   // Reset cycle flag
+                    spawnedThisCycle++;
+                    if (spawnedThisCycle >= config.drops)
+                    {
+                        allowSpawning = false; // Stop spawning; wait for all to finish
+                    }
                     break;
                 }
             }
@@ -134,7 +143,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         }
     }
 
-    // At natural boundary: if no drops are active and we've had activity since last boundary,
+    // At natural boundary: if no drops are active and we spawned our quota,
     // consider one full cycle complete (all drops have exited the strip)
     bool anyActive = false;
     for (int i = 0; i < config.drops; i++)
@@ -145,10 +154,13 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
             break;
         }
     }
-    if (!anyActive && hadActiveSinceCycleStart)
+    if (!anyActive && !allowSpawning && spawnedThisCycle >= config.drops)
     {
         completedCycles++;
+        // Reset for next cycle
         hadActiveSinceCycleStart = false;
+        spawnedThisCycle = 0;
+        allowSpawning = true;
     }
 
     return true; // Continue running (cycle boundary handled above)

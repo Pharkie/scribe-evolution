@@ -43,7 +43,10 @@ LedEffects::LedEffects() : leds(nullptr),
                            effectDirection(1),
                            effectPhase(0.0f),
                            currentEffect(nullptr),
-                           effectRegistry(nullptr)
+                           effectRegistry(nullptr),
+                           finalFadeActive(false),
+                           finalFadeStart(0),
+                           finalFadeBase(nullptr)
 {
 }
 
@@ -212,6 +215,39 @@ void LedEffects::update()
 
     lastUpdate = now;
 
+    // Handle manager-driven final fade-out (e.g., rainbow end-of-all-cycles)
+    if (finalFadeActive)
+    {
+        unsigned long elapsed = now - finalFadeStart;
+        if (elapsed >= finalFadeDurationMs)
+        {
+            // Cleanup fade resources then stop
+            if (finalFadeBase)
+            {
+                delete[] finalFadeBase;
+                finalFadeBase = nullptr;
+            }
+            stopEffect();
+            return;
+        }
+
+        // Time-based linear fade for smoother perception over the duration
+        float t = (float)elapsed / (float)finalFadeDurationMs; // 0..1
+        t = constrain(t, 0.0f, 1.0f);
+        uint8_t scale = (uint8_t)((1.0f - t) * 255.0f);
+        if (finalFadeBase)
+        {
+            for (int i = 0; i < ledCount; i++)
+            {
+                CRGB c = finalFadeBase[i];
+                nscale8x3_video(c.r, c.g, c.b, scale);
+                leds[i] = c;
+            }
+        }
+        FastLED.show();
+        return;
+    }
+
     // Update the current effect
     bool shouldContinue = currentEffect->update(leds, ledCount, effectStep, effectDirection,
                                                 effectPhase, effectColor1, effectColor2, effectColor3,
@@ -220,8 +256,33 @@ void LedEffects::update()
     // Check if cycle-based effect is complete (when target cycles > 0)
     if (targetCycles > 0 && completedCycles >= targetCycles)
     {
-        stopEffect();
-        return;
+        // For rainbow: initiate a manager-driven final fade-out instead of abrupt stop
+        if (currentEffectName.equalsIgnoreCase("rainbow"))
+        {
+            finalFadeActive = true;
+            finalFadeStart = now;
+            // Snapshot current LED state as base for linear fade
+            if (finalFadeBase)
+            {
+                delete[] finalFadeBase;
+                finalFadeBase = nullptr;
+            }
+            finalFadeBase = new CRGB[ledCount];
+            if (finalFadeBase)
+            {
+                for (int i = 0; i < ledCount; i++)
+                {
+                    finalFadeBase[i] = leds[i];
+                }
+            }
+            FastLED.show();
+            return;
+        }
+        else
+        {
+            stopEffect();
+            return;
+        }
     }
 
     // Show the updated LEDs
@@ -259,6 +320,13 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
     effectActive = true;
     targetCycles = cycles;
     completedCycles = 0;
+    finalFadeActive = false;
+    finalFadeStart = 0;
+    if (finalFadeBase)
+    {
+        delete[] finalFadeBase;
+        finalFadeBase = nullptr;
+    }
 
     // Reset effect state
     effectStep = 0;
@@ -297,6 +365,13 @@ void LedEffects::stopEffect()
         // Additional safety: clear again and show again to ensure it takes effect
         fill_solid(leds, ledCount, CRGB::Black);
         FastLED.show();
+    }
+    finalFadeActive = false;
+    finalFadeStart = 0;
+    if (finalFadeBase)
+    {
+        delete[] finalFadeBase;
+        finalFadeBase = nullptr;
     }
 }
 

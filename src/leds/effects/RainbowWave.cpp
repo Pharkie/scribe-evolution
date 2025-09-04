@@ -12,6 +12,7 @@
 #if ENABLE_LEDS
 
 #include "../../core/led_config.h"
+#include "../../core/config_loader.h"
 
 RainbowWave::RainbowWave(const RainbowConfig &config)
     : config(config), frameCounter(0)
@@ -22,11 +23,28 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
                          float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
                          int &completedCycles)
 {
+    if (startMillis == 0)
+    {
+        startMillis = millis();
+    }
+
+    // Compute fade-in (first 1s). Final fade-out is handled by the manager.
+    float brightnessScale = 1.0f;
+    unsigned long now = millis();
+    unsigned long elapsed = now - startMillis;
+    if (elapsed < 1000UL)
+    {
+        brightnessScale = (float)elapsed / 1000.0f; // 0..1 over first second
+    }
+
     for (int i = 0; i < ledCount; i++)
     {
         // Create rainbow wave with moving phase
         int hue = (i * 255 / ledCount + (int)effectPhase) % 256;
-        leds[i] = wheel(hue);
+        CRGB c = wheel(hue);
+        // Apply brightness scaling
+        nscale8x3_video(c.r, c.g, c.b, (uint8_t)(brightnessScale * 255.0f));
+        leds[i] = c;
     }
 
     // Advance the phase every update. config.speed is the phase increment per frame.
@@ -38,6 +56,7 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
     {
         effectPhase = 0.0f;
         completedCycles++;
+        // Reset fade-in for consecutive effects only once at start; keep startMillis
     }
 
     return true; // Continue running (cycle tracking handled by LedEffects manager)
@@ -46,6 +65,7 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
 void RainbowWave::reset()
 {
     frameCounter = 0;
+    startMillis = millis();
     // Reset phase will be handled by the effect manager
 }
 

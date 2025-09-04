@@ -17,6 +17,11 @@
 /**
  * @brief Matrix-style falling code effect
  * Creates falling drops of light with trailing fades like the Matrix movie
+ *
+ * Parameters semantics:
+ * - speed (1..100): target droplets to spawn per cycle (1→3, 100→10). Spawning stops once target reached.
+ * - intensity (1..100): background/tail density parameters; effect keeps smooth fading.
+ * - cycles: one cycle = spawn target droplets and wait until all drops exit the strip.
  */
 class Matrix : public EffectBase
 {
@@ -79,6 +84,8 @@ private:
     bool initialized;
     int frameCounter; // Frame counter for speed control
     bool hadActiveSinceCycleStart = false; // Track if any drop was active since last cycle boundary
+    int spawnedThisCycle = 0; // Number of drops spawned in current cycle
+    bool allowSpawning = true; // Whether we are still spawning in this cycle
 
     void deallocateDrops();
     void fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue);
