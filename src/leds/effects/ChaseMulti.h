@@ -56,6 +56,7 @@ private:
 
     int targetCycles;
     int frameCounter;
+    float stepAccumulator = 0.0f; // fractional step accumulator for smooth speed
 
     void clearAllLEDs(CRGB *leds, int ledCount);
 };

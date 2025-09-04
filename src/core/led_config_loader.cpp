@@ -20,14 +20,14 @@ LedEffectsConfig getDefaultLedEffectsConfig()
     // Use standardized defaults that map from DEFAULT_LED_EFFECT_SPEED/INTENSITY
     // These will be overridden by the API handlers with proper 10-100 mapping
     
-    // Chase Single defaults (mapped from standard 50 speed/intensity)
-    config.chaseSingle.speed = 5;  // Reasonable frame delay for 50 speed
+    // Chase Single defaults (steps-per-frame x100; 80 = 0.80 steps/frame)
+    config.chaseSingle.speed = 80;  // Smooth, reasonably quick default
     config.chaseSingle.trailLength = 15;  // Reasonable trail for 50 intensity  
     config.chaseSingle.trailFade = 15;  // Fixed fade amount
     config.chaseSingle.defaultColor = String(DEFAULT_CHASE_SINGLE_COLOR);
 
-    // Chase Multi defaults (mapped from standard 50 speed/intensity)
-    config.chaseMulti.speed = 3;  // Reasonable frame delay for 50 speed
+    // Chase Multi defaults (steps-per-frame x100)
+    config.chaseMulti.speed = 70;  // Slightly slower than single chase by default
     config.chaseMulti.trailLength = 15;  // Reasonable trail for 50 intensity
     config.chaseMulti.trailFade = 20;  // Fixed fade amount
     config.chaseMulti.colorSpacing = DEFAULT_CHASE_MULTI_COLOR_SPACING;

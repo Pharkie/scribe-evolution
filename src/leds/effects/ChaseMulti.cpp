@@ -16,7 +16,7 @@
 #include "../../utils/color_utils.h"
 
 ChaseMulti::ChaseMulti(const ChaseMultiConfig &effectConfig)
-    : config(effectConfig), targetCycles(1), frameCounter(0)
+    : config(effectConfig), targetCycles(1), frameCounter(0), stepAccumulator(0.0f)
 {
 }
 
@@ -38,15 +38,19 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
         leds[currentPosition] = color1;
     }
 
-    // Add color1 trail
-    for (int i = 1; i <= config.trailLength; i++)
+    // Add color1 trail with linear fade
     {
-        int trailPos = currentPosition - i;
-        if (trailPos >= 0 && trailPos < ledCount)
+        int N = max(1, config.trailLength);
+        for (int i = 1; i <= config.trailLength; i++)
         {
-            CRGB trailColor = color1;
-            trailColor.fadeToBlackBy(i * config.trailFade);
-            leds[trailPos] = trailColor;
+            int trailPos = currentPosition - i;
+            if (trailPos >= 0 && trailPos < ledCount)
+            {
+                uint8_t scale = (uint8_t)(((long)(N - i + 1) * 255) / (N + 1));
+                CRGB trailColor = color1;
+                nscale8x3_video(trailColor.r, trailColor.g, trailColor.b, scale);
+                leds[trailPos] = trailColor;
+            }
         }
     }
 
@@ -57,15 +61,19 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
         leds[color2Position] = color2;
     }
 
-    // Add color2 trail
-    for (int i = 1; i <= config.trailLength; i++)
+    // Add color2 trail with linear fade
     {
-        int trailPos = color2Position - i;
-        if (trailPos >= 0 && trailPos < ledCount)
+        int N = max(1, config.trailLength);
+        for (int i = 1; i <= config.trailLength; i++)
         {
-            CRGB trailColor = color2;
-            trailColor.fadeToBlackBy(i * config.trailFade);
-            leds[trailPos] = trailColor;
+            int trailPos = color2Position - i;
+            if (trailPos >= 0 && trailPos < ledCount)
+            {
+                uint8_t scale = (uint8_t)(((long)(N - i + 1) * 255) / (N + 1));
+                CRGB trailColor = color2;
+                nscale8x3_video(trailColor.r, trailColor.g, trailColor.b, scale);
+                leds[trailPos] = trailColor;
+            }
         }
     }
 
@@ -76,24 +84,30 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
         leds[color3Position] = color3;
     }
 
-    // Add color3 trail
-    for (int i = 1; i <= config.trailLength; i++)
+    // Add color3 trail with linear fade
     {
-        int trailPos = color3Position - i;
-        if (trailPos >= 0 && trailPos < ledCount)
+        int N = max(1, config.trailLength);
+        for (int i = 1; i <= config.trailLength; i++)
         {
-            CRGB trailColor = color3;
-            trailColor.fadeToBlackBy(i * config.trailFade);
-            leds[trailPos] = trailColor;
+            int trailPos = color3Position - i;
+            if (trailPos >= 0 && trailPos < ledCount)
+            {
+                uint8_t scale = (uint8_t)(((long)(N - i + 1) * 255) / (N + 1));
+                CRGB trailColor = color3;
+                nscale8x3_video(trailColor.r, trailColor.g, trailColor.b, scale);
+                leds[trailPos] = trailColor;
+            }
         }
     }
 
-    // Use frame counter for speed control (higher config.speed = slower movement)
-    frameCounter++;
-    if (frameCounter >= config.speed)
+    // Smooth speed control using fractional steps-per-frame (x100 fixed-point)
+    // config.speed encodes steps-per-frame * 100 (e.g., 120 = 1.20 steps/frame)
+    float stepsPerFrame = max(1, config.speed) / 100.0f;
+    stepAccumulator += stepsPerFrame;
+    while (stepAccumulator >= 1.0f)
     {
-        frameCounter = 0;
-        effectStep++; // Only advance position when frame counter reaches speed threshold
+        effectStep++;
+        stepAccumulator -= 1.0f;
     }
 
     // Check if we've completed a cycle (all colors + trails have exited the strip)
@@ -102,6 +116,7 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
         completedCycles++;
         effectStep = 0;   // Reset for next cycle
         frameCounter = 0; // Reset frame counter
+        stepAccumulator = 0.0f; // Reset fractional speed accumulator
         LOG_VERBOSE("LEDS", "Chase multi completed cycle %d/%d", completedCycles, targetCycles);
 
         // Return false if we've completed all requested cycles
@@ -115,6 +130,7 @@ void ChaseMulti::reset()
 {
     // Reset state variables - will be set by the effect manager
     frameCounter = 0;
+    stepAccumulator = 0.0f;
 }
 
 void ChaseMulti::clearAllLEDs(CRGB *leds, int ledCount)

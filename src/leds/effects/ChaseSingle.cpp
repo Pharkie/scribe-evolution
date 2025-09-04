@@ -16,7 +16,7 @@
 #include "../../core/led_config.h"
 
 ChaseSingle::ChaseSingle(const ChaseSingleConfig &config)
-    : config(config), targetCycles(1), frameCounter(0)
+    : config(config), targetCycles(1), frameCounter(0), stepAccumulator(0.0f)
 {
 }
 
@@ -36,24 +36,30 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         leds[currentPosition] = color1;
     }
 
-    // Add trailing dots with fading (only show trail positions within strip bounds)
+    // Add trailing dots with linearly fading brightness (tip -> tail)
+    int N = max(1, config.trailLength);
     for (int i = 1; i <= config.trailLength; i++)
     {
         int trailPos = currentPosition - i;
-        if (trailPos >= 0 && trailPos < ledCount) // Only show trail if within strip bounds (no wrapping)
+        if (trailPos >= 0 && trailPos < ledCount)
         {
+            // Linear fade: near the tip is brightest, tail fades to 0
+            uint8_t scale = (uint8_t)(((long)(N - i + 1) * 255) / (N + 1));
             CRGB trailColor = color1;
-            trailColor.fadeToBlackBy(i * config.trailFade); // Fade each trailing dot
+            nscale8x3_video(trailColor.r, trailColor.g, trailColor.b, scale);
             leds[trailPos] = trailColor;
         }
     }
 
-    // Use frame counter for speed control (higher speed = slower movement)
-    frameCounter++;
-    if (frameCounter >= config.speed)
+    // Smooth speed control using fractional steps-per-frame (x100 fixed-point)
+    // config.speed encodes steps-per-frame * 100 (e.g., 120 = 1.20 steps/frame)
+    // This allows speeds faster than 1 step per frame while staying smooth.
+    float stepsPerFrame = max(1, config.speed) / 100.0f;
+    stepAccumulator += stepsPerFrame;
+    while (stepAccumulator >= 1.0f)
     {
-        frameCounter = 0;
-        effectStep++; // Only advance position when frame counter reaches speed threshold
+        effectStep++;
+        stepAccumulator -= 1.0f;
     }
 
     // Check if we've completed a cycle (head + entire trail has exited the strip)
@@ -62,6 +68,7 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         completedCycles++;
         effectStep = 0;   // Reset for next cycle
         frameCounter = 0; // Reset frame counter
+        stepAccumulator = 0.0f; // Reset fractional speed accumulator
         LOG_VERBOSE("LEDS", "Chase single completed cycle %d/%d", completedCycles, targetCycles);
 
         // Return false if we've completed all requested cycles
@@ -75,6 +82,7 @@ void ChaseSingle::reset()
 {
     // Reset state variables - will be set by the effect manager
     frameCounter = 0;
+    stepAccumulator = 0.0f;
 }
 
 void ChaseSingle::clearAllLEDs(CRGB *leds, int ledCount)

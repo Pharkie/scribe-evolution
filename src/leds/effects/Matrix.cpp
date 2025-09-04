@@ -14,7 +14,7 @@
 #include "../../core/led_config.h"
 
 Matrix::Matrix(const MatrixConfig &config)
-    : config(config), matrixDrops(nullptr), initialized(false), frameCounter(0)
+    : config(config), matrixDrops(nullptr), initialized(false), frameCounter(0), hadActiveSinceCycleStart(false)
 {
 }
 
@@ -69,6 +69,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         {
             if (matrixDrops[i].active)
             {
+                hadActiveSinceCycleStart = true; // Mark that we had an active drop in this cycle window
                 // Clear previous position
                 for (int j = 0; j < matrixDrops[i].length; j++)
                 {
@@ -86,12 +87,7 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                 if (matrixDrops[i].position >= ledCount + matrixDrops[i].length)
                 {
                     matrixDrops[i].active = false;
-                    // Mark as completed cycle when drop finishes its journey
-                    if (!matrixDrops[i].completedCycle)
-                    {
-                        matrixDrops[i].completedCycle = true;
-                        completedCycles++;
-                    }
+                    matrixDrops[i].completedCycle = true;
                 }
             }
         }
@@ -138,7 +134,24 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         }
     }
 
-    return true; // Continue running (duration-based effect)
+    // At natural boundary: if no drops are active and we've had activity since last boundary,
+    // consider one full cycle complete (all drops have exited the strip)
+    bool anyActive = false;
+    for (int i = 0; i < config.drops; i++)
+    {
+        if (matrixDrops[i].active)
+        {
+            anyActive = true;
+            break;
+        }
+    }
+    if (!anyActive && hadActiveSinceCycleStart)
+    {
+        completedCycles++;
+        hadActiveSinceCycleStart = false;
+    }
+
+    return true; // Continue running (cycle boundary handled above)
 }
 
 void Matrix::reset()

@@ -95,6 +95,11 @@ export function createSettingsButtonsStore() {
           },
         };
 
+        // Also load LED enabled state for conditional rendering of LED dropdowns
+        this.config.leds = {
+          enabled: data.leds?.enabled ?? false,
+        };
+
         this.originalConfig = {
           buttons: JSON.parse(JSON.stringify(this.config.buttons)),
         };

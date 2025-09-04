@@ -78,6 +78,7 @@ private:
     MatrixDrop *matrixDrops;
     bool initialized;
     int frameCounter; // Frame counter for speed control
+    bool hadActiveSinceCycleStart = false; // Track if any drop was active since last cycle boundary
 
     void deallocateDrops();
     void fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue);

@@ -3,28 +3,7 @@
  * @brief LED API endpoint handlers for FastLED effects
  * @author Adam Knowles
  * @date 2025
- * @copyright Copyr        LOG_ERROR("LEDS", "No         if (effectHasCycles(effect))
-        {
-            response["cycles"] = cycles;
-        }
-        else
-        {
-            response["duration"] = duration;
-        }
-
-        // Add color information to response
-        JsonArray responseColors = response.createNestedArray("colors");
-        responseColors.add(String("#") + String(c1.r, HEX) + String(c1.g, HEX) + String(c1.b, HEX));
-        if (colors.size() > 1) {
-            responseColors.add(String("#") + String(c2.r, HEX) + String(c2.g, HEX) + String(c2.b, HEX));
-        }
-        if (colors.size() > 2) {
-            responseColors.add(String("#") + String(c3.r, HEX) + String(c3.g, HEX) + String(c3.b, HEX));
-        }
-
-        LOG_ERROR("LEDS", "No settings object found - only new format supported");
-        sendErrorResponse(request, 400, "Settings object required");
-        return;
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
 
@@ -170,13 +149,33 @@ void handleLedEffect(AsyncWebServerRequest *request)
     CRGB c1 = CRGB::Blue, c2 = CRGB::Black, c3 = CRGB::Black;
     bool colorsAdjusted = false;
 
-    auto setDefaultColorsForEffect = [&](const String &name) {
-        if (name.equalsIgnoreCase("chase_single")) { c1 = CRGB(0x00, 0x62, 0xff); }
-        else if (name.equalsIgnoreCase("chase_multi")) { c1 = CRGB(0xff, 0x00, 0x00); c2 = CRGB(0x00, 0xff, 0x00); c3 = CRGB(0x00, 0x00, 0xff); }
-        else if (name.equalsIgnoreCase("matrix")) { c1 = CRGB(0x00, 0xff, 0x00); }
-        else if (name.equalsIgnoreCase("twinkle")) { c1 = CRGB(0xff, 0xff, 0x00); }
-        else if (name.equalsIgnoreCase("pulse")) { c1 = CRGB(0x80, 0x00, 0x80); }
-        else /* rainbow or unknown */ { /* rainbow ignores explicit colors */ }
+    auto setDefaultColorsForEffect = [&](const String &name)
+    {
+        if (name.equalsIgnoreCase("chase_single"))
+        {
+            c1 = CRGB(0x00, 0x62, 0xff);
+        }
+        else if (name.equalsIgnoreCase("chase_multi"))
+        {
+            c1 = CRGB(0xff, 0x00, 0x00);
+            c2 = CRGB(0x00, 0xff, 0x00);
+            c3 = CRGB(0x00, 0x00, 0xff);
+        }
+        else if (name.equalsIgnoreCase("matrix"))
+        {
+            c1 = CRGB(0x00, 0xff, 0x00);
+        }
+        else if (name.equalsIgnoreCase("twinkle"))
+        {
+            c1 = CRGB(0xff, 0xff, 0x00);
+        }
+        else if (name.equalsIgnoreCase("pulse"))
+        {
+            c1 = CRGB(0x80, 0x00, 0x80);
+        }
+        else /* rainbow or unknown */
+        {    /* rainbow ignores explicit colors */
+        }
     };
 
     if (effectName.equalsIgnoreCase("rainbow"))
@@ -191,19 +190,26 @@ void handleLedEffect(AsyncWebServerRequest *request)
         {
             JsonArray colorsArray = doc["colors"].as<JsonArray>();
             int n = colorsArray.size();
-            if (n >= 1) c1 = parseHexColor(colorsArray[0].as<String>());
-            if (n >= 2) c2 = parseHexColor(colorsArray[1].as<String>());
-            if (n >= 3) c3 = parseHexColor(colorsArray[2].as<String>());
+            if (n >= 1)
+                c1 = parseHexColor(colorsArray[0].as<String>());
+            if (n >= 2)
+                c2 = parseHexColor(colorsArray[1].as<String>());
+            if (n >= 3)
+                c3 = parseHexColor(colorsArray[2].as<String>());
             if (n != 3)
             {
                 // Fill missing with defaults
-                CRGB d1 = CRGB(0xff,0x00,0x00), d2 = CRGB(0x00,0xff,0x00), d3 = CRGB(0x00,0x00,0xff);
-                if (n < 1) c1 = d1;
-                if (n < 2) c2 = d2;
-                if (n < 3) c3 = d3;
+                CRGB d1 = CRGB(0xff, 0x00, 0x00), d2 = CRGB(0x00, 0xff, 0x00), d3 = CRGB(0x00, 0x00, 0xff);
+                if (n < 1)
+                    c1 = d1;
+                if (n < 2)
+                    c2 = d2;
+                if (n < 3)
+                    c3 = d3;
                 colorsAdjusted = true;
             }
-            if (n > 3) colorsAdjusted = true; // extras ignored
+            if (n > 3)
+                colorsAdjusted = true; // extras ignored
         }
         else
         {
@@ -220,7 +226,8 @@ void handleLedEffect(AsyncWebServerRequest *request)
             if (colorsArray.size() >= 1)
             {
                 c1 = parseHexColor(colorsArray[0].as<String>());
-                if (colorsArray.size() > 1) colorsAdjusted = true; // extras ignored
+                if (colorsArray.size() > 1)
+                    colorsAdjusted = true; // extras ignored
             }
             else
             {
@@ -245,53 +252,78 @@ void handleLedEffect(AsyncWebServerRequest *request)
         // Get LED configuration for calculations
         const RuntimeConfig &config = getRuntimeConfig();
         int ledCount = config.ledCount;
-        
+
         // Map 1–100 speed/intensity to reasonable effect parameters (50 = ideal)
-        int speed = settings["speed"] | 50;        // Default to 50 if missing
+        int speed = settings["speed"] | 50;         // Default to 50 if missing
         int intensity = settings["intensity"] | 50; // Default to 50 if missing
         // Clamp to expected range (1..100)
         speed = max(1, min(100, speed));
         intensity = max(10, min(100, intensity));
 
         // Helper to map slider (1..100) to frame delay (smaller delay = faster)
-        auto mapFrameDelayExp = [](int s, int minDelay, int maxDelay, float expK = 2.0f) {
+        auto mapFrameDelayExp = [](int s, int minDelay, int maxDelay, float expK = 2.0f)
+        {
             // s=1 (slow) -> maxDelay, s=100 (fast) -> minDelay
             float t = (float)(s - 1) / 99.0f; // 0..1
             int d = (int)(maxDelay - (maxDelay - minDelay) * powf(t, expK));
             return max(minDelay, min(maxDelay, d));
         };
         // Helper to map slider (1..100) to a direct range where higher = larger value
-        auto mapRangeExp = [](int s, int minVal, int maxVal, float expK = 2.0f) {
+        auto mapRangeExp = [](int s, int minVal, int maxVal, float expK = 2.0f)
+        {
             // s=1 -> minVal, s=100 -> maxVal
             float t = (float)(s - 1) / 99.0f; // 0..1
             int v = (int)(minVal + (maxVal - minVal) * powf(t, expK));
             return max(minVal, min(maxVal, v));
         };
-        
+
         if (effectName.equalsIgnoreCase("chase_single"))
         {
-            // higher slider -> faster (smaller delay)
-            int frameDelay = mapFrameDelayExp(speed, /*min*/1, /*max*/50, /*exp*/2.0f);
-            playgroundConfig.chaseSingle.speed = frameDelay;
-            
-            // Intensity: 10-100 -> trail length (50 = 15 pixels, good balance)
-            playgroundConfig.chaseSingle.trailLength = max(3, min(30, (int)(intensity * 0.3)));
+            // Map slider to steps-per-frame (x100 fixed-point) for smooth speed
+            // Goal: compress previous fast range (95-100) into 1-100, with 100 ~20% faster than old max.
+            auto mapStepsPerFrameX100 = [&](int s)
+            {
+                float t = (float)(s - 1) / 99.0f; // 0..1
+                float minStep = 0.50f;            // ~2 frames/step at low end (not sluggish)
+                float maxStep = 1.20f;            // ~20% faster than 1 step/frame
+                float spf = minStep + (maxStep - minStep) * powf(t, 1.7f);
+                return (int)(spf * 100.0f + 0.5f);
+            };
+
+            playgroundConfig.chaseSingle.speed = mapStepsPerFrameX100(speed);
+
+            // Intensity 1..100 -> trail length 2..20 (linear)
+            {
+                int trailLen = (int)(2 + ((intensity - 1) * 18.0f / 99.0f) + 0.5f);
+                playgroundConfig.chaseSingle.trailLength = max(2, min(20, trailLen));
+            }
             playgroundConfig.chaseSingle.trailFade = 15; // Fixed fade amount
             playgroundConfig.chaseSingle.defaultColor = "#0062ff";
         }
         else if (effectName.equalsIgnoreCase("chase_multi"))
         {
-            // higher slider -> faster
-            int frameDelay = mapFrameDelayExp(speed, /*min*/1, /*max*/40, /*exp*/2.0f);
-            playgroundConfig.chaseMulti.speed = frameDelay;
-            
-            // Intensity: 10-100 -> trail length (50 = 15 pixels) 
-            playgroundConfig.chaseMulti.trailLength = max(3, min(25, (int)(intensity * 0.3)));
+            // Same steps-per-frame mapping as chase_single
+            auto mapStepsPerFrameX100 = [&](int s)
+            {
+                float t = (float)(s - 1) / 99.0f; // 0..1
+                float minStep = 0.50f;
+                float maxStep = 1.20f;
+                float spf = minStep + (maxStep - minStep) * powf(t, 1.7f);
+                return (int)(spf * 100.0f + 0.5f);
+            };
+
+            playgroundConfig.chaseMulti.speed = mapStepsPerFrameX100(speed);
+
+            // Intensity 1..100 -> trail length 2..20 (linear)
+            {
+                int trailLen = (int)(2 + ((intensity - 1) * 18.0f / 99.0f) + 0.5f);
+                playgroundConfig.chaseMulti.trailLength = max(2, min(20, trailLen));
+            }
             playgroundConfig.chaseMulti.trailFade = 20; // Fixed fade amount
-            
+
             // Color spacing based on LED count for optimal visual effect
             playgroundConfig.chaseMulti.colorSpacing = max(2, ledCount / 10); // Auto-scale to strip length
-            
+
             // Colors from frontend
             if (settings.containsKey("colors") && settings["colors"].as<JsonArray>().size() > 0)
             {
@@ -303,15 +335,15 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("matrix"))
         {
-            // higher slider -> faster
-            int frameDelay = mapFrameDelayExp(speed, /*min*/1, /*max*/30, /*exp*/2.0f);
+            // Higher slider -> faster updates; keep movement smooth by limiting delay range
+            int frameDelay = mapFrameDelayExp(speed, /*min*/ 1, /*max*/ 6, /*exp*/ 2.0f);
             playgroundConfig.matrix.speed = frameDelay;
-            
+
             // Intensity: 10-100 -> number of drops (50 = good density, scales with LED count)
             // For 30 LEDs: 50 intensity = ~6 drops, 10 = 1-2 drops, 100 = 10-12 drops
             int baseDensity = max(1, ledCount / 15); // Scale to strip length
             playgroundConfig.matrix.drops = max(1, (int)(baseDensity * intensity / 50.0f));
-            
+
             // Fixed internal parameters for smooth matrix effect
             playgroundConfig.matrix.backgroundFade = 64;
             playgroundConfig.matrix.trailFade = 32;
@@ -321,28 +353,28 @@ void handleLedEffect(AsyncWebServerRequest *request)
         else if (effectName.equalsIgnoreCase("twinkle"))
         {
             // Higher slider -> faster twinkling: use larger fade step for faster fade
-            int fadeStep = mapRangeExp(speed, /*min*/1, /*max*/64, /*exp*/1.6f);
+            int fadeStep = mapRangeExp(speed, /*min*/ 1, /*max*/ 64, /*exp*/ 1.6f);
 
             // Intensity: 1-100 -> number of active twinkles (50->10 twinkles ideal)
             int numTwinkles = max(1, (int)(intensity * 0.2)); // 50->10, 25->5, 100->20
 
             playgroundConfig.twinkle.density = numTwinkles;
             playgroundConfig.twinkle.fadeSpeed = fadeStep; // Larger = faster fade per frame
-            playgroundConfig.twinkle.minBrightness = 50;  // Fixed
-            playgroundConfig.twinkle.maxBrightness = 255; // Fixed 
+            playgroundConfig.twinkle.minBrightness = 50;   // Fixed
+            playgroundConfig.twinkle.maxBrightness = 255;  // Fixed
             playgroundConfig.twinkle.defaultColor = "#ffff00";
         }
         else if (effectName.equalsIgnoreCase("pulse"))
         {
-            // Align semantics: higher = faster, with snappier high-end feel (exponential)
-            int frameDelay = mapFrameDelayExp(speed, /*min*/1, /*max*/20, /*exp*/2.5f);
+            // Higher = faster; compress slow end so 1 isn't glacial
+            int frameDelay = mapFrameDelayExp(speed, /*min*/ 1, /*max*/ 8, /*exp*/ 2.2f);
             playgroundConfig.pulse.speed = frameDelay;
-            
+
             // Intensity: 1-100 -> brightness variation (50 = moderate variation)
-            // Map intensity to min brightness: 50->64 (moderate), 25->128 (subtle), 100->0 (full range)  
+            // Map intensity to min brightness: 50->64 (moderate), 25->128 (subtle), 100->0 (full range)
             int minBrightness = max(0, 255 - (int)(intensity * 2.55));
             playgroundConfig.pulse.minBrightness = minBrightness;
-            playgroundConfig.pulse.maxBrightness = 255; // Always full bright at peak
+            playgroundConfig.pulse.maxBrightness = 255;   // Always full bright at peak
             playgroundConfig.pulse.waveFrequency = 0.05f; // Fixed
             playgroundConfig.pulse.defaultColor = "#800080";
         }
@@ -354,12 +386,12 @@ void handleLedEffect(AsyncWebServerRequest *request)
             // Quadratic growth toward maxSpeed as slider increases
             float rainbowSpeed = minSpeed + (maxSpeed - minSpeed) * (t * t);
             playgroundConfig.rainbow.speed = rainbowSpeed;
-            
+
             // Intensity: 1-100 -> wave length/density (50->2.5 hue step ideal)
             // Lower intensity = longer waves (higher hue step), higher intensity = shorter waves
             float hueStep = max(0.5f, (float)(6.0 - (intensity * 0.08))); // 50->2.0, 25->4.0, 100->1.2
             playgroundConfig.rainbow.hueStep = hueStep;
-            
+
             // Fixed parameters
             playgroundConfig.rainbow.saturation = 255;
             playgroundConfig.rainbow.brightness = 255;
@@ -412,11 +444,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
         used.add(String("#") + String(c2.r, HEX) + String(c2.g, HEX) + String(c2.b, HEX));
         used.add(String("#") + String(c3.r, HEX) + String(c3.g, HEX) + String(c3.b, HEX));
 
-        // Include the original settings object in the response
-        if (doc.containsKey("settings"))
-        {
-            response["settings"] = doc["settings"];
-        }
+        // Response includes only new-format fields; no legacy echo
 
         String responseStr;
         serializeJson(response, responseStr);
