@@ -403,7 +403,13 @@ void handleLedEffect(AsyncWebServerRequest *request)
 #endif
 
     LOG_VERBOSE("LEDS", "Applied settings for LED effect: %s", effectName.c_str());
-    LOG_VERBOSE("LEDS", "Parsed %d colors from settings", (int)colorsArray.size());
+    int colorsCount = 0;
+    if (hasColors)
+    {
+        JsonArray ca = doc["colors"].as<JsonArray>();
+        colorsCount = ca.size();
+    }
+    LOG_VERBOSE("LEDS", "Parsed %d colors from settings", colorsCount);
 
     // Unified cycle-based system: all effects run for cycles (0 = continuous)
     bool success;

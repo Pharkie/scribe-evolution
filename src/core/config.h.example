@@ -185,6 +185,15 @@ static const int statusLEDPin = 8;    // ESP32-C3 has built-in LED on GPIO8
 static const int webServerPort = 80;  // HTTP port for web server
 const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
 
+// MQTT Connection Settings
+static const unsigned long mqttReconnectIntervalMs = 5000;      // Time between reconnection attempts
+static const unsigned long mqttConnectionTimeoutMs = 10000;     // Max time for connection attempt  
+static const unsigned long mqttTlsHandshakeTimeoutMs = 5000;    // TLS handshake timeout
+static const int mqttMaxConsecutiveFailures = 5;               // Max failures before cooldown
+static const unsigned long mqttFailureCooldownMs = 60000;      // Cooldown after max failures
+static const unsigned long mqttTestCleanupDelayMs = 300;       // Delay after test connection
+static const int mqttBufferSize = 4096;                        // MQTT client buffer size
+
 // Printer Discovery Heartbeat
 static const unsigned long printerDiscoveryHeartbeatInterval = 60000; // 1 minute heartbeat interval
 
