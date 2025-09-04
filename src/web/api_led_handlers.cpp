@@ -108,19 +108,8 @@ void handleLedEffect(AsyncWebServerRequest *request)
 
     // Note: No duration concept - effects run for cycles or continuously
 
-    // Parse colors array (required)
-    if (!doc.containsKey("colors") || !doc["colors"].is<JsonArray>())
-    {
-        sendErrorResponse(request, 400, "Colors array is required");
-        return;
-    }
-
-    JsonArray colorsArray = doc["colors"];
-    if (colorsArray.size() == 0)
-    {
-        sendErrorResponse(request, 400, "Colors array cannot be empty");
-        return;
-    }
+    // Colors: optional; effects will use defaults when not supplied.
+    const bool hasColors = doc.containsKey("colors") && doc["colors"].is<JsonArray>();
 
     // Create settings object from unified parameters
     DynamicJsonDocument settingsDoc(512);
@@ -157,8 +146,11 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
     }
 
-    // Add colors array to settings
-    settings["colors"] = doc["colors"];
+    // Add colors array to settings if provided
+    if (hasColors)
+    {
+        settings["colors"] = doc["colors"];
+    }
 
     // Parse colors from the colors array into CRGB values
     auto parseHexColor = [](const String &hexColor) -> CRGB
@@ -174,15 +166,74 @@ void handleLedEffect(AsyncWebServerRequest *request)
         return CRGB(r, g, b);
     };
 
-    // Parse colors into CRGB values
+    // Parse colors into CRGB values (effect-specific rules, defaults when needed)
     CRGB c1 = CRGB::Blue, c2 = CRGB::Black, c3 = CRGB::Black;
-    if (colorsArray.size() > 0)
-        c1 = parseHexColor(colorsArray[0].as<String>());
-    if (colorsArray.size() > 1)
-        c2 = parseHexColor(colorsArray[1].as<String>());
-    if (colorsArray.size() > 2)
-        c3 = parseHexColor(colorsArray[2].as<String>());
-    LOG_VERBOSE("LEDS", "Parsed %d colors from array", colorsArray.size());
+    bool colorsAdjusted = false;
+
+    auto setDefaultColorsForEffect = [&](const String &name) {
+        if (name.equalsIgnoreCase("chase_single")) { c1 = CRGB(0x00, 0x62, 0xff); }
+        else if (name.equalsIgnoreCase("chase_multi")) { c1 = CRGB(0xff, 0x00, 0x00); c2 = CRGB(0x00, 0xff, 0x00); c3 = CRGB(0x00, 0x00, 0xff); }
+        else if (name.equalsIgnoreCase("matrix")) { c1 = CRGB(0x00, 0xff, 0x00); }
+        else if (name.equalsIgnoreCase("twinkle")) { c1 = CRGB(0xff, 0xff, 0x00); }
+        else if (name.equalsIgnoreCase("pulse")) { c1 = CRGB(0x80, 0x00, 0x80); }
+        else /* rainbow or unknown */ { /* rainbow ignores explicit colors */ }
+    };
+
+    if (effectName.equalsIgnoreCase("rainbow"))
+    {
+        // Rainbow ignores colors; use internal color generation
+        LOG_VERBOSE("LEDS", "Rainbow effect: ignoring explicit colors");
+    }
+    else if (effectName.equalsIgnoreCase("chase_multi"))
+    {
+        // Expect 3 colors; adjust if missing/excess
+        if (hasColors)
+        {
+            JsonArray colorsArray = doc["colors"].as<JsonArray>();
+            int n = colorsArray.size();
+            if (n >= 1) c1 = parseHexColor(colorsArray[0].as<String>());
+            if (n >= 2) c2 = parseHexColor(colorsArray[1].as<String>());
+            if (n >= 3) c3 = parseHexColor(colorsArray[2].as<String>());
+            if (n != 3)
+            {
+                // Fill missing with defaults
+                CRGB d1 = CRGB(0xff,0x00,0x00), d2 = CRGB(0x00,0xff,0x00), d3 = CRGB(0x00,0x00,0xff);
+                if (n < 1) c1 = d1;
+                if (n < 2) c2 = d2;
+                if (n < 3) c3 = d3;
+                colorsAdjusted = true;
+            }
+            if (n > 3) colorsAdjusted = true; // extras ignored
+        }
+        else
+        {
+            setDefaultColorsForEffect(effectName);
+            colorsAdjusted = true;
+        }
+    }
+    else
+    {
+        // Single-color effects: chase_single, matrix, twinkle, pulse
+        if (hasColors)
+        {
+            JsonArray colorsArray = doc["colors"].as<JsonArray>();
+            if (colorsArray.size() >= 1)
+            {
+                c1 = parseHexColor(colorsArray[0].as<String>());
+                if (colorsArray.size() > 1) colorsAdjusted = true; // extras ignored
+            }
+            else
+            {
+                setDefaultColorsForEffect(effectName);
+                colorsAdjusted = true;
+            }
+        }
+        else
+        {
+            setDefaultColorsForEffect(effectName);
+            colorsAdjusted = true;
+        }
+    }
 
     // Parse ALL settings based on effect type and apply them
 
@@ -375,6 +426,17 @@ void handleLedEffect(AsyncWebServerRequest *request)
         response["message"] = "LED effect started";
         response["effect"] = effectName;
         response["cycles"] = cycles;
+
+        if (colorsAdjusted)
+        {
+            response["note"] = "Colors adjusted for effect; defaults applied where necessary";
+        }
+
+        // Include the resolved colors used
+        JsonArray used = response.createNestedArray("colors_used");
+        used.add(String("#") + String(c1.r, HEX) + String(c1.g, HEX) + String(c1.b, HEX));
+        used.add(String("#") + String(c2.r, HEX) + String(c2.g, HEX) + String(c2.b, HEX));
+        used.add(String("#") + String(c3.r, HEX) + String(c3.g, HEX) + String(c3.b, HEX));
 
         // Include the original settings object in the response
         if (doc.containsKey("settings"))

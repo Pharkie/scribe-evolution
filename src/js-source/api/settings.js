@@ -127,31 +127,19 @@ export async function printLocalContent(content) {
  * @param {Object} settings - Effect-specific settings (optional) - ignored if effectName is object
  * @returns {Promise<Object>} API response
  */
-export async function triggerLedEffect(
-  effectName,
-  duration = 10000,
-  settings = null,
-) {
+export async function triggerLedEffect(params) {
   try {
-    let payload;
-
-    // Handle new WLED-style unified parameters (from Alpine store)
-    if (typeof effectName === "object" && effectName.effect) {
-      payload = effectName; // Use the full parameters object
-    } else if (typeof effectName === "string" && typeof duration === "object") {
-      // Handle case where second parameter is the full effect params
-      payload = { effect: effectName, ...duration };
-    } else {
-      // Handle legacy simple parameters
-      payload = {
-        effect: effectName,
-        duration: duration,
-      };
-
-      // Add settings to payload if provided
-      if (settings && Object.keys(settings).length > 0) {
-        payload.settings = settings;
-      }
+    // Fail fast: exactly one way — pass a single object with effect params
+    if (!params || typeof params !== "object") {
+      throw new Error("Invalid LED effect payload: expected an object");
+    }
+    if (!params.effect || typeof params.effect !== "string") {
+      throw new Error("Invalid LED effect payload: missing 'effect' string");
+    }
+    if (Object.prototype.hasOwnProperty.call(params, "duration")) {
+      throw new Error(
+        "Invalid LED effect payload: 'duration' is not supported",
+      );
     }
 
     const response = await fetch("/api/leds/test", {
@@ -159,7 +147,7 @@ export async function triggerLedEffect(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) {

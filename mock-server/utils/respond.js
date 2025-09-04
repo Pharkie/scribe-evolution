@@ -12,51 +12,53 @@ function sendJSON(res, data, statusCode = 200) {
 }
 
 function sendNotFound(res) {
-  const baseDir = path.join(__dirname, "..", "data");
-  const gz404 = path.join(baseDir, "404.html.gz");
-  const html404 = path.join(baseDir, "404.html");
-  if (fs.existsSync(gz404)) {
-    fs.readFile(gz404, (err, data) => {
-      if (err) {
-        res.writeHead(404, {
+  // Candidate locations for 404 page (priority order):
+  // 1) mock-server/data/404.html(.gz)
+  // 2) repo data/404.html(.gz) from build output
+  // 3) source template src/web-static/404.html
+  const candidates = [];
+  const mockData = path.join(__dirname, "..", "data");
+  const repoData = path.join(__dirname, "..", "..", "data");
+  const src404 = path.join(
+    __dirname,
+    "..",
+    "..",
+    "src",
+    "web-static",
+    "404.html",
+  );
+
+  candidates.push({ file: path.join(mockData, "404.html.gz"), gzip: true });
+  candidates.push({ file: path.join(mockData, "404.html"), gzip: false });
+  candidates.push({ file: path.join(repoData, "404.html.gz"), gzip: true });
+  candidates.push({ file: path.join(repoData, "404.html"), gzip: false });
+  candidates.push({ file: src404, gzip: false });
+
+  for (const c of candidates) {
+    if (fs.existsSync(c.file)) {
+      return fs.readFile(c.file, (err, data) => {
+        if (err) breakFallback();
+        const headers = {
           "Content-Type": "text/html",
           "Access-Control-Allow-Origin": "*",
-        });
-        return res.end("<h1>404 Not Found</h1>");
-      }
-      res.writeHead(404, {
-        "Content-Type": "text/html",
-        "Content-Encoding": "gzip",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache",
+        };
+        if (c.gzip) headers["Content-Encoding"] = "gzip";
+        res.writeHead(404, headers);
+        return res.end(data);
       });
-      return res.end(data);
-    });
-    return;
+    }
   }
-  if (fs.existsSync(html404)) {
-    fs.readFile(html404, (err, data) => {
-      if (err) {
-        res.writeHead(404, {
-          "Content-Type": "text/html",
-          "Access-Control-Allow-Origin": "*",
-        });
-        return res.end("<h1>404 Not Found</h1>");
-      }
-      res.writeHead(404, {
-        "Content-Type": "text/html",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-cache",
-      });
-      return res.end(data);
+
+  function breakFallback() {
+    res.writeHead(404, {
+      "Content-Type": "text/html",
+      "Access-Control-Allow-Origin": "*",
     });
-    return;
+    res.end("<h1>404 Not Found</h1>");
   }
-  res.writeHead(404, {
-    "Content-Type": "text/html",
-    "Access-Control-Allow-Origin": "*",
-  });
-  return res.end("<h1>404 Not Found</h1>");
+
+  return breakFallback();
 }
 
 function serveFile(res, filePath, statusCode = 200, opts = {}) {

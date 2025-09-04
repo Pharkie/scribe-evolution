@@ -31,7 +31,7 @@ void setupMQTTWithDiscovery();
 
 // Dynamic MQTT control functions
 bool isMQTTEnabled();
-void startMQTTClient();
+void startMQTTClient(bool immediate = true);
 void stopMQTTClient();
 
 #endif // MQTT_HANDLER_H

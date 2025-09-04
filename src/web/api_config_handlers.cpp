@@ -486,7 +486,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         if (newConfig.mqttEnabled)
         {
             LOG_NOTICE("WEB", "MQTT enabled - starting client");
-            startMQTTClient();
+            startMQTTClient(true);  // true = immediate connection
         }
         else
         {
@@ -496,12 +496,11 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
     else if (newConfig.mqttEnabled)
     {
-        // MQTT was already enabled - restart client to avoid race conditions
-        // (especially after test connections that may leave client disconnected)
-        LOG_NOTICE("WEB", "MQTT config updated - restarting client to prevent race conditions");
+        // MQTT settings changed but was already enabled - restart cleanly
+        LOG_NOTICE("WEB", "MQTT settings updated - restarting client");
         stopMQTTClient();
-        delay(100); // Brief delay to ensure clean shutdown
-        startMQTTClient();
+        delay(100);  // Brief cleanup delay
+        startMQTTClient(true);  // true = immediate reconnection
     }
 
 #if ENABLE_LEDS
@@ -910,7 +909,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     testWifiClient.setCACert(NULL); // Clear certificate to avoid state pollution
 
     // Add delay to ensure socket resources are completely released
-    delay(300); // 300ms delay to prevent socket reuse/racing with main MQTT connection
+    delay(mqttTestCleanupDelayMs); // Delay to prevent socket reuse/racing with main MQTT connection
 
     if (connected)
     {

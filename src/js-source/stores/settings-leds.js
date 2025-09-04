@@ -22,11 +22,11 @@ export function createSettingsLedsStore() {
     config: {}, // Empty object (populated on load)
 
     // Effects playground (temporary, not saved to config)
-    effect: null,
-    speed: null,
-    intensity: null,
-    cycles: null,
-    colors: [],
+    effect: "chase_single", // Must reflect default option in the select
+    speed: 50,
+    intensity: 50,
+    cycles: 3,
+    colors: ["#0062ff"],
     originalConfig: {},
     testingEffect: false,
     // Test button state
@@ -104,10 +104,13 @@ export function createSettingsLedsStore() {
           leds: JSON.parse(JSON.stringify(this.config.leds)),
         };
 
-        // Ensure colors array exists and has at least 3 colors
-        if (!Array.isArray(this.colors) || this.colors.length < 3) {
-          this.colors = ["#0062ff", "#ff0000", "#00ff00"];
-        }
+        // Initialize playground controls from config (keeps UI/state in sync)
+        this.effect = this.config.leds.effect || "chase_single";
+        this.speed = this.config.leds.speed || 50;
+        this.intensity = this.config.leds.intensity || 50;
+        this.cycles = this.config.leds.cycles || 3;
+        // Derive default colors based on effect
+        this.updateEffectParams();
 
         this.loaded = true; // Mark as loaded AFTER data assignment
       } catch (error) {
@@ -181,7 +184,7 @@ export function createSettingsLedsStore() {
       } else if (this.effect === "pulse") {
         this.colors = ["#800080"]; // Purple (DEFAULT_PULSE_COLOR)
       } else if (this.effect === "rainbow") {
-        // Rainbow effect uses no colors - procedurally generated
+        // Rainbow effect uses no explicit colors
         this.colors = [];
       }
     },
@@ -221,7 +224,7 @@ export function createSettingsLedsStore() {
           // Multi color effects need exactly 3 colors
           colors = colors.slice(0, 3);
         } else if (this.effect === "rainbow") {
-          // Rainbow effect uses no colors
+          // Rainbow ignores explicit colors
           colors = [];
         }
 

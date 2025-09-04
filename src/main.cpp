@@ -191,6 +191,7 @@ void setup()
   if (!isAPMode() && isMQTTEnabled())
   {
     setupMQTTWithDiscovery();
+    startMQTTClient(true);   // true = immediate connection on boot (WiFi is already stable)
   }
   else
   {

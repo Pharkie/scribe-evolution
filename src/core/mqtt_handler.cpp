@@ -11,20 +11,29 @@
 // MQTT objects
 WiFiClientSecure wifiSecureClient;
 PubSubClient mqttClient(wifiSecureClient);
+
+// MQTT State Machine
+enum MQTTState {
+    MQTT_STATE_DISABLED,
+    MQTT_STATE_ENABLED_DISCONNECTED, 
+    MQTT_STATE_CONNECTING,
+    MQTT_STATE_CONNECTED,
+    MQTT_STATE_DISCONNECTING
+};
+
+static MQTTState mqttState = MQTT_STATE_DISABLED;
+static unsigned long stateChangeTime = 0;
+
+// MQTT connection management (using config.h values)
 unsigned long lastMQTTReconnectAttempt = 0;
-const unsigned long mqttReconnectInterval = 5000; // 5 seconds
+static int consecutiveFailures = 0;
+static unsigned long lastFailureTime = 0;
 
 // Track current subscription
 String currentSubscribedTopic = "";
 
 // Persistent CA certificate buffer (must outlive wifiSecureClient)
 static String caCertificateBuffer;
-
-// Failure tracking to prevent system crashes
-static int consecutiveFailures = 0;
-static unsigned long lastFailureTime = 0;
-const int MAX_CONSECUTIVE_FAILURES = 5;
-const unsigned long FAILURE_COOLDOWN_MS = 60000; // 1 minute
 
 
 // === MQTT Functions ===
@@ -65,7 +74,7 @@ void setupMQTT()
     
     // Configure exactly like test - local string passed to setCACert
     wifiSecureClient.setCACert(caCertificateBuffer.c_str());
-    wifiSecureClient.setHandshakeTimeout(10000);
+    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
     
     // Ensure MQTT client uses the refreshed secure client
     mqttClient.setClient(wifiSecureClient);
@@ -74,42 +83,38 @@ void setupMQTT()
     const RuntimeConfig &config = getRuntimeConfig();
     mqttClient.setServer(config.mqttServer.c_str(), config.mqttPort);
     mqttClient.setCallback(mqttCallback);
-    mqttClient.setBufferSize(4096);
+    mqttClient.setBufferSize(mqttBufferSize);
 
-    // Initial connection attempt
-    connectToMQTT();
+    // Don't call connectToMQTT() here anymore - let state machine handle it
 
     const char* tlsMode = mqttClient.connected() ? "Secure (TLS with CA verification)" : "Secure (TLS configured, connection pending)";
-    LOG_NOTICE("MQTT", "MQTT server configured: %s:%d | Inbox topic: %s | TLS mode: %s | Buffer size: 4096 bytes", config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), tlsMode);
+    LOG_NOTICE("MQTT", "MQTT server configured: %s:%d | Inbox topic: %s | TLS mode: %s | Buffer size: %d bytes", config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), tlsMode, mqttBufferSize);
 }
 
 void connectToMQTT()
 {
-    static int attemptCounter = 0;
-    static bool connectionInProgress = false;
+    LOG_VERBOSE("MQTT", "=== connectToMQTT() ENTRY ===");
     
-    attemptCounter++;
-    LOG_VERBOSE("MQTT", "=== connectToMQTT() ENTRY #%d ===", attemptCounter);
-    
-    if (connectionInProgress) {
-        LOG_WARNING("MQTT", "Connection already in progress, skipping duplicate call #%d", attemptCounter);
+    // State machine handles duplicate prevention - no static flags needed
+    if (mqttState != MQTT_STATE_CONNECTING) {
+        LOG_ERROR("MQTT", "connectToMQTT called in wrong state: %d", mqttState);
         return;
     }
     
     if (WiFi.status() != WL_CONNECTED)
     {
-        // WiFi not connected, skipping MQTT connection
+        LOG_WARNING("MQTT", "WiFi not connected, aborting MQTT connection");
+        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
         return;
     }
     
-    connectionInProgress = true;
-    
     // Check if we should skip connection due to consecutive failures
-    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES)
+    if (consecutiveFailures >= mqttMaxConsecutiveFailures)
     {
-        if (millis() - lastFailureTime < FAILURE_COOLDOWN_MS)
+        if (millis() - lastFailureTime < mqttFailureCooldownMs)
         {
-            // Still in cooldown period, skip connection attempt
+            LOG_VERBOSE("MQTT", "Still in cooldown period, returning to disconnected state");
+            mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
             return;
         }
         else
@@ -132,8 +137,8 @@ void connectToMQTT()
     // Force clean state by recreating the secure client (match test behavior)
     wifiSecureClient = WiFiClientSecure();
     wifiSecureClient.setCACert(caCertificateBuffer.c_str());
-    wifiSecureClient.setHandshakeTimeout(10000);
-    wifiSecureClient.setTimeout(5000);
+    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
+    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
     
     LOG_VERBOSE("MQTT", "WiFiClientSecure reset to clean state");
 
@@ -154,8 +159,8 @@ void connectToMQTT()
     // Try connection with or without credentials, including LWT
     const RuntimeConfig &config = getRuntimeConfig();
     
-    // Set a shorter timeout to prevent blocking
-    wifiSecureClient.setTimeout(5000); // 5 second timeout
+    // Set timeout to prevent blocking (already set above, but ensuring consistency)
+    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
     
     try {
         if (config.mqttUsername.length() > 0 && config.mqttPassword.length() > 0)
@@ -186,7 +191,8 @@ void connectToMQTT()
 
     if (connected)
     {
-        // Reset failure count on successful connection
+        // Connection successful - update state
+        mqttState = MQTT_STATE_CONNECTED;
         consecutiveFailures = 0;
         
         // Subscribe to the inbox topic
@@ -217,22 +223,21 @@ void connectToMQTT()
     }
     else
     {
-        // Track consecutive failures
+        // Connection failed - return to disconnected state
+        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
         consecutiveFailures++;
         lastFailureTime = millis();
         
         int state = mqttClient.state();
-        LOG_WARNING("MQTT", "MQTT connection failed (attempt %d/%d), state: %d - Will retry in %d seconds", 
-                   consecutiveFailures, MAX_CONSECUTIVE_FAILURES, state, mqttReconnectInterval / 1000);
+        LOG_WARNING("MQTT", "MQTT connection failed (attempt %d/%d), state: %d - Will retry in %lums", 
+                   consecutiveFailures, mqttMaxConsecutiveFailures, state, mqttReconnectIntervalMs);
         
-        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES)
+        if (consecutiveFailures >= mqttMaxConsecutiveFailures)
         {
-            LOG_ERROR("MQTT", "Too many consecutive MQTT failures (%d), entering cooldown mode for %d seconds to prevent system instability", 
-                     MAX_CONSECUTIVE_FAILURES, FAILURE_COOLDOWN_MS / 1000);
+            LOG_ERROR("MQTT", "Too many consecutive MQTT failures (%d), entering cooldown mode for %lums to prevent system instability", 
+                     mqttMaxConsecutiveFailures, mqttFailureCooldownMs);
         }
     }
-    
-    connectionInProgress = false;
 }
 
 void mqttCallback(char *topic, byte *payload, unsigned int length)
@@ -323,23 +328,67 @@ void handleMQTTMessage(String topic, String message)
 // === MQTT Connection Handler ===
 void handleMQTTConnection()
 {
-    // Handle MQTT connection and messages
-    if (!mqttClient.connected())
+    switch(mqttState)
     {
-        if (millis() - lastMQTTReconnectAttempt > mqttReconnectInterval)
-        {
-            LOG_VERBOSE("MQTT", "MQTT disconnected, attempting reconnection...");
-
-            // Feed watchdog before potentially blocking MQTT operation
-            esp_task_wdt_reset();
-
-            connectToMQTT();
-            lastMQTTReconnectAttempt = millis();
-        }
-    }
-    else
-    {
-        mqttClient.loop(); // Handle incoming MQTT messages
+        case MQTT_STATE_DISABLED:
+            // Nothing to do
+            return;
+            
+        case MQTT_STATE_ENABLED_DISCONNECTED:
+            // Check if it's time to reconnect
+            if (millis() - lastMQTTReconnectAttempt > mqttReconnectIntervalMs)
+            {
+                LOG_VERBOSE("MQTT", "Starting connection attempt");
+                mqttState = MQTT_STATE_CONNECTING;
+                stateChangeTime = millis();
+                
+                // Setup MQTT if not already done, then connect
+                if (WiFi.status() == WL_CONNECTED)
+                {
+                    setupMQTT();  // Load certs, configure client
+                    connectToMQTT();  // Actually connect
+                }
+                else
+                {
+                    LOG_WARNING("MQTT", "WiFi not connected, returning to disconnected state");
+                    mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+                }
+                
+                lastMQTTReconnectAttempt = millis();
+            }
+            break;
+            
+        case MQTT_STATE_CONNECTING:
+            // Check for timeout
+            if (millis() - stateChangeTime > mqttConnectionTimeoutMs)
+            {
+                LOG_ERROR("MQTT", "Connection timeout after %lums", mqttConnectionTimeoutMs);
+                mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+                
+                // Clean up stuck connection
+                if (wifiSecureClient.connected())
+                {
+                    wifiSecureClient.stop();
+                }
+            }
+            // Note: connectToMQTT() will change state when connection completes
+            break;
+            
+        case MQTT_STATE_CONNECTED:
+            // Process MQTT messages
+            mqttClient.loop();
+            
+            // Check if still connected
+            if (!mqttClient.connected())
+            {
+                LOG_WARNING("MQTT", "Connection lost");
+                mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+            }
+            break;
+            
+        case MQTT_STATE_DISCONNECTING:
+            // Transitional state - should be brief
+            break;
     }
 }
 
@@ -399,33 +448,54 @@ bool isMQTTEnabled()
     return config.mqttEnabled;
 }
 
-void startMQTTClient()
+void startMQTTClient(bool immediate)
 {
     if (!isMQTTEnabled())
     {
-        LOG_VERBOSE("MQTT", "MQTT is disabled, not starting client");
+        LOG_VERBOSE("MQTT", "MQTT is disabled in config, not starting client");
         return;
     }
     
-    LOG_VERBOSE("MQTT", "Starting MQTT client");
-    
-    // Ensure WiFi is stable before attempting MQTT connection
-    if (WiFi.status() != WL_CONNECTED)
+    if (mqttState == MQTT_STATE_DISABLED)
     {
-        LOG_WARNING("MQTT", "WiFi not connected, delaying MQTT startup");
-        return; // Will retry on next handleMQTTConnection() call
+        LOG_NOTICE("MQTT", "Enabling MQTT client (immediate=%s)", immediate ? "true" : "false");
+        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+        
+        if (immediate)
+        {
+            // Force immediate connection on next loop iteration
+            lastMQTTReconnectAttempt = 0;
+        }
+        else
+        {
+            // Wait normal reconnect interval
+            lastMQTTReconnectAttempt = millis();
+        }
     }
-    
-    setupMQTT();
 }
 
 void stopMQTTClient()
 {
+    LOG_NOTICE("MQTT", "Stopping MQTT client");
+    mqttState = MQTT_STATE_DISCONNECTING;
+    
+    // Disconnect MQTT
     if (mqttClient.connected())
     {
-        LOG_NOTICE("MQTT", "Stopping MQTT client");
         mqttClient.disconnect();
     }
+    
+    // Clean up SSL connection
+    if (wifiSecureClient.connected())
+    {
+        wifiSecureClient.stop();
+    }
+    
+    // Reset ALL state variables
+    mqttState = MQTT_STATE_DISABLED;
     currentSubscribedTopic = "";
+    consecutiveFailures = 0;
+    lastMQTTReconnectAttempt = 0;
+    lastFailureTime = 0;
 }
 
