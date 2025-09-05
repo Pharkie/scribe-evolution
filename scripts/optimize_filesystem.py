@@ -14,6 +14,8 @@ ap_essentials = [
     "js/app-common.js",
     "js/alpine.js",
     "css/app.css",
+    # Keep manifest uncompressed for AP mode (served without gzip)
+    "site.webmanifest",
 ]
 
 readme_assets = [
@@ -71,7 +73,8 @@ def build_optimized_filesystem(source, target, pio_env):
     removed_count = 0
 
     # Compressible file extensions
-    compressible_extensions = {".html", ".css", ".js", ".svg", ".json"}
+    # Include .webmanifest so STA mode can serve gzipped manifest
+    compressible_extensions = {".html", ".css", ".js", ".svg", ".json", ".webmanifest"}
 
     # Walk through all files recursively
     for root, _, files in os.walk(data_dir):

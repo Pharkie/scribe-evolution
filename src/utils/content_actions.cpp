@@ -10,6 +10,7 @@
 #include "content_actions.h"
 #include "../content/content_generators.h"
 #include "../content/content_handlers.h"
+#include "../content/memo_handler.h"
 #include "../utils/time_utils.h"
 #include "../core/shared_types.h"
 #include "../core/logging.h"
@@ -134,8 +135,16 @@ bool queueContentForPrinting(const ContentActionResult &result)
         return false;
     }
 
-    // Format content for local printing (header + body)
-    String formattedContent = result.header + "\n\n" + result.body;
+    // Expand memo placeholders at print time (if this is a memo)
+    String finalBody = result.body;
+    if (result.header.startsWith("MEMO"))
+    {
+        finalBody = processMemoPlaceholders(result.body);
+        LOG_VERBOSE("CONTENT_ACTION", "Expanded memo placeholders for: %s", result.header.c_str());
+    }
+
+    // Format content for local printing (header + processed body)
+    String formattedContent = result.header + "\n\n" + finalBody;
     currentMessage.message = formattedContent;
     currentMessage.timestamp = getFormattedDateTime();
     currentMessage.shouldPrintLocally = true;

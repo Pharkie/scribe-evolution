@@ -159,20 +159,10 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
 
     if (result.success)
     {
-        // Check if structured format is requested
-        bool structuredFormat = request->hasParam("format") && 
-                               request->getParam("format")->value() == "structured";
-        
+        // Always return structured data (header + body separately)
         DynamicJsonDocument doc(2048);
-        
-        if (structuredFormat) {
-            // Return structured data (header + body separately)
-            doc["header"] = result.header;
-            doc["body"] = result.body;
-        } else {
-            // Return formatted content (header + body for display)
-            doc["content"] = result.header + "\n\n" + result.body;
-        }
+        doc["header"] = result.header;
+        doc["body"] = result.body;
 
         String response;
         serializeJson(doc, response);
@@ -221,9 +211,10 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
 
     if (result.success)
     {
-        // Return JSON response in the same format as other content endpoints
+        // Return JSON response in structured format (header + body separately)
         DynamicJsonDocument responseDoc(2048);
-        responseDoc["content"] = result.header + "\n\n" + result.body;
+        responseDoc["header"] = result.header;
+        responseDoc["body"] = result.body;
 
         String response;
         serializeJson(responseDoc, response);
@@ -425,9 +416,8 @@ String generateMemoContent(int memoId)
         return "";
     }
 
-    // Expand placeholders
-    String expandedContent = processMemoPlaceholders(memoContent);
-    return expandedContent;
+    // Return raw template - placeholders will be expanded at print time
+    return memoContent;
 }
 
 bool generateAndQueueMemo(int memoId)
@@ -448,14 +438,11 @@ bool generateAndQueueMemo(int memoId)
         return false;
     }
 
-    // Expand placeholders
-    String expandedContent = processMemoPlaceholders(memoContent);
-
-    // Queue for printing
-    currentMessage.message = expandedContent;
+    // Queue raw template for printing - placeholders will be expanded at print time
+    currentMessage.message = memoContent;
     currentMessage.timestamp = getFormattedDateTime();
     currentMessage.hasMessage = true;
 
-    LOG_NOTICE("CONTENT", "Memo %d queued for printing: %s", memoId, expandedContent.c_str());
+    LOG_NOTICE("CONTENT", "Memo %d queued for printing: %s", memoId, memoContent.c_str());
     return true;
 }

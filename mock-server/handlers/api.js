@@ -253,44 +253,50 @@ function handleAPI(req, res, pathname, ctx) {
     return (sendJSON(res, { error: "Timezone data not available" }, 500), true);
   }
 
-  // Content endpoints
+  // Content endpoints - structured data format (header + body)
   const contentEndpoints = {
     "/api/joke": {
       delay: 300,
       body: {
-        content:
-          "JOKE\n\nWhy don't scientists trust atoms? Because they make up everything!",
+        header: "JOKE",
+        body: "Why don't scientists trust atoms? Because they make up everything!",
       },
     },
     "/api/riddle": {
       delay: 400,
       body: {
-        content:
-          "RIDDLE\n\nI speak without a mouth and hear without ears. I have no body, but come alive with the wind. What am I?\n\nAn echo!",
+        header: "RIDDLE",
+        body: "I speak without a mouth and hear without ears. I have no body, but come alive with the wind. What am I?\n\nAn echo!",
       },
     },
     "/api/quote": {
       delay: 350,
       body: {
-        content:
-          'QUOTE\n\n"The only way to do great work is to love what you do." - Steve Jobs',
+        header: "QUOTE",
+        body: '"The only way to do great work is to love what you do." - Steve Jobs',
       },
     },
     "/api/quiz": {
       delay: 450,
       body: {
-        content:
-          "QUIZ\n\nWhat is the largest planet in our solar system?\n\nA) Mars\nB) Jupiter\nC) Saturn\nD) Neptune\n\nAnswer: B) Jupiter",
+        header: "QUIZ",
+        body: "What is the largest planet in our solar system?\n\nA) Mars\nB) Jupiter\nC) Saturn\nD) Neptune\n\nAnswer: B) Jupiter",
       },
     },
     "/api/news": {
       delay: 500,
       body: {
-        content:
-          "NEWS\n\nBreaking: Local thermal printer achieves sentience, demands better paper quality and regular maintenance breaks.",
+        header: "NEWS",
+        body: "Breaking: Local thermal printer achieves sentience, demands better paper quality and regular maintenance breaks.",
       },
     },
-    "/api/poke": { delay: 250, body: { content: "POKE" } },
+    "/api/poke": {
+      delay: 250,
+      body: {
+        header: "POKE",
+        body: "",
+      },
+    },
   };
 
   if (contentEndpoints[pathname] && req.method === "GET") {
@@ -312,27 +318,32 @@ function handleAPI(req, res, pathname, ctx) {
         ),
         true
       );
-    let content;
-    if (target === "local-direct") content = `MESSAGE\n\n${userMessage}`;
-    else {
+    let header, body;
+    if (target === "local-direct") {
+      header = "MESSAGE";
+      body = userMessage;
+    } else {
       const deviceOwner = mockConfig.device.owner || "MockDevice";
-      content = `MESSAGE from ${deviceOwner}\n\n${userMessage}`;
+      header = `MESSAGE from ${deviceOwner}`;
+      body = userMessage;
     }
-    setTimeout(() => sendJSON(res, { content }), 200);
+    setTimeout(() => sendJSON(res, { header, body }), 200);
     return true;
   }
 
   if (pathname === "/api/unbidden-ink" && req.method === "GET") {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const customPrompt = url.searchParams.get("prompt");
-    let content;
+    let header, body;
     if (customPrompt) {
-      content = `UNBIDDEN INK (Custom)\n\n${customPrompt}\n\nThe shadows dance with secrets untold, whispering tales of digital dreams and analog desires...`;
+      header = "UNBIDDEN INK (Custom)";
+      body = `${customPrompt}\n\nThe shadows dance with secrets untold, whispering tales of digital dreams and analog desires...`;
     } else {
-      content =
-        "UNBIDDEN INK\n\nIn the quiet hum of circuits dreaming, where electrons dance to silicon symphonies, lies the poetry of computation - each bit a verse in the endless song of possibility.";
+      header = "UNBIDDEN INK";
+      body =
+        "In the quiet hum of circuits dreaming, where electrons dance to silicon symphonies, lies the poetry of computation - each bit a verse in the endless song of possibility.";
     }
-    setTimeout(() => sendJSON(res, { content }), 600);
+    setTimeout(() => sendJSON(res, { header, body }), 600);
     return true;
   }
 
@@ -341,7 +352,10 @@ function handleAPI(req, res, pathname, ctx) {
     const memoKeys = ["memo1", "memo2", "memo3", "memo4"];
     const memoContent = mockMemos[memoKeys[memoId - 1]];
     const expandedContent = memoContent; // expandPlaceholders could be added if needed
-    return (sendJSON(res, { content: expandedContent }), true);
+    return (
+      sendJSON(res, { header: `MEMO ${memoId}`, body: expandedContent }),
+      true
+    );
   }
 
   if (pathname === "/api/memos" && req.method === "GET") {

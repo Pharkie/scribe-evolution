@@ -5,6 +5,7 @@
 #include "config_utils.h"
 #include "config_loader.h"
 #include "printer_discovery.h"
+#include "../content/memo_handler.h"
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 
@@ -301,6 +302,13 @@ void handleMQTTMessage(String topic, String message)
     String header = doc["header"].as<String>();
     String body = doc["body"].as<String>();
     String senderName = doc["sender"] | "";
+
+    // Expand memo placeholders at print time (if this is a memo)
+    if (header.startsWith("MEMO"))
+    {
+        body = processMemoPlaceholders(body);
+        LOG_VERBOSE("MQTT", "Expanded memo placeholders for: %s", header.c_str());
+    }
 
     // Construct header with sender information
     String finalHeader = header;
