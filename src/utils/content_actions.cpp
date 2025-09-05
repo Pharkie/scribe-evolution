@@ -75,7 +75,7 @@ ContentActionResult executeContentActionWithTimeout(ContentActionType actionType
     case ContentActionType::USER_MESSAGE:
         if (customData.length() == 0)
         {
-            return ContentActionResult(false, "", "No message content provided");
+            return ContentActionResult(false, "", "", "No message content provided");
         }
         content = customData;
         actionName = "MESSAGE";
@@ -107,7 +107,7 @@ ContentActionResult executeContentActionWithTimeout(ContentActionType actionType
         break;
 
     default:
-        return ContentActionResult(false, "", "Unknown content action type");
+        return ContentActionResult(false, "", "", "Unknown content action type");
     }
 
     // Check if content generation failed
@@ -117,32 +117,31 @@ ContentActionResult executeContentActionWithTimeout(ContentActionType actionType
         actionString.toLowerCase();
         String errorMsg = "Failed to generate " + actionString + " content";
         LOG_ERROR("CONTENT_ACTION", "%s", errorMsg.c_str());
-        return ContentActionResult(false, "", errorMsg);
+        return ContentActionResult(false, "", "", errorMsg);
     }
 
-    // Format content with header using existing utility function
-    String formattedContent = formatContentWithHeader(actionName, content, sender);
-
     LOG_VERBOSE("CONTENT_ACTION", "Successfully generated %s content (%d chars)",
-                actionName.c_str(), formattedContent.length());
+                actionName.c_str(), content.length());
 
-    return ContentActionResult(true, formattedContent, "");
+    return ContentActionResult(true, actionName, content, "");
 }
 
 bool queueContentForPrinting(const ContentActionResult &result)
 {
-    if (!result.success || result.content.length() == 0)
+    if (!result.success || result.header.length() == 0 || result.body.length() == 0)
     {
         LOG_ERROR("CONTENT_ACTION", "Cannot queue invalid content for printing");
         return false;
     }
 
-    currentMessage.message = result.content;
+    // Format content for local printing (header + body)
+    String formattedContent = result.header + "\n\n" + result.body;
+    currentMessage.message = formattedContent;
     currentMessage.timestamp = getFormattedDateTime();
     currentMessage.shouldPrintLocally = true;
 
     LOG_VERBOSE("CONTENT_ACTION", "Content queued for local printing (%d chars)",
-                result.content.length());
+                formattedContent.length());
     return true;
 }
 

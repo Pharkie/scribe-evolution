@@ -274,7 +274,7 @@ String generateUnbiddenInkContent(const String &customPrompt)
                 if (apiMessage.length() > 0)
                 {
                     LOG_VERBOSE("UNBIDDENINK", "Using ChatGPT content: %s", apiMessage.c_str());
-                    return apiMessage; // Return raw content, header will be added by formatContentWithHeader()
+                    return apiMessage; // Return raw content, header will be added by caller
                 }
                 else
                 {

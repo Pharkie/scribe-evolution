@@ -57,12 +57,10 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
         fadeToBlackBy(leds, i, fadeStep);
     }
 
-    // Use frame counter for speed control - update cadence responds to fade speed
+    // Use a stable update cadence (every 2 frames) to reduce flicker and CPU churn
     frameCounter++;
     {
-        // Map fadeSpeed (1..64) to an update interval of 3..1 frames
-        int updateInterval = 3 - min(2, (config.fadeSpeed + 15) / 32);
-        if (updateInterval < 1) updateInterval = 1;
+        int updateInterval = 2;
         if (frameCounter < updateInterval)
             return true;
         frameCounter = 0;
@@ -90,8 +88,8 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
             }
         }
 
-        // Randomly start new twinkle stars (higher fadeSpeed => more spawns)
-        int spawnChance = 2 + (max(1, config.fadeSpeed) * 10 / 64); // ~2%..12%
+        // Randomly start new twinkle stars; keep spawn conservative to avoid rapid flicker
+        int spawnChance = 1 + (max(1, config.fadeSpeed) * 6 / 64); // ~1%..7%
         if (random16(100) < spawnChance)
         {
             for (int i = 0; i < config.density; i++)

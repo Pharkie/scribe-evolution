@@ -63,6 +63,14 @@ Backend Stack:
 - ESP32-C3 with PlatformIO
 - Express.js 5.1.0 (mock server)
 - Unity test framework
+
+Content Generation Architecture:
+
+- Content generators always return structured data: {header, body}
+- Local printing: formats as "header\n\nbody"
+- MQTT sending: sends {header, body, sender} JSON
+- MQTT receiving: constructs "header from sender\n\nbody"
+- No backwards compatibility - fail fast principle
   </patterns>
 
 <workflow>
@@ -82,3 +90,4 @@ Code Quality Process:
 - Hardcode values = Maintenance nightmare
 - Custom reactivity instead of Alpine = You're doing it wrong
 - Missing GPIO validation = Hardware damage
+- Deploy MQTT without security review = Network vulnerabilities

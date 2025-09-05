@@ -57,7 +57,7 @@ export async function printLocalContent(content) {
 
 /**
  * Print content via MQTT to remote printer
- * @param {string} content - Content to print
+ * @param {string} content - Content to print (formatted)
  * @param {string} topic - MQTT topic for the target printer
  * @returns {Promise<Object>} Print response from server
  */
@@ -87,9 +87,44 @@ export async function printMQTTContent(content, topic) {
 }
 
 /**
+ * Print structured content via MQTT to remote printer
+ * @param {string} header - Content header (e.g., "JOKE", "RIDDLE")
+ * @param {string} body - Content body
+ * @param {string} topic - MQTT topic for the target printer
+ * @returns {Promise<Object>} Print response from server
+ */
+export async function printMQTTStructuredContent(header, body, topic) {
+  try {
+    console.log(
+      `API: Sending structured content to MQTT printer on topic: ${topic}`,
+    );
+
+    const response = await fetch("/api/print-mqtt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        header: header,
+        body: body,
+        topic: topic,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`MQTT structured print failed: ${errorData}`);
+    }
+
+    console.log("API: Structured content sent to MQTT printer successfully");
+  } catch (error) {
+    console.error("API: Failed to print MQTT structured content:", error);
+    throw error;
+  }
+}
+
+/**
  * Execute a quick action via API
  * @param {string} action - Action name (e.g., 'time', 'joke', 'riddle', 'wisdom')
- * @returns {Promise<Object>} Generated content response
+ * @returns {Promise<Object>} Generated content response with formatted content
  */
 export async function executeQuickAction(action) {
   try {
@@ -109,6 +144,40 @@ export async function executeQuickAction(action) {
     return result;
   } catch (error) {
     console.error(`API: Failed to execute quick action '${action}':`, error);
+    throw error;
+  }
+}
+
+/**
+ * Execute a quick action and get structured data (header + body)
+ * @param {string} action - Action name (e.g., 'joke', 'riddle', 'quote')
+ * @returns {Promise<Object>} Generated content with {header, body} structure
+ */
+export async function executeQuickActionStructured(action) {
+  try {
+    console.log(`API: Executing structured quick action: ${action}`);
+
+    const response = await fetch(`/api/${action}?format=structured`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(
+        `Structured quick action '${action}' failed: ${errorData}`,
+      );
+    }
+
+    const result = await response.json();
+    console.log(
+      `API: Structured quick action '${action}' completed successfully`,
+    );
+    return result;
+  } catch (error) {
+    console.error(
+      `API: Failed to execute structured quick action '${action}':`,
+      error,
+    );
     throw error;
   }
 }

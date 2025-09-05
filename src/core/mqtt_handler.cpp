@@ -289,50 +289,34 @@ void handleMQTTMessage(String topic, String message)
         return;
     }
 
-    // Handle text messages (content should already be formatted with headers)
-    if (doc.containsKey("message"))
+    String timestamp = getFormattedDateTime();
+
+    // Only handle structured messages (header + body + sender)
+    if (!doc.containsKey("header") || !doc.containsKey("body"))
     {
-        String printMessage = doc["message"].as<String>();
-        String timestamp = getFormattedDateTime();
-
-        // Extract sender name from JSON payload (if provided)
-        String senderName = "";
-        if (doc.containsKey("sender"))
-        {
-            senderName = doc["sender"].as<String>();
-        }
-
-        // Add "from {sender}" to message headers if sender identified
-        // Note: Check if message already has "from" to avoid duplicates
-        if (senderName.length() > 0 && printMessage.indexOf(" from ") == -1)
-        {
-            // Find the header end (first newline or end of string)
-            int headerEnd = printMessage.indexOf('\n');
-            if (headerEnd == -1) headerEnd = printMessage.length();
-            
-            // Insert " from {sender}" before the newline or at the end
-            String modifiedMessage = printMessage.substring(0, headerEnd) + 
-                                   " from " + senderName;
-            if (headerEnd < printMessage.length())
-            {
-                modifiedMessage += printMessage.substring(headerEnd);
-            }
-            printMessage = modifiedMessage;
-            
-            LOG_VERBOSE("MQTT", "Added sender to header: %s", senderName.c_str());
-        }
-        else if (senderName.length() > 0)
-        {
-            LOG_VERBOSE("MQTT", "Sender header already present in message, skipping duplicate");
-        }
-
-        // Print immediately using the existing printWithHeader function
-        printWithHeader(timestamp, printMessage);
+        LOG_ERROR("MQTT", "MQTT JSON must contain 'header' and 'body' fields");
+        return;
     }
-    else
+
+    String header = doc["header"].as<String>();
+    String body = doc["body"].as<String>();
+    String senderName = doc["sender"] | "";
+
+    // Construct header with sender information
+    String finalHeader = header;
+    if (senderName.length() > 0)
     {
-        LOG_WARNING("MQTT", "MQTT JSON missing 'message' field");
+        finalHeader += " from " + senderName;
     }
+
+    // Format final message: header + body
+    String printMessage = finalHeader + "\n\n" + body;
+
+    // Print immediately using the existing printWithHeader function
+    printWithHeader(timestamp, printMessage);
+
+    LOG_VERBOSE("MQTT", "Processed structured message: %s (%d chars)",
+               finalHeader.c_str(), printMessage.length());
 }
 
 // === MQTT Connection Handler ===

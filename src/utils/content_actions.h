@@ -21,12 +21,21 @@
 struct ContentActionResult
 {
     bool success;        // Whether the action succeeded
-    String content;      // Generated content (formatted with header)
+    String header;       // Content header (e.g., "JOKE", "RIDDLE", "MEMO 1")
+    String body;         // Content body (the actual joke, riddle text, etc.)
     String errorMessage; // Error message if failed
 
-    ContentActionResult() : success(false), content(""), errorMessage("") {}
-    ContentActionResult(bool s, const String &c, const String &e = "")
-        : success(s), content(c), errorMessage(e) {}
+    ContentActionResult() : success(false), header(""), body(""), errorMessage("") {}
+    ContentActionResult(bool s, const String &h, const String &b, const String &e = "")
+        : success(s), header(h), body(b), errorMessage(e) {}
+    
+    // Backward compatibility: get formatted content
+    String getFormattedContent() const {
+        if (!success || header.length() == 0 || body.length() == 0) {
+            return "";
+        }
+        return header + "\n\n" + body;
+    }
 };
 
 /**

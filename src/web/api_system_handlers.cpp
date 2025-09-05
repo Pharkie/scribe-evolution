@@ -227,9 +227,9 @@ void handleMQTTSend(AsyncWebServerRequest *request)
         return;
     }
 
-    // Validate JSON structure
-    const char *requiredFields[] = {"topic", "message"};
-    ValidationResult jsonValidation = validateJSON(body, requiredFields, 2);
+    // Validate JSON structure - only support structured format (header+body)
+    const char *requiredFields[] = {"topic", "header", "body"};
+    ValidationResult jsonValidation = validateJSON(body, requiredFields, 3);
     if (!jsonValidation.isValid)
     {
         sendValidationError(request, jsonValidation);
@@ -241,8 +241,7 @@ void handleMQTTSend(AsyncWebServerRequest *request)
     deserializeJson(doc, body);
 
     String topic = doc["topic"].as<String>();
-    String message = doc["message"].as<String>();
-
+    
     // Validate MQTT topic
     ValidationResult topicValidation = validateMQTTTopic(topic);
     if (!topicValidation.isValid)
@@ -251,17 +250,25 @@ void handleMQTTSend(AsyncWebServerRequest *request)
         return;
     }
 
-    // Validate message content
-    ValidationResult messageValidation = validateMessage(message);
-    if (!messageValidation.isValid)
-    {
-        sendValidationError(request, messageValidation);
+    String header = doc["header"].as<String>();
+    String bodyContent = doc["body"].as<String>();
+    
+    // Validate content
+    ValidationResult headerValidation = validateMessage(header);
+    ValidationResult bodyValidation = validateMessage(bodyContent);
+    if (!headerValidation.isValid) {
+        sendValidationError(request, headerValidation);
         return;
     }
-
+    if (!bodyValidation.isValid) {
+        sendValidationError(request, bodyValidation);
+        return;
+    }
+    
     // Create the MQTT payload as JSON with proper escaping
     DynamicJsonDocument payloadDoc(4096);
-    payloadDoc["message"] = message; // ArduinoJson handles escaping automatically
+    payloadDoc["header"] = header;
+    payloadDoc["body"] = bodyContent;
     
     // Add sender information (device owner)
     const RuntimeConfig &config = getRuntimeConfig();
@@ -276,7 +283,7 @@ void handleMQTTSend(AsyncWebServerRequest *request)
     // Publish to MQTT
     if (mqttClient.publish(topic.c_str(), payload.c_str()))
     {
-        LOG_VERBOSE("WEB", "MQTT message sent to topic: %s (%d characters)", topic.c_str(), message.length());
+        LOG_VERBOSE("WEB", "MQTT message sent to topic: %s (%d characters)", topic.c_str(), payload.length());
         sendSuccessResponse(request, "Message scribed via MQTT");
     }
     else

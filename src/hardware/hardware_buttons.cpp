@@ -614,15 +614,18 @@ bool executeButtonActionDirect(const char *actionType, bool shouldSetPrintFlag)
     ContentActionResult result = executeContentActionWithTimeout(
         contentAction, "", senderName, BUTTON_ACTION_TIMEOUT_MS);
 
-    if (result.success && result.content.length() > 0)
+    if (result.success && result.header.length() > 0 && result.body.length() > 0)
     {
+        // Format content for local printing (header + body)
+        String formattedContent = result.header + "\n\n" + result.body;
+        
         // Set currentMessage content and timestamp
-        currentMessage.message = result.content;
+        currentMessage.message = formattedContent;
         currentMessage.timestamp = getFormattedDateTime();
         currentMessage.shouldPrintLocally = shouldSetPrintFlag;
 
         LOG_VERBOSE("BUTTONS", "Content generated (%d chars), shouldPrintLocally = %s", 
-                    result.content.length(), shouldSetPrintFlag ? "true" : "false");
+                    formattedContent.length(), shouldSetPrintFlag ? "true" : "false");
         return true;
     }
     else

@@ -38,6 +38,8 @@ It has pressable buttons to save your favourite actions for quick access, and li
 - **Remote Control**: Print from iOS shortcuts, web services, or custom applications
 - **Multi-Device Orchestration**: Coordinate content across multiple Scribe Evolution printers
 
+> ⚠️ **Security Note**: MQTT networking uses a trust-based model suitable for home/private networks. See [MQTT Security](docs/MQTT_SECURITY.md) for limitations and recommendations.
+
 ### 🤖 **AI-Powered Content Generation**
 
 - **Quick Fun Actions**: Instant jokes, quotes, riddles, weather reports, and daily news briefings
@@ -135,6 +137,7 @@ npm run firmware
 
 - **[Logging System](docs/logging-system.md)** - Multi-destination logging and monitoring
 - **[Configuration System](docs/configuration-system.md)** - Dual-layer config architecture
+- **[MQTT Security](docs/MQTT_SECURITY.md)** - Security model and limitations for MQTT networking
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues, diagnostics, and solutions
 
 ### Development & Customization

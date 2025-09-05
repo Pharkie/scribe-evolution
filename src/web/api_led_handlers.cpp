@@ -361,8 +361,8 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
         else if (effectName.equalsIgnoreCase("twinkle"))
         {
-            // Higher slider -> faster twinkling. Speed=1 is ~50% faster than previous minimum.
-            int fadeStep = mapRangeExp(speed, /*min*/ 2, /*max*/ 64, /*exp*/ 1.6f);
+            // Higher slider -> faster twinkling; allow min fade step = 1 for smoother low-end
+            int fadeStep = mapRangeExp(speed, /*min*/ 1, /*max*/ 64, /*exp*/ 1.6f);
             
             // Intensity: 1-100 -> number of active twinkles (50->10 twinkles ideal)
             int numTwinkles = max(1, (int)(intensity * 0.2)); // 50->10, 25->5, 100->20

@@ -54,9 +54,9 @@ void handleMemoGet(AsyncWebServerRequest *request)
     String expandedContent = processMemoPlaceholders(memoContent);
 
     // Use simple format like other content endpoints (joke, quiz, etc.)
-    // Add heading using the standard formatContentWithHeader function for consistency
+    // Format content with header for local display
     String actionName = "MEMO " + String(memoId);
-    String contentWithHeading = formatContentWithHeader(actionName, expandedContent, "");
+    String contentWithHeading = actionName + "\n\n" + expandedContent;
     
     DynamicJsonDocument doc(1024);
     doc["content"] = contentWithHeading;

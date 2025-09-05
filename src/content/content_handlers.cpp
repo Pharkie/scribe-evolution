@@ -159,9 +159,20 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
 
     if (result.success)
     {
-        // Return JSON with formatted content
+        // Check if structured format is requested
+        bool structuredFormat = request->hasParam("format") && 
+                               request->getParam("format")->value() == "structured";
+        
         DynamicJsonDocument doc(2048);
-        doc["content"] = result.content;
+        
+        if (structuredFormat) {
+            // Return structured data (header + body separately)
+            doc["header"] = result.header;
+            doc["body"] = result.body;
+        } else {
+            // Return formatted content (header + body for display)
+            doc["content"] = result.header + "\n\n" + result.body;
+        }
 
         String response;
         serializeJson(doc, response);
@@ -212,7 +223,7 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     {
         // Return JSON response in the same format as other content endpoints
         DynamicJsonDocument responseDoc(2048);
-        responseDoc["content"] = result.content;
+        responseDoc["content"] = result.header + "\n\n" + result.body;
 
         String response;
         serializeJson(responseDoc, response);
@@ -382,22 +393,6 @@ void handlePrintContent(AsyncWebServerRequest *request)
 // UTILITY FUNCTIONS
 // ========================================
 
-/**
- * @brief Format content with action header and optional sender info
- * @param action The action name (JOKE, RIDDLE, MESSAGE, etc.)
- * @param content The raw content
- * @param sender Optional sender name (empty for local actions)
- * @return Formatted string with header
- */
-String formatContentWithHeader(const String &action, const String &content, const String &sender)
-{
-    String header = action;
-    if (sender.length() > 0)
-    {
-        header += " from " + sender;
-    }
-    return header + "\n\n" + content;
-}
 
 String loadPrintTestContent()
 {

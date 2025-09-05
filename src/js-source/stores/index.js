@@ -9,7 +9,9 @@ import {
   generateUserMessage,
   printLocalContent,
   printMQTTContent,
+  printMQTTStructuredContent,
   executeQuickAction,
+  executeQuickActionStructured,
 } from "../api/index.js";
 
 /**
@@ -278,19 +280,31 @@ export function createIndexStore() {
         // Set active action - Alpine.js will reactively update the UI
         this.activeQuickAction = action;
 
-        // Use ES6 imported API function for executing quick action
-        const contentResult = await executeQuickAction(action);
-
-        if (!contentResult.content) {
-          this.error = "No content received from server";
-          return;
-        }
-
-        // Use ES6 imported API functions for printing content
+        // Use different API calls based on target printer
         if (this.selectedPrinter === "local-direct") {
+          // For local printing, use formatted content
+          const contentResult = await executeQuickAction(action);
+
+          if (!contentResult.content) {
+            this.error = "No content received from server";
+            return;
+          }
+
           await printLocalContent(contentResult.content);
         } else {
-          await printMQTTContent(contentResult.content, this.selectedPrinter);
+          // For MQTT printing, use structured content
+          const structuredResult = await executeQuickActionStructured(action);
+
+          if (!structuredResult.header || !structuredResult.body) {
+            this.error = "No structured content received from server";
+            return;
+          }
+
+          await printMQTTStructuredContent(
+            structuredResult.header,
+            structuredResult.body,
+            this.selectedPrinter,
+          );
         }
 
         // 🎊 Trigger confetti celebration for successful quick action!

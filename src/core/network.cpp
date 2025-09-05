@@ -285,7 +285,7 @@ void printAPDetailsOnStartup()
     if (apContent.length() > 0)
     {
         // Create a content action result and queue for printing
-        ContentActionResult result(true, apContent);
+        ContentActionResult result(true, "NETWORK INFO", apContent);
         if (queueContentForPrinting(result))
         {
             LOG_NOTICE("NETWORK", "AP connection details queued for printing");

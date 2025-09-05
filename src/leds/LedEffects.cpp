@@ -234,7 +234,9 @@ void LedEffects::update()
         // Time-based linear fade for smoother perception over the duration
         float t = (float)elapsed / (float)finalFadeDurationMs; // 0..1
         t = constrain(t, 0.0f, 1.0f);
-        uint8_t scale = (uint8_t)((1.0f - t) * 255.0f);
+        // Perceptual (gamma) fade: closer to human brightness perception
+        float gamma = 2.2f;
+        uint8_t scale = (uint8_t)(powf(1.0f - t, gamma) * 255.0f);
         if (finalFadeBase)
         {
             for (int i = 0; i < ledCount; i++)
