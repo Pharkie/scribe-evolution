@@ -49,8 +49,8 @@ static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict";  
 static const int mqttMaxConsecutiveFailures = 3;                                // Max failures before cooldown
 static const unsigned long mqttReconnectIntervalMs = ScribeTime::Seconds(5);    // Normal reconnect interval (5s)
 static const unsigned long mqttFailureCooldownMs = ScribeTime::Minutes(1);      // Cooldown after max failures (60s)
-static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(10);   // Connection timeout (10s)
-static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(15); // TLS handshake timeout (15s)
+static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(7);    // Connection timeout (7s)
+static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(6);  // TLS handshake timeout (< watchdog)
 static const int mqttBufferSize = 512;                                          // MQTT message buffer size
 
 // Unbidden Ink prompt presets (autoprompts)

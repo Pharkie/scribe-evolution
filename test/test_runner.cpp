@@ -63,8 +63,8 @@ void initializeGlobalTestEnvironment()
     LOG_NOTICE("TEST", "Global test environment (no network)");
 #endif
 
-    // Initialize LittleFS
-    if (!LittleFS.begin(true))
+    // Initialize LittleFS (explicit partition label matches partitions_no_ota.csv)
+    if (!LittleFS.begin(true, "/littlefs", 10, "littlefs"))
     {
         LOG_ERROR("TEST", "LittleFS Mount Failed");
         Serial.println("Warning: LittleFS mount failed - content tests may fail");

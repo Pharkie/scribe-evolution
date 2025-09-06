@@ -67,6 +67,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
         {NVS_WIFI_TIMEOUT, "int", "WiFi connect timeout (ms)", false, 5000, 60000},
 
         // MQTT Configuration
+        {NVS_MQTT_ENABLED, "bool", "MQTT enabled flag", false, 0, 0},
         {NVS_MQTT_SERVER, "string", "MQTT broker server", false, 0, 0},
         {NVS_MQTT_PORT, "int", "MQTT broker port", false, 1, 65535},
         {NVS_MQTT_USERNAME, "string", "MQTT username", false, 0, 0},

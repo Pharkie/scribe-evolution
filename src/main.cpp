@@ -96,7 +96,10 @@ void setup()
   Serial.printf("[BOOT] System: ESP32-C3, %d KB free heap\n", ESP.getFreeHeap() / mediumJsonBuffer);
 
   // Initialize LittleFS early so config loading works
-  if (!LittleFS.begin(true)) // true = format if mount fails
+  // Arduino-ESP32 v3.x defaults LittleFS partition label to "spiffs".
+  // Our partition table labels it "littlefs" (see partitions_no_ota.csv),
+  // so pass the explicit label to avoid mount failure.
+  if (!LittleFS.begin(true, "/littlefs", 10, "littlefs")) // true = format if mount fails
   {
     Serial.println("LittleFS Mount Failed");
   }
