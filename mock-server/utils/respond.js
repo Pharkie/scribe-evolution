@@ -109,12 +109,19 @@ function serveFile(res, filePath, statusCode = 200, opts = {}) {
     const gzipPath = filePath + ".gz";
     fs.readFile(gzipPath, (err, data) => {
       if (err) return sendNotFound(res);
-      res.writeHead(statusCode, {
+      const headers = {
         "Content-Type": contentType,
         "Content-Encoding": "gzip",
         "Access-Control-Allow-Origin": "*",
         "Cache-Control": "public, max-age=31536000",
-      });
+      };
+
+      // Set session cookie if prepared by authentication middleware
+      if (res.mockSessionCookie) {
+        headers["Set-Cookie"] = res.mockSessionCookie;
+      }
+
+      res.writeHead(statusCode, headers);
       res.end(data);
     });
     return;
@@ -122,11 +129,18 @@ function serveFile(res, filePath, statusCode = 200, opts = {}) {
 
   fs.readFile(filePath, (err, data) => {
     if (err) return sendNotFound(res);
-    res.writeHead(statusCode, {
+    const headers = {
       "Content-Type": contentType,
       "Access-Control-Allow-Origin": "*",
       "Cache-Control": apMode ? "no-cache" : "public, max-age=31536000",
-    });
+    };
+
+    // Set session cookie if prepared by authentication middleware
+    if (res.mockSessionCookie) {
+      headers["Set-Cookie"] = res.mockSessionCookie;
+    }
+
+    res.writeHead(statusCode, headers);
     res.end(data);
   });
 }

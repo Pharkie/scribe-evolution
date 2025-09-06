@@ -6,6 +6,7 @@ const { handleAPStatic, handleSTAStatic } = require("./handlers/static");
 const { handleConnectivity, isProbe } = require("./handlers/connectivity");
 const { handleDebug } = require("./handlers/debug");
 const { sendJSON } = require("./utils/respond");
+const { authenticatedHandler, handleSessionCreation } = require("./utils/auth");
 
 function createRequestHandler(ctx) {
   return (req, res) => {
@@ -14,6 +15,9 @@ function createRequestHandler(ctx) {
       pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
     } catch {}
     try {
+      // Handle session creation for index page access
+      handleSessionCreation(req, res, () => {});
+
       // Preflight
       if (req.method === "OPTIONS") {
         res.writeHead(200, {
@@ -57,8 +61,14 @@ function createRequestHandler(ctx) {
 
       // API
       if (pathname.startsWith("/api/")) {
-        if (handleAPI(req, res, pathname, ctx)) return;
-        return;
+        return authenticatedHandler(
+          req,
+          res,
+          (req, res) => {
+            handleAPI(req, res, pathname, ctx);
+          },
+          ctx,
+        );
       }
 
       // Debug
