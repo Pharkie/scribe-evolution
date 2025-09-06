@@ -206,6 +206,8 @@ void connectToMQTT()
         mqttState = MQTT_STATE_CONNECTED;
         consecutiveFailures = 0;
         
+        LOG_NOTICE("MQTT", "✅ Connected to broker");
+        
         // Subscribe to the inbox topic
         String newTopic = String(getLocalPrinterTopic());
         if (!mqttClient.subscribe(newTopic.c_str()))

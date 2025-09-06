@@ -22,6 +22,7 @@
 #include "config_utils.h"
 #include "config.h"
 #include "config_loader.h"
+#include "logging.h"
 #include <Arduino.h>
 
 // This file contains implementations that cannot be inlined
@@ -105,46 +106,41 @@ void validateConfig()
 
     if (gpioConflict)
     {
-        Serial.println("⚠️  Continuing with degraded functionality due to GPIO conflicts...");
+        Serial.println("[BOOT] ⚠️  Hardware: GPIO conflicts detected");
     }
     else
     {
-        Serial.printf("✅ GPIO validation passed - %d GPIOs configured correctly\n", usedCount);
+        Serial.printf("[BOOT] ✅ Hardware: %d GPIOs validated\n", usedCount);
     }
-
-    // Display GPIO usage summary for easy reference
-    logGPIOUsageSummary();
 }
 
 void logGPIOUsageSummary()
 {
-    Serial.println("\n📍 GPIO Usage Summary:");
+    LOG_VERBOSE("BOOT", "📍 GPIO Usage Summary:");
 
     // Get current configuration
     const RuntimeConfig &config = getRuntimeConfig();
 
     // Button GPIOs
-    Serial.println("  Buttons:");
+    LOG_VERBOSE("BOOT", "  Buttons:");
     for (int i = 0; i < numHardwareButtons; i++)
     {
         int gpio = config.buttonGpios[i];
-        Serial.printf("    GPIO %d: Button %d (%s) - %s\n",
+        LOG_VERBOSE("BOOT", "    GPIO %d: Button %d (%s) - %s",
                       gpio, i + 1, config.buttonShortActions[i].c_str(), getGPIODescription(gpio));
     }
 
     // Status LED GPIO
-    Serial.printf("  Status LED:\n    GPIO %d: Status LED - %s\n",
-                  statusLEDPin, getGPIODescription(statusLEDPin));
+    LOG_VERBOSE("BOOT", "  Status LED:");
+    LOG_VERBOSE("BOOT", "    GPIO %d: Status LED - %s", statusLEDPin, getGPIODescription(statusLEDPin));
 
 // LED Strip GPIO (if LEDs enabled)
 #if ENABLE_LEDS
-    Serial.printf("  LED Strip:\n    GPIO %d: LED Strip - %s\n",
-                  config.ledPin, getGPIODescription(config.ledPin));
+    LOG_VERBOSE("BOOT", "  LED Strip:");
+    LOG_VERBOSE("BOOT", "    GPIO %d: LED Strip - %s", config.ledPin, getGPIODescription(config.ledPin));
 #endif
 
     // Printer GPIO
-    Serial.printf("  Printer:\n    GPIO %d: Printer TX - %s\n",
-                  config.printerTxPin, getGPIODescription(config.printerTxPin));
-
-    Serial.println();
+    LOG_VERBOSE("BOOT", "  Printer:");
+    LOG_VERBOSE("BOOT", "    GPIO %d: Printer TX - %s", config.printerTxPin, getGPIODescription(config.printerTxPin));
 }

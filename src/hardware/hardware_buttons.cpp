@@ -61,7 +61,7 @@ ButtonState buttonStates[sizeof(defaultButtons) / sizeof(defaultButtons[0])];
 
 void initializeHardwareButtons()
 {
-    LOG_NOTICE("BUTTONS", "=== INITIALIZING HARDWARE BUTTONS ===");
+    LOG_NOTICE("BUTTONS", "Buttons: Initializing %d hardware buttons", numHardwareButtons);
     LOG_VERBOSE("BUTTONS", "Button count: %d", numHardwareButtons);
     LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
     LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
@@ -155,7 +155,7 @@ void initializeHardwareButtons()
         esp_task_wdt_reset();
     }
 
-    LOG_NOTICE("BUTTONS", "Hardware buttons initialized successfully");
+    LOG_NOTICE("BUTTONS", "Buttons: ✅ All %d buttons ready", numHardwareButtons);
 }
 
 void checkHardwareButtons()

@@ -28,6 +28,13 @@
 #include "gpio_map.h"
 
 // ============================================================================
+// FIRMWARE VERSION & BUILD INFO
+// ============================================================================
+static const char *FIRMWARE_VERSION = "0.2.0";
+static const char *BUILD_DATE = __DATE__;
+static const char *BUILD_TIME = __TIME__;
+
+// ============================================================================
 // RUNTIME DEFAULTS - Can be overridden by config.json
 // ============================================================================
 // WARNING: These are INITIAL DEFAULTS ONLY used to populate config.json on first setup

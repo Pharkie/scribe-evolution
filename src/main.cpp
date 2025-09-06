@@ -73,6 +73,9 @@ String deviceBootTime = "";
 
 void setup()
 {
+  // Track boot time
+  unsigned long bootStartTime = millis();
+  
   // Stabilize printer pin as early as possible
   stabilizePrinterPin();
 
@@ -81,14 +84,16 @@ void setup()
 
   // Wait for USB CDC connection (ESP32-C3 with USB CDC enabled)
   // This is needed because of ARDUINO_USB_CDC_ON_BOOT=1 in platformio.ini
-  unsigned long startTime = millis();
-  while (!Serial && (millis() - startTime < 5000))
+  unsigned long serialStartTime = millis();
+  while (!Serial && (millis() - serialStartTime < 5000))
   {
     delay(10); // Wait up to 5 seconds for serial connection
   }
 
   // Note: We can't use Log.notice() yet as logging isn't initialized
-  Serial.println("\n=== Scribe Evolution Starting ===");
+  Serial.printf("\n=== Scribe Evolution v%s ===\n", FIRMWARE_VERSION);
+  Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
+  Serial.printf("[BOOT] System: ESP32-C3, %d KB free heap\n", ESP.getFreeHeap() / 1024);
 
   // Initialize LittleFS early so config loading works
   if (!LittleFS.begin(true)) // true = format if mount fails
@@ -143,6 +148,9 @@ void setup()
 
   // Log initial memory status
   LOG_VERBOSE("BOOT", "Free heap: %d bytes", ESP.getFreeHeap());
+  
+  // Log detailed GPIO summary in verbose mode (now that logging is available)
+  logGPIOUsageSummary();
 
   // Initialize configuration system
   if (!initializeConfigSystem())
@@ -158,15 +166,13 @@ void setup()
   initializePrinter();
 
   // Initialize hardware buttons (only in STA mode)
-  LOG_NOTICE("BOOT", "WiFi mode check: currentWiFiMode=%d, isAPSTAMode()=%s", currentWiFiMode, isAPSTAMode() ? "true" : "false");
   if (!isAPMode())
   {
-    LOG_NOTICE("BOOT", "Initializing hardware buttons (STA mode)");
     initializeHardwareButtons();
   }
   else
   {
-    LOG_NOTICE("BOOT", "Skipping hardware buttons setup (AP-STA mode - configure WiFi first)");
+    LOG_NOTICE("BOOT", "Buttons: ❌ Disabled (AP mode)");
   }
 
 #if ENABLE_LEDS
@@ -191,16 +197,17 @@ void setup()
   if (!isAPMode() && isMQTTEnabled())
   {
     startMQTTClient(true);    // true = immediate connection on boot (WiFi is already stable)
+    LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
   }
   else
   {
     if (isAPMode())
     {
-      LOG_VERBOSE("BOOT", "Skipping MQTT setup (AP-STA mode - configure WiFi first)");
+      LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (AP mode)");
     }
     else
     {
-      LOG_VERBOSE("BOOT", "Skipping MQTT setup (MQTT disabled in configuration)");
+      LOG_NOTICE("BOOT", "MQTT: ❌ Disabled");
     }
   }
 
@@ -209,8 +216,7 @@ void setup()
 
   // Start the server
   server.begin();
-  String webServerInfo = "Web server started: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
-  LOG_VERBOSE("BOOT", "%s", webServerInfo.c_str());
+  LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
 
   // Print startup message (handles both AP mode and normal mode)
   printStartupMessage();
@@ -218,13 +224,24 @@ void setup()
   // Initialize Unbidden Ink schedule
   initializeUnbiddenInk();
 
+  // Calculate boot time
+  unsigned long bootDuration = millis() - bootStartTime;
+  float bootSeconds = bootDuration / 1000.0;
+  
+  // Get device name from config
+  const RuntimeConfig &config = getRuntimeConfig();
+  String deviceName = config.deviceOwner;
+  if (deviceName.length() == 0) {
+    deviceName = "Unknown";
+  }
+  
   if (isAPMode())
   {
-    LOG_NOTICE("BOOT", "=== Scribe Ready (AP-STA Setup Mode) ===");
+    LOG_NOTICE("BOOT", "=== %s Ready (Setup Mode) in %.1f seconds ===", deviceName.c_str(), bootSeconds);
   }
   else
   {
-    LOG_NOTICE("BOOT", "=== Scribe Evolution Ready ===");
+    LOG_NOTICE("BOOT", "=== %s Ready in %.1f seconds ===", deviceName.c_str(), bootSeconds);
   }
 }
 

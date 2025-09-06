@@ -18,11 +18,7 @@ String getPrinterId()
 
 String getFirmwareVersion()
 {
-#ifdef FIRMWARE_VERSION
     return FIRMWARE_VERSION;
-#else
-#error "FIRMWARE_VERSION must be defined at build time in platformio.ini"
-#endif
 }
 
 String createOfflinePayload()

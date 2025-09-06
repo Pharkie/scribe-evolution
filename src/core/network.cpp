@@ -73,15 +73,12 @@ WiFiConnectionMode connectToWiFi()
     String password = config.wifiPassword;
     unsigned long timeout = config.wifiConnectTimeoutMs;
 
-    Serial.println("🔍 WiFi Connection:");
-    Serial.println("SSID: '" + ssid + "' (length: " + String(ssid.length()) + ")");
-    Serial.println("Password: '" + String(password.length() > 0 ? "[HIDDEN]" : "[EMPTY]") + "' (length: " + String(password.length()) + ")");
-    Serial.println("Timeout: " + String(timeout) + "ms");
+    Serial.printf("[BOOT] Network: Connecting to WiFi (timeout: %lus)\n", timeout/1000);
 
     if (ssid.length() == 0)
     {
         // No WiFi SSID configured, starting fallback AP mode
-        Serial.println("❌ No SSID configured - starting AP mode");
+        Serial.println("[BOOT] Network: No SSID configured - starting AP mode");
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
@@ -107,7 +104,7 @@ WiFiConnectionMode connectToWiFi()
 
     if (!ssidPresent)
     {
-        Serial.println("📡 Target SSID not found in scan - starting AP-STA fallback immediately");
+        Serial.println("[BOOT] Network: Target SSID not found - starting AP mode");
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }
@@ -130,8 +127,9 @@ WiFiConnectionMode connectToWiFi()
     if (WiFi.status() == WL_CONNECTED)
     {
         currentWiFiMode = WIFI_MODE_STA_CONNECTED;
-        Serial.print("WiFi connected: ");
-        Serial.println(WiFi.localIP());
+        long rssi = WiFi.RSSI();
+        Serial.printf("[BOOT] Network: ✅ Connected to WiFi (RSSI: %ld dBm)\n", rssi);
+        Serial.printf("[BOOT] Network: IP address: %s\n", WiFi.localIP().toString().c_str());
         return WIFI_MODE_STA_CONNECTED;
     }
     else
@@ -188,15 +186,14 @@ void setupmDNS()
 
     if (MDNS.begin(getMdnsHostname()))
     {
-        Serial.println("mDNS responder started");
-        Serial.println("Web interface alive at http://" + String(getMdnsHostname()) + ".local");
+        Serial.printf("[BOOT] mDNS: http://%s.local\n", getMdnsHostname());
 
         // Add service to MDNS-SD
         MDNS.addService("http", "tcp", webServerPort);
     }
     else
     {
-        Serial.println("Error setting up mDNS responder!");
+        Serial.println("[BOOT] mDNS: ❌ Setup failed");
     }
 
     // Feed watchdog after potentially slow mDNS operations

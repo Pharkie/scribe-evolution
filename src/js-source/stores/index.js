@@ -8,10 +8,8 @@ import {
   loadMemos,
   generateUserMessage,
   printLocalContent,
-  printMQTTContent,
-  printMQTTStructuredContent,
+  printMQTT,
   executeQuickAction,
-  executeQuickActionStructured,
 } from "../api/index.js";
 
 /**
@@ -239,21 +237,29 @@ export function createIndexStore() {
       try {
         const message = this.message.trim();
 
-        // Step 1: Generate formatted content with MESSAGE header using user-message endpoint
+        // Step 1: Generate structured content with MESSAGE header using user-message endpoint
         const contentResult = await generateUserMessage(
           message,
           this.selectedPrinter,
         );
 
-        if (!contentResult.content) {
+        if (!contentResult.header || !contentResult.body) {
           throw new Error("Failed to generate message content");
         }
 
         // Step 2: Print the formatted content
         if (this.selectedPrinter === "local-direct") {
-          await printLocalContent(contentResult.content);
+          // For local printing, combine header + body into formatted string
+          const formattedContent =
+            contentResult.header + "\n\n" + contentResult.body;
+          await printLocalContent(formattedContent);
         } else {
-          await printMQTTContent(contentResult.content, this.selectedPrinter);
+          // For MQTT printing, use structured data
+          await printMQTT(
+            contentResult.header,
+            contentResult.body,
+            this.selectedPrinter,
+          );
         }
 
         // 🎊 Trigger confetti celebration for successful submission!
@@ -280,31 +286,22 @@ export function createIndexStore() {
         // Set active action - Alpine.js will reactively update the UI
         this.activeQuickAction = action;
 
-        // Use different API calls based on target printer
+        // Get structured content from API
+        const result = await executeQuickAction(action);
+
+        if (!result.header || !result.body) {
+          this.error = "No content received from server";
+          return;
+        }
+
+        // Format content based on target printer
         if (this.selectedPrinter === "local-direct") {
-          // For local printing, use formatted content
-          const contentResult = await executeQuickAction(action);
-
-          if (!contentResult.content) {
-            this.error = "No content received from server";
-            return;
-          }
-
-          await printLocalContent(contentResult.content);
+          // For local printing, combine header + body into formatted string
+          const formattedContent = result.header + "\n\n" + result.body;
+          await printLocalContent(formattedContent);
         } else {
-          // For MQTT printing, use structured content
-          const structuredResult = await executeQuickActionStructured(action);
-
-          if (!structuredResult.header || !structuredResult.body) {
-            this.error = "No structured content received from server";
-            return;
-          }
-
-          await printMQTTStructuredContent(
-            structuredResult.header,
-            structuredResult.body,
-            this.selectedPrinter,
-          );
+          // For MQTT printing, use structured data
+          await printMQTT(result.header, result.body, this.selectedPrinter);
         }
 
         // 🎊 Trigger confetti celebration for successful quick action!
