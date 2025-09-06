@@ -50,12 +50,18 @@ void initializeGlobalTestEnvironment()
     validateConfig();
     initializePrinterConfig();
 
+#ifndef TEST_NO_NETWORK
     // Connect to WiFi
     connectToWiFi();
 
     // Initialize logging
     setupLogging();
     LOG_NOTICE("TEST", "Global test environment WiFi connected");
+#else
+    // Initialize logging without network emphasis
+    setupLogging();
+    LOG_NOTICE("TEST", "Global test environment (no network)");
+#endif
 
     // Initialize LittleFS
     if (!LittleFS.begin(true))
@@ -68,12 +74,12 @@ void initializeGlobalTestEnvironment()
         LOG_VERBOSE("TEST", "LittleFS mounted successfully for all tests");
     }
 
-    // Setup web server routes
+    // Setup web server routes (skip for no-network mode)
+#ifndef TEST_NO_NETWORK
     setupWebServerRoutes(maxCharacters);
-
-    // Start the server
     server.begin();
     LOG_NOTICE("TEST", "Web server initialized for all tests");
+#endif
 
     globalTestEnvironmentInitialized = true;
     Serial.println("=== Global Test Environment Ready ===");
@@ -109,8 +115,12 @@ void setup()
     Serial.println("=== Running Memo Handler Tests ===");
     run_memo_handler_tests();
 
+#ifndef TEST_SKIP_INTEGRATION
     Serial.println("=== Running Endpoint Integration Tests ===");
     run_endpoint_integration_tests();
+#else
+    Serial.println("=== Skipping Endpoint Integration Tests (TEST_SKIP_INTEGRATION) ===");
+#endif
 
     UNITY_END();
 }

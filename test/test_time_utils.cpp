@@ -76,7 +76,11 @@ void run_time_utils_tests()
 {
     RUN_TEST(test_formatted_datetime);
     RUN_TEST(test_custom_date_formatting);
+    #ifndef TEST_NO_NETWORK
     RUN_TEST(test_timezone_setup);
+    #else
+    Serial.println("Skipping timezone setup test (TEST_NO_NETWORK)");
+    #endif
     RUN_TEST(test_millis_basic);
     RUN_TEST(test_time_constants_from_config);
 }
