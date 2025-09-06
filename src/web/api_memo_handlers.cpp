@@ -53,13 +53,12 @@ void handleMemoGet(AsyncWebServerRequest *request)
     // Expand placeholders (this is the key change - now returns processed content)
     String expandedContent = processMemoPlaceholders(memoContent);
 
-    // Use simple format like other content endpoints (joke, quiz, etc.)
-    // Format content with header for local display
+    // Use structured format like other content endpoints (joke, quiz, etc.)
     String actionName = "MEMO " + String(memoId);
-    String contentWithHeading = actionName + "\n\n" + expandedContent;
     
     DynamicJsonDocument doc(1024);
-    doc["content"] = contentWithHeading;
+    doc["header"] = actionName;
+    doc["body"] = expandedContent;
 
     String response;
     serializeJson(doc, response);
