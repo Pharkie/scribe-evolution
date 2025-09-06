@@ -424,17 +424,30 @@ def create_release_info():
     """Create release information files in firmware directories."""
     import datetime
     
-    # Load template from file
-    template_path = Path(__file__).parent / "templates" / "firmware_readme.md"
-    try:
-        with open(template_path, "r", encoding="utf-8") as f:
-            template = f.read()
-        # Prefer macOS default port in README examples
-        template = template.replace("/dev/ttyUSB0", "/dev/cu.usbmodem1201")
-    except FileNotFoundError:
-        log(f"Warning: Template not found at {template_path}", "WARNING")
+    # Load template from file (prefer scripts/templates/, fall back to scripts/bin/templates/)
+    candidates = [
+        Path(__file__).resolve().parents[1] / "templates" / "firmware_readme.md",  # scripts/templates
+        Path(__file__).parent / "templates" / "firmware_readme.md",               # scripts/bin/templates (legacy)
+    ]
+    template = None
+    template_path = None
+    for p in candidates:
+        if p.exists():
+            template_path = p
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    template = f.read()
+            except Exception:
+                template = None
+            if template is not None:
+                break
+    if template is None:
+        log("Warning: Template not found in expected locations", "WARNING")
         log("Creating basic README without template", "WARNING")
         template = "# Scribe Firmware Release\n\nBuilt on: {build_date}\n\nSee /docs/quick-start.md for flashing instructions."
+    else:
+        # Prefer macOS default port in README examples
+        template = template.replace("/dev/ttyUSB0", "/dev/cu.usbmodem1101")
     
     # Format template with build date and environment
     build_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')

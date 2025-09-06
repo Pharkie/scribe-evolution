@@ -23,7 +23,11 @@ Get your Scribe Evolution thermal printer up and running in minutes! This guide 
    - `scribe-esp32c3-vX.X.X.zip` for ESP32-C3 Supermini
    - `scribe-lolin32lite-vX.X.X.zip` for Lolin32 Lite
 3. Extract the zip file - you'll find:
-   - `scribe-{board}-complete.bin` - **Complete firmware (single file - RECOMMENDED)**
+   - `scribe-{environment}-complete.bin` - **Complete firmware (single file - RECOMMENDED)**
+     Where `{environment}` is one of:
+     - `esp32c3-prod` (ESP32‑C3 with LEDs enabled)
+     - `esp32c3-prod-no-leds` (ESP32‑C3 without LEDs)
+     - `lolin32lite-no-leds` (Lolin32 Lite without LEDs)
    - `bootloader.bin`, `partitions.bin`, `firmware.bin`, `littlefs.bin` - Individual components (advanced)
    - `README.md` - Quick flashing instructions
 
@@ -72,26 +76,31 @@ ls /dev/ttyUSB* /dev/ttyACM*
 
 ⚠️ **Important**: Erase the flash to avoid conflicts with existing firmware. This will erase all user settings/config.
 
-Replace `/dev/ttyUSB0` with your actual port from Step 3.
+Replace `/dev/cu.usbmodem1101` with your actual port from Step 3 (if different on your Mac).
 
 ### Step 1: Erase flash
 
 ```bash
-esptool --port /dev/ttyUSB0 erase-flash
+esptool --port /dev/cu.usbmodem1101 erase-flash
 ```
 
 ### Step 2: Flash complete firmware
 
 ```bash
-esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-{board}-complete.bin
+esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-{environment}-complete.bin
 ```
 
-Replace `{board}` with either `esp32c3` or `lolin32lite` depending on your hardware.
+Replace `{environment}` with one of:
 
-**Examples:**
+- `esp32c3-prod` (C3 with LEDs)
+- `esp32c3-prod-no-leds` (C3 without LEDs)
+- `lolin32lite-no-leds` (Lolin32 Lite without LEDs)
 
-- ESP32-C3: `esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-esp32c3-complete.bin`
-- Lolin32: `esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-lolin32lite-complete.bin`
+**Examples (macOS default path):**
+
+- ESP32‑C3 (LEDs): `esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-esp32c3-prod-complete.bin`
+- ESP32‑C3 (no LEDs): `esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-esp32c3-prod-no-leds-complete.bin`
+- Lolin32 Lite: `esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-lolin32lite-no-leds-complete.bin`
 
 ### Windows Users
 
@@ -104,11 +113,11 @@ esptool --port COM3 --baud 460800 write-flash 0x0 scribe-esp32c3-complete.bin
 
 ### macOS Users
 
-Use your specific port (like `/dev/cu.usbserial-0001`) instead of `/dev/ttyUSB0`:
+If your device path differs (e.g., `/dev/cu.usbserial-0001`), substitute accordingly:
 
 ```bash
-esptool --port /dev/cu.usbserial-0001 erase-flash
-esptool --port /dev/cu.usbserial-0001 --baud 460800 write-flash 0x0 scribe-esp32c3-complete.bin
+esptool --port /dev/cu.usbmodem1101 erase-flash
+esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-esp32c3-complete.bin
 ```
 
 ## Step 5: Connect Your Thermal Printer
