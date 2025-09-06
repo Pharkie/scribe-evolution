@@ -79,6 +79,7 @@ void handleNotFound(AsyncWebServerRequest *request)
         resp->setCode(404);
         resp->addHeader("Content-Encoding", "gzip");
         resp->addHeader("Cache-Control", "no-cache");
+        resp->addHeader("Vary", "Accept-Encoding");
         request->send(resp);
         return;
     }

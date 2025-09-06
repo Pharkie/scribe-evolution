@@ -183,6 +183,8 @@ static void setupStaticFileServing(bool isAP)
             AsyncWebServerResponse* response = request->beginResponse(LittleFS, path, "text/html");
             if (isGz) {
                 response->addHeader("Content-Encoding", "gzip");
+                response->addHeader("Cache-Control", "no-cache");
+                response->addHeader("Vary", "Accept-Encoding");
             }
 
             if (sessionToken.length() > 0) {
