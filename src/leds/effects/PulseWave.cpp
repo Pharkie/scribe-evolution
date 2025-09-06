@@ -1,6 +1,6 @@
 /**
  * @file PulseWave.cpp
- * @brief Implementation of sine wave pulse effect
+ * @brief Implementation of cosine wave pulse effect (off→on→off)
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -36,18 +36,24 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
         }
     }
 
-    // Create a sine wave pulse across the entire strip
+    // Cosine-based pulse for OFF → ON → OFF over 0..360 degrees
+    // cos(0)=1 -> 0 brightness; cos(180)=-1 -> 1 brightness; cos(360)=1 -> 0 brightness
     float phaseRadians = effectPhase * 3.14159f / 180.0f;
-    float sineValue = sin(phaseRadians);
+    float brightness01 = 0.5f * (1.0f - cosf(phaseRadians)); // 0..1
 
-    // Convert sine wave (-1 to 1) to brightness (0 to 1)
-    float brightness = (sineValue + 1.0f) / 2.0f;
+    // Map to configured min/max brightness range (0..255)
+    int minB = max(0, min(255, config.minBrightness));
+    int maxB = max(0, min(255, config.maxBrightness));
+    if (maxB < minB)
+        std::swap(maxB, minB);
+    int targetBrightness = minB + (int)((maxB - minB) * brightness01 + 0.5f); // 0..255
+    uint8_t fadeAmount = (uint8_t)(255 - targetBrightness);
 
     // Apply brightness to all LEDs with the same color
     for (int i = 0; i < ledCount; i++)
     {
         CRGB color = color1;
-        color.fadeToBlackBy(255 - (int)(brightness * 255));
+        color.fadeToBlackBy(fadeAmount);
         leds[i] = color;
     }
 
