@@ -161,28 +161,52 @@ static void setupStaticFileServing(bool isAP)
     }
     else
     {
-        // STA mode - Custom handler for index.html to create sessions
+        // STA mode - Custom handler for index.html to create sessions and set cookie header
         server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
             IPAddress clientIP = request->client()->remoteIP();
             String sessionToken = createSession(clientIP);
-            
-            if (sessionToken.length() > 0) {
-                setSessionCookie(request, sessionToken);
-                LOG_VERBOSE("AUTH", "Created session and set cookie for %s", clientIP.toString().c_str());
-            }
-            
-            // Serve the index.html file
+
+            // Decide which file to serve
+            const char* path = nullptr;
+            bool isGz = false;
             if (LittleFS.exists("/index.html.gz")) {
-                request->send(LittleFS, "/index.html.gz", "text/html", false, nullptr);
+                path = "/index.html.gz";
+                isGz = true;
             } else if (LittleFS.exists("/index.html")) {
-                request->send(LittleFS, "/index.html", "text/html", false, nullptr);
-            } else {
-                request->send(404, "text/plain", "index.html not found");
+                path = "/index.html";
             }
+
+            if (!path) {
+                request->send(404, "text/plain", "index.html not found");
+                return;
+            }
+
+            // Build response so we can add Set-Cookie
+            AsyncWebServerResponse* response = request->beginResponse(LittleFS, path, "text/html");
+            if (isGz) {
+                response->addHeader("Content-Encoding", "gzip");
+            }
+
+            if (sessionToken.length() > 0) {
+                String sessionCookie = getSessionCookieValue(sessionToken);
+                if (sessionCookie.length() > 0) {
+                    response->addHeader("Set-Cookie", sessionCookie);
+                }
+                // Also attach CSRF cookie (readable by JS)
+                String csrfToken = getCsrfForSession(sessionToken, clientIP);
+                String csrfCookie = csrfToken.length() > 0 ? getCsrfCookieValue(csrfToken) : "";
+                if (csrfCookie.length() > 0) {
+                    response->addHeader("Set-Cookie", csrfCookie);
+                }
+                LOG_VERBOSE("AUTH", "Created session and set cookies for %s", clientIP.toString().c_str());
+            }
+
+            request->send(response);
         });
 
         // Serve all other static files with compression (no session needed)
         server.serveStatic("/", LittleFS, "/")
+            .setDefaultFile("index.html")
             .setTryGzipFirst(true)
             .setCacheControl("max-age=31536000");
     }
@@ -330,64 +354,69 @@ void setupAPIRoutes()
     registerRoute("GET", "/api/user-message", "Generate user message");
 
     // Memo endpoints (regex for path parameters)
-    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, handleMemoGet);
+    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleMemoGet);
+    });
     registerRoute("GET", "/api/memo/{id}", "Get processed memo content");
-    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handleMemoUpdate(request); }, NULL, handleChunkedUpload);
+    server.on("^\\/api\\/memo\\/([1-4])$", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleMemoUpdate);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/memo/{id}", "Update specific memo");
-    server.on("/api/memos", HTTP_GET, handleMemosGet);
+    server.on("/api/memos", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleMemosGet);
+    });
     registerRoute("GET", "/api/memos", "Get all memos");
-    server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handleMemosPost(request); }, NULL, handleChunkedUpload);
+    server.on("/api/memos", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleMemosPost);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/memos", "Update all memos");
 
     // System endpoints
-    server.on("/api/diagnostics", HTTP_GET, handleDiagnostics);
+    server.on("/api/diagnostics", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleDiagnostics);
+    });
     registerRoute("GET", "/api/diagnostics", "System diagnostics");
-    server.on("/api/routes", HTTP_GET, handleRoutes);
+    server.on("/api/routes", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleRoutes);
+    });
     registerRoute("GET", "/api/routes", "List all routes and endpoints");
-    server.on("/api/nvs-dump", HTTP_GET, handleNVSDump);
+    server.on("/api/nvs-dump", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleNVSDump);
+    });
     registerRoute("GET", "/api/nvs-dump", "Raw NVS storage dump");
-    server.on("/api/config", HTTP_GET, handleConfigGet);
+    server.on("/api/config", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleConfigGet);
+    });
     registerRoute("GET", "/api/config", "Get configuration");
-    server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handleConfigPost(request); }, NULL, handleChunkedUpload);
+    server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleConfigPost);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/config", "Update configuration");
-    server.on("/api/wifi-scan", HTTP_GET, handleWiFiScan);
+    server.on("/api/wifi-scan", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleWiFiScan);
+    });
     registerRoute("GET", "/api/wifi-scan", "Scan WiFi networks");
 
     // MQTT endpoints
-    server.on("/api/print-mqtt", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handleMQTTSend(request); }, NULL, handleChunkedUpload);
+    server.on("/api/print-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleMQTTSend);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-mqtt", "Send MQTT message");
-    server.on("/api/test-mqtt", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handleTestMQTT(request); }, NULL, handleChunkedUpload);
+    server.on("/api/test-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleTestMQTT);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/test-mqtt", "Test MQTT connection");
 
-    // Static timezone data
-    server.serveStatic("/api/timezones", LittleFS, "/resources/timezones.json")
-        .setCacheControl("public, max-age=86400");
-    registerRoute("GET", "/api/timezones", "Get IANA timezone data (static file)");
 
 #if ENABLE_LEDS
-    server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handleLedEffect(request); }, NULL, handleChunkedUpload);
+    server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleLedEffect);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/leds/test", "Trigger LED Effect");
-    server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handleLedOff(request); }, NULL, handleChunkedUpload);
+    server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleLedOff);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/leds/off", "Turn LEDs Off");
-#else
-    // Provide endpoints even when LEDs are disabled at build time
-    server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request)
-              {
-                  sendErrorResponse(request, 501, "LED functionality is disabled in this firmware build");
-              });
-    registerRoute("POST", "/api/leds/test", "Trigger LED Effect (disabled)");
-    server.on("/api/leds/off", HTTP_POST, [](AsyncWebServerRequest *request)
-              {
-                  sendErrorResponse(request, 501, "LED functionality is disabled in this firmware build");
-              });
-    registerRoute("POST", "/api/leds/off", "Turn LEDs Off (disabled)");
 #endif
 
     // Debug endpoint to list LittleFS contents (only in STA mode)

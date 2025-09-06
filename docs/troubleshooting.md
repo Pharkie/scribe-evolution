@@ -163,7 +163,7 @@ Power Supply 5V → Printer POWER VH
 **Partial Loading**:
 
 - **Asset Issues**: CSS or JavaScript files may be corrupted
-- **Rebuild Assets**: Run `npm run build-prod` and re-upload
+- **Rebuild Assets**: Run `npm run build` and re-upload
 - **Network Issues**: Slow or unstable network connection
 - **Browser Compatibility**: Try different browser
 
@@ -182,6 +182,7 @@ Power Supply 5V → Printer POWER VH
 - **Flash Issues**: Storage may be full or corrupted
 - **Validation Errors**: Check for input validation failures
 - **Network Issues**: Settings requests may be timing out
+- **Auth/CSRF**: If POST fails with 403, ensure the UI was loaded from `/` (session cookie set). The UI sends a CSRF token automatically in headers.
 
 ### Content Generation Issues
 

@@ -120,7 +120,7 @@ void checkUnbiddenInk()
         LOG_NOTICE("UNBIDDENINK", "Triggering Unbidden Ink message");
         LOG_VERBOSE("UNBIDDENINK", "API endpoint: %s", chatgptApiEndpoint);
         const RuntimeConfig &config = getRuntimeConfig();
-        LOG_VERBOSE("UNBIDDENINK", "Token starts with: %.10s...", config.chatgptApiToken.c_str());
+        LOG_VERBOSE("UNBIDDENINK", "Token configured: %s", config.chatgptApiToken.length() > 0 ? "yes" : "no");
         LOG_VERBOSE("UNBIDDENINK", "Prompt: %s", currentSettings.prompt.c_str());
 
         // Feed watchdog before potentially long API call

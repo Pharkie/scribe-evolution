@@ -22,10 +22,20 @@ static int nextSessionSlot = 0;
 // Statistics
 static unsigned long lastCleanupTime = 0;
 static const unsigned long cleanupIntervalMs = 300000; // 5 minutes
+// Mutex for session storage
+static SemaphoreHandle_t sessionMutex = nullptr;
 
 void initAuthSystem() {
     LOG_NOTICE("AUTH", "Initializing session authentication system");
     
+    // Create mutex for session storage
+    if (sessionMutex == nullptr) {
+        sessionMutex = xSemaphoreCreateMutex();
+        if (sessionMutex == nullptr) {
+            LOG_ERROR("AUTH", "Failed to create session mutex");
+        }
+    }
+
     // Initialize all session slots
     for (int i = 0; i < maxConcurrentSessions; i++) {
         sessions[i].token[0] = '\0';
@@ -74,6 +84,11 @@ String createSession(const IPAddress& clientIP) {
     cleanupExpiredSessions(); // Clean up before creating new session
     
     // Find an available slot (circular buffer)
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(50)) != pdTRUE) {
+        LOG_ERROR("AUTH", "Session mutex unavailable during createSession");
+        return "";
+    }
+
     int startSlot = nextSessionSlot;
     do {
         if (!sessions[nextSessionSlot].active) {
@@ -85,21 +100,31 @@ String createSession(const IPAddress& clientIP) {
     // If no slots available, use the current one anyway (LRU replacement)
     Session& session = sessions[nextSessionSlot];
     
-    // Generate new session
+    // Generate new session + CSRF tokens
     String token = generateSecureToken();
+    String csrf = generateSecureToken();
     if (token.length() != sessionTokenLength) {
         LOG_ERROR("AUTH", "Failed to generate session token");
+        if (sessionMutex) xSemaphoreGive(sessionMutex);
+        return "";
+    }
+    if (csrf.length() != sessionTokenLength) {
+        LOG_ERROR("AUTH", "Failed to generate CSRF token");
+        if (sessionMutex) xSemaphoreGive(sessionMutex);
         return "";
     }
     
     strncpy(session.token, token.c_str(), sizeof(session.token) - 1);
     session.token[sizeof(session.token) - 1] = '\0';
+    strncpy(session.csrf, csrf.c_str(), sizeof(session.csrf) - 1);
+    session.csrf[sizeof(session.csrf) - 1] = '\0';
     session.clientIP = clientIP;
     session.lastActivity = millis();
     session.active = true;
     
     totalSessionsCreated++;
     nextSessionSlot = (nextSessionSlot + 1) % maxConcurrentSessions;
+    if (sessionMutex) xSemaphoreGive(sessionMutex);
     
     LOG_VERBOSE("AUTH", "Created session for IP %s (slot %d)", 
                 clientIP.toString().c_str(), nextSessionSlot - 1);
@@ -113,7 +138,10 @@ bool validateSession(const String& token, const IPAddress& clientIP) {
     }
     
     unsigned long currentTime = millis();
-    
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(50)) != pdTRUE) {
+        return false;
+    }
+
     // Check all session slots
     for (int i = 0; i < maxConcurrentSessions; i++) {
         if (!sessions[i].active) {
@@ -130,10 +158,11 @@ bool validateSession(const String& token, const IPAddress& clientIP) {
         // Use constant-time comparison to prevent timing attacks
         if (constantTimeCompare(token, String(sessions[i].token)) && 
             sessions[i].clientIP == clientIP) {
+            if (sessionMutex) xSemaphoreGive(sessionMutex);
             return true;
         }
     }
-    
+    if (sessionMutex) xSemaphoreGive(sessionMutex);
     return false;
 }
 
@@ -143,7 +172,10 @@ void refreshSession(const String& token) {
     }
     
     unsigned long currentTime = millis();
-    
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(50)) != pdTRUE) {
+        return;
+    }
+
     for (int i = 0; i < maxConcurrentSessions; i++) {
         if (sessions[i].active && constantTimeCompare(token, String(sessions[i].token))) {
             sessions[i].lastActivity = currentTime;
@@ -152,6 +184,7 @@ void refreshSession(const String& token) {
             break;
         }
     }
+    if (sessionMutex) xSemaphoreGive(sessionMutex);
 }
 
 void cleanupExpiredSessions() {
@@ -163,13 +196,16 @@ void cleanupExpiredSessions() {
     }
     
     int cleanedUp = 0;
-    for (int i = 0; i < maxConcurrentSessions; i++) {
-        if (sessions[i].active && 
-            (currentTime - sessions[i].lastActivity > sessionTimeoutMs)) {
-            sessions[i].active = false;
-            sessions[i].token[0] = '\0';
-            cleanedUp++;
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        for (int i = 0; i < maxConcurrentSessions; i++) {
+            if (sessions[i].active && 
+                (currentTime - sessions[i].lastActivity > sessionTimeoutMs)) {
+                sessions[i].active = false;
+                sessions[i].token[0] = '\0';
+                cleanedUp++;
+            }
         }
+        xSemaphoreGive(sessionMutex);
     }
     
     lastCleanupTime = currentTime;
@@ -180,12 +216,12 @@ void cleanupExpiredSessions() {
 }
 
 bool requiresAuthentication(const String& path) {
-    // Check if we're in AP mode - no auth required during setup
+    // In AP mode, allow everything (setup flow)
     if (isAPMode()) {
         return false;
     }
-    
-    // Public paths that never require authentication
+
+    // Public paths that never require authentication (static assets and landing)
     const char* publicPaths[] = {
         "/",
         "/index.html",
@@ -195,32 +231,22 @@ bool requiresAuthentication(const String& path) {
         "/css/",
         "/js/",
         "/images/",
-        "/api/routes",
         "/ncsi.txt"
     };
-    
+
     const int numPublicPaths = sizeof(publicPaths) / sizeof(publicPaths[0]);
-    
     for (int i = 0; i < numPublicPaths; i++) {
         if (path.startsWith(publicPaths[i])) {
             return false;
         }
     }
-    
-    // Setup endpoints are public
-    if (path.startsWith("/api/setup") || 
-        path.startsWith("/api/wifi-scan") || 
-        path.startsWith("/api/test-wifi") ||
-        path.startsWith("/api/timezones")) {
-        return false;
-    }
-    
-    // All other API endpoints require authentication
+
+    // All other API endpoints require authentication in STA mode
     if (path.startsWith("/api/")) {
         return true;
     }
-    
-    // Default: no authentication required for static assets
+
+    // Default for other static files
     return false;
 }
 
@@ -242,6 +268,22 @@ void authenticatedHandler(AsyncWebServerRequest* request,
     if (sessionToken.length() > 0 && validateSession(sessionToken, clientIP)) {
         // Refresh session activity
         refreshSession(sessionToken);
+
+        // Enforce CSRF for state-changing methods in STA mode
+        auto method = request->method();
+        if (method != HTTP_GET && method != HTTP_OPTIONS && !isAPMode()) {
+            String csrfHeader = request->hasHeader("X-CSRF-Token") ? request->header("X-CSRF-Token") : "";
+            if (csrfHeader.length() == 0) {
+                // Fallback to cookie if header not present
+                csrfHeader = getCookieValue(request, "scribe_csrf");
+            }
+            if (csrfHeader.length() == 0 || !validateCsrf(sessionToken, csrfHeader, clientIP)) {
+                LOG_WARNING("AUTH", "CSRF validation failed for %s %s", request->methodToString(), path.c_str());
+                request->send(403, "application/json", "{\"error\":\"Invalid CSRF token\",\"code\":403}");
+                return;
+            }
+        }
+
         // Call the original handler
         handler(request);
     } else {
@@ -264,6 +306,18 @@ String getSessionCookieValue(const String& sessionToken) {
                         String(sessionCookieOptions) + "; Max-Age=" + 
                         String(sessionTimeoutMs / 1000);
     
+    return cookieValue;
+}
+
+String getCsrfCookieValue(const String& csrfToken) {
+    if (csrfToken.length() != sessionTokenLength) {
+        LOG_ERROR("AUTH", "Invalid CSRF token length for cookie");
+        return "";
+    }
+    String cookieName = "scribe_csrf";
+    String cookieValue = cookieName + String("=") + csrfToken + "; " +
+                         String("SameSite=Strict; Path=/") + "; Max-Age=" +
+                         String(sessionTimeoutMs / 1000);
     return cookieValue;
 }
 
@@ -303,26 +357,87 @@ String getSessionToken(AsyncWebServerRequest* request) {
     return (token.length() == sessionTokenLength) ? token : "";
 }
 
+String getCookieValue(AsyncWebServerRequest* request, const String& name) {
+    if (!request->hasHeader("Cookie")) {
+        return "";
+    }
+    String cookieHeader = request->header("Cookie");
+    String cookieName = name + "=";
+    int cookieStart = cookieHeader.indexOf(cookieName);
+    if (cookieStart == -1) {
+        return "";
+    }
+    cookieStart += cookieName.length();
+    int cookieEnd = cookieHeader.indexOf(';', cookieStart);
+    if (cookieEnd == -1) {
+        cookieEnd = cookieHeader.length();
+    }
+    String val = cookieHeader.substring(cookieStart, cookieEnd);
+    val.trim();
+    return val;
+}
+
 void getAuthStats(int& activeSessionCount, unsigned long& totalSessionsCreated) {
     activeSessionCount = 0;
-    
-    for (int i = 0; i < maxConcurrentSessions; i++) {
-        if (sessions[i].active) {
-            activeSessionCount++;
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        for (int i = 0; i < maxConcurrentSessions; i++) {
+            if (sessions[i].active) {
+                activeSessionCount++;
+            }
         }
+        xSemaphoreGive(sessionMutex);
     }
-    
     totalSessionsCreated = ::totalSessionsCreated;
 }
 
 void clearAllSessions() {
     LOG_NOTICE("AUTH", "Clearing all active sessions");
-    
-    for (int i = 0; i < maxConcurrentSessions; i++) {
-        sessions[i].active = false;
-        sessions[i].token[0] = '\0';
-        sessions[i].lastActivity = 0;
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        for (int i = 0; i < maxConcurrentSessions; i++) {
+            sessions[i].active = false;
+            sessions[i].token[0] = '\0';
+            sessions[i].lastActivity = 0;
+        }
+        xSemaphoreGive(sessionMutex);
     }
-    
+
     nextSessionSlot = 0;
+}
+
+bool validateCsrf(const String& sessionToken, const String& csrfToken, const IPAddress& clientIP) {
+    if (sessionToken.length() != sessionTokenLength || csrfToken.length() != sessionTokenLength) {
+        return false;
+    }
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(50)) != pdTRUE) {
+        return false;
+    }
+    bool ok = false;
+    for (int i = 0; i < maxConcurrentSessions; i++) {
+        if (!sessions[i].active) continue;
+        if (sessions[i].clientIP == clientIP && constantTimeCompare(sessionToken, String(sessions[i].token))) {
+            ok = constantTimeCompare(csrfToken, String(sessions[i].csrf));
+            break;
+        }
+    }
+    if (sessionMutex) xSemaphoreGive(sessionMutex);
+    return ok;
+}
+
+String getCsrfForSession(const String& sessionToken, const IPAddress& clientIP) {
+    if (sessionToken.length() != sessionTokenLength) {
+        return "";
+    }
+    if (sessionMutex && xSemaphoreTake(sessionMutex, pdMS_TO_TICKS(50)) != pdTRUE) {
+        return "";
+    }
+    String csrf = "";
+    for (int i = 0; i < maxConcurrentSessions; i++) {
+        if (!sessions[i].active) continue;
+        if (sessions[i].clientIP == clientIP && constantTimeCompare(sessionToken, String(sessions[i].token))) {
+            csrf = String(sessions[i].csrf);
+            break;
+        }
+    }
+    if (sessionMutex) xSemaphoreGive(sessionMutex);
+    return csrf;
 }

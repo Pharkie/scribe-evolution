@@ -13,12 +13,15 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 #include <IPAddress.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 /**
  * @brief Session data structure for tracking authenticated users
  */
 struct Session {
     char token[33];           // 32-character session token + null terminator
+    char csrf[33];            // 32-character CSRF token + null terminator
     IPAddress clientIP;       // Client IP address for additional security
     unsigned long lastActivity; // Timestamp of last API request
     bool active;              // Whether this session slot is in use
@@ -78,6 +81,7 @@ void authenticatedHandler(AsyncWebServerRequest* request,
  * @return Formatted cookie value string
  */
 String getSessionCookieValue(const String& sessionToken);
+String getCsrfCookieValue(const String& csrfToken);
 
 /**
  * @brief Set session cookie on HTTP response
@@ -92,6 +96,7 @@ void setSessionCookie(AsyncWebServerRequest* request, const String& sessionToken
  * @return Session token string, or empty if not found
  */
 String getSessionToken(AsyncWebServerRequest* request);
+String getCookieValue(AsyncWebServerRequest* request, const String& cookieName);
 
 /**
  * @brief Get authentication statistics for diagnostics
@@ -118,5 +123,15 @@ String generateSecureToken();
  * @return true if strings are equal, false otherwise
  */
 bool constantTimeCompare(const String& a, const String& b);
+
+/**
+ * @brief Validate CSRF token for a session and client IP
+ */
+bool validateCsrf(const String& sessionToken, const String& csrfToken, const IPAddress& clientIP);
+
+/**
+ * @brief Retrieve CSRF token for a given session+IP
+ */
+String getCsrfForSession(const String& sessionToken, const IPAddress& clientIP);
 
 #endif // AUTH_MIDDLEWARE_H

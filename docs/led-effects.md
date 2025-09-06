@@ -1,7 +1,6 @@
-# FastLED Library Support for Scribe Evolution
+# LED Effects Overview (FastLED)
 
-This implementation adds FastLED library support to the Scribe Evolution ESP32-C3 thermal
-printer project with a **runtime-configurable LED effects system**.
+Optional WS2812B LED support with a runtime‑configurable effects manager.
 
 ## Features
 
@@ -20,41 +19,10 @@ printer project with a **runtime-configurable LED effects system**.
 
 ## Configuration
 
-### Enable/Disable LED Support
+- Enable at build time (`ENABLE_LEDS`).
+- Configure at runtime via Settings → LEDs (pin, count, brightness, refresh, effect presets).
 
-Edit `src/core/config.h`:
-
-```cpp
-// Uncomment the following line to enable LED strip support
-#define ENABLE_LEDS
-```
-
-### Runtime Configuration
-
-**All LED settings are now runtime-configurable via the web interface at
-`/settings.html`.**
-
-The LED Settings section provides:
-
-- **Hardware Configuration**: GPIO pin selection (0-10) and LED count (1-300)
-- **Performance Settings**: Brightness (0-255) and refresh rate (10-120 Hz)
-- **Effect Settings**: Fine-tuning for all built-in LED effects
-
-### Default Values
-
-Default settings from `src/core/config.h` (used for initial config.json
-creation):
-
-```cpp
-static const int DEFAULT_LED_PIN = 4;                    // GPIO pin for LED strip data
-static const int DEFAULT_LED_COUNT = 30;                 // Number of LEDs in the strip
-static const int DEFAULT_LED_BRIGHTNESS = 64;            // 25% brightness to save power
-static const int DEFAULT_LED_REFRESH_RATE = 60;          // 60Hz refresh rate
-static const int DEFAULT_LED_EFFECT_FADE_SPEED = 5;      // Fade transition speed
-static const int DEFAULT_LED_TWINKLE_DENSITY = 8;        // Simultaneous twinkle stars
-static const int DEFAULT_LED_CHASE_SPEED = 3;            // Chase effect speed
-static const int DEFAULT_LED_MATRIX_DROPS = 5;           // Matrix drops count
-```
+Default values are seeded from `src/core/config.h(.example)` and persisted in NVS.
 
 ### Configuration Storage
 
@@ -78,56 +46,22 @@ LED settings are stored in `config.json`:
 Changes made via the web interface are **immediately applied** and **persisted**
 to the configuration file.
 
-## API Usage
+## Usage
 
-### Basic Operations
-
-```cpp
-#ifdef ENABLE_LEDS
-// Initialize in setup()
-ledEffects.begin();
-
-// Update in loop() - non-blocking
-ledEffects.update();
-
-// Cycle-based effects (recommended - all effects now operate on cycles)
-ledEffects.startEffectCycles("chase_single", 1, CRGB::Blue);  // Single blue chase from start to end
-ledEffects.startEffectCycles("chase_single", 3, CRGB::Red);   // Three red chase sequences
-ledEffects.startEffectCycles("rainbow", 2);                  // Two complete rainbow waves
-ledEffects.startEffectCycles("pulse", 1, CRGB::Green);       // One complete pulse cycle
-ledEffects.startEffectCycles("matrix", 5, CRGB::Green);      // Five matrix drop cycles
-
-// Time-based effects (legacy support - internally converted to cycles)
-ledEffects.startEffectDuration("chase_single", 10, CRGB::Blue);  // 10s blue chase
-ledEffects.startEffectDuration("rainbow", 30);                   // 30s rainbow wave
-ledEffects.startEffectDuration("matrix", 0, CRGB::Green);        // Infinite green matrix
-
-// Control and query
-ledEffects.stopEffect();                            // Stop current effect
-bool running = ledEffects.isEffectRunning();        // Check if active
-String current = ledEffects.getCurrentEffectName(); // Get current effect
-int remainingCycles = ledEffects.getRemainingCycles(); // Get remaining cycles
-#endif
-```
-
-### Runtime Configuration
+Firmware (non‑blocking):
 
 ```cpp
 #ifdef ENABLE_LEDS
-// Update LED configuration at runtime
-updateLedConfiguration(pin, count, brightness, refreshRate,
-                      fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops);
-
-// Get current LED configuration
-int pin, count, brightness, refreshRate, fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops;
-getLedConfiguration(pin, count, brightness, refreshRate,
-                    fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops);
-
-// Reinitialize LED system with new settings (automatically called by updateLedConfiguration)
-ledEffects.reinitialize(pin, count, brightness, refreshRate,
-                        fadeSpeed, twinkleDensity, chaseSpeed, matrixDrops);
+ledEffects.begin();      // in setup()
+ledEffects.update();     // in loop()
+ledEffects.startEffectCycles("rainbow", 1);
 #endif
 ```
+
+HTTP API (UI uses these):
+
+- `POST /api/leds/test` with JSON `{ "effect": "rainbow", "speed": 50, ... }`
+- `POST /api/leds/off`
 
 **Note**: LED configuration changes via the web interface automatically:
 
@@ -166,16 +100,9 @@ if (success) {
 #endif
 ```
 
-## Available Effects
+## Built‑in Effects
 
-All effects operate on a **cycle-based system** where 1 cycle = one complete pattern execution:
-
-1. **"chase_single"**: Single color chases from start to end (1 cycle = one complete traversal)
-2. **"rainbow"**: Rainbow wave effect with configurable wave length (1 cycle = one complete wave)
-3. **"twinkle"**: Random twinkling stars with fade effect (1 cycle = one complete twinkle sequence)
-4. **"chase_multi"**: Multi-color chase supporting up to 3 colors (1 cycle = one complete traversal)
-5. **"pulse"**: Brightness pulse across the entire strip (1 cycle = one complete pulse)
-6. **"matrix"**: Falling Matrix-style drops with configurable colors (1 cycle = one complete drop sequence)
+rainbow, pulse, matrix, twinkle, chase_single, chase_multi
 
 ### Effect Parameters
 
@@ -201,12 +128,10 @@ The LED system is integrated into the main application:
 - **Logging**: Uses the existing logging system for status messages
 - **Conditional compilation**: Zero code size impact when disabled
 
-## Dependencies
+## Notes
 
-- **FastLED 3.7.8+**: Added to both main and test environments in
-  `platformio.ini`
-- **ESP32-C3 compatible**: Uses appropriate GPIO pins and power limiting
-- **Memory safe**: Configurable power limits and refresh rate controls
+- Non‑blocking update loop; cycle‑based completion and graceful fade for rainbow.
+- GPIO safety validated; memory allocated dynamically to match LED count.
 
 ## Files
 

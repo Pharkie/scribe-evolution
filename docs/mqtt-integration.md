@@ -16,17 +16,15 @@ The Scribe Evolution MQTT integration enables:
 
 ### Multi-Printer Support
 
-- Configure multiple remote Scribe Evolution printers in `config.h`
-- Single web interface controls all configured printers
-- Printer selection in web UI
-- Automatic printer discovery and status monitoring
+- Control local and remote printers from the same UI
+- Automatic discovery and status monitoring
 
 ### Secure Communication
 
-- TLS encryption (port 8883) for secure MQTT communication
-- Anonymous TLS mode (no certificate verification required)
+- TLS encryption (port 8883) with CA certificate verification
+- Hostname verification pending
 - Compatible with cloud MQTT brokers like HiveMQ Cloud
-- 4096-byte message buffer for large content
+- 4096-byte message buffer for larger content
 
 ### Content Distribution
 
@@ -38,34 +36,11 @@ The Scribe Evolution MQTT integration enables:
 
 ### MQTT Broker Setup
 
-Add your MQTT broker credentials to `src/config.h`:
+Set credentials via Settings → MQTT (persisted in NVS).
 
-```cpp
-// MQTT Configuration
-static const char *mqttServer = "your-broker.hivemq.cloud";
-static const int mqttPort = 8883;  // TLS port
-static const char *mqttUsername = "your-username";
-static const char *mqttPassword = "your-password";
-```
+### Topics
 
-### Printer Configuration
-
-Configure your local printer and remote printers:
-
-```cpp
-// This device's MQTT configuration
-static const char *localPrinter[2] = {"Your Printer", "scribeprinter/yourname/inbox"};
-
-// Remote printer configurations
-static const char *otherPrinters[][2] = {
-    {"Friend's Printer", "scribeprinter/friend/inbox"},
-    {"Office Printer", "scribeprinter/office/inbox"},
-    {"Kitchen Printer", "scribeprinter/kitchen/inbox"}
-};
-
-// Number of other printers configured
-static const int numOtherPrinters = 3;
-```
+Use a consistent pattern, e.g. `scribe/{printer-id}/inbox`.
 
 ### Topic Naming Convention
 
@@ -208,35 +183,26 @@ mosquitto_pub -h your-broker.hivemq.cloud -p 8883 \
 
 ### Diagnostic Information
 
-The Scribe Evolution web interface provides MQTT diagnostic information:
-
-- Connection status
-- Subscribed topics
-- Last message timestamp
-- Error messages and reconnection attempts
+Diagnostics page shows connection status, subscriptions, last message, and errors.
 
 ## Security Considerations
 
 ### Network Security
 
-- Always use TLS encryption (port 8883)
-- Avoid plain MQTT (port 1883) for production
-- Use strong, unique passwords for MQTT credentials
-- Consider firewall rules for self-hosted brokers
+- Always use TLS (port 8883)
+- Use strong, unique credentials
+- Consider firewall rules for self‑hosted brokers
 
 ### Topic Security
 
-- Use unique, non-guessable topic names
-- Consider topic-based access control if supported by broker
-- Monitor for unauthorized access in broker logs
+- Use unique, non‑guessable topics
+- Configure topic ACLs on the broker
 - Rotate credentials periodically
 
 ### Content Security
 
-- Validate message content before printing
-- Consider message size limits to prevent abuse
-- Monitor for spam or inappropriate content
-- Implement rate limiting if needed
+- Validate messages; enforce size limits
+- Monitor for abuse; use rate limiting
 
 ## Troubleshooting
 

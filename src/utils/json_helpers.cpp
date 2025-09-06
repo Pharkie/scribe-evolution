@@ -17,18 +17,6 @@ void sendErrorResponse(AsyncWebServerRequest* request, int httpCode, const Strin
     request->send(httpCode, "application/json", responseString);
 }
 
-void sendSuccessResponse(AsyncWebServerRequest* request, const String &message)
-{
-    DynamicJsonDocument response(256);
-    if (message.length() > 0)
-    {
-        response["message"] = message;
-    }
-
-    String responseString;
-    serializeJson(response, responseString);
-    request->send(200, "application/json", responseString);
-}
 
 void sendRateLimitResponse(AsyncWebServerRequest* request)
 {
@@ -42,12 +30,3 @@ DynamicJsonDocument createErrorResponse(const String &errorMessage)
     return response;
 }
 
-DynamicJsonDocument createSuccessResponse(const String &message)
-{
-    DynamicJsonDocument response(256);
-    if (message.length() > 0)
-    {
-        response["message"] = message;
-    }
-    return response;
-}

@@ -129,7 +129,7 @@ export async function loadTimezones(timezoneState) {
   timezoneState.error = null;
 
   try {
-    const response = await fetch("/api/timezones");
+    const response = await fetch("/resources/timezones.json");
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }

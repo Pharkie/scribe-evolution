@@ -51,10 +51,10 @@ npm install                # Install build dependencies
 Before building, you must create your configuration file:
 
 ```bash
-cp src/config.h.example src/config.h
+cp src/core/config.h.example src/core/config.h
 ```
 
-Edit `src/config.h` with your specific settings:
+Edit `src/core/config.h` with your specific settings:
 
 - WiFi credentials (SSID and password)
 - Timezone settings
@@ -72,9 +72,9 @@ Edit `src/config.h` with your specific settings:
 The web interface uses Tailwind CSS and ES6 modules bundled with esbuild:
 
 ```bash
-npm install                # Install build dependencies
-npm run dev               # Development build (unminified)
-npm run build             # Production build (minified)
+npm install      # Install build dependencies
+npm run dev      # Development build (unminified)
+npm run build    # Production build (minified + gzipped)
 ```
 
 ### Build Process Details
@@ -175,9 +175,9 @@ pio run --target upload_all
 ### For Frontend Changes
 
 ```bash
-# 1. Edit files in src/css/ or src/js/
+# 1. Edit files in src/css-source/ or src/js-source/
 # 2. Build assets
-npm run build-prod
+npm run build
 
 # 3. Upload filesystem and firmware
 pio run --target upload_all

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Scribe project uses a **data-driven configuration system** that eliminates hardcoded field validation and provides automatic partial updates for any configuration field. This system is implemented in `src/web/config_field_registry.h/.cpp`.
+Scribe uses a **data‑driven configuration system** that eliminates hardcoded field validation and provides automatic partial updates for any configuration field. This is implemented in `src/web/config_field_registry.{h,cpp}` and persisted to NVS.
 
 ## Architecture
 
@@ -209,4 +209,4 @@ curl -X POST http://device-ip/api/config \
   -d '{"device":{"printerTxPin":999}}'
 ```
 
-This system is the foundation for all settings pages - each page can send any subset of configuration fields and they will be validated and applied automatically.
+This system underpins all settings pages. Each page can send any subset of fields and they will be validated and persisted to NVS automatically.

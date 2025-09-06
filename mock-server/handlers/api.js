@@ -212,47 +212,6 @@ function handleAPI(req, res, pathname, ctx) {
     return true;
   }
 
-  // Static timezone data
-  if (pathname === "/api/timezones") {
-    const jsonPath = path.join(
-      __dirname,
-      "..",
-      "..",
-      "data",
-      "resources",
-      "timezones.json",
-    );
-    const gzPath = jsonPath + ".gz";
-    if (fs.existsSync(gzPath)) {
-      fs.readFile(gzPath, (err, data) => {
-        if (err)
-          return sendJSON(res, { error: "Timezone data not available" }, 500);
-        res.writeHead(200, {
-          "Content-Type": "application/json",
-          "Content-Encoding": "gzip",
-          "Cache-Control": "public, max-age=86400",
-          "Access-Control-Allow-Origin": "*",
-        });
-        res.end(data);
-      });
-      return true;
-    }
-    if (fs.existsSync(jsonPath)) {
-      fs.readFile(jsonPath, (err, data) => {
-        if (err)
-          return sendJSON(res, { error: "Timezone data not available" }, 500);
-        res.writeHead(200, {
-          "Content-Type": "application/json",
-          "Cache-Control": "public, max-age=86400",
-          "Access-Control-Allow-Origin": "*",
-        });
-        res.end(data);
-      });
-      return true;
-    }
-    return (sendJSON(res, { error: "Timezone data not available" }, 500), true);
-  }
-
   // Content endpoints - structured data format (header + body)
   const contentEndpoints = {
     "/api/joke": {
@@ -319,14 +278,8 @@ function handleAPI(req, res, pathname, ctx) {
         true
       );
     let header, body;
-    if (target === "local-direct") {
-      header = "MESSAGE";
-      body = userMessage;
-    } else {
-      const deviceOwner = mockConfig.device.owner || "MockDevice";
-      header = `MESSAGE from ${deviceOwner}`;
-      body = userMessage;
-    }
+    header = "MESSAGE";
+    body = userMessage;
     setTimeout(() => sendJSON(res, { header, body }), 200);
     return true;
   }
@@ -547,7 +500,11 @@ function handleAPI(req, res, pathname, ctx) {
         if (String(username).toLowerCase() === "baduser") {
           return sendJSON(res, { error: "Unauthorized" }, 401);
         }
-        return sendJSON(res, { success: true }, 200);
+        return sendJSON(
+          res,
+          { success: true, message: "Successfully connected to MQTT broker" },
+          200,
+        );
       }, delayMs);
     });
     return true;

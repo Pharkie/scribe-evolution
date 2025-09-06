@@ -124,8 +124,7 @@ function requiresAuthentication(path, isAPMode = false) {
   if (
     path.startsWith("/api/setup") ||
     path.startsWith("/api/wifi-scan") ||
-    path.startsWith("/api/test-wifi") ||
-    path.startsWith("/api/timezones")
+    path.startsWith("/api/test-wifi")
   ) {
     return false;
   }

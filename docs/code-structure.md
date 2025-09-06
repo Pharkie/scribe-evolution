@@ -1,7 +1,6 @@
-# Code Structure Documentation
+# Code Structure Overview
 
-This document provides a comprehensive overview of the Scribe Evolution ESP32-C3 Thermal
-Printer codebase structure after the modular reorganization.
+Current layout and responsibilities for the Scribe ESP32‑C3 Thermal Printer codebase.
 
 ## Table of Contents
 
@@ -52,49 +51,18 @@ data/                        # Web assets organized by type
 docs/                        # Documentation
 ```
 
-## Web Assets Directory (`data/`)
+## Web Assets (source → output)
 
-The `data/` directory contains all web-related assets organized by file type for
-optimal maintainability and professional structure.
+- Source directories
+  - `src/css-source/` (Tailwind input)
+  - `src/js-source/` (ES modules: api, stores, pages)
+- Build output (served by firmware)
+  - `data/css/app.css[.gz]`
+  - `data/js/*.js[.gz]`
+  - `data/*.html.gz`, `data/settings/*.html.gz`, `data/diagnostics/*.html.gz`
+  - `data/resources/*` (JSON, text, PEM)
 
-### Directory Organization:
-
-- **`css/`**: All stylesheet files
-  - `styles.css`: Main application styles with Tailwind CSS
-- **`html/`**: All HTML files (templates, pages, components)
-  - `index.html`: Main application interface
-  - `404.html`: Error page template
-  - `diagnostics.html`: System diagnostics page with built-in sections
-- **`js/`**: Modular JavaScript files (replaces monolithic app.js)
-  - `config.js`: Configuration management and global variables
-  - `messaging.js`: Message sending functionality and quick actions
-  - `diagnostics.js`: System diagnostics data population and display
-  - `utils.js`: Utility functions and clipboard operations
-  - `settings.js`: Settings panel functionality
-  - `main.js`: Application initialization and event handling
-- **`resources/`**: Data files and content resources
-  - `print-test.txt`: Printer test content
-  - `riddles.ndjson`: Riddles database for content generation
-- **`favicon.ico`**: Website icon (root level per web standards)
-
-### Benefits of Organization:
-
-- **Separation of Concerns**: HTML, CSS, and JavaScript properly separated
-- **Modular JavaScript**: Smaller, focused files instead of monolithic code
-- **Professional Structure**: Follows modern web development conventions
-- **Easy Maintenance**: Developers know exactly where to find specific file
-  types
-- **Scalability**: Simple to add new files in appropriate directories
-
-### Template-Based Architecture:
-
-The web interface now uses a template-based approach instead of
-JavaScript-generated HTML:
-
-- **HTML Templates**: Clean, semantic HTML in separate files
-- **DOM Manipulation**: JavaScript uses templates with data binding
-- **Performance**: Templates loaded once and cloned as needed
-- **Security**: Reduces XSS risks from dynamic HTML generation
+Build commands: `npm run dev` (unminified) and `npm run build` (minified, gzipped).
 
 ## Core Components
 
@@ -105,10 +73,9 @@ depend on.
 
 ### Files:
 
-- **`config.h`** & **`config.cpp`**: Global configuration management
-- **`config.h.example`**: Template for user configuration
-- **`config_utils.h`** & **`config_utils.cpp`**: Configuration validation and
-  utilities
+- **`config.h.example`** & `config.h`: Compile‑time defaults template and local copy (gitignored)
+- **`config_loader.{h,cpp}`**: Load/persist `RuntimeConfig` from NVS
+- **`config_utils.{h,cpp}`**: Validation, helpers
 - **`shared_types.h`**: Common data structures and type definitions
 - **`logging.h`** & **`logging.cpp`**: Centralized logging system
 - **`network.h`** & **`network.cpp`**: WiFi connection and network management
@@ -128,7 +95,7 @@ depend on.
 - `Message currentMessage`: Shared message structure for printing
 - Configuration variables: WiFi credentials, MQTT settings, logging preferences
 
-## Web Layer
+## Web Layer (HTTP + Auth)
 
 **Location**: `src/web/`
 
@@ -136,41 +103,19 @@ The web layer provides the HTTP interface and web-based control panel.
 
 ### Files:
 
-- **`web_server.h`** & **`web_server.cpp`**: Main web server setup and routing
+- **`web_server.{h,cpp}`**: Main web server setup and routing
 - **`web_handlers.h`** & **`web_handlers.cpp`**: Static file serving and basic
   endpoints
 - **`api_handlers.h`** & **`api_handlers.cpp`**: API endpoints for content
   generation
-- **`validation.h`** & **`validation.cpp`**: Input validation and security
+- **`validation.{h,cpp}`**: Input validation and rate limiting
+- **`auth_middleware.{h,cpp}`**: Session cookie auth, CSRF for POST, public path rules
 
-### Key Features:
+### Notes
 
-- **Modular Routing**: Clean separation of static and API endpoints
-- **Organized Asset Serving**: Dedicated routes for CSS, JS, HTML, and resources
-- **Security**: Input validation, rate limiting, content filtering
-- **RESTful API**: Consistent endpoint design for content generation
-- **Template-based UI**: HTML templates with JavaScript DOM manipulation
-
-### Static File Routes:
-
-The web server now serves organized assets with dedicated handlers:
-
-- **`/`**: Main application (serves `/html/index.html`)
-- **`/css/styles.css`**: Application stylesheets
-- **`/js/*.js`**: Modular JavaScript files (config, messaging, diagnostics,
-  etc.)
-- **`/html/*.html`**: HTML templates and pages (index, 404, diagnostics
-  templates)
-- **`/favicon.ico`**: Website icon
-
-### Architecture:
-
-The web server uses a layered approach:
-
-1. **web_server.cpp**: Core routing and server initialization
-2. **web_handlers.cpp**: Basic file serving and utility endpoints
-3. **api_handlers.cpp**: Content generation API endpoints
-4. **validation.cpp**: Security and input validation layer
+- AP mode (setup): captive portal, setup endpoints are public.
+- STA mode: all `/api/*` endpoints require session auth (including `/api/routes` and `/api/timezones`).
+- CSRF protection required on POST/PUT/DELETE (client sends `X-CSRF-Token`, cookie provided on index).
 
 ## Content System
 
@@ -250,7 +195,7 @@ Utility functions provide common functionality used across multiple components.
 - **`time_utils.h`** & **`time_utils.cpp`**: Time and date management
 - **`character_mapping.h`** & **`character_mapping.cpp`**: Character set
   conversions
-- **`api_client.h`** & **`api_client.cpp`**: HTTP client for external API calls
+- **`api_client.{h,cpp}`**: HTTP client for external API calls (retry/backoff)
 
 ### Key Functions:
 
@@ -261,28 +206,8 @@ Utility functions provide common functionality used across multiple components.
 
 ## Build System
 
-The project uses PlatformIO with the Arduino framework for ESP32-C3.
-
-### Key Files:
-
-- **`platformio.ini`**: Build configuration and dependencies
-- **`upload_all.py`**: Custom upload script for filesystem and firmware
-
-### Dependencies:
-
-- **NTPClient**: Network time synchronization
-- **ezTime**: Advanced timezone and DST handling
-- **ArduinoJson**: JSON parsing and generation
-- **PubSubClient**: MQTT client library
-- **ArduinoLog**: Flexible logging framework
-- **LittleFS**: Flash filesystem for configuration storage
-
-### Build Features:
-
-- **USB CDC**: Direct USB communication without external serial adapter
-- **Debug Levels**: Configurable logging verbosity
-- **Filesystem Integration**: Automatic LittleFS upload
-- **Memory Optimization**: Efficient resource usage monitoring
+- PlatformIO (firmware) + Node (assets)
+- `platformio.ini` for environments; enhanced upload target builds and uploads FS+FW
 
 ## Key Files
 

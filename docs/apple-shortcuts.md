@@ -4,7 +4,7 @@ This document explains how to integrate Apple Shortcuts with your Scribe Evoluti
 
 ## Overview
 
-Apple Shortcuts can trigger your Scribe Evolution printer remotely by sending HTTP requests to a bridge service that converts them to MQTT messages. This allows you to:
+Apple Shortcuts can trigger your Scribe remotely by sending HTTP requests to a bridge (e.g., Pipedream) that converts HTTP→MQTT.
 
 - Send messages to your printer from anywhere with internet access
 - Trigger printing from Siri voice commands
@@ -26,7 +26,7 @@ Apple Shortcuts can't send MQTT messages directly, and exposing your Scribe Evol
 - Forwards messages to your printer via a secure cloud MQTT broker
 - Eliminates the need to open firewall ports or expose your home network
 
-## Bridge Service Options
+## Bridge Options
 
 ### Pipedream (Recommended)
 
@@ -42,12 +42,7 @@ Apple Shortcuts can't send MQTT messages directly, and exposing your Scribe Evol
 
 ### Alternative Bridge Services
 
-**n8n**
-
-- More complex setup requiring hosting
-- Better for complex automation workflows
-- Higher ongoing costs ($5-20+/month)
-- Full workflow automation capabilities
+**n8n / Make.com / Zapier** – viable alternatives if you already use them.
 
 **Make.com (formerly Integromat)**
 
@@ -63,11 +58,11 @@ Apple Shortcuts can't send MQTT messages directly, and exposing your Scribe Evol
 - Easy setup but limited free usage
 - More expensive for regular use
 
-## Apple Shortcuts Setup
+## Shortcuts Setup (basic)
 
 Once you have a bridge service configured, create shortcuts to send messages:
 
-### Basic Text Message Shortcut
+### Basic “Print Text” Shortcut
 
 1. **Add "Ask for Input" action**:
    - Input Type: Text
@@ -95,7 +90,7 @@ Once you have a bridge service configured, create shortcuts to send messages:
    - Title: "Sent to Printer"
    - Body: "Your message was sent successfully"
 
-### Voice-Activated Printing
+### Voice Activation
 
 1. Create the basic shortcut above
 2. **Record Siri phrase**: "Print this" or "Send to printer"

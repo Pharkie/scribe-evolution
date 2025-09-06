@@ -2,9 +2,7 @@
 
 ## Overview
 
-This project uses **PlatformIO Unity Testing Framework** for embedded unit
-testing. The testing infrastructure is designed for the ESP32-C3 microcontroller
-environment with comprehensive validation of core functionality.
+This project uses the **PlatformIO Unity Testing Framework** for embedded tests on ESP32‑C3.
 
 ## Testing Framework Status
 
@@ -26,10 +24,10 @@ environment with comprehensive validation of core functionality.
 
 ### Configuration
 
-The test environment is configured in `platformio.ini`:
+Tests run under a dedicated PlatformIO environment (see `platformio.ini`). Example:
 
 ```ini
-[env:test]
+[env:esp32c3-test]
 platform = espressif32
 board = esp32-c3-devkitc-02
 framework = arduino
@@ -115,13 +113,13 @@ file linking resolution:
 
 ```bash
 # Run complete test suite
-pio test -e test
+pio test -e esp32c3-test
 
-# Verbose output with detailed information
-pio test -e test --verbose
+# Verbose output
+pio test -e esp32c3-test --verbose
 
 # Filter specific tests
-pio test -e test --filter="test_basic"
+pio test -e esp32c3-test --filter "*basic*"
 ```
 
 ### Automated Test Script
@@ -191,15 +189,14 @@ void loop() {
 }
 ```
 
-## Integration Challenges & Solutions
+## Integration Notes
 
 ### Source File Linking
 
 **Challenge**: PlatformIO test environment doesn't automatically include all
 source files.
 
-**Current Solution**: Use `build_src_filter = +<*> -<main.cpp>` in test
-environment.
+Use `build_src_filter = +<*> -<main.cpp>` to exclude the main app entry point.
 
 **Future Enhancement**: May require individual test file organization or mock
 implementations for complex dependencies.

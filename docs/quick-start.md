@@ -128,7 +128,7 @@ esptool --port /dev/cu.usbserial-0001 --baud 460800 write-flash 0x0 scribe-esp32
 
 When your Scribe boots for the first time, it creates its own WiFi network:
 
-1. **Look for WiFi network**: `Scribe-Setup`
+1. **Look for WiFi network**: `Scribe-setup`
 2. **Connect** to this network from your phone/computer
 3. **Open browser** and go to: `http://192.168.4.1` or wait for it load the WiFi settings screen
 4. **Configure your settings**:
@@ -307,9 +307,9 @@ esptool --port /dev/ttyUSB0 --baud 460800 write-flash \
 
 ## Need Help?
 
-- **Documentation**: Check `/docs/` folder for technical details
-- **Issues**: Report problems on [GitHub Issues](https://github.com/YOUR_REPO/issues)
-- **Community**: Join discussions in [GitHub Discussions](https://github.com/YOUR_REPO/discussions)
+- **Documentation**: See the `/docs` folder in the repo
+- **Issues**: Report problems on GitHub Issues (https://github.com/Pharkie/scribe/issues)
+- **Community**: Join GitHub Discussions (https://github.com/Pharkie/scribe/discussions)
 
 ## What's Next?
 

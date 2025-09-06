@@ -45,47 +45,47 @@ The system uses ArduinoLog's standard severity levels:
 
 ## Configuration
 
-Configure logging in `src/config.h`:
+Configure logging in `src/core/config.h` (copy from `.example` first):
 
 ```cpp
 // Set your desired log level (0-6)
 static const int logLevel = LOG_LEVEL_NOTICE;
 
 // Enable/disable output destinations
-static const bool logToSerial = true;        // Development console
-static const bool logToFile = false;         // LittleFS file (/logs/scribe.log)
-static const bool logToMQTT = false;         // MQTT topic (scribe/log)
-static const bool logToBetterStack = false;  // BetterStack cloud service
+static const bool enableSerialLogging = true;       // Serial console
+static const bool enableFileLogging = false;        // LittleFS file (/logs/scribe.log)
+static const bool enableMQTTLogging = false;        // MQTT topic
+static const bool enableBetterStackLogging = false; // BetterStack (HTTP)
 
 // File logging configuration
 static const char* logFileName = "/logs/scribe.log";
 static const size_t maxLogFileSize = 100000; // 100KB max file size
 
 // BetterStack configuration (if enabled)
-static const char *betterStackToken = "your-betterstack-token";
-static const char *betterStackUrl = "https://in.logs.betterstack.com/http/";
+static const char *betterStackToken = "YOUR_TOKEN";
+static const char *betterStackEndpoint = "https://in.logs.betterstack.com/http/";
 ```
 
 ### Development vs Production Settings
 
-**Development Configuration**:
+Development example:
 
 ```cpp
 static const int logLevel = LOG_LEVEL_VERBOSE;
-static const bool logToSerial = true;
-static const bool logToFile = true;
-static const bool logToMQTT = false;
-static const bool logToBetterStack = false;
+static const bool enableSerialLogging = true;
+static const bool enableFileLogging = true;
+static const bool enableMQTTLogging = false;
+static const bool enableBetterStackLogging = false;
 ```
 
-**Production Configuration**:
+Production example:
 
 ```cpp
 static const int logLevel = LOG_LEVEL_NOTICE;
-static const bool logToSerial = false;
-static const bool logToFile = true;
-static const bool logToMQTT = true;
-static const bool logToBetterStack = true;
+static const bool enableSerialLogging = false;
+static const bool enableFileLogging = true;
+static const bool enableMQTTLogging = true;
+static const bool enableBetterStackLogging = true;
 ```
 
 ## Usage Examples

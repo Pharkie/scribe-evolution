@@ -121,6 +121,15 @@ npm run firmware
 
 ## 📚 Documentation
 
+### Docs Index
+
+- Getting Started: [Quick Start](docs/quick-start.md), [Build Instructions](docs/build-instructions.md), [Hardware Guide](docs/hardware.md)
+- Architecture: [Code Structure](docs/code-structure.md), [Configuration System](docs/configuration-system.md), [Logging System](docs/logging-system.md)
+- Security: [Auth Overview](docs/auth-overview.md), [MQTT Security](docs/MQTT_SECURITY.md), [Backend QA Review](docs/backend-qa-review.md)
+- Operations: [Troubleshooting](docs/troubleshooting.md), [Testing](docs/testing.md), [WiFi Provisioning Test Gating](docs/wifi-provisioning-test-gating.md)
+- Integrations: [MQTT Integration](docs/mqtt-integration.md), [Pipedream Bridge](docs/pipedream-integration.md), [Apple Shortcuts](docs/apple-shortcuts.md)
+- Features: [LED Effects](docs/led-effects.md), [Button Debugging](docs/button-debugging-guide.md)
+
 ### Getting Started
 
 - **[Build Instructions](docs/build-instructions.md)** - Complete setup guide: PlatformIO, npm, dependencies

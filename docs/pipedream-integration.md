@@ -1,11 +1,8 @@
 # Pipedream MQTT Bridge Integration Guide
 
-## 🎯 **Purpose & Overview**
+## Overview
 
-The Pipedream MQTT Bridge allows you to send messages to your Scribe thermal
-printers from anywhere on the internet via HTTP requests. This integration acts
-as a secure gateway that receives HTTP requests and forwards them as MQTT
-messages to your printers.
+Use Pipedream as a simple HTTP→MQTT bridge to send messages to your Scribe over the internet without exposing your LAN.
 
 ### **What is Pipedream?**
 
@@ -49,18 +46,7 @@ receives messages from anywhere via a cloud MQTT broker, without exposing your
 home network. You just need a way to send HTTP requests from web services to
 that MQTT broker.
 
-### **n8n is another option**
-
-You could use n8n to act as an htto-mqtt bridge, but that needs:
-
-- **💰 Always-On Hosting** - Self-hosted VPS or paid cloud hosting
-  ($5-20+/month)
-- **🔧 Infrastructure Management** - Server maintenance, updates, monitoring
-- **📈 Resource Scaling** - Managing CPU/RAM as workflows grow
-- **🛠️ Setup Complexity** - Docker, reverse proxies, database configuration
-
-This is perfect if you already have infrastructure, but expensive just for a
-simple HTTP-to-MQTT bridge.
+Alternatives (n8n, Make.com, Zapier) work too; Pipedream offers a generous free tier and simple code execution.
 
 ### **Or you might try**
 
@@ -77,7 +63,7 @@ Other serverless platforms might work like Pipedream:
 flexibility, and native MQTT library support - perfect for this specific use
 case.
 
-## 🚀 **Setup Guide**
+## Setup (condensed)
 
 ### **Step 1: Create Pipedream Account**
 
@@ -103,7 +89,7 @@ Add these 4 secrets in **Account Settings** → **Environment Variables**:
 | `MQTT_username` | MQTT broker username - mark as secret | `scribe_user`          |
 | `MQTT_password` | MQTT broker password - mark as secret | `your_secure_password` |
 
-### **Step 4: Configure HTTP Trigger**
+### Step 4: HTTP trigger
 
 1. **Trigger Type**: HTTP / Webhook Requests
 2. **HTTP Method**: POST
@@ -117,14 +103,14 @@ Add these 4 secrets in **Account Settings** → **Environment Variables**:
    ```
 7. **Save trigger** - note the webhook URL
 
-### **Step 5: Add Code Step**
+### Step 5: Code
 
 1. Click **"+"** → **"Add step"** → **"Run custom code"**
 2. **Language**: Node.js
 3. **Step name**: `publish_to_mqtt`
 4. **Code**: Copy the complete [`pipedream.mjs`](../pipedream.mjs) content
 
-### **Step 6: Test & Deploy**
+### Step 6: Test & deploy
 
 1. Click **"Test"** in trigger section
 2. Use the test payload (see below)
@@ -133,7 +119,7 @@ Add these 4 secrets in **Account Settings** → **Environment Variables**:
 
 ## 📋 **Usage Examples**
 
-### **Test Payload (Pipedream Interface)**
+### Test payload
 
 ```json
 {
@@ -144,7 +130,7 @@ Add these 4 secrets in **Account Settings** → **Environment Variables**:
 }
 ```
 
-### **cURL Request**
+### cURL request
 
 ```bash
 curl -X POST https://your-pipedream-webhook-url \

@@ -17,6 +17,14 @@ function handleAuthError(response) {
   return false; // Not an auth error
 }
 
+// Read cookie value by name (for CSRF token)
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
 /**
  * Load configuration from server API
  * @returns {Promise<Object>} Configuration object from server
@@ -50,6 +58,7 @@ export async function saveConfiguration(configData) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": getCookie("scribe_csrf") || "",
       },
       body: JSON.stringify(configData),
     });
@@ -126,6 +135,7 @@ export async function printLocalContent(content) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": getCookie("scribe_csrf") || "",
       },
       body: JSON.stringify({ message: content }),
     });
@@ -169,6 +179,7 @@ export async function triggerLedEffect(params) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": getCookie("scribe_csrf") || "",
       },
       body: JSON.stringify(params),
     });
@@ -196,6 +207,7 @@ export async function turnOffLeds() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": getCookie("scribe_csrf") || "",
       },
     });
 
@@ -286,6 +298,7 @@ export async function saveMemos(memosData) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": getCookie("scribe_csrf") || "",
       },
       body: JSON.stringify(memosData),
     });
