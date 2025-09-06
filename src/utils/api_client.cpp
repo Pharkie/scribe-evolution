@@ -28,10 +28,13 @@
 #include <esp_task_wdt.h>
 #include <functional>
 
+// Forward declaration
+bool performSingleAPIRequest(const String &url, const String &userAgent, int timeoutMs, String &result);
+
 // Helper function for retry logic with exponential backoff
 bool retryWithBackoff(std::function<bool()> operation, int maxRetries = defaultMaxRetries, int baseDelayMs = defaultBaseDelay)
 {
-    int delay = baseDelayMs;
+    int delayMs = baseDelayMs;
     for (int attempt = 0; attempt < maxRetries; attempt++)
     {
         if (operation())
@@ -45,10 +48,10 @@ bool retryWithBackoff(std::function<bool()> operation, int maxRetries = defaultM
         
         if (attempt < maxRetries - 1) // Don't delay after the last attempt
         {
-            LOG_VERBOSE("API", "Retry attempt %d failed, waiting %dms", attempt + 1, delay);
+            LOG_VERBOSE("API", "Retry attempt %d failed, waiting %dms", attempt + 1, delayMs);
             esp_task_wdt_reset(); // Keep watchdog happy during delays
-            delay(delay);
-            delay *= 2; // Exponential backoff
+            delay(delayMs);
+            delayMs *= 2; // Exponential backoff
         }
     }
     

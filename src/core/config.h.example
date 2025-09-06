@@ -204,6 +204,13 @@ static const size_t hugeJsonBuffer = 8192;               // 8KB (Huge JSON docs 
 static const int defaultMaxRetries = 3;                  // Maximum retry attempts
 static const int defaultBaseDelay = 500;                 // Base delay for exponential backoff (ms)
 static const int maxRetryDelay = 30000;                  // Maximum retry delay (30 seconds)
+
+// Authentication & Session Constants
+static const int maxConcurrentSessions = 10;             // Maximum simultaneous sessions
+static const unsigned long sessionTimeoutMs = 14400000;  // 4 hours in milliseconds
+static const int sessionTokenLength = 32;                // Length of session tokens (hex chars)
+static const char *sessionCookieName = "scribe_session"; // Name of the session cookie
+static const char *sessionCookieOptions = "HttpOnly; SameSite=Strict; Path=/"; // Security options
 static const unsigned long wifiConnectTimeoutMs = 15000; // 15 seconds timeout for WiFi connection
 static const char *fallbackAPSSID = "Scribe-setup";
 static const char *fallbackAPPassword = "scribe123";

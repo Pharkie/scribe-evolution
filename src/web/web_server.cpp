@@ -30,6 +30,7 @@
 #include "api_led_handlers.h"
 #endif
 #include "validation.h"
+#include "auth_middleware.h"
 #include "../content/content_handlers.h"
 #include "../core/config.h"
 #include "../core/logging.h"
@@ -160,9 +161,28 @@ static void setupStaticFileServing(bool isAP)
     }
     else
     {
-        // STA mode - serve all static files with compression
+        // STA mode - Custom handler for index.html to create sessions
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+            IPAddress clientIP = request->client()->remoteIP();
+            String sessionToken = createSession(clientIP);
+            
+            if (sessionToken.length() > 0) {
+                setSessionCookie(request, sessionToken);
+                LOG_VERBOSE("AUTH", "Created session and set cookie for %s", clientIP.toString().c_str());
+            }
+            
+            // Serve the index.html file
+            if (LittleFS.exists("/index.html.gz")) {
+                request->send(LittleFS, "/index.html.gz", "text/html", false, nullptr);
+            } else if (LittleFS.exists("/index.html")) {
+                request->send(LittleFS, "/index.html", "text/html", false, nullptr);
+            } else {
+                request->send(404, "text/plain", "index.html not found");
+            }
+        });
+
+        // Serve all other static files with compression (no session needed)
         server.serveStatic("/", LittleFS, "/")
-            .setDefaultFile("index.html")
             .setTryGzipFirst(true)
             .setCacheControl("max-age=31536000");
     }
@@ -172,6 +192,9 @@ void setupWebServerRoutes(int maxChars)
 {
     setMaxCharacters(maxChars);
     bool isAP = isAPMode();
+
+    // Initialize authentication system
+    initAuthSystem();
 
     LOG_NOTICE("WEB", "Setting up %s mode routes", isAP ? "AP (captive portal)" : "STA (full web interface)");
 
@@ -258,32 +281,52 @@ void setupSTAModeRoutes()
 
 void setupAPIRoutes()
 {
-    // Print endpoints
-    server.on("/api/print-local", HTTP_GET, handlePrintContent);
+    // Print endpoints (with authentication)
+    server.on("/api/print-local", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handlePrintContent);
+    });
     registerRoute("GET", "/api/print-local", "Print custom message");
-    server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handlePrintContent(request); }, NULL, handleChunkedUpload);
+    server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handlePrintContent);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-local", "Print custom message");
-    server.on("/api/character-test", HTTP_POST, [](AsyncWebServerRequest *request)
-              { handlePrintTest(request); }, NULL, handleChunkedUpload);
+    server.on("/api/character-test", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handlePrintTest);
+    }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/character-test", "Print character test pattern");
 
-    // Content generation
-    server.on("/api/riddle", HTTP_GET, handleRiddle);
+    // Content generation (with authentication)
+    server.on("/api/riddle", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleRiddle);
+    });
     registerRoute("GET", "/api/riddle", "Generate random riddle");
-    server.on("/api/joke", HTTP_GET, handleJoke);
+    server.on("/api/joke", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleJoke);
+    });
     registerRoute("GET", "/api/joke", "Generate random joke");
-    server.on("/api/quote", HTTP_GET, handleQuote);
+    server.on("/api/quote", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleQuote);
+    });
     registerRoute("GET", "/api/quote", "Generate random quote");
-    server.on("/api/quiz", HTTP_GET, handleQuiz);
+    server.on("/api/quiz", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleQuiz);
+    });
     registerRoute("GET", "/api/quiz", "Generate random quiz");
-    server.on("/api/news", HTTP_GET, handleNews);
+    server.on("/api/news", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleNews);
+    });
     registerRoute("GET", "/api/news", "Generate BBC news headlines");
-    server.on("/api/poke", HTTP_GET, handlePoke);
+    server.on("/api/poke", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handlePoke);
+    });
     registerRoute("GET", "/api/poke", "Generate poke message");
-    server.on("/api/unbidden-ink", HTTP_GET, handleUnbiddenInk);
+    server.on("/api/unbidden-ink", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleUnbiddenInk);
+    });
     registerRoute("GET", "/api/unbidden-ink", "Generate unbidden ink content");
-    server.on("/api/user-message", HTTP_GET, handleUserMessage);
+    server.on("/api/user-message", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleUserMessage);
+    });
     registerRoute("GET", "/api/user-message", "Generate user message");
 
     // Memo endpoints (regex for path parameters)

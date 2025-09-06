@@ -5,12 +5,26 @@
  */
 
 /**
+ * Handle 401 Unauthorized responses by reloading the page to get a new session
+ * @param {Response} response - Fetch response object
+ */
+function handleAuthError(response) {
+  if (response.status === 401) {
+    console.log("API: Session expired, reloading page for new session");
+    window.location.reload();
+    return true; // Indicates we handled the error
+  }
+  return false; // Not an auth error
+}
+
+/**
  * Load configuration from server API
  * @returns {Promise<Object>} Configuration object from server
  */
 export async function loadConfiguration() {
   try {
     const response = await fetch("/api/config");
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       throw new Error(
         `Config API returned ${response.status}: ${response.statusText}`,
@@ -40,6 +54,7 @@ export async function saveConfiguration(configData) {
       body: JSON.stringify(configData),
     });
 
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       const errorText = await response.text();
       console.error("API: Server error response:", errorText);
@@ -75,6 +90,7 @@ export async function testUnbiddenInkGeneration(prompt) {
       method: "GET",
     });
 
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       let errorMessage =
@@ -114,6 +130,7 @@ export async function printLocalContent(content) {
       body: JSON.stringify({ message: content }),
     });
 
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
@@ -156,6 +173,7 @@ export async function triggerLedEffect(params) {
       body: JSON.stringify(params),
     });
 
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -181,6 +199,7 @@ export async function turnOffLeds() {
       },
     });
 
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -208,6 +227,7 @@ export async function scanWiFiNetworks() {
     });
 
     clearTimeout(timeoutId);
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       throw new Error(
         `WiFi scan failed: ${response.status} - ${response.statusText}`,
@@ -237,6 +257,7 @@ export async function loadMemos() {
     console.log("API: Loading memos from server...");
 
     const response = await fetch("/api/memos");
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       throw new Error(
         `Memos API returned ${response.status}: ${response.statusText}`,
@@ -269,6 +290,7 @@ export async function saveMemos(memosData) {
       body: JSON.stringify(memosData),
     });
 
+    if (handleAuthError(response)) return; // Will reload page, no return needed
     if (!response.ok) {
       const errorText = await response.text();
       console.error("API: Server error response:", errorText);

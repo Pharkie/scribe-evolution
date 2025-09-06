@@ -209,7 +209,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
     }
 
     // Add summary object with counts
-    JsonObject summary = doc.createNestedObject("summary");
+    JsonObject summary = (*doc).createNestedObject("summary");
     summary["totalKeys"] = totalKeys;
     summary["validKeys"] = validKeys;  
     summary["correctedKeys"] = correctedKeys;
