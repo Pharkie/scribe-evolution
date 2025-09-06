@@ -318,10 +318,10 @@ bool saveNVSConfig(const RuntimeConfig &config)
     prefs.putString(NVS_CHATGPT_TOKEN, config.chatgptApiToken);
 
     // Save Unbidden Ink configuration
-    prefs.putBool("unbid_enabled", config.unbiddenInkEnabled);
-    prefs.putInt("unbid_start_hr", config.unbiddenInkStartHour);
-    prefs.putInt("unbid_end_hr", config.unbiddenInkEndHour);
-    prefs.putInt("unbid_freq_min", config.unbiddenInkFrequencyMinutes);
+    prefs.putBool(NVS_UNBIDDEN_ENABLED, config.unbiddenInkEnabled);
+    prefs.putInt(NVS_UNBIDDEN_START_HOUR, config.unbiddenInkStartHour);
+    prefs.putInt(NVS_UNBIDDEN_END_HOUR, config.unbiddenInkEndHour);
+    prefs.putInt(NVS_UNBIDDEN_FREQUENCY, config.unbiddenInkFrequencyMinutes);
     prefs.putString(NVS_UNBIDDEN_PROMPT, config.unbiddenInkPrompt);
 
     // Save button configuration
