@@ -34,10 +34,8 @@ Thumbs.db
 node_modules/
 package-lock.json
 
-# Generated CSS and JS files
-data/css/*.min.css
-data/js/*.min.js
-data/js/*.min.js.map
+# Generated frontend build directory (all files are auto-generated from src/)
+data/
 
 # Python virtual environment
 .venv/

@@ -35,26 +35,26 @@ Copy .mqtt_secrets.example to .mqtt_secrets and edit with your MQTT broker crede
 Usage Examples:
 
 1. Quick office scenario (4 printers):
-   python3 test_printer_discovery.py --scenario office
+   python3 scripts/bin/printer_discovery_sim.py --scenario office
 
 2. Home scenario (2 printers):
-   python3 test_printer_discovery.py --scenario home
+   python3 scripts/bin/printer_discovery_sim.py --scenario home
 
 3. Interactive mode for manual testing:
-   python3 test_printer_discovery.py
+   python3 scripts/bin/printer_discovery_sim.py
    > start Alice 1.2.0
    > start Bob 1.0.0
    > stop Alice
    > quit
 
 4. Custom MQTT broker:
-   python3 test_printer_discovery.py --host mqtt.example.com --username user --password pass
+   python3 scripts/bin/printer_discovery_sim.py --host mqtt.example.com --username user --password pass
 
 5. Test chaos mode (rapid connect/disconnect):
-   python3 test_printer_discovery.py --scenario chaos
+   python3 scripts/bin/printer_discovery_sim.py --scenario chaos
 
 6. Test both shutdown types:
-   python3 test_printer_discovery.py --scenario home
+   python3 scripts/bin/printer_discovery_sim.py --scenario home
    # Then while running:
    # - Press 'x' + Enter = ABRUPT shutdown (triggers LWT)
    # - Press Ctrl+C = GRACEFUL shutdown (publishes offline status)

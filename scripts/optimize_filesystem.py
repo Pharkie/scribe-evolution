@@ -66,6 +66,13 @@ def build_optimized_filesystem(source, target, pio_env):
 
     print("✓ Static assets copied")
 
+    # Copy warning file from template
+    warning_template = "scripts/templates/data_warning.md"
+    warning_dest = os.path.join(data_dir, "AGENTS.md")
+    if os.path.exists(warning_template):
+        shutil.copy2(warning_template, warning_dest)
+        print("✓ Warning file (AGENTS.md) copied from template")
+
     # Now optimize the live directory: compress files and clean up
     print("⚡ Optimizing filesystem...")
     

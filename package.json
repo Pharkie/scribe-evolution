@@ -4,11 +4,11 @@
   "description": "Build tools for Scribe ESP32-C3 Thermal Printer CSS",
   "private": true,
   "scripts": {
-    "build": "npx @tailwindcss/cli --input ./src/css-source/input.css --output ./data/css/app.css --minify && node scripts/esbuild.config.js prod && python3 scripts/optimize_filesystem.py",
-    "dev": "npx @tailwindcss/cli --input ./src/css-source/input.css --output ./data/css/app.css && node scripts/esbuild.config.js dev && python3 scripts/optimize_filesystem.py",
+    "build": "npx @tailwindcss/cli --input ./src/css-source/input.css --output ./data/css/app.css --minify && node scripts/esbuild.config.js prod && python3 scripts/bin/optimize_filesystem.py",
+    "dev": "npx @tailwindcss/cli --input ./src/css-source/input.css --output ./data/css/app.css && node scripts/esbuild.config.js dev && python3 scripts/bin/optimize_filesystem.py",
     "test": "pio test -e esp32c3-test",
-    "firmware": "python3 scripts/build_firmware_release.py",
-    "firmware:recover": "python3 scripts/build_firmware_release.py --recover",
+    "firmware": "python3 scripts/bin/build_firmware_release.py",
+    "firmware:recover": "python3 scripts/bin/build_firmware_release.py --recover",
     "firmware:esp32c3": "pio run -e esp32c3",
     "firmware:lolin32lite": "pio run -e lolin32lite"
   },

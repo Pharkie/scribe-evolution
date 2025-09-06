@@ -6,7 +6,11 @@ This script uses the shared config_cleaner module for consistent secret handling
 
 import os
 import sys
-from config_cleaner import clean_secrets_from_content, add_example_file_metadata
+from pathlib import Path
+
+# Ensure scripts/ is on sys.path and import shared cleaner from scripts/lib
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from lib.config_cleaner import clean_secrets_from_content, add_example_file_metadata
 
 # This import is required for PlatformIO extra scripts
 # Import is only available when run by PlatformIO, not in regular Python context

@@ -16,9 +16,9 @@ import re
 from pathlib import Path
 import csv
 
-# Add scripts directory to path for importing config_cleaner
-sys.path.insert(0, str(Path(__file__).parent))
-from config_cleaner import clean_secrets_from_content, add_example_file_metadata
+# Add scripts root to path for importing lib modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from lib.config_cleaner import clean_secrets_from_content, add_example_file_metadata
 
 
 def log(message, level="INFO"):

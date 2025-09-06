@@ -49,3 +49,4 @@ def build_frontend(source, target, env):  # pylint: disable=unused-argument
 
 # Run the build function during the pre-build phase
 build_frontend(None, None, env)  # pylint: disable=undefined-variable
+
