@@ -155,7 +155,6 @@ static void setupStaticFileServing(bool isAP)
         // AP mode - serve files for captive portal
         server.serveStatic("/", LittleFS, "/")
             .setDefaultFile("setup.html")
-            .setTryGzipFirst(false)
             .setCacheControl("no-cache");
     }
     else
@@ -206,7 +205,6 @@ static void setupStaticFileServing(bool isAP)
         // Serve all other static files with compression (no session needed)
         server.serveStatic("/", LittleFS, "/")
             .setDefaultFile("index.html")
-            .setTryGzipFirst(true)
             .setCacheControl("max-age=31536000");
     }
 }
@@ -441,21 +439,17 @@ void setupStaticAssets()
 {
     // Explicit favicon handling (no compression needed)
     server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
-        .setTryGzipFirst(false)
         .setCacheControl("max-age=604800");
     registerRoute("GET", "/favicon.ico", "Favicon ICO file", false);
     server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png")
-        .setTryGzipFirst(false)
         .setCacheControl("max-age=604800");
     registerRoute("GET", "/favicon-96x96.png", "Favicon PNG file", false);
     server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png")
-        .setTryGzipFirst(false)
         .setCacheControl("max-age=604800");
     registerRoute("GET", "/apple-touch-icon.png", "Apple touch icon", false);
 
     // Font: explicitly disable gzip fallback (no .woff2.gz present / immutable)
     server.serveStatic("/fonts/outfit-variable.woff2", LittleFS, "/fonts/outfit-variable.woff2")
-        .setTryGzipFirst(false)
         .setCacheControl("max-age=31536000");
     registerRoute("GET", "/fonts/outfit-variable.woff2", "Outfit variable font", false);
 
