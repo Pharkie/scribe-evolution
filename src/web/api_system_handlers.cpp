@@ -181,15 +181,16 @@ void handleRoutes(AsyncWebServerRequest *request)
 {
     LOG_VERBOSE("WEB", "handleRoutes() called - listing pages and API endpoints");
 
-    DynamicJsonDocument doc(8192); // Large buffer for all routes
-    JsonObject routes = doc.to<JsonObject>();
+    // Use heap allocation for large JSON documents to prevent stack overflow
+    std::unique_ptr<DynamicJsonDocument> doc(new DynamicJsonDocument(8192));
+    JsonObject routes = doc->to<JsonObject>();
 
     // === PAGES AND ENDPOINTS ===
     addRegisteredRoutesToJson(routes);
 
     // Serialize and send
     String response;
-    serializeJson(doc, response);
+    serializeJson(*doc, response);
     
     AsyncWebServerResponse *res = request->beginResponse(200, "application/json", response);
     res->addHeader("Access-Control-Allow-Origin", "*");

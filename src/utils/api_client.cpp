@@ -26,6 +26,35 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <esp_task_wdt.h>
+#include <functional>
+
+// Helper function for retry logic with exponential backoff
+bool retryWithBackoff(std::function<bool()> operation, int maxRetries = 3, int baseDelayMs = 1000)
+{
+    int delay = baseDelayMs;
+    for (int attempt = 0; attempt < maxRetries; attempt++)
+    {
+        if (operation())
+        {
+            if (attempt > 0)
+            {
+                LOG_NOTICE("API", "Operation succeeded after %d retries", attempt);
+            }
+            return true;
+        }
+        
+        if (attempt < maxRetries - 1) // Don't delay after the last attempt
+        {
+            LOG_VERBOSE("API", "Retry attempt %d failed, waiting %dms", attempt + 1, delay);
+            esp_task_wdt_reset(); // Keep watchdog happy during delays
+            delay(delay);
+            delay *= 2; // Exponential backoff
+        }
+    }
+    
+    LOG_WARNING("API", "Operation failed after %d retries", maxRetries);
+    return false;
+}
 
 String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
 {
@@ -36,6 +65,18 @@ String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
     }
 
     LOG_VERBOSE("API", "Fetching from API: %s", url.c_str());
+
+    String result = "";
+    bool success = retryWithBackoff([&]() -> bool {
+        return performSingleAPIRequest(url, userAgent, timeoutMs, result);
+    }, 3, 500); // 3 retries, starting with 500ms delay
+
+    return success ? result : "";
+}
+
+// Helper function to perform a single API request
+bool performSingleAPIRequest(const String &url, const String &userAgent, int timeoutMs, String &result)
+{
 
     // Feed watchdog before starting HTTP operations
     esp_task_wdt_reset();
@@ -48,7 +89,7 @@ String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
     if (!http.begin(client, url))
     {
         LOG_ERROR("API", "Failed to begin HTTPS connection");
-        return "";
+        return false;
     }
 
     // Feed watchdog after HTTP setup
@@ -69,7 +110,12 @@ String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
 
     if (httpResponseCode == 200)
     {
-        response = http.getString();
+        result = http.getString();
+        // Proper connection cleanup
+        http.end();
+        // Feed watchdog after cleanup
+        esp_task_wdt_reset();
+        return true;
     }
     else if (httpResponseCode == 301 || httpResponseCode == 302)
     {
@@ -89,20 +135,12 @@ String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
     // Feed watchdog after cleanup
     esp_task_wdt_reset();
 
-    return response;
+    return false;
 }
 
-String fetchFromAPIWithBearer(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs)
+// Helper function to perform a single Bearer API request
+bool performSingleBearerAPIRequest(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs, String &result)
 {
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        LOG_WARNING("API", "API fetch failed - WiFi not connected");
-        return "";
-    }
-
-    LOG_VERBOSE("API", "Fetching from API (using Bearer token): %s", url.c_str());
-    LOG_VERBOSE("API", "Bearer token length: %d characters", bearerToken.length());
-
     // Feed watchdog before starting HTTP operations
     esp_task_wdt_reset();
 
@@ -113,8 +151,8 @@ String fetchFromAPIWithBearer(const String &url, const String &bearerToken, cons
     // Explicitly specify HTTPS connection
     if (!http.begin(client, url))
     {
-        LOG_ERROR("API", "Failed to begin HTTPS connection");
-        return "";
+        LOG_ERROR("API", "Failed to begin HTTPS connection for Bearer request");
+        return false;
     }
 
     // Feed watchdog after HTTP setup
@@ -125,13 +163,12 @@ String fetchFromAPIWithBearer(const String &url, const String &bearerToken, cons
     http.addHeader("User-Agent", userAgent);
     http.setTimeout(timeoutMs);
 
-    LOG_VERBOSE("API", "Sending GET request with headers set");
+    LOG_VERBOSE("API", "Sending GET request with Bearer token headers set");
 
     // Feed watchdog before making the actual request
     esp_task_wdt_reset();
 
     int httpResponseCode = http.GET();
-    String response = "";
 
     // Feed watchdog after API call
     esp_task_wdt_reset();
@@ -140,8 +177,13 @@ String fetchFromAPIWithBearer(const String &url, const String &bearerToken, cons
 
     if (httpResponseCode == 200)
     {
-        response = http.getString();
-        LOG_VERBOSE("API", "Bearer API call successful, response length: %d", response.length());
+        result = http.getString();
+        LOG_VERBOSE("API", "Bearer API call successful, response length: %d", result.length());
+        // Proper connection cleanup
+        http.end();
+        // Feed watchdog after cleanup
+        esp_task_wdt_reset();
+        return true;
     }
     else if (httpResponseCode == 301 || httpResponseCode == 302)
     {
@@ -173,21 +215,31 @@ String fetchFromAPIWithBearer(const String &url, const String &bearerToken, cons
     // Feed watchdog after cleanup
     esp_task_wdt_reset();
 
-    return response;
+    return false;
 }
 
-String postToAPIWithBearer(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs)
+String fetchFromAPIWithBearer(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs)
 {
     if (WiFi.status() != WL_CONNECTED)
     {
-        LOG_WARNING("API", "API POST failed - WiFi not connected");
+        LOG_WARNING("API", "API fetch failed - WiFi not connected");
         return "";
     }
 
-    LOG_VERBOSE("API", "POSTing to API (using Bearer token): %s", url.c_str());
+    LOG_VERBOSE("API", "Fetching from API (using Bearer token): %s", url.c_str());
     LOG_VERBOSE("API", "Bearer token length: %d characters", bearerToken.length());
-    LOG_VERBOSE("API", "JSON payload: %s", jsonPayload.c_str());
 
+    String result = "";
+    bool success = retryWithBackoff([&]() -> bool {
+        return performSingleBearerAPIRequest(url, bearerToken, userAgent, timeoutMs, result);
+    }, 3, 500); // 3 retries, starting with 500ms delay
+
+    return success ? result : "";
+}
+
+// Helper function to perform a single Bearer POST API request
+bool performSinglePostAPIRequest(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs, String &result)
+{
     // Feed watchdog before starting HTTP operations
     esp_task_wdt_reset();
 
@@ -199,7 +251,7 @@ String postToAPIWithBearer(const String &url, const String &bearerToken, const S
     if (!http.begin(client, url))
     {
         LOG_ERROR("API", "Failed to begin HTTPS connection for POST");
-        return "";
+        return false;
     }
 
     // Feed watchdog after HTTP setup
@@ -217,7 +269,6 @@ String postToAPIWithBearer(const String &url, const String &bearerToken, const S
     esp_task_wdt_reset();
 
     int httpResponseCode = http.POST(jsonPayload);
-    String response = "";
 
     // Feed watchdog after API call
     esp_task_wdt_reset();
@@ -226,8 +277,13 @@ String postToAPIWithBearer(const String &url, const String &bearerToken, const S
 
     if (httpResponseCode == 200)
     {
-        response = http.getString();
-        LOG_VERBOSE("API", "Bearer POST API call successful, response length: %d", response.length());
+        result = http.getString();
+        LOG_VERBOSE("API", "Bearer POST API call successful, response length: %d", result.length());
+        // Proper connection cleanup
+        http.end();
+        // Feed watchdog after cleanup
+        esp_task_wdt_reset();
+        return true;
     }
     else if (httpResponseCode == 301 || httpResponseCode == 302)
     {
@@ -259,7 +315,27 @@ String postToAPIWithBearer(const String &url, const String &bearerToken, const S
     // Feed watchdog after cleanup
     esp_task_wdt_reset();
 
-    return response;
+    return false;
+}
+
+String postToAPIWithBearer(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs)
+{
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        LOG_WARNING("API", "API POST failed - WiFi not connected");
+        return "";
+    }
+
+    LOG_VERBOSE("API", "POSTing to API (using Bearer token): %s", url.c_str());
+    LOG_VERBOSE("API", "Bearer token length: %d characters", bearerToken.length());
+    LOG_VERBOSE("API", "JSON payload: %s", jsonPayload.c_str());
+
+    String result = "";
+    bool success = retryWithBackoff([&]() -> bool {
+        return performSinglePostAPIRequest(url, bearerToken, jsonPayload, userAgent, timeoutMs, result);
+    }, 3, 500); // 3 retries, starting with 500ms delay
+
+    return success ? result : "";
 }
 
 String replaceTemplate(String templateStr, const String &placeholder, const String &value)

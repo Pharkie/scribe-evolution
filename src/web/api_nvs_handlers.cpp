@@ -20,25 +20,26 @@ void handleNVSDump(AsyncWebServerRequest *request)
 {
     LOG_VERBOSE("WEB", "NVS dump requested from %s", request->client()->remoteIP().toString().c_str());
 
-    DynamicJsonDocument doc(8192); // Larger buffer for complete NVS dump with all descriptions
+    // Use heap allocation for large JSON documents to prevent stack overflow
+    std::unique_ptr<DynamicJsonDocument> doc(new DynamicJsonDocument(8192));
 
     Preferences prefs;
     if (!prefs.begin("scribe-app", true))
     { // read-only mode
-        doc["error"] = "Failed to open NVS namespace";
-        doc["namespace"] = "scribe-app";
-        doc["status"] = "error";
+        (*doc)["error"] = "Failed to open NVS namespace";
+        (*doc)["namespace"] = "scribe-app";
+        (*doc)["status"] = "error";
 
         String response;
-        serializeJson(doc, response);
+        serializeJson(*doc, response);
         request->send(500, "application/json", response);
         return;
     }
 
-    doc["namespace"] = "scribe-app";
-    doc["timestamp"] = getFormattedDateTime();
+    (*doc)["namespace"] = "scribe-app";
+    (*doc)["timestamp"] = getFormattedDateTime();
 
-    JsonObject keys = doc.createNestedObject("keys");
+    JsonObject keys = doc->createNestedObject("keys");
     int totalKeys = 0;
     int validKeys = 0;
     int correctedKeys = 0;
@@ -217,17 +218,17 @@ void handleNVSDump(AsyncWebServerRequest *request)
     prefs.end();
 
     String response;
-    size_t jsonSize = serializeJson(doc, response);
+    size_t jsonSize = serializeJson(*doc, response);
     
-    LOG_VERBOSE("WEB", "NVS JSON serialization: %d bytes, buffer capacity: %d", jsonSize, doc.capacity());
+    LOG_VERBOSE("WEB", "NVS JSON serialization: %d bytes, buffer capacity: %d", jsonSize, doc->capacity());
     if (jsonSize == 0) {
         LOG_ERROR("WEB", "NVS JSON serialization failed - response too large or memory issue");
-        doc.clear();
-        doc["error"] = "JSON serialization failed - response too large";
-        doc["namespace"] = "scribe-app";
-        doc["status"] = "error";
+        doc->clear();
+        (*doc)["error"] = "JSON serialization failed - response too large";
+        (*doc)["namespace"] = "scribe-app";
+        (*doc)["status"] = "error";
         response = "";
-        serializeJson(doc, response);
+        serializeJson(*doc, response);
         request->send(500, "application/json", response);
         return;
     }
