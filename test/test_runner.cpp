@@ -6,7 +6,7 @@
 #include <unity.h>
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 
 // Include core modules for global test setup
@@ -28,8 +28,8 @@ extern void run_memo_handler_tests();
 // Test stubs for variables normally defined in main.cpp
 String deviceBootTime = "2025-08-17T12:00:00Z"; // Test stub
 
-// Web server instance for all tests
-WebServer server(webServerPort);
+// Web server instance for all tests (must match Async type used by app)
+AsyncWebServer server(webServerPort);
 
 // Global test state
 bool globalTestEnvironmentInitialized = false;
@@ -50,7 +50,7 @@ void initializeGlobalTestEnvironment()
     validateConfig();
     initializePrinterConfig();
 
-#ifndef TEST_NO_NETWORK
+#ifndef TEST_SKIP_NETWORK_TESTS
     // Connect to WiFi
     connectToWiFi();
 
@@ -75,7 +75,7 @@ void initializeGlobalTestEnvironment()
     }
 
     // Setup web server routes (skip for no-network mode)
-#ifndef TEST_NO_NETWORK
+#ifndef TEST_SKIP_NETWORK_TESTS
     setupWebServerRoutes(maxCharacters);
     server.begin();
     LOG_NOTICE("TEST", "Web server initialized for all tests");
@@ -115,11 +115,11 @@ void setup()
     Serial.println("=== Running Memo Handler Tests ===");
     run_memo_handler_tests();
 
-#ifndef TEST_SKIP_INTEGRATION
+#ifndef TEST_SKIP_NETWORK_TESTS
     Serial.println("=== Running Endpoint Integration Tests ===");
     run_endpoint_integration_tests();
 #else
-    Serial.println("=== Skipping Endpoint Integration Tests (TEST_SKIP_INTEGRATION) ===");
+    Serial.println("=== Skipping Network-Dependent Endpoint Tests (TEST_SKIP_NETWORK_TESTS) ===");
 #endif
 
     UNITY_END();

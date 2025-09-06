@@ -122,6 +122,37 @@ pio test -e esp32c3-test --verbose
 pio test -e esp32c3-test --filter "*basic*"
 ```
 
+### Offline vs Online Runs
+
+- Default behavior: Tests run with WiFi + web server enabled (networked), LEDs on.
+- Optional offline run: Skip network-heavy tests without creating a new env.
+
+Use a project option to define a skip flag at invocation time:
+
+```bash
+# Skip WiFi/HTTP/network-dependent tests
+pio test -e esp32c3-test -v -o "build_flags=-DTEST_SKIP_NETWORK_TESTS=1"
+```
+
+This flag:
+- Skips WiFi connection and web-server route setup in the runner.
+- Skips the timezone/NTP synchronization test.
+- Skips endpoint tests that depend on HTTP routes.
+
+### Quick Subsets via Filters
+
+Run just “unit” style suites (no network):
+
+```bash
+pio test -e esp32c3-test --filter "*character_mapping*" "*config_validation*" "*web_validation*" "*time_utils*" "*nvs_config*" "*memo_handler*"
+```
+
+Run only the networked endpoint tests:
+
+```bash
+pio test -e esp32c3-test --filter "*endpoint_integration*"
+```
+
 ### Automated Test Script
 
 ```bash

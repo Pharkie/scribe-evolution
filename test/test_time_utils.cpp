@@ -76,10 +76,10 @@ void run_time_utils_tests()
 {
     RUN_TEST(test_formatted_datetime);
     RUN_TEST(test_custom_date_formatting);
-    #ifndef TEST_NO_NETWORK
+    #ifndef TEST_SKIP_NETWORK_TESTS
     RUN_TEST(test_timezone_setup);
     #else
-    Serial.println("Skipping timezone setup test (TEST_NO_NETWORK)");
+    Serial.println("Skipping timezone setup test (TEST_SKIP_NETWORK_TESTS)");
     #endif
     RUN_TEST(test_millis_basic);
     RUN_TEST(test_time_constants_from_config);
