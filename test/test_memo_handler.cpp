@@ -26,7 +26,10 @@ void test_simple_placeholders() {
     // Should contain no brackets after processing
     TEST_ASSERT_TRUE(result.indexOf('[') == -1);
     TEST_ASSERT_TRUE(result.indexOf(']') == -1);
-    TEST_ASSERT_TRUE(result.length() > testMemo.length());
+    // Should preserve static parts and be non-empty; expansion may be longer or shorter
+    TEST_ASSERT_TRUE(result.indexOf("Today is ") != -1);
+    TEST_ASSERT_TRUE(result.indexOf(" at ") != -1);
+    TEST_ASSERT_TRUE(result.length() > 0);
 }
 
 void test_pick_placeholder() {

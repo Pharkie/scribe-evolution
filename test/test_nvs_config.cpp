@@ -18,21 +18,11 @@ void clearNVSTestData(void) {
     }
 }
 
-void test_nvs_schema_initialization()
+// Schema versioning removed; initialization simply inits NVS now.
+void test_nvs_initialization()
 {
-    // Clear NVS first
     clearNVSTestData();
-    
-    // Test that NVS schema is initialized correctly on first boot
-    bool result = initializeNVSConfig();
-    TEST_ASSERT_TRUE(result);
-    
-    // Check that schema version was set
-    Preferences prefs;
-    TEST_ASSERT_TRUE(prefs.begin("scribe-app", true));
-    int version = prefs.getInt("prefs_version", -1);
-    TEST_ASSERT_EQUAL_INT(1, version);
-    prefs.end();
+    TEST_ASSERT_TRUE(initializeNVSConfig());
 }
 
 void test_nvs_load_defaults()
@@ -73,7 +63,7 @@ void test_nvs_save_and_load()
     testConfig.mqttUsername = "testuser";
     testConfig.mqttPassword = "testpass";
     testConfig.chatgptApiToken = "test-token";
-    testConfig.maxCharacters = 500;
+    // maxCharacters is a fixed system constant; not persisted
     testConfig.unbiddenInkEnabled = true;
     testConfig.unbiddenInkStartHour = 9;
     testConfig.unbiddenInkEndHour = 17;
@@ -104,7 +94,7 @@ void test_nvs_save_and_load()
     TEST_ASSERT_EQUAL_STRING("testuser", loadedConfig.mqttUsername.c_str());
     TEST_ASSERT_EQUAL_STRING("testpass", loadedConfig.mqttPassword.c_str());
     TEST_ASSERT_EQUAL_STRING("test-token", loadedConfig.chatgptApiToken.c_str());
-    TEST_ASSERT_EQUAL_INT(500, loadedConfig.maxCharacters);
+    TEST_ASSERT_EQUAL_INT(maxCharacters, loadedConfig.maxCharacters);
     TEST_ASSERT_EQUAL(true, loadedConfig.unbiddenInkEnabled);
     TEST_ASSERT_EQUAL_INT(9, loadedConfig.unbiddenInkStartHour);
     TEST_ASSERT_EQUAL_INT(17, loadedConfig.unbiddenInkEndHour);
@@ -135,37 +125,17 @@ void test_nvs_validation_fallbacks()
     TEST_ASSERT_EQUAL_INT(defaultUnbiddenInkFrequencyMinutes, config.unbiddenInkFrequencyMinutes); // Should use default
 }
 
-void test_nvs_schema_migration()
+// Schema migration removed; no-op test retained for suite structure
+void test_nvs_schema_migration_removed()
 {
-    // Clear NVS first
-    clearNVSTestData();
-    
-    // Set up an old schema version
-    Preferences prefs;
-    TEST_ASSERT_TRUE(prefs.begin("scribe-app", false));
-    prefs.putInt("prefs_version", 0); // Old version
-    prefs.putString("old_key", "old_value");
-    prefs.end();
-    
-    // Check schema migration triggers reinitalization
-    TEST_ASSERT_TRUE(checkAndMigrateNVSSchema());
-    
-    // Verify schema was updated
-    TEST_ASSERT_TRUE(prefs.begin("scribe-app", true));
-    int version = prefs.getInt("prefs_version", -1);
-    TEST_ASSERT_EQUAL_INT(1, version);
-    
-    // Verify old data was cleared
-    String oldValue = prefs.getString("old_key", "not_found");
-    TEST_ASSERT_EQUAL_STRING("not_found", oldValue.c_str());
-    prefs.end();
+    TEST_ASSERT_TRUE(true);
 }
 
 void run_nvs_config_tests()
 {
-    RUN_TEST(test_nvs_schema_initialization);
+    RUN_TEST(test_nvs_initialization);
     RUN_TEST(test_nvs_load_defaults);
     RUN_TEST(test_nvs_save_and_load);
     RUN_TEST(test_nvs_validation_fallbacks);
-    RUN_TEST(test_nvs_schema_migration);
+    RUN_TEST(test_nvs_schema_migration_removed);
 }
