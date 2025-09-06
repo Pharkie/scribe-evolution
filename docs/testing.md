@@ -135,6 +135,7 @@ pio test -e esp32c3-test -v -o "build_flags=-DTEST_SKIP_NETWORK_TESTS=1"
 ```
 
 This flag:
+
 - Skips WiFi connection and web-server route setup in the runner.
 - Skips the timezone/NTP synchronization test.
 - Skips endpoint tests that depend on HTTP routes.

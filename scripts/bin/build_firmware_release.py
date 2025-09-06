@@ -280,7 +280,12 @@ def _get_partitions_file_for_env(environment: str) -> Path:
 
 
 def _get_fs_offset_from_partitions(csv_path: Path) -> str:
-    """Parse the partitions CSV and return the LittleFS filesystem offset as hex string (e.g., '0x210000')."""
+    """Parse the partitions CSV and return the LittleFS filesystem offset as hex string (e.g., '0x210000').
+    
+    IMPORTANT: ESP32 partition tables use "spiffs" as the SUBTYPE for filesystem partitions
+    even when using LittleFS. We look for partition NAME "littlefs" but the subtype will be "spiffs".
+    This is an ESP32 platform requirement - don't be confused by this apparent mismatch!
+    """
     try:
         with csv_path.open("r", encoding="utf-8") as f:
             reader = csv.reader(f)
