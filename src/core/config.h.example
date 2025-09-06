@@ -185,6 +185,25 @@ static const int heatingInterval = 250;    // Heating interval (200-250ms)
 // System Performance Settings
 static const unsigned long memCheckInterval = 60000;     // 60 seconds (memory check frequency)
 static const unsigned long reconnectInterval = 5000;     // 5 seconds (WiFi reconnection interval)
+
+// Common Timeout Constants
+static const unsigned long serialTimeout = 5000;         // 5 seconds (Serial connection wait)
+static const unsigned long defaultAPITimeout = 5000;     // 5 seconds (API request timeout)
+static const unsigned long bootDelay = 2000;             // 2 seconds (Boot delay for serial)
+static const unsigned long smallDelay = 10;              // 10ms (Small delay for CPU)
+static const unsigned long ledBlinkInterval = 500;       // 500ms (LED blink interval)
+
+// Memory Buffer Size Constants
+static const size_t smallJsonBuffer = 512;               // 512 bytes (Small JSON docs)
+static const size_t mediumJsonBuffer = 1024;             // 1KB (Medium JSON docs)
+static const size_t largeJsonBuffer = 2048;              // 2KB (Large JSON docs)
+static const size_t extraLargeJsonBuffer = 4096;         // 4KB (Extra large JSON docs)
+static const size_t hugeJsonBuffer = 8192;               // 8KB (Huge JSON docs - heap only)
+
+// Retry and Backoff Constants
+static const int defaultMaxRetries = 3;                  // Maximum retry attempts
+static const int defaultBaseDelay = 500;                 // Base delay for exponential backoff (ms)
+static const int maxRetryDelay = 30000;                  // Maximum retry delay (30 seconds)
 static const unsigned long wifiConnectTimeoutMs = 15000; // 15 seconds timeout for WiFi connection
 static const char *fallbackAPSSID = "Scribe-setup";
 static const char *fallbackAPPassword = "scribe123";

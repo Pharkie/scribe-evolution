@@ -85,15 +85,15 @@ void setup()
   // Wait for USB CDC connection (ESP32-C3 with USB CDC enabled)
   // This is needed because of ARDUINO_USB_CDC_ON_BOOT=1 in platformio.ini
   unsigned long serialStartTime = millis();
-  while (!Serial && (millis() - serialStartTime < 5000))
+  while (!Serial && (millis() - serialStartTime < serialTimeout))
   {
-    delay(10); // Wait up to 5 seconds for serial connection
+    delay(smallDelay); // Wait up to 5 seconds for serial connection
   }
 
   // Note: We can't use Log.notice() yet as logging isn't initialized
   Serial.printf("\n=== Scribe Evolution v%s ===\n", FIRMWARE_VERSION);
   Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
-  Serial.printf("[BOOT] System: ESP32-C3, %d KB free heap\n", ESP.getFreeHeap() / 1024);
+  Serial.printf("[BOOT] System: ESP32-C3, %d KB free heap\n", ESP.getFreeHeap() / mediumJsonBuffer);
 
   // Initialize LittleFS early so config loading works
   if (!LittleFS.begin(true)) // true = format if mount fails
@@ -303,5 +303,5 @@ void loop()
     checkUnbiddenInk();
   }
 
-  delay(10); // Small delay to prevent excessive CPU usage
+  delay(smallDelay); // Small delay to prevent excessive CPU usage
 }

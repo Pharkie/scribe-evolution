@@ -29,7 +29,7 @@
 #include <functional>
 
 // Helper function for retry logic with exponential backoff
-bool retryWithBackoff(std::function<bool()> operation, int maxRetries = 3, int baseDelayMs = 1000)
+bool retryWithBackoff(std::function<bool()> operation, int maxRetries = defaultMaxRetries, int baseDelayMs = defaultBaseDelay)
 {
     int delay = baseDelayMs;
     for (int attempt = 0; attempt < maxRetries; attempt++)
@@ -69,7 +69,7 @@ String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
     String result = "";
     bool success = retryWithBackoff([&]() -> bool {
         return performSingleAPIRequest(url, userAgent, timeoutMs, result);
-    }, 3, 500); // 3 retries, starting with 500ms delay
+    }); // Use default retry settings
 
     return success ? result : "";
 }
@@ -232,7 +232,7 @@ String fetchFromAPIWithBearer(const String &url, const String &bearerToken, cons
     String result = "";
     bool success = retryWithBackoff([&]() -> bool {
         return performSingleBearerAPIRequest(url, bearerToken, userAgent, timeoutMs, result);
-    }, 3, 500); // 3 retries, starting with 500ms delay
+    }); // Use default retry settings
 
     return success ? result : "";
 }
@@ -333,7 +333,7 @@ String postToAPIWithBearer(const String &url, const String &bearerToken, const S
     String result = "";
     bool success = retryWithBackoff([&]() -> bool {
         return performSinglePostAPIRequest(url, bearerToken, jsonPayload, userAgent, timeoutMs, result);
-    }, 3, 500); // 3 retries, starting with 500ms delay
+    }); // Use default retry settings
 
     return success ? result : "";
 }
