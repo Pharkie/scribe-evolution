@@ -72,14 +72,12 @@ void handleNotFound(AsyncWebServerRequest *request)
 
     LOG_WARNING("WEB", "%s", errorDetails.c_str());
 
-    // Serve static 404 page with correct status and headers
-    if (LittleFS.exists("/404.html.gz"))
+    // Serve static 404 page with correct status and headers - let AsyncWebServer handle compression
+    if (LittleFS.exists("/404.html") || LittleFS.exists("/404.html.gz"))
     {
-        AsyncWebServerResponse *resp = request->beginResponse(LittleFS, "/404.html.gz", "text/html");
+        AsyncWebServerResponse *resp = request->beginResponse(LittleFS, "/404.html", "text/html");
         resp->setCode(404);
-        resp->addHeader("Content-Encoding", "gzip");
         resp->addHeader("Cache-Control", "no-cache");
-        resp->addHeader("Vary", "Accept-Encoding");
         request->send(resp);
         return;
     }

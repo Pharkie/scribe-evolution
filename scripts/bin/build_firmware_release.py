@@ -442,9 +442,8 @@ def create_release_info():
             if template is not None:
                 break
     if template is None:
-        log("Warning: Template not found in expected locations", "WARNING")
-        log("Creating basic README without template", "WARNING")
-        template = "# Scribe Firmware Release\n\nBuilt on: {build_date}\n\nSee /docs/quick-start.md for flashing instructions."
+        log("Warning: Template not found in expected locations (no README will be created)", "WARNING")
+        return  # Do not create any README without the template
     else:
         # Prefer macOS default port in README examples
         template = template.replace("/dev/ttyUSB0", "/dev/cu.usbmodem1101")

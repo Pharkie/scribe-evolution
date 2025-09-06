@@ -164,28 +164,14 @@ static void setupStaticFileServing(bool isAP)
             IPAddress clientIP = request->client()->remoteIP();
             String sessionToken = createSession(clientIP);
 
-            // Decide which file to serve
-            const char* path = nullptr;
-            bool isGz = false;
-            if (LittleFS.exists("/index.html.gz")) {
-                path = "/index.html.gz";
-                isGz = true;
-            } else if (LittleFS.exists("/index.html")) {
-                path = "/index.html";
-            }
-
-            if (!path) {
+            // Let AsyncWebServer handle compression automatically
+            if (!LittleFS.exists("/index.html") && !LittleFS.exists("/index.html.gz")) {
                 request->send(404, "text/plain", "index.html not found");
                 return;
             }
 
-            // Build response so we can add Set-Cookie
-            AsyncWebServerResponse* response = request->beginResponse(LittleFS, path, "text/html");
-            if (isGz) {
-                response->addHeader("Content-Encoding", "gzip");
-                response->addHeader("Cache-Control", "no-cache");
-                response->addHeader("Vary", "Accept-Encoding");
-            }
+            // Build response so we can add Set-Cookie - AsyncWebServer will find .gz automatically
+            AsyncWebServerResponse* response = request->beginResponse(LittleFS, "/index.html", "text/html");
 
             if (sessionToken.length() > 0) {
                 String sessionCookie = getSessionCookieValue(sessionToken);
