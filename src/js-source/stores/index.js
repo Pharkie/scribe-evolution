@@ -751,19 +751,18 @@ export function createIndexStore() {
         }
 
         const memoData = await response.json();
-        if (!memoData.content) {
+        if (!memoData.header || !memoData.body) {
           throw new Error("No memo content received");
         }
 
         // Step 2: Print using the same method as other buttons
-        let printResponse;
         if (this.selectedPrinter === "local-direct") {
-          printResponse = await printLocalContent(memoData.content);
+          // Format as string for local printing
+          const formattedContent = memoData.header + "\n\n" + memoData.body;
+          await printLocalContent(formattedContent);
         } else {
-          printResponse = await printMQTTContent(
-            memoData.content,
-            this.selectedPrinter,
-          );
+          // Send structured data for MQTT printing
+          await printMQTT(memoData.header, memoData.body, this.selectedPrinter);
         }
 
         // HTTP 200 status indicates success - no need to check response body

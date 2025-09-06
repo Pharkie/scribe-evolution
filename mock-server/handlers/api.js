@@ -347,11 +347,64 @@ function handleAPI(req, res, pathname, ctx) {
     return true;
   }
 
+  // Placeholder expansion function to mimic ESP32 behavior
+  function expandPlaceholders(content) {
+    return content.replace(/\[([^\]]+)\]/g, (match, placeholder) => {
+      const lowerPlaceholder = placeholder.toLowerCase();
+
+      // Simple placeholders
+      if (lowerPlaceholder === "date") {
+        return new Date().toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      } else if (lowerPlaceholder === "time") {
+        return new Date().toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } else if (lowerPlaceholder === "weekday") {
+        return new Date().toLocaleDateString("en-GB", { weekday: "long" });
+      } else if (lowerPlaceholder === "coin") {
+        return Math.random() < 0.5 ? "heads" : "tails";
+      } else if (lowerPlaceholder === "uptime") {
+        const uptimeMs = Date.now() - startTime;
+        const hours = Math.floor(uptimeMs / (1000 * 60 * 60));
+        const mins = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
+        return `${hours}h ${mins}m`;
+      } else if (lowerPlaceholder === "ip") {
+        return "192.168.1.123"; // Mock IP
+      } else if (lowerPlaceholder === "mdns") {
+        return "scribe-printer.local"; // Mock mDNS
+      } else if (lowerPlaceholder === "dice") {
+        return Math.floor(Math.random() * 6) + 1;
+      }
+
+      // Complex placeholders
+      else if (lowerPlaceholder.startsWith("dice:")) {
+        const max = parseInt(lowerPlaceholder.split(":")[1]);
+        if (max && max > 0) {
+          return Math.floor(Math.random() * max) + 1;
+        }
+      } else if (lowerPlaceholder.startsWith("pick:")) {
+        const options = lowerPlaceholder.substring(5).split("|");
+        if (options.length > 0) {
+          return options[Math.floor(Math.random() * options.length)];
+        }
+      }
+
+      // Return original placeholder if not recognized
+      return match;
+    });
+  }
+
   if (pathname.match(/^\/api\/memo\/([1-4])$/) && req.method === "GET") {
     const memoId = parseInt(pathname.match(/^\/api\/memo\/([1-4])$/)[1]);
     const memoKeys = ["memo1", "memo2", "memo3", "memo4"];
     const memoContent = mockMemos[memoKeys[memoId - 1]];
-    const expandedContent = memoContent; // expandPlaceholders could be added if needed
+    const expandedContent = expandPlaceholders(memoContent);
     return (
       sendJSON(res, { header: `MEMO ${memoId}`, body: expandedContent }),
       true
