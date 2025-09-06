@@ -209,7 +209,7 @@ void handleWiFiReconnection()
     // but not currently connected, and we're not in AP fallback mode
     if (currentWiFiMode != WIFI_MODE_AP_FALLBACK && WiFi.status() != WL_CONNECTED)
     {
-        if (millis() - lastReconnectAttempt > reconnectInterval)
+        if (millis() - lastReconnectAttempt > reconnectIntervalMs)
         {
             const RuntimeConfig &config = getRuntimeConfig();
 

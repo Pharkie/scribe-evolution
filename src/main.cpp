@@ -85,9 +85,9 @@ void setup()
   // Wait for USB CDC connection (ESP32-C3 with USB CDC enabled)
   // This is needed because of ARDUINO_USB_CDC_ON_BOOT=1 in platformio.ini
   unsigned long serialStartTime = millis();
-  while (!Serial && (millis() - serialStartTime < serialTimeout))
+  while (!Serial && (millis() - serialStartTime < serialTimeoutMs))
   {
-    delay(smallDelay); // Wait up to 5 seconds for serial connection
+    delay(smallDelayMs); // Wait up to 5 seconds for serial connection
   }
 
   // Note: We can't use Log.notice() yet as logging isn't initialized
@@ -291,7 +291,7 @@ void loop()
   }
 
   // Monitor memory usage periodically
-  if (millis() - lastMemCheck > memCheckInterval)
+  if (millis() - lastMemCheck > memCheckIntervalMs)
   {
     LOG_VERBOSE("SYSTEM", "Free heap: %d bytes", ESP.getFreeHeap());
     lastMemCheck = millis();
@@ -303,5 +303,5 @@ void loop()
     checkUnbiddenInk();
   }
 
-  delay(smallDelay); // Small delay to prevent excessive CPU usage
+  delay(smallDelayMs); // Small delay to prevent excessive CPU usage
 }

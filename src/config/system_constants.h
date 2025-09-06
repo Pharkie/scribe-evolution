@@ -17,29 +17,39 @@
 #include <ArduinoLog.h>
 #include <esp_log.h>
 
+// ----------------------------------------------------------------------------
+// Time conversion helpers (express human units, return milliseconds)
+// ----------------------------------------------------------------------------
+namespace ScribeTime {
+constexpr unsigned long Seconds(unsigned long s) { return s * 1000UL; }
+constexpr unsigned long Minutes(unsigned long m) { return m * 60UL * 1000UL; }
+constexpr unsigned long Hours(unsigned long h)   { return h * 60UL * 60UL * 1000UL; }
+}
+
 // ============================================================================
 // SYSTEM CONSTANTS - Hardware timings and buffer sizes
 // ============================================================================
-static const int serialTimeout = 5000;           // Serial connection timeout (5s)
-static const int smallDelay = 50;                // Small delay for CPU/power management
+static const int serialTimeoutMs = 5000;         // Serial connection timeout (5s)
+static const int smallDelayMs = 50;              // Small delay for CPU/power management
 static const int mediumJsonBuffer = 1024;        // Medium JSON buffer size divisor
 static const int defaultMaxRetries = 3;          // Default max retries for API calls
-static const int defaultBaseDelay = 1000;        // Default base delay for backoff (1s)
-static const int mqttTestCleanupDelayMs = 1000;  // MQTT test cleanup delay (1s)
+static const int defaultBaseDelayMs = 1000;      // Default base delay for backoff (1s)
+static const int mqttTestCleanupDelayMs = ScribeTime::Seconds(1);  // MQTT test cleanup delay (1s)
 
 // Session management constants
 static const int maxConcurrentSessions = 5;      // Maximum concurrent user sessions
 static const int sessionTokenLength = 32;        // Session token length (bytes)
-static const unsigned long sessionTimeoutMs = 14400000; // Session timeout (4 hours)
+static const unsigned int sessionTimeoutHours = 4; // Session timeout in hours (canonical)
+static const unsigned long sessionTimeoutMs = ScribeTime::Hours(sessionTimeoutHours); // Derived ms
 static const char *sessionCookieName = "ScribeSession";  // Session cookie name
 static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict"; // Cookie security options
 
 // MQTT connection and retry settings
 static const int mqttMaxConsecutiveFailures = 3;           // Max failures before cooldown
-static const unsigned long mqttReconnectIntervalMs = 5000; // Normal reconnect interval (5s)
-static const unsigned long mqttFailureCooldownMs = 60000;  // Cooldown after max failures (60s)
-static const unsigned long mqttConnectionTimeoutMs = 10000; // Connection timeout (10s)
-static const unsigned long mqttTlsHandshakeTimeoutMs = 15000; // TLS handshake timeout (15s)
+static const unsigned long mqttReconnectIntervalMs = ScribeTime::Seconds(5); // Normal reconnect interval (5s)
+static const unsigned long mqttFailureCooldownMs = ScribeTime::Minutes(1);   // Cooldown after max failures (60s)
+static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(10); // Connection timeout (10s)
+static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(15); // TLS handshake timeout (15s)
 static const int mqttBufferSize = 512;                      // MQTT message buffer size
 
 // Unbidden Ink prompt presets (autoprompts)
@@ -154,9 +164,9 @@ static const int heatingTime = 150;        // Heating time (80-200ms)
 static const int heatingInterval = 250;    // Heating interval (200-250ms)
 
 // System Performance Settings
-static const unsigned long memCheckInterval = 60000;     // 60 seconds (memory check frequency)
-static const unsigned long reconnectInterval = 5000;     // 5 seconds (WiFi reconnection interval)
-static const unsigned long wifiConnectTimeoutMs = 15000; // 15 seconds timeout for WiFi connection
+static const unsigned long memCheckIntervalMs = ScribeTime::Minutes(1);     // 60 seconds (memory check frequency)
+static const unsigned long reconnectIntervalMs = ScribeTime::Seconds(5);    // 5 seconds (WiFi reconnection interval)
+static const unsigned long wifiConnectTimeoutMs = ScribeTime::Seconds(15);  // 15 seconds timeout for WiFi connection
 static const char *fallbackAPSSID = "Scribe-setup";
 static const char *fallbackAPPassword = "scribe123";
 static const int statusLEDPin = 8;    // ESP32-C3 has built-in LED on GPIO8
@@ -164,12 +174,12 @@ static const int webServerPort = 80;  // HTTP port for web server
 const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
 
 // Printer Discovery Heartbeat
-static const unsigned long printerDiscoveryHeartbeatInterval = 60000; // 1 minute heartbeat interval
+static const unsigned long printerDiscoveryHeartbeatIntervalMs = ScribeTime::Minutes(1); // 1 minute heartbeat interval
 
 // Input Validation Limits
-static const unsigned long minRequestInterval = 100;  // 100ms minimum between requests
+static const unsigned long minRequestIntervalMs = 100;  // 100ms minimum between requests
 static const unsigned long maxRequestsPerMinute = 60; // 60 requests per minute
-static const unsigned long rateLimitWindowMs = 60000; // 1 minute rate limit window
+static const unsigned long rateLimitWindowMs = ScribeTime::Minutes(1); // 1 minute rate limit window
 static const int maxControlCharPercent = 10;          // Max control characters as percentage of message length
 static const int maxJsonPayloadSize = 8192;           // 8KB max JSON payload size
 static const int maxMqttTopicLength = 128;            // Max MQTT topic length

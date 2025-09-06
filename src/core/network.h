@@ -18,7 +18,7 @@ enum WiFiConnectionMode
 
 // Network status variables
 extern unsigned long lastReconnectAttempt;
-extern const unsigned long reconnectInterval;
+extern const unsigned long reconnectIntervalMs;
 extern WiFiConnectionMode currentWiFiMode;
 extern DNSServer dnsServer;
 

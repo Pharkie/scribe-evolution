@@ -40,11 +40,11 @@ bool isRateLimited()
 
     // Basic timing rate limit (prevent rapid-fire requests)
     unsigned long timeSinceLastRequest = currentTime - lastRequestTime;
-    if (timeSinceLastRequest < minRequestInterval)
+    if (timeSinceLastRequest < minRequestIntervalMs)
     {
-        lastRateLimitReason = "Too many requests too quickly. Only " + String(timeSinceLastRequest) + "ms since last request (minimum " + String(minRequestInterval) + "ms required).";
+        lastRateLimitReason = "Too many requests too quickly. Only " + String(timeSinceLastRequest) + "ms since last request (minimum " + String(minRequestIntervalMs) + "ms required).";
         LOG_WARNING("WEB", "Rate limit triggered: only %lums since last request (min: %lums)",
-                    timeSinceLastRequest, minRequestInterval);
+                    timeSinceLastRequest, minRequestIntervalMs);
         return true;
     }
 
