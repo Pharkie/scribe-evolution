@@ -87,6 +87,14 @@ public:
                            CRGB color1 = CRGB::Blue, CRGB color2 = CRGB::Black, CRGB color3 = CRGB::Black);
 
     /**
+     * @brief Start a new LED effect using autonomous default colors from configuration
+     * @param effectName Name of the effect (case-insensitive)
+     * @param cycles Number of cycles/sequences to run (0 = infinite)
+     * @return true if effect started successfully, false if unknown effect
+     */
+    bool startEffectCyclesAuto(const String &effectName, int cycles);
+
+    /**
      * @brief Stop the current effect and turn off all LEDs
      */
     void stopEffect();

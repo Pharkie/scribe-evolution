@@ -67,6 +67,15 @@ public:
      */
     void updateConfig(const LedEffectsConfig &newEffectsConfig);
 
+    /**
+     * @brief Get default color hex strings for an effect from autonomous config
+     * @param effectName Effect name (case-insensitive)
+     * @param h1 Out: primary color hex (e.g., #FF0000)
+     * @param h2 Out: secondary color hex (may be empty if unused)
+     * @param h3 Out: tertiary color hex (may be empty if unused)
+     */
+    void getDefaultColorsHex(const String &effectName, String &h1, String &h2, String &h3) const;
+
 private:
     LedEffectsConfig effectsConfig; // Autonomous per-effect configurations
 

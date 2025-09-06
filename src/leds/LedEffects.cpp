@@ -15,6 +15,7 @@
 #include "../core/config.h"
 #include "../core/config_loader.h"
 #include "effects/EffectRegistry.h"
+#include "../utils/color_utils.h"
 
 // Global instance
 LedEffects ledEffects;
@@ -339,6 +340,40 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
                 effectName.c_str(), cycles);
 
     return true;
+}
+
+bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
+{
+    // Use autonomous per-effect default colors from registry
+    if (!effectRegistry)
+    {
+        LOG_WARNING("LEDS", "Effect registry not initialized");
+        return false;
+    }
+
+    String h1, h2, h3;
+    effectRegistry->getDefaultColorsHex(effectName, h1, h2, h3);
+
+    // Convert to CRGB (fallbacks if strings are empty)
+    CRGB c1 = CRGB::Blue;
+    CRGB c2 = CRGB::Black;
+    CRGB c3 = CRGB::Black;
+
+    // Convert only when hex provided; otherwise keep sensible defaults
+    if (h1.length() > 0)
+    {
+        c1 = hexToRgb(h1);
+    }
+    if (h2.length() > 0)
+    {
+        c2 = hexToRgb(h2);
+    }
+    if (h3.length() > 0)
+    {
+        c3 = hexToRgb(h3);
+    }
+
+    return startEffectCycles(effectName, cycles, c1, c2, c3);
 }
 
 void LedEffects::stopEffect()

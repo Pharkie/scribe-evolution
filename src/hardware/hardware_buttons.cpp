@@ -328,18 +328,8 @@ void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
         return;
     }
 
-    // Trigger configured LED effect for 1 cycle with appropriate colors
-    CRGB color = CRGB::Green; // Default to green for most effects
-    if (effectName == "rainbow")
-        color = CRGB::White; // Rainbow uses its own colors
-    else if (effectName == "pulse")
-        color = CRGB::Blue;
-    else if (effectName == "matrix")
-        color = CRGB::Green;
-    else if (effectName == "twinkle")
-        color = CRGB::Yellow;
-
-    if (ledEffects.startEffectCycles(effectName, 1, color))
+    // Trigger configured LED effect for 1 cycle using autonomous defaults
+    if (ledEffects.startEffectCyclesAuto(effectName, 1))
     {
         LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): %s, 1 cycle",
                     buttonIndex, isLongPress ? "long" : "short", effectName.c_str());
