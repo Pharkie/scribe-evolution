@@ -16,7 +16,6 @@
  * Commercial use is prohibited without explicit written permission from the author.
  * For commercial licensing inquiries, please contact Adam Knowles.
  *
- * Based on the original Project Scribe by UrbanCircles.
  */
 
 #include "web_server.h"

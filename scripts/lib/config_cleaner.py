@@ -167,17 +167,19 @@ def add_example_file_metadata(content):
     )
 
     # Add instructions after the license section
-    instructions = """
- * 
- * INSTRUCTIONS: Copy this file to config.h and fill in your actual credentials.
- * The config.h file is gitignored to keep your secrets safe."""
+    instructions = """ * INSTRUCTIONS: Copy this file to device_config.h and fill in your actual credentials.
+ * The device_config.h file is gitignored to keep your secrets safe."""
 
-    content = content.replace(
-        " * Based on the original Project Scribe by UrbanCircles.\n */",
-        " * Based on the original Project Scribe by UrbanCircles."
-        + instructions
-        + "\n */",
-    )
+    # Find the license section ending and add instructions
+    # Remove any trailing empty comment lines before the closing */
+    if " */\n" in content:
+        parts = content.split(" */\n", 1)
+        if len(parts) == 2:
+            # Remove trailing empty comment lines from the first part
+            first_part = parts[0].rstrip()
+            if first_part.endswith(" *"):
+                first_part = first_part[:-2].rstrip()
+            content = first_part + "\n *\n" + instructions + "\n */\n" + parts[1]
     
     return content
 

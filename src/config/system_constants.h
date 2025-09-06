@@ -9,7 +9,6 @@
  * This file contains system constants, hardware settings, and technical parameters.
  * These rarely need modification and are tuned for ESP32-C3 performance.
  *
- * Based on the original Project Scribe by UrbanCircles.
  */
 
 #ifndef SYSTEM_CONSTANTS_H
@@ -31,7 +30,7 @@ static const int mqttTestCleanupDelayMs = 1000;  // MQTT test cleanup delay (1s)
 // Session management constants
 static const int maxConcurrentSessions = 5;      // Maximum concurrent user sessions
 static const int sessionTokenLength = 32;        // Session token length (bytes)
-static const unsigned long sessionTimeoutMs = 3600000;  // Session timeout (1 hour)
+static const unsigned long sessionTimeoutMs = 14400000; // Session timeout (4 hours)
 static const char *sessionCookieName = "ScribeSession";  // Session cookie name
 static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict"; // Cookie security options
 

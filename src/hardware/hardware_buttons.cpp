@@ -155,13 +155,13 @@ void initializeHardwareButtons()
         LOG_VERBOSE("BUTTONS", "Button %d GPIO %d initialized", i, config.buttonGpios[i]);
     }
 
-    // Log button configuration
+    // Log button configuration (verbose detail)
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        LOG_NOTICE("BUTTONS", "Button %d: GPIO %d -> Short: '%s', Long: '%s'",
-                   i, config.buttonGpios[i],
-                   config.buttonShortActions[i].c_str(),
-                   config.buttonLongActions[i].c_str());
+        LOG_VERBOSE("BUTTONS", "Button %d: GPIO %d -> Short: '%s', Long: '%s'",
+                    i, config.buttonGpios[i],
+                    config.buttonShortActions[i].c_str(),
+                    config.buttonLongActions[i].c_str());
 
         // Feed watchdog after each log to prevent timeout
         esp_task_wdt_reset();

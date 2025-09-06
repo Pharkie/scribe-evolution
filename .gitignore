@@ -7,7 +7,6 @@ compile_commands.json
 src/config/device_config.h*
 data/config.json
 config.json
-config.h
 
 # Build artifacts
 *.bin

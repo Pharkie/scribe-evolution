@@ -10,7 +10,6 @@
  * system constants, and GPIO mappings. It serves as the single entry point
  * for all configuration needs throughout the codebase.
  *
- * Based on the original Project Scribe by UrbanCircles.
  */
 
 #ifndef CONFIG_H
