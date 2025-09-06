@@ -9,10 +9,10 @@ This script manages secrets by:
 5. Restoring the original config.h
 """
 
-import sys
 import shutil
 import subprocess
 import re
+import sys
 from pathlib import Path
 import csv
 
@@ -25,6 +25,36 @@ def log(message, level="INFO"):
     """Simple logging function."""
     icons = {"INFO": "🔧", "SUCCESS": "✅", "WARNING": "⚠️", "ERROR": "❌"}
     print(f"{icons.get(level, '•')} {message}")
+
+
+def fatal_error(message, code=1):
+    """Log error and exit consistently."""
+    log(message, "ERROR")
+    raise SystemExit(code)
+
+
+def get_production_environments():
+    """Parse platformio.ini to get production environments from default_envs."""
+    ini_path = Path("platformio.ini")
+    if not ini_path.exists():
+        fatal_error("platformio.ini not found")
+    
+    try:
+        with open(ini_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip().startswith("default_envs"):
+                    envs_str = line.split('=')[1].strip()
+                    envs = [e.strip() for e in envs_str.split(',')]
+                    log(f"Found production environments: {', '.join(envs)}")
+                    return envs
+        
+        # Fallback to hardcoded list if not found
+        fallback = ["esp32c3-prod", "esp32c3-prod-no-leds", "lolin32lite-no-leds"]
+        log(f"No default_envs found, using fallback: {', '.join(fallback)}", "WARNING")
+        return fallback
+        
+    except Exception as e:
+        fatal_error(f"Failed to parse platformio.ini: {e}")
 
 
 def is_config_already_clean(config_path):
@@ -63,8 +93,7 @@ def backup_config():
     backup_path = Path("src/config/device_config.h.adam")
 
     if not config_path.exists():
-        log(f"Error: {config_path} not found", "ERROR")
-        sys.exit(1)
+        fatal_error(f"{config_path} not found")
 
     # Check if current config appears to already be cleaned
     if is_config_already_clean(config_path):
@@ -81,13 +110,7 @@ def backup_config():
             )
             return True
         else:
-            log("❌ No backup found and current config appears clean!", "ERROR")
-            log("❌ Cannot proceed - would lose your original configuration", "ERROR")
-            log(
-                "💡 Please restore your original config.h with secrets and try again",
-                "ERROR",
-            )
-            sys.exit(1)
+            fatal_error("No backup found and current config appears clean! Cannot proceed - would lose your original configuration. Please restore your original config.h with secrets and try again")
 
     # Check if we're about to overwrite a good backup with a bad one
     if backup_path.exists():
@@ -99,7 +122,7 @@ def backup_config():
             import datetime
 
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            timestamped_backup = Path(f"src/core/config.h.adam.{timestamp}")
+            timestamped_backup = Path(f"src/config/device_config.h.adam.{timestamp}")
             try:
                 shutil.copy2(config_path, timestamped_backup)
                 log(f"Created timestamped backup: {timestamped_backup}", "SUCCESS")
@@ -142,8 +165,7 @@ def generate_clean_config():
     example_path = Path("src/config/device_config.h.example")
 
     if not config_path.exists():
-        log(f"Error: {config_path} not found", "ERROR")
-        return False
+        fatal_error(f"{config_path} not found")
 
     try:
         # Read the main config
@@ -302,12 +324,9 @@ def _get_fs_offset_from_partitions(csv_path: Path) -> str:
                             offset = hex(int(offset, 0))
                         return offset
         # If we get here, no littlefs partition was found - fail fast
-        log(f"FATAL: No 'littlefs' partition found in {csv_path}", "ERROR")
-        log("Expected partition name must be exactly 'littlefs'", "ERROR")
-        raise SystemExit(1)
+        fatal_error(f"No 'littlefs' partition found in {csv_path}. Expected partition name must be exactly 'littlefs'")
     except Exception as e:
-        log(f"Failed to parse partitions file {csv_path}: {e}", "ERROR")
-        raise SystemExit(1)
+        fatal_error(f"Failed to parse partitions file {csv_path}: {e}")
 
 
 def create_merged_binary(environment):
@@ -435,11 +454,11 @@ def create_release_info():
 
 def recover_config():
     """Emergency recovery - restore config.h from backup."""
-    backup_path = Path("src/core/config.h.adam")
-    config_path = Path("src/core/config.h")
+    backup_path = Path("src/config/device_config.h.adam")
+    config_path = Path("src/config/device_config.h")
 
     if not backup_path.exists():
-        log("❌ No backup found at src/core/config.h.adam", "ERROR")
+        log("❌ No backup found at src/config/device_config.h.adam", "ERROR")
         return False
 
     if is_config_already_clean(backup_path):
@@ -447,8 +466,8 @@ def recover_config():
             "⚠️  Backup also appears to be cleaned - check for timestamped backups:",
             "WARNING",
         )
-        backup_dir = Path("src/core")
-        timestamped_backups = list(backup_dir.glob("config.h.adam.*"))
+        backup_dir = Path("src/config")
+        timestamped_backups = list(backup_dir.glob("device_config.h.adam.*"))
         if timestamped_backups:
             log("Found timestamped backups:", "INFO")
             for backup in sorted(timestamped_backups):
@@ -480,18 +499,17 @@ def main():
 
     # Check we're in the right directory
     if not Path("platformio.ini").exists():
-        log("Error: Not in a PlatformIO project directory", "ERROR")
-        sys.exit(1)
+        fatal_error("Not in a PlatformIO project directory")
 
-    # Build targets
-    targets = ["esp32c3-prod", "esp32c3-prod-no-leds", "lolin32lite-no-leds"]
+    # Get build targets from platformio.ini
+    targets = get_production_environments()
 
     success = True
 
     try:
         # Step 1: Backup current config
         if not backup_config():
-            sys.exit(1)
+            fatal_error("Failed to backup configuration")
 
         # Step 2: Generate clean config
         if not generate_clean_config():
@@ -549,8 +567,7 @@ def main():
                 size = firmware_path.stat().st_size / 1024
                 log(f"  • firmware/{target}/ ({size:.1f} KB)")
     else:
-        log("\\n❌ Firmware release build failed", "ERROR")
-        sys.exit(1)
+        fatal_error("Firmware release build failed")
 
 
 if __name__ == "__main__":
