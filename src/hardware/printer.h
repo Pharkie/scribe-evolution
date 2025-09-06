@@ -13,7 +13,6 @@ extern HardwareSerial printer;
 extern const int maxCharsPerLine;
 
 // Function declarations
-void stabilizePrinterPin();
 void initializePrinter();
 void printMessage();
 void printStartupMessage();

@@ -298,6 +298,7 @@ void handleWiFiScan(AsyncWebServerRequest *request)
 {
     LOG_VERBOSE("WEB", "WiFi scan requested");
 
+
     // Only allow GET method
     if (request->method() != HTTP_GET)
     {
@@ -305,12 +306,14 @@ void handleWiFiScan(AsyncWebServerRequest *request)
         return;
     }
 
-    // Feed watchdog before scan (scan can take 4+ seconds)
+    // Feed watchdog before scan (scan can take ~1-2s with tuned params)
     esp_task_wdt_reset();
     
-    // Simple synchronous scan - let ESP32 handle it natively with reasonable per-channel timeout
-    LOG_VERBOSE("WEB", "Starting WiFi scan");
-    int networkCount = WiFi.scanNetworks(false, false, false, 300); // 300ms per channel max
+    // Tuned synchronous scan to reduce disruption in AP-STA mode:
+    // - passive=true (less active probing)
+    // - max_ms_per_chan=120 to keep scan quick across channels
+    LOG_VERBOSE("WEB", "Starting WiFi scan (passive, 120ms/channel)");
+    int networkCount = WiFi.scanNetworks(false, false, true, 120);
     LOG_VERBOSE("WEB", "WiFi scan completed, found %d networks", networkCount);
     
     // Feed watchdog after scan completes

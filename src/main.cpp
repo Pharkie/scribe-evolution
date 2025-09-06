@@ -16,13 +16,6 @@
  * Commercial use is prohibited without explicit written permission from the author.
  * For commercial licensing inquiries, please contact Adam Knowles.
  *
- * Inspired by Project Scribe by UrbanCircles.
- *
- *  TODO:
- * - FastLED support for LED strip
- *
- *  IDEAS:
- * - Allow disabling of MQTT for purely local printing
  */
 
 #include <WiFi.h>
@@ -50,17 +43,21 @@
 #include "content/unbidden_ink.h"
 #if ENABLE_LEDS
 #include "leds/LedEffects.h"
-#else
-// Forward declaration of LED stub
-extern class LedEffects
+extern LedEffects ledEffects;
+#endif
+
+// Stabilize printer pin ASAP, before anything else
+class PrinterPinStabilizer
 {
 public:
-  bool begin();
-  bool startEffectCycles(const String &effectName, int cycles = 1,
-                         unsigned long color1 = 0, unsigned long color2 = 0, unsigned long color3 = 0);
-  void update();
-} ledEffects;
-#endif
+  PrinterPinStabilizer()
+  {
+    const RuntimeConfig &config = getRuntimeConfig(); // Fast - returns defaults
+    pinMode(config.printerTxPin, OUTPUT);
+    digitalWrite(config.printerTxPin, HIGH); // UART idle state
+  }
+};
+static PrinterPinStabilizer pinStabilizer;
 
 // === Web Server ===
 AsyncWebServer server(webServerPort);
@@ -75,15 +72,13 @@ void setup()
 {
   // Track boot time
   unsigned long bootStartTime = millis();
-  
-  // Stabilize printer pin as early as possible
-  stabilizePrinterPin();
 
   // Initialize serial communication first (USB CDC)
   Serial.begin(115200);
 
-  // Wait for USB CDC connection (ESP32-C3 with USB CDC enabled)
-  // This is needed because of ARDUINO_USB_CDC_ON_BOOT=1 in platformio.ini
+  // Allow USB-C connection to send logs back to monitor on host computer
+  // Wait for USB CDC connection
+  // Needed due to ARDUINO_USB_CDC_ON_BOOT=1 in platformio.ini
   unsigned long serialStartTime = millis();
   while (!Serial && (millis() - serialStartTime < serialTimeoutMs))
   {
@@ -95,10 +90,7 @@ void setup()
   Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
   Serial.printf("[BOOT] System: ESP32-C3, %d KB free heap\n", ESP.getFreeHeap() / mediumJsonBuffer);
 
-  // Initialize LittleFS early so config loading works
-  // Arduino-ESP32 v3.x defaults LittleFS partition label to "spiffs".
-  // Our partition table labels it "littlefs" (see partitions_no_ota.csv),
-  // so pass the explicit label to avoid mount failure.
+  // Initialize LittleFS so config loading works
   if (!LittleFS.begin(true, "/littlefs", 10, "littlefs")) // true = format if mount fails
   {
     Serial.println("LittleFS Mount Failed");
@@ -151,7 +143,7 @@ void setup()
 
   // Log initial memory status
   LOG_VERBOSE("BOOT", "Free heap: %d bytes", ESP.getFreeHeap());
-  
+
   // Log detailed GPIO summary in verbose mode (now that logging is available)
   logGPIOUsageSummary();
 
@@ -199,7 +191,7 @@ void setup()
   // Setup MQTT client (only in STA mode and when MQTT enabled)
   if (!isAPMode() && isMQTTEnabled())
   {
-    startMQTTClient(true);    // true = immediate connection on boot (WiFi is already stable)
+    startMQTTClient(true); // true = immediate connection on boot (WiFi is already stable)
     LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
   }
   else
@@ -230,14 +222,15 @@ void setup()
   // Calculate boot time
   unsigned long bootDuration = millis() - bootStartTime;
   float bootSeconds = bootDuration / 1000.0;
-  
+
   // Get device name from config
   const RuntimeConfig &config = getRuntimeConfig();
   String deviceName = config.deviceOwner;
-  if (deviceName.length() == 0) {
+  if (deviceName.length() == 0)
+  {
     deviceName = "Unknown";
   }
-  
+
   if (isAPMode())
   {
     LOG_NOTICE("BOOT", "=== %s Ready (Setup Mode) in %.1f seconds ===", deviceName.c_str(), bootSeconds);

@@ -13,24 +13,11 @@ HardwareSerial printer(1); // Use UART1 on ESP32-C3
 const int maxCharsPerLine = 32;
 
 // === Printer Functions ===
-void stabilizePrinterPin()
-{
-    // Set TX pin to HIGH (idle state) before UART initialization
-    // This prevents spurious data from being sent to the printer during boot
-    const RuntimeConfig &config = getRuntimeConfig();
-    pinMode(config.printerTxPin, OUTPUT);
-    digitalWrite(config.printerTxPin, HIGH); // UART idle state is HIGH
-
-    // Small delay to ensure pin is stable
-    delay(100);
-}
-
 void initializePrinter()
 {
     LOG_VERBOSE("PRINTER", "Starting printer initialization...");
 
-    // The TX pin was manually set to HIGH in stabilizePrinterPin()
-    // Now initialize UART1 which will take over pin control
+    // Initialize UART1 which will take over pin control
     const RuntimeConfig &config = getRuntimeConfig();
     printer.begin(9600, SERIAL_8N1, -1, config.printerTxPin); // baud, config, RX pin (-1 = not used), TX pin
 
@@ -78,27 +65,31 @@ void printStartupMessage()
     // Feed watchdog after first log (network logging can be slow)
     esp_task_wdt_reset();
 
-    if (isAPMode()) {
+    if (isAPMode())
+    {
         // In AP mode, print the proper setup message using existing content generator
         String apContent = generateAPDetailsContent();
-        if (apContent.length() > 0) {
+        if (apContent.length() > 0)
+        {
             // Feed watchdog before thermal printing (can be slow)
             esp_task_wdt_reset();
-            
+
             LOG_VERBOSE("PRINTER", "Printing AP setup message");
-            
+
             advancePaper(1);
-            
+
             // Feed watchdog before the actual printing
             esp_task_wdt_reset();
-            
+
             String timestamp = getFormattedDateTime();
             printWithHeader(timestamp, apContent);
-            
+
             // Feed watchdog after thermal printing completes
             esp_task_wdt_reset();
         }
-    } else {
+    }
+    else
+    {
         // In STA mode, print normal server info
         String serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
 
