@@ -126,10 +126,10 @@ def test_esp32_gpio():
 
     # Initialize UART (test communication ability)
     try:
-        uart = UART(1, baudrate=9600, tx=UART_TX_GPIO)
-        log_message("INFO", f"UART initialized on GPIO {UART_TX_GPIO}")
+        uart = UART(0, baudrate=115200, tx=UART_TX_GPIO, rx=UART_RX_GPIO)
+        log_message("INFO", f"UART initialized on TX {UART_TX_GPIO}")
     except Exception as e:
-        log_message("ERROR", f"Failed to initialize UART GPIO {UART_TX_GPIO}: {e}")
+        log_message("ERROR", f"Failed to initialize UART: {e}")
         uart = None
 
     log_message("INFO", "=== GPIO Test Started ===")
@@ -258,128 +258,3 @@ def test_esp32_gpio():
             "⚠️  No button presses detected - check wiring or press buttons during test",
         )
 
-    # Cleanup
-    if status_led:
-        status_led.off()
-    if led_strip:
-        led_strip.off()
-
-    return True
-
-
-def find_esp32_serial_port():
-    """Find ESP32-C3 serial port on computer"""
-    ports = list(serial.tools.list_ports.comports())
-
-    # Look for ESP32 related ports
-    for port in ports:
-        if any(
-            keyword in port.description.lower()
-            for keyword in ["esp32", "silicon labs", "cp210", "uart"]
-        ):
-            return port.device
-
-    # If no ESP32 found, list all ports
-    if ports:
-        print("Available serial ports:")
-        for i, port in enumerate(ports):
-            print(f"  {i}: {port.device} - {port.description}")
-
-        try:
-            choice = input(f"Select port (0-{len(ports)-1}): ")
-            return ports[int(choice)].device
-        except (ValueError, IndexError):
-            return None
-
-    return None
-
-
-def test_via_serial():
-    """Test ESP32 via serial connection from computer"""
-    print("=== Computer-Based ESP32-C3 GPIO Test ===")
-    print("This will send test commands to ESP32-C3 via serial connection")
-
-    # Find ESP32 port
-    port = find_esp32_serial_port()
-    if not port:
-        print("ERROR: No ESP32-C3 serial port found")
-        print("Make sure ESP32-C3 is connected via USB and recognized by system")
-        return False
-
-    print(f"Using serial port: {port}")
-
-    try:
-        # Connect to ESP32
-        ser = serial.Serial(port, 115200, timeout=1)
-        time.sleep(2)  # Allow connection to stabilize
-
-        print("Connected to ESP32-C3")
-        print("Monitoring serial output for button press logs...")
-        print("Press buttons on ESP32-C3 and watch for crashes or successful detection")
-        print("Press Ctrl+C to stop monitoring")
-
-        start_time = time.time()
-
-        while time.time() - start_time < TEST_DURATION_SECONDS:
-            try:
-                if ser.in_waiting:
-                    line = ser.readline().decode("utf-8", errors="ignore").strip()
-                    if line:
-                        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-                        print(f"[{timestamp}] ESP32: {line}")
-
-                        # Look for button-related messages
-                        if "BUTTON" in line.upper() or "PRESS" in line.upper():
-                            print(f">>> BUTTON ACTIVITY DETECTED: {line}")
-
-                time.sleep(0.01)  # Small delay to prevent overwhelming CPU
-
-            except UnicodeDecodeError:
-                continue  # Skip non-UTF8 data
-
-    except serial.SerialException as e:
-        print(f"Serial communication error: {e}")
-        return False
-    except KeyboardInterrupt:
-        print("\nMonitoring stopped by user")
-    finally:
-        if "ser" in locals():
-            ser.close()
-
-    return True
-
-
-def main():
-    """Main function"""
-    print("ESP32-C3 GPIO Hardware Test Script")
-    print("==================================")
-    print()
-    print("This script tests the GPIO configuration from config.h:")
-    print(f"  - Buttons: GPIO {BUTTON_GPIOS} ({BUTTON_NAMES})")
-    print(f"  - Status LED: GPIO {STATUS_LED_GPIO}")
-    print(f"  - LED Strip: GPIO {LED_STRIP_GPIO}")
-    print(f"  - UART TX: GPIO {UART_TX_GPIO}")
-    print()
-    print("Purpose: Determine if button crashes are hardware or software related")
-    print()
-
-    # Set up signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-
-    if ON_ESP32:
-        return test_esp32_gpio()
-    else:
-        return test_via_serial()
-
-
-if __name__ == "__main__":
-    try:
-        success = main()
-        if success:
-            print("\n✅ Test completed successfully")
-        else:
-            print("\n❌ Test failed")
-            sys.exit(1)
-    except Exception as e:
-        print(f"\n💥 Test crashed with error: {e}")
-        sys.exit(1)
