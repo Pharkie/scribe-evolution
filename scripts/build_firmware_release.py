@@ -18,7 +18,7 @@ import csv
 
 # Add scripts directory to path for importing config_cleaner
 sys.path.insert(0, str(Path(__file__).parent))
-from config_cleaner import clean_secrets_from_content
+from config_cleaner import clean_secrets_from_content, add_example_file_metadata
 
 
 def log(message, level="INFO"):
@@ -161,9 +161,10 @@ def generate_clean_config():
         else:
             log("Secrets successfully cleaned from configuration", "SUCCESS")
 
-        # Step 1: Write clean config to .example file
+        # Step 1: Write clean config to .example file (with example metadata/instructions)
+        example_content = add_example_file_metadata(cleaned_content)
         with open(example_path, "w", encoding="utf-8") as f:
-            f.write(cleaned_content)
+            f.write(example_content)
         log(f"Generated {example_path} with cleaned secrets", "SUCCESS")
 
         # Step 2: Replace config.h with the clean version for build
