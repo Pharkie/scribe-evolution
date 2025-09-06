@@ -137,8 +137,9 @@ def restore_config():
 
 
 def generate_clean_config():
-    """Generate a clean config.h without secrets."""
+    """Generate config.h.example with secrets cleaned, then replace config.h with it."""
     config_path = Path("src/core/config.h")
+    example_path = Path("src/core/config.h.example")
 
     if not config_path.exists():
         log(f"Error: {config_path} not found", "ERROR")
@@ -160,11 +161,16 @@ def generate_clean_config():
         else:
             log("Secrets successfully cleaned from configuration", "SUCCESS")
 
-        # Write the clean config
+        # Step 1: Write clean config to .example file
+        with open(example_path, "w", encoding="utf-8") as f:
+            f.write(cleaned_content)
+        log(f"Generated {example_path} with cleaned secrets", "SUCCESS")
+
+        # Step 2: Replace config.h with the clean version for build
         with open(config_path, "w", encoding="utf-8") as f:
             f.write(cleaned_content)
-
-        log(f"Generated clean {config_path} for firmware build", "SUCCESS")
+        log(f"Replaced {config_path} with clean version for build", "SUCCESS")
+        
         return True
 
     except Exception as e:
@@ -273,7 +279,7 @@ def _get_partitions_file_for_env(environment: str) -> Path:
 
 
 def _get_fs_offset_from_partitions(csv_path: Path) -> str:
-    """Parse the partitions CSV and return the filesystem offset as hex string (e.g., '0x210000')."""
+    """Parse the partitions CSV and return the LittleFS filesystem offset as hex string (e.g., '0x210000')."""
     try:
         with csv_path.open("r", encoding="utf-8") as f:
             reader = csv.reader(f)
@@ -284,15 +290,18 @@ def _get_fs_offset_from_partitions(csv_path: Path) -> str:
                 if len(row) >= 5:
                     name = row[0].strip().lower()
                     offset = row[3].strip()
-                    if name in ("spiffs", "littlefs", "fs"):
+                    if name == "littlefs":
                         # Normalize to 0x... string
                         if not offset.startswith("0x"):
                             offset = hex(int(offset, 0))
                         return offset
+        # If we get here, no littlefs partition was found - fail fast
+        log(f"FATAL: No 'littlefs' partition found in {csv_path}", "ERROR")
+        log("Expected partition name must be exactly 'littlefs'", "ERROR")
+        raise SystemExit(1)
     except Exception as e:
-        log(f"Failed to parse partitions file {csv_path}: {e}", "WARNING")
-    # Fallback to previous default if parsing fails
-    return "0x2B0000"
+        log(f"Failed to parse partitions file {csv_path}: {e}", "ERROR")
+        raise SystemExit(1)
 
 
 def create_merged_binary(environment):

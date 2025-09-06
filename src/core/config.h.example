@@ -28,11 +28,25 @@
 #include "gpio_map.h"
 
 // ============================================================================
-// FIRMWARE VERSION & BUILD INFO
+// FIRMWARE VERSION
 // ============================================================================
-static const char *FIRMWARE_VERSION = "0.2.0";
-static const char *BUILD_DATE = __DATE__;
-static const char *BUILD_TIME = __TIME__;
+#define FIRMWARE_VERSION "0.2.0"
+#define BUILD_DATE __DATE__
+#define BUILD_TIME __TIME__
+
+// ============================================================================
+// SYSTEM CONSTANTS - Hardware timings and buffer sizes
+// ============================================================================
+static const int serialTimeout = 5000;           // Serial connection timeout (5s)
+static const int smallDelay = 50;                // Small delay for CPU/power management
+static const int mediumJsonBuffer = 1024;        // Medium JSON buffer size divisor
+static const int defaultMaxRetries = 3;          // Default max retries for API calls
+static const int defaultBaseDelay = 1000;        // Default base delay for backoff (1s)
+static const int mqttTestCleanupDelayMs = 1000;  // MQTT test cleanup delay (1s)
+
+// Session management constants
+static const int maxConcurrentSessions = 5;      // Maximum concurrent user sessions
+static const int sessionTokenLength = 32;        // Session token length (bytes)
 
 // ============================================================================
 // RUNTIME DEFAULTS - Can be overridden by config.json
@@ -55,6 +69,14 @@ static const char *defaultMqttServer = "YOUR_MQTT_SERVER.hivemq.cloud";
 static const int defaultMqttPort = 8883; // TLS port
 static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";
 static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
+
+// MQTT connection and retry settings
+static const int mqttMaxConsecutiveFailures = 3;           // Max failures before cooldown
+static const unsigned long mqttReconnectIntervalMs = 5000; // Normal reconnect interval (5s)
+static const unsigned long mqttFailureCooldownMs = 60000;  // Cooldown after max failures (60s)
+static const unsigned long mqttConnectionTimeoutMs = 10000; // Connection timeout (10s)
+static const unsigned long mqttTlsHandshakeTimeoutMs = 15000; // TLS handshake timeout (15s)
+static const int mqttBufferSize = 512;                      // MQTT message buffer size
 
 // Unbidden Ink (ChatGPT) API configuration
 static const bool defaultEnableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
@@ -185,47 +207,12 @@ static const int heatingInterval = 250;    // Heating interval (200-250ms)
 // System Performance Settings
 static const unsigned long memCheckInterval = 60000;     // 60 seconds (memory check frequency)
 static const unsigned long reconnectInterval = 5000;     // 5 seconds (WiFi reconnection interval)
-
-// Common Timeout Constants
-static const unsigned long serialTimeout = 5000;         // 5 seconds (Serial connection wait)
-static const unsigned long defaultAPITimeout = 5000;     // 5 seconds (API request timeout)
-static const unsigned long bootDelay = 2000;             // 2 seconds (Boot delay for serial)
-static const unsigned long smallDelay = 10;              // 10ms (Small delay for CPU)
-static const unsigned long ledBlinkInterval = 500;       // 500ms (LED blink interval)
-
-// Memory Buffer Size Constants
-static const size_t smallJsonBuffer = 512;               // 512 bytes (Small JSON docs)
-static const size_t mediumJsonBuffer = 1024;             // 1KB (Medium JSON docs)
-static const size_t largeJsonBuffer = 2048;              // 2KB (Large JSON docs)
-static const size_t extraLargeJsonBuffer = 4096;         // 4KB (Extra large JSON docs)
-static const size_t hugeJsonBuffer = 8192;               // 8KB (Huge JSON docs - heap only)
-
-// Retry and Backoff Constants
-static const int defaultMaxRetries = 3;                  // Maximum retry attempts
-static const int defaultBaseDelay = 500;                 // Base delay for exponential backoff (ms)
-static const int maxRetryDelay = 30000;                  // Maximum retry delay (30 seconds)
-
-// Authentication & Session Constants
-static const int maxConcurrentSessions = 10;             // Maximum simultaneous sessions
-static const unsigned long sessionTimeoutMs = 14400000;  // 4 hours in milliseconds
-static const int sessionTokenLength = 32;                // Length of session tokens (hex chars)
-static const char *sessionCookieName = "scribe_session"; // Name of the session cookie
-static const char *sessionCookieOptions = "HttpOnly; SameSite=Strict; Path=/"; // Security options
 static const unsigned long wifiConnectTimeoutMs = 15000; // 15 seconds timeout for WiFi connection
 static const char *fallbackAPSSID = "Scribe-setup";
 static const char *fallbackAPPassword = "scribe123";
 static const int statusLEDPin = 8;    // ESP32-C3 has built-in LED on GPIO8
 static const int webServerPort = 80;  // HTTP port for web server
 const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
-
-// MQTT Connection Settings
-static const unsigned long mqttReconnectIntervalMs = 5000;      // Time between reconnection attempts
-static const unsigned long mqttConnectionTimeoutMs = 10000;     // Max time for connection attempt  
-static const unsigned long mqttTlsHandshakeTimeoutMs = 5000;    // TLS handshake timeout
-static const int mqttMaxConsecutiveFailures = 5;               // Max failures before cooldown
-static const unsigned long mqttFailureCooldownMs = 60000;      // Cooldown after max failures
-static const unsigned long mqttTestCleanupDelayMs = 300;       // Delay after test connection
-static const int mqttBufferSize = 4096;                        // MQTT client buffer size
 
 // Printer Discovery Heartbeat
 static const unsigned long printerDiscoveryHeartbeatInterval = 60000; // 1 minute heartbeat interval
@@ -255,13 +242,9 @@ static const int MEMO_COUNT = 4;        // Number of configurable memos
 static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
 
 // Default memo content for first boot
-static const char *defaultMemo1 =
-    "Salutations! Today is [weekday], [date].\n\nIt's [time]. But what is time, really?";
-static const char *defaultMemo2 =
-    "Magic 8-Ball says → [pick:It is certain|Yes definitely|Outlook good|Signs point to yes|Ask again later|Cannot predict now|Don't count on it|My sources say no|Outlook not so good|Very doubtful]\n\nToday's dare → [pick:Write a love note to your toaster|Sort socks by mood|Teach goldfish algebra|Whisper to lampposts|Polish the moon with a spoon|Expose the pigeon cabal]";
-static const char *defaultMemo3 =
-    "Next week's lotto numbers: [dice:59], [dice:59], [dice:59], [dice:59], [dice:59], [dice:59]\n\nToss a coin: [coin].\n\nWill you defeat the [pick:Beholder|Mind Flayer|Gelatinous Cube|Displacer Beast|Mimic|Tarrasque|Owlbear|Lich|Dragon|Rust Monster|Hydra|Chimera]? Your roll: [dice:20]";
-static const char *defaultMemo4 =
-    "Guest WiFi: chumbawumba\nPassword: igetknockeddown\n\nScribe uptime: [uptime]\nScribe Evolution at: [mdns]\nIP: [ip]";
+static const char *defaultMemo1 = "Good morning! Today is [weekday], [date]. Current time: [time]";
+static const char *defaultMemo2 = "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]";
+static const char *defaultMemo3 = "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]";
+static const char *defaultMemo4 = "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]";
 
 #endif

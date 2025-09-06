@@ -15,16 +15,17 @@
 #include <IPAddress.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+#include "../core/config.h"
 
 /**
  * @brief Session data structure for tracking authenticated users
  */
 struct Session {
-    char token[33];           // 32-character session token + null terminator
-    char csrf[33];            // 32-character CSRF token + null terminator
-    IPAddress clientIP;       // Client IP address for additional security
-    unsigned long lastActivity; // Timestamp of last API request
-    bool active;              // Whether this session slot is in use
+    char token[sessionTokenLength + 1];  // Session token + null terminator
+    char csrf[sessionTokenLength + 1];   // CSRF token + null terminator
+    IPAddress clientIP;                  // Client IP address for additional security
+    unsigned long lastActivity;          // Timestamp of last API request
+    bool active;                         // Whether this session slot is in use
 };
 
 /**
