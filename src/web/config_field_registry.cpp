@@ -1,5 +1,5 @@
 #include "config_field_registry.h"
-#include "core/config.h"
+#include "config/config.h"
 #include "core/logging.h"
 #include <cstddef>
 

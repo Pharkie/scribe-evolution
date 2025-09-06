@@ -8,7 +8,7 @@
  */
 
 #include "config_loader.h"
-#include "config.h"
+#include "../config/config.h"
 #include "nvs_keys.h"
 #include "logging.h"
 #include <Preferences.h>

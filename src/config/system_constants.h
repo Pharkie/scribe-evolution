@@ -1,38 +1,22 @@
 /**
- * @file config.h.example
- * @brief Configuration settings template for Scribe ESP32-C3 Thermal Printer
+ * @file system_constants.h
+ * @brief System constants and hardware settings for Scribe ESP32-C3 Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
- * This file is part of the Scribe ESP32-C3 Thermal Printer project.
- *
- * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
- * International License. To view a copy of this license, visit
- * http://creativecommons.org/licenses/by-nc-sa/4.0/ or send a letter to
- * Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
- *
- * Commercial use is prohibited without explicit written permission from the author.
- * For commercial licensing inquiries, please contact Adam Knowles.
+ * This file contains system constants, hardware settings, and technical parameters.
+ * These rarely need modification and are tuned for ESP32-C3 performance.
  *
  * Based on the original Project Scribe by UrbanCircles.
-
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef SYSTEM_CONSTANTS_H
+#define SYSTEM_CONSTANTS_H
 
 #include <ArduinoLog.h>
 #include <esp_log.h>
-#include "gpio_map.h"
-
-// ============================================================================
-// FIRMWARE VERSION
-// ============================================================================
-#define FIRMWARE_VERSION "0.2.0"
-#define BUILD_DATE __DATE__
-#define BUILD_TIME __TIME__
 
 // ============================================================================
 // SYSTEM CONSTANTS - Hardware timings and buffer sizes
@@ -51,28 +35,6 @@ static const unsigned long sessionTimeoutMs = 3600000;  // Session timeout (1 ho
 static const char *sessionCookieName = "ScribeSession";  // Session cookie name
 static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict"; // Cookie security options
 
-// ============================================================================
-// RUNTIME DEFAULTS - Can be overridden by config.json
-// ============================================================================
-// WARNING: These are INITIAL DEFAULTS ONLY used to populate config.json on first setup
-// In production, ALL these values will be OVERRIDDEN by config.json
-// Users can modify these via the settings web interface
-
-// Default WiFi settings
-static const char *defaultWifiSSID = "YOUR_WIFI_SSID";
-static const char *defaultWifiPassword = "YOUR_WIFI_PASSWORD";
-
-// Default device identity
-static const char *defaultDeviceOwner = "YOUR_DEVICE_NAME";
-static const char *defaultTimezone = "Europe/London";
-
-// Default MQTT broker settings
-static const bool defaultMqttEnabled = false; // Disable MQTT by default
-static const char *defaultMqttServer = "YOUR_MQTT_SERVER.hivemq.cloud";
-static const int defaultMqttPort = 8883; // TLS port
-static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";
-static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
-
 // MQTT connection and retry settings
 static const int mqttMaxConsecutiveFailures = 3;           // Max failures before cooldown
 static const unsigned long mqttReconnectIntervalMs = 5000; // Normal reconnect interval (5s)
@@ -80,13 +42,6 @@ static const unsigned long mqttFailureCooldownMs = 60000;  // Cooldown after max
 static const unsigned long mqttConnectionTimeoutMs = 10000; // Connection timeout (10s)
 static const unsigned long mqttTlsHandshakeTimeoutMs = 15000; // TLS handshake timeout (15s)
 static const int mqttBufferSize = 512;                      // MQTT message buffer size
-
-// Unbidden Ink (ChatGPT) API configuration
-static const bool defaultEnableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
-static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token
-static const int defaultUnbiddenInkStartHour = 10;                                                 // Working hours start (24-hour format)
-static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
-static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
 // Unbidden Ink prompt presets (autoprompts)
 static const char *unbiddenInkPromptCreative = "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.";
@@ -128,13 +83,6 @@ static const ButtonConfig defaultButtons[] = {
     {7, "QUOTE", "", "chase_single", "", "", "pulse"},              // Button 3: Quote → (no long action)
     {4, "QUIZ", "", "chase_single", "", "", "pulse"}                // Button 4: Quiz → (no long action) - GPIO 4 (safe pin)
 };
-
-// LEDs: Optional FastLED support
-// Enabled via build flags (-DENABLE_LEDS=1 in platformio.ini)
-
-#if ENABLE_LEDS
-#include "led_config.h"
-#endif
 
 // ============================================================================
 // BACKEND CONSTANTS - Fixed at compile time, not user-configurable
@@ -192,8 +140,7 @@ static const char *newsAPI = "https://feeds.bbci.co.uk/news/rss.xml";
 static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL (NEVER exposed to frontend)
 
 // BetterStack configuration
-static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
-static const char *betterStackEndpoint = "YOUR_BETTERSTACK_ENDPOINT";
+static const char *betterStackEndpoint = "https://s1451477.eu-nbg-2.betterstackdata.com/";
 
 // Application Settings
 static const int maxCharacters = 1000;      // Max characters per message (single source of truth)

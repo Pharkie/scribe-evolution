@@ -13,7 +13,7 @@
 
 #include "api_handlers.h" // For sendErrorResponse
 #include "web_server.h"   // For getRequestBody function
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_loader.h"
 #include "../core/led_config.h"
 #include "../core/logging.h"

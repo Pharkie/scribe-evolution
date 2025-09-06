@@ -58,9 +58,9 @@ def is_config_already_clean(config_path):
 
 
 def backup_config():
-    """Backup the current config.h to config.h.adam, with safety checks."""
-    config_path = Path("src/core/config.h")
-    backup_path = Path("src/core/config.h.adam")
+    """Backup the current device_config.h to device_config.h.adam, with safety checks."""
+    config_path = Path("src/config/device_config.h")
+    backup_path = Path("src/config/device_config.h.adam")
 
     if not config_path.exists():
         log(f"Error: {config_path} not found", "ERROR")
@@ -119,9 +119,9 @@ def backup_config():
 
 
 def restore_config():
-    """Restore the original config.h from config.h.adam."""
-    config_path = Path("src/core/config.h")
-    backup_path = Path("src/core/config.h.adam")
+    """Restore the original device_config.h from device_config.h.adam."""
+    config_path = Path("src/config/device_config.h")
+    backup_path = Path("src/config/device_config.h.adam")
 
     if not backup_path.exists():
         log(f"Warning: No backup found at {backup_path}", "WARNING")
@@ -137,9 +137,9 @@ def restore_config():
 
 
 def generate_clean_config():
-    """Generate config.h.example with secrets cleaned, then replace config.h with it."""
-    config_path = Path("src/core/config.h")
-    example_path = Path("src/core/config.h.example")
+    """Generate device_config.h.example with secrets cleaned, then replace device_config.h with it."""
+    config_path = Path("src/config/device_config.h")
+    example_path = Path("src/config/device_config.h.example")
 
     if not config_path.exists():
         log(f"Error: {config_path} not found", "ERROR")
@@ -167,7 +167,7 @@ def generate_clean_config():
             f.write(example_content)
         log(f"Generated {example_path} with cleaned secrets", "SUCCESS")
 
-        # Step 2: Replace config.h with the clean version for build
+        # Step 2: Replace device_config.h with the clean version for build
         with open(config_path, "w", encoding="utf-8") as f:
             f.write(cleaned_content)
         log(f"Replaced {config_path} with clean version for build", "SUCCESS")

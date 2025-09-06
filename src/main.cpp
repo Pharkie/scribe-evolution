@@ -33,7 +33,7 @@
 #include <ezTime.h>
 #include <LittleFS.h>
 #include <PubSubClient.h>
-#include "core/config.h"
+#include "config/config.h"
 #include "core/config_loader.h"
 #include "core/config_utils.h"
 #include "core/shared_types.h"

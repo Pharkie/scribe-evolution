@@ -11,7 +11,7 @@
 #include "api_handlers.h" // For shared utilities
 #include "validation.h"
 #include "web_server.h" // For addRegisteredRoutesToJson
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_loader.h"
 #include "../core/config_utils.h"
 #include "../core/logging.h"

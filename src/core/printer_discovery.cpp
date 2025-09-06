@@ -2,7 +2,7 @@
 #include "mqtt_handler.h"
 #include "config_utils.h"
 #include "logging.h"
-#include "config.h"
+#include "../config/config.h"
 #include "../utils/time_utils.h"
 #include "../web/web_server.h"
 #include <WiFi.h>

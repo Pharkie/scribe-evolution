@@ -1,7 +1,7 @@
 #include "time_utils.h"
 #include "../core/logging.h"
 #include "../core/config_utils.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_loader.h"
 #include "../core/network.h"
 #include <ezTime.h>

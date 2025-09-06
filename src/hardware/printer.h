@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include <vector>
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../utils/character_mapping.h"
 #include "../web/web_server.h"
 

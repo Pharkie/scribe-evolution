@@ -10,7 +10,7 @@
 #include "api_handlers.h"
 #include "validation.h"
 #include "../utils/json_helpers.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/logging.h"
 
 // ========================================

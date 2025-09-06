@@ -11,7 +11,7 @@
 #define API_MEMO_HANDLERS_H
 
 #include <ESPAsyncWebServer.h>
-#include "../core/config.h"
+#include "../config/config.h"
 
 
 /**

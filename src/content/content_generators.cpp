@@ -22,7 +22,7 @@
 #include "content_generators.h"
 #include "../utils/api_client.h"
 #include "../utils/time_utils.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_loader.h"
 #include "../core/config_utils.h"
 #include "../core/logging.h"

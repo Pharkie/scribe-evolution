@@ -12,7 +12,7 @@
 #if ENABLE_LEDS
 
 #include "../../core/logging.h"
-#include "../../core/config.h"
+#include "../../config/config.h"
 #include "../../core/led_config.h"
 
 ChaseSingle::ChaseSingle(const ChaseSingleConfig &config)

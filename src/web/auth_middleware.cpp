@@ -8,7 +8,7 @@
  */
 
 #include "auth_middleware.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/logging.h"
 #include "../core/network.h"
 #include <esp_random.h>

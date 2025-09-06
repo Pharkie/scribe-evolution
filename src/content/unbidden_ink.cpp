@@ -20,7 +20,7 @@
  */
 
 #include "unbidden_ink.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_loader.h"
 #include "../utils/time_utils.h"
 #include "../core/logging.h"

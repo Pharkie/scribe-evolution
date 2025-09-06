@@ -10,7 +10,7 @@
 #include "api_config_handlers.h"
 #include "api_handlers.h" // For shared utilities
 #include "validation.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/nvs_keys.h"
 #include "../core/config_loader.h"
 #include "../core/config_utils.h"

@@ -10,7 +10,7 @@
 #ifndef CHASE_MULTI_H
 #define CHASE_MULTI_H
 
-#include "../../core/config.h"
+#include "../../config/config.h"
 
 #if ENABLE_LEDS
 

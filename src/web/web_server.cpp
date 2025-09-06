@@ -32,7 +32,7 @@
 #include "validation.h"
 #include "auth_middleware.h"
 #include "../content/content_handlers.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/logging.h"
 #include "../core/network.h"
 #include "../core/printer_discovery.h"

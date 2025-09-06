@@ -9,7 +9,7 @@
 
 #include "web_handlers.h"
 #include "validation.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_utils.h"
 #include "../core/logging.h"
 #include "../utils/api_client.h"

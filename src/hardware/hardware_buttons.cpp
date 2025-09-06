@@ -3,7 +3,7 @@
 #include "printer.h"
 #include "../content/content_handlers.h"
 #include "../utils/content_actions.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_loader.h"
 #include "../core/shared_types.h"
 #include "../core/network.h"

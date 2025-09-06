@@ -9,7 +9,10 @@ import sys
 from pathlib import Path
 
 # Ensure scripts/ is on sys.path and import shared cleaner from scripts/lib
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Use absolute path since __file__ may not be available in PlatformIO context
+script_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else 'scripts/pio'
+scripts_root = os.path.join(script_dir, '..')
+sys.path.insert(0, scripts_root)
 from lib.config_cleaner import clean_secrets_from_content, add_example_file_metadata
 
 # This import is required for PlatformIO extra scripts
@@ -18,8 +21,8 @@ Import("env")  # type: ignore # pylint: disable=undefined-variable
 
 
 def generate_example_config():
-    config_path = "src/core/config.h"
-    example_path = "src/core/config.h.example"
+    config_path = "src/config/device_config.h"
+    example_path = "src/config/device_config.h.example"
 
     if not os.path.exists(config_path):
         print(f"Error: {config_path} not found")
@@ -48,5 +51,5 @@ if __name__ == "__main__":
     generate_example_config()
 else:
     # This runs when PlatformIO imports this script
-    print("🔧 Running pre-build script: generating config.h.example...")
+    print("🔧 Running pre-build script: generating device_config.h.example...")
     generate_example_config()

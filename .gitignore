@@ -4,9 +4,7 @@
 compile_commands.json
 
 # Configuration with sensitive data
-src/core/config.h
-src/core/config.h.adam
-src/core/config.h.adam.*
+src/config/device_config.h*
 data/config.json
 config.json
 config.h

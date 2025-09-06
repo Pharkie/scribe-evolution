@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ArduinoJson.h>
-#include "core/config.h"
+#include "config/config.h"
 #include "core/config_loader.h"
 
 /**

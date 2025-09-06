@@ -11,7 +11,7 @@
 #include "../content/memo_handler.h"
 #include "../content/content_handlers.h"
 #include "../core/nvs_keys.h"
-#include "../core/config.h"
+#include "../config/config.h"
 #include "../core/config_loader.h"
 #include "../core/shared_types.h"
 #include "../core/logging.h"
