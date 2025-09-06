@@ -11,7 +11,7 @@
 
 #if ENABLE_LEDS
 
-#include "../../core/led_config.h"
+#include <core/led_config.h>
 
 Matrix::Matrix(const MatrixConfig &config)
     : config(config), matrixDrops(nullptr), initialized(false), frameCounter(0), hadActiveSinceCycleStart(false), spawnedThisCycle(0), allowSpawning(true)

@@ -11,7 +11,7 @@
 #define ERROR_HANDLING_H
 
 #include <Arduino.h>
-#include "../core/logging.h"
+#include <core/logging.h>
 
 /**
  * @brief Standard error result codes

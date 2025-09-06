@@ -10,7 +10,7 @@
 #ifndef LED_CONFIG_H
 #define LED_CONFIG_H
 
-#include "../config/config.h"
+#include <config/config.h>
 
 #ifdef ENABLE_LEDS
 

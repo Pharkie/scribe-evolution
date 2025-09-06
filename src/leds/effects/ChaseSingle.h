@@ -10,7 +10,7 @@
 #ifndef CHASE_SINGLE_H
 #define CHASE_SINGLE_H
 
-#include "../../config/config.h"
+#include <config/config.h>
 
 #if ENABLE_LEDS
 

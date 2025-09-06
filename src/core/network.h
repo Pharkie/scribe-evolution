@@ -5,7 +5,7 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <DNSServer.h>
-#include "../config/config.h"
+#include <config/config.h>
 
 // WiFi mode enumeration
 enum WiFiConnectionMode

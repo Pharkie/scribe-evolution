@@ -11,7 +11,7 @@
 
 #if ENABLE_LEDS
 
-#include "../core/logging.h"
+#include <core/logging.h>
 
 CRGB hexToRgb(const String &hexColor)
 {

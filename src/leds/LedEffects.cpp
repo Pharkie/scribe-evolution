@@ -11,11 +11,11 @@
 
 #if ENABLE_LEDS
 
-#include "../core/logging.h"
-#include "../config/config.h"
-#include "../core/config_loader.h"
+#include <core/logging.h>
+#include <config/config.h>
+#include <core/config_loader.h>
 #include "effects/EffectRegistry.h"
-#include "../utils/color_utils.h"
+#include <utils/color_utils.h>
 
 // Global instance
 LedEffects ledEffects;

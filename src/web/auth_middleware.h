@@ -15,7 +15,7 @@
 #include <IPAddress.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
-#include "../config/config.h"
+#include <config/config.h>
 
 /**
  * @brief Session data structure for tracking authenticated users

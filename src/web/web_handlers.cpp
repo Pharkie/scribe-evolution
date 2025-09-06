@@ -9,10 +9,10 @@
 
 #include "web_handlers.h"
 #include "validation.h"
-#include "../config/config.h"
-#include "../core/config_utils.h"
-#include "../core/logging.h"
-#include "../utils/api_client.h"
+#include <config/config.h>
+#include <core/config_utils.h>
+#include <core/logging.h>
+#include <utils/api_client.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>

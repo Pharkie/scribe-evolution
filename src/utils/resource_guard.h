@@ -13,7 +13,7 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <HTTPClient.h>
-#include "../core/logging.h"
+#include <core/logging.h>
 
 /**
  * @brief RAII file guard that automatically closes files

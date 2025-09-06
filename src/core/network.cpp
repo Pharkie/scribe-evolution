@@ -2,8 +2,8 @@
 #include "logging.h"
 #include "config_utils.h"
 #include "config_loader.h"
-#include "../content/content_generators.h"
-#include "../utils/content_actions.h"
+#include <content/content_generators.h>
+#include <utils/content_actions.h>
 #include <esp_task_wdt.h>
 
 // Network status variables

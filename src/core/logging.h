@@ -27,7 +27,7 @@
 #include <PubSubClient.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "../config/config.h"
+#include <config/config.h>
 
 /**
  * @file logging.h

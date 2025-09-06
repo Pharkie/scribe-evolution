@@ -8,12 +8,12 @@
  */
 
 #include "content_actions.h"
-#include "../content/content_generators.h"
-#include "../content/content_handlers.h"
-#include "../content/memo_handler.h"
-#include "../utils/time_utils.h"
-#include "../core/shared_types.h"
-#include "../core/logging.h"
+#include <content/content_generators.h>
+#include <content/content_handlers.h>
+#include <content/memo_handler.h>
+#include <utils/time_utils.h>
+#include <core/shared_types.h>
+#include <core/logging.h>
 #include <ArduinoJson.h>
 
 // External variable reference

@@ -10,7 +10,7 @@
 #ifndef EFFECT_BASE_H
 #define EFFECT_BASE_H
 
-#include "../../config/config.h"
+#include <config/config.h>
 
 #if ENABLE_LEDS
 

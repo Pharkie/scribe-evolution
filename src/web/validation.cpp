@@ -8,8 +8,8 @@
  */
 
 #include "validation.h"
-#include "../config/config.h"
-#include "../core/logging.h"
+#include <config/config.h>
+#include <core/logging.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 

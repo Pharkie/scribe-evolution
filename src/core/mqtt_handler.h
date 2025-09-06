@@ -12,7 +12,7 @@
 #include <PubSubClient.h>
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
-#include "../config/config.h"
+#include <config/config.h>
 
 // External MQTT objects
 extern WiFiClientSecure wifiSecureClient;

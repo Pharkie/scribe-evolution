@@ -20,7 +20,7 @@
  */
 
 #include "config_utils.h"
-#include "../config/config.h"
+#include <config/config.h>
 #include "config_loader.h"
 #include "logging.h"
 #include <Arduino.h>

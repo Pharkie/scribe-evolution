@@ -1,10 +1,10 @@
 #include "printer.h"
-#include "../utils/time_utils.h"
-#include "../core/logging.h"
-#include "../core/config_utils.h"
-#include "../core/shared_types.h"
-#include "../core/network.h"
-#include "../content/content_generators.h"
+#include <utils/time_utils.h>
+#include <core/logging.h>
+#include <core/config_utils.h>
+#include <core/shared_types.h>
+#include <core/network.h>
+#include <content/content_generators.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 

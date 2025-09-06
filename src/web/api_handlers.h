@@ -12,8 +12,8 @@
 
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
-#include "../core/shared_types.h"
-#include "../utils/json_helpers.h"
+#include <core/shared_types.h>
+#include <utils/json_helpers.h>
 #include "validation.h"
 
 // Import specialized handler modules

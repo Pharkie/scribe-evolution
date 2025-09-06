@@ -22,13 +22,13 @@
 #ifndef CONFIG_UTILS_H
 #define CONFIG_UTILS_H
 
-#include "../config/config.h"
+#include <config/config.h>
 #include "config_loader.h"
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <Arduino.h>
-#include "../web/validation.h"
+#include <web/validation.h>
 
 // ========================================
 // STRING BUILDING UTILITIES

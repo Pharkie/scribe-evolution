@@ -11,12 +11,12 @@
 #include "api_handlers.h" // For shared utilities
 #include "validation.h"
 #include "web_server.h" // For addRegisteredRoutesToJson
-#include "../config/config.h"
-#include "../core/config_loader.h"
-#include "../core/config_utils.h"
-#include "../core/logging.h"
-#include "../core/network.h"
-#include "../core/mqtt_handler.h"
+#include <config/config.h>
+#include <core/config_loader.h>
+#include <core/config_utils.h>
+#include <core/logging.h>
+#include <core/network.h>
+#include <core/mqtt_handler.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <WiFi.h>

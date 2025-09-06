@@ -10,16 +10,16 @@
 #include "api_config_handlers.h"
 #include "api_handlers.h" // For shared utilities
 #include "validation.h"
-#include "../config/config.h"
-#include "../core/nvs_keys.h"
-#include "../core/config_loader.h"
-#include "../core/config_utils.h"
-#include "../core/led_config_loader.h"
-#include "../core/logging.h"
-#include "../core/printer_discovery.h"
-#include "../utils/time_utils.h"
-#include "../core/network.h"
-#include "../core/mqtt_handler.h"
+#include <config/config.h>
+#include <core/nvs_keys.h>
+#include <core/config_loader.h>
+#include <core/config_utils.h>
+#include <core/led_config_loader.h>
+#include <core/logging.h>
+#include <core/printer_discovery.h>
+#include <utils/time_utils.h>
+#include <core/network.h>
+#include <core/mqtt_handler.h>
 
 // Utility function to mask secrets for API responses
 String maskSecret(const String &secret)
@@ -39,10 +39,10 @@ String maskSecret(const String &secret)
     // For longer secrets, show first 2 and last 2 characters
     return secret.substring(0, 2) + "●●●●●●●●" + secret.substring(secret.length() - 2);
 }
-#include "../content/unbidden_ink.h"
-#include "../hardware/hardware_buttons.h"
+#include <content/unbidden_ink.h>
+#include <hardware/hardware_buttons.h>
 #if ENABLE_LEDS
-#include "../leds/LedEffects.h"
+#include <leds/LedEffects.h>
 #include <FastLED.h>
 #endif
 #include <ArduinoJson.h>
@@ -53,7 +53,7 @@ String maskSecret(const String &secret)
 extern PubSubClient mqttClient;
 
 #if ENABLE_LEDS
-#include "../leds/LedEffects.h"
+#include <leds/LedEffects.h>
 extern LedEffects ledEffects;
 #endif
 

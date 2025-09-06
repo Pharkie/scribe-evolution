@@ -11,7 +11,7 @@
 
 #if ENABLE_LEDS
 
-#include "../../core/led_config.h"
+#include <core/led_config.h>
 
 TwinkleStars::TwinkleStars(const TwinkleConfig &config)
     : config(config), twinkleStars(nullptr), initialized(false), frameCounter(0)

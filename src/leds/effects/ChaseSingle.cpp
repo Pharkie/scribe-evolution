@@ -11,9 +11,9 @@
 
 #if ENABLE_LEDS
 
-#include "../../core/logging.h"
-#include "../../config/config.h"
-#include "../../core/led_config.h"
+#include <core/logging.h>
+#include <config/config.h>
+#include <core/led_config.h>
 
 ChaseSingle::ChaseSingle(const ChaseSingleConfig &config)
     : config(config), targetCycles(1), frameCounter(0), stepAccumulator(0.0f)

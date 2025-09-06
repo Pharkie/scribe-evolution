@@ -10,7 +10,7 @@
 #ifndef COLOR_UTILS_H
 #define COLOR_UTILS_H
 
-#include "../config/config.h"
+#include <config/config.h>
 
 #if ENABLE_LEDS
 

@@ -1,11 +1,11 @@
 #include "mqtt_handler.h"
-#include "../utils/time_utils.h"
-#include "../hardware/printer.h"
+#include <utils/time_utils.h>
+#include <hardware/printer.h>
 #include "logging.h"
 #include "config_utils.h"
 #include "config_loader.h"
 #include "printer_discovery.h"
-#include "../content/memo_handler.h"
+#include <content/memo_handler.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 

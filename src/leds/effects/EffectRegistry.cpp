@@ -11,7 +11,7 @@
 
 #if ENABLE_LEDS
 
-#include "../../core/logging.h"
+#include <core/logging.h>
 // No color conversion here; expose hex defaults via getDefaultColorsHex
 
 // Static effect names array

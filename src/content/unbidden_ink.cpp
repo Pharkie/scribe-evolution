@@ -20,11 +20,11 @@
  */
 
 #include "unbidden_ink.h"
-#include "../config/config.h"
-#include "../core/config_loader.h"
-#include "../utils/time_utils.h"
-#include "../core/logging.h"
-#include "../web/web_server.h"
+#include <config/config.h>
+#include <core/config_loader.h>
+#include <utils/time_utils.h>
+#include <core/logging.h>
+#include <web/web_server.h>
 #include "content_handlers.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>

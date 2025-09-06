@@ -20,13 +20,13 @@
  */
 
 #include "content_generators.h"
-#include "../utils/api_client.h"
-#include "../utils/time_utils.h"
-#include "../config/config.h"
-#include "../core/config_loader.h"
-#include "../core/config_utils.h"
-#include "../core/logging.h"
-#include "../core/network.h"
+#include <utils/api_client.h>
+#include <utils/time_utils.h>
+#include <config/config.h>
+#include <core/config_loader.h>
+#include <core/config_utils.h>
+#include <core/logging.h>
+#include <core/network.h>
 #include "unbidden_ink.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>

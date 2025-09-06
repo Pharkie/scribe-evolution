@@ -12,8 +12,8 @@
 
 #if ENABLE_LEDS
 
-#include "../../core/logging.h"
-#include "../../utils/color_utils.h"
+#include <core/logging.h>
+#include <utils/color_utils.h>
 
 ChaseMulti::ChaseMulti(const ChaseMultiConfig &effectConfig)
     : config(effectConfig), targetCycles(1), frameCounter(0), stepAccumulator(0.0f)

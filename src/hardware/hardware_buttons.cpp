@@ -1,14 +1,14 @@
 #include "hardware_buttons.h"
-#include "../web/web_server.h"
+#include <web/web_server.h>
 #include "printer.h"
-#include "../content/content_handlers.h"
-#include "../utils/content_actions.h"
-#include "../config/config.h"
-#include "../core/config_loader.h"
-#include "../core/shared_types.h"
-#include "../core/network.h"
-#include "../core/mqtt_handler.h"
-#include "../utils/time_utils.h"
+#include <content/content_handlers.h>
+#include <utils/content_actions.h>
+#include <config/config.h>
+#include <core/config_loader.h>
+#include <core/shared_types.h>
+#include <core/network.h>
+#include <core/mqtt_handler.h>
+#include <utils/time_utils.h>
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
 #include <PubSubClient.h>
@@ -18,7 +18,7 @@
 #include <freertos/semphr.h>
 
 #if ENABLE_LEDS
-#include "../leds/LedEffects.h"
+#include <leds/LedEffects.h>
 extern LedEffects ledEffects;
 #endif
 

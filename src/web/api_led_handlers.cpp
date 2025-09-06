@@ -13,11 +13,11 @@
 
 #include "api_handlers.h" // For sendErrorResponse
 #include "web_server.h"   // For getRequestBody function
-#include "../config/config.h"
-#include "../core/config_loader.h"
-#include "../core/led_config.h"
-#include "../core/logging.h"
-#include "../leds/LedEffects.h"
+#include <config/config.h>
+#include <core/config_loader.h>
+#include <core/led_config.h>
+#include <core/logging.h>
+#include <leds/LedEffects.h>
 #include <ArduinoJson.h>
 #include <FastLED.h>
 

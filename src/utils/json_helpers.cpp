@@ -4,8 +4,8 @@
  */
 
 #include "json_helpers.h"
-#include "../config/config.h"
-#include "../web/validation.h"
+#include <config/config.h>
+#include <web/validation.h>
 
 void sendErrorResponse(AsyncWebServerRequest* request, int httpCode, const String &errorMessage)
 {

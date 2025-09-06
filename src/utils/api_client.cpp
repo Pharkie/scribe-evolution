@@ -20,8 +20,8 @@
  */
 
 #include "api_client.h"
-#include "../config/config.h"
-#include "../core/logging.h"
+#include <config/config.h>
+#include <core/logging.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>

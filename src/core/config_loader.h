@@ -13,7 +13,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
-#include "../config/config.h"
+#include <config/config.h>
 
 // Runtime configuration structure
 struct RuntimeConfig

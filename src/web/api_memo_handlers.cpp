@@ -8,15 +8,15 @@
  */
 
 #include "api_memo_handlers.h"
-#include "../content/memo_handler.h"
-#include "../content/content_handlers.h"
-#include "../core/nvs_keys.h"
-#include "../config/config.h"
-#include "../core/config_loader.h"
-#include "../core/shared_types.h"
-#include "../core/logging.h"
-#include "../utils/json_helpers.h"
-#include "../utils/time_utils.h"
+#include <content/memo_handler.h>
+#include <content/content_handlers.h>
+#include <core/nvs_keys.h>
+#include <config/config.h>
+#include <core/config_loader.h>
+#include <core/shared_types.h>
+#include <core/logging.h>
+#include <utils/json_helpers.h>
+#include <utils/time_utils.h>
 #include "validation.h"
 #include "web_server.h"
 #include <Preferences.h>

@@ -1,5 +1,5 @@
 #include "logging.h"
-#include "../utils/time_utils.h"
+#include <utils/time_utils.h>
 #include "config_utils.h"
 #include <esp_task_wdt.h>
 

@@ -10,7 +10,7 @@
 #ifndef EFFECT_REGISTRY_H
 #define EFFECT_REGISTRY_H
 
-#include "../../config/config.h"
+#include <config/config.h>
 
 #if ENABLE_LEDS
 

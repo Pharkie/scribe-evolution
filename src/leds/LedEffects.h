@@ -18,7 +18,7 @@
 #ifndef LED_EFFECTS_NEW_H
 #define LED_EFFECTS_NEW_H
 
-#include "../config/config.h"
+#include <config/config.h>
 
 #if ENABLE_LEDS
 

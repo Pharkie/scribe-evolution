@@ -31,11 +31,11 @@
 #endif
 #include "validation.h"
 #include "auth_middleware.h"
-#include "../content/content_handlers.h"
-#include "../config/config.h"
-#include "../core/logging.h"
-#include "../core/network.h"
-#include "../core/printer_discovery.h"
+#include <content/content_handlers.h>
+#include <config/config.h>
+#include <core/logging.h>
+#include <core/network.h>
+#include <core/printer_discovery.h>
 #include <vector>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>

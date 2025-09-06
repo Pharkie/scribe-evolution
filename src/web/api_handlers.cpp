@@ -9,9 +9,9 @@
 
 #include "api_handlers.h"
 #include "validation.h"
-#include "../utils/json_helpers.h"
-#include "../config/config.h"
-#include "../core/logging.h"
+#include <utils/json_helpers.h>
+#include <config/config.h>
+#include <core/logging.h>
 
 // ========================================
 // SHARED API UTILITIES

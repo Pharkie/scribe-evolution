@@ -9,10 +9,10 @@
 
 #include "api_nvs_handlers.h"
 #include "api_handlers.h" // For shared utilities
-#include "../core/config_loader.h"
-#include "../core/nvs_keys.h"
-#include "../core/logging.h"
-#include "../utils/time_utils.h"
+#include <core/config_loader.h>
+#include <core/nvs_keys.h>
+#include <core/logging.h>
+#include <utils/time_utils.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
 

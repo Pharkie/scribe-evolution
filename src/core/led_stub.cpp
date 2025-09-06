@@ -7,7 +7,7 @@
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
 
-#include "../config/config.h"
+#include <config/config.h>
 
 #if !ENABLE_LEDS
 

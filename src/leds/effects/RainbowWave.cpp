@@ -11,8 +11,8 @@
 
 #if ENABLE_LEDS
 
-#include "../../core/led_config.h"
-#include "../../core/config_loader.h"
+#include <core/led_config.h>
+#include <core/config_loader.h>
 
 RainbowWave::RainbowWave(const RainbowConfig &config)
     : config(config), frameCounter(0)

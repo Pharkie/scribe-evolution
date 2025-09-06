@@ -9,16 +9,16 @@
 
 #include "content_handlers.h"
 #include "memo_handler.h"
-#include "../web/validation.h"
-#include "../web/web_server.h"
-#include "../config/config.h"
-#include "../core/config_loader.h"
-#include "../core/config_utils.h"
-#include "../core/nvs_keys.h"
-#include "../core/logging.h"
-#include "../utils/time_utils.h"
-#include "../utils/json_helpers.h"
-#include "../utils/content_actions.h"
+#include <web/validation.h>
+#include <web/web_server.h>
+#include <config/config.h>
+#include <core/config_loader.h>
+#include <core/config_utils.h>
+#include <core/nvs_keys.h>
+#include <core/logging.h>
+#include <utils/time_utils.h>
+#include <utils/json_helpers.h>
+#include <utils/content_actions.h>
 #include "content_generators.h"
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
