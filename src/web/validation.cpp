@@ -125,15 +125,26 @@ ValidationResult validateMessage(const String &message, int maxLength)
         return ValidationResult(false, "Message contains too many control characters");
     }
 
-    // Check for potential script injection attempts (basic XSS protection)
+    // Check for potential script injection attempts (enhanced XSS protection)
     String messageLower = message;
     messageLower.toLowerCase();
-    if (messageLower.indexOf("<script") != -1 ||
-        messageLower.indexOf("javascript:") != -1 ||
-        messageLower.indexOf("onload=") != -1 ||
-        messageLower.indexOf("onerror=") != -1)
+    
+    // Enhanced list of dangerous patterns
+    const char* xssPatterns[] = {
+        "<script", "javascript:", "onload=", "onerror=",
+        "<iframe", "<object", "<embed", "<link",
+        "onclick=", "onmouseover=", "onfocus=", "onblur=",
+        "eval(", "expression(", "vbscript:", "data:",
+        "<svg", "<form", "formaction=", "srcdoc="
+    };
+    
+    int patternCount = sizeof(xssPatterns) / sizeof(xssPatterns[0]);
+    for (int i = 0; i < patternCount; i++)
     {
-        return ValidationResult(false, "Message contains potentially malicious content");
+        if (messageLower.indexOf(xssPatterns[i]) != -1)
+        {
+            return ValidationResult(false, "Message contains potentially malicious content");
+        }
     }
 
     return ValidationResult(true);
@@ -230,6 +241,13 @@ ValidationResult validateParameter(const String &param, const String &paramName,
     if (param.length() > maxLength)
     {
         return ValidationResult(false, "Parameter '" + paramName + "' too long (max " + String(maxLength) + " characters)");
+    }
+
+    // Check for path traversal attempts
+    if (param.indexOf("..") != -1 || param.indexOf("./") != -1 || 
+        param.indexOf("\\") != -1 || param.indexOf("//") != -1)
+    {
+        return ValidationResult(false, "Parameter '" + paramName + "' contains invalid path characters");
     }
 
     return ValidationResult(true);

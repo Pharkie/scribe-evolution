@@ -15,6 +15,7 @@
 #include <WiFi.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <freertos/semphr.h>
 
 #if ENABLE_LEDS
 #include "../leds/LedEffects.h"
@@ -29,8 +30,9 @@ extern Message currentMessage;
 // ASYNC BUTTON ACTION MANAGEMENT
 // ========================================
 
-// Simple task tracking
+// Thread-safe task tracking with mutex protection
 static volatile bool buttonActionRunning = false;
+static SemaphoreHandle_t buttonActionMutex = nullptr;
 
 // Task configuration
 static const int BUTTON_TASK_STACK_SIZE = 8192;   // 8KB stack
@@ -61,6 +63,16 @@ ButtonState buttonStates[sizeof(defaultButtons) / sizeof(defaultButtons[0])];
 
 void initializeHardwareButtons()
 {
+    // Initialize mutex for thread-safe button action handling
+    if (buttonActionMutex == nullptr)
+    {
+        buttonActionMutex = xSemaphoreCreateMutex();
+        if (buttonActionMutex == nullptr)
+        {
+            LOG_ERROR("BUTTONS", "Failed to create button action mutex");
+        }
+    }
+
     LOG_NOTICE("BUTTONS", "Buttons: Initializing %d hardware buttons", numHardwareButtons);
     LOG_VERBOSE("BUTTONS", "Button count: %d", numHardwareButtons);
     LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
@@ -427,15 +439,34 @@ void handleButtonLongPress(int buttonIndex)
  */
 bool createButtonActionTask(int buttonIndex, bool isLongPress)
 {
-    // Rate limiting: reject if another task is running
+    // Thread-safe check if another task is running
+    if (buttonActionMutex == nullptr || 
+        xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(10)) != pdTRUE)
+    {
+        LOG_WARNING("BUTTONS", "Button action mutex unavailable - rejecting button %d press", buttonIndex);
+        return false;
+    }
+
+    // Critical section: check and set running flag atomically
     if (buttonActionRunning)
     {
+        xSemaphoreGive(buttonActionMutex);
         LOG_WARNING("BUTTONS", "Button action in progress - rejecting button %d press", buttonIndex);
         return false;
     }
 
+    // Set flag while still holding mutex
+    buttonActionRunning = true;
+    xSemaphoreGive(buttonActionMutex);
+
     if (buttonIndex < 0 || buttonIndex >= numHardwareButtons)
     {
+        // Reset flag on error since we already set it
+        if (xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+        {
+            buttonActionRunning = false;
+            xSemaphoreGive(buttonActionMutex);
+        }
         LOG_ERROR("BUTTONS", "Invalid button index: %d", buttonIndex);
         return false;
     }
@@ -474,6 +505,12 @@ bool createButtonActionTask(int buttonIndex, bool isLongPress)
 
     if (result != pdPASS)
     {
+        // Reset flag on task creation failure
+        if (xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+        {
+            buttonActionRunning = false;
+            xSemaphoreGive(buttonActionMutex);
+        }
         LOG_ERROR("BUTTONS", "Failed to create button action task");
         delete params;
         return false;
@@ -490,8 +527,8 @@ bool createButtonActionTask(int buttonIndex, bool isLongPress)
  */
 void buttonActionTask(void *parameter)
 {
-    buttonActionRunning = true;
-
+    // Flag is already set in createButtonActionTask under mutex protection
+    
     // Get parameters
     ButtonActionParams *params = (ButtonActionParams *)parameter;
 
@@ -570,7 +607,14 @@ void buttonActionTask(void *parameter)
 
     // Cleanup and mark complete
     delete params;
-    buttonActionRunning = false;
+
+    // Thread-safe reset of running flag
+    if (buttonActionMutex != nullptr && 
+        xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+        buttonActionRunning = false;
+        xSemaphoreGive(buttonActionMutex);
+    }
 
     LOG_VERBOSE("BUTTONS", "Button action task completed, deleting task");
 

@@ -84,7 +84,7 @@ bool isValidHexColor(const String &hexColor)
 String rgbToHex(const CRGB &color)
 {
     char hexBuffer[8];
-    sprintf(hexBuffer, "#%02X%02X%02X", color.r, color.g, color.b);
+    snprintf(hexBuffer, sizeof(hexBuffer), "#%02X%02X%02X", color.r, color.g, color.b);
     return String(hexBuffer);
 }
 

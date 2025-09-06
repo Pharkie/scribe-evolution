@@ -39,15 +39,24 @@ String formatCustomDate(String customDate)
     bool parsed = false;
 
     // Try different date formats in order of preference
-    if (sscanf(customDate.c_str(), "%d-%d-%d", &year, &month, &day) == 3)
+    // Add bounds checking for year, month, day to prevent overflow
+    if (sscanf(customDate.c_str(), "%4d-%2d-%2d", &year, &month, &day) == 3)
     {
         // ISO format: YYYY-MM-DD or DD-MM-YYYY
-        parsed = true;
+        // Validate parsed values are in reasonable ranges
+        if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31)
+        {
+            parsed = true;
+        }
     }
-    else if (sscanf(customDate.c_str(), "%d/%d/%d", &day, &month, &year) == 3)
+    else if (sscanf(customDate.c_str(), "%2d/%2d/%4d", &day, &month, &year) == 3)
     {
         // European format: DD/MM/YYYY
-        parsed = true;
+        // Validate parsed values are in reasonable ranges
+        if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31)
+        {
+            parsed = true;
+        }
     }
 
     if (parsed)
