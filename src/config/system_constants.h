@@ -20,37 +20,38 @@
 // ----------------------------------------------------------------------------
 // Time conversion helpers (express human units, return milliseconds)
 // ----------------------------------------------------------------------------
-namespace ScribeTime {
-constexpr unsigned long Seconds(unsigned long s) { return s * 1000UL; }
-constexpr unsigned long Minutes(unsigned long m) { return m * 60UL * 1000UL; }
-constexpr unsigned long Hours(unsigned long h)   { return h * 60UL * 60UL * 1000UL; }
+namespace ScribeTime
+{
+    constexpr unsigned long Seconds(unsigned long s) { return s * 1000UL; }
+    constexpr unsigned long Minutes(unsigned long m) { return m * 60UL * 1000UL; }
+    constexpr unsigned long Hours(unsigned long h) { return h * 60UL * 60UL * 1000UL; }
 }
 
 // ============================================================================
 // SYSTEM CONSTANTS - Hardware timings and buffer sizes
 // ============================================================================
-static const int serialTimeoutMs = 5000;         // Serial connection timeout (5s)
-static const int smallDelayMs = 50;              // Small delay for CPU/power management
-static const int mediumJsonBuffer = 1024;        // Medium JSON buffer size divisor
-static const int defaultMaxRetries = 3;          // Default max retries for API calls
-static const int defaultBaseDelayMs = 1000;      // Default base delay for backoff (1s)
-static const int mqttTestCleanupDelayMs = ScribeTime::Seconds(1);  // MQTT test cleanup delay (1s)
+static const int serialTimeoutMs = 5000;                          // Serial connection timeout (5s)
+static const int smallDelayMs = 50;                               // Small delay for CPU/power management
+static const int mediumJsonBuffer = 1024;                         // Medium JSON buffer size divisor
+static const int defaultMaxRetries = 3;                           // Default max retries for API calls
+static const int defaultBaseDelayMs = 1000;                       // Default base delay for backoff (1s)
+static const int mqttTestCleanupDelayMs = ScribeTime::Seconds(1); // MQTT test cleanup delay (1s)
 
 // Session management constants
-static const int maxConcurrentSessions = 5;      // Maximum concurrent user sessions
-static const int sessionTokenLength = 32;        // Session token length (bytes)
-static const unsigned int sessionTimeoutHours = 4; // Session timeout in hours (canonical)
+static const int maxConcurrentSessions = 5;                                           // Maximum concurrent user sessions
+static const int sessionTokenLength = 32;                                             // Session token length (bytes)
+static const unsigned int sessionTimeoutHours = 4;                                    // Session timeout in hours (canonical)
 static const unsigned long sessionTimeoutMs = ScribeTime::Hours(sessionTimeoutHours); // Derived ms
-static const char *sessionCookieName = "ScribeSession";  // Session cookie name
-static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict"; // Cookie security options
+static const char *sessionCookieName = "ScribeSession";                               // Session cookie name
+static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict";        // Cookie security options
 
 // MQTT connection and retry settings
-static const int mqttMaxConsecutiveFailures = 3;           // Max failures before cooldown
-static const unsigned long mqttReconnectIntervalMs = ScribeTime::Seconds(5); // Normal reconnect interval (5s)
-static const unsigned long mqttFailureCooldownMs = ScribeTime::Minutes(1);   // Cooldown after max failures (60s)
-static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(10); // Connection timeout (10s)
+static const int mqttMaxConsecutiveFailures = 3;                                // Max failures before cooldown
+static const unsigned long mqttReconnectIntervalMs = ScribeTime::Seconds(5);    // Normal reconnect interval (5s)
+static const unsigned long mqttFailureCooldownMs = ScribeTime::Minutes(1);      // Cooldown after max failures (60s)
+static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(10);   // Connection timeout (10s)
 static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(15); // TLS handshake timeout (15s)
-static const int mqttBufferSize = 512;                      // MQTT message buffer size
+static const int mqttBufferSize = 512;                                          // MQTT message buffer size
 
 // Unbidden Ink prompt presets (autoprompts)
 static const char *unbiddenInkPromptCreative = "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.";
@@ -79,13 +80,6 @@ struct ButtonConfig
 //
 // Note: GPIO are fixed in config.h, actions can be changed in config.json
 // Empty MQTT topic means use local printing (no network calls)
-//
-// ESP32-C3 GPIO Notes:
-// - Available GPIOs: 0-21 (some have restrictions)
-// - GPIO 0,2,3,9: Strapping pins - can cause boot issues (GPIO 9 used for buttons anyway)
-// - GPIO 1: UART0 TX (Serial) - can cause programming issues
-// - GPIO 18,19: Used for USB, not available for general use
-// - GPIO 5,6,7,4: Chosen for button inputs (avoiding strapping and problematic pins)
 static const ButtonConfig defaultButtons[] = {
     {5, "JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"}, // Button 1: Joke → Character Test
     {6, "RIDDLE", "", "chase_single", "", "", "pulse"},             // Button 2: Riddle → (no long action)
@@ -164,9 +158,9 @@ static const int heatingTime = 150;        // Heating time (80-200ms)
 static const int heatingInterval = 250;    // Heating interval (200-250ms)
 
 // System Performance Settings
-static const unsigned long memCheckIntervalMs = ScribeTime::Minutes(1);     // 60 seconds (memory check frequency)
-static const unsigned long reconnectIntervalMs = ScribeTime::Seconds(5);    // 5 seconds (WiFi reconnection interval)
-static const unsigned long wifiConnectTimeoutMs = ScribeTime::Seconds(15);  // 15 seconds timeout for WiFi connection
+static const unsigned long memCheckIntervalMs = ScribeTime::Minutes(1);    // 60 seconds (memory check frequency)
+static const unsigned long reconnectIntervalMs = ScribeTime::Seconds(5);   // 5 seconds (WiFi reconnection interval)
+static const unsigned long wifiConnectTimeoutMs = ScribeTime::Seconds(15); // 15 seconds timeout for WiFi connection
 static const char *fallbackAPSSID = "Scribe-setup";
 static const char *fallbackAPPassword = "scribe123";
 static const int statusLEDPin = 8;    // ESP32-C3 has built-in LED on GPIO8
@@ -177,24 +171,24 @@ const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
 static const unsigned long printerDiscoveryHeartbeatIntervalMs = ScribeTime::Minutes(1); // 1 minute heartbeat interval
 
 // Input Validation Limits
-static const unsigned long minRequestIntervalMs = 100;  // 100ms minimum between requests
-static const unsigned long maxRequestsPerMinute = 60; // 60 requests per minute
+static const unsigned long minRequestIntervalMs = 100;                 // 100ms minimum between requests
+static const unsigned long maxRequestsPerMinute = 60;                  // 60 requests per minute
 static const unsigned long rateLimitWindowMs = ScribeTime::Minutes(1); // 1 minute rate limit window
-static const int maxControlCharPercent = 10;          // Max control characters as percentage of message length
-static const int maxJsonPayloadSize = 8192;           // 8KB max JSON payload size
-static const int maxMqttTopicLength = 128;            // Max MQTT topic length
-static const int maxParameterLength = 1000;           // Default max parameter length
-static const int maxRemoteParameterLength = 100;      // Max length for remote parameter
-static const int maxUriDisplayLength = 200;           // Max URI length for display (truncated after this)
-static const int jsonDocumentSize = 1024;             // Standard JSON document buffer size
-static const int largeJsonDocumentSize = 6144;        // Large JSON document buffer size (6KB for config with GPIO info and memos)
-static const int maxValidationErrors = 10;            // Max validation errors to store
-static const int maxOtherPrinters = 10;               // Max other printers to track
-static const int stringBufferSize = 64;               // Standard string buffer size
-static const int topicBufferSize = 64;                // MQTT topic buffer size
-static const int maxWifiPasswordLength = 64;          // Max WiFi password length
-static const int maxTimezoneLength = 64;              // Max timezone string length
-static const int minJokeLength = 10;                  // Minimum joke length to be considered valid
+static const int maxControlCharPercent = 10;                           // Max control characters as percentage of message length
+static const int maxJsonPayloadSize = 8192;                            // 8KB max JSON payload size
+static const int maxMqttTopicLength = 128;                             // Max MQTT topic length
+static const int maxParameterLength = 1000;                            // Default max parameter length
+static const int maxRemoteParameterLength = 100;                       // Max length for remote parameter
+static const int maxUriDisplayLength = 200;                            // Max URI length for display (truncated after this)
+static const int jsonDocumentSize = 1024;                              // Standard JSON document buffer size
+static const int largeJsonDocumentSize = 6144;                         // Large JSON document buffer size (6KB for config with GPIO info and memos)
+static const int maxValidationErrors = 10;                             // Max validation errors to store
+static const int maxOtherPrinters = 10;                                // Max other printers to track
+static const int stringBufferSize = 64;                                // Standard string buffer size
+static const int topicBufferSize = 64;                                 // MQTT topic buffer size
+static const int maxWifiPasswordLength = 64;                           // Max WiFi password length
+static const int maxTimezoneLength = 64;                               // Max timezone string length
+static const int minJokeLength = 10;                                   // Minimum joke length to be considered valid
 
 // Memo Configuration
 static const int MEMO_COUNT = 4;        // Number of configurable memos

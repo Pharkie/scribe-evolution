@@ -48,8 +48,8 @@ void initAuthSystem() {
     nextSessionSlot = 0;
     lastCleanupTime = millis();
     
-    LOG_NOTICE("AUTH", "Auth system initialized - max %d concurrent sessions, %d hour timeout", 
-               maxConcurrentSessions, sessionTimeoutMs / 3600000);
+    LOG_NOTICE("AUTH", "Auth system initialized - max %d concurrent sessions, %d %s timeout", 
+               maxConcurrentSessions, sessionTimeoutHours, (sessionTimeoutHours == 1 ? "hour" : "hours"));
 }
 
 String generateSecureToken() {

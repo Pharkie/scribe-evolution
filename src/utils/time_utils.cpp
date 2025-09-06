@@ -1,4 +1,5 @@
 #include "time_utils.h"
+#include "retry_utils.h"
 #include <core/logging.h>
 #include <core/config_utils.h>
 #include <config/config.h>
@@ -239,18 +240,36 @@ void setupTime()
         }
         
         LOG_VERBOSE("time_utils", "Setting timezone to: %s", timezoneStr.c_str());
-        bool timezoneSet = localTZ.setLocation(timezoneStr);
+        
+        // Enable caching to NVS location 0 (50 bytes storage)
+        LOG_VERBOSE("time_utils", "Attempting to load timezone from cache...");
+        bool cacheLoaded = localTZ.setCache(0);
+        
+        bool timezoneSet = false;
+        if (cacheLoaded) {
+            LOG_VERBOSE("time_utils", "Timezone loaded from cache");
+            timezoneSet = true;
+            timezoneConfigured = true;
+        } else {
+            LOG_VERBOSE("time_utils", "Cache miss - fetching timezone from network with retry");
+            
+            // Use shared retry utility with exponential backoff
+            timezoneSet = retryWithBackoff([&]() -> bool {
+                return localTZ.setLocation(timezoneStr);
+            }, 3, 1000); // 3 retries, 1s base delay
+        }
         
         if (timezoneSet)
         {
             timezoneConfigured = true;
-            LOG_VERBOSE("time_utils", "Timezone successfully set to %s", timezoneStr.c_str());
+            LOG_VERBOSE("time_utils", "Timezone successfully configured for %s", timezoneStr.c_str());
             LOG_VERBOSE("time_utils", "Current local time: %s", localTZ.dateTime().c_str());
         }
         else
         {
             timezoneConfigured = false;
-            LOG_WARNING("time_utils", "Failed to set timezone %s, using UTC", timezoneStr.c_str());
+            LOG_WARNING("time_utils", "Failed to set timezone %s after retries, using UTC", 
+                       timezoneStr.c_str());
         }
     }
     else
@@ -320,4 +339,33 @@ String getDeviceUptime()
     unsigned long minutes = (uptimeMs % 3600000) / 60000;
     
     return String(hours) + "h" + String(minutes) + "m";
+}
+
+// === Timezone Update Function ===
+bool updateTimezone(const String &newTimezone)
+{
+    LOG_VERBOSE("time_utils", "Updating timezone to: %s", newTimezone.c_str());
+    
+    // Check if timezone actually changed
+    String currentPosix = localTZ.getPosix();
+    
+    // Clear cache to force fresh lookup for new timezone
+    // Note: ezTime doesn't have a clearCache method, but setCache(0) will reload
+    LOG_VERBOSE("time_utils", "Attempting to update timezone with cache refresh");
+    
+    // Try to set new timezone with cache support using shared retry utility
+    bool timezoneSet = retryWithBackoff([&]() -> bool {
+        return localTZ.setLocation(newTimezone);
+    }, 3, 1000); // 3 retries, 1s base delay
+    
+    if (timezoneSet) {
+        timezoneConfigured = true;
+        LOG_VERBOSE("time_utils", "Timezone successfully updated to %s", newTimezone.c_str());
+        LOG_VERBOSE("time_utils", "Current local time: %s", localTZ.dateTime().c_str());
+        return true;
+    } else {
+        LOG_WARNING("time_utils", "Failed to update timezone to %s after retries", 
+                   newTimezone.c_str());
+        return false;
+    }
 }

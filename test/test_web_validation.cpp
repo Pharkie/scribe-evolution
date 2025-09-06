@@ -6,7 +6,7 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "../src/web/validation.h"
-#include "../src/core/config.h"
+#include "../src/config/config.h"
 
 void test_message_validation_valid()
 {

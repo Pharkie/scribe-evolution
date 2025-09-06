@@ -417,7 +417,11 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
     // Load current configuration for partial updates
-    RuntimeConfig newConfig = getRuntimeConfig();
+    RuntimeConfig currentConfig = getRuntimeConfig();
+    RuntimeConfig newConfig = currentConfig;
+    
+    // Track timezone changes for immediate update
+    String currentTimezone = currentConfig.timezone;
 
     // Data-driven configuration processing - handles ALL fields generically
     String errorMsg;
@@ -437,7 +441,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
         JsonObject mqttObj = doc["mqtt"];
         if (!mqttObj.containsKey("password"))
         {
-            const RuntimeConfig &currentConfig = getRuntimeConfig();
             LOG_VERBOSE("WEB", "MQTT password not in request, preserving existing stored password (length: %d)", currentConfig.mqttPassword.length());
             newConfig.mqttPassword = currentConfig.mqttPassword;
         }
@@ -464,8 +467,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.ledEffects = getDefaultLedEffectsConfig();
 #endif
 
-    // Check change states before saving (while currentConfig is still valid)
-    const RuntimeConfig &currentConfig = getRuntimeConfig();
+    // Check change states before saving (using currentConfig as the original state)
     bool mqttStateChanged = (currentConfig.mqttEnabled != newConfig.mqttEnabled);
     
     // Check if MQTT settings changed (only matters if MQTT is enabled)
@@ -514,6 +516,20 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // ONLY THEN: Update global runtime configuration (after successful NVS save)
     setRuntimeConfig(newConfig);
+    
+    // Handle timezone changes - update immediately without requiring reboot
+    bool timezoneChanged = (currentTimezone != newConfig.timezone);
+    if (timezoneChanged) {
+        LOG_NOTICE("WEB", "Timezone changed from %s to %s - updating immediately", 
+                   currentTimezone.c_str(), newConfig.timezone.c_str());
+        bool timezoneUpdated = updateTimezone(newConfig.timezone);
+        if (timezoneUpdated) {
+            LOG_NOTICE("WEB", "Timezone successfully updated to %s", newConfig.timezone.c_str());
+        } else {
+            LOG_WARNING("WEB", "Failed to update timezone to %s - will retry on next reboot", 
+                       newConfig.timezone.c_str());
+        }
+    }
 
     // Handle dynamic MQTT start/stop
     if (mqttStateChanged)
@@ -733,6 +749,9 @@ void handleSetupPost(AsyncWebServerRequest *request)
     // Load current configuration to preserve existing settings
     RuntimeConfig currentConfig = getRuntimeConfig();
     RuntimeConfig newConfig = currentConfig; // Start with current values
+    
+    // Track timezone changes for immediate update
+    String currentTimezone = currentConfig.timezone;
 
     // Validate and extract device configuration
     JsonObject device = doc["device"];
@@ -788,6 +807,20 @@ void handleSetupPost(AsyncWebServerRequest *request)
         LOG_ERROR("WEB", "Failed to save setup configuration to NVS");
         sendErrorResponse(request, 500, "Failed to save configuration");
         return;
+    }
+
+    // Handle timezone changes - update immediately without requiring reboot
+    bool timezoneChanged = (currentTimezone != newConfig.timezone);
+    if (timezoneChanged) {
+        LOG_NOTICE("WEB", "Setup: Timezone changed from %s to %s - updating immediately", 
+                   currentTimezone.c_str(), newConfig.timezone.c_str());
+        bool timezoneUpdated = updateTimezone(newConfig.timezone);
+        if (timezoneUpdated) {
+            LOG_NOTICE("WEB", "Setup: Timezone successfully updated to %s", newConfig.timezone.c_str());
+        } else {
+            LOG_WARNING("WEB", "Setup: Failed to update timezone to %s - will retry on next reboot", 
+                       newConfig.timezone.c_str());
+        }
     }
 
     LOG_NOTICE("WEB", "Setup configuration saved successfully");

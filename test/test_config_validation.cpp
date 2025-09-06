@@ -5,7 +5,7 @@
 
 #include <unity.h>
 #include <Arduino.h>
-#include "../src/core/config.h"
+#include "../src/config/config.h"
 
 void test_config_constants()
 {
@@ -55,8 +55,8 @@ void test_api_endpoints()
 void test_hardware_configuration()
 {
     // Test hardware pin configuration
-    TEST_ASSERT_GREATER_THAN(0, TX_PIN);
-    TEST_ASSERT_LESS_THAN(50, TX_PIN); // ESP32-C3 doesn't have 50+ GPIO pins
+    TEST_ASSERT_GREATER_THAN(0, defaultPrinterTxPin);
+    TEST_ASSERT_LESS_THAN(50, defaultPrinterTxPin); // ESP32-C3 doesn't have 50+ GPIO pins
 
     // Test button configuration
     TEST_ASSERT_EQUAL(4, numHardwareButtons);
@@ -82,8 +82,8 @@ void test_timing_constants()
     TEST_ASSERT_GREATER_THAN(1, watchdogTimeoutSeconds);
     TEST_ASSERT_LESS_THAN(300, watchdogTimeoutSeconds); // Should be reasonable
 
-    TEST_ASSERT_GREATER_THAN(1000, memCheckInterval);
-    TEST_ASSERT_LESS_THAN(3600000, memCheckInterval); // Less than 1 hour
+    TEST_ASSERT_GREATER_THAN(1000, memCheckIntervalMs);
+    TEST_ASSERT_LESS_THAN(3600000, memCheckIntervalMs); // Less than 1 hour
 }
 
 void test_validation_limits()

@@ -19,44 +19,16 @@
  */
 
 #include "api_client.h"
+#include "retry_utils.h"
 #include <config/config.h>
 #include <core/logging.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <esp_task_wdt.h>
-#include <functional>
 
 // Forward declaration
 bool performSingleAPIRequest(const String &url, const String &userAgent, int timeoutMs, String &result);
-
-// Helper function for retry logic with exponential backoff
-bool retryWithBackoff(std::function<bool()> operation, int maxRetries = defaultMaxRetries, int baseDelayMs = defaultBaseDelay)
-{
-    int delayMs = baseDelayMs;
-    for (int attempt = 0; attempt < maxRetries; attempt++)
-    {
-        if (operation())
-        {
-            if (attempt > 0)
-            {
-                LOG_NOTICE("API", "Operation succeeded after %d retries", attempt);
-            }
-            return true;
-        }
-        
-        if (attempt < maxRetries - 1) // Don't delay after the last attempt
-        {
-            LOG_VERBOSE("API", "Retry attempt %d failed, waiting %dms", attempt + 1, delayMs);
-            esp_task_wdt_reset(); // Keep watchdog happy during delays
-            delay(delayMs);
-            delayMs *= 2; // Exponential backoff
-        }
-    }
-    
-    LOG_WARNING("API", "Operation failed after %d retries", maxRetries);
-    return false;
-}
 
 String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs)
 {

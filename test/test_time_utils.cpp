@@ -6,7 +6,7 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "../src/utils/time_utils.h"
-#include "../src/core/config.h"
+#include "../src/config/config.h"
 
 void test_formatted_datetime()
 {
@@ -66,7 +66,7 @@ void test_millis_basic()
 void test_time_constants_from_config()
 {
     // Test that time-related constants from config are reasonable
-    TEST_ASSERT_GREATER_THAN(1000, memCheckInterval);   // Should be at least 1 second
+    TEST_ASSERT_GREATER_THAN(1000, memCheckIntervalMs);  // Should be at least 1 second
     TEST_ASSERT_GREATER_THAN(10, buttonDebounceMs);     // Should be at least 10ms
     TEST_ASSERT_GREATER_THAN(100, buttonLongPressMs);   // Should be at least 100ms
     TEST_ASSERT_GREATER_THAN(1, ntpSyncTimeoutSeconds); // Should be at least 1 second

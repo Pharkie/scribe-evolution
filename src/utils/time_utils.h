@@ -16,6 +16,7 @@ String formatRFC2822Date(const String &rfc2822Date);
 String getISOTimestamp();
 String getDeviceBootTime();
 void setupTime();
+bool updateTimezone(const String &newTimezone);
 
 // Additional functions for memo placeholder expansion
 String getMemoDate();          // Format: "24Aug25"

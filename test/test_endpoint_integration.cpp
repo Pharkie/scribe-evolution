@@ -12,7 +12,7 @@
 #include <ArduinoJson.h>
 
 // Include core modules like main.cpp
-#include "../src/core/config.h"
+#include "../src/config/config.h"
 #include "../src/core/network.h"
 #include "../src/web/web_server.h"
 #include "../src/web/web_handlers.h"

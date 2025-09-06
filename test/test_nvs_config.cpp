@@ -7,7 +7,7 @@
 #include <unity.h>
 #include <Preferences.h>
 #include "../src/core/config_loader.h"
-#include "../src/core/config.h"
+#include "../src/config/config.h"
 
 void clearNVSTestData(void) {
     // Clear NVS before tests

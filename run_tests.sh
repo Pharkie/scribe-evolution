@@ -17,7 +17,7 @@ run_test() {
     local test_name=$1
     echo -e "${YELLOW}Running $test_name...${NC}"
     
-    if pio test -e test --filter="*$test_name*" --verbose; then
+    if pio test -e esp32c3-test --filter="*$test_name*" --verbose; then
         echo -e "${GREEN}✅ $test_name PASSED${NC}"
         return 0
     else
@@ -49,7 +49,7 @@ done
 # Run all tests together
 echo -e "${YELLOW}Running all tests together...${NC}"
 total_tests=$((total_tests + 1))
-if pio test -e test --verbose; then
+if pio test -e esp32c3-test --verbose; then
     passed_tests=$((passed_tests + 1))
     echo -e "${GREEN}✅ All tests PASSED${NC}"
 else

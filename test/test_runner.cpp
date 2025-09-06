@@ -10,7 +10,7 @@
 #include <LittleFS.h>
 
 // Include core modules for global test setup
-#include "../src/core/config.h"
+#include "../src/config/config.h"
 #include "../src/core/config_utils.h"
 #include "../src/core/network.h"
 #include "../src/web/web_server.h"
@@ -80,15 +80,6 @@ void initializeGlobalTestEnvironment()
     delay(1000); // Give system time to stabilize
 }
 
-void setUp(void)
-{
-    // Set up before each test
-}
-
-void tearDown(void)
-{
-    // Clean up after each test
-}
 
 void setup()
 {

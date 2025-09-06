@@ -1,5 +1,5 @@
 #include <unity.h>
-#include "../src/core/config.h"
+#include "../src/config/config.h"
 
 // Test ESP32-C3 button GPIO safety and configuration
 void test_button_gpio_esp32c3_compatibility()
