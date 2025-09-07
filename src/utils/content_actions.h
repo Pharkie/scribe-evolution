@@ -28,14 +28,6 @@ struct ContentActionResult
     ContentActionResult() : success(false), header(""), body(""), errorMessage("") {}
     ContentActionResult(bool s, const String &h, const String &b, const String &e = "")
         : success(s), header(h), body(b), errorMessage(e) {}
-    
-    // Backward compatibility: get formatted content
-    String getFormattedContent() const {
-        if (!success || header.length() == 0 || body.length() == 0) {
-            return "";
-        }
-        return header + "\n\n" + body;
-    }
 };
 
 /**
@@ -48,7 +40,6 @@ enum class ContentActionType
     QUOTE,
     QUIZ,
     NEWS,
-    PRINT_TEST,
     POKE,
     USER_MESSAGE,
     UNBIDDEN_INK,

@@ -77,6 +77,12 @@ export function createSettingsMqttStore() {
       );
     },
 
+    // No snapshot: any input mutation should call resetMqttTestState()
+    // which clears mqttTestPassed and enables re-testing reactively.
+    hasChangesSinceLastTest() {
+      return true;
+    },
+
     // ================== VALIDATION ==================
     // Validate MQTT server field
     validateServer(value) {
@@ -213,6 +219,20 @@ export function createSettingsMqttStore() {
             message: "Successfully connected to MQTT broker",
           };
           this.mqttTestPassed = true;
+
+          // Capture a snapshot of the tested values
+          this.lastTestedConfig = {
+            server: this.config.mqtt.server,
+            port: this.config.mqtt.port,
+            username: this.config.mqtt.username,
+            passwordCaptured: !!(
+              this.mqttPasswordModified && this.config.mqtt.password
+            ),
+            password: this.mqttPasswordModified
+              ? this.config.mqtt.password
+              : null,
+            passwordModified: this.mqttPasswordModified,
+          };
         } else {
           // For error responses, try to parse JSON for error message
           try {

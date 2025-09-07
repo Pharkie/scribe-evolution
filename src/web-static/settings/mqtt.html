@@ -263,48 +263,30 @@
                   </div>
                 </div>
 
-                <!-- Test Connection Button -->
-                <div class="flex justify-center">
+                <!-- Test Connection Button + helper text -->
+                <div class="flex flex-col items-center gap-2">
                   <button
                     type="button"
-                    class="px-6 py-3 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700 rounded-xl font-medium transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                    :disabled="mqttTesting || !config.mqtt.server || !config.mqtt.port || !hasChanges()"
+                    class="px-6 py-3 bg-transparent dark:bg-transparent text-yellow-700 dark:text-yellow-300 border-2 border-yellow-600 dark:border-yellow-500 rounded-xl font-medium transition-all duration-200 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-800 dark:hover:text-yellow-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-400/50 dark:focus:ring-yellow-700/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
+                    :disabled="mqttTesting || !config.mqtt.server || !config.mqtt.port || !!mqttTestResult || !hasChanges()"
                     @click="testMqttConnection()"
                     x-text="testButtonLabel"
                   >
                     Test Connection
                   </button>
+                  <p class="text-xs text-gray-600 dark:text-gray-400">
+                    <span
+                      x-show="!mqttTesting && (!hasChanges() || mqttTestResult)"
+                      >Change settings to test</span
+                    >
+                    <span
+                      x-show="!mqttTesting && hasChanges() && !mqttTestResult"
+                      >Test MQTT to enable save</span
+                    >
+                  </p>
                 </div>
               </div>
               <!-- End MQTT Configuration -->
-            </div>
-          </div>
-
-          <!-- MQTT Warning Banner -->
-          <div
-            x-show="config.mqtt?.enabled && !mqttTestPassed"
-            class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-6 mt-6"
-            x-transition
-          >
-            <div class="flex items-center">
-              <svg
-                class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-                ></path>
-              </svg>
-              <div class="text-sm">
-                <span class="font-medium text-yellow-800 dark:text-yellow-200"
-                  >Please test MQTT connection before saving</span
-                >
-              </div>
             </div>
           </div>
 
