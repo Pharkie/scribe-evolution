@@ -97,8 +97,8 @@ bool generateAndQueueMemo(int memoId);
 void handleUserMessage(AsyncWebServerRequest* request);
 
 /**
- * @brief Handle content printing (generic handler for any pre-formatted content)
- * @details Unified endpoint for printing content locally or routing via MQTT.
+ * @brief Handle local content printing (generic handler for any pre-formatted content)
+ * @details Endpoint for printing content locally only. For MQTT operations, use /api/print-mqtt.
  *          Content should already have action headers (MESSAGE, JOKE, etc.)
  */
 void handlePrintContent(AsyncWebServerRequest* request);

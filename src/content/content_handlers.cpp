@@ -281,7 +281,6 @@ void handlePrintContent(AsyncWebServerRequest *request)
     }
 
     String message = doc["message"].as<String>();
-    String source = doc.containsKey("source") ? doc["source"].as<String>() : "local-direct";
 
     // Debug: Log message details
     LOG_VERBOSE("WEB", "Received message: length=%d, content: '%.50s'", message.length(), message.c_str());
@@ -295,60 +294,13 @@ void handlePrintContent(AsyncWebServerRequest *request)
         return;
     }
 
-    // Set up message data - content should already be formatted with action headers
+    // Set up message data for local printing - content should already be formatted with action headers
     currentMessage.message = message;
     currentMessage.timestamp = getFormattedDateTime();
-
-    // Handle routing based on source
-    bool isLocalDirect = (strcmp(source.c_str(), "local-direct") == 0);
-
-    if (isLocalDirect)
-    {
-        // Local direct printing: queue for local printer
-        currentMessage.shouldPrintLocally = true;
-        LOG_VERBOSE("WEB", "Custom message queued for local direct printing");
-
-        request->send(200);
-    }
-    else
-    {
-        // MQTT: send via MQTT, don't print locally
-        currentMessage.shouldPrintLocally = false;
-        LOG_VERBOSE("WEB", "Custom message will be sent via MQTT to topic: %s", source.c_str());
-
-        // Check MQTT connection
-        if (!mqttClient.connected())
-        {
-            sendErrorResponse(request, 503, "MQTT client not connected");
-            return;
-        }
-
-        // Create JSON payload for MQTT
-        DynamicJsonDocument payloadDoc(jsonDocumentSize);
-        payloadDoc["message"] = currentMessage.message;
-        payloadDoc["timestamp"] = currentMessage.timestamp;
-        
-        // Add sender information (device owner)
-        const RuntimeConfig &config = getRuntimeConfig();
-        if (config.deviceOwner.length() > 0)
-        {
-            payloadDoc["sender"] = config.deviceOwner;
-        }
-        String payload;
-        serializeJson(payloadDoc, payload);
-
-        // Send via MQTT
-        if (mqttClient.publish(source.c_str(), payload.c_str()))
-        {
-            LOG_VERBOSE("WEB", "Custom message successfully sent via MQTT");
-            request->send(200);
-        }
-        else
-        {
-            LOG_ERROR("WEB", "Failed to send custom message via MQTT");
-            sendErrorResponse(request, 500, "Failed to process message");
-        }
-    }
+    currentMessage.shouldPrintLocally = true;
+    
+    LOG_VERBOSE("WEB", "Custom message queued for local printing");
+    request->send(200);
 }
 
 // ========================================
