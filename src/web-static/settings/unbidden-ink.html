@@ -204,8 +204,14 @@
                       :disabled="chatgptTesting || !config.unbiddenInk.enabled || !config.unbiddenInk.chatgptApiToken || !apiTokenModified"
                       @click="testChatgptConnection()"
                     >
-                      <span x-show="!chatgptTesting">Test Connection</span>
-                      <span x-show="chatgptTesting">Testing…</span>
+                      <template x-if="chatgptTesting"><span>Testing…</span></template>
+                      <template x-if="!chatgptTesting">
+                        <span>
+                          <template x-if="config.unbiddenInk.enabled && config.unbiddenInk.chatgptApiToken && !apiTokenModified && !validation.errors['unbiddenInk.chatgptApiToken']"><span>Connected</span></template>
+                          <template x-if="config.unbiddenInk.enabled && config.unbiddenInk.chatgptApiToken && !apiTokenModified && validation.errors['unbiddenInk.chatgptApiToken']"><span>Connection Failed</span></template>
+                          <template x-if="!(config.unbiddenInk.enabled && config.unbiddenInk.chatgptApiToken && !apiTokenModified)"><span>Test Connection</span></template>
+                        </span>
+                      </template>
                     </button>
                     <p class="text-xs text-gray-600 dark:text-gray-400">
                       <span x-show="!apiTokenModified"
