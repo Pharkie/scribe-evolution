@@ -289,7 +289,7 @@ export function createIndexStore() {
         // Get structured content from API
         const result = await executeQuickAction(action);
 
-        if (!result.header || !result.body) {
+        if (!result.header) {
           this.error = "No content received from server";
           return;
         }
@@ -297,7 +297,10 @@ export function createIndexStore() {
         // Format content based on target printer
         if (this.selectedPrinter === "local-direct") {
           // For local printing, combine header + body into formatted string
-          const formattedContent = result.header + "\n\n" + result.body;
+          // Handle empty body case (e.g., POKE action)
+          const formattedContent = result.body
+            ? result.header + "\n\n" + result.body
+            : result.header;
           await printLocalContent(formattedContent);
         } else {
           // For MQTT printing, use structured data

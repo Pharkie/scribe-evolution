@@ -59,10 +59,10 @@ bool isValidIANATimezone(const String& timezone) {
 
 // Valid button actions
 const char* const VALID_BUTTON_ACTIONS[] = {
-    "JOKE", "RIDDLE", "QUOTE", "QUIZ", "NEWS", "CHARACTER_TEST", 
+    "JOKE", "RIDDLE", "QUOTE", "QUIZ", "NEWS", "CHARACTER_TEST", "POKE",
     "UNBIDDEN_INK", "MEMO1", "MEMO2", "MEMO3", "MEMO4", ""
 };
-const int VALID_BUTTON_ACTIONS_COUNT = 12;
+const int VALID_BUTTON_ACTIONS_COUNT = 13;
 
 // Valid LED effects
 const char* const VALID_LED_EFFECTS[] = {
