@@ -56,7 +56,10 @@ export function createSettingsButtonsStore() {
         const data = await loadConfiguration();
 
         // ✅ CRITICAL: Direct assignment to config object
+        // Start with any existing keys from the API (e.g., technical fields like debounce_time)
+        // then normalize per-button structures to ensure expected shape in the UI
         this.config.buttons = {
+          ...(data.buttons || {}),
           button1: {
             gpio: data.buttons?.button1?.gpio ?? -1,
             shortAction: data.buttons?.button1?.shortAction ?? "",

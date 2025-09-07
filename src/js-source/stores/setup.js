@@ -291,12 +291,12 @@ export function createSetupStore() {
             this._confettiShown = true;
             const base = {
               scalar: 2.4, // Larger scalar (~2x original visual area)
-              spread: 110,
-              particleCount: 60,
+              spread: 70,
+              particleCount: 40,
               origin,
-              startVelocity: 40,
-              gravity: 0.9,
-              decay: 0.92,
+              startVelocity: 10,
+              gravity: 0.3,
+              decay: 0.98,
             };
             // Burst of WiFi icon shapes
             window.confetti({
@@ -307,8 +307,8 @@ export function createSetupStore() {
                   {
                     src: wifiSvgDataUrl,
                     replaceColor: false, // already baked color
-                    width: 24,
-                    height: 24,
+                    width: 48,
+                    height: 48,
                   },
                 ],
               },

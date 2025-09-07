@@ -25,7 +25,7 @@
   </head>
 
   <body
-    class="flex flex-col min-h-screen justify-between py-8 px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    class="px-4 font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
     x-data="$store.index"
     x-init="loadData()"
   >
@@ -69,6 +69,7 @@
         x-init="$nextTick(() => show = true)"
         x-show="show"
         x-transition.opacity.duration.300ms
+        class="flex flex-col min-h-screen justify-between py-8"
       >
         <main class="w-full max-w-4xl mx-auto flex-1">
           <!-- Header with title and settings button -->
@@ -494,7 +495,7 @@
                         </svg>
                         <span
                           class="text-sm font-medium text-center"
-                          x-text="activeQuickAction === 'poke' ? 'Scribing' : 'Poke'"
+                          x-text="activeQuickAction === 'poke' ? 'Poking' : 'Poke'"
                         ></span>
                       </button>
                     </div>
