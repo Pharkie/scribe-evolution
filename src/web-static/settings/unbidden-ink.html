@@ -204,12 +204,20 @@
                       :disabled="chatgptTesting || !config.unbiddenInk.enabled || !config.unbiddenInk.chatgptApiToken || !apiTokenModified"
                       @click="testChatgptConnection()"
                     >
-                      <template x-if="chatgptTesting"><span>Testing…</span></template>
+                      <template x-if="chatgptTesting"
+                        ><span>Testing…</span></template
+                      >
                       <template x-if="!chatgptTesting">
                         <span>
-                          <template x-if="chatgptTested && chatgptTestSuccess"><span>Connected</span></template>
-                          <template x-if="chatgptTested && !chatgptTestSuccess"><span>Connection Failed</span></template>
-                          <template x-if="!chatgptTested"><span>Test Connection</span></template>
+                          <template x-if="chatgptTested && chatgptTestSuccess"
+                            ><span>API Key Works</span></template
+                          >
+                          <template x-if="chatgptTested && !chatgptTestSuccess"
+                            ><span>Connection Failed</span></template
+                          >
+                          <template x-if="!chatgptTested"
+                            ><span>Test API Key</span></template
+                          >
                         </span>
                       </template>
                     </button>
@@ -684,10 +692,8 @@
                     ></path>
                   </svg>
                   <p class="text-sm text-purple-800 dark:text-purple-200">
-                    <strong
-                      >First Unbidden Ink will trigger in the next couple of
-                      minutes</strong
-                    >, then follow the schedule you've set above.
+                    Your first Unbidden Ink will unfurl in a moment, then follow
+                    the rhythm you set.
                   </p>
                 </div>
               </div>
