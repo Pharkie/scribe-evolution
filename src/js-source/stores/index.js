@@ -523,132 +523,114 @@ export function createIndexStore() {
         switch (action) {
           case "riddle":
             // 🧩 Puzzle pieces effect for riddles
-            await confetti(
-              Object.assign(
-                {},
-                {
-                  count: 100,
-                  spread: 70,
-                  flat: false,
-                  position: buttonRect
-                    ? {
-                        x:
-                          ((buttonRect.left + buttonRect.width / 2) /
-                            window.innerWidth) *
-                          100,
-                        y:
-                          ((buttonRect.top + buttonRect.height / 2) /
-                            window.innerHeight) *
-                          100,
-                      }
-                    : { x: 50, y: 60 },
-                  colors: ["#f59e0b", "#eab308", "#facc15", "#fde047"], // Yellow tones
-                  shapes: ["star", "circle"],
-                },
-              ),
-            );
+            await confetti("confetti-3d", {
+              count: 100,
+              spread: 70,
+              flat: false,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+              colors: ["#f59e0b", "#eab308", "#facc15", "#fde047"], // Yellow tones
+              shapes: ["star", "circle"],
+            });
             break;
 
           case "joke":
             // 😄 Happy burst for jokes
-            await confetti(
-              Object.assign(
-                {},
-                {
-                  count: 50,
-                  spread: 90,
-                  flat: true,
-                  position: buttonRect
-                    ? {
-                        x:
-                          ((buttonRect.left + buttonRect.width / 2) /
-                            window.innerWidth) *
-                          100,
-                        y:
-                          ((buttonRect.top + buttonRect.height / 2) /
-                            window.innerHeight) *
-                          100,
-                      }
-                    : { x: 50, y: 60 },
-                  colors: ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0"], // Emerald tones
-                  shapes: ["emoji"],
-                  startVelocity: 20,
-                  shapeOptions: {
-                    emoji: {
-                      value: ["🤭", "😝", "🤣"],
-                    },
-                  },
-                  scalar: 2.5,
+            await confetti("confetti-2d", {
+              count: 40,
+              spread: 90,
+              flat: true,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+              colors: ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0"], // Emerald tones
+              shapes: ["emoji"],
+              startVelocity: 25,
+              shapeOptions: {
+                emoji: {
+                  value: ["🤭", "😝", "🤣"],
                 },
-              ),
-            );
+              },
+              scalar: 3,
+            });
             break;
 
           case "quote":
             // ✨ Elegant sparkles for quotes
-            await confetti(
-              Object.assign(
-                {},
-                {
-                  count: 80,
-                  spread: 45,
-                  flat: false,
-                  position: buttonRect
-                    ? {
-                        x:
-                          ((buttonRect.left + buttonRect.width / 2) /
-                            window.innerWidth) *
-                          100,
-                        y:
-                          ((buttonRect.top + buttonRect.height / 2) /
-                            window.innerHeight) *
-                          100,
-                      }
-                    : { x: 50, y: 60 },
-                  colors: ["#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"], // Purple tones
-                  scalar: 0.8,
-                  shapes: ["star"],
-                },
-              ),
-            );
+            await confetti("confetti-3d", {
+              count: 80,
+              spread: 45,
+              flat: false,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+              colors: ["#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"], // Purple tones
+              scalar: 0.8,
+              shapes: ["star"],
+            });
             break;
 
           case "quiz":
             // 🎯 Target burst for quiz
-            await confetti(
-              Object.assign(
-                {},
-                {
-                  count: 120,
-                  spread: 360,
-                  flat: false,
-                  position: buttonRect
-                    ? {
-                        x:
-                          ((buttonRect.left + buttonRect.width / 2) /
-                            window.innerWidth) *
-                          100,
-                        y:
-                          ((buttonRect.top + buttonRect.height / 2) /
-                            window.innerHeight) *
-                          100,
-                      }
-                    : { x: 50, y: 60 },
-                  colors: ["#06b6d4", "#67e8f9", "#a5f3fc", "#cffafe"], // Cyan tones
-                  startVelocity: 45,
-                  shapes: ["star"],
-                  decay: 0.85,
-                },
-              ),
-            );
+            await confetti("confetti-3d", {
+              count: 120,
+              spread: 360,
+              flat: false,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+              colors: ["#06b6d4", "#67e8f9", "#a5f3fc", "#cffafe"], // Cyan tones
+              startVelocity: 45,
+              shapes: ["star"],
+              decay: 0.85,
+            });
             break;
 
           case "news":
             // 📰 Ticker tape rectangles for news
+            // Use currentColor so tsParticles can tint the SVG via colors[] when replaceColor is true
             const tickerTapeSvg =
-              "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 10' fill='#000'>" +
-              "<rect width='50' height='30'/>" +
+              "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 30'>" +
+              "<rect width='50' height='30' fill='currentColor'/>" +
               "</svg>";
+
             const tickerTapeSvgDataUrl =
               "data:image/svg+xml;utf8," + encodeURIComponent(tickerTapeSvg);
 
@@ -685,44 +667,40 @@ export function createIndexStore() {
             };
 
             const colors = [
-              "#000000",
-              "#374151",
-              "#6b7280",
-              "#d1d5db",
               "#ffffff",
+              "#f3f4f6",
+              "#e5e7eb",
+              "#d1d5db",
+              "#9ca3af",
+              "#6b7280",
             ];
             await Promise.all(
-              colors.map((c) => confetti({ ...base, colors: [c] })),
+              colors.map((c) => confetti("confetti-3d", { ...base, colors: [c] })),
             );
             break;
 
           case "memo":
             // 📝 Pink sparkles for memos
-            await confetti(
-              Object.assign(
-                {},
-                {
-                  count: 100,
-                  spread: 60,
-                  flat: false,
-                  position: buttonRect
-                    ? {
-                        x:
-                          ((buttonRect.left + buttonRect.width / 2) /
-                            window.innerWidth) *
-                          100,
-                        y:
-                          ((buttonRect.top + buttonRect.height / 2) /
-                            window.innerHeight) *
-                          100,
-                      }
-                    : { x: 50, y: 60 },
-                  colors: ["#ec4899", "#f472b6", "#f9a8d4", "#fce7f3"], // Pink tones to match pink button
-                  scalar: 0.9,
-                  startVelocity: 30,
-                },
-              ),
-            );
+            await confetti("confetti-3d", {
+              count: 100,
+              spread: 60,
+              flat: false,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+              colors: ["#ec4899", "#f472b6", "#f9a8d4", "#fce7f3"], // Pink tones to match pink button
+              scalar: 0.9,
+              startVelocity: 30,
+            });
             break;
 
           case "poke":
@@ -735,70 +713,60 @@ export function createIndexStore() {
               "data:image/svg+xml;utf8," +
               encodeURIComponent(filledThumbsUpSvg);
 
-            await confetti(
-              Object.assign(
-                {},
-                {
-                  count: 40,
-                  spread: 70,
-                  startVelocity: 10,
-                  gravity: 0.3,
-                  decay: 0.98,
-                  scalar: 2.4,
-                  flat: true,
-                  position: buttonRect
-                    ? {
-                        x:
-                          ((buttonRect.left + buttonRect.width / 2) /
-                            window.innerWidth) *
-                          100,
-                        y:
-                          ((buttonRect.top + buttonRect.height / 2) /
-                            window.innerHeight) *
-                          100,
-                      }
-                    : { x: 50, y: 60 },
-                  colors: ["#0ea5e9"],
-                  shapes: ["image"],
-                  shapeOptions: {
-                    image: [
-                      {
-                        src: filledThumbsUpSvgDataUrl,
-                        replaceColor: false,
-                        width: 48,
-                        height: 48,
-                      },
-                    ],
+            await confetti("confetti-2d", {
+              count: 40,
+              spread: 70,
+              startVelocity: 10,
+              gravity: 0.3,
+              decay: 0.98,
+              scalar: 2.4,
+              flat: true,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+              colors: ["#0ea5e9"],
+              shapes: ["image"],
+              shapeOptions: {
+                image: [
+                  {
+                    src: filledThumbsUpSvgDataUrl,
+                    replaceColor: false,
+                    width: 48,
+                    height: 48,
                   },
-                },
-              ),
-            );
+                ],
+              },
+            });
             break;
 
           default:
             // Default celebration
-            await confetti(
-              Object.assign(
-                {},
-                {
-                  count: 100,
-                  spread: 70,
-                  flat: false,
-                  position: buttonRect
-                    ? {
-                        x:
-                          ((buttonRect.left + buttonRect.width / 2) /
-                            window.innerWidth) *
-                          100,
-                        y:
-                          ((buttonRect.top + buttonRect.height / 2) /
-                            window.innerHeight) *
-                          100,
-                      }
-                    : { x: 50, y: 60 },
-                },
-              ),
-            );
+            await confetti("confetti-3d", {
+              count: 100,
+              spread: 70,
+              flat: false,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+            });
         }
       }
     },
@@ -817,22 +785,17 @@ export function createIndexStore() {
           : { y: 0.6 };
 
         // Single blue burst celebration
-        await confetti(
-          Object.assign(
-            {},
-            {
-              count: 200,
-              spread: 100,
-              flat: false, // Ensure 3D confetti (override any flat state)
-              position: {
-                x: origin.x * 100,
-                y: origin.y * 100,
-              },
-              colors: ["#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"], // Blue tones only
-              scalar: 1.5,
-            },
-          ),
-        );
+        await confetti("confetti-3d", {
+          count: 200,
+          spread: 100,
+          flat: false, // Ensure 3D confetti (override any flat state)
+          position: {
+            x: origin.x * 100,
+            y: origin.y * 100,
+          },
+          colors: ["#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"], // Blue tones only
+          scalar: 1.5,
+        });
       }
     },
 
@@ -920,21 +883,16 @@ export function createIndexStore() {
 
         // Pink sparkle confetti celebration (keep the confetti!)
         if (window.confetti) {
-          await confetti(
-            Object.assign(
-              {},
-              {
-                count: 100, // Add missing count parameter
-                colors: ["#ec4899", "#f472b6", "#f9a8d4", "#fce7f3"], // Pink tones to match pink button
-                flat: false, // Ensure 3D confetti (override any flat state)
-                startVelocity: 30,
-                spread: 360,
-                ticks: 60,
-                zIndex: 0,
-                position: { x: 50, y: 50 }, // Center of screen
-              },
-            ),
-          );
+          await confetti("confetti-3d", {
+            count: 100, // Add missing count parameter
+            colors: ["#ec4899", "#f472b6", "#f9a8d4", "#fce7f3"], // Pink tones to match pink button
+            flat: false, // Ensure 3D confetti (override any flat state)
+            startVelocity: 30,
+            spread: 360,
+            ticks: 60,
+            zIndex: 0,
+            position: { x: 50, y: 50 }, // Center of screen
+          });
         }
 
         // Reset active action after 2 seconds like other quick actions
