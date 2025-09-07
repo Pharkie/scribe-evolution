@@ -46,12 +46,12 @@ static const char *sessionCookieName = "ScribeSession";                         
 static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict";        // Cookie security options
 
 // MQTT connection and retry settings
-static const int mqttMaxConsecutiveFailures = 3;                                // Max failures before cooldown
-static const unsigned long mqttReconnectIntervalMs = ScribeTime::Seconds(5);    // Normal reconnect interval (5s)
-static const unsigned long mqttFailureCooldownMs = ScribeTime::Minutes(1);      // Cooldown after max failures (60s)
-static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(7);    // Connection timeout (7s)
-static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(6);  // TLS handshake timeout (< watchdog)
-static const int mqttBufferSize = 512;                                          // MQTT message buffer size
+static const int mqttMaxConsecutiveFailures = 3;                               // Max failures before cooldown
+static const unsigned long mqttReconnectIntervalMs = ScribeTime::Seconds(5);   // Normal reconnect interval (5s)
+static const unsigned long mqttFailureCooldownMs = ScribeTime::Minutes(1);     // Cooldown after max failures (60s)
+static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(7);   // Connection timeout (7s)
+static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(6); // TLS handshake timeout (< watchdog)
+static const int mqttBufferSize = 512;                                         // MQTT message buffer size
 
 // Unbidden Ink prompt presets (autoprompts)
 static const char *unbiddenInkPromptCreative = "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.";
@@ -195,9 +195,13 @@ static const int MEMO_COUNT = 4;        // Number of configurable memos
 static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
 
 // Default memo content for first boot
-static const char *defaultMemo1 = "Good morning! Today is [weekday], [date]. Current time: [time]";
-static const char *defaultMemo2 = "Random task: [pick:Call Mum|Do Laundry|Walk Dog|Buy Groceries|Clean Kitchen]";
-static const char *defaultMemo3 = "Lucky numbers: [dice:10], [dice:20], [dice:6]. Coin flip: [coin]";
-static const char *defaultMemo4 = "Device info - Uptime: [uptime], IP: [ip], mDNS: [mdns]";
+static const char *defaultMemo1 =
+    "Salutations! Today is [weekday], [date].\n\nIt's [time]. But what is time, really?";
+static const char *defaultMemo2 =
+    "Magic 8-Ball says → [pick:It is certain|Yes definitely|Outlook good|Signs point to yes|Ask again later|Cannot predict now|Don't count on it|My sources say no|Outlook not so good|Very doubtful]\n\nToday's dare → [pick:Write a love note to your toaster|Sort socks by mood|Teach goldfish algebra|Whisper to lampposts|Polish the moon with a spoon|Expose the pigeon cabal]";
+static const char *defaultMemo3 =
+    "Next week's lotto numbers: [dice:59], [dice:59], [dice:59], [dice:59], [dice:59], [dice:59]\n\nToss a coin: [coin].\n\nWill you defeat the [pick:Beholder|Mind Flayer|Gelatinous Cube|Displacer Beast|Mimic|Tarrasque|Owlbear|Lich|Dragon|Rust Monster|Hydra|Chimera]? Your roll: [dice:20]";
+static const char *defaultMemo4 =
+    "Guest WiFi: chumbawumba\nPassword: igetknockeddown\n\nScribe uptime: [uptime]\nScribe Evolution at: [mdns]\nIP: [ip]";
 
 #endif

@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ScribeLogoMain-white.svg">
     <source media="(prefers-color-scheme: light)" srcset="docs/assets/ScribeLogoMain-black.svg">
-    <img alt="Scribe Evolution Logo" src="docs/assets/ScribeLogoMain-black.svg" width="800" />
+    <img alt="Scribe Evolution Logo" src="docs/assets/ScribeLogoMain-black.svg" width="80%" />
   </picture>
 </p>
 
@@ -14,147 +14,48 @@
   
 </p>
 
-**Print Fast. Share Securely. Poke Friends.**
+**Print Magic. Share Securely. Poke Friends.**
 
-Scribe Evolution is a small, AI-powered thermal printer that delights you with ink-free, super-fast, tear-and-go printing of quick notes, to-do lists, recipes, news summaries, or trivia. Share any of these instantly with those in your private network.
+Scribe Evolution is a delightful, small thermal printer you can use from your phone or laptop. Print quick notes, to‑dos, recipes, riddles, quotes, or little surprises. Keep it on a desk, the kitchen counter, or anywhere you want instant hard copy.
 
-It’s ready when you are: print from your phone, poke your friends like it’s 1997, or manage your day. It’s your helpful, compact desk assistant.
+### Why you’ll love it
 
-It has pressable buttons to save your favourite actions for quick access, and lights up as a beautiful object in your home or office.
-
-![Scribe Evolution Thermal Printer](https://github.com/user-attachments/assets/56afd51b-3560-419a-93f4-af315ba2968f)
-
-### 🔑 **Features**
-
-- **Physical Buttons**: Dedicated hardware controls for instant content generation
-- **Content Library**: Curated collections of jokes, riddles, quotes, and trivia
-- **LED Effects**: Add an LED strip for lighting awesomeness.
-- **Apple Shortcuts Ready**: Print anything from your iPhone with a tap
-
-### 🕸️ **Network-First Design**
-
-- **MQTT Integration**: Network multiple printers, print from anywhere in the world
-- **mDNS Discovery**: Access via `http://scribe-[devicename].local` - no IP hunting
-- **Remote Control**: Print from iOS shortcuts, web services, or custom applications
-- **Multi-Device Orchestration**: Coordinate content across multiple Scribe Evolution printers
-
-> ⚠️ **Security Note**: MQTT networking uses a trust-based model suitable for home/private networks. See [MQTT Security](docs/MQTT_SECURITY.md) for limitations and recommendations.
-
-### 🤖 **AI-Powered Content Generation**
-
-- **Quick Fun Actions**: Instant jokes, quotes, riddles, weather reports, and daily news briefings
-- **Unbidden Ink**: Scheduled AI-generated content that appears automatically throughout your day
-
-### 🎛️ **Solid Build**
-
-- **Web-Based Interface**: Responsive design works on phones, tablets, and desktops
-- **Persistent Settings**: NVS storage preserves all configurations across firmware updates
-- **Real-Time Diagnostics**: Monitor system health, memory usage, network status, and hardware
-- **Comprehensive Logging**: Multiple output destinations including BetterStack integration
-
-### 🛠️ **Developer Experience**
-
-- **Modern Architecture**: Modular C++ codebase with proper separation of concerns
-- **Build Automation**: Integrated npm and PlatformIO workflows
-- **Mock Server**: Local development server for frontend testing without ESP32 rebuilds
-- **Configuration Management**: Centralized settings with environment-specific overrides
-- **Documentation**: Extensive guides covering aspects of the system
+- **Instant printing**: Tear‑and‑go notes in seconds — no ink, no fuss on supercheap paper.
+- **Use any device**: Use the friendly web app at `http://scribe‑[name].local`
+- **Private by default**: Runs securely on your network.
+- **Remote printing (optional)**: Print from anywhere — set up remote printing ([learn more](docs/mqtt-integration.md))
+- **Semi-scheduled surprises**: “Unbidden Ink” (untested) posts fun content throughout your day
+- **Share between friends or rooms**: Send any message between Scribe Evolution devices
 
 ## Quick Start
 
-### 🚀 **Ready to Print? Start Here!**
+### 🚀 **Ready to Go?**
 
-**👉 [Quick Start Guide - Flash Pre-built Firmware →](docs/quick-start.md)**
+**👉 [Quick Start Guide - Flash the Pre-built Firmware →](docs/quick-start.md)**
 
-Get your Scribe printer running in minutes with pre-built firmware. No development environment needed!
+Get your Scribe printer running in minutes with pre-built firmware. No development environment needed.
 
 ---
 
-### 🛠️ **Developer Setup**
+### What you need
 
-Building from source? Follow these steps:
+- ESP32‑C3 Supermini (only board tested so far)
+- CSN‑A4L thermal printer (or compatible)
+- 5V power supply (2.4A+ recommended, important)
 
-#### 1. Hardware Setup
+### Optional extras (DIY)
 
-Build your Scribe Evolution printer following the [Hardware Guide](docs/hardware.md). You'll need:
-
-- ESP32-C3 development board
-- CSN-A4L thermal printer
-- 3D printed enclosure ([download files](https://makerworld.com/en/models/1577165-project-scribe))
-- 5V power supply (2.4A+ recommended)
-
-#### 2. Software Configuration
-
-```bash
-# Create your configuration file
-cp src/core/config.h.example src/core/config.h
-
-# Edit src/core/config.h with your settings:
-# - WiFi credentials
-# - MQTT broker (optional)
-# - Timezone preferences
-```
-
-#### 3. Build and Deploy
-
-```bash
-# Install dependencies
-npm install
-
-# Build frontend assets and upload everything
-npm run build && pio run --target upload -e main && pio run --target uploadfs -e main
-```
-
-#### 4. Build Firmware for Distribution
-
-```bash
-# Build clean firmware releases for both board types
-npm run firmware
-```
-
-### 4. Access Your Printer
-
-- **Local**: http://scribe-[devicename].local or use IP address from boot message
-- **Remote**: Configure MQTT for printing from anywhere
+If you like to tinker, you can add physical buttons and an LED strip later. They’re not required for normal use.
+See the [Hardware Guide](docs/hardware.md).
 
 > **Need help?** See the [Build Instructions](docs/build-instructions.md) for detailed setup steps.
 
-## 📚 Documentation
+### Learn more
 
-### Docs Index
-
-- Getting Started: [Quick Start](docs/quick-start.md), [Build Instructions](docs/build-instructions.md), [Hardware Guide](docs/hardware.md)
-- Architecture: [Code Structure](docs/code-structure.md), [Configuration System](docs/configuration-system.md), [Logging System](docs/logging-system.md)
-- Security: [Auth Overview](docs/auth-overview.md), [MQTT Security](docs/MQTT_SECURITY.md), [Backend QA Review](docs/backend-qa-review.md)
-- Operations: [Troubleshooting](docs/troubleshooting.md), [Testing](docs/testing.md), [WiFi Provisioning Test Gating](docs/wifi-provisioning-test-gating.md)
-- Integrations: [MQTT Integration](docs/mqtt-integration.md), [Pipedream Bridge](docs/pipedream-integration.md), [Apple Shortcuts](docs/apple-shortcuts.md)
-- Features: [LED Effects](docs/led-effects.md), [Button Debugging](docs/button-debugging-guide.md)
-
-### Getting Started
-
-- **[Build Instructions](docs/build-instructions.md)** - Complete setup guide: PlatformIO, npm, dependencies
-- **[Hardware Guide](docs/hardware.md)** - BOM, wiring, assembly, and 3D printing
-- **[Microcontroller Firmware](docs/microcontroller-firmware.md)** - Development environment and code architecture
-
-### Integration & Automation
-
-- **[MQTT Integration](docs/mqtt-integration.md)** - Multi-printer networking and remote control
-- **[Pipedream Integration](docs/pipedream-integration.md)** - Serverless HTTP-to-MQTT bridge
-- **[Apple Shortcuts](docs/apple-shortcuts.md)** - Print from iOS using HTTP-to-MQTT bridges
-
-### System Administration
-
-- **[Logging System](docs/logging-system.md)** - Multi-destination logging and monitoring
-- **[Configuration System](docs/configuration-system.md)** - Dual-layer config architecture
-- **[MQTT Security](docs/MQTT_SECURITY.md)** - Security model and limitations for MQTT networking
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues, diagnostics, and solutions
-
-### Development & Customization
-
-- **[Code Structure](docs/code-structure.md)** - Modular architecture and development guidelines
-- **[LED Effects](docs/led-effects.md)** - Optional LED system with cycle-based effects
-- **[Testing Guide](docs/testing.md)** - Unit testing and validation procedures
-- **[Mock Server](mock-server/README.md)** - Local development server for frontend testing
+- **Quick Start**: [Flash pre‑built firmware](docs/quick-start.md)
+- **Troubleshooting**: [Common issues and fixes](docs/troubleshooting.md)
+- **Remote printing**: [MQTT integration](docs/mqtt-integration.md) and [Apple Shortcuts](docs/apple-shortcuts.md)
+- **Full docs index**: [See all guides](docs/build-instructions.md)
 
 ## Credits and Acknowledgments
 
@@ -244,5 +145,3 @@ https://creativecommons.org/licenses/by-nc-sa/4.0/
 ### Copyright
 
 © 2025 Adam Knowles. All rights reserved.
-
-**Original Project:** This project, with a new foundation for the codebase, was inspired by the original Project Scribe by UrbanCircles.
