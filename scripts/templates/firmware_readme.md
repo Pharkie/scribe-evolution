@@ -2,29 +2,24 @@
 
 Built on: {build_date}
 
-## Files in this directory:
-
-- `scribe-{environment}-complete.bin` - Complete firmware as a single file
-- `bootloader.bin`, `partitions.bin`, `firmware.bin`, `littlefs.bin` - Individual Flash partitions (advanced)
-
 ## Flashing Instructions:
 
 **Step 1: Erase flash**
 
 ```bash
-esptool --port /dev/ttyUSB0 erase-flash
+esptool --port /dev/cu.usbmodem1101 erase-flash
 ```
 
 **Step 2: Flash firmware**
 
 ```bash
-esptool --port /dev/ttyUSB0 --baud 460800 write-flash 0x0 scribe-{environment}-complete.bin
+esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-esp32c3-prod-no-leds-complete.bin
 ```
 
-Replace `/dev/ttyUSB0` with your actual port (e.g. Windows: COM3, macOS: /dev/cu.usbserial-\*).
+Replace `/dev/cu.usbmodem1101` with your actual port e.g. Windows: COM3, macOS: /dev/cu.usbserial-\*
 
-That's it! Your Scribe is ready to use.
+Your Scribe Evolution will start a wifi network "Scribe-setup" with password "scribe123" and go from there.
 
-## Need more help?
+## More details
 
-See `/docs/quick-start.md`
+Check out `/docs/quick-start.md`
