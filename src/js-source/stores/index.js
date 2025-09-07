@@ -12,6 +12,33 @@ import {
   executeQuickAction,
 } from "../api/index.js";
 
+// Confetti helpers to enforce consistent per-container parameters
+function fireConfetti3D(options = {}) {
+  if (typeof confetti === "undefined") return Promise.resolve();
+  const base = {};
+  // Enforce container-level consistency (last wins)
+  return confetti("confetti-3d", {
+    ...base,
+    ...options,
+    flat: false,
+    zIndex: 100,
+    disableForReducedMotion: true,
+  });
+}
+
+function fireConfetti2D(options = {}) {
+  if (typeof confetti === "undefined") return Promise.resolve();
+  const base = {};
+  // Enforce container-level consistency (last wins)
+  return confetti("confetti-2d", {
+    ...base,
+    ...options,
+    flat: true,
+    zIndex: 100,
+    disableForReducedMotion: true,
+  });
+}
+
 /**
  * Create Alpine.js index store with data loading
  * @returns {Object} Alpine.js store object
@@ -523,10 +550,9 @@ export function createIndexStore() {
         switch (action) {
           case "riddle":
             // 🧩 Puzzle pieces effect for riddles
-            await confetti("confetti-3d", {
+            await fireConfetti3D({
               count: 100,
               spread: 70,
-              flat: false,
               position: buttonRect
                 ? {
                     x:
@@ -546,10 +572,9 @@ export function createIndexStore() {
 
           case "joke":
             // 😄 Happy burst for jokes
-            await confetti("confetti-2d", {
+            await fireConfetti2D({
               count: 40,
               spread: 90,
-              flat: true,
               position: buttonRect
                 ? {
                     x:
@@ -571,15 +596,16 @@ export function createIndexStore() {
                 },
               },
               scalar: 3,
+              gravity: 0.9,
+              drift: 0.7,
             });
             break;
 
           case "quote":
             // ✨ Elegant sparkles for quotes
-            await confetti("confetti-3d", {
+            await fireConfetti3D({
               count: 80,
               spread: 45,
-              flat: false,
               position: buttonRect
                 ? {
                     x:
@@ -600,10 +626,9 @@ export function createIndexStore() {
 
           case "quiz":
             // 🎯 Target burst for quiz
-            await confetti("confetti-3d", {
+            await fireConfetti3D({
               count: 120,
               spread: 360,
-              flat: false,
               position: buttonRect
                 ? {
                     x:
@@ -625,17 +650,17 @@ export function createIndexStore() {
 
           case "news":
             // 📰 Ticker tape rectangles for news
-            // Use currentColor so tsParticles can tint the SVG via colors[] when replaceColor is true
-            const tickerTapeSvg =
-              "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 30'>" +
-              "<rect width='50' height='30' fill='currentColor'/>" +
-              "</svg>";
-
-            const tickerTapeSvgDataUrl =
-              "data:image/svg+xml;utf8," + encodeURIComponent(tickerTapeSvg);
+            // Pre-color the SVG per burst and disable runtime replaceColor to avoid src-level caching issues
+            const makeTickerTapeSrc = (hex) => {
+              const svg =
+                "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 30'>" +
+                `<rect width='50' height='30' fill='${hex}'/>` +
+                "</svg>";
+              return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+            };
 
             const base = {
-              count: Math.ceil(80 / 5),
+              count: Math.ceil(80 / 6),
               spread: 100,
               startVelocity: 60,
               position: buttonRect
@@ -651,40 +676,51 @@ export function createIndexStore() {
                   }
                 : { x: 50, y: 60 },
               shapes: ["image"],
-              shapeOptions: {
-                image: [
-                  {
-                    src: tickerTapeSvgDataUrl,
-                    replaceColor: true,
-                    width: 50,
-                    height: 30,
-                  },
-                ],
-              },
               scalar: 1.5,
               gravity: 0.9,
               drift: 0.5,
             };
 
-            const colors = [
-              "#ffffff",
-              "#f3f4f6",
-              "#e5e7eb",
-              "#d1d5db",
-              "#9ca3af",
-              "#6b7280",
-            ];
-            await Promise.all(
-              colors.map((c) => confetti("confetti-3d", { ...base, colors: [c] })),
-            );
+            const whiteSrc = makeTickerTapeSrc("#ffffff");
+            const graySrc = makeTickerTapeSrc("#9ca3af");
+            const blackSrc = makeTickerTapeSrc("#000000");
+
+            await Promise.all([
+              fireConfetti3D({
+                ...base,
+                count: 20, // white
+                shapeOptions: {
+                  image: [
+                    { src: whiteSrc, replaceColor: false, width: 50, height: 30 },
+                  ],
+                },
+              }),
+              fireConfetti3D({
+                ...base,
+                count: 40, // gray (2x)
+                shapeOptions: {
+                  image: [
+                    { src: graySrc, replaceColor: false, width: 50, height: 30 },
+                  ],
+                },
+              }),
+              fireConfetti3D({
+                ...base,
+                count: 20, // black
+                shapeOptions: {
+                  image: [
+                    { src: blackSrc, replaceColor: false, width: 50, height: 30 },
+                  ],
+                },
+              }),
+            ]);
             break;
 
           case "memo":
             // 📝 Pink sparkles for memos
-            await confetti("confetti-3d", {
+            await fireConfetti3D({
               count: 100,
               spread: 60,
-              flat: false,
               position: buttonRect
                 ? {
                     x:
@@ -713,14 +749,14 @@ export function createIndexStore() {
               "data:image/svg+xml;utf8," +
               encodeURIComponent(filledThumbsUpSvg);
 
-            await confetti("confetti-2d", {
-              count: 40,
+            await fireConfetti2D({
+              count: 25,
               spread: 70,
-              startVelocity: 10,
-              gravity: 0.3,
-              decay: 0.98,
+              startVelocity: 20,
+              gravity: 0.95,
+              drift: 0.5,
+              decay: 0.95,
               scalar: 2.4,
-              flat: true,
               position: buttonRect
                 ? {
                     x:
@@ -750,10 +786,9 @@ export function createIndexStore() {
 
           default:
             // Default celebration
-            await confetti("confetti-3d", {
+            await fireConfetti3D({
               count: 100,
               spread: 70,
-              flat: false,
               position: buttonRect
                 ? {
                     x:
@@ -785,10 +820,9 @@ export function createIndexStore() {
           : { y: 0.6 };
 
         // Single blue burst celebration
-        await confetti("confetti-3d", {
+        await fireConfetti3D({
           count: 200,
           spread: 100,
-          flat: false, // Ensure 3D confetti (override any flat state)
           position: {
             x: origin.x * 100,
             y: origin.y * 100,
@@ -883,14 +917,12 @@ export function createIndexStore() {
 
         // Pink sparkle confetti celebration (keep the confetti!)
         if (window.confetti) {
-          await confetti("confetti-3d", {
+          await fireConfetti3D({
             count: 100, // Add missing count parameter
             colors: ["#ec4899", "#f472b6", "#f9a8d4", "#fce7f3"], // Pink tones to match pink button
-            flat: false, // Ensure 3D confetti (override any flat state)
             startVelocity: 30,
             spread: 360,
             ticks: 60,
-            zIndex: 0,
             position: { x: 50, y: 50 }, // Center of screen
           });
         }
