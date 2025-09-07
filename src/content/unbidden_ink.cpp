@@ -52,18 +52,10 @@ void loadUnbiddenInkSettings()
 
 void initializeUnbiddenInk()
 {
-    // Load dynamic settings first
-    loadUnbiddenInkSettings();
-
-    if (!currentSettings.enabled)
-    {
-        LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink feature is disabled");
-        return;
-    }
-
-    scheduleNextUnbiddenInk();
-    LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink feature enabled - Working hours: %02d:00-%02d:00, Frequency: %d minutes",
-                currentSettings.startHour, currentSettings.endHour, currentSettings.frequencyMinutes);
+    LOG_VERBOSE("UNBIDDENINK", "Initializing Unbidden Ink system");
+    
+    // Use the new manager function for consistent behavior
+    startUnbiddenInk(false); // false = don't schedule immediately, use normal timing
 }
 
 bool isInWorkingHours()
@@ -151,4 +143,66 @@ UnbiddenInkSettings getCurrentUnbiddenInkSettings()
 unsigned long getNextUnbiddenInkTime()
 {
     return nextUnbiddenInkTime;
+}
+
+// ========================================
+// UNBIDDEN INK MANAGER FUNCTIONS
+// ========================================
+
+void startUnbiddenInk(bool immediate)
+{
+    LOG_VERBOSE("UNBIDDENINK", "Starting Unbidden Ink (immediate=%s)", immediate ? "true" : "false");
+    
+    // Load current settings from runtime config
+    loadUnbiddenInkSettings();
+    
+    if (!currentSettings.enabled)
+    {
+        LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink is disabled in config, not starting");
+        return;
+    }
+    
+    // Schedule the first/next print
+    if (immediate)
+    {
+        // Schedule very soon (within 1-2 minutes) for immediate feedback
+        unsigned long shortDelay = random(60000, 120000); // 1-2 minutes
+        nextUnbiddenInkTime = millis() + shortDelay;
+        LOG_NOTICE("UNBIDDENINK", "Unbidden Ink enabled - first message scheduled in %lu seconds", shortDelay / 1000);
+    }
+    else
+    {
+        // Schedule normally
+        scheduleNextUnbiddenInk();
+    }
+    
+    LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink feature enabled - Working hours: %02d:00-%02d:00, Frequency: %d minutes",
+                currentSettings.startHour, currentSettings.endHour, currentSettings.frequencyMinutes);
+}
+
+void stopUnbiddenInk()
+{
+    LOG_NOTICE("UNBIDDENINK", "Stopping Unbidden Ink");
+    
+    // Clear the schedule
+    nextUnbiddenInkTime = 0;
+    
+    // Update settings to reflect disabled state
+    currentSettings.enabled = false;
+    
+    LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink stopped and schedule cleared");
+}
+
+void restartUnbiddenInk()
+{
+    LOG_NOTICE("UNBIDDENINK", "Restarting Unbidden Ink with updated settings");
+    
+    // Stop current scheduling
+    stopUnbiddenInk();
+    
+    // Brief delay for clean state transition
+    delay(10);
+    
+    // Start with new settings
+    startUnbiddenInk(true); // Immediate scheduling for quick feedback
 }

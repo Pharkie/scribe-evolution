@@ -98,4 +98,21 @@ UnbiddenInkSettings getCurrentUnbiddenInkSettings();
  */
 unsigned long getNextUnbiddenInkTime();
 
+/**
+ * @brief Start Unbidden Ink with current config settings
+ * @param immediate If true, schedule first message soon for immediate feedback
+ */
+void startUnbiddenInk(bool immediate = true);
+
+/**
+ * @brief Stop Unbidden Ink and clear any scheduled messages
+ */
+void stopUnbiddenInk();
+
+/**
+ * @brief Restart Unbidden Ink with updated settings
+ * Stops current instance and starts fresh with new config
+ */
+void restartUnbiddenInk();
+
 #endif // UNBIDDEN_INK_H

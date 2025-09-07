@@ -481,6 +481,21 @@ void handleConfigPost(AsyncWebServerRequest *request)
         );
     }
     
+    // Check UnbiddenInk state changes
+    bool unbiddenStateChanged = (currentConfig.unbiddenInkEnabled != newConfig.unbiddenInkEnabled);
+    
+    // Check if UnbiddenInk settings changed (only matters if UnbiddenInk is enabled)
+    bool unbiddenSettingsChanged = false;
+    if (doc.containsKey("unbiddenInk") && newConfig.unbiddenInkEnabled) {
+        unbiddenSettingsChanged = (
+            currentConfig.unbiddenInkStartHour != newConfig.unbiddenInkStartHour ||
+            currentConfig.unbiddenInkEndHour != newConfig.unbiddenInkEndHour ||
+            currentConfig.unbiddenInkFrequencyMinutes != newConfig.unbiddenInkFrequencyMinutes ||
+            currentConfig.unbiddenInkPrompt != newConfig.unbiddenInkPrompt ||
+            currentConfig.chatgptApiToken != newConfig.chatgptApiToken
+        );
+    }
+    
     // Check if WiFi credentials changed
     bool wifiCredentialsChanged = false;
     if (doc.containsKey("wifi"))
@@ -552,6 +567,27 @@ void handleConfigPost(AsyncWebServerRequest *request)
         stopMQTTClient();
         delay(100);  // Brief cleanup delay
         startMQTTClient(true);  // true = immediate reconnection
+    }
+
+    // Handle dynamic UnbiddenInk start/stop
+    if (unbiddenStateChanged)
+    {
+        if (newConfig.unbiddenInkEnabled)
+        {
+            LOG_NOTICE("WEB", "UnbiddenInk enabled - starting scheduler");
+            startUnbiddenInk(true);  // true = immediate scheduling for feedback
+        }
+        else
+        {
+            LOG_NOTICE("WEB", "UnbiddenInk disabled - stopping scheduler");
+            stopUnbiddenInk();
+        }
+    }
+    else if (unbiddenSettingsChanged)
+    {
+        // UnbiddenInk settings changed but was already enabled - restart cleanly
+        LOG_NOTICE("WEB", "UnbiddenInk settings updated - restarting scheduler");
+        restartUnbiddenInk();
     }
 
 #if ENABLE_LEDS
