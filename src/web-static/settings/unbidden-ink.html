@@ -207,15 +207,15 @@
                       <template x-if="chatgptTesting"><span>Testing…</span></template>
                       <template x-if="!chatgptTesting">
                         <span>
-                          <template x-if="config.unbiddenInk.enabled && config.unbiddenInk.chatgptApiToken && !apiTokenModified && !validation.errors['unbiddenInk.chatgptApiToken']"><span>Connected</span></template>
-                          <template x-if="config.unbiddenInk.enabled && config.unbiddenInk.chatgptApiToken && !apiTokenModified && validation.errors['unbiddenInk.chatgptApiToken']"><span>Connection Failed</span></template>
-                          <template x-if="!(config.unbiddenInk.enabled && config.unbiddenInk.chatgptApiToken && !apiTokenModified)"><span>Test Connection</span></template>
+                          <template x-if="chatgptTested && chatgptTestSuccess"><span>Connected</span></template>
+                          <template x-if="chatgptTested && !chatgptTestSuccess"><span>Connection Failed</span></template>
+                          <template x-if="!chatgptTested"><span>Test Connection</span></template>
                         </span>
                       </template>
                     </button>
                     <p class="text-xs text-gray-600 dark:text-gray-400">
                       <span x-show="!apiTokenModified"
-                        >Change settings to test</span
+                        >Change ChatGPT API Token to test</span
                       >
                       <span x-show="apiTokenModified"
                         >Test API key to enable save</span

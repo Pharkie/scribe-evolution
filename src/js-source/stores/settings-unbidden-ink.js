@@ -20,6 +20,9 @@ export function createSettingsUnbiddenInkStore() {
 
     originalValues: {},
     apiTokenModified: false,
+    // Track connection test state for button label logic
+    chatgptTested: false,
+    chatgptTestSuccess: false,
 
     // Validation state
     validation: {
@@ -61,6 +64,12 @@ export function createSettingsUnbiddenInkStore() {
           chatgptApiToken: this.config.unbiddenInk.chatgptApiToken,
         };
 
+        // Reset token/test state on load
+        this.apiTokenModified = false;
+        this.chatgptTesting = false;
+        this.chatgptTested = false;
+        this.chatgptTestSuccess = false;
+
         this.loaded = true; // Mark as loaded AFTER data assignment
       } catch (error) {
         console.error("Failed to load configuration:", error);
@@ -83,8 +92,11 @@ export function createSettingsUnbiddenInkStore() {
           },
         };
 
-        // Only include ChatGPT API token if it was modified
-        if (this.passwordModified) {
+        // Include ChatGPT API token if it actually changed vs original
+        if (
+          (this.config.unbiddenInk.chatgptApiToken || "") !==
+          (this.originalValues.chatgptApiToken || "")
+        ) {
           payload.unbiddenInk.chatgptApiToken =
             this.config.unbiddenInk.chatgptApiToken;
         }
@@ -100,7 +112,10 @@ export function createSettingsUnbiddenInkStore() {
           prompt: this.config.unbiddenInk.prompt,
         });
 
-        if (this.apiTokenModified) {
+        if (
+          (this.config.unbiddenInk.chatgptApiToken || "") !==
+          (this.originalValues.chatgptApiToken || "")
+        ) {
           this.originalValues.chatgptApiToken =
             this.config.unbiddenInk.chatgptApiToken;
           this.apiTokenModified = false;
@@ -128,16 +143,25 @@ export function createSettingsUnbiddenInkStore() {
       const hasValidationErrors =
         Object.keys(this.validation.errors).length > 0;
 
-      // Must have changes
-      const hasChanges =
+      // Detect if token actually changed vs original
+      const tokenChanged =
+        (current.chatgptApiToken || "") !== (original.chatgptApiToken || "");
+
+      // Other changes (excluding token)
+      const otherChanges =
         current.enabled !== original.enabled ||
         current.startHour !== original.startHour ||
         current.endHour !== original.endHour ||
         current.frequencyMinutes !== original.frequencyMinutes ||
-        current.prompt !== original.prompt ||
-        this.apiTokenModified;
+        current.prompt !== original.prompt;
 
-      return hasChanges && !hasValidationErrors;
+      // If token changed and it's still marked as modified,
+      // require a successful test (which clears apiTokenModified) before allowing save.
+      const blockedByTokenTest = tokenChanged && this.apiTokenModified;
+
+      const hasAnyChange = otherChanges || tokenChanged;
+
+      return hasAnyChange && !hasValidationErrors && !blockedByTokenTest;
     },
 
     // ================== TOKEN HANDLING ==================
@@ -146,6 +170,9 @@ export function createSettingsUnbiddenInkStore() {
       if (this.config.unbiddenInk.chatgptApiToken) {
         this.config.unbiddenInk.chatgptApiToken = "";
         this.apiTokenModified = true;
+        // Invalidate previous test result when user starts editing
+        this.chatgptTested = false;
+        this.chatgptTestSuccess = false;
       }
     },
 
@@ -154,6 +181,11 @@ export function createSettingsUnbiddenInkStore() {
       const hasChanged = newValue !== this.originalValues.chatgptApiToken;
       this.apiTokenModified = hasChanged;
       this.validateChatgptToken(newValue);
+      // Any change to the token invalidates prior test status
+      if (hasChanged) {
+        this.chatgptTested = false;
+        this.chatgptTestSuccess = false;
+      }
     },
 
     // ================ Test ChatGPT API Token ================
@@ -178,15 +210,21 @@ export function createSettingsUnbiddenInkStore() {
             delete this.validation.errors["unbiddenInk.chatgptApiToken"];
           }
           this.apiTokenModified = false;
+          this.chatgptTested = true;
+          this.chatgptTestSuccess = true;
         } else {
           const msg =
             (data && (data.error || data.message)) || "Connection test failed";
           this.validation.errors["unbiddenInk.chatgptApiToken"] = msg;
           this.apiTokenModified = false; // lock button until user edits again
+          this.chatgptTested = true;
+          this.chatgptTestSuccess = false;
         }
       } catch (e) {
         this.validation.errors["unbiddenInk.chatgptApiToken"] =
           "Network error during connection test";
+        this.chatgptTested = true;
+        this.chatgptTestSuccess = false;
       } finally {
         this.chatgptTesting = false;
       }
