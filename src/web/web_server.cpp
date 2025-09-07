@@ -299,10 +299,6 @@ void setupAPIRoutes()
         authenticatedHandler(request, handlePrintContent);
     }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-local", "Print custom message");
-    server.on("/api/character-test", HTTP_POST, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handlePrintTest);
-    }, NULL, handleChunkedUpload);
-    registerRoute("POST", "/api/character-test", "Print character test pattern");
 
     // Content generation (with authentication)
     server.on("/api/riddle", HTTP_GET, [](AsyncWebServerRequest *request) {

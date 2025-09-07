@@ -15,6 +15,7 @@ export function createDiagnosticsMicrocontrollerStore() {
     // ================== STATE MANAGEMENT ==================
     loaded: false,
     error: null,
+    loading: false,
     microcontrollerInfo: {},
     memoryUsage: {},
     config: {},
@@ -76,6 +77,40 @@ export function createDiagnosticsMicrocontrollerStore() {
       } catch (error) {
         this.error = `Failed to load microcontroller data: ${error.message}`;
         this.loaded = true;
+      }
+    },
+
+    // ================== ACTIONS ==================
+    async printCharacterTest() {
+      this.loading = true;
+      try {
+        // Fetch character test content directly from file
+        const response = await fetch("/resources/character-test.txt");
+        if (!response.ok) {
+          throw new Error(`Failed to load character test: ${response.status}`);
+        }
+        const content = await response.text();
+
+        // Print content using local print endpoint
+        const printResponse = await fetch("/api/print-local", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: content,
+            source: "local-direct",
+          }),
+        });
+
+        if (!printResponse.ok) {
+          throw new Error("Failed to print character test");
+        }
+      } catch (error) {
+        console.error("Character test print failed:", error);
+        // Could show error to user here if needed
+      } finally {
+        this.loading = false;
       }
     },
 

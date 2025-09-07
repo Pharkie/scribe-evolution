@@ -81,7 +81,7 @@ def build_optimized_filesystem(source, target, pio_env):
 
     # Compressible file extensions
     # Include .webmanifest so STA mode can serve gzipped manifest
-    compressible_extensions = {".html", ".css", ".js", ".svg", ".json", ".webmanifest"}
+    compressible_extensions = {".html", ".css", ".js", ".svg", ".json", ".webmanifest", ".txt"}
 
     # Walk through all files recursively
     for root, _, files in os.walk(data_dir):

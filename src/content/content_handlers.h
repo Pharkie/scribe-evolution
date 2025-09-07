@@ -74,7 +74,6 @@ bool generateAndQueueRiddle();
 bool generateAndQueueJoke();
 bool generateAndQueueQuote();
 bool generateAndQueueQuiz();
-bool generateAndQueuePrintTest();
 bool generateAndQueueNews();
 
 /**
@@ -91,10 +90,6 @@ String generateMemoContent(int memoId);
  */
 bool generateAndQueueMemo(int memoId);
 
-/**
- * @brief Handle print test request
- */
-void handlePrintTest(AsyncWebServerRequest* request);
 
 /**
  * @brief Handle user message content generation (adds MESSAGE prefix)
@@ -114,10 +109,5 @@ void handlePrintContent(AsyncWebServerRequest* request);
 // ========================================
 
 
-/**
- * @brief Load print test content from filesystem
- * @return String containing the test content
- */
-String loadPrintTestContent();
 
 #endif // CONTENT_HANDLERS_H

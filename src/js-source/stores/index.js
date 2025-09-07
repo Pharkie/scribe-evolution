@@ -691,7 +691,12 @@ export function createIndexStore() {
                 count: 20, // white
                 shapeOptions: {
                   image: [
-                    { src: whiteSrc, replaceColor: false, width: 50, height: 30 },
+                    {
+                      src: whiteSrc,
+                      replaceColor: false,
+                      width: 50,
+                      height: 30,
+                    },
                   ],
                 },
               }),
@@ -700,7 +705,12 @@ export function createIndexStore() {
                 count: 40, // gray (2x)
                 shapeOptions: {
                   image: [
-                    { src: graySrc, replaceColor: false, width: 50, height: 30 },
+                    {
+                      src: graySrc,
+                      replaceColor: false,
+                      width: 50,
+                      height: 30,
+                    },
                   ],
                 },
               }),
@@ -709,7 +719,12 @@ export function createIndexStore() {
                 count: 20, // black
                 shapeOptions: {
                   image: [
-                    { src: blackSrc, replaceColor: false, width: 50, height: 30 },
+                    {
+                      src: blackSrc,
+                      replaceColor: false,
+                      width: 50,
+                      height: 30,
+                    },
                   ],
                 },
               }),

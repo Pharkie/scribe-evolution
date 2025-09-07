@@ -43,7 +43,6 @@ enum ContentType
     JOKE,
     QUOTE,
     QUIZ,
-    PRINT_TEST,
     POKE,
     USER_MESSAGE,
     NEWS,
@@ -76,10 +75,6 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     case QUIZ:
         actionType = ContentActionType::QUIZ;
         typeName = "quiz";
-        break;
-    case PRINT_TEST:
-        actionType = ContentActionType::PRINT_TEST;
-        typeName = "print test";
         break;
     case POKE:
         actionType = ContentActionType::POKE;
@@ -169,7 +164,6 @@ void handleRiddle(AsyncWebServerRequest *request) { handleContentGeneration(requ
 void handleJoke(AsyncWebServerRequest *request) { handleContentGeneration(request, JOKE); }
 void handleQuote(AsyncWebServerRequest *request) { handleContentGeneration(request, QUOTE); }
 void handleQuiz(AsyncWebServerRequest *request) { handleContentGeneration(request, QUIZ); }
-void handlePrintTest(AsyncWebServerRequest *request) { handleContentGeneration(request, PRINT_TEST); }
 void handlePoke(AsyncWebServerRequest *request) { handleContentGeneration(request, POKE); }
 void handleNews(AsyncWebServerRequest *request) { handleContentGeneration(request, NEWS); }
 void handleUserMessage(AsyncWebServerRequest *request) { handleContentGeneration(request, USER_MESSAGE); }
@@ -247,10 +241,6 @@ bool generateAndQueueQuiz()
     return executeAndQueueContent(ContentActionType::QUIZ);
 }
 
-bool generateAndQueuePrintTest()
-{
-    return executeAndQueueContent(ContentActionType::PRINT_TEST);
-}
 
 bool generateAndQueueNews()
 {
@@ -366,18 +356,6 @@ void handlePrintContent(AsyncWebServerRequest *request)
 // ========================================
 
 
-String loadPrintTestContent()
-{
-    File file = LittleFS.open("/resources/character-test.txt", "r");
-    if (!file)
-    {
-        return "ASCII: Hello World 123!@#\n\nFailed to load print test file";
-    }
-
-    String content = file.readString();
-    file.close();
-    return content;
-}
 
 String generateMemoContent(int memoId)
 {
