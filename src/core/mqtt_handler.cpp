@@ -498,3 +498,60 @@ void stopMQTTClient()
     lastFailureTime = 0;
 }
 
+// ========================================
+// CENTRALIZED MQTT MESSAGE PUBLISHING
+// ========================================
+
+bool publishMQTTMessage(const String& topic, const String& header, const String& body)
+{
+    // Validate inputs
+    if (topic.length() == 0) {
+        LOG_ERROR("MQTT", "publishMQTTMessage: topic cannot be empty");
+        return false;
+    }
+    
+    if (header.length() == 0) {
+        LOG_ERROR("MQTT", "publishMQTTMessage: header cannot be empty");
+        return false;
+    }
+    
+    // Check if MQTT is enabled and connected
+    if (!isMQTTEnabled()) {
+        LOG_WARNING("MQTT", "MQTT is disabled, cannot publish to topic: %s", topic.c_str());
+        return false;
+    }
+    
+    if (!mqttClient.connected()) {
+        LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
+        return false;
+    }
+    
+    // Create standardized JSON payload
+    DynamicJsonDocument payloadDoc(4096);
+    payloadDoc["header"] = header;
+    payloadDoc["body"] = body;
+    payloadDoc["timestamp"] = getFormattedDateTime();
+    
+    // Add sender information (device owner)
+    const RuntimeConfig &config = getRuntimeConfig();
+    if (config.deviceOwner.length() > 0) {
+        payloadDoc["sender"] = config.deviceOwner;
+    }
+    
+    // Serialize payload
+    String payload;
+    serializeJson(payloadDoc, payload);
+    
+    // Publish message
+    bool success = mqttClient.publish(topic.c_str(), payload.c_str());
+    
+    if (success) {
+        LOG_VERBOSE("MQTT", "Published message to topic: %s (%d characters)", 
+                   topic.c_str(), payload.length());
+    } else {
+        LOG_ERROR("MQTT", "Failed to publish message to topic: %s", topic.c_str());
+    }
+    
+    return success;
+}
+

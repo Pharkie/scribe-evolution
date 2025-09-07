@@ -539,25 +539,31 @@ void buttonActionTask(void *parameter)
             // Execute content action for MQTT (don't set print flag)
             bool success = executeButtonActionDirect(params->actionType.c_str(), false);
 
-            if (success && isMQTTEnabled() && mqttClient.connected())
+            if (success)
             {
-                // Create MQTT payload (sender already included in message header)
-                DynamicJsonDocument payloadDoc(4096);
-                payloadDoc["message"] = currentMessage.message;
+                // Parse message content into header and body (format: "header\n\nbody")
+                String message = currentMessage.message;
+                int separatorPos = message.indexOf("\n\n");
                 
-                String payload;
-                serializeJson(payloadDoc, payload);
+                String header, body;
+                if (separatorPos != -1) {
+                    header = message.substring(0, separatorPos);
+                    body = message.substring(separatorPos + 2);
+                } else {
+                    // Fallback: use action type as header if no separator found
+                    header = params->actionType.c_str();
+                    body = message;
+                }
                 
-                // Publish to MQTT (do NOT print locally)
-                if (mqttClient.publish(params->mqttTopic.c_str(), payload.c_str()))
-                {
+                // Use centralized MQTT publishing function
+                bool mqttSuccess = publishMQTTMessage(params->mqttTopic, header, body);
+                
+                if (mqttSuccess) {
                     const RuntimeConfig &config = getRuntimeConfig();
                     int gpio = config.buttonGpios[params->buttonIndex];
                     LOG_NOTICE("BUTTONS", "Button %d (GPIO%d) sent %s via MQTT to: %s", 
                               params->buttonIndex + 1, gpio, params->actionType.c_str(), params->mqttTopic.c_str());
-                }
-                else
-                {
+                } else {
                     LOG_ERROR("BUTTONS", "Failed to send button action via MQTT to topic: %s", params->mqttTopic.c_str());
                 }
             }

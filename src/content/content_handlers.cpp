@@ -247,7 +247,7 @@ bool generateAndQueueNews()
     return executeAndQueueContent(ContentActionType::NEWS);
 }
 
-void handlePrintContent(AsyncWebServerRequest *request)
+void handlePrintLocal(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {

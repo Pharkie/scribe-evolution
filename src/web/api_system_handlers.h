@@ -42,7 +42,7 @@ void handleRoutes(AsyncWebServerRequest *request);
  * Validates MQTT connectivity, topic format, and message content
  * before publishing to the MQTT broker
  */
-void handleMQTTSend(AsyncWebServerRequest *request);
+void handlePrintMQTT(AsyncWebServerRequest *request);
 
 /**
  * @brief Handle WiFi network scanning request

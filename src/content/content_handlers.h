@@ -101,7 +101,7 @@ void handleUserMessage(AsyncWebServerRequest* request);
  * @details Endpoint for printing content locally only. For MQTT operations, use /api/print-mqtt.
  *          Content should already have action headers (MESSAGE, JOKE, etc.)
  */
-void handlePrintContent(AsyncWebServerRequest* request);
+void handlePrintLocal(AsyncWebServerRequest* request);
 
 // ========================================
 // ========================================

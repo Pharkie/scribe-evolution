@@ -199,7 +199,7 @@ void handleRoutes(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "Routes data sent (%zu bytes)", response.length());
 }
 
-void handleMQTTSend(AsyncWebServerRequest *request)
+void handlePrintMQTT(AsyncWebServerRequest *request)
 {
     if (isRateLimited())
     {
@@ -266,29 +266,13 @@ void handleMQTTSend(AsyncWebServerRequest *request)
         return;
     }
     
-    // Create the MQTT payload as JSON with proper escaping
-    DynamicJsonDocument payloadDoc(4096);
-    payloadDoc["header"] = header;
-    payloadDoc["body"] = bodyContent;
+    // Use centralized MQTT publishing function
+    bool success = publishMQTTMessage(topic, header, bodyContent);
     
-    // Add sender information (device owner)
-    const RuntimeConfig &config = getRuntimeConfig();
-    if (config.deviceOwner.length() > 0)
-    {
-        payloadDoc["sender"] = config.deviceOwner;
-    }
-
-    String payload;
-    serializeJson(payloadDoc, payload);
-
-    // Publish to MQTT
-    if (mqttClient.publish(topic.c_str(), payload.c_str()))
-    {
-        LOG_VERBOSE("WEB", "MQTT message sent to topic: %s (%d characters)", topic.c_str(), payload.length());
+    if (success) {
+        LOG_VERBOSE("WEB", "MQTT message sent via centralized function to topic: %s", topic.c_str());
         request->send(200);
-    }
-    else
-    {
+    } else {
         LOG_ERROR("WEB", "Failed to send MQTT message to topic: %s", topic.c_str());
         sendErrorResponse(request, 500, "Failed to send MQTT message - broker error");
     }

@@ -292,11 +292,11 @@ void setupAPIRoutes()
 {
     // Print endpoints (with authentication)
     server.on("/api/print-local", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handlePrintContent);
+        authenticatedHandler(request, handlePrintLocal);
     });
     registerRoute("GET", "/api/print-local", "Print custom message");
     server.on("/api/print-local", HTTP_POST, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handlePrintContent);
+        authenticatedHandler(request, handlePrintLocal);
     }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-local", "Print custom message");
 
@@ -380,7 +380,7 @@ void setupAPIRoutes()
 
     // MQTT endpoints
     server.on("/api/print-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleMQTTSend);
+        authenticatedHandler(request, handlePrintMQTT);
     }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-mqtt", "Send MQTT message");
     server.on("/api/test-mqtt", HTTP_POST, [](AsyncWebServerRequest *request) {

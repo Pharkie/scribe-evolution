@@ -34,4 +34,7 @@ bool isMQTTEnabled();
 void startMQTTClient(bool immediate = true);
 void stopMQTTClient();
 
+// Centralized MQTT message publishing
+bool publishMQTTMessage(const String& topic, const String& header, const String& body);
+
 #endif // MQTT_HANDLER_H
