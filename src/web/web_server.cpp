@@ -388,6 +388,12 @@ void setupAPIRoutes()
     }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/test-mqtt", "Test MQTT connection");
 
+    // ChatGPT test endpoint
+    server.on("/api/test-chatgpt", HTTP_POST, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleTestChatGPT);
+    }, NULL, handleChunkedUpload);
+    registerRoute("POST", "/api/test-chatgpt", "Test ChatGPT API token");
+
 
 #if ENABLE_LEDS
     server.on("/api/leds/test", HTTP_POST, [](AsyncWebServerRequest *request) {

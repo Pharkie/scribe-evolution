@@ -188,6 +188,11 @@
     },
     {
       "method": "POST",
+      "path": "/api/test-chatgpt",
+      "description": "Test ChatGPT API token"
+    },
+    {
+      "method": "POST",
       "path": "/api/leds/test",
       "description": "Trigger LED Effect"
     },

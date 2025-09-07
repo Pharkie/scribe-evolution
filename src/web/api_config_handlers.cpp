@@ -48,6 +48,8 @@ String maskSecret(const String &secret)
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <Preferences.h>
+#include <utils/api_client.h>
+#include <config/system_constants.h>
 
 // External references
 extern PubSubClient mqttClient;
@@ -1087,5 +1089,63 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 
         LOG_WARNING("WEB", "MQTT test connection failed: %s", errorMsg.c_str());
         sendErrorResponse(request, 400, errorMsg);
+    }
+}
+
+void handleTestChatGPT(AsyncWebServerRequest *request)
+{
+    extern String getRequestBody(AsyncWebServerRequest * request);
+
+    LOG_VERBOSE("WEB", "handleTestChatGPT() called - testing ChatGPT API token");
+
+    // Read body
+    String body = getRequestBody(request);
+    if (body.length() == 0)
+    {
+        sendErrorResponse(request, 400, "Request body is empty");
+        return;
+    }
+
+    DynamicJsonDocument doc(512);
+    DeserializationError err = deserializeJson(doc, body);
+    if (err)
+    {
+        sendValidationError(request, ValidationResult(false, "Invalid JSON format: " + String(err.c_str())));
+        return;
+    }
+
+    if (!doc.containsKey("token") || !doc["token"].is<const char *>())
+    {
+        sendValidationError(request, ValidationResult(false, "Missing required field 'token'"));
+        return;
+    }
+
+    String token = doc["token"].as<String>();
+    token.trim();
+    if (token.length() == 0)
+    {
+        sendValidationError(request, ValidationResult(false, "API token cannot be blank"));
+        return;
+    }
+
+    // Build bearer and call models endpoint
+    String bearer = String("Bearer ") + token;
+    String response = fetchFromAPIWithBearer(chatgptApiTestEndpoint, bearer, apiUserAgent, 6000);
+
+    DynamicJsonDocument out(256);
+    if (response.length() > 0)
+    {
+        out["success"] = true;
+        String resp;
+        serializeJson(out, resp);
+        request->send(200, "application/json", resp);
+    }
+    else
+    {
+        out["success"] = false;
+        out["error"] = "Invalid API key or network error";
+        String resp;
+        serializeJson(out, resp);
+        request->send(401, "application/json", resp);
     }
 }

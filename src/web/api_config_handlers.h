@@ -84,6 +84,17 @@ void handleMemosPost(AsyncWebServerRequest *request);
 void handleTestMQTT(AsyncWebServerRequest *request);
 
 /**
+ * @brief Handle ChatGPT API token test
+ * @param request The HTTP request containing the ChatGPT API token
+ *
+ * Endpoint: POST /api/test-chatgpt
+ * Body: JSON with token (string, mandatory)
+ *
+ * Validates the token by calling the ChatGPT models endpoint with Bearer auth
+ */
+void handleTestChatGPT(AsyncWebServerRequest *request);
+
+/**
  * @brief Handle timezone data GET request
  * @param request The HTTP request
  *

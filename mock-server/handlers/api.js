@@ -82,6 +82,40 @@ function handleAPI(req, res, pathname, ctx) {
     return true;
   }
 
+  // /api/test-chatgpt (POST)
+  if (pathname === "/api/test-chatgpt" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { token } = JSON.parse(body || "{}");
+        if (!token || typeof token !== "string") {
+          return sendJSON(
+            res,
+            { success: false, error: "Missing 'token'" },
+            400,
+          );
+        }
+        // Simulate success for any token except 'badkey'
+        if (token === "badkey") {
+          return sendJSON(
+            res,
+            { success: false, error: "Invalid API key" },
+            401,
+          );
+        }
+        return sendJSON(res, { success: true }, 200);
+      } catch (e) {
+        return sendJSON(
+          res,
+          { success: false, error: "Invalid JSON format" },
+          400,
+        );
+      }
+    });
+    return true;
+  }
+
   // /api/config (GET)
   if (pathname === "/api/config" && req.method === "GET") {
     const mode =

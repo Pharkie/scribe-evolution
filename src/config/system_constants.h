@@ -141,6 +141,7 @@ static const char *quoteAPI = "https://zenquotes.io/api/random";
 static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categories=general_knowledge&difficulty=medium&limit=1";
 static const char *newsAPI = "https://feeds.bbci.co.uk/news/rss.xml";
 static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL (NEVER exposed to frontend)
+static const char *chatgptApiTestEndpoint = "https://api.openai.com/v1/models";       // ChatGPT token test URL (NEVER exposed to frontend)
 
 // BetterStack configuration
 static const char *betterStackEndpoint = "https://s1451477.eu-nbg-2.betterstackdata.com/";
