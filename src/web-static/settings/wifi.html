@@ -217,7 +217,7 @@
                             <button
                               type="button"
                               @click="scanWiFiNetworks"
-                              class="px-6 py-3 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 rounded-xl font-medium transition-all duration-200 hover:scale-105 hover:shadow-md flex items-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                              class="px-6 py-3 bg-transparent dark:bg-transparent text-green-700 dark:text-green-300 border-2 border-green-600 dark:border-green-500 rounded-xl font-medium transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-800 dark:hover:text-green-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-400/50 dark:focus:ring-green-700/50 flex items-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
                             >
                               <svg
                                 class="w-5 h-5 mr-2"
@@ -232,7 +232,7 @@
                                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                                 ></path>
                               </svg>
-                              Scan for Networks
+                              Sniff the Airwaves
                             </button>
                           </div>
 
@@ -262,7 +262,7 @@
                               <button
                                 type="button"
                                 @click="scanWiFiNetworks"
-                                class="flex items-center px-3 py-1 text-sm bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="flex items-center px-3 py-1 text-sm bg-transparent dark:bg-transparent text-green-700 dark:text-green-300 border-2 border-green-600 dark:border-green-500 rounded-xl transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-800 dark:hover:text-green-200 hover:scale-105 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400/50 dark:focus:ring-green-700/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
                               >
                                 <svg
                                   class="w-4 h-4 mr-1"
@@ -617,7 +617,7 @@
                         >WiFi changes restart device.</span
                       >
                       <span class="text-yellow-700 dark:text-yellow-300 ml-2"
-                        >Fallback AP:</span
+                        >Fallback network:</span
                       >
                       <span
                         class="font-mono text-yellow-800 dark:text-yellow-200 ml-1"
@@ -635,7 +635,7 @@
                   <button
                     @click="printAPDetails()"
                     :disabled="apPrintStatus === 'scribing'"
-                    class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-500 text-white rounded text-xs font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    class="px-3 py-1 bg-transparent dark:bg-transparent text-yellow-700 dark:text-yellow-300 border-2 border-yellow-600 dark:border-yellow-500 rounded text-xs font-medium transition-all duration-200 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-800 dark:hover:text-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 dark:focus:ring-yellow-700/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent flex items-center gap-1"
                   >
                     <svg
                       class="w-3 h-3"
@@ -651,7 +651,7 @@
                       ></path>
                     </svg>
                     <span
-                      x-text="apPrintStatus === 'scribing' ? 'Scribing' : 'Print'"
+                      x-text="apPrintStatus === 'scribing' ? 'Scribing Fallback Details' : 'Scribe Fallback Details'"
                     ></span>
                   </button>
                 </div>
