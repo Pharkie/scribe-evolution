@@ -99,7 +99,6 @@ export function createDiagnosticsMicrocontrollerStore() {
           },
           body: JSON.stringify({
             message: content,
-            source: "local-direct",
           }),
         });
 
