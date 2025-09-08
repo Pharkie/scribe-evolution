@@ -12,6 +12,7 @@ function handleAPStatic(pathname, res) {
     "/js/",
     "/images/",
     "/fonts/",
+    "/resources/",
     "/site.webmanifest",
     "/favicon.ico",
     "/favicon.svg",
