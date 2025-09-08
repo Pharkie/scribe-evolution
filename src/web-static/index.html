@@ -117,9 +117,9 @@
 
             <!-- Right spacer with settings button -->
             <div class="flex-1 flex justify-end">
-              <button
-                @click="goToSettings()"
-                class="inline-flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-md"
+              <a
+                href="/settings/"
+                class="inline-flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-md cursor-pointer"
                 :class="settingsStashed ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-600' : ''"
               >
                 <svg
@@ -145,7 +145,7 @@
                   class="text-xs sm:text-sm font-medium"
                   x-text="settingsStashed ? 'Saved' : 'Settings'"
                 ></span>
-              </button>
+              </a>
             </div>
           </header>
 
@@ -287,7 +287,7 @@
                     type="submit"
                     id="main-submit-btn"
                     :disabled="!canSubmit"
-                    class="w-full px-6 py-4 bg-blue-600 dark:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
+                    class="w-full px-6 py-4 bg-blue-600 dark:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg cursor-pointer"
                     :class="{
                                 'opacity-50 cursor-not-allowed': !canSubmit,
                                 'hover:bg-blue-700 dark:hover:bg-blue-600 hover:scale-[1.02]': canSubmit
@@ -325,7 +325,7 @@
                       <button
                         type="button"
                         @click="sendQuickAction('riddle')"
-                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         :class="{ 'opacity-75': activeQuickAction === 'riddle' }"
                         :disabled="activeQuickAction !== null"
                         data-action="riddle"
@@ -351,7 +351,7 @@
                       <button
                         type="button"
                         @click="sendQuickAction('joke')"
-                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         :class="{ 'opacity-75': activeQuickAction === 'joke' }"
                         :disabled="activeQuickAction !== null"
                         data-action="joke"
@@ -377,7 +377,7 @@
                       <button
                         type="button"
                         @click="sendQuickAction('quote')"
-                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         :class="{ 'opacity-75': activeQuickAction === 'quote' }"
                         :disabled="activeQuickAction !== null"
                         data-action="quote"
@@ -403,7 +403,7 @@
                       <button
                         type="button"
                         @click="showMemoModal()"
-                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-pink-50 hover:bg-pink-100 dark:bg-pink-900/20 dark:hover:bg-pink-900/40 border border-pink-200 dark:border-pink-700 text-pink-700 dark:text-pink-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-pink-50 hover:bg-pink-100 dark:bg-pink-900/20 dark:hover:bg-pink-900/40 border border-pink-200 dark:border-pink-700 text-pink-700 dark:text-pink-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         :class="{ 'opacity-75': activeQuickAction === 'memo' }"
                         :disabled="activeQuickAction !== null"
                         data-action="memo"
@@ -429,7 +429,7 @@
                       <button
                         type="button"
                         @click="sendQuickAction('quiz')"
-                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/20 dark:hover:bg-cyan-900/40 border border-cyan-200 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/20 dark:hover:bg-cyan-900/40 border border-cyan-200 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         :class="{ 'opacity-75': activeQuickAction === 'quiz' }"
                         :disabled="activeQuickAction !== null"
                         data-action="quiz"
@@ -446,7 +446,7 @@
                       <button
                         type="button"
                         @click="sendQuickAction('news')"
-                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         :class="{ 'opacity-75': activeQuickAction === 'news' }"
                         :disabled="activeQuickAction !== null"
                         data-action="news"
@@ -472,7 +472,7 @@
                       <button
                         type="button"
                         @click="sendQuickAction('poke')"
-                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/40 border border-sky-200 dark:border-sky-700 text-sky-700 dark:text-sky-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex flex-col items-center justify-center p-4 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/40 border border-sky-200 dark:border-sky-700 text-sky-700 dark:text-sky-300 transition-all duration-200 hover:scale-105 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         :class="{ 'opacity-75': activeQuickAction === 'poke' }"
                         :disabled="activeQuickAction !== null"
                         data-action="poke"
