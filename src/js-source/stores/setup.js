@@ -25,6 +25,20 @@ import {
   createTimezonePickerUI,
 } from "../device-config-utils/timezone-utils.js";
 
+// Confetti helper to enforce consistent per-container parameters (matching index.js pattern)
+function fireConfetti2D(options = {}) {
+  if (typeof confetti === "undefined") return Promise.resolve();
+  const base = {};
+  // Enforce container-level consistency (last wins)
+  return confetti("confetti-2d", {
+    ...base,
+    ...options,
+    flat: true,
+    zIndex: 100,
+    disableForReducedMotion: true,
+  });
+}
+
 export function createSetupStore() {
   return {
     // Basic state
@@ -260,59 +274,51 @@ export function createSetupStore() {
         this.wifiTestResult = result;
         if (result.success) {
           this.wifiTestPassed = true;
-          if (
-            !this._confettiShown &&
-            typeof window !== "undefined" &&
-            typeof window.confetti === "function"
-          ) {
-            // Inline SVG (Heroicons-style WiFi arcs) as image shape.
-            // Decide color first, then bake it directly into the SVG stroke (no runtime recolor needed).
-            const isDark =
-              document.documentElement.classList.contains("dark") ||
-              (window.matchMedia &&
-                window.matchMedia("(prefers-color-scheme: dark)").matches);
-            // Bright pink in dark mode, dark green in light mode
-            const wifiColor = isDark ? "#ff2fae" : "#064e3b";
-            const rawWifiSvg =
-              "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>" +
-              `<path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' stroke='${wifiColor}' fill='none' d='M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z'/>` +
+          if (!this._confettiShown && typeof confetti !== "undefined") {
+            // 📶 WiFi celebration with WiFi icon shape (matching poke button pattern)
+            const wifiSvg =
+              "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#10b981' stroke-width='1.5'>" +
+              "<path stroke-linecap='round' stroke-linejoin='round' d='M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z'/>" +
               "</svg>";
             const wifiSvgDataUrl =
-              "data:image/svg+xml;utf8," + encodeURIComponent(rawWifiSvg);
-            const btn = document.getElementById("test-wifi-button");
-            let origin = { x: 0.5, y: 0.5 };
-            if (btn) {
-              const rect = btn.getBoundingClientRect();
-              origin = {
-                x: (rect.left + rect.width / 2) / window.innerWidth,
-                y: (rect.top + rect.height / 2) / window.innerHeight,
-              };
-            }
+              "data:image/svg+xml;utf8," + encodeURIComponent(wifiSvg);
+
+            const buttonElement = document.getElementById("test-wifi-button");
+            const buttonRect = buttonElement?.getBoundingClientRect();
+
             this._confettiShown = true;
-            const base = {
-              scalar: 2.4, // Larger scalar (~2x original visual area)
+            await fireConfetti2D({
+              count: 25,
               spread: 70,
-              particleCount: 40,
-              origin,
-              startVelocity: 10,
-              gravity: 0.3,
-              decay: 0.98,
-            };
-            // Burst of WiFi icon shapes
-            window.confetti({
-              ...base,
+              startVelocity: 20,
+              gravity: 0.95,
+              drift: 0.5,
+              decay: 0.95,
+              scalar: 2.4,
+              position: buttonRect
+                ? {
+                    x:
+                      ((buttonRect.left + buttonRect.width / 2) /
+                        window.innerWidth) *
+                      100,
+                    y:
+                      ((buttonRect.top + buttonRect.height / 2) /
+                        window.innerHeight) *
+                      100,
+                  }
+                : { x: 50, y: 60 },
+              colors: ["#10b981"],
               shapes: ["image"],
               shapeOptions: {
                 image: [
                   {
                     src: wifiSvgDataUrl,
-                    replaceColor: false, // already baked color
+                    replaceColor: false,
                     width: 48,
                     height: 48,
                   },
                 ],
               },
-              colors: [wifiColor], // not used for image now but harmless if future mix added
             });
           }
         } else {
