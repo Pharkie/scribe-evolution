@@ -113,7 +113,7 @@
             </p>
             <button
               @click="window.location.reload()"
-              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer"
             >
               Retry
             </button>
@@ -876,7 +876,7 @@
               <button
                 type="submit"
                 :disabled="!canSave"
-                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg cursor-pointer"
                 :class="{ 'opacity-50 cursor-not-allowed': !canSave }"
               >
                 <span x-show="!saving" class="flex items-center justify-center">
@@ -908,7 +908,7 @@
               <button
                 type="button"
                 @click="cancelConfiguration"
-                class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600"
+                class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-pointer"
               >
                 Cancel
               </button>

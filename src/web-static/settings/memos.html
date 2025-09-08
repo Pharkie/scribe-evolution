@@ -34,7 +34,7 @@
         <div class="flex-1 flex justify-start">
           <button
             onclick="window.location.href='/settings/'"
-            class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md"
+            class="inline-flex items-center space-x-1 px-2 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-md cursor-pointer"
           >
             <svg
               class="w-3 h-3 sm:w-4 sm:h-4"
@@ -93,7 +93,7 @@
             <p class="text-red-600 dark:text-red-300 mb-4" x-text="error"></p>
             <button
               @click="loadConfiguration()"
-              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer"
             >
               Retry
             </button>
@@ -295,7 +295,7 @@
               <button
                 type="submit"
                 :disabled="!canSave"
-                class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
+                class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg cursor-pointer"
                 :class="{ 'opacity-50 cursor-not-allowed': !canSave }"
               >
                 <span x-show="!saving" class="flex items-center justify-center">
@@ -327,7 +327,7 @@
               <button
                 type="button"
                 @click="window.location.href = '/settings/'"
-                class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600"
+                class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-pointer"
               >
                 Cancel
               </button>

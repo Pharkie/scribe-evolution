@@ -113,7 +113,7 @@
             </p>
             <button
               @click="window.location.reload()"
-              class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+              class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer"
             >
               Retry
             </button>
@@ -267,7 +267,7 @@
                 <div class="flex flex-col items-center gap-2">
                   <button
                     type="button"
-                    class="px-6 py-3 bg-transparent dark:bg-transparent text-yellow-700 dark:text-yellow-300 border-2 border-yellow-600 dark:border-yellow-500 rounded-xl font-medium transition-all duration-200 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-800 dark:hover:text-yellow-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-400/50 dark:focus:ring-yellow-700/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
+                    class="px-6 py-3 bg-transparent dark:bg-transparent text-yellow-700 dark:text-yellow-300 border-2 border-yellow-600 dark:border-yellow-500 rounded-xl font-medium transition-all duration-200 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-800 dark:hover:text-yellow-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-400/50 dark:focus:ring-yellow-700/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent cursor-pointer"
                     :disabled="mqttTesting || !config.mqtt.server || !config.mqtt.port || !!mqttTestResult || !hasChanges()"
                     @click="testMqttConnection()"
                     x-text="testButtonLabel"
@@ -296,7 +296,7 @@
               type="button"
               @click="saveConfig()"
               :disabled="saving || !canSave"
-              class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold text-lg py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg"
+              class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold text-lg py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl transform active:scale-95 shadow-lg cursor-pointer"
               :class="{ 'opacity-50 cursor-not-allowed': saving || !canSave }"
               :title="!canSave ? (config.mqtt?.enabled && !mqttTestPassed ? 'Please test MQTT connection before saving' : 'Please fill in all required fields to save') : ''"
             >
@@ -343,7 +343,7 @@
             <button
               type="button"
               @click="cancelConfiguration"
-              class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600"
+              class="sm:flex-initial sm:w-32 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-xl font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-pointer"
             >
               Cancel
             </button>
