@@ -31,8 +31,8 @@ If you don't have a 3D printer, consider using the PCBWay affiliate link: https:
 
 | Component                         | Amazon US               | Amazon UK               | AliExpress                                |
 | --------------------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
-| Microcontroller (ESP32-C3)        | -                       | -                       | -                                         |
-| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                       | https://s.click.aliexpress.com/e/_opjoNrw |
+| Microcontroller (ESP32-C3)        | -                       | https://amzn.eu/d/ebTV8DC | https://www.aliexpress.com/item/1005007499955013.html?spm=a2g0o.order_list.order_list_main.15.329c1802O41vw5                                         |
+| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                       | https://www.aliexpress.com/item/32994269074.html?spm=a2g0o.order_list.order_list_main.36.76a91802Kn45St |
 | Paper Rolls, BPA-free (57.5x30mm) | https://amzn.to/4kpOREP | https://amzn.to/44nqGCg | -                                         |
 
 ### Thermal Paper Safety
