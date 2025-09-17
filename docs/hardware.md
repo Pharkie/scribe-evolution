@@ -59,7 +59,7 @@ The project uses UART1 to communicate with the printer:
 
 | Printer Pin | ESP32-C3 Pin | Power Supply Pin | Description              |
 | ----------- | ------------ | ---------------- | ------------------------ |
-| TTL RX      | GPIO21       | -                | MCU Transmit             |
+| TTL RX      | Configurable in software, defaults to GPIO21 | -                | MCU Transmit             |
 | TTL GND     | GND          | GND              | Common Ground            |
 | Power VH    | -            | 5V               | Printer VIN              |
 | Power GND   | GND          | GND              | Printer GND              |
@@ -88,7 +88,7 @@ These wires can be removed to reduce clutter during assembly.
 ├── GND → Common Ground Rail
 │
 ESP32-C3
-├── GPIO21 → Printer TTL RX
+├── GPIOXX (pick one) → Printer TTL RX
 ├── GND → Common Ground Rail
 ├── 5V ← Power Supply (during operation)
 └── USB ← Programming cable (programming only)
