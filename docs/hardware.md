@@ -35,6 +35,8 @@ If you don't have a 3D printer, consider using the PCBWay affiliate link: https:
 | Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                       | https://www.aliexpress.com/item/32994269074.html?spm=a2g0o.order_list.order_list_main.36.76a91802Kn45St |
 | Paper Rolls, BPA-free (57.5x30mm) | https://amzn.to/4kpOREP | https://amzn.to/44nqGCg | -                                         |
 
+For the AliExpress printer, order the vairant "Color: White TU 5-9V" (i.e. TTL not RS232 and 5-9v not 12v
+)
 ### Thermal Paper Safety
 
 > [!IMPORTANT] **BPA-Free Paper Recommended**
