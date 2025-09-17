@@ -59,14 +59,14 @@ The project uses UART1 to communicate with the printer:
 
 | Printer Pin | ESP32-C3 Pin | Power Supply Pin | Description              |
 | ----------- | ------------ | ---------------- | ------------------------ |
-| TTL RX      | GPIO20       | -                | MCU Transmit             |
-| TTL TX      | GPIO21       | -                | MCU Receive (not needed) |
+| TTL RX      | GPIO21       | -                | MCU Transmit             |
 | TTL GND     | GND          | GND              | Common Ground            |
 | Power VH    | -            | 5V               | Printer VIN              |
 | Power GND   | GND          | GND              | Printer GND              |
 
 **Unused connections:**
 
+- TTL TX (the printer doesn't reply to the MCU at all, traffic is one-way)
 - TTL NC (Not Connected)
 - TTL DTR (Data Terminal Ready)
 
@@ -88,8 +88,7 @@ These wires can be removed to reduce clutter during assembly.
 ├── GND → Common Ground Rail
 │
 ESP32-C3
-├── GPIO20 → Printer TTL RX
-├── GPIO21 → Printer TTL TX (optional)
+├── GPIO21 → Printer TTL RX
 ├── GND → Common Ground Rail
 ├── 5V ← Power Supply (during operation)
 └── USB ← Programming cable (programming only)
@@ -212,7 +211,7 @@ Before assembly, test your printer:
 
 **No printing output:**
 
-- Verify GPIO20 to TTL RX connection
+- Verify GPIO pin from MCU to printer TTL RX connection
 - Check baud rate configuration (115200)
 - Test with serial monitor for communication
 
