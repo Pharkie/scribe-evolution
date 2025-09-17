@@ -31,12 +31,12 @@ If you don't have a 3D printer, consider using the PCBWay affiliate link: https:
 
 | Component                         | Amazon US               | Amazon UK               | AliExpress                                |
 | --------------------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
-| Microcontroller (ESP32-C3)        | -                       | https://amzn.eu/d/ebTV8DC | https://www.aliexpress.com/item/1005007499955013.html?spm=a2g0o.order_list.order_list_main.15.329c1802O41vw5                                         |
-| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                       | https://www.aliexpress.com/item/32994269074.html?spm=a2g0o.order_list.order_list_main.36.76a91802Kn45St |
+| Microcontroller (ESP32-C3)        | -                       | https://amzn.eu/d/ebTV8DC | https://is.gd/G1Ymlw |
+| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                       | https://is.gd/ZZoRLk |
 | Paper Rolls, BPA-free (57.5x30mm) | https://amzn.to/4kpOREP | https://amzn.to/44nqGCg | -                                         |
 
 For EU e.g. Germany, this AliExpress link may work better for the printer:
-https://www.aliexpress.com/item/1005004083860562.html?invitationCode=alozcnRqeGJtUDFpdmlnc0REbHUvMUdKSU1ZaUdoUU5XSU8wT3pBbHpRcWVQemFTZUJrNWVWT0s1MU1hdTAyWg&srcSns=sns_Copy&spreadType=socialShare&social_params=61249277176&bizType=ProductDetail&spreadCode=alozcnRqeGJtUDFpdmlnc0REbHUvMUdKSU1ZaUdoUU5XSU8wT3pBbHpRcWVQemFTZUJrNWVWT0s1MU1hdTAyWg&aff_fcid=f8302358a2ab4ecaa87b8b284428ca00-1758110765812-00444-_EwVTwz8&tt=MG&aff_fsk=_EwVTwz8&aff_platform=default&sk=_EwVTwz8&aff_trace_key=f8302358a2ab4ecaa87b8b284428ca00-1758110765812-00444-_EwVTwz8&shareId=61249277176&businessType=ProductDetail&platform=AE&terminal_id=ab9fec63be3e4accb2c86d58c089e805&afSmartRedirect=y
+https://is.gd/kyWcfD
 
 For the AliExpress printer, order the vairant "Color: White TU 5-9V" (i.e. TTL not RS232 and 5-9v not 12v
 )
