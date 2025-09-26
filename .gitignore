@@ -41,6 +41,7 @@ data/
 __pycache__/
 *.pyc
 
-# Environment variables with secrets
-.mqtt_secrets
+# Environment variables with secrets (simulator only)
+scripts/.mqtt_secrets
+!scripts/.mqtt_secrets.example
 /.claude/sounds

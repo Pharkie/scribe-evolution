@@ -28,9 +28,9 @@ Or if you need to create a new virtual environment:
     pip install -r requirements.txt
 
 Configuration:
-Copy .mqtt_secrets.example to .mqtt_secrets and edit with your MQTT broker credentials:
-    cp .mqtt_secrets.example .mqtt_secrets
-    # Edit .mqtt_secrets with your actual MQTT settings
+Copy scripts/.mqtt_secrets.example to scripts/.mqtt_secrets and edit with your MQTT broker credentials:
+    cp scripts/.mqtt_secrets.example scripts/.mqtt_secrets
+    # Edit scripts/.mqtt_secrets with your actual MQTT settings
 
 Usage Examples:
 
@@ -111,14 +111,21 @@ except ImportError as e:
 
 try:
     from dotenv import load_dotenv  # type: ignore
+    from pathlib import Path
 
-    load_dotenv(".mqtt_secrets")  # Load .mqtt_secrets file if present
+    # Single canonical location for simulator secrets: scripts/.mqtt_secrets
+    _SECRETS_PATH = (Path(__file__).resolve().parent.parent / ".mqtt_secrets").resolve()
+    if _SECRETS_PATH.exists():
+        load_dotenv(_SECRETS_PATH)
+    else:
+        # Not fatal: user can still pass creds via CLI args
+        print("ℹ️  No secrets file at scripts/.mqtt_secrets; using CLI args/env vars.")
 except ImportError:
     print(
         "⚠️  Warning: python-dotenv not found. Install with: pip install python-dotenv"
     )
     print("   Using command line arguments only.")
-except (OSError, ValueError) as env_error:
+except Exception as env_error:
     print(f"⚠️  Warning: Could not load .mqtt_secrets file: {env_error}")
 
 
