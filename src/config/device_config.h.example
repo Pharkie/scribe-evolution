@@ -1,0 +1,51 @@
+/**
+ * @file device_config.h
+ * @brief Device-specific configuration for Scribe ESP32-C3 Thermal Printer
+ * @author Adam Knowles
+ * @date 2025
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+ *
+ * This file contains device-specific settings that MUST be configured for each device.
+ * This includes WiFi credentials, MQTT settings, API keys, and personal preferences.
+ *
+ * IMPORTANT: This file contains secrets and should be kept private.
+ * It is gitignored and should never be committed to version control.
+ *
+ * INSTRUCTIONS: Copy this file to device_config.h and fill in your actual credentials.
+ * The device_config.h file is gitignored to keep your secrets safe.
+ */
+
+#ifndef DEVICE_CONFIG_H
+#define DEVICE_CONFIG_H
+
+// ============================================================================
+// DEVICE-SPECIFIC SETTINGS - MUST BE CONFIGURED PER DEVICE
+// ============================================================================
+
+// Default WiFi settings
+static const char *defaultWifiSSID = "YOUR_WIFI_SSID";
+static const char *defaultWifiPassword = "YOUR_WIFI_PASSWORD";
+
+// Default device identity
+static const char *defaultDeviceOwner = "YOUR_DEVICE_NAME";
+static const char *defaultTimezone = "Europe/London";
+
+// Default MQTT broker settings
+static const bool defaultMqttEnabled = false; // Disable MQTT by default
+static const char *defaultMqttServer = "YOUR_MQTT_SERVER.hivemq.cloud";
+static const int defaultMqttPort = 8883; // TLS port
+static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";
+static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
+
+// Unbidden Ink (ChatGPT) API configuration
+static const bool defaultEnableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
+static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token
+static const int defaultUnbiddenInkStartHour = 10;                                                 // Working hours start (24-hour format)
+static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
+static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
+
+// BetterStack configuration
+static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
+
+#endif

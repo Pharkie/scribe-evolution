@@ -5,6 +5,8 @@ compile_commands.json
 
 # Configuration with sensitive data
 src/config/device_config.h*
+# Allow checked-in example template
+!src/config/device_config.h.example
 data/config.json
 config.json
 
