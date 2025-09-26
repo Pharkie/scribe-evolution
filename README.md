@@ -66,85 +66,14 @@ The firmware also supports 4 x physical buttons and an addressable LED strip, bu
 
 ## Acknowledgments
 
-### Original Project
-
-Credit to **UrbanCircles** for the original Project Scribe concept, 3D
-model, and initial codebase that inspired Scribe Evolution.
-
-### Riddles Collection
-
-The riddles feature uses a collection of riddles curated by **Nikhil Mohite**
-from the [riddles-api](https://github.com/nkilm/riddles-api) project. This
-collection is provided under the MIT License.
-
-- **Original Repository:** https://github.com/nkilm/riddles-api
-- **Author:** Nikhil Mohite
-- **License:** MIT License
-
-I thank Nikhil for making this wonderful collection of riddles available to the
-open source community.
-
-### UI Icons
-
-The user interface icons throughout the application are sourced from high-quality
-open source icon libraries:
-
-**Heroicons** - Modern SVG icons crafted by the makers of Tailwind CSS
-
-- **Repository:** https://github.com/tailwindlabs/heroicons
-- **Authors:** Steve Schoger and Adam Wathan (Refactoring UI Inc.)
-- **License:** MIT License
-- **Copyright:** © 2020 Refactoring UI Inc.
-
-**Sidekick Icons** - Carefully designed outline icons for modern applications
-
-- **Repository:** https://github.com/ndri/sidekickicons
-- **Author:** Andrea Debnar (@ndri)
-- **License:** MIT License
-- **Copyright:** © 2021 Andrea Debnar
+See `ACKNOWLEDGEMENTS.md` for full credits and attributions.
 
 ## Disclaimer
 
-I've done my best to document everything accurately - however, there might be
-mistakes. If you see them, or opportunities to improve, please open an issue. This is an open-source project with no warranties or guarantees.
-
-It assumes a level of proficiency with electronics, assemblies, engineering,
-etc. Do your own due diligence - it's your responsibility. Stay safe. Stay
-productive. Work with what you have. Make the world a better place.
+See `DISCLAIMER.md`.
 
 ## License
 
-This project is licensed under the **Creative Commons
-Attribution-NonCommercial-ShareAlike 4.0 International License**.
-
-### What this means:
-
-✅ **You are free to:**
-
-- **Share** — copy and redistribute the material in any medium or format
-- **Adapt** — remix, transform, and build upon the material
-
-⚠️ **Under the following terms:**
-
-- **Attribution** — You must give appropriate credit to Adam Knowles, provide a
-  link to the license, and indicate if changes were made
-- **NonCommercial** — You may not use the material for commercial purposes
-  without explicit written permission
-- **ShareAlike** — If you remix, transform, or build upon the material, you must
-  distribute your contributions under the same license
-
-### Commercial Use
-
-**Commercial use is prohibited without a licensing agreement.** If you wish to
-use this project commercially (including but not limited to selling products
-based on this design, using it in commercial environments, or incorporating it
-into commercial software), please contact the author.
-
-### Full License
-
-You can view the full license text at:
-https://creativecommons.org/licenses/by-nc-sa/4.0/
-
-### Copyright
+Commercial use is not free — a commercial license is required. See `LICENSE` for full terms (CC BY‑NC‑SA 4.0).
 
 © 2025 Adam Knowles. All rights reserved.
