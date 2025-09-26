@@ -1,8 +1,6 @@
 # Hardware Guide
 
-This document covers the hardware requirements, wiring, assembly, and printer-specific information for the Scribe ESP32-C3 Thermal Printer project.
-
-## Bill of Materials (BOM)
+This document covers the hardware requirements, wiring, and assembly for the Scribe Evolution ESP32-C3 Thermal Printer project.
 
 ### Basics
 
@@ -10,7 +8,7 @@ This document covers the hardware requirements, wiring, assembly, and printer-sp
 - **CSN-A4L thermal printer** - Thermal printing unit (comaptible, similar serial thermal printers might work)
 - **Paper rolls** - 57.5±0.5mm width and 30mm max diameter
 
-### And also
+### Plus
 - **Wires** - For connections between components
 - **USB cable** - For power and programming
 - **5V USB power supply** - Must be capable of higher currents (2.4A+ recommended, only needed during thermal printing)
@@ -18,9 +16,9 @@ This document covers the hardware requirements, wiring, assembly, and printer-sp
 
 ### Component Links
 
-#### 3D Printed Components
+#### 3D Printed Enclosure
 
-Until I can release my own design with buttons, grab the 3D printed components from the original Scribe project:
+Until I can release my own design with buttons, you can use the 3D printed components from the original Scribe project:
 
 - [Maker World](https://makerworld.com/en/models/1577165-project-scribe#profileId-1670812)
 - [Printables](https://www.printables.com/model/1346462-project-scribe/files)
@@ -29,7 +27,7 @@ If you don't have a 3D printer, please use the original PCBWay affiliate link: h
 
 #### Affiliate Component Links
 
-> [!NOTE] The components might be slightly different as listings change. It's difficult to provide links for products available in different markets / locations. Verify specifications before purchasing.
+> [!NOTE] The components might be slightly different as listings change. It's difficult to provide links for products available in different markets / locations. Check specs before purchase.
 
 | Component                         | Amazon US               | Amazon UK               | AliExpress                                |
 | --------------------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
@@ -107,9 +105,9 @@ Thermal Printer (CSN-A4L)
 └── TTL GND → Common Ground Rail
 ```
 
-## CSN-A4L Printer Specific Information
+## CSN-A4L Printer
 
-### Power Requirements
+### Power
 
 The CSN-A4L thermal printer cannot be powered via typical USB ports on e.g. your PC because they don't provide enough power. It requires dedicated power.
 
@@ -117,75 +115,40 @@ The CSN-A4L thermal printer cannot be powered via typical USB ports on e.g. your
 - **Voltage**: 5V
 - **Current**: High current during printing is reason for 2.4A+ power supply requirement.
 
-### Testing the Printer
+### Testing
 
-Before assembly, test your printer:
+To test your printer:
 
 1. Hold down the front button
 2. Apply 5V power to the POWER connector (2 pins)
 3. The printer should perform a self-test and print a test pattern
 4. You could use a bench power supply with crocodile clips for initial testing
 
-## 3D Printing Guidelines
-
-### Print Settings
-
-**Head Unit**
-
-- Requires supports due to fillets and overhangs
-- Use smaller layer heights (0.1-0.2mm) for better surface finish
-- Print orientation: electronics cavity facing up
-
-**Base**
-
-- Can be printed upright without supports
-- Standard layer heights acceptable (0.2-0.3mm)
-
-### Post-Processing
-
-- Test fit components before final assembly
-- Tolerances may vary between printers:
-  - **Too loose**: Use CA glue or epoxy for permanent bonding
-  - **Too tight**: Sand contact surfaces carefully
-- Do not glue electrical components - leave serviceable
-
 ## Assembly Instructions
 
-### Pre-Assembly Checklist
-
-1. **Test all electrical components** before enclosing them
-2. **Route cables first** - thread power cable through base before making connections
-3. **Prepare connections** - ensure all solder joints are clean and well-insulated
-4. **Functional test** - verify printing works before final assembly
+Verify printing works before assembly.
 
 ### Assembly Process
 
-1. **Route Power Cable:**
+1. **Route Power Cable**
    - Thread USB power cable through base channel
    - Leave sufficient length for internal connections
 
-2. **Prepare Electronics:**
+2. **Prepare Electronics**
    - Solder connections according to wiring diagram
    - Test continuity and isolation of all connections
    - Heat shrink or tape all exposed connections
 
-3. **Test Assembly:**
+3. **Test**
    - Connect power and test basic functionality
    - Print a test page to verify operation
    - Check for any shorts or connection issues
 
-4. **Final Assembly:**
+4. **Final Assembly**
    - Carefully place electronics in head unit
    - Ensure no wires are pinched or stressed
    - Secure components without permanent adhesive (in case service is needed)
    - Fit base to head unit and glue it together
-
-### Assembly Tips
-
-- **Cable Management**: Route wires neatly to avoid interference with paper feed
-- **Isolation**: Double-check all electrical connections are properly insulated
-- **Access**: Leave some access to connections for future troubleshooting
-- **Testing**: Perform a test print after assembly
 
 ### Tools Required
 
@@ -216,11 +179,12 @@ Before assembly, test your printer:
 
 **No printing output:**
 
-- Verify GPIO pin from MCU to printer TTL RX connection
+- Check connection from ESP32 GPIO to printer TTL RX
 - Test with serial monitor
 
-**Garbled output:**
+**Garbled print output:**
 
+- Indicates floating voltage/signal on the data line from ESP32
 - Check ground connections
 - Inspect for loose connections
 

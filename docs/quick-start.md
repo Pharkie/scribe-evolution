@@ -35,7 +35,7 @@ Where the .bin is one of:
 ## Step 4: Power up!
 
 1. **Disconnect** your ESP32
-2. Connect the thermal printer to your ESP32. TX pin is default GPIO21. (RX is disconnected, the printer doesn't talk back)
+2. Connect the thermal printer to your ESP32. Typically, GPIO21 (default; configurable) on the ESP32 connects to printer RX.
 3. **Power up** your ESP32. Cross fingers 🤞
 
 > 💡 **Power**: Use a separate 2.4A+ power supply for the thermal printer. Most USB ports can't power your thermal printer, due to the high power demands. With low current, you will get weird behaviour.
@@ -60,13 +60,13 @@ Open `http://scribe-XXXXXX.local` in a browser, where XXXXXX is your device name
 
 ## Step 6: Set Up MQTT for Remote Printing (Optional)
 
-### Optional MQTT Enables:
+### Setup MQTT to:
 
 - **🖨️ Send privately to your friends** - connect multiple Scribe Evolution devices to print between them
-- **🌍 Print from anywhere in the world** - send a message to your home printer from the train
-- **🏠 Home automation integration** - have your smart home or Apple Shortcuts send things to printers
+- **🌍 Print from anywhere in the world**
+- **🏠 Home automation integration** - have your smart home or Apple Shortcuts send text to your printer
 
-### Free MQTT Server Setup
+### MQTT Server Setup
 
 1. **Go to [HiveMQ Cloud](https://www.hivemq.com/)**
 2. **Create account** (free tier) and **create a cluster**
@@ -91,18 +91,18 @@ Welcome to the Scribe Evolution community! 🎉
 
 ## Where to get esptool
 
-### Option A: Using pip (Recommended)
+### Using pip (Recommended)
 
 ```bash
 pip install esptool
 ```
 
-### Option B: Using Homebrew (macOS)
+### Using Homebrew (macOS)
 
 ```bash
 brew install esptool
 ```
 
-### Option C: Download esptool binary
+### Download esptool binary
 
 Download from [espressif/esptool releases](https://github.com/espressif/esptool/releases)
