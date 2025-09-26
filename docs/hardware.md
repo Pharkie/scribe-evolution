@@ -4,30 +4,32 @@ This document covers the hardware requirements, wiring, assembly, and printer-sp
 
 ## Bill of Materials (BOM)
 
-### Required Components
+### Basics
 
-- **ESP32-C3 MCU board** - Main microcontroller (other ESP32 boards may work with pin adjustments)
-- **CSN-A4L thermal printer** - Thermal printing unit (other serial thermal printers might work)
-- **Paper rolls** - 57.5±0.5mm width and 30mm max diameter (printer comes preloaded with one)
-- **3D printed enclosure** - 2-part design (head unit and neck/leg)
+- **ESP32-C3 MCU board** - Main microcontroller (other ESP32 boards could work, with pin adjustments)
+- **CSN-A4L thermal printer** - Thermal printing unit (comaptible, similar serial thermal printers might work)
+- **Paper rolls** - 57.5±0.5mm width and 30mm max diameter
+
+### And also
 - **Wires** - For connections between components
 - **USB cable** - For power and programming
 - **5V USB power supply** - Must be capable of higher currents (2.4A+ recommended, only needed during thermal printing)
+- **3D printed enclosure** - 2-part design, head unit plus base.
 
 ### Component Links
 
 #### 3D Printed Components
 
-The printed components are available on:
+Until I can release my own design with buttons, grab the 3D printed components from the original Scribe project:
 
 - [Maker World](https://makerworld.com/en/models/1577165-project-scribe#profileId-1670812)
 - [Printables](https://www.printables.com/model/1346462-project-scribe/files)
 
-If you don't have a 3D printer, consider using the PCBWay affiliate link: https://pcbway.com/g/86cN6v
+If you don't have a 3D printer, please use the original PCBWay affiliate link: https://pcbway.com/g/86cN6v
 
 #### Affiliate Component Links
 
-> [!NOTE] The components might be slightly different as listings change. Always verify specifications before purchasing.
+> [!NOTE] The components might be slightly different as listings change. It's difficult to provide links for products available in different markets / locations. Verify specifications before purchasing.
 
 | Component                         | Amazon US               | Amazon UK               | AliExpress                                |
 | --------------------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
@@ -40,27 +42,27 @@ https://is.gd/kyWcfD
 
 For the AliExpress printer, order the vairant "Color: White TU 5-9V" (i.e. TTL not RS232 and 5-9v not 12v
 )
-### Thermal Paper Safety
+### Thermal Paper
 
-> [!IMPORTANT] **BPA-Free Paper Recommended**
+> [!IMPORTANT] BPA-Free Paper Recommended
 >
-> Standard thermal paper (like grocery receipts) contains BPA. For this project, choose BPA-free paper for health safety. The linked products are BPA-free.
+> Standard thermal paper (like grocery receipts) contains BPA. For this project, choose BPA-free paper for health safety.
 >
-> For maximum safety, look for "phenol-free" paper. Safe alternatives contain:
+> Look for "phenol-free" paper. Safe alternatives contain:
 >
 > - Ascorbic acid (vitamin C)
 > - Urea-based Pergafast 201
-> - Blue4est technology (no developers)
+> - Blue4est
 
-> [!NOTE] **Archival Considerations**
+> [!NOTE] Archival Considerations
 >
-> Some thermal paper is treated against fading and can last 35+ years. If using Scribe for archival purposes, consider ink longevity when selecting paper rolls.
+> Some thermal paper is treated against fading and can last 35+ years. If using Scribe Evolution for archival purposes, consider ink longevity when selecting paper rolls.
 
 ## Pin-out and Wiring
 
 ### ESP32-C3 to CSN-A4L Printer Connection
 
-The project uses UART1 to communicate with the printer:
+The project uses ESP32-C3 UART1 to communicate with the printer:
 
 | Printer Pin | ESP32-C3 Pin | Power Supply Pin | Description              |
 | ----------- | ------------ | ---------------- | ------------------------ |
@@ -69,17 +71,17 @@ The project uses UART1 to communicate with the printer:
 | Power VH    | -            | 5V               | Printer VIN              |
 | Power GND   | GND          | GND              | Printer GND              |
 
-**Unused connections:**
+**Unused printer connections:**
 
-- TTL TX (the printer doesn't reply to the MCU at all, traffic is one-way)
-- TTL NC (Not Connected)
+- TTL TX (the printer doesn't reply to the ESP32 at all, traffic is one-way)
+- TTL NC = Not Connected should be.. not connected.
 - TTL DTR (Data Terminal Ready)
 
-These wires can be removed to reduce clutter during assembly.
+These wires can be removed from the connector to reduce clutter and confusion.
 
 ### Power Requirements
 
-> [!IMPORTANT] **Power Safety**
+> [!IMPORTANT] Power Safety
 >
 > - **Never power the printer directly from the ESP32-C3** - you may damage the microcontroller
 > - **Only power the ESP32-C3 via one source** - either USB (during programming) OR via the 5V pin (during operation)
@@ -93,21 +95,27 @@ These wires can be removed to reduce clutter during assembly.
 ├── GND → Common Ground Rail
 │
 ESP32-C3
-├── GPIOXX (pick one) → Printer TTL RX
 ├── GND → Common Ground Rail
-├── 5V ← Power Supply (during operation)
-└── USB ← Programming cable (programming only)
+├── 5V ← Power Supply
+├── GPIO21 (default; configurable) → Printer TTL RX
+└── USB ← cable to PC when programming
+│
+Thermal Printer (CSN-A4L)
+├── Power VH ← 5V Power Supply VCC
+├── Power GND → Common Ground Rail
+├── TTL RX ← ESP32-C3 TX (GPIO21 default; configurable)
+└── TTL GND → Common Ground Rail
 ```
 
 ## CSN-A4L Printer Specific Information
 
 ### Power Requirements
 
-The CSN-A4L thermal printer cannot be powered via USB - it requires the dedicated POWER connector:
+The CSN-A4L thermal printer cannot be powered via typical USB ports on e.g. your PC because they don't provide enough power. It requires dedicated power.
 
 - **Power connector**: 3-pin (2 pins used)
 - **Voltage**: 5V
-- **Current**: High current during printing (reason for 2.4A+ power supply requirement)
+- **Current**: High current during printing is reason for 2.4A+ power supply requirement.
 
 ### Testing the Printer
 
@@ -116,30 +124,22 @@ Before assembly, test your printer:
 1. Hold down the front button
 2. Apply 5V power to the POWER connector (2 pins)
 3. The printer should perform a self-test and print a test pattern
-4. Use a bench power supply with crocodile clips for initial testing
-
-### Serial Communication
-
-- Uses TTL serial communication (5V logic levels)
-- Baud rate: 115200 (configured in firmware)
-- Only TX from ESP32 to printer RX is required for operation
-- RX from printer is optional (not used in current firmware)
+4. You could use a bench power supply with crocodile clips for initial testing
 
 ## 3D Printing Guidelines
 
 ### Print Settings
 
-**Head Unit:**
+**Head Unit**
 
 - Requires supports due to fillets and overhangs
 - Use smaller layer heights (0.1-0.2mm) for better surface finish
 - Print orientation: electronics cavity facing up
 
-**Neck/Leg:**
+**Base**
 
 - Can be printed upright without supports
 - Standard layer heights acceptable (0.2-0.3mm)
-- Ensure cable channel is properly formed
 
 ### Post-Processing
 
@@ -154,14 +154,14 @@ Before assembly, test your printer:
 ### Pre-Assembly Checklist
 
 1. **Test all electrical components** before enclosing them
-2. **Route cables first** - thread power cable through neck/leg before making connections
+2. **Route cables first** - thread power cable through base before making connections
 3. **Prepare connections** - ensure all solder joints are clean and well-insulated
 4. **Functional test** - verify printing works before final assembly
 
 ### Assembly Process
 
 1. **Route Power Cable:**
-   - Thread USB power cable through neck/leg channel
+   - Thread USB power cable through base channel
    - Leave sufficient length for internal connections
 
 2. **Prepare Electronics:**
@@ -178,14 +178,14 @@ Before assembly, test your printer:
    - Carefully place electronics in head unit
    - Ensure no wires are pinched or stressed
    - Secure components without permanent adhesive (in case service is needed)
-   - Fit neck/leg to head unit
+   - Fit base to head unit and glue it together
 
 ### Assembly Tips
 
 - **Cable Management**: Route wires neatly to avoid interference with paper feed
 - **Isolation**: Double-check all electrical connections are properly insulated
 - **Access**: Leave some access to connections for future troubleshooting
-- **Testing**: Always perform a final test print after assembly
+- **Testing**: Perform a test print after assembly
 
 ### Tools Required
 
@@ -194,7 +194,7 @@ Before assembly, test your printer:
 - Heat shrink tubing or electrical tape
 - Multimeter (for continuity testing)
 - Small files or sandpaper (for fit adjustments)
-- CA glue or epoxy (if permanent bonding is needed)
+- CA glue or epoxy
 
 ## Troubleshooting Hardware Issues
 
@@ -217,13 +217,11 @@ Before assembly, test your printer:
 **No printing output:**
 
 - Verify GPIO pin from MCU to printer TTL RX connection
-- Check baud rate configuration (115200)
-- Test with serial monitor for communication
+- Test with serial monitor
 
 **Garbled output:**
 
 - Check ground connections
-- Verify 5V/3.3V logic level compatibility
 - Inspect for loose connections
 
 ### Mechanical Issues
@@ -231,8 +229,7 @@ Before assembly, test your printer:
 **Paper feeding problems:**
 
 - Check for obstructions in paper path
-- Verify paper roll orientation
-- Ensure proper paper tension
+- Verify paper roll is the right way around
 
 **Assembly fit issues:**
 

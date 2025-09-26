@@ -2,7 +2,7 @@
 
 ## Step 1: Download Scribe Evolution Firmware
 
-1. Download firmware for your board from [Releases](https://github.com/Pharkie/scribe/releases) page
+1. Download firmware for your board from the [Releases](https://github.com/Pharkie/scribe/releases) page
 2. Extract the zip file to get `scribe-{environment}-complete.bin`.
 
 ## Step 2: Connect Your Board
@@ -34,11 +34,11 @@ Where the .bin is one of:
 
 ## Step 4: Power up!
 
-1. **Power down** your ESP32
+1. **Disconnect** your ESP32
 2. Connect the thermal printer to your ESP32. TX pin is default GPIO21. (RX is disconnected, the printer doesn't talk back)
 3. **Power up** your ESP32. Cross fingers 🤞
 
-> 💡 **Crucial**: Use a separate 2.4A+ power supply for the thermal printer. Most USB ports can't power your thermal printer, due to the high power demands. With low current, you will get WEIRD behaviour.
+> 💡 **Power**: Use a separate 2.4A+ power supply for the thermal printer. Most USB ports can't power your thermal printer, due to the high power demands. With low current, you will get weird behaviour.
 
 > Don't let the printer draw power from your board pins - always a separate power supply.
 
@@ -63,7 +63,7 @@ Open `http://scribe-XXXXXX.local` in a browser, where XXXXXX is your device name
 ### Optional MQTT Enables:
 
 - **🖨️ Send privately to your friends** - connect multiple Scribe Evolution devices to print between them
-- **🌍 Print from anywhere in the world** - send a message to your home printer from the bus
+- **🌍 Print from anywhere in the world** - send a message to your home printer from the train
 - **🏠 Home automation integration** - have your smart home or Apple Shortcuts send things to printers
 
 ### Free MQTT Server Setup

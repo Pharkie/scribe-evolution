@@ -2,7 +2,7 @@
 
 ## Overview
 
-Use Pipedream as a simple HTTP→MQTT bridge to send messages to your Scribe over the internet without exposing your LAN.
+Use Pipedream as a simple HTTP→MQTT bridge to send messages to your Scribe over the internet without exposing your local network.
 
 ### **What is Pipedream?**
 
@@ -46,7 +46,7 @@ receives messages from anywhere via a cloud MQTT broker, without exposing your
 home network. You just need a way to send HTTP requests from web services to
 that MQTT broker.
 
-Alternatives (n8n, Make.com, Zapier) work too; Pipedream offers a generous free tier and simple code execution.
+Alternatives (n8n, Make.com, Zapier) work too; Pipedream offers a good free tier and simple code execution.
 
 ### **Or you might try**
 
@@ -57,13 +57,12 @@ Other serverless platforms might work like Pipedream:
 - **[Zapier](https://zapier.com)** - Popular automation platform (100
   tasks/month free)
 - **[n8n Cloud](https://n8n.io)** - Hosted n8n without infrastructure
-  ($20+/month)
 
 **Pipedream stands out** because it combines generous free limits, full coding
 flexibility, and native MQTT library support - perfect for this specific use
 case.
 
-## Setup (condensed)
+## Setup
 
 ### **Step 1: Create Pipedream Account**
 
@@ -108,7 +107,7 @@ Add these 4 secrets in **Account Settings** → **Environment Variables**:
 1. Click **"+"** → **"Add step"** → **"Run custom code"**
 2. **Language**: Node.js
 3. **Step name**: `publish_to_mqtt`
-4. **Code**: Copy the complete [`pipedream.mjs`](../pipedream.mjs) content
+4. **Code**: Copy the code in [`pipedream.mjs`](../pipedream.mjs)
 
 ### Step 6: Test & deploy
 
@@ -262,5 +261,4 @@ mosquitto_pub -h your-mqtt-broker.com -p 8883 -u username -P password \
    - Document who has access
    - Revoke tokens when team members leave
 
-For questions or issues, refer to the main [Scribe README](../README.md) or
-create an issue in the repository.
+For questions or issues, please create an issue in the repository.

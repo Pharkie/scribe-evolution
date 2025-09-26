@@ -10,17 +10,25 @@
 <br>
 
 <p align="center">
-  <img src="docs/assets/Scribe-evolution-demo.gif" alt="Scribe Evolution Demo" width="100%" />
-  
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="docs/assets/Scribe-evolution-demo.gif" alt="Scribe Evolution Demo" width="100%" />
+      </td>
+      <td width="50%">
+        <img src="docs/assets/Scribe-original-hardware.jpeg" alt="Scribe Original Hardware" width="100%" />
+      </td>
+    </tr>
+  </table>
 </p>
 
 **Print Magic. Share Securely. Poke Friends.**
 
 Scribe Evolution is a delightful, small thermal printer you can use from your phone or laptop. Print quick notes, to‑dos, recipes, riddles, quotes, or little surprises. Keep it on a desk, the kitchen counter, or anywhere you want instant hard copy.
 
-### Why you’ll love it
+### Reasons to love it
 
-- **Instant printing**: Tear‑and‑go notes in seconds — no ink, no fuss on supercheap paper.
+- **Instant printing**: Tear‑and‑go notes in seconds — no ink, no fuss, on supercheap paper.
 - **Use any device**: Use the friendly web app at `http://scribe‑[name].local`
 - **Private by default**: Runs securely on your network.
 - **Remote printing (optional)**: Print from anywhere — set up remote printing ([learn more](docs/mqtt-integration.md))
@@ -33,31 +41,35 @@ Scribe Evolution is a delightful, small thermal printer you can use from your ph
 
 **👉 [Quick Start Guide - Flash the Pre-built Firmware →](docs/quick-start.md)**
 
-Get your Scribe printer running in minutes with pre-built firmware. No development environment needed.
+Get your Scribe printer running in minutes with pre-built firmware. No coding changes needed.
 
 ---
 
-### What you need
+### Hardware setup
 
-- ESP32‑C3 Supermini (only board tested so far)
-- CSN‑A4L thermal printer (or compatible)
+- ESP32‑C3 Supermini
+- CSN‑A4L thermal printer (or compatible) and paper
 - 5V power supply (2.4A+ recommended, important)
 
-### Optional extras (DIY)
+To setup your hardware, check the [Hardware Guide](docs/hardware.md).
 
-If you like to tinker, you can add physical buttons and an LED strip later. They’re not required for normal use.
-See the [Hardware Guide](docs/hardware.md).
+### Optional extras
 
-> **Need help?** See the [Build Instructions](docs/build-instructions.md) for detailed setup steps.
+The firmware also supports 4 x physical buttons and an addressable LED strip, but you can add these later. 
 
 ### Learn more
 
 - **Quick Start**: [Flash pre‑built firmware](docs/quick-start.md)
 - **Troubleshooting**: [Common issues and fixes](docs/troubleshooting.md)
 - **Remote printing**: [MQTT integration](docs/mqtt-integration.md) and [Apple Shortcuts](docs/apple-shortcuts.md)
-- **Full docs index**: [See all guides](docs/build-instructions.md)
+- **Docs index**: [See all guides](docs/build-instructions.md)
 
-## Credits and Acknowledgments
+## Acknowledgments
+
+### Original Project
+
+Credit to **UrbanCircles** for the original Project Scribe concept, 3D
+model, and initial codebase that inspired Scribe Evolution.
 
 ### Riddles Collection
 
@@ -91,20 +103,11 @@ open source icon libraries:
 - **License:** MIT License
 - **Copyright:** © 2021 Andrea Debnar
 
-Both icon sets replaced emoji characters throughout the interface to provide
-consistent, scalable, and accessible visual elements. All icons maintain
-their original MIT License terms.
-
-### Original Project
-
-Credit to **UrbanCircles** for the original Project Scribe concept, 3D
-model, and initial codebase that inspired Scribe Evolution.
-
 ## Disclaimer
 
 I've done my best to document everything accurately - however, there might be
-mistakes. If you see them, or opportunities to improve, please open an issue.  
-This is an open-source project given for free, with no warranties or guarantees.
+mistakes. If you see them, or opportunities to improve, please open an issue. This is an open-source project with no warranties or guarantees.
+
 It assumes a level of proficiency with electronics, assemblies, engineering,
 etc. Do your own due diligence - it's your responsibility. Stay safe. Stay
 productive. Work with what you have. Make the world a better place.

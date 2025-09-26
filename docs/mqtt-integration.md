@@ -12,49 +12,24 @@ The Scribe Evolution MQTT integration enables:
 - **Quick action buttons** that work with any configured printer
 - **External service integration** via webhook-to-MQTT bridges
 
-## Features
-
-### Multi-Printer Support
-
-- Control local and remote printers from the same UI
-- Automatic discovery and status monitoring
-
-### Secure Communication
-
-- TLS encryption (port 8883) with CA certificate verification
-- Hostname verification pending
-- Compatible with cloud MQTT brokers like HiveMQ Cloud
-- 4096-byte message buffer for larger content
-
-### Content Distribution
-
-- All quick action buttons work with remote printers
-- Unified endpoint system processes both local and MQTT requests
-- Watchdog timer integration prevents system crashes during content generation
-
 ## Configuration
 
 ### MQTT Broker Setup
 
 Set credentials via Settings → MQTT (persisted in NVS).
 
-### Topics
-
-Use a consistent pattern, e.g. `scribe/{printer-id}/inbox`.
 
 ### Topic Naming Convention
 
-Use a consistent topic structure:
-
-- **Pattern**: `scribeprinter/{unique-id}/inbox`
+- **Pattern**: `scribeprinter/{unique-id}/print`
 - **Examples**:
-  - `scribeprinter/alice/inbox`
-  - `scribeprinter/office-main/inbox`
-  - `scribeprinter/kitchen-home/inbox`
-
-This ensures topics are unique and organized for easy management.
+  - `scribeprinter/alice/print`
+  - `scribeprinter/office-main/print`
+  - `scribeprinter/kitchen-home/print`
 
 ## Message Formats
+
+Note: the below may need updating.. check what the web interface sends to be sure.
 
 ### Simple Text Messages
 
@@ -88,40 +63,6 @@ For triggering quick actions remotely:
 
 These endpoints trigger the same functionality as the web interface quick action buttons.
 
-### Message Processing
-
-- Messages are processed through the unified endpoint system
-- Timestamps are automatically added to all printed content
-- Watchdog timer prevents system crashes during content generation
-- Invalid JSON falls back to plain text printing
-
-## Web Interface Integration
-
-### Printer Selection
-
-The web interface includes a printer selection dropdown:
-
-- **Local Direct** - Print directly to local printer (bypasses MQTT)
-- **Local via MQTT** - Print to local printer via MQTT (useful for testing)
-- **Remote Printers** - All configured remote printers from `config.h`
-
-### Quick Action Buttons
-
-All quick actions work with any selected printer:
-
-- **🧩 Riddle** - Random riddle from built-in collection (545+ riddles)
-- **😂 Joke** - Dad joke from icanhazdadjoke.com API
-- **💭 Quote** - Inspirational quote from ZenQuotes.io API
-- **🧠 Quiz** - Trivia question from The Trivia API
-- **🔤 Test Print** - Comprehensive character set test for calibration
-
-### User Experience
-
-- Actions provide immediate feedback via toast messages
-- Failed remote printing attempts show appropriate error messages
-- Printer status indicators show connection state
-- Seamless switching between local and remote printers
-
 ## MQTT Broker Options
 
 ### HiveMQ Cloud (Recommended)
@@ -133,7 +74,7 @@ All quick actions work with any selected printer:
 - TLS encryption included
 - Web dashboard for monitoring
 
-**Setup Steps**:
+**Setup**:
 
 1. Create account at [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/)
 2. Create cluster and note connection details
@@ -171,7 +112,7 @@ Test your setup with MQTT client tools:
 ```bash
 mosquitto_pub -h your-broker.hivemq.cloud -p 8883 \
   -u your-username -P your-password \
-  -t "scribeprinter/test/inbox" \
+  -t "scribeprinter/test/print" \
   -m '{"message": "Test message from command line"}'
 ```
 
@@ -184,43 +125,6 @@ mosquitto_pub -h your-broker.hivemq.cloud -p 8883 \
 ### Diagnostic Information
 
 Diagnostics page shows connection status, subscriptions, last message, and errors.
-
-## Security Considerations
-
-### Network Security
-
-- Always use TLS (port 8883)
-- Use strong, unique credentials
-- Consider firewall rules for self‑hosted brokers
-
-### Topic Security
-
-- Use unique, non‑guessable topics
-- Configure topic ACLs on the broker
-- Rotate credentials periodically
-
-### Content Security
-
-- Validate messages; enforce size limits
-- Monitor for abuse; use rate limiting
-
-## Troubleshooting
-
-### Connection Issues
-
-**Can't connect to MQTT broker**:
-
-- Check network connectivity
-- Verify broker hostname and port
-- Confirm credentials are correct
-- Check TLS certificate issues
-
-**Frequent disconnections**:
-
-- Check network stability
-- Verify broker connection limits
-- Monitor broker logs for errors
-- Check keep-alive settings
 
 ### Message Issues
 
@@ -257,7 +161,7 @@ Monitor serial output for detailed MQTT connection and message processing logs.
 ```yaml
 mqtt:
   - name: "Scribe Evolution Kitchen Printer"
-    command_topic: "scribeprinter/kitchen/inbox"
+    command_topic: "scribe/kitchen/print"
     payload_on: '{"message": "Good morning! Coffee is ready."}'
 ```
 
