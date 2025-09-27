@@ -27,8 +27,7 @@ If you don't have a 3D printer, please use the original PCBWay affiliate link: h
 
 #### Electronic Components
 
-> [!NOTE]
-> The components might be slightly different as listings change. It's difficult to provide links for products available in different markets/locations. Check specs before purchase.
+The components might be slightly different as listings change. It's difficult to provide links for products available in different markets/locations. Check specs before purchase.
 
 | Component                         | Amazon US               | Amazon UK               | AliExpress                                |
 | --------------------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
@@ -43,21 +42,19 @@ For the AliExpress printer, order the vairant "Color: White TU 5-9V" (i.e. TTL n
 
 ### Thermal Paper
 
-> [!IMPORTANT]
-> BPA-free paper recommended.
->
-> Standard thermal paper (like grocery receipts) contains BPA. For this project, choose BPA‑free paper for health safety.
->
-> Look for "phenol‑free" paper. Safe alternatives contain:
->
-> - Ascorbic acid (vitamin C)
-> - Urea-based Pergafast 201
-> - Blue4est
+#### BPA-free paper recommended
 
-> [!NOTE]
-> Archival considerations
->
-> Some thermal paper is treated against fading and can last 35+ years. If using Scribe Evolution for archival purposes, consider ink longevity when selecting paper rolls.
+Standard thermal paper (like grocery receipts) contains BPA. For this project, choose BPA‑free paper for health safety.
+
+Look for "phenol‑free" paper. Safe alternatives contain:
+
+- Ascorbic acid (vitamin C)
+- Urea-based Pergafast 201
+- Blue4est
+
+#### Archival considerations
+
+Some thermal paper is treated against fading and can last 35+ years. If using Scribe Evolution for archival purposes, consider ink longevity when selecting paper rolls.
 
 ## Pin-out and Wiring
 
