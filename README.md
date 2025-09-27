@@ -62,7 +62,7 @@ The firmware also supports 4 x physical buttons and an addressable LED strip, bu
 - **Quick Start**: [Flash pre‑built firmware](docs/quick-start.md)
 - **Troubleshooting**: [Common issues and fixes](docs/troubleshooting.md)
 - **Remote printing**: [MQTT integration](docs/mqtt-integration.md) and [Apple Shortcuts](docs/apple-shortcuts.md)
-- **Docs index**: [See all guides](docs/build-instructions.md)
+- **Docs index**: [See all guides](docs/index.md)
 
 ## Acknowledgments
 

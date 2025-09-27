@@ -4,8 +4,8 @@ This document covers the hardware requirements, wiring, and assembly for the Scr
 
 ### Basics
 
-- **ESP32-C3 MCU board** - Main microcontroller (other ESP32 boards could work, with pin adjustments)
-- **CSN-A4L thermal printer** - Thermal printing unit (comaptible, similar serial thermal printers might work)
+- **ESP32-C3 MCU board** - Main microcontroller. Other ESP32 boards might work.
+- **CSN-A4L thermal printer** - Thermal printing unit or compatible - similar serial thermal printers might work.
 - **Paper rolls** - 57.5±0.5mm width and 30mm max diameter
 
 ### Plus
@@ -14,7 +14,7 @@ This document covers the hardware requirements, wiring, and assembly for the Scr
 - **5V USB power supply** - Must be capable of higher currents (2.4A+ recommended, only needed during thermal printing)
 - **3D printed enclosure** - 2-part design, head unit plus base.
 
-### Component Links
+### Components
 
 #### 3D Printed Enclosure
 
@@ -25,9 +25,10 @@ Until I can release my own design with buttons, you can use the 3D printed compo
 
 If you don't have a 3D printer, please use the original PCBWay affiliate link: https://pcbway.com/g/86cN6v
 
-#### Affiliate Component Links
+#### Electronic Components
 
-> [!NOTE] The components might be slightly different as listings change. It's difficult to provide links for products available in different markets / locations. Check specs before purchase.
+> [!NOTE]
+> The components might be slightly different as listings change. It's difficult to provide links for products available in different markets/locations. Check specs before purchase.
 
 | Component                         | Amazon US               | Amazon UK               | AliExpress                                |
 | --------------------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
@@ -38,21 +39,23 @@ If you don't have a 3D printer, please use the original PCBWay affiliate link: h
 For EU e.g. Germany, this AliExpress link may work better for the printer:
 https://is.gd/kyWcfD
 
-For the AliExpress printer, order the vairant "Color: White TU 5-9V" (i.e. TTL not RS232 and 5-9v not 12v
-)
+For the AliExpress printer, order the vairant "Color: White TU 5-9V" (i.e. TTL not RS232 and 5-9v not 12v)
+
 ### Thermal Paper
 
-> [!IMPORTANT] BPA-Free Paper Recommended
+> [!IMPORTANT]
+> BPA-free paper recommended.
 >
-> Standard thermal paper (like grocery receipts) contains BPA. For this project, choose BPA-free paper for health safety.
+> Standard thermal paper (like grocery receipts) contains BPA. For this project, choose BPA‑free paper for health safety.
 >
-> Look for "phenol-free" paper. Safe alternatives contain:
+> Look for "phenol‑free" paper. Safe alternatives contain:
 >
 > - Ascorbic acid (vitamin C)
 > - Urea-based Pergafast 201
 > - Blue4est
 
-> [!NOTE] Archival Considerations
+> [!NOTE]
+> Archival considerations
 >
 > Some thermal paper is treated against fading and can last 35+ years. If using Scribe Evolution for archival purposes, consider ink longevity when selecting paper rolls.
 
@@ -79,11 +82,12 @@ These wires can be removed from the connector to reduce clutter and confusion.
 
 ### Power Requirements
 
-> [!IMPORTANT] Power Safety
+> [!IMPORTANT]
+> Power safety
 >
-> - **Never power the printer directly from the ESP32-C3** - you may damage the microcontroller
-> - **Only power the ESP32-C3 via one source** - either USB (during programming) OR via the 5V pin (during operation)
-> - Use a dedicated 5V power supply capable of 2.4A+ for the shared power rail
+> - Never power the printer directly from the ESP32‑C3 — you may damage the microcontroller.
+> - Power the ESP32‑C3 from only one source at a time: either USB (during programming) OR the 5V pin (during operation).
+> - Use a dedicated 5V power supply capable of 2.4A+ for the shared power rail.
 
 ### Wiring Diagram
 
@@ -123,6 +127,9 @@ To test your printer:
 2. Apply 5V power to the POWER connector (2 pins)
 3. The printer should perform a self-test and print a test pattern
 4. You could use a bench power supply with crocodile clips for initial testing
+
+### Printer manual
+https://www.manualslib.com/manual/3035820/Cashino-Csn-A4l.html
 
 ## Assembly Instructions
 
