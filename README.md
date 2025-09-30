@@ -12,8 +12,13 @@
 <p align="center">
   <table>
     <tr>
-      <td width="50%">
+      <td colspan="2">
         <img src="docs/assets/Scribe-evolution-demo.gif" alt="Scribe Evolution Demo" width="100%" />
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <img src="docs/assets/News-printing.gif" alt="Scribe News Printing Demo" width="100%" />
       </td>
       <td width="50%">
         <img src="docs/assets/Scribe-original-hardware.jpeg" alt="Scribe Original Hardware" width="100%" />
