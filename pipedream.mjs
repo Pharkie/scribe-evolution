@@ -74,16 +74,16 @@ export default defineComponent({
     const data = steps.trigger.event || {};
 
     const remote_printer = data.remote_printer;
-    const message = data.message;
-    const timestamp = data.timestamp;
+    const header = data.header;
+    const body = data.body;
     const sender = data.sender;
+    const timestamp = data.timestamp;
 
     // Validate required fields
     const missingFields = [];
     if (!remote_printer) missingFields.push("remote_printer");
-    if (!message) missingFields.push("message");
-    if (!timestamp) missingFields.push("timestamp");
-    if (!sender) missingFields.push("sender");
+    if (!header) missingFields.push("header");
+    if (!body) missingFields.push("body");
 
     if (missingFields.length > 0) {
       await $.respond({
@@ -93,8 +93,14 @@ export default defineComponent({
       return;
     }
 
-    const topic = `scribe/${remote_printer}/inbox`;
-    const payload = JSON.stringify({ message, timestamp, sender });
+    const topic = `scribe/${remote_printer}/print`;
+
+    // Build payload with header, body, and optional sender/timestamp
+    const payloadData = { header, body };
+    if (sender) payloadData.sender = sender;
+    if (timestamp) payloadData.timestamp = timestamp;
+
+    const payload = JSON.stringify(payloadData);
 
     try {
       const client = await mqttConnectAsync({

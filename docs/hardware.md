@@ -9,6 +9,7 @@ This document covers the hardware requirements, wiring, and assembly for the Scr
 - **Paper rolls** - 57.5±0.5mm width and 30mm max diameter
 
 ### Plus
+
 - **Wires** - For connections between components
 - **USB cable** - For power and programming
 - **5V USB power supply** - Must be capable of higher currents (2.4A+ recommended, only needed during thermal printing)
@@ -29,11 +30,11 @@ If you don't have a 3D printer, please use the original PCBWay affiliate link: h
 
 The components might be slightly different as listings change. It's difficult to provide links for products available in different markets/locations. Check specs before purchase.
 
-| Component                         | Amazon US               | Amazon UK               | AliExpress                                |
-| --------------------------------- | ----------------------- | ----------------------- | ----------------------------------------- |
+| Component                         | Amazon US               | Amazon UK                 | AliExpress           |
+| --------------------------------- | ----------------------- | ------------------------- | -------------------- |
 | Microcontroller (ESP32-C3)        | -                       | https://amzn.eu/d/ebTV8DC | https://is.gd/G1Ymlw |
-| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                       | https://is.gd/ZZoRLk |
-| Paper Rolls, BPA-free (57.5x30mm) | https://amzn.to/4kpOREP | https://amzn.to/44nqGCg | -                                         |
+| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                         | https://is.gd/ZZoRLk |
+| Paper Rolls, BPA-free (57.5x30mm) | https://amzn.to/4kpOREP | https://amzn.to/44nqGCg   | -                    |
 
 For EU e.g. Germany, this AliExpress link may work better for the printer:
 https://is.gd/kyWcfD
@@ -62,12 +63,12 @@ Some thermal paper is treated against fading and can last 35+ years. If using Sc
 
 The project uses ESP32-C3 UART1 to communicate with the printer:
 
-| Printer Pin | ESP32-C3 Pin | Power Supply Pin | Description              |
-| ----------- | ------------ | ---------------- | ------------------------ |
-| TTL RX      | Configurable in software, defaults to GPIO21 | -                | MCU Transmit             |
-| TTL GND     | GND          | GND              | Common Ground            |
-| Power VH    | -            | 5V               | Printer VIN              |
-| Power GND   | GND          | GND              | Printer GND              |
+| Printer Pin | ESP32-C3 Pin                                 | Power Supply Pin | Description   |
+| ----------- | -------------------------------------------- | ---------------- | ------------- |
+| TTL RX      | Configurable in software, defaults to GPIO21 | -                | MCU Transmit  |
+| TTL GND     | GND                                          | GND              | Common Ground |
+| Power VH    | -                                            | 5V               | Printer VIN   |
+| Power GND   | GND                                          | GND              | Printer GND   |
 
 **Unused printer connections:**
 
@@ -126,6 +127,7 @@ To test your printer:
 4. You could use a bench power supply with crocodile clips for initial testing
 
 ### Printer manual
+
 https://www.manualslib.com/manual/3035820/Cashino-Csn-A4l.html
 
 ## Assembly Instructions

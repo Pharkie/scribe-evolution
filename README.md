@@ -60,7 +60,7 @@ To setup your hardware, check the [Hardware Guide](docs/hardware.md).
 
 ### Optional extras
 
-The firmware also supports 4 x physical buttons and an addressable LED strip, but you can add these later. 
+The firmware also supports 4 x physical buttons and an addressable LED strip, but you can add these later.
 
 ### Learn more
 

@@ -31,4 +31,3 @@ The user interface icons throughout the application are sourced from high-qualit
 - **Author:** Andrea Debnar (@ndri)
 - **License:** MIT License
 - **Copyright:** © 2021 Andrea Debnar
-

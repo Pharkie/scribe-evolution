@@ -18,7 +18,6 @@ The Scribe Evolution MQTT integration enables:
 
 Set credentials via Settings → MQTT (persisted in NVS).
 
-
 ### Topic Naming Convention
 
 - Pattern: `scribe/{printer_name}/print`
@@ -33,10 +32,12 @@ Set credentials via Settings → MQTT (persisted in NVS).
 Scribe expects a structured JSON payload over MQTT with at least `header` and `body`. The device prints `header`, a blank line, then `body`.
 
 Required fields
+
 - `header` string: e.g. `"MESSAGE"`, `"JOKE"`, `"RIDDLE"`, `"QUOTE"`, `"QUIZ"`, or `"MEMO 1"`–`"MEMO 4"`.
 - `body` string: the content to print.
 
 Optional fields
+
 - `sender` string: appended to header as “<header> from <sender>”.
 - `timestamp` string: ignored on receipt; device adds its own on print.
 
