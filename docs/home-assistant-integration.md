@@ -163,7 +163,7 @@ You can manually publish to your Scribe topic using **Developer Tools** → **Ac
 1. Type "mqtt" in search bar and choose "Publish" action
 2. Set topic for your printer e.g.
 
-```json
+```
   scribe/Krists/print
 ```
 

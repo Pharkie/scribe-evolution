@@ -72,11 +72,13 @@ The firmware also supports 4 x physical buttons and an addressable LED strip, bu
 
 ## Acknowledgments
 
-See `ACKNOWLEDGEMENTS.md` for full credits and attributions.
+Thanks to UrbanCircles for the original Project Scribe.
+
+For more, see [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md).
 
 ## Disclaimer
 
-See `DISCLAIMER.md`.
+See [DISCLAIMER.md](DISCLAIMER.md).
 
 ## License
 
