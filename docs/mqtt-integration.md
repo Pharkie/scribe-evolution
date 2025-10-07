@@ -75,11 +75,9 @@ Now connect your Scribe Evoluton to your HiveMQ cluster:
 
 ### Connect Scribe Evolution Printers Together
 
-Want to print to friends' printers?
-
-1. Both of you complete HiveMQ setup (you can share the same cluster)
-2. Both of you use the same MQTT credentials
-3. Printers auto-detect each other. Start sending messages!
+1. Use the same MQTT credentials for all Scribe Evolution printers in your private network.
+2. Printers will auto-detect each other, instantly.
+3. Send messages, joke, news, poke!
 
 ### Send Messages From Other Devices
 
