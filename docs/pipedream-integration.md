@@ -1,6 +1,6 @@
 # Pipedream MQTT Bridge Integration Guide
 
-Use Pipedream as a free HTTP→MQTT bridge to send messages to your Scribe from anywhere on the internet - perfect for Apple Shortcuts, web services, and automation tools.
+Use Pipedream as a free HTTP→MQTT bridge to send messages to your Scribe from anywhere on the internet - perfect for Apple Shortcuts, Home Assistant, IFTTT, and other automation tools.
 
 > ⚠️ Set up HiveMQ first, see the [MQTT Integration Guide](mqtt-integration.md)
 
@@ -53,7 +53,7 @@ Configure the webhook that will receive HTTP requests and forward them to MQTT.
 2. Configure these settings:
    - **Event Data**: HTTP Body Only
    - **HTTP Response**: "Return a custom response from your workflow"
-   authentication (protects your webhook from unauthorized access):
+     authentication (protects your webhook from unauthorized access):
    - **Authorization**: Custom token
    - **Token**: Create a secure random token
 
@@ -61,7 +61,7 @@ Configure the webhook that will receive HTTP requests and forward them to MQTT.
    >
    > Example: `scribe_a8f3x9sdfsfw34f434334vsvdfvdfvdfverfdv344vb28282882828828090918912m2p7q1`
 
-4. **Save and continue**
+3. **Save and continue**
 
 ![Configure HTTP Trigger](assets/screenshots/mqtt/pipedream/pipedream-4.png)
 
