@@ -22,6 +22,7 @@ Welcome! This index groups the most useful docs so you can find things fast.
 ## Remote Printing
 
 - MQTT Integration: setup, topics, examples — [docs/mqtt-integration.md](mqtt-integration.md)
+- Home Assistant: MQTT bridge integration — [docs/home-assistant-integration.md](home-assistant-integration.md)
 - Apple Shortcuts: send via HTTP→MQTT — [docs/apple-shortcuts.md](apple-shortcuts.md)
 - Pipedream Bridge: webhook→MQTT workflow — [docs/pipedream-integration.md](pipedream-integration.md)
 

@@ -37,7 +37,8 @@ Scribe Evolution is a delightful, small thermal printer you can use from your ph
 - **Use any device**: Use the friendly web app at `http://scribe‑[name].local`
 - **Private by default**: Runs securely on your network.
 - **Remote printing (optional)**: Print from anywhere — set up remote printing ([learn more](docs/mqtt-integration.md))
-- **Semi-scheduled surprises**: “Unbidden Ink” (untested) posts fun content throughout your day
+- **Home automation**: Integrate with Home Assistant automations ([guide](docs/home-assistant-integration.md))
+- **Semi-scheduled surprises**: "Unbidden Ink" (untested) posts fun content throughout your day
 - **Share between friends or rooms**: Send any message between Scribe Evolution devices
 
 ## Quick Start
@@ -66,7 +67,7 @@ The firmware also supports 4 x physical buttons and an addressable LED strip, bu
 
 - **Quick Start**: [Flash pre‑built firmware](docs/quick-start.md)
 - **Troubleshooting**: [Common issues and fixes](docs/troubleshooting.md)
-- **Remote printing**: [MQTT integration](docs/mqtt-integration.md) and [Apple Shortcuts](docs/apple-shortcuts.md)
+- **Remote printing**: [MQTT integration](docs/mqtt-integration.md), [Home Assistant](docs/home-assistant-integration.md), and [Apple Shortcuts](docs/apple-shortcuts.md)
 - **Docs index**: [See all guides](docs/index.md)
 
 ## Acknowledgments

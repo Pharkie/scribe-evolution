@@ -8,6 +8,7 @@ User guides, integration tutorials, and technical references.
 <critical_notes>
 
 - Always use "Scribe Evolution" (never just "Scribe") in all documentation
+- Use "Select" or "Choose" for UI actions, never "Click"
 - Use markdown links for file references: [filename.ts](path/to/filename.ts)
 - Include screenshots in `docs/assets/screenshots/` with descriptive paths
 - Keep documentation in sync with actual code behavior
@@ -23,6 +24,7 @@ Documentation Structure:
 - `build-instructions.md` → Build and flash process
 - `configuration-system.md` → Config.h and NVS explained
 - `mqtt-integration.md` → MQTT setup with HiveMQ
+- `home-assistant-integration.md` → Home Assistant MQTT bridge setup
 - `pipedream-integration.md` → HTTP→MQTT bridge setup
 - `apple-shortcuts.md` → iOS automation integration
 - `code-structure.md` → Codebase organization
