@@ -105,8 +105,6 @@ Test that it works:
    - Topic showing `scribe/YourName/print`
    - No errors
 
-   ![Successful Test](assets/screenshots/mqtt/pipedream/pipedream-7.png)
-
 5. **Your Scribe printer should print the test message!**
 6. If successful, click **"Deploy"** to activate the workflow
 
