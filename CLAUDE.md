@@ -12,6 +12,7 @@ Memory-constrained embedded system with dual configuration layers.
 - Never edit `/data/` directly - edit `/src/data/` instead
 - Never hardcode values - use `config.h` and NVS
 - Fail fast principle - no fallback values or defensive arrays
+- Always use "Scribe Evolution" (never just "Scribe") in all documentation
   </critical_notes>
 
 <file_map>

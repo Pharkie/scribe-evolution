@@ -34,7 +34,7 @@ Once your cluster is running:
 Now create a username and password for your Scribe Evolution printer(s) to use:
 
 1. Select "Manage Cluster"
-   
+
    ![Manage cluster](assets/screenshots/mqtt/HiveMQ-3.png)
 
 2. Select **Access Management** and "Edit"
@@ -53,7 +53,7 @@ Now connect your Scribe Evoluton to your HiveMQ cluster:
 1. Open your Scribe Evolution web interface (e.g., `http://scribe-yourname.local`)
 2. Go to **Settings** → **MQTT**
 
-   ![Scribe MQTT Settings](assets/screenshots/mqtt/scribe_UI-1.png)
+   ![Scribe Evolution MQTT Settings](assets/screenshots/mqtt/scribe_UI-1.png)
 
 3. **Enable MQTT** (toggle switch)
 4. Enter your HiveMQ details:
@@ -105,7 +105,7 @@ The device name comes from **Settings** → **Device** → **Owner name**. For e
 
 ### Message Format Specification
 
-Scribe expects a structured JSON payload over MQTT with at least `header` and `body`. The device prints `header`, a blank line, then `body`.
+Scribe Evolution expects a structured JSON payload over MQTT with at least `header` and `body`. The device prints `header`, a blank line, then `body`.
 
 **Required fields:**
 
@@ -154,4 +154,3 @@ POST `/api/print-mqtt`
   "body": "Hello from REST"
 }
 ```
-

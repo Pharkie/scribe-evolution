@@ -4,7 +4,7 @@ This document explains how to integrate Apple Shortcuts with your Scribe Evoluti
 
 ## Overview
 
-Apple Shortcuts can trigger your Scribe remotely by sending HTTP requests to a bridge (e.g., Pipedream) that converts HTTP→MQTT.
+Apple Shortcuts can trigger your Scribe Evolution remotely by sending HTTP requests to a bridge (e.g., Pipedream) that converts HTTP→MQTT.
 
 - Send messages to your printer from anywhere with internet access
 - Trigger printing from Siri voice commands

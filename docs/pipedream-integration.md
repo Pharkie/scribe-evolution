@@ -1,6 +1,6 @@
 # Pipedream MQTT Bridge Integration Guide
 
-Use Pipedream as a free HTTP→MQTT bridge to send messages to your Scribe from anywhere on the internet - perfect for Apple Shortcuts, Home Assistant, IFTTT, and other automation tools.
+Use Pipedream as a free HTTP→MQTT bridge to send messages to your Scribe Evolution from anywhere on the internet - perfect for Apple Shortcuts, Home Assistant, IFTTT, and other automation tools.
 
 > ⚠️ Set up HiveMQ first, see the [MQTT Integration Guide](mqtt-integration.md)
 
@@ -28,7 +28,7 @@ Add your HiveMQ credentials (from the MQTT Integration Guide) to Pipedream:
 | `MQTT_username` | MQTT username you created in HiveMQ  | From "Create MQTT Credentials" step | **Yes**         |
 | `MQTT_password` | MQTT password you copied from HiveMQ | From "Create MQTT Credentials" step | **Yes**         |
 
-> 💡 **Tip**: These are the same credentials you entered in your Scribe device's MQTT settings.
+> 💡 **Tip**: These are the same credentials you entered in your Scribe Evolution device's MQTT settings.
 
 ![Project Variables](assets/screenshots/mqtt/pipedream/pipedream-project2.png)
 
@@ -38,7 +38,7 @@ Add your HiveMQ credentials (from the MQTT Integration Guide) to Pipedream:
 
    ![Select + New](assets/screenshots/mqtt/pipedream/pipedream-1.png)
 
-2. Name your workflow: `"Scribe MQTT Bridge"`
+2. Name your workflow: `"Scribe Evolution MQTT Bridge"`
 
 ![Name workflow](assets/screenshots/mqtt/pipedream/pipedream-2.png)
 
@@ -105,7 +105,7 @@ Test that it works:
    - Topic showing `scribe/YourName/print`
    - No errors
 
-5. **Your Scribe printer should print the test message!**
+5. **Your Scribe Evolution printer should print the test message!**
 6. If successful, click **"Deploy"** to activate the workflow
 
 ## 📋 **Example MQTT messages**
@@ -279,14 +279,14 @@ Perfect for a typical Scribe Evolution printer.
 
 ### Why Use an HTTP-to-MQTT Bridge?
 
-Your Scribe printer's web interface is only accessible on your local network. **Directly exposing your printer to the internet is dangerous and NOT recommended** because it requires:
+Your Scribe Evolution printer's web interface is only accessible on your local network. **Directly exposing your printer to the internet is dangerous and NOT recommended** because it requires:
 
 - **🚨 Firewall Holes** - Port forwarding exposes your home network to attacks
 - **🔧 Complex Setup** - Dynamic DNS, SSL certificates, router configuration
 - **⚡ Always-On Requirements** - Your home network becomes a critical dependency
 - **🌐 Attack Surface** - Tools like ngrok create security risks
 
-**Instead, MQTT provides a secure solution** - your Scribe printer safely receives messages from anywhere via a cloud MQTT broker, without exposing your home network. You just need a way to send HTTP requests from web services to that MQTT broker.
+**Instead, MQTT provides a secure solution** - your Scribe Evolution printer safely receives messages from anywhere via a cloud MQTT broker, without exposing your home network. You just need a way to send HTTP requests from web services to that MQTT broker.
 
 ### Alternatives to Pipedream
 

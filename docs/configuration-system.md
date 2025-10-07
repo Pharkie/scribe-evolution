@@ -2,7 +2,7 @@
 
 ## Overview
 
-Scribe separates compile‑time defaults from runtime settings persisted in NVS (ESP32 Preferences).
+Scribe Evolution separates compile‑time defaults from runtime settings persisted in NVS (ESP32 Preferences).
 
 ## Core Principle
 

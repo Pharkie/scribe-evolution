@@ -1,10 +1,10 @@
 # Troubleshooting Guide
 
-This document covers common issues, solutions, and diagnostic procedures for the Scribe ESP32-C3 Thermal Printer project.
+This document covers common issues, solutions, and diagnostic procedures for the Scribe Evolution ESP32-C3 Thermal Printer project.
 
 ## Overview
 
-The Scribe thermal printer system has been tested extensively and is generally very reliable. Most issues stem from a few common causes that can be systematically diagnosed and resolved.
+The Scribe Evolution thermal printer system has been tested extensively and is generally very reliable. Most issues stem from a few common causes that can be systematically diagnosed and resolved.
 
 ## Common Issues and Solutions
 

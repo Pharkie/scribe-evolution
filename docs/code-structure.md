@@ -1,6 +1,6 @@
 # Code Structure Overview
 
-Current layout and responsibilities for the Scribe ESP32‑C3 Thermal Printer codebase.
+Current layout and responsibilities for the Scribe Evolution ESP32‑C3 Thermal Printer codebase.
 
 ## Table of Contents
 

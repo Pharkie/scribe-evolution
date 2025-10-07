@@ -19,7 +19,7 @@ This document covers the hardware requirements, wiring, and assembly for the Scr
 
 #### 3D Printed Enclosure
 
-Until I can release my own design with buttons, you can use the 3D printed components from the original Scribe project:
+Until I can release my own design with buttons, you can use the 3D printed components from the original Project Scribe:
 
 - [Maker World](https://makerworld.com/en/models/1577165-project-scribe#profileId-1670812)
 - [Printables](https://www.printables.com/model/1346462-project-scribe/files)

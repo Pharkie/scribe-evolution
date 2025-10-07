@@ -2,7 +2,7 @@
 
 ## Overview
 
-Scribe uses a **data‑driven configuration system** that eliminates hardcoded field validation and provides automatic partial updates for any configuration field. This is implemented in `src/web/config_field_registry.{h,cpp}` and persisted to NVS.
+Scribe Evolution uses a **data‑driven configuration system** that eliminates hardcoded field validation and provides automatic partial updates for any configuration field. This is implemented in `src/web/config_field_registry.{h,cpp}` and persisted to NVS.
 
 ## Architecture
 

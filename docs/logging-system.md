@@ -1,6 +1,6 @@
 # Logging System Guide
 
-The Scribe project includes a comprehensive logging system built on the ArduinoLog library, providing multiple output destinations and configurable log levels for debugging and monitoring.
+The Scribe Evolution project includes a comprehensive logging system built on the ArduinoLog library, providing multiple output destinations and configurable log levels for debugging and monitoring.
 
 ## Overview
 

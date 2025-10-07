@@ -1,4 +1,4 @@
-# Scribe Documentation Index
+# Scribe Evolution Documentation Index
 
 Welcome! This index groups the most useful docs so you can find things fast.
 

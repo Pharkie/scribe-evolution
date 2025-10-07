@@ -1,4 +1,4 @@
-# Scribe ESP32-C3 Testing Guide
+# Scribe Evolution ESP32-C3 Testing Guide
 
 ## Overview
 
