@@ -84,6 +84,7 @@ export default defineComponent({
     if (!remote_printer) missingFields.push("remote_printer");
     if (!header) missingFields.push("header");
     if (!body) missingFields.push("body");
+    if (!sender) missingFields.push("sender");
 
     if (missingFields.length > 0) {
       await $.respond({
@@ -95,9 +96,8 @@ export default defineComponent({
 
     const topic = `scribe/${remote_printer}/print`;
 
-    // Build payload with header, body, and optional sender/timestamp
-    const payloadData = { header, body };
-    if (sender) payloadData.sender = sender;
+    // Build payload with header, body, sender, and optional timestamp
+    const payloadData = { header, body, sender };
     if (timestamp) payloadData.timestamp = timestamp;
 
     const payload = JSON.stringify(payloadData);

@@ -96,7 +96,7 @@ Test that it works:
      "remote_printer": "Pharkie",
      "header": "MESSAGE",
      "body": "Hello from Pipedream integration!",
-     "sender": "pipedream_test"
+     "sender": "Pipedream"
    }
    ```
 3. Select **"Send Test Event"**
@@ -115,9 +115,9 @@ Test that it works:
 ```json
 {
   "remote_printer": "Pharkie",
-  "timestamp": "Mon 28 Jul 2025 18:20",
-  "message": "Hello from Pipedream integration!",
-  "sender": "pipedream_test"
+  "header": "MESSAGE",
+  "body": "Hello from Pipedream integration!",
+  "sender": "Pipedream"
 }
 ```
 
@@ -129,9 +129,9 @@ curl -X POST https://your-pipedream-webhook-url \
   -H "Content-Type: application/json" \
   -d '{
     "remote_printer": "Pharkie",
-    "timestamp": "2025-07-28 18:20:15",
-    "message": "Test message from API",
-    "sender": "api_client"
+    "header": "MESSAGE",
+    "body": "Test message from API",
+    "sender": "API"
   }'
 ```
 
@@ -155,9 +155,10 @@ Content-Type: application/json
 ```json
 {
   "remote_printer": "string", // Target printer name (required)
-  "timestamp": "string", // Message timestamp (required)
-  "message": "string", // Message content (required)
-  "sender": "string" // Message sender ID (required)
+  "header": "string", // Message header like MESSAGE, JOKE, etc. (required)
+  "body": "string", // Message content (required)
+  "sender": "string", // Message sender ID (required)
+  "timestamp": "string" // Message timestamp (optional)
 }
 ```
 
@@ -175,8 +176,8 @@ Content-Type: application/json
 ```json
 {
   "status": "Published",
-  "topic": "scribe/Pharkie/inbox",
-  "payload": "{\"message\":\"Hello!\",\"timestamp\":\"2025-07-28 18:20:15\",\"sender\":\"api\"}"
+  "topic": "scribe/Pharkie/print",
+  "payload": "{\"header\":\"MESSAGE\",\"body\":\"Hello!\",\"sender\":\"API\"}"
 }
 ```
 
@@ -184,7 +185,7 @@ Content-Type: application/json
 
 ```json
 {
-  "error": "Missing required fields: remote_printer, message"
+  "error": "Missing required fields: remote_printer, header, body, sender"
 }
 ```
 
@@ -199,8 +200,7 @@ Content-Type: application/json
 
 **❌ 400 Missing required fields**
 
-- Ensure all 4 fields present: `remote_printer`, `timestamp`, `message`,
-  `sender`
+- Ensure all 4 required fields present: `remote_printer`, `header`, `body`, `sender`
 - Check JSON syntax is valid
 
 **❌ 500 MQTT Error**
@@ -229,8 +229,8 @@ Content-Type: application/json
 
 ```bash
 mosquitto_pub -h your-mqtt-broker.com -p 8883 -u username -P password \
-  -t scribe/Pharkie/inbox \
-  -m '{"message":"Test","timestamp":"2025-07-28","sender":"manual"}'
+  -t scribe/Pharkie/print \
+  -m '{"header":"MESSAGE","body":"Test","sender":"Manual"}'
 ```
 
 ## 🔐 **Security Best Practices**

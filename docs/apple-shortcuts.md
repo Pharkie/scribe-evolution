@@ -80,9 +80,9 @@ Once you have a bridge service configured, create shortcuts to send messages:
      ```json
      {
        "remote_printer": "YourPrinterName",
-       "timestamp": "2025-01-15 15:30:00",
-       "message": "[Provided Input]",
-       "sender": "shortcuts"
+       "header": "MESSAGE",
+       "body": "[Provided Input]",
+       "sender": "Shortcuts"
      }
      ```
 
@@ -105,9 +105,9 @@ Create multiple shortcuts for common messages:
 ```json
 {
   "remote_printer": "KitchenPrinter",
-  "message": "Shopping List:\n- Milk\n- Bread\n- Eggs\n- Apples",
-  "timestamp": "[Current Date]",
-  "sender": "shortcuts_shopping"
+  "header": "SHOPPING LIST",
+  "body": "- Milk\n- Bread\n- Eggs\n- Apples",
+  "sender": "Shortcuts"
 }
 ```
 
@@ -116,9 +116,9 @@ Create multiple shortcuts for common messages:
 ```json
 {
   "remote_printer": "BedroomPrinter",
-  "message": "Good morning! Today's goals:\n- Exercise 30min\n- Read 20min\n- Call family",
-  "timestamp": "[Current Date]",
-  "sender": "shortcuts_reminder"
+  "header": "DAILY REMINDER",
+  "body": "Good morning! Today's goals:\n- Exercise 30min\n- Read 20min\n- Call family",
+  "sender": "Shortcuts"
 }
 ```
 
@@ -145,8 +145,8 @@ All messages to the bridge service must include:
 ```json
 {
   "remote_printer": "string", // Target printer name (must match config)
-  "timestamp": "string", // Message timestamp
-  "message": "string", // Message content to print
+  "header": "string", // Message header like MESSAGE, JOKE, etc.
+  "body": "string", // Message content to print
   "sender": "string" // Identifier for message source
 }
 ```
@@ -155,17 +155,17 @@ All messages to the bridge service must include:
 
 **remote_printer**:
 
-- Must match the printer name configured in your Scribe Evolution's `config.h`
+- Must match the printer name configured in your Scribe Evolution's device settings
 - Case-sensitive
-- Examples: "KitchenPrinter", "OfficeScribe", "BedroomPrinter"
+- Examples: "Alice", "Bob", "OfficeMain"
 
-**timestamp**:
+**header**:
 
-- ISO 8601 format recommended: "2025-01-15T15:30:00"
-- Alternative format: "2025-01-15 15:30:00"
-- Used for message header on printed output
+- Message type header printed at the top
+- Examples: "MESSAGE", "JOKE", "RIDDLE", "QUOTE", "MEMO 1"-"MEMO 4"
+- Used to categorize the type of message
 
-**message**:
+**body**:
 
 - UTF-8 text content to print
 - Line breaks supported with `\n`
@@ -174,27 +174,20 @@ All messages to the bridge service must include:
 
 **sender**:
 
-- Identifier for tracking message source
-- Examples: "shortcuts", "siri", "automation", "ios_app"
-- Helps with debugging and message source tracking
+- Identifier for who/what sent the message
+- Appended to header as "[header] from [sender]"
+- Examples: "Shortcuts", "Siri", "iOS", "HomeKit"
+- Helps with message tracking and accountability
 
 ### Dynamic Content
 
 Use Shortcuts variables for dynamic content:
 
-**Current Date/Time**:
-
-```json
-{
-  "timestamp": "[Current Date formatted as 'yyyy-MM-dd HH:mm:ss']"
-}
-```
-
 **User Input**:
 
 ```json
 {
-  "message": "[Provided Input from Ask for Input action]"
+  "body": "[Provided Input from Ask for Input action]"
 }
 ```
 
@@ -202,7 +195,15 @@ Use Shortcuts variables for dynamic content:
 
 ```json
 {
-  "message": "Location update: [Current Address]"
+  "body": "Location update: [Current Address]"
+}
+```
+
+**Current Date/Time** (optional timestamp field):
+
+```json
+{
+  "timestamp": "[Current Date formatted as 'yyyy-MM-dd HH:mm:ss']"
 }
 ```
 
@@ -252,9 +253,9 @@ curl -X POST https://your-bridge-webhook-url \
   -H "Content-Type: application/json" \
   -d '{
     "remote_printer": "TestPrinter",
-    "timestamp": "2025-01-15 15:30:00",
-    "message": "Test message from curl",
-    "sender": "debug"
+    "header": "MESSAGE",
+    "body": "Test message from curl",
+    "sender": "Debug"
   }'
 ```
 
@@ -264,7 +265,7 @@ Use an MQTT client to monitor messages:
 ```bash
 mosquitto_sub -h your-mqtt-broker.com -p 8883 \
   -u username -P password \
-  -t "scribe/+/inbox"
+  -t "scribe/+/print"
 ```
 
 ## Security Considerations

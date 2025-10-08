@@ -50,7 +50,7 @@ inline const char *buildPersistentMqttTopic(int index, const char *key)
 {
     if (index >= 0 && index < maxOtherPrinters)
     {
-        snprintf(otherTopics[index], sizeof(otherTopics[index]), "scribe/%s/inbox", key);
+        snprintf(otherTopics[index], sizeof(otherTopics[index]), "scribe/%s/print", key);
         return otherTopics[index];
     }
     return "";

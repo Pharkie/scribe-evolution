@@ -105,17 +105,13 @@ The device name comes from **Settings** → **Device** → **Owner name**. For e
 
 ### Message Format Specification
 
-Scribe Evolution expects a structured JSON payload over MQTT with at least `header` and `body`. The device prints `header`, a blank line, then `body`.
+Scribe Evolution expects a structured JSON payload over MQTT with `header`, `body`, and `sender`. The device prints `header from sender`, a blank line, then `body`.
 
 **Required fields:**
 
 - `header` string: e.g. `"MESSAGE"`, `"JOKE"`, `"RIDDLE"`, `"QUOTE"`, `"QUIZ"`, or `"MEMO 1"`–`"MEMO 4"`.
 - `body` string: the content to print.
-
-**Optional fields:**
-
-- `sender` string: appended to header as "<header> from <sender>".
-- `timestamp` string: ignored on receipt; device adds its own on print.
+- `sender` string: identifies who sent the message (appended to header as "[header] from [sender]").
 
 **Example payloads:**
 
@@ -130,16 +126,20 @@ Scribe Evolution expects a structured JSON payload over MQTT with at least `head
 ```json
 {
   "header": "JOKE",
-  "body": "Why did the scarecrow win an award? Because he was outstanding in his field!"
+  "body": "Why did the scarecrow win an award? Because he was outstanding in his field!",
+  "sender": "Bob"
 }
 ```
 
 **Memo placeholders** (expanded by the printer when header starts with MEMO):
 
+Valid placeholders: `[date]`, `[time]`, `[weekday]`, `[coin]`, `[dice]`, `[dice:N]`, `[pick:A|B|C]`, `[uptime]`, `[ip]`, `[mdns]`
+
 ```json
 {
   "header": "MEMO 1",
-  "body": "Meet at {{time}} in {{room}}"
+  "body": "Today is [weekday], [date] at [time]. Coin flip: [coin]",
+  "sender": "System"
 }
 ```
 
@@ -151,6 +151,7 @@ POST `/api/print-mqtt`
 {
   "topic": "scribe/alice/print",
   "header": "MESSAGE",
-  "body": "Hello from REST"
+  "body": "Hello from REST",
+  "sender": "API Client"
 }
 ```

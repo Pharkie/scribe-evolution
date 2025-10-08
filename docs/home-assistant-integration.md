@@ -101,8 +101,9 @@ The following steps tells Mosquitto to check the /share/mosquitto/ folder for ad
 5. Publish a test message to your HiveMQ MQTT e.g.:
    ```json
    {
-     "topic": "scribe/test/inbox",
-     "payload": { "test": "fromHiveMQ" }
+     "header": "KITTY UPDATE",
+     "body": "Subject has completed zoomies and entered loaf mode. Purring intensity: medium-high.",
+     "sender": "Feline Observation Unit"
    }
    ```
 6. You should see the message appear in Home Assistant

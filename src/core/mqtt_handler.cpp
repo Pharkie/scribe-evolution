@@ -208,7 +208,7 @@ void connectToMQTT()
         
         LOG_NOTICE("MQTT", "✅ Connected to broker");
         
-        // Subscribe to the inbox topic
+        // Subscribe to the print topic
         String newTopic = String(getLocalPrinterTopic());
         if (!mqttClient.subscribe(newTopic.c_str()))
         {
@@ -295,15 +295,15 @@ void handleMQTTMessage(String topic, String message)
     String timestamp = getFormattedDateTime();
 
     // Only handle structured messages (header + body + sender)
-    if (!doc.containsKey("header") || !doc.containsKey("body"))
+    if (!doc.containsKey("header") || !doc.containsKey("body") || !doc.containsKey("sender"))
     {
-        LOG_ERROR("MQTT", "MQTT JSON must contain 'header' and 'body' fields");
+        LOG_ERROR("MQTT", "MQTT JSON must contain 'header', 'body', and 'sender' fields");
         return;
     }
 
     String header = doc["header"].as<String>();
     String body = doc["body"].as<String>();
-    String senderName = doc["sender"] | "";
+    String senderName = doc["sender"].as<String>();
 
     // Expand memo placeholders at print time (if this is a memo)
     if (header.startsWith("MEMO"))

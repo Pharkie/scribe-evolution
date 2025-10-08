@@ -280,12 +280,12 @@ Printer Issues:
 
 ```bash
 # Subscribe to printer topic
-mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/+/inbox"
+mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe/+/print"
 
 # Publish test message
 mosquitto_pub -h your-broker.com -p 8883 -u username -P password \
-  -t "scribe/yourprinter/inbox" \
-  -m '{"message":"Test from command line"}'
+  -t "scribe/yourprinter/print" \
+  -m '{"header":"MESSAGE","body":"Test from command line","sender":"CLI"}'
 ```
 
 **GUI MQTT Clients**:
