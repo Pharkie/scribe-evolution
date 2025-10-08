@@ -2,6 +2,8 @@
 
 This guide is for **Home Assistant Container** (Docker) with a **separate Mosquitto container** (`eclipse-mosquitto` image).
 
+> ⚠️ **This guide is currently untested.** If you successfully (or unsuccessfully) follow this guide, please share feedback via GitHub issues. Contributions welcome!
+
 [← Back to setup guide selection](README.md)
 
 ---

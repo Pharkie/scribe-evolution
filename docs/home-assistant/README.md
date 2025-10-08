@@ -2,7 +2,7 @@
 
 This guide shows you how to integrate your Scribe Evolution printer with Home Assistant.
 
-Create an MQTT bridge between Home Assistant's Mosquitto broker and HiveMQ Cloud. Then you can **print to Scribe Evolution from Home Assistant**, including from automations, service calls, scripts etc.
+Since HA can't connect to 2 x MQTT Brokers at one time, create an MQTT bridge between Home Assistant's Mosquitto broker and HiveMQ Cloud. Then you can **print to Scribe Evolution from Home Assistant**, including from automations, service calls, scripts etc.
 
 ```
 Home Assistant (Mosquitto) ←→ MQTT Bridge ←→ HiveMQ Cloud ←→ Scribe Evolution
@@ -52,18 +52,22 @@ Select the guide that matches your Home Assistant installation:
 
 ---
 
-## Still Not Sure?
+## Not Sure?
 
-Check which installation type you have:
+**Quick checks:**
+
+- Can you see **Settings** → **Add-ons** in Home Assistant? → **OS/Supervised**
+- Did you install Home Assistant with `pip` in a Python virtual environment? → **Core**
+- Are you running Home Assistant and Mosquitto as separate Docker containers? → **Container**
+
+You can also check from the command line:
 
 ```bash
-# If this shows "Home Assistant OS" or "Home Assistant Supervised"
+# If this command works and shows "Home Assistant OS" or "Supervised"
 ha core info
-
-# If Home Assistant command isn't available, check if you installed via:
-# - Python venv → Core
-# - Docker container → Container
 ```
+
+If the `ha` command doesn't exist, you're running **Core** or **Container**.
 
 ## Prerequisites (All Methods)
 

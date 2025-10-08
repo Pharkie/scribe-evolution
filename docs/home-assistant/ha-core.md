@@ -2,6 +2,8 @@
 
 This guide is for **Home Assistant Core** installations with **system-installed Mosquitto**.
 
+> ⚠️ **This guide is currently untested.** If you successfully (or unsuccessfully) follow this guide, please share feedback via GitHub issues. Contributions welcome!
+
 [← Back to setup guide selection](README.md)
 
 ---
