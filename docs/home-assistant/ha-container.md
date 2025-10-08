@@ -158,8 +158,9 @@ Look for:
 ```
 Loading config file /mosquitto/config/bridge.conf
 Connecting bridge hivemq (...)
-Bridge hivemq connected
 ```
+
+> **Note:** Connection success may not generate a log entry. If you see "Connecting bridge" without errors, the bridge is likely working.
 
 ### Follow logs in real-time:
 

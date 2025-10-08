@@ -24,7 +24,11 @@ Documentation Structure:
 - `build-instructions.md` → Build and flash process
 - `configuration-system.md` → Config.h and NVS explained
 - `mqtt-integration.md` → MQTT setup with HiveMQ
-- `home-assistant-integration.md` → Home Assistant MQTT bridge setup
+- `home-assistant/` → Home Assistant MQTT bridge guides
+  - `home-assistant/README.md` → Installation type selector
+  - `home-assistant/ha-supervised.md` → OS/Supervised setup
+  - `home-assistant/ha-core.md` → Core (venv) setup
+  - `home-assistant/ha-container.md` → Docker container setup
 - `pipedream-integration.md` → HTTP→MQTT bridge setup
 - `apple-shortcuts.md` → iOS automation integration
 - `code-structure.md` → Codebase organization
