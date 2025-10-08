@@ -40,7 +40,7 @@ bridge_protocol_version mqttv311
 try_private false
 cleansession true
 keepalive_interval 60
-restart_timeout 30
+restart_timeout 5 30
 notifications false
 
 # TLS (HiveMQ Cloud requires it)

@@ -48,11 +48,9 @@ log_dest file /mosquitto/log/mosquitto.log
 listener 1883
 allow_anonymous false
 
-# Include the bridge file
-include_file /mosquitto/config/bridge.conf
+# Include bridge configuration
+include_dir /mosquitto/config
 ```
-
-> 💡 **Note:** Use the **container path** (`/mosquitto/config/bridge.conf`), not the host path.
 
 Save and exit.
 
@@ -83,7 +81,7 @@ bridge_protocol_version mqttv311
 try_private false
 cleansession true
 keepalive_interval 60
-restart_timeout 30
+restart_timeout 5 30
 notifications false
 
 # TLS (HiveMQ Cloud requires it)
