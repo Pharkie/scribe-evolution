@@ -28,35 +28,7 @@ mkdir -p /opt/mosquitto/config /opt/mosquitto/data /opt/mosquitto/log
 
 ---
 
-## Step 2: Create Mosquitto Configuration
-
-### Main Configuration File
-
-Create `/opt/mosquitto/config/mosquitto.conf`:
-
-```bash
-nano /opt/mosquitto/config/mosquitto.conf
-```
-
-Paste this configuration:
-
-```conf
-persistence true
-persistence_location /mosquitto/data/
-log_dest file /mosquitto/log/mosquitto.log
-
-listener 1883
-allow_anonymous false
-
-# Include bridge configuration
-include_dir /mosquitto/config
-```
-
-Save and exit.
-
----
-
-## Step 3: Create Bridge Configuration
+## Step 2: Create Bridge Configuration
 
 Create `/opt/mosquitto/config/bridge.conf`:
 
@@ -95,6 +67,34 @@ topic scribe/# both 0
 ```
 
 > 💡 **Note:** Adjust `bridge_cafile` path if your CA certificates are located elsewhere in the container (e.g., `/etc/ssl/cert.pem` on some systems).
+
+Save and exit.
+
+---
+
+## Step 3: Create Mosquitto Configuration
+
+### Main Configuration File
+
+Create `/opt/mosquitto/config/mosquitto.conf`:
+
+```bash
+nano /opt/mosquitto/config/mosquitto.conf
+```
+
+Paste this configuration:
+
+```conf
+persistence true
+persistence_location /mosquitto/data/
+log_dest file /mosquitto/log/mosquitto.log
+
+listener 1883
+allow_anonymous false
+
+# Include bridge configuration
+include_dir /mosquitto/config
+```
 
 Save and exit.
 
