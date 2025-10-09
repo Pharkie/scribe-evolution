@@ -30,6 +30,7 @@ Where the .bin is one of:
 
 - `scribe-esp32c3-prod-no-leds-complete.bin` (ESP32-C3 without LEDs)
 - `scribe-esp32c3-prod-complete.bin` (ESP32-C3 with LEDs)
+- `scribe-esp32s3-mini-prod-complete.bin` (ESP32-S3 Mini with LEDs)
 - `scribe-lolin32lite-no-leds-complete.bin` (Lolin32 Lite without LEDs)
 
 ## Step 4: Power up!

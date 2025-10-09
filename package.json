@@ -9,8 +9,9 @@
     "test": "pio test -e esp32c3-test",
     "firmware": "python3 scripts/bin/build_firmware_release.py",
     "firmware:recover": "python3 scripts/bin/build_firmware_release.py --recover",
-    "firmware:esp32c3": "pio run -e esp32c3",
-    "firmware:lolin32lite": "pio run -e lolin32lite"
+    "firmware:esp32c3": "pio run -e esp32c3-prod",
+    "firmware:esp32s3": "pio run -e esp32s3-mini-prod",
+    "firmware:lolin32lite": "pio run -e lolin32lite-no-leds"
   },
   "dependencies": {
     "@alpinejs/collapse": "^3.14.9",

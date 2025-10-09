@@ -353,19 +353,28 @@ def create_merged_binary(environment):
         if environment.startswith("esp32c3"):
             chip_type = "ESP32C3"
             bootloader_addr = "0x0000"  # ESP32-C3 uses 0x0000
+        elif environment.startswith("esp32s3"):
+            chip_type = "ESP32S3"
+            bootloader_addr = "0x0000"  # ESP32-S3 uses 0x0000
         else:
-            chip_type = "ESP32" 
+            chip_type = "ESP32"
             bootloader_addr = "0x1000"  # Original ESP32 uses 0x1000
         # Determine filesystem offset from the environment's partitions file
         partitions_csv = _get_partitions_file_for_env(environment)
         fs_offset = _get_fs_offset_from_partitions(partitions_csv)
 
+        # Determine flash size based on environment
+        if environment.startswith("esp32s3"):
+            flash_size = "8MB"
+        else:
+            flash_size = "4MB"
+
         merge_cmd = [
-            "esptool", "--chip", chip_type, "merge-bin", 
+            "esptool", "--chip", chip_type, "merge-bin",
             "-o", str(merged_dest),
-            "--flash-mode", "dio", "--flash-size", "4MB",
+            "--flash-mode", "dio", "--flash-size", flash_size,
             bootloader_addr, str(bootloader_source),
-            "0x8000", str(partitions_source), 
+            "0x8000", str(partitions_source),
             "0x10000", str(firmware_source),
             fs_offset, str(littlefs_source)
         ]
@@ -420,10 +429,10 @@ def build_filesystem(environment):
         return False
 
 
-def create_release_info():
+def create_release_info(targets):
     """Create release information files in firmware directories."""
     import datetime
-    
+
     # Load template from file (prefer scripts/templates/, fall back to scripts/bin/templates/)
     candidates = [
         Path(__file__).resolve().parents[1] / "templates" / "firmware_readme.md",  # scripts/templates
@@ -447,14 +456,14 @@ def create_release_info():
     else:
         # Prefer macOS default port in README examples
         template = template.replace("/dev/ttyUSB0", "/dev/cu.usbmodem1101")
-    
+
     # Format template with build date and environment
     build_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    for env in ["esp32c3-prod", "esp32c3-prod-no-leds", "lolin32lite-no-leds"]:
+
+    for env in targets:
         # Format template for this specific environment
         release_info = template.format(build_date=build_date, environment=env)
-        
+
         info_file = Path(f"firmware/{env}/README.md")
         try:
             with open(info_file, "w", encoding="utf-8") as f:
@@ -564,7 +573,7 @@ def main():
                 log("⏭️  Skipping firmware builds due to frontend failure", "WARNING")
 
         # Step 5: Create release information
-        create_release_info()
+        create_release_info(targets)
 
     finally:
         # Step 6: Always restore original config

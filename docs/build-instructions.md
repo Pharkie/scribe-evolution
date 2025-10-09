@@ -1,13 +1,21 @@
 # Build Instructions
 
-This document provides detailed instructions for building and deploying the Scribe Evolution ESP32-C3 Thermal Printer firmware.
+This document provides detailed instructions for building and deploying the Scribe Evolution Thermal Printer firmware.
 
 ## Build System Overview
 
 This project uses a simplified npm build system for web assets and PlatformIO for firmware compilation. The build process consists of two main phases:
 
 1. **Web Assets**: HTML, CSS, and JavaScript bundling with ES6 modules and GZIP compression
-2. **Firmware**: ESP32-C3 firmware compilation using PlatformIO
+2. **Firmware**: ESP32 firmware compilation using PlatformIO
+
+## Supported Devices
+
+Scribe Evolution supports multiple ESP32 variants with different configurations:
+
+- **ESP32-C3** - 4MB flash, no OTA (default)
+- **ESP32-S3 Mini** - 8MB flash, OTA-capable
+- **Lolin32 Lite** - 4MB flash, no OTA
 
 ### Available Build Commands
 
@@ -100,20 +108,47 @@ The JavaScript uses modern ES6 modules in development:
 
 ## Firmware Building
 
-### Standard PlatformIO Commands
+### Build Targets
+
+The firmware can be built for different environments:
 
 ```bash
-# Build firmware only
+# Production builds (optimized, minified)
+pio run -e esp32c3-prod              # ESP32-C3 with LEDs
+pio run -e esp32c3-prod-no-leds      # ESP32-C3 without LEDs
+pio run -e esp32s3-mini-prod         # ESP32-S3 Mini with LEDs
+pio run -e lolin32lite-no-leds       # Lolin32 Lite without LEDs
+
+# Development builds (debug symbols, verbose logging)
+pio run -e esp32c3-dev               # ESP32-C3 development
+pio run -e esp32s3-mini-dev          # ESP32-S3 development
+
+# Test environment
+pio run -e esp32c3-test              # Run unit tests
+```
+
+### Quick Build Commands
+
+```bash
+# Build firmware only (default environment)
 pio run
 
-# Upload firmware only
-pio run --target upload
+# Upload firmware to specific target
+pio run -e esp32s3-mini-prod --target upload
 
 # Monitor serial output
 pio device monitor
 
 # Clean build files
 pio run --target clean
+```
+
+### npm Firmware Shortcuts
+
+```bash
+npm run firmware:esp32c3      # Build ESP32-C3 production
+npm run firmware:esp32s3      # Build ESP32-S3 production
+npm run firmware:lolin32lite  # Build Lolin32 production
 ```
 
 ### Enhanced Upload Process (Recommended)
@@ -217,9 +252,10 @@ npm install
 
 **Upload failures:**
 
-- Check that the ESP32-C3 is connected via USB
+- Check that the ESP32 is connected via USB
 - Ensure no other programs are using the serial port
 - Try resetting the device before upload
+- For ESP32-S3, ensure you're using a data-capable USB cable (not charge-only)
 
 **Asset building failures:**
 
@@ -229,12 +265,34 @@ npm install
 
 ### Build Configuration
 
-The project uses specific build flags optimized for the ESP32-C3:
+The project uses specific build flags optimized for ESP32:
 
 - C++17 standard
 - Optimized size (`-Os`)
-- FastLED support (`-DENABLE_LEDS=1`)
-- USB CDC for serial communication
+- FastLED support (`-DENABLE_LEDS=1` where applicable)
+- USB CDC for serial communication (ESP32-C3 and ESP32-S3)
 - LittleFS filesystem
+
+#### Device-Specific Configurations
+
+**ESP32-C3:**
+
+- 4MB flash with `partitions_no_ota.csv`
+- Bootloader at 0x0000
+- Factory app: 2MB
+
+**ESP32-S3 Mini:**
+
+- 8MB flash with `partitions_8mb_ota.csv`
+- Bootloader at 0x0000
+- Factory app: 2.5MB
+- OTA partition: 2.5MB
+- LittleFS: ~3MB
+
+**Lolin32 Lite:**
+
+- 4MB flash with `partitions_no_ota.csv`
+- Bootloader at 0x1000 (classic ESP32)
+- Factory app: 2MB
 
 See `platformio.ini` for complete build configuration details.

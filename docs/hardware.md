@@ -1,11 +1,19 @@
 # Hardware Guide
 
-This document covers the hardware requirements, wiring, and assembly for the Scribe Evolution ESP32-C3 Thermal Printer project.
+This document covers the hardware requirements, wiring, and assembly for the Scribe Evolution Thermal Printer project.
+
+## Supported Microcontrollers
+
+Scribe Evolution supports multiple ESP32 variants:
+
+- **ESP32-C3** - Main supported board, compact and cost-effective (4MB flash)
+- **ESP32-S3 Mini** - Enhanced variant with more flash (8MB), OTA support capability, and more processing power
+- **Lolin32 Lite** - Original ESP32 board (4MB flash)
 
 ### Basics
 
-- **ESP32-C3 MCU board** - Main microcontroller. Other ESP32 boards might work.
-- **CSN-A4L thermal printer** - Thermal printing unit or compatible - similar serial thermal printers might work.
+- **ESP32 MCU board** - Choose from supported boards above
+- **CSN-A4L thermal printer** - Thermal printing unit or compatible - similar serial thermal printers might work
 - **Paper rolls** - 57.5±0.5mm width and 30mm max diameter
 
 ### Plus
@@ -30,11 +38,12 @@ If you don't have a 3D printer, please use the original PCBWay affiliate link: h
 
 The components might be slightly different as listings change. It's difficult to provide links for products available in different markets/locations. Check specs before purchase.
 
-| Component                         | Amazon US               | Amazon UK                 | AliExpress           |
-| --------------------------------- | ----------------------- | ------------------------- | -------------------- |
-| Microcontroller (ESP32-C3)        | -                       | https://amzn.eu/d/ebTV8DC | https://is.gd/G1Ymlw |
-| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                         | https://is.gd/ZZoRLk |
-| Paper Rolls, BPA-free (57.5x30mm) | https://amzn.to/4kpOREP | https://amzn.to/44nqGCg   | -                    |
+| Component                         | Amazon US               | Amazon UK                 | AliExpress                 |
+| --------------------------------- | ----------------------- | ------------------------- | -------------------------- |
+| Microcontroller (ESP32-C3)        | -                       | https://amzn.eu/d/ebTV8DC | https://is.gd/G1Ymlw       |
+| Microcontroller (ESP32-S3 Mini)   | -                       | -                         | Search "ESP32-S3 Mini 8MB" |
+| Thermal Printer (CSN-A4L)         | https://amzn.to/4kr5ksq | -                         | https://is.gd/ZZoRLk       |
+| Paper Rolls, BPA-free (57.5x30mm) | https://amzn.to/4kpOREP | https://amzn.to/44nqGCg   | -                          |
 
 For EU e.g. Germany, this AliExpress link may work better for the printer:
 https://is.gd/kyWcfD
@@ -59,16 +68,18 @@ Some thermal paper is treated against fading and can last 35+ years. If using Sc
 
 ## Pin-out and Wiring
 
-### ESP32-C3 to CSN-A4L Printer Connection
+### ESP32 to CSN-A4L Printer Connection
 
-The project uses ESP32-C3 UART1 to communicate with the printer:
+The project uses ESP32 UART to communicate with the printer:
 
-| Printer Pin | ESP32-C3 Pin                                 | Power Supply Pin | Description   |
+| Printer Pin | ESP32 Pin                                    | Power Supply Pin | Description   |
 | ----------- | -------------------------------------------- | ---------------- | ------------- |
 | TTL RX      | Configurable in software, defaults to GPIO21 | -                | MCU Transmit  |
 | TTL GND     | GND                                          | GND              | Common Ground |
 | Power VH    | -                                            | 5V               | Printer VIN   |
 | Power GND   | GND                                          | GND              | Printer GND   |
+
+**Note:** GPIO21 is available on ESP32-C3, ESP32-S3, and most ESP32 variants. The same default pin works across all supported boards.
 
 **Unused printer connections:**
 
@@ -83,8 +94,8 @@ These wires can be removed from the connector to reduce clutter and confusion.
 > [!IMPORTANT]
 > Power safety
 >
-> - Never power the printer directly from the ESP32‑C3 — you may damage the microcontroller.
-> - Power the ESP32‑C3 from only one source at a time: either USB (during programming) OR the 5V pin (during operation).
+> - Never power the printer directly from the ESP32 — you may damage the microcontroller.
+> - Power the ESP32 from only one source at a time: either USB (during programming) OR the 5V pin (during operation).
 > - Use a dedicated 5V power supply capable of 2.4A+ for the shared power rail.
 
 ### Wiring Diagram
@@ -94,7 +105,7 @@ These wires can be removed from the connector to reduce clutter and confusion.
 ├── VCC → Printer Power VH
 ├── GND → Common Ground Rail
 │
-ESP32-C3
+ESP32 (C3/S3/Lolin32)
 ├── GND → Common Ground Rail
 ├── 5V ← Power Supply
 ├── GPIO21 (default; configurable) → Printer TTL RX
@@ -103,7 +114,7 @@ ESP32-C3
 Thermal Printer (CSN-A4L)
 ├── Power VH ← 5V Power Supply VCC
 ├── Power GND → Common Ground Rail
-├── TTL RX ← ESP32-C3 TX (GPIO21 default; configurable)
+├── TTL RX ← ESP32 TX (GPIO21 default; configurable)
 └── TTL GND → Common Ground Rail
 ```
 
