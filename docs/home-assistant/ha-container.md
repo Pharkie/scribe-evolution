@@ -11,10 +11,12 @@ This guide is for **Home Assistant Container** (Docker) with a **separate Mosqui
 ## Prerequisites
 
 - Home Assistant running in Docker
-- Mosquitto running as a separate Docker container
+- Mosquitto running as a separate Docker container (version 1.6 or 2.x)
 - Docker or Docker Compose installed
 - Terminal/SSH access to your Docker host
 - Your **HiveMQ Cloud** credentials - see [MQTT Integration Guide](../mqtt-integration.md)
+
+> 💡 **Version Note:** This guide covers both Mosquitto 1.6 and 2.x. The main difference is authentication defaults—Mosquitto 2.0+ requires explicit authentication configuration (covered in Step 3a).
 
 ---
 
@@ -26,17 +28,27 @@ Create directories on your Docker host:
 mkdir -p /opt/mosquitto/config /opt/mosquitto/data /opt/mosquitto/log
 ```
 
-> 💡 Adjust paths if your setup uses a different location (e.g., `~/mosquitto/`).
+**Set proper ownership for Mosquitto user:**
+
+```bash
+sudo chown -R 1883:1883 /opt/mosquitto
+```
+
+> ⚠️ **Important:** The Mosquitto container runs as user ID 1883. Files must be owned by this user or the container won't be able to read configs or write logs.
+
+> 💡 Adjust paths if your setup uses a different location (e.g., `~/mosquitto/`). If using TLS certificates (see Step 4a), set permissions after copying cert files.
 
 ---
 
 ## Step 2: Create Bridge Configuration
 
-Create `/opt/mosquitto/config/bridge.conf`:
+Create `/opt/mosquitto/config/50-bridge.conf`:
 
 ```bash
-nano /opt/mosquitto/config/bridge.conf
+nano /opt/mosquitto/config/50-bridge.conf
 ```
+
+> 💡 **Why "50-"?** Numeric prefixes ensure config files load in the correct order. The main config includes all `.conf` files in the directory.
 
 Paste the following and **replace the placeholders**:
 
@@ -64,11 +76,17 @@ bridge_insecure false
 bridge_tls_version tlsv1.2
 
 # Topic routing
-# Mirror Scribe messages both ways
+# Syntax: topic <pattern> <direction> <qos> [local_prefix] [remote_prefix]
+# direction: in (remote→local), out (local→remote), both (bidirectional)
 topic scribe/# both 0
 ```
 
-> 💡 **Note:** Adjust `bridge_cafile` path if your CA certificates are located elsewhere in the container (e.g., `/etc/ssl/cert.pem` on some systems).
+> ⚠️ **About `cleansession`:**
+>
+> - `true` = Fresh start on every reconnect (useful for testing, avoids stale subscriptions)
+> - `false` = Resume previous session (better for production, maintains QoS state)
+
+> 💡 **Note:** Adjust `bridge_cafile` path if your CA certificates are located elsewhere in the container (e.g., `/etc/ssl/cert.pem` on some systems). See Step 4a for custom certificate setup.
 
 Save and exit.
 
@@ -84,21 +102,112 @@ Create `/opt/mosquitto/config/mosquitto.conf`:
 nano /opt/mosquitto/config/mosquitto.conf
 ```
 
-Paste this configuration:
+**For Mosquitto 2.0+**, paste this configuration:
 
 ```conf
 persistence true
 persistence_location /mosquitto/data/
 log_dest file /mosquitto/log/mosquitto.log
+log_dest stdout
+socket_domain ipv4
 
+# Mosquitto 2.0+ defaults to allow_anonymous false
+# We'll configure authentication in Step 3a
 listener 1883
-allow_anonymous false
 
-# Include bridge configuration
 include_dir /mosquitto/config
 ```
 
+**For Mosquitto 1.6**, paste this configuration:
+
+```conf
+persistence true
+persistence_location /mosquitto/data/
+log_dest file /mosquitto/log/mosquitto.log
+log_dest stdout
+socket_domain ipv4
+
+# Mosquitto 1.6 defaults to allow_anonymous true
+# Explicitly set for clarity (configure auth in Step 3a if needed)
+listener 1883
+allow_anonymous true
+
+include_dir /mosquitto/config
+```
+
+> ⚠️ **Important Version Difference:**
+>
+> - **Mosquitto 1.6**: Defaults to `allow_anonymous true` (insecure but works immediately)
+> - **Mosquitto 2.0+**: Defaults to `allow_anonymous false` (secure but requires authentication setup)
+
+> 💡 **Why `include_dir`?** This directive loads all `.conf` files from the directory. This is why we mount the entire `/opt/mosquitto/config` directory, not individual config files. The bridge config (`50-bridge.conf`) will be loaded automatically.
+
+> 💡 **About `socket_domain ipv4`:** Forces IPv4 connections. Some Docker environments have IPv6 networking issues that can prevent bridge connections.
+
 Save and exit.
+
+---
+
+## Step 3a: Configure Authentication (Required for Mosquitto 2.0+)
+
+**If you're using Mosquitto 1.6 and want to skip authentication**, you can jump to Step 4.
+
+**For Mosquitto 2.0+ or for securing Mosquitto 1.6**, configure authentication for local clients (Home Assistant):
+
+### Option 1: Quick Start (Testing Only)
+
+Allow anonymous access temporarily for testing:
+
+```bash
+nano /opt/mosquitto/config/mosquitto.conf
+```
+
+Add or modify the line:
+
+```conf
+allow_anonymous true
+```
+
+> ⚠️ **Security Warning:** This allows anyone on your network to connect to your MQTT broker without credentials. Only use for testing, never in production.
+
+### Option 2: Password Authentication (Recommended)
+
+Create a password file with username/password for Home Assistant:
+
+```bash
+# Create password file (run on host, not in container)
+docker run -it --rm -v /opt/mosquitto/config:/mosquitto/config eclipse-mosquitto:2 mosquitto_passwd -c /mosquitto/config/password.txt homeassistant
+```
+
+You'll be prompted to enter a password twice. This creates `/opt/mosquitto/config/password.txt`.
+
+**Set correct permissions:**
+
+```bash
+sudo chown 1883:1883 /opt/mosquitto/config/password.txt
+sudo chmod 600 /opt/mosquitto/config/password.txt
+```
+
+**Update mosquitto.conf** to enable password authentication:
+
+```bash
+nano /opt/mosquitto/config/mosquitto.conf
+```
+
+Add these lines before `include_dir`:
+
+```conf
+allow_anonymous false
+password_file /mosquitto/config/password.txt
+```
+
+> 💡 **Adding more users:** Omit the `-c` flag to add users (don't recreate the file):
+>
+> ```bash
+> docker run -it --rm -v /opt/mosquitto/config:/mosquitto/config eclipse-mosquitto:2 mosquitto_passwd /mosquitto/config/password.txt another_user
+> ```
+
+**Important:** You'll need to update your Home Assistant configuration (Step 6) with these credentials.
 
 ---
 
@@ -126,12 +235,16 @@ services:
     container_name: mosquitto
     ports:
       - "1883:1883"
+      # - "8883:8883"   # Uncomment if using TLS
+      # - "9001:9001"   # Uncomment if using WebSockets
     volumes:
-      - /opt/mosquitto/config:/mosquitto/config
+      - /opt/mosquitto/config:/mosquitto/config # Mount directory, not individual files!
       - /opt/mosquitto/data:/mosquitto/data
       - /opt/mosquitto/log:/mosquitto/log
     restart: unless-stopped
 ```
+
+> ⚠️ **Critical:** Always mount the entire `/mosquitto/config` directory, not individual config files. The `include_dir` directive requires directory access to load all `.conf` files.
 
 Then run:
 
@@ -141,28 +254,76 @@ docker-compose up -d mosquitto
 
 ---
 
-## Step 5: Verify Connection
+## Step 4a: TLS Configuration (Optional)
 
-Check Mosquitto container logs:
+If you need custom TLS certificates for local listeners (not the bridge—HiveMQ Cloud TLS is already configured in Step 2):
+
+### 1. Copy Certificates to Config Directory
+
+```bash
+# Copy your certificate files to the config directory
+sudo cp /path/to/your/server.crt /opt/mosquitto/config/
+sudo cp /path/to/your/server.key /opt/mosquitto/config/
+sudo cp /path/to/your/ca.crt /opt/mosquitto/config/
+
+# Set correct permissions
+sudo chown 1883:1883 /opt/mosquitto/config/*.crt /opt/mosquitto/config/*.key
+sudo chmod 644 /opt/mosquitto/config/*.crt
+sudo chmod 600 /opt/mosquitto/config/*.key
+```
+
+> ⚠️ **Important:** Private keys (`.key` files) must be readable only by the Mosquitto user (mode 600).
+
+### 2. Add TLS Listener to Main Config
+
+Edit `/opt/mosquitto/config/mosquitto.conf` and add a TLS listener:
+
+```conf
+# Add after the existing listener 1883 section
+listener 8883
+cafile /mosquitto/config/ca.crt
+certfile /mosquitto/config/server.crt
+keyfile /mosquitto/config/server.key
+require_certificate false
+```
+
+### 3. Update Bridge Config for Custom Certs (if needed)
+
+If your bridge needs to use custom CA certificates instead of system defaults, edit `/opt/mosquitto/config/50-bridge.conf`:
+
+```conf
+# Replace this line:
+bridge_cafile /etc/ssl/certs/ca-certificates.crt
+
+# With:
+bridge_cafile /mosquitto/config/ca.crt
+```
+
+### 4. Restart Container
+
+```bash
+docker restart mosquitto
+```
+
+> 💡 **HiveMQ Cloud Note:** HiveMQ Cloud already uses TLS (port 8883) with system CA certificates. This section is only needed if you're adding additional TLS listeners or using custom certificates.
+
+---
+
+## Step 5: Verify Bridge Connection
+
+**After any configuration change, follow this checklist:**
+
+### 1. Restart Container
 
 ```bash
 # For Docker:
-docker logs mosquitto
+docker restart mosquitto
 
 # For Docker Compose:
-docker-compose logs mosquitto
+docker-compose restart mosquitto
 ```
 
-Look for:
-
-```
-Loading config file /mosquitto/config/bridge.conf
-Connecting bridge hivemq (...)
-```
-
-> **Note:** Connection success may not generate a log entry. If you see "Connecting bridge" without errors, the bridge is likely working.
-
-### Follow logs in real-time:
+### 2. Check Logs for Bridge Connection
 
 ```bash
 # For Docker:
@@ -172,7 +333,33 @@ docker logs -f mosquitto
 docker-compose logs -f mosquitto
 ```
 
-Press `Ctrl+C` to exit.
+**Look for these key messages:**
+
+```
+Loading config file /mosquitto/config/50-bridge.conf
+Connecting bridge hivemq (a08something.s1.eu.hivemq.cloud:8883)
+```
+
+**Success indicators:**
+
+- `Connecting bridge hivemq` appears without errors
+- No "Connection refused" or "Authentication failed" messages
+- Bridge doesn't repeatedly disconnect/reconnect
+
+> **Note:** A successful connection may not produce a "connected" log entry. If you see "Connecting bridge" without subsequent errors, the bridge is working.
+
+### 3. Test from Scribe Evolution
+
+Send a test message from your Scribe printer to verify end-to-end connectivity.
+
+### 4. Verify on HiveMQ Cloud Console
+
+Log into HiveMQ Cloud console and check for:
+
+- Active bridge connection from your HA broker
+- Messages appearing in the `scribe/#` topic
+
+Press `Ctrl+C` to exit log view.
 
 ---
 
@@ -275,39 +462,163 @@ Manually publish to your Scribe topic using **Developer Tools** → **Actions**:
 
 ## Troubleshooting
 
-**Bridge not connecting?**
+### Broker Won't Start (Mosquitto 2.0+)
 
-- Check HiveMQ credentials are correct in `bridge.conf`
-- Verify HiveMQ Cloud allows connections from your IP
-- Check firewall allows outbound port 8883
-- Verify container has network access: `docker exec mosquitto ping -c 3 8.8.8.8`
+**Problem:** Container starts then immediately exits, or shows authentication errors in logs.
 
-**Home Assistant can't connect to Mosquitto?**
+**Most common cause:** Missing or misconfigured authentication on Mosquitto 2.0+.
 
-- Check they're on the same Docker network, or use host IP
+**Check logs:**
+
+```bash
+docker logs mosquitto
+```
+
+**Look for errors like:**
+
+- `Error: Unable to open password file`
+- `Error: Authentication required`
+- Config syntax errors
+
+**Solutions:**
+
+1. **If you see password file errors:**
+   - Either create the password file (Step 3a Option 2)
+   - Or enable anonymous access (Step 3a Option 1)
+
+2. **If you see config syntax errors:**
+   - Check `mosquitto.conf` for typos
+   - Ensure `include_dir /mosquitto/config` has correct path
+   - Verify file ownership: `ls -la /opt/mosquitto/config`
+
+3. **Quick fix for testing (Mosquitto 2.0):**
+   ```bash
+   nano /opt/mosquitto/config/mosquitto.conf
+   # Add this line before include_dir:
+   allow_anonymous true
+   ```
+   Then restart: `docker restart mosquitto`
+
+### Configuration Changes Not Applied
+
+**Problem:** Made changes to config files but bridge still not working.
+
+**Solution checklist:**
+
+1. **Verify file ownership:**
+
+   ```bash
+   sudo chown -R 1883:1883 /opt/mosquitto/config
+   ls -la /opt/mosquitto/config
+   ```
+
+   All config files must be owned by user/group 1883.
+
+2. **Check file naming:**
+
+   ```bash
+   ls /opt/mosquitto/config/*.conf
+   ```
+
+   Bridge config should be named `50-bridge.conf` (or similar numeric prefix) to ensure proper load order.
+
+3. **Restart container:**
+
+   ```bash
+   docker restart mosquitto
+   ```
+
+4. **Check logs for syntax errors:**
+   ```bash
+   docker logs mosquitto | grep -i error
+   ```
+
+### Bridge Not Connecting
+
+**Problem:** Bridge configuration exists but not connecting to HiveMQ Cloud.
+
+**Check these common issues:**
+
+1. **Credentials are case-sensitive:**
+   - Verify username and password in `50-bridge.conf` match HiveMQ Cloud exactly
+   - No extra spaces or quotes around values
+
+2. **Network and firewall:**
+   - Check firewall allows outbound port 8883
+   - Verify container has network access: `docker exec mosquitto ping -c 3 8.8.8.8`
+   - Check HiveMQ Cloud allows connections from your IP (console → Access Management)
+
+3. **Missing critical settings in main config:**
+   - Verify `socket_domain ipv4` is in `mosquitto.conf`
+   - Ensure `allow_anonymous false` is in root config (not bridge config)
+   - Confirm `include_dir /mosquitto/config` is present
+
+4. **TLS certificate issues:**
+   - Default path `/etc/ssl/certs/ca-certificates.crt` may not exist
+   - Try system CA paths: `/etc/ssl/cert.pem` or `/etc/ssl/certs/`
+   - Or mount custom certs (see Step 4a)
+
+5. **Check bridge logs:**
+   ```bash
+   docker logs mosquitto | grep -i bridge
+   ```
+   Look for "Connecting bridge hivemq" followed by connection errors.
+
+### Home Assistant Can't Connect to Mosquitto
+
+**Problem:** HA can't reach local Mosquitto broker.
+
+**Version-specific issues:**
+
+**Mosquitto 2.0+ (most common):**
+
+- **Authentication required by default.** Check logs for "not authorised" messages:
+  ```bash
+  docker logs mosquitto | grep -i "not authorised"
+  ```
+- **Solution:** Either configure password authentication (Step 3a Option 2) or temporarily allow anonymous access (Step 3a Option 1)
+- Verify password file exists if using authentication:
+  ```bash
+  ls -la /opt/mosquitto/config/password.txt
+  ```
+
+**Mosquitto 1.6:**
+
+- Authentication is optional (defaults to anonymous allowed)
+- If you configured authentication, ensure password file exists and HA credentials match
+
+**General solutions:**
+
+- Check they're on the same Docker network, or use host IP address
 - Verify port 1883 is exposed: `docker ps | grep mosquitto`
-- Check Mosquitto logs for connection attempts
+- Check Mosquitto logs for connection attempts:
+  ```bash
+  docker logs -f mosquitto
+  ```
+- Verify Home Assistant configuration matches your authentication setup (Step 6)
 
-**Permission issues with volumes?**
+### Permission Issues with Volumes
 
-```bash
-sudo chown -R 1883:1883 /opt/mosquitto/data /opt/mosquitto/log
-sudo chmod -R 755 /opt/mosquitto
-```
+**Problem:** Container can't read config or write logs.
 
----
-
-## Restart Container
-
-If you need to restart Mosquitto after config changes:
+**Solution:**
 
 ```bash
-# For Docker:
-docker restart mosquitto
+sudo chown -R 1883:1883 /opt/mosquitto
+sudo chmod 755 /opt/mosquitto/config /opt/mosquitto/data /opt/mosquitto/log
 
-# For Docker Compose:
-docker-compose restart mosquitto
+# If using TLS certificates:
+sudo chmod 644 /opt/mosquitto/config/*.crt
+sudo chmod 600 /opt/mosquitto/config/*.key
 ```
+
+**Verify permissions:**
+
+```bash
+ls -la /opt/mosquitto/config
+```
+
+All files should show `1883:1883` ownership.
 
 ---
 
