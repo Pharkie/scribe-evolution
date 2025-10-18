@@ -89,7 +89,7 @@ export function createSettingsLedsStore() {
 
         // ✅ CRITICAL: Direct assignment to config object
         this.config.leds = {
-          gpio: data.leds?.gpio ?? -1,
+          pin: data.leds?.pin ?? -1,
           count: data.leds?.count ?? 30,
           effect: data.leds?.effect ?? "chase_single",
           brightness: data.leds?.brightness ?? 128,

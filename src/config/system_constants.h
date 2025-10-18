@@ -9,6 +9,15 @@
  * This file contains system constants, hardware settings, and technical parameters.
  * These rarely need modification and are tuned for ESP32-C3 performance.
  *
+ * Organization:
+ * 1. CORE SYSTEM - Timing, buffers, retries
+ * 2. HARDWARE - GPIO, printer, buttons physical settings
+ * 3. NETWORK - WiFi, NTP, MQTT connection
+ * 4. SECURITY - Sessions, rate limiting
+ * 5. LOGGING - All logging configuration
+ * 6. EXTERNAL APIS - Third-party service endpoints
+ * 7. CONTENT LIMITS - Character limits, validation
+ * 8. DEFAULT CONTENT - Button configs, memos, prompts
  */
 
 #ifndef SYSTEM_CONSTANTS_H
@@ -17,9 +26,9 @@
 #include <ArduinoLog.h>
 #include <esp_log.h>
 
-// ----------------------------------------------------------------------------
-// Time conversion helpers (express human units, return milliseconds)
-// ----------------------------------------------------------------------------
+// ============================================================================
+// TIME CONVERSION HELPERS
+// ============================================================================
 namespace ScribeTime
 {
     constexpr unsigned long Seconds(unsigned long s) { return s * 1000UL; }
@@ -28,22 +37,67 @@ namespace ScribeTime
 }
 
 // ============================================================================
-// SYSTEM CONSTANTS - Hardware timings and buffer sizes
+// 1. CORE SYSTEM - Timing, buffers, retries
 // ============================================================================
 static const int serialTimeoutMs = 5000;                          // Serial connection timeout (5s)
 static const int smallDelayMs = 50;                               // Small delay for CPU/power management
 static const int mediumJsonBuffer = 1024;                         // Medium JSON buffer size divisor
 static const int defaultMaxRetries = 3;                           // Default max retries for API calls
 static const int defaultBaseDelayMs = 1000;                       // Default base delay for backoff (1s)
-static const int mqttTestCleanupDelayMs = ScribeTime::Seconds(1); // MQTT test cleanup delay (1s)
+static const int jsonDocumentSize = 1024;                         // Standard JSON document buffer size
+static const int largeJsonDocumentSize = 6144;                    // Large JSON document buffer size (6KB for config with GPIO info and memos)
+static const int stringBufferSize = 64;                           // Standard string buffer size
+const int watchdogTimeoutSeconds = 8;                             // Watchdog timeout in seconds
+static const unsigned long memCheckIntervalMs = ScribeTime::Minutes(1); // Memory check frequency (60s)
 
-// Session management constants
-static const int maxConcurrentSessions = 5;                                           // Maximum concurrent user sessions
-static const int sessionTokenLength = 32;                                             // Session token length (bytes)
-static const unsigned int sessionTimeoutHours = 4;                                    // Session timeout in hours (canonical)
-static const unsigned long sessionTimeoutMs = ScribeTime::Hours(sessionTimeoutHours); // Derived ms
-static const char *sessionCookieName = "ScribeSession";                               // Session cookie name
-static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict";        // Cookie security options
+// ============================================================================
+// 2. HARDWARE - GPIO, printer, buttons physical settings
+// ============================================================================
+
+// Printer hardware configuration
+static const int defaultPrinterTxPin = 21; // Default TX pin to printer RX (green wire)
+static const int heatingDots = 10;         // Heating dots (7-15, lower = less power)
+static const int heatingTime = 150;        // Heating time (80-200ms)
+static const int heatingInterval = 250;    // Heating interval (200-250ms)
+
+// Printer discovery heartbeat
+static const unsigned long printerDiscoveryHeartbeatIntervalMs = ScribeTime::Minutes(1); // 1 minute heartbeat interval
+
+// Button hardware configuration
+static const unsigned long buttonDebounceMs = 50;         // Debounce time in milliseconds
+static const unsigned long buttonLongPressMs = 2000;      // Long press threshold in milliseconds
+static const bool buttonActiveLow = true;                 // true = button pulls to ground, false = button pulls to VCC
+
+// Button task safety settings (ESP32-C3 specific)
+static const int buttonTaskStackSize = 8192;   // 8KB stack for HTTP operations
+static const int buttonTaskPriority = 1;       // Lower than main loop (priority 1)
+static const int buttonQueueSize = 10;         // Max queued button actions
+static const int buttonActionTimeoutMs = 3000; // 3s timeout for button-triggered HTTP calls (reduced from 5s)
+
+// System GPIO
+static const int statusLEDPin = 8; // ESP32-C3 has built-in LED on GPIO8
+
+// ============================================================================
+// 3. NETWORK - WiFi, NTP, MQTT connection
+// ============================================================================
+
+// WiFi configuration
+static const unsigned long reconnectIntervalMs = ScribeTime::Seconds(5);   // 5 seconds (WiFi reconnection interval)
+static const unsigned long wifiConnectTimeoutMs = ScribeTime::Seconds(15); // 15 seconds timeout for WiFi connection
+static const char *fallbackAPSSID = "Scribe-setup";
+static const char *fallbackAPPassword = "scribe123";
+static const int webServerPort = 80; // HTTP port for web server
+
+// NTP time synchronization
+static const char *ntpServers[] = {
+    "time.cloudflare.com", // Fastest - Cloudflare's global CDN
+    "time.google.com",     // Very fast - Google's infrastructure
+    "0.pool.ntp.org",      // Traditional reliable pool
+    "1.pool.ntp.org"       // Backup pool server
+};
+static const int ntpServerCount = sizeof(ntpServers) / sizeof(ntpServers[0]);
+static const int ntpSyncTimeoutSeconds = 30;    // Maximum wait time for initial NTP sync
+static const int ntpSyncIntervalSeconds = 3600; // Re-sync interval (1 hour)
 
 // MQTT connection and retry settings
 static const int mqttMaxConsecutiveFailures = 3;                               // Max failures before cooldown
@@ -52,6 +106,106 @@ static const unsigned long mqttFailureCooldownMs = ScribeTime::Minutes(1);     /
 static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(7);   // Connection timeout (7s)
 static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(6); // TLS handshake timeout (< watchdog)
 static const int mqttBufferSize = 512;                                         // MQTT message buffer size
+static const int mqttTestCleanupDelayMs = ScribeTime::Seconds(1);              // MQTT test cleanup delay (1s)
+static const int topicBufferSize = 64;                                         // MQTT topic buffer size
+static const int maxMqttTopicLength = 128;                                     // Max MQTT topic length
+
+// ============================================================================
+// 4. SECURITY - Sessions, rate limiting
+// ============================================================================
+
+// Session management
+static const int maxConcurrentSessions = 5;                                           // Maximum concurrent user sessions
+static const int sessionTokenLength = 32;                                             // Session token length (bytes)
+static const unsigned int sessionTimeoutHours = 4;                                    // Session timeout in hours (canonical)
+static const unsigned long sessionTimeoutMs = ScribeTime::Hours(sessionTimeoutHours); // Derived ms
+static const char *sessionCookieName = "ScribeSession";                               // Session cookie name
+static const char *sessionCookieOptions = "HttpOnly; Secure; SameSite=Strict";        // Cookie security options
+
+// Request rate limiting (API endpoints)
+static const unsigned long minRequestIntervalMs = 100;                 // 100ms minimum between requests
+static const unsigned long maxRequestsPerMinute = 60;                  // 60 requests per minute
+static const unsigned long rateLimitWindowMs = ScribeTime::Minutes(1); // 1 minute rate limit window
+
+// Button rate limiting (separate from debouncing)
+static const unsigned long buttonMinInterval = 5000;      // 5 seconds minimum between button presses (increased from 3s)
+static const unsigned long buttonMaxPerMinute = 10;       // 10 button presses per minute max (reduced from 20)
+static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
+
+// ============================================================================
+// 5. LOGGING - All logging configuration
+// ============================================================================
+
+// Logging levels: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
+static const int logLevel = LOG_LEVEL_NOTICE;
+// ESP log levels: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE
+static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
+
+// Logging destinations
+static const bool enableSerialLogging = true;       // Serial console
+static const bool enableFileLogging = false;        // LittleFS file (untested)
+static const bool enableMQTTLogging = false;        // MQTT topic
+static const bool enableBetterStackLogging = false; // BetterStack (slow but useful for debugging)
+
+// Logging configuration
+static const char *mqttLogTopic = "scribe/log";
+static const char *logFileName = "/logs/scribe.log";
+static const size_t maxLogFileSize = 100000; // 100KB
+
+// ============================================================================
+// 6. EXTERNAL APIS - Third-party service endpoints
+// ============================================================================
+
+// Content API endpoints
+static const char *jokeAPI = "https://icanhazdadjoke.com/";
+static const char *quoteAPI = "https://zenquotes.io/api/random";
+static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categories=general_knowledge&difficulty=medium&limit=1";
+static const char *newsAPI = "https://feeds.bbci.co.uk/news/rss.xml";
+
+// ChatGPT API (NEVER exposed to frontend)
+static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL
+static const char *chatgptApiTestEndpoint = "https://api.openai.com/v1/models";       // ChatGPT token test URL
+
+// BetterStack logging service
+static const char *betterStackEndpoint = "https://s1451477.eu-nbg-2.betterstackdata.com/";
+
+// User agent for API requests
+static const char *apiUserAgent = "Scribe Thermal Printer (https://github.com/Pharkie/scribe)";
+
+// ============================================================================
+// 7. CONTENT LIMITS - Character limits, validation
+// ============================================================================
+
+// Message length limits
+static const int maxCharacters = 1000;      // Max characters per message (single source of truth)
+static const int maxPromptCharacters = 500; // Max characters for Unbidden Ink prompts
+static const int minJokeLength = 10;        // Minimum joke length to be considered valid
+
+// Unbidden Ink frequency validation
+constexpr int minUnbiddenInkFrequencyMinutes = 15;  // Minimum frequency: 15 minutes
+constexpr int maxUnbiddenInkFrequencyMinutes = 480; // Maximum frequency: 8 hours
+
+// Input validation limits
+static const int maxControlCharPercent = 10;    // Max control characters as percentage of message length
+static const int maxJsonPayloadSize = 8192;     // 8KB max JSON payload size
+static const int maxParameterLength = 1000;     // Default max parameter length
+static const int maxRemoteParameterLength = 100; // Max length for remote parameter
+static const int maxUriDisplayLength = 200;     // Max URI length for display (truncated after this)
+static const int maxValidationErrors = 10;      // Max validation errors to store
+static const int maxWifiPasswordLength = 64;    // Max WiFi password length
+static const int maxTimezoneLength = 64;        // Max timezone string length
+
+// System limits
+static const int maxOtherPrinters = 10; // Max other printers to track
+static const int totalRiddles = 545;    // Total riddles in riddles.ndjson
+
+// Memo configuration
+static const int MEMO_COUNT = 4;        // Number of configurable memos
+static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
+
+// ============================================================================
+// 8. DEFAULT CONTENT - Button configs, memos, prompts
+// ============================================================================
 
 // Unbidden Ink prompt presets (autoprompts)
 static const char *unbiddenInkPromptCreative = "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.";
@@ -87,113 +241,8 @@ static const ButtonConfig defaultButtons[] = {
     {4, "QUIZ", "", "chase_single", "", "", "pulse"}                // Button 4: Quiz → (no long action) - GPIO 4 (safe pin)
 };
 
-// ============================================================================
-// BACKEND CONSTANTS - Fixed at compile time, not user-configurable
-// ============================================================================
-
-// Unbidden Ink frequency validation limits
-constexpr int minUnbiddenInkFrequencyMinutes = 15; // Minimum frequency: 15 minutes
-constexpr int maxUnbiddenInkFrequencyMinutes = 480;
-
-// Hardware button settings
-static const int numHardwareButtons = sizeof(defaultButtons) / sizeof(defaultButtons[0]); // Automatically calculated
-static const unsigned long buttonDebounceMs = 50;                                         // Debounce time in milliseconds
-static const unsigned long buttonLongPressMs = 2000;                                      // Long press threshold in milliseconds
-static const bool buttonActiveLow = true;                                                 // true = button pulls to ground, false = button pulls to VCC
-
-// Button rate limiting (separate from debouncing) - made more aggressive for ESP32-C3 stability
-static const unsigned long buttonMinInterval = 5000;      // 5 seconds minimum between button presses (increased from 3s)
-static const unsigned long buttonMaxPerMinute = 10;       // 10 button presses per minute max (reduced from 20)
-static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
-
-// Button task safety settings (ESP32-C3 specific)
-static const int buttonTaskStackSize = 8192;   // 8KB stack for HTTP operations
-static const int buttonTaskPriority = 1;       // Lower than main loop (priority 1)
-static const int buttonQueueSize = 10;         // Max queued button actions
-static const int buttonActionTimeoutMs = 3000; // 3s timeout for button-triggered HTTP calls (reduced from 5s)
-
-// Network & Time Configuration
-static const char *ntpServers[] = {
-    "time.cloudflare.com", // Fastest - Cloudflare's global CDN
-    "time.google.com",     // Very fast - Google's infrastructure
-    "0.pool.ntp.org",      // Traditional reliable pool
-    "1.pool.ntp.org"       // Backup pool server
-};
-static const int ntpServerCount = sizeof(ntpServers) / sizeof(ntpServers[0]);
-static const int ntpSyncTimeoutSeconds = 30;    // Maximum wait time for initial NTP sync
-static const int ntpSyncIntervalSeconds = 3600; // Re-sync interval (1 hour)
-
-// Logging Configuration
-// Logging levels: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
-static const int logLevel = LOG_LEVEL_NOTICE;
-static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
-static const bool enableSerialLogging = true;       // Serial console
-static const bool enableFileLogging = false;        // LittleFS file (untested)
-static const bool enableMQTTLogging = false;        // MQTT topic
-static const bool enableBetterStackLogging = false; // BetterStack (slow but useful for debugging)
-static const char *mqttLogTopic = "scribe/log";
-static const char *logFileName = "/logs/scribe.log";
-static const size_t maxLogFileSize = 100000; // 100KB
-
-// External API endpoints
-static const char *jokeAPI = "https://icanhazdadjoke.com/";
-static const char *quoteAPI = "https://zenquotes.io/api/random";
-static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categories=general_knowledge&difficulty=medium&limit=1";
-static const char *newsAPI = "https://feeds.bbci.co.uk/news/rss.xml";
-static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL (NEVER exposed to frontend)
-static const char *chatgptApiTestEndpoint = "https://api.openai.com/v1/models";       // ChatGPT token test URL (NEVER exposed to frontend)
-
-// BetterStack configuration
-static const char *betterStackEndpoint = "https://s1451477.eu-nbg-2.betterstackdata.com/";
-
-// Application Settings
-static const int maxCharacters = 1000;      // Max characters per message (single source of truth)
-static const int maxPromptCharacters = 500; // Max characters for Unbidden Ink prompts
-static const int totalRiddles = 545;        // Total riddles in riddles.ndjson
-static const char *apiUserAgent = "Scribe Thermal Printer (https://github.com/Pharkie/scribe)";
-
-// Hardware Configuration - GPIO Defaults (can be overridden in runtime config)
-static const int defaultPrinterTxPin = 21; // Default TX pin to printer RX (green wire)
-static const int heatingDots = 10;         // Heating dots (7-15, lower = less power)
-static const int heatingTime = 150;        // Heating time (80-200ms)
-static const int heatingInterval = 250;    // Heating interval (200-250ms)
-
-// System Performance Settings
-static const unsigned long memCheckIntervalMs = ScribeTime::Minutes(1);    // 60 seconds (memory check frequency)
-static const unsigned long reconnectIntervalMs = ScribeTime::Seconds(5);   // 5 seconds (WiFi reconnection interval)
-static const unsigned long wifiConnectTimeoutMs = ScribeTime::Seconds(15); // 15 seconds timeout for WiFi connection
-static const char *fallbackAPSSID = "Scribe-setup";
-static const char *fallbackAPPassword = "scribe123";
-static const int statusLEDPin = 8;    // ESP32-C3 has built-in LED on GPIO8
-static const int webServerPort = 80;  // HTTP port for web server
-const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
-
-// Printer Discovery Heartbeat
-static const unsigned long printerDiscoveryHeartbeatIntervalMs = ScribeTime::Minutes(1); // 1 minute heartbeat interval
-
-// Input Validation Limits
-static const unsigned long minRequestIntervalMs = 100;                 // 100ms minimum between requests
-static const unsigned long maxRequestsPerMinute = 60;                  // 60 requests per minute
-static const unsigned long rateLimitWindowMs = ScribeTime::Minutes(1); // 1 minute rate limit window
-static const int maxControlCharPercent = 10;                           // Max control characters as percentage of message length
-static const int maxJsonPayloadSize = 8192;                            // 8KB max JSON payload size
-static const int maxMqttTopicLength = 128;                             // Max MQTT topic length
-static const int maxParameterLength = 1000;                            // Default max parameter length
-static const int maxRemoteParameterLength = 100;                       // Max length for remote parameter
-static const int maxUriDisplayLength = 200;                            // Max URI length for display (truncated after this)
-static const int jsonDocumentSize = 1024;                              // Standard JSON document buffer size
-static const int largeJsonDocumentSize = 6144;                         // Large JSON document buffer size (6KB for config with GPIO info and memos)
-static const int maxValidationErrors = 10;                             // Max validation errors to store
-static const int maxOtherPrinters = 10;                                // Max other printers to track
-static const int stringBufferSize = 64;                                // Standard string buffer size
-static const int topicBufferSize = 64;                                 // MQTT topic buffer size
-static const int maxWifiPasswordLength = 64;                           // Max WiFi password length
-static const int maxTimezoneLength = 64;                               // Max timezone string length
-static const int minJokeLength = 10;                                   // Minimum joke length to be considered valid
-
-// Memo Configuration
-static const int MEMO_COUNT = 4;        // Number of configurable memos
-static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
+// Calculate number of hardware buttons automatically
+static const int numHardwareButtons = sizeof(defaultButtons) / sizeof(defaultButtons[0]);
 
 // Default memo content for first boot
 static const char *defaultMemo1 =

@@ -113,6 +113,10 @@ void setup()
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
+#ifdef RELEASE_BUILD
+  // Suppress VFS errors in production (AsyncWebServer checks for uncompressed files before serving .gz)
+  esp_log_level_set("vfs", ESP_LOG_NONE);
+#endif
 
   // Log logging system configuration
   LOG_VERBOSE("BOOT", "Logging system initialized - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
