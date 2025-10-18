@@ -62,7 +62,7 @@ static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
 // NOTICE = Important events (default, recommended)
 // WARN = Warnings and errors only
 // ERROR = Errors only
-static const int logLevel = LOG_LEVEL_NOTICE;
+static const int logLevel = LOG_LEVEL_VERBOSE;
 
 // ESP system logging levels
 // Options: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE
@@ -73,9 +73,9 @@ static const int logLevel = LOG_LEVEL_NOTICE;
 static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
 
 // Logging destinations - Enable/disable where logs are sent
-static const bool enableSerialLogging = true;        // USB serial console (always recommended)
-static const bool enableFileLogging = false;         // LittleFS file logging (untested, may impact performance)
-static const bool enableMqttLogging = false;         // Send logs to MQTT (requires MQTT enabled)
-static const bool enableBetterStackLogging = false;  // Send logs to BetterStack (slow, debug only)
+static const bool enableSerialLogging = true;       // USB serial console (always recommended)
+static const bool enableFileLogging = false;        // LittleFS file logging (untested, may impact performance)
+static const bool enableMqttLogging = false;        // Send logs to MQTT (requires MQTT enabled)
+static const bool enableBetterStackLogging = false; // Send logs to BetterStack (slow, debug only)
 
 #endif
