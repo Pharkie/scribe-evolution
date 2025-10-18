@@ -36,7 +36,14 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
 
     # Step 4/4: Start serial monitor
     print("\n🛰️  [4/4] Starting serial monitor...")
-    env.Execute(f"pio device monitor -p {env.GetProjectOption('monitor_port')} -b {env.GetProjectOption('monitor_speed')}")
+    # Use upload_port if available, otherwise let pio auto-detect
+    upload_port = env.GetProjectOption('upload_port', None)
+    monitor_speed = env.GetProjectOption('monitor_speed')
+
+    if upload_port:
+        env.Execute(f"pio device monitor -p {upload_port} -b {monitor_speed}")
+    else:
+        env.Execute(f"pio device monitor -b {monitor_speed}")
 
 Import("env")  # type: ignore # pylint: disable=undefined-variable
 env.AddCustomTarget(

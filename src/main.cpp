@@ -88,7 +88,7 @@ void setup()
   // Note: We can't use Log.notice() yet as logging isn't initialized
   Serial.printf("\n=== Scribe Evolution v%s ===\n", FIRMWARE_VERSION);
   Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
-  Serial.printf("[BOOT] System: ESP32-C3, %d KB free heap\n", ESP.getFreeHeap() / mediumJsonBuffer);
+  Serial.printf("[BOOT] System: %s, %d KB free heap\n", ESP.getChipModel(), ESP.getFreeHeap() / mediumJsonBuffer);
 
   // Initialize LittleFS so config loading works
   if (!LittleFS.begin(true, "/littlefs", 10, "littlefs")) // true = format if mount fails

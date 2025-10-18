@@ -7,7 +7,6 @@ Memory-constrained embedded system with dual configuration layers.
 
 <critical_notes>
 
-- Claude must proactively ask user to check VSCode Problems panel after ANY code changes
 - Always run `npm run build` after ANY frontend changes
 - Never edit `/data/` directly - edit `/src/data/` instead
 - Never hardcode values - use `config.h` and NVS
@@ -77,16 +76,13 @@ Content Generation Architecture:
 <workflow>
 Code Quality Process:
 1. Make changes to source files
-2. Ask user to check VSCode Problems panel for errors
-3. Fix any linting/type errors reported
-4. Run `npm run build` (if frontend changes)
-5. Test with hardware or mock server
-6. Commit with descriptive message
+2. Run `npm run build` (if frontend changes)
+3. Test with hardware or mock server
+4. Commit with descriptive message
 </workflow>
 
 <fatal_implications>
 
-- Skip checking for errors = Broken code ships
 - Edit `/data/` directly = Changes lost on build
 - Hardcode values = Maintenance nightmare
 - Custom reactivity instead of Alpine = You're doing it wrong
