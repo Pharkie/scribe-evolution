@@ -11,9 +11,11 @@
 // External printer object and configuration
 extern HardwareSerial printer;
 extern const int maxCharsPerLine;
+extern volatile bool printerReady; // Ready flag to gate all writes
 
 // Function declarations
 void initializePrinter();
+bool isPrinterReady(); // Check if printer is ready for writes
 void printMessage();
 void printStartupMessage();
 void setInverse(bool enable);

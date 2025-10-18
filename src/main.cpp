@@ -237,8 +237,8 @@ void setup()
   server.begin();
   LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
 
-  // Print startup message (handles both AP mode and normal mode)
-  printStartupMessage();
+  // Skip startup print to avoid early UART writes that can crash on S3
+  // printStartupMessage();
 
   // Initialize Unbidden Ink schedule
   initializeUnbiddenInk();

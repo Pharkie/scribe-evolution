@@ -9,32 +9,57 @@
 #include <esp_task_wdt.h>
 
 // Printer object and configuration
-HardwareSerial printer(1); // Use UART1 (available on all ESP32 variants)
+// Use UART1 on all ESP32 variants
+HardwareSerial printer(1);
 const int maxCharsPerLine = 32;
+volatile bool printerReady = false; // Ready flag to gate all writes (volatile to prevent optimization)
 
 // === Printer Functions ===
+
+// Check if printer is ready for writes
+bool isPrinterReady()
+{
+    return printerReady;
+}
+
 void initializePrinter()
 {
     LOG_VERBOSE("PRINTER", "Starting printer initialization...");
+    printerReady = false; // Ensure flag is false during init
 
     // Get board-specific printer configuration
     const RuntimeConfig &config = getRuntimeConfig();
     const BoardPinDefaults &boardDefaults = getBoardDefaults();
 
-    // Initialize UART1 with board-specific RX/TX pins for bidirectional communication
+    // Ensure clean state - call end() first to clear any stale state
+    printer.end();
+    delay(100);
+
+    // Initialize UART with board-specific RX/TX pins for bidirectional communication
     // RX pin receives printer status and feedback, DTR is configured separately if present
     printer.begin(9600, SERIAL_8N1, boardDefaults.printer.rx, config.printerTxPin);
 
-    LOG_VERBOSE("PRINTER", "UART1 initialized (TX=%d, RX=%d, DTR=%d)",
-                config.printerTxPin, boardDefaults.printer.rx, boardDefaults.printer.dtr);
-
-    // Give printer and UART time to settle after pin transition
-    delay(100);
+    // ESP32-S3 requires extra time for UART hardware to fully initialize
+    delay(500);
 
     // Feed watchdog after delay
     esp_task_wdt_reset();
 
-    LOG_VERBOSE("PRINTER", "UART initialized, sending printer commands...");
+    // Verify printer is available before marking ready
+    if (!printer)
+    {
+        LOG_ERROR("PRINTER", "UART failed to initialize - printer not available");
+        printerReady = false;
+        return;
+    }
+
+    // Mark printer as ready BEFORE any writes
+    printerReady = true;
+
+    LOG_VERBOSE("PRINTER", "UART initialized (TX=%d, RX=%d, DTR=%d)",
+                config.printerTxPin, boardDefaults.printer.rx, boardDefaults.printer.dtr);
+
+    LOG_VERBOSE("PRINTER", "Sending printer initialization commands...");
 
     // Initialize printer with ESC @ (reset command)
     printer.write(0x1B);
@@ -55,12 +80,34 @@ void initializePrinter()
     printer.write(0x01); // ESC { 1
     delay(50);
 
-    LOG_VERBOSE("PRINTER", "Printer initialized successfully");
+    LOG_VERBOSE("PRINTER", "Printer initialized successfully - printerReady = %s (address: %p)",
+                printerReady ? "TRUE" : "FALSE", (void*)&printerReady);
 }
 
 void printMessage()
 {
-    LOG_VERBOSE("PRINTER", "Printing message...");
+    LOG_VERBOSE("PRINTER", "Printing message... (printerReady = %s, address: %p)",
+                printerReady ? "TRUE" : "FALSE", (void*)&printerReady);
+
+    // Validate printer is ready
+    if (!printerReady)
+    {
+        LOG_ERROR("PRINTER", "Printer not ready - cannot print (printerReady = FALSE)");
+        return;
+    }
+
+    // Validate currentMessage has valid strings
+    LOG_VERBOSE("PRINTER", "Message timestamp pointer: %p, length: %d",
+                currentMessage.timestamp.c_str(), currentMessage.timestamp.length());
+    LOG_VERBOSE("PRINTER", "Message content pointer: %p, length: %d",
+                currentMessage.message.c_str(), currentMessage.message.length());
+
+    // Check if strings are valid before printing
+    if (currentMessage.timestamp.c_str() == nullptr || currentMessage.message.c_str() == nullptr)
+    {
+        LOG_ERROR("PRINTER", "currentMessage has NULL string buffers - cannot print");
+        return;
+    }
 
     printWithHeader(currentMessage.timestamp, currentMessage.message);
 
