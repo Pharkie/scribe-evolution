@@ -123,16 +123,55 @@ bool loadNVSConfig()
         return false;
     }
 
+    // Board type detection and mismatch handling
+    const BoardPinDefaults &boardDefaults = getBoardDefaults();
+    String savedBoardType = prefs.getString(NVS_BOARD_TYPE, "");
+    String currentBoardType = String(boardDefaults.boardIdentifier);
+
+    if (savedBoardType.isEmpty())
+    {
+        // First boot or board type not saved yet - save current board type
+        LOG_NOTICE("CONFIG", "First boot or board type not set - saving board type: %s", currentBoardType.c_str());
+        prefs.putString(NVS_BOARD_TYPE, currentBoardType);
+    }
+    else if (savedBoardType != currentBoardType)
+    {
+        // Board mismatch detected - reset GPIO configurations to new board defaults
+        LOG_WARNING("CONFIG", "╔═══════════════════════════════════════════════════════════╗");
+        LOG_WARNING("CONFIG", "║  ⚠️  BOARD MISMATCH DETECTED - RESETTING GPIO CONFIGS  ⚠️  ║");
+        LOG_WARNING("CONFIG", "╠═══════════════════════════════════════════════════════════╣");
+        LOG_WARNING("CONFIG", "║  Saved Board:   %-41s ║", savedBoardType.c_str());
+        LOG_WARNING("CONFIG", "║  Current Board: %-41s ║", currentBoardType.c_str());
+        LOG_WARNING("CONFIG", "║  Resetting all GPIO pins to new board defaults...        ║");
+        LOG_WARNING("CONFIG", "╚═══════════════════════════════════════════════════════════╝");
+
+        // Update board type in NVS
+        prefs.putString(NVS_BOARD_TYPE, currentBoardType);
+
+        // Reset GPIO configurations to new board defaults
+        prefs.putInt(NVS_PRINTER_TX_PIN, boardDefaults.printer.tx);
+        prefs.putInt(NVS_BUTTON1_GPIO, boardDefaults.buttons[0].gpio);
+        prefs.putInt(NVS_BUTTON2_GPIO, boardDefaults.buttons[1].gpio);
+        prefs.putInt(NVS_BUTTON3_GPIO, boardDefaults.buttons[2].gpio);
+        prefs.putInt(NVS_BUTTON4_GPIO, boardDefaults.buttons[3].gpio);
+
+        #if ENABLE_LEDS
+        prefs.putInt(NVS_LED_PIN, boardDefaults.ledDataPin);
+        #endif
+
+        LOG_NOTICE("CONFIG", "GPIO configurations reset to %s defaults", currentBoardType.c_str());
+    }
+
     // Load device configuration
     g_runtimeConfig.deviceOwner = getNVSString(prefs, NVS_DEVICE_OWNER, defaultDeviceOwner, 50);
     g_runtimeConfig.timezone = getNVSString(prefs, NVS_DEVICE_TIMEZONE, defaultTimezone, 50);
-    
-    // Load hardware GPIO configuration
-    g_runtimeConfig.printerTxPin = getNVSInt(prefs, NVS_PRINTER_TX_PIN, defaultPrinterTxPin, 0, 39);
-    g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, defaultButtons[0].gpio, 0, 39);
-    g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, defaultButtons[1].gpio, 0, 39);
-    g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, defaultButtons[2].gpio, 0, 39);
-    g_runtimeConfig.buttonGpios[3] = getNVSInt(prefs, NVS_BUTTON4_GPIO, defaultButtons[3].gpio, 0, 39);
+
+    // Load hardware GPIO configuration (now board-aware)
+    g_runtimeConfig.printerTxPin = getNVSInt(prefs, NVS_PRINTER_TX_PIN, boardDefaults.printer.tx, 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, boardDefaults.buttons[0].gpio, 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, boardDefaults.buttons[1].gpio, 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, boardDefaults.buttons[2].gpio, 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[3] = getNVSInt(prefs, NVS_BUTTON4_GPIO, boardDefaults.buttons[3].gpio, 0, BOARD_MAX_GPIO);
 
     // Load WiFi configuration
     g_runtimeConfig.wifiSSID = getNVSString(prefs, NVS_WIFI_SSID, defaultWifiSSID, 32);
@@ -192,8 +231,8 @@ bool loadNVSConfig()
     }
 
 #if ENABLE_LEDS
-    // Load LED configuration
-    g_runtimeConfig.ledPin = getNVSInt(prefs, NVS_LED_PIN, DEFAULT_LED_PIN, 0, 39);
+    // Load LED configuration (board-aware GPIO limits)
+    g_runtimeConfig.ledPin = getNVSInt(prefs, NVS_LED_PIN, DEFAULT_LED_PIN, 0, BOARD_MAX_GPIO);
     g_runtimeConfig.ledCount = getNVSInt(prefs, NVS_LED_COUNT, DEFAULT_LED_COUNT, 1, 1000);
     g_runtimeConfig.ledBrightness = getNVSInt(prefs, NVS_LED_BRIGHTNESS, DEFAULT_LED_BRIGHTNESS, 1, 255);
     g_runtimeConfig.ledRefreshRate = getNVSInt(prefs, NVS_LED_REFRESH_RATE, DEFAULT_LED_REFRESH_RATE, 10, 120);
@@ -214,16 +253,19 @@ bool loadNVSConfig()
 
 void loadDefaultConfig()
 {
+    // Get board-specific defaults
+    const BoardPinDefaults &boardDefaults = getBoardDefaults();
+
     // Load device defaults
     g_runtimeConfig.deviceOwner = defaultDeviceOwner;
     g_runtimeConfig.timezone = defaultTimezone;
-    
-    // Load hardware GPIO defaults
-    g_runtimeConfig.printerTxPin = defaultPrinterTxPin;
-    g_runtimeConfig.buttonGpios[0] = defaultButtons[0].gpio;
-    g_runtimeConfig.buttonGpios[1] = defaultButtons[1].gpio;
-    g_runtimeConfig.buttonGpios[2] = defaultButtons[2].gpio;
-    g_runtimeConfig.buttonGpios[3] = defaultButtons[3].gpio;
+
+    // Load hardware GPIO defaults (board-specific)
+    g_runtimeConfig.printerTxPin = boardDefaults.printer.tx;
+    g_runtimeConfig.buttonGpios[0] = boardDefaults.buttons[0].gpio;
+    g_runtimeConfig.buttonGpios[1] = boardDefaults.buttons[1].gpio;
+    g_runtimeConfig.buttonGpios[2] = boardDefaults.buttons[2].gpio;
+    g_runtimeConfig.buttonGpios[3] = boardDefaults.buttons[3].gpio;
 
     // Load WiFi defaults (empty by default, must be configured)
     g_runtimeConfig.wifiSSID = defaultWifiSSID;

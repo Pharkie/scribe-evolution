@@ -21,7 +21,8 @@
 // ============================================================================
 
 // LED Hardware Configuration - Runtime Configurable Defaults
-static const int DEFAULT_LED_PIN = 20;                                                    // GPIO pin for LED strip data (safe, digital output)
+// NOTE: Default LED pin is now board-specific (from board_config.h)
+static const int DEFAULT_LED_PIN = BOARD_DEFAULT_LED_PIN;                                // GPIO pin for LED strip data (board-specific)
 static const int DEFAULT_LED_COUNT = 30;                                                  // Number of LEDs in the strip
 static const int DEFAULT_LED_BRIGHTNESS = 100;                                            // Default brightness (0-255, 64 = 25% to save power)
 static const int DEFAULT_LED_REFRESH_RATE = 60;                                           // Refresh rate in Hz

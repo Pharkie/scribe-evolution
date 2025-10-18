@@ -333,14 +333,15 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonArray safePins = gpio["safePins"].to<JsonArray>();
     JsonObject pinDescriptions = gpio["pinDescriptions"].to<JsonObject>();
 
-    LOG_VERBOSE("CONFIG", "Adding GPIO info, ESP32C3_GPIO_COUNT: %d", ESP32C3_GPIO_COUNT);
+    const BoardConstraints &constraints = getBoardConstraints();
+    LOG_VERBOSE("CONFIG", "Adding GPIO info, GPIO map size: %d (Board: %s)", constraints.gpioMapSize, BOARD_NAME);
 
-    // Add all ESP32-C3 GPIO information
-    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    // Add all GPIO information for this board
+    for (int i = 0; i < constraints.gpioMapSize; i++)
     {
-        int pin = ESP32C3_GPIO_MAP[i].pin;
+        int pin = constraints.gpioMap[i].pin;
         availablePins.add(pin);
-        pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
+        pinDescriptions[String(pin)] = constraints.gpioMap[i].description;
 
         if (isSafeGPIO(pin))
         {
@@ -903,13 +904,14 @@ void handleSetupGet(AsyncWebServerRequest *request)
     JsonObject pinDescriptions = gpio["pinDescriptions"].to<JsonObject>();
 
     // Only include safe pins for setup
-    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    const BoardConstraints &constraints = getBoardConstraints();
+    for (int i = 0; i < constraints.gpioMapSize; i++)
     {
-        int pin = ESP32C3_GPIO_MAP[i].pin;
+        int pin = constraints.gpioMap[i].pin;
         if (isSafeGPIO(pin))
         {
             safePins.add(pin);
-            pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
+            pinDescriptions[String(pin)] = constraints.gpioMap[i].description;
         }
     }
 

@@ -34,6 +34,12 @@ void validateConfig()
         // First-time startup: Loading default configuration from config.h
     }
 
+    // Validate board match (hardware vs firmware)
+    if (!validateBoardMatch())
+    {
+        Serial.println("[BOOT] ⚠️  Board mismatch detected - see warning above");
+    }
+
     ValidationResult result = validateDeviceConfig();
 
     if (!result.isValid)
@@ -46,7 +52,8 @@ void validateConfig()
 
     // GPIO validation - check for conflicts between buttons, status LED, and LED strip
     const RuntimeConfig &config = getRuntimeConfig();
-    int usedGpios[32]; // ESP32-C3 has GPIOs 0-21, but use larger array for safety
+    const BoardConstraints &constraints = getBoardConstraints();
+    int usedGpios[64]; // Support up to 64 GPIOs (ESP32-S3 has up to 48)
     int usedCount = 0;
     bool gpioConflict = false;
 
@@ -83,23 +90,21 @@ void validateConfig()
         }
     }
 
-    // Validate GPIO ranges for ESP32-C3 (GPIO 0-21)
+    // Validate GPIO ranges (board-specific)
     for (int i = 0; i < usedCount && !gpioConflict; i++)
     {
-        if (usedGpios[i] < 0 || usedGpios[i] > 21)
+        // Check if GPIO is valid for this board
+        if (!isValidGPIO(usedGpios[i]))
         {
-            Serial.printf("❌ Invalid GPIO %d: ESP32-C3 only supports GPIO 0-21\n", usedGpios[i]);
+            Serial.printf("❌ Invalid GPIO %d: %s only supports GPIOs 0-%d\n",
+                         usedGpios[i], BOARD_NAME, BOARD_MAX_GPIO);
             gpioConflict = true;
         }
 
-        // Warn about potentially problematic GPIOs
-        if (usedGpios[i] == 0 || usedGpios[i] == 1)
+        // Warn about unsafe GPIOs (strapping, USB, flash, etc.)
+        if (!isSafeGPIO(usedGpios[i]))
         {
-            Serial.printf("⚠️  GPIO %d warning: Used for UART0 (Serial) - may cause boot/programming issues\n", usedGpios[i]);
-        }
-        if (usedGpios[i] == 2 || usedGpios[i] == 3)
-        {
-            Serial.printf("⚠️  GPIO %d warning: Strapping pin - may cause boot issues if pulled wrong way\n", usedGpios[i]);
+            Serial.printf("⚠️  GPIO %d warning: %s\n", usedGpios[i], getGPIODescription(usedGpios[i]));
         }
     }
 
@@ -109,13 +114,13 @@ void validateConfig()
     }
     else
     {
-        Serial.printf("[BOOT] ✅ Hardware: %d GPIOs validated\n", usedCount);
+        Serial.printf("[BOOT] ✅ Hardware: %d GPIOs validated on %s\n", usedCount, BOARD_NAME);
     }
 }
 
 void logGPIOUsageSummary()
 {
-    LOG_VERBOSE("BOOT", "📍 GPIO Usage Summary:");
+    LOG_VERBOSE("BOOT", "📍 GPIO Usage Summary (Board: %s):", BOARD_NAME);
 
     // Get current configuration
     const RuntimeConfig &config = getRuntimeConfig();

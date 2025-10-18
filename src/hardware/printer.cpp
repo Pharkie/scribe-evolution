@@ -9,7 +9,7 @@
 #include <esp_task_wdt.h>
 
 // Printer object and configuration
-HardwareSerial printer(1); // Use UART1 on ESP32-C3
+HardwareSerial printer(1); // Use UART1 (available on all ESP32 variants)
 const int maxCharsPerLine = 32;
 
 // === Printer Functions ===
@@ -17,9 +17,16 @@ void initializePrinter()
 {
     LOG_VERBOSE("PRINTER", "Starting printer initialization...");
 
-    // Initialize UART1 which will take over pin control
+    // Get board-specific printer configuration
     const RuntimeConfig &config = getRuntimeConfig();
-    printer.begin(9600, SERIAL_8N1, -1, config.printerTxPin); // baud, config, RX pin (-1 = not used), TX pin
+    const BoardPinDefaults &boardDefaults = getBoardDefaults();
+
+    // Initialize UART1 with board-specific RX/TX pins
+    // RX pin is optional (-1 if not used), DTR is configured separately if present
+    printer.begin(9600, SERIAL_8N1, boardDefaults.printer.rx, config.printerTxPin);
+
+    LOG_VERBOSE("PRINTER", "UART1 initialized (TX=%d, RX=%d, DTR=%d)",
+                config.printerTxPin, boardDefaults.printer.rx, boardDefaults.printer.dtr);
 
     // Give printer and UART time to settle after pin transition
     delay(100);

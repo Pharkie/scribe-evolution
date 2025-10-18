@@ -1,13 +1,13 @@
 /**
  * @file system_constants.h
- * @brief System constants and hardware settings for Scribe ESP32-C3 Thermal Printer
+ * @brief System constants and hardware settings for Scribe Evolution Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
  * This file contains system constants, hardware settings, and technical parameters.
- * These rarely need modification and are tuned for ESP32-C3 performance.
+ * These rarely need modification and are tuned for ESP32 performance.
  *
  * Organization:
  * 1. CORE SYSTEM - Timing, buffers, retries
@@ -25,6 +25,7 @@
 
 #include <ArduinoLog.h>
 #include <esp_log.h>
+#include "boards/board_config.h"
 
 // ============================================================================
 // TIME CONVERSION HELPERS
@@ -51,9 +52,11 @@ static const unsigned long memCheckIntervalMs = ScribeTime::Minutes(1); // Memor
 // ============================================================================
 // 2. HARDWARE - GPIO, printer, buttons physical settings
 // ============================================================================
+// NOTE: Board-specific GPIO defaults are now in src/config/boards/
+// These values come from board_config.h based on compile-time board selection
 
-// Printer hardware configuration
-static const int defaultPrinterTxPin = 21; // Default TX pin to printer RX (green wire)
+// Printer hardware configuration (board-specific TX/RX/DTR from board_config.h)
+static const int defaultPrinterTxPin = BOARD_DEFAULT_PRINTER_TX; // TX pin to printer RX
 static const int heatingDots = 10;         // Heating dots (7-15, lower = less power)
 static const int heatingTime = 150;        // Heating time (80-200ms)
 static const int heatingInterval = 250;    // Heating interval (200-250ms)
@@ -72,8 +75,8 @@ static const int buttonTaskPriority = 1;       // Lower than main loop (priority
 static const int buttonQueueSize = 10;         // Max queued button actions
 static const int buttonActionTimeoutMs = 3000; // 3s timeout for button-triggered HTTP calls (reduced from 5s)
 
-// System GPIO
-static const int statusLEDPin = 8; // ESP32-C3 has built-in LED on GPIO8
+// System GPIO (board-specific from board_config.h)
+static const int statusLEDPin = BOARD_STATUS_LED_PIN; // Built-in status LED
 
 // ============================================================================
 // 3. NETWORK - WiFi, NTP, MQTT connection
@@ -206,32 +209,19 @@ static const char *unbiddenInkPromptDoctorWho = "Generate content inspired by Do
 static const char *defaultUnbiddenInkPrompt = unbiddenInkPromptCreative;
 
 // Default button configuration (GPIO, actions, MQTT topics, LED effects)
-struct ButtonConfig
-{
-    int gpio;
-    const char *shortAction; // Direct content action type (JOKE, RIDDLE, etc.) - NOT HTTP endpoints
-    const char *shortMqttTopic;
-    const char *shortLedEffect;
-    const char *longAction; // Direct content action type (JOKE, RIDDLE, etc.) - NOT HTTP endpoints
-    const char *longMqttTopic;
-    const char *longLedEffect;
-};
+// NOTE: ButtonConfig struct is now defined in board_interface.h
+// Board-specific button GPIO mappings are defined in board_config.h
 
 // IMPORTANT: Hardware buttons call internal functions directly, NOT HTTP endpoints
 // Actions are content types (JOKE, RIDDLE, QUOTE, etc.) that map to generateXXXContent() functions
 // HTTP endpoints (/api/joke, etc.) are for web interface and MQTT only
 //
-// Note: GPIO are fixed in config.h, actions can be changed in config.json
+// Note: Button GPIOs are board-specific, actions can be changed in config.json
 // Empty MQTT topic means use local printing (no network calls)
-static const ButtonConfig defaultButtons[] = {
-    {5, "JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"}, // Button 1: Joke → Character Test
-    {6, "RIDDLE", "", "chase_single", "", "", "pulse"},             // Button 2: Riddle → (no long action)
-    {7, "QUOTE", "", "chase_single", "", "", "pulse"},              // Button 3: Quote → (no long action)
-    {4, "QUIZ", "", "chase_single", "", "", "pulse"}                // Button 4: Quiz → (no long action) - GPIO 4 (safe pin)
-};
+static const ButtonConfig *defaultButtons = BOARD_DEFAULT_BUTTONS;
 
-// Calculate number of hardware buttons automatically
-static const int numHardwareButtons = sizeof(defaultButtons) / sizeof(defaultButtons[0]);
+// Calculate number of hardware buttons automatically (board-specific)
+static const int numHardwareButtons = BOARD_BUTTON_COUNT;
 
 // Default memo content for first boot
 static const char *defaultMemo1 =

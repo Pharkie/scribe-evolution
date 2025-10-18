@@ -116,6 +116,18 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         return false;
     }
 
+    // Enable LED eFuse if present (custom PCB only)
+    #if BOARD_HAS_LED_EFUSE
+    const BoardPinDefaults &boardDefaults = getBoardDefaults();
+    if (boardDefaults.efuse.ledStrip != -1)
+    {
+        LOG_VERBOSE("LEDS", "Enabling LED strip eFuse on GPIO %d", boardDefaults.efuse.ledStrip);
+        pinMode(boardDefaults.efuse.ledStrip, OUTPUT);
+        digitalWrite(boardDefaults.efuse.ledStrip, HIGH); // Enable LED power
+        delay(10); // Give eFuse time to stabilize
+    }
+    #endif
+
     // Initialize FastLED
     // Validate GPIO pin using configuration system
     if (!isSafeGPIO(ledPin))
@@ -124,54 +136,64 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         return false;
     }
 
-    // Dynamic FastLED initialization using template magic
-    // This avoids the massive switch statement and supports all valid GPIO pins
+    LOG_VERBOSE("LEDS", "Initializing FastLED on GPIO %d (Board: %s)", ledPin, BOARD_NAME);
+
+    // FastLED requires GPIO pin as compile-time template parameter
+    // Use macro to reduce repetition
+    #define FASTLED_INIT_CASE(pin) \
+        case pin: FastLED.addLeds<WS2812B, pin, GRB>(leds, ledCount); break;
+
     bool initSuccess = false;
     switch (ledPin)
     {
-    case 0:
-        initSuccess = (FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount), true);
-        break;
-    case 1:
-        initSuccess = (FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount), true);
-        break;
-    case 2:
-        initSuccess = (FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount), true);
-        break;
-    case 3:
-        initSuccess = (FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount), true);
-        break;
-    case 4:
-        initSuccess = (FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount), true);
-        break;
-    case 5:
-        initSuccess = (FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount), true);
-        break;
-    case 6:
-        initSuccess = (FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount), true);
-        break;
-    case 7:
-        initSuccess = (FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount), true);
-        break;
-    case 8:
-        initSuccess = (FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount), true);
-        break;
-    case 9:
-        initSuccess = (FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount), true);
-        break;
-    case 10:
-        initSuccess = (FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount), true);
-        break;
-    case 20:
-        initSuccess = (FastLED.addLeds<WS2812B, 20, GRB>(leds, ledCount), true);
-        break;
-    case 21:
-        initSuccess = (FastLED.addLeds<WS2812B, 21, GRB>(leds, ledCount), true);
-        break;
+    // Common GPIO pins (0-10, 20-21) - available on all ESP32 boards
+    FASTLED_INIT_CASE(0)
+    FASTLED_INIT_CASE(1)
+    FASTLED_INIT_CASE(2)
+    FASTLED_INIT_CASE(3)
+    FASTLED_INIT_CASE(4)
+    FASTLED_INIT_CASE(5)
+    FASTLED_INIT_CASE(6)
+    FASTLED_INIT_CASE(7)
+    FASTLED_INIT_CASE(8)
+    FASTLED_INIT_CASE(9)
+    FASTLED_INIT_CASE(10)
+    FASTLED_INIT_CASE(20)
+    FASTLED_INIT_CASE(21)
+
+    // ESP32-S3 additional GPIO pins - only compile for boards with GPIO > 21
+    #if BOARD_MAX_GPIO > 21
+    FASTLED_INIT_CASE(11)
+    FASTLED_INIT_CASE(12)
+    FASTLED_INIT_CASE(13)
+    FASTLED_INIT_CASE(14)
+    FASTLED_INIT_CASE(15)
+    FASTLED_INIT_CASE(16)
+    FASTLED_INIT_CASE(17)
+    FASTLED_INIT_CASE(18)
+    FASTLED_INIT_CASE(33)
+    FASTLED_INIT_CASE(34)
+    FASTLED_INIT_CASE(35)
+    FASTLED_INIT_CASE(36)
+    FASTLED_INIT_CASE(37)
+    FASTLED_INIT_CASE(38)
+    FASTLED_INIT_CASE(39)
+    FASTLED_INIT_CASE(40)
+    FASTLED_INIT_CASE(41)
+    FASTLED_INIT_CASE(42)
+    FASTLED_INIT_CASE(43)
+    FASTLED_INIT_CASE(44)
+    FASTLED_INIT_CASE(47)
+    FASTLED_INIT_CASE(48)
+    #endif
+
     default:
         LOG_ERROR("LEDS", "GPIO %d not implemented in FastLED switch (this is a code bug)", ledPin);
         return false;
     }
+
+    initSuccess = true;
+    #undef FASTLED_INIT_CASE
 
     if (!initSuccess)
     {
