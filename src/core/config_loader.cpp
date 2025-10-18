@@ -128,14 +128,27 @@ bool loadNVSConfig()
     String currentBoardType = String(boardDefaults.boardIdentifier);
 
     // Check if board_type exists - we need to know this BEFORE getNVSString changes it
-    // because we must reset GPIO pins if the board type was missing OR mismatched
     bool boardTypeWasMissing = !prefs.isKey(NVS_BOARD_TYPE);
 
     // Load saved board type (getNVSString will save currentBoardType if missing)
     String savedBoardType = getNVSString(prefs, NVS_BOARD_TYPE, currentBoardType, 50);
 
-    // Reset GPIO pins if board type was missing OR if it mismatches current firmware
-    if (boardTypeWasMissing || savedBoardType != currentBoardType)
+    // Validate GPIO pins match current board (detect stale GPIO values from wrong board)
+    bool gpioMismatch = false;
+    if (!boardTypeWasMissing && savedBoardType == currentBoardType)
+    {
+        // Board type matches, but verify GPIO pins are correct for this board
+        int savedPrinterTx = prefs.getInt(NVS_PRINTER_TX_PIN, -1);
+        if (savedPrinterTx != -1 && savedPrinterTx != boardDefaults.printer.tx)
+        {
+            LOG_WARNING("CONFIG", "GPIO mismatch detected: printer TX is %d, expected %d for %s",
+                        savedPrinterTx, boardDefaults.printer.tx, currentBoardType.c_str());
+            gpioMismatch = true;
+        }
+    }
+
+    // Reset GPIO pins if board type was missing, mismatched, OR GPIO pins don't match board
+    if (boardTypeWasMissing || savedBoardType != currentBoardType || gpioMismatch)
     {
         if (!boardTypeWasMissing)
         {

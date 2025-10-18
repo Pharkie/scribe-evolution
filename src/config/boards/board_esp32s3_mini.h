@@ -123,7 +123,7 @@ static const BoardPinDefaults ESP32S3_DEFAULTS = {
         .dtr = 15  // DTR for flow control (optional)
     },
     .ledDataPin = 14,      // LED strip data
-    .statusLedPin = 8,     // Status LED (may not have built-in LED)
+    .statusLedPin = 48,    // Status LED (RGB LED on DevKitC-1)
     .buttons = ESP32S3_DEFAULT_BUTTONS,
     .buttonCount = sizeof(ESP32S3_DEFAULT_BUTTONS) / sizeof(ButtonConfig),
     .efuse = {
