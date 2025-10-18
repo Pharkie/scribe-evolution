@@ -125,30 +125,34 @@ bool loadNVSConfig()
 
     // Board type detection and mismatch handling
     const BoardPinDefaults &boardDefaults = getBoardDefaults();
-    String savedBoardType = prefs.getString(NVS_BOARD_TYPE, "");
     String currentBoardType = String(boardDefaults.boardIdentifier);
 
-    if (savedBoardType.isEmpty())
-    {
-        // First boot or board type not saved yet - save current board type
-        LOG_NOTICE("CONFIG", "First boot or board type not set - saving board type: %s", currentBoardType.c_str());
-        prefs.putString(NVS_BOARD_TYPE, currentBoardType);
-    }
-    else if (savedBoardType != currentBoardType)
-    {
-        // Board mismatch detected - reset GPIO configurations to new board defaults
-        LOG_WARNING("CONFIG", "╔═══════════════════════════════════════════════════════════╗");
-        LOG_WARNING("CONFIG", "║  ⚠️  BOARD MISMATCH DETECTED - RESETTING GPIO CONFIGS  ⚠️  ║");
-        LOG_WARNING("CONFIG", "╠═══════════════════════════════════════════════════════════╣");
-        LOG_WARNING("CONFIG", "║  Saved Board:   %-41s ║", savedBoardType.c_str());
-        LOG_WARNING("CONFIG", "║  Current Board: %-41s ║", currentBoardType.c_str());
-        LOG_WARNING("CONFIG", "║  Resetting all GPIO pins to new board defaults...        ║");
-        LOG_WARNING("CONFIG", "╚═══════════════════════════════════════════════════════════╝");
+    // Check if board_type exists - we need to know this BEFORE getNVSString changes it
+    // because we must reset GPIO pins if the board type was missing OR mismatched
+    bool boardTypeWasMissing = !prefs.isKey(NVS_BOARD_TYPE);
 
-        // Update board type in NVS
-        prefs.putString(NVS_BOARD_TYPE, currentBoardType);
+    // Load saved board type (getNVSString will save currentBoardType if missing)
+    String savedBoardType = getNVSString(prefs, NVS_BOARD_TYPE, currentBoardType, 50);
 
-        // Reset GPIO configurations to new board defaults
+    // Reset GPIO pins if board type was missing OR if it mismatches current firmware
+    if (boardTypeWasMissing || savedBoardType != currentBoardType)
+    {
+        if (!boardTypeWasMissing)
+        {
+            // Board mismatch - show warning
+            LOG_WARNING("CONFIG", "╔═══════════════════════════════════════════════════════════╗");
+            LOG_WARNING("CONFIG", "║  ⚠️  BOARD MISMATCH DETECTED - RESETTING GPIO CONFIGS  ⚠️  ║");
+            LOG_WARNING("CONFIG", "╠═══════════════════════════════════════════════════════════╣");
+            LOG_WARNING("CONFIG", "║  Saved Board:   %-41s ║", savedBoardType.c_str());
+            LOG_WARNING("CONFIG", "║  Current Board: %-41s ║", currentBoardType.c_str());
+            LOG_WARNING("CONFIG", "║  Resetting all GPIO pins to new board defaults...        ║");
+            LOG_WARNING("CONFIG", "╚═══════════════════════════════════════════════════════════╝");
+
+            // Update board type in NVS (getNVSString already did this if it was missing)
+            prefs.putString(NVS_BOARD_TYPE, currentBoardType);
+        }
+
+        // Reset GPIO configurations to current board defaults
         prefs.putInt(NVS_PRINTER_TX_PIN, boardDefaults.printer.tx);
         prefs.putInt(NVS_BUTTON1_GPIO, boardDefaults.buttons[0].gpio);
         prefs.putInt(NVS_BUTTON2_GPIO, boardDefaults.buttons[1].gpio);
@@ -159,7 +163,7 @@ bool loadNVSConfig()
         prefs.putInt(NVS_LED_PIN, boardDefaults.ledDataPin);
         #endif
 
-        LOG_NOTICE("CONFIG", "GPIO configurations reset to %s defaults", currentBoardType.c_str());
+        LOG_NOTICE("CONFIG", "GPIO configurations initialized for %s", currentBoardType.c_str());
     }
 
     // Load device configuration

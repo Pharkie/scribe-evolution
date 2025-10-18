@@ -42,13 +42,13 @@ npm install
 # Development cycle (choose your board)
 npm run build
 
-# ESP32-C3-mini
+# ESP32-C3-mini (4MB)
 pio run --target upload -e esp32c3-4mb-dev && pio run --target uploadfs -e esp32c3-4mb-dev
 
-# ESP32-S3-mini
-pio run --target upload -e esp32s3-8mb-dev && pio run --target uploadfs -e esp32s3-8mb-dev
+# ESP32-S3-mini (4MB)
+pio run --target upload -e esp32s3-4mb-dev && pio run --target uploadfs -e esp32s3-4mb-dev
 
-# ESP32-S3-custom-PCB
+# ESP32-S3-custom-PCB (8MB)
 pio run --target upload -e esp32s3-8mb-custom-pcb-dev && pio run --target uploadfs -e esp32s3-8mb-custom-pcb-dev
 
 # Testing
