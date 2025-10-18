@@ -180,7 +180,7 @@ ValidationResult validateJSON(const String &jsonString, const char *requiredFiel
     }
 
     // Parse JSON
-    DynamicJsonDocument doc(maxJsonPayloadSize / 2);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, jsonString);
 
     if (error)
@@ -191,7 +191,7 @@ ValidationResult validateJSON(const String &jsonString, const char *requiredFiel
     // Check required fields
     for (int i = 0; i < fieldCount; i++)
     {
-        if (!doc.containsKey(requiredFields[i]))
+        if (!doc[requiredFields[i]].is<JsonVariant>())
         {
             return ValidationResult(false, "Missing required field: " + String(requiredFields[i]));
         }
@@ -308,7 +308,7 @@ void sendValidationError(AsyncWebServerRequest *request, const ValidationResult 
     LOG_WARNING("WEB", "Validation error: %s", result.errorMessage.c_str());
 
     // Return JSON error response
-    DynamicJsonDocument errorResponse(512);
+    JsonDocument errorResponse;
     errorResponse["error"] = result.errorMessage;
 
     String errorString;

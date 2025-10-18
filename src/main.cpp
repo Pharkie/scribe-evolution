@@ -123,7 +123,7 @@ void setup()
               getLogLevelString(logLevel).c_str(),
               enableSerialLogging ? "ON" : "OFF",
               enableFileLogging ? "ON" : "OFF",
-              enableMQTTLogging ? "ON" : "OFF",
+              enableMqttLogging ? "ON" : "OFF",
               enableBetterStackLogging ? "ON" : "OFF");
 
   // Enable watchdog timer

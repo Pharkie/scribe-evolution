@@ -52,6 +52,12 @@ Dual Configuration System:
 1. Compile-time defaults in `src/core/config.h`
 2. Runtime configuration in NVS (Non-Volatile Storage)
 
+Configuration Naming Convention:
+
+- `default` prefix = NVS-backed settings that can be overridden via web interface (e.g., `defaultWifiSSID`, `defaultMqttEnabled`)
+- No prefix = Compile-time only settings (e.g., `logLevel`, `betterStackToken`, `jokeAPI`)
+- NEVER use `default` prefix for non-NVS constants
+
 Frontend Stack:
 
 - Alpine.js 3.14.9 (reactive framework)

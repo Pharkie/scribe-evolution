@@ -9,7 +9,7 @@
 
 void sendErrorResponse(AsyncWebServerRequest* request, int httpCode, const String &errorMessage)
 {
-    DynamicJsonDocument response(256);
+    JsonDocument response;
     response["error"] = errorMessage;
 
     String responseString;
@@ -23,9 +23,9 @@ void sendRateLimitResponse(AsyncWebServerRequest* request)
     sendErrorResponse(request, 429, getRateLimitReason());
 }
 
-DynamicJsonDocument createErrorResponse(const String &errorMessage)
+JsonDocument createErrorResponse(const String &errorMessage)
 {
-    DynamicJsonDocument response(256);
+    JsonDocument response;
     response["error"] = errorMessage;
     return response;
 }

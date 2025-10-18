@@ -283,7 +283,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
 void handleMQTTMessage(String topic, String message)
 {
     // Parse JSON message
-    DynamicJsonDocument doc(4096); // Increased to match MQTT buffer size
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, message);
 
     if (error)
@@ -295,7 +295,7 @@ void handleMQTTMessage(String topic, String message)
     String timestamp = getFormattedDateTime();
 
     // Only handle structured messages (header + body + sender)
-    if (!doc.containsKey("header") || !doc.containsKey("body") || !doc.containsKey("sender"))
+    if (!doc["header"].is<JsonVariant>() || !doc["body"].is<JsonVariant>() || !doc["sender"].is<JsonVariant>())
     {
         LOG_ERROR("MQTT", "MQTT JSON must contain 'header', 'body', and 'sender' fields");
         return;
@@ -527,7 +527,7 @@ bool publishMQTTMessage(const String& topic, const String& header, const String&
     }
     
     // Create standardized JSON payload
-    DynamicJsonDocument payloadDoc(4096);
+    JsonDocument payloadDoc;
     payloadDoc["header"] = header;
     payloadDoc["body"] = body;
     payloadDoc["timestamp"] = getFormattedDateTime();

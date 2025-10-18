@@ -44,8 +44,6 @@ static const int smallDelayMs = 50;                               // Small delay
 static const int mediumJsonBuffer = 1024;                         // Medium JSON buffer size divisor
 static const int defaultMaxRetries = 3;                           // Default max retries for API calls
 static const int defaultBaseDelayMs = 1000;                       // Default base delay for backoff (1s)
-static const int jsonDocumentSize = 1024;                         // Standard JSON document buffer size
-static const int largeJsonDocumentSize = 6144;                    // Large JSON document buffer size (6KB for config with GPIO info and memos)
 static const int stringBufferSize = 64;                           // Standard string buffer size
 const int watchdogTimeoutSeconds = 8;                             // Watchdog timeout in seconds
 static const unsigned long memCheckIntervalMs = ScribeTime::Minutes(1); // Memory check frequency (60s)
@@ -133,21 +131,12 @@ static const unsigned long buttonMaxPerMinute = 10;       // 10 button presses p
 static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
 
 // ============================================================================
-// 5. LOGGING - All logging configuration
+// 5. LOGGING - Technical logging constants (NOT user preferences)
 // ============================================================================
+// NOTE: Logging preferences (levels, destinations) are now in device_config.h
+// These are technical constants for logging infrastructure
 
-// Logging levels: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
-static const int logLevel = LOG_LEVEL_NOTICE;
-// ESP log levels: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE
-static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
-
-// Logging destinations
-static const bool enableSerialLogging = true;       // Serial console
-static const bool enableFileLogging = false;        // LittleFS file (untested)
-static const bool enableMQTTLogging = false;        // MQTT topic
-static const bool enableBetterStackLogging = false; // BetterStack (slow but useful for debugging)
-
-// Logging configuration
+// Logging file configuration
 static const char *mqttLogTopic = "scribe/log";
 static const char *logFileName = "/logs/scribe.log";
 static const size_t maxLogFileSize = 100000; // 100KB

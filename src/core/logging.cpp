@@ -116,7 +116,7 @@ void logToMQTT(const String &message, const String &level, const String &compone
         esp_task_wdt_reset();
 
         // Create JSON log entry
-        DynamicJsonDocument doc(1024);
+        JsonDocument doc;
         doc["device_timestamp"] = getFormattedDateTime();
         doc["device"] = String(getMdnsHostname());
         doc["device_owner"] = getSafeDeviceOwner();
@@ -163,7 +163,7 @@ void logToBetterStack(const String &message, const String &level, const String &
     }
 
     // Create BetterStack log entry with structured tags
-    DynamicJsonDocument doc(1024);
+    JsonDocument doc;
     doc["device_owner"] = getSafeDeviceOwner();
     doc["level"] = level;
     doc["message"] = cleanMessage;
@@ -265,7 +265,7 @@ void structuredLog(const char *component, int level, const char *format, ...)
     }
 
     // Send structured logs to MQTT/BetterStack
-    if (enableMQTTLogging && mqttClient.connected())
+    if (enableMqttLogging && mqttClient.connected())
     {
         logToMQTT(message, levelStr, component);
     }

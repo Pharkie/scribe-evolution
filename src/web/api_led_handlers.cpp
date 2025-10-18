@@ -46,7 +46,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
     }
 
     // Parse JSON body
-    DynamicJsonDocument doc(512);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, body);
 
     if (error)
@@ -69,7 +69,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
 
     // Parse required parameters
     int cycles = DEFAULT_LED_EFFECT_CYCLES; // Default cycles from led_config.h
-    if (doc.containsKey("cycles"))
+    if (doc["cycles"].is<JsonVariant>())
     {
         if (doc["cycles"].is<int>())
         {
@@ -88,16 +88,16 @@ void handleLedEffect(AsyncWebServerRequest *request)
     // Note: No duration concept - effects run for cycles or continuously
 
     // Colors: optional; effects will use defaults when not supplied.
-    const bool hasColors = doc.containsKey("colors") && doc["colors"].is<JsonArray>();
+    const bool hasColors = doc["colors"].is<JsonVariant>() && doc["colors"].is<JsonArray>();
 
     // Create settings object from unified parameters
-    DynamicJsonDocument settingsDoc(512);
+    JsonDocument settingsDoc;
     JsonObject settings = settingsDoc.to<JsonObject>();
 
     // Map unified parameters to effect-specific settings
-    if (doc.containsKey("speed"))
+    if (doc["speed"].is<JsonVariant>())
         settings["speed"] = doc["speed"];
-    if (doc.containsKey("intensity"))
+    if (doc["intensity"].is<JsonVariant>())
     {
         // Map intensity to effect-specific parameter based on effect type
         int intensity = doc["intensity"];
@@ -255,8 +255,8 @@ void handleLedEffect(AsyncWebServerRequest *request)
         int ledCount = config.ledCount;
 
         // Map 1–100 speed/intensity to reasonable effect parameters (50 = ideal)
-        bool speedProvided = doc.containsKey("speed");
-        bool intensityProvided = doc.containsKey("intensity");
+        bool speedProvided = doc["speed"].is<JsonVariant>();
+        bool intensityProvided = doc["intensity"].is<JsonVariant>();
         int speed = speedProvided ? (int)doc["speed"] : 50;         // Only used if provided
         int intensity = intensityProvided ? (int)doc["intensity"] : 50; // Only used if provided
         // Clamp to expected range (1..100)
@@ -331,7 +331,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
             playgroundConfig.chaseMulti.colorSpacing = max(2, ledCount / 10); // Auto-scale to strip length
 
             // Colors from frontend
-            if (settings.containsKey("colors") && settings["colors"].as<JsonArray>().size() > 0)
+            if (settings["colors"].is<JsonVariant>() && settings["colors"].as<JsonArray>().size() > 0)
             {
                 JsonArray settingsColors = settings["colors"];
                 playgroundConfig.chaseMulti.color1 = settingsColors.size() > 0 ? settingsColors[0].as<String>() : "#ff0000";
@@ -442,7 +442,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
 
     if (success)
     {
-        DynamicJsonDocument response(1024); // Increased size for full settings object
+        JsonDocument response;
         response["message"] = "LED effect started";
         response["effect"] = effectName;
         response["cycles"] = cycles;
@@ -453,7 +453,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
 
         // Include the resolved colors used
-        JsonArray used = response.createNestedArray("colors_used");
+        JsonArray used = response["colors_used"].to<JsonArray>();
         used.add(String("#") + String(c1.r, HEX) + String(c1.g, HEX) + String(c1.b, HEX));
         used.add(String("#") + String(c2.r, HEX) + String(c2.g, HEX) + String(c2.b, HEX));
         used.add(String("#") + String(c3.r, HEX) + String(c3.g, HEX) + String(c3.b, HEX));
@@ -487,7 +487,7 @@ void handleLedOff(AsyncWebServerRequest *request)
 
     LOG_NOTICE("LEDS", "LEDs turned off");
 
-    DynamicJsonDocument response(256);
+    JsonDocument response;
     response["success"] = true;
     response["message"] = "LEDs turned off";
 

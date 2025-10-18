@@ -21,7 +21,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "NVS dump requested from %s", request->client()->remoteIP().toString().c_str());
 
     // Use heap allocation for large JSON documents to prevent stack overflow
-    std::unique_ptr<DynamicJsonDocument> doc(new DynamicJsonDocument(8192));
+    std::unique_ptr<JsonDocument> doc(new JsonDocument());
 
     Preferences prefs;
     if (!prefs.begin("scribe-app", true))
@@ -130,7 +130,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
     for (size_t i = 0; i < numKeys; i++)
     {
         const NVSKey &keyInfo = knownKeys[i];
-        JsonObject keyObj = keys.createNestedObject(keyInfo.key);
+        JsonObject keyObj = keys[keyInfo.key].to<JsonObject>();
 
         keyObj["type"] = keyInfo.type;
         keyObj["description"] = keyInfo.description;
@@ -210,7 +210,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
     }
 
     // Add summary object with counts
-    JsonObject summary = (*doc).createNestedObject("summary");
+    JsonObject summary = (*doc)["summary"].to<JsonObject>();
     summary["totalKeys"] = totalKeys;
     summary["validKeys"] = validKeys;  
     summary["correctedKeys"] = correctedKeys;
@@ -220,8 +220,8 @@ void handleNVSDump(AsyncWebServerRequest *request)
 
     String response;
     size_t jsonSize = serializeJson(*doc, response);
-    
-    LOG_VERBOSE("WEB", "NVS JSON serialization: %d bytes, buffer capacity: %d", jsonSize, doc->capacity());
+
+    LOG_VERBOSE("WEB", "NVS JSON serialization: %d bytes", jsonSize);
     if (jsonSize == 0) {
         LOG_ERROR("WEB", "NVS JSON serialization failed - response too large or memory issue");
         doc->clear();

@@ -136,7 +136,7 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     if (result.success)
     {
         // Always return structured data (header + body separately)
-        DynamicJsonDocument doc(2048);
+        JsonDocument doc;
         doc["header"] = result.header;
         doc["body"] = result.body;
 
@@ -148,7 +148,7 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     }
     else
     {
-        DynamicJsonDocument errorResponse(256);
+        JsonDocument errorResponse;
         errorResponse["error"] = result.errorMessage.length() > 0 ? result.errorMessage : 
                                  String("Failed to generate ") + typeName + " content";
 
@@ -187,7 +187,7 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     if (result.success)
     {
         // Return JSON response in structured format (header + body separately)
-        DynamicJsonDocument responseDoc(2048);
+        JsonDocument responseDoc;
         responseDoc["header"] = result.header;
         responseDoc["body"] = result.body;
 
@@ -200,7 +200,7 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     else
     {
         // Return JSON error response in the same format as other content endpoints
-        DynamicJsonDocument errorDoc(256);
+        JsonDocument errorDoc;
         errorDoc["error"] = result.errorMessage.length() > 0 ? result.errorMessage : 
                            "Failed to generate Unbidden Ink content";
 
@@ -265,7 +265,7 @@ void handlePrintLocal(AsyncWebServerRequest *request)
     }
 
     // Parse JSON
-    DynamicJsonDocument doc(1024);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
@@ -274,7 +274,7 @@ void handlePrintLocal(AsyncWebServerRequest *request)
     }
 
     // Validate required message field
-    if (!doc.containsKey("message"))
+    if (!doc["message"].is<JsonVariant>())
     {
         sendValidationError(request, ValidationResult(false, "Missing required field 'message' in JSON"));
         return;

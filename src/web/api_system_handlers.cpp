@@ -44,10 +44,10 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     const RuntimeConfig &runtimeConfig = getRuntimeConfig();
 
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
 
     // === MICROCONTROLLER SECTION ===
-    JsonObject microcontroller = doc.createNestedObject("microcontroller");
+    JsonObject microcontroller = doc["microcontroller"].to<JsonObject>();
 
     // Hardware information
     microcontroller["chip_model"] = ESP.getChipModel();
@@ -117,20 +117,20 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     microcontroller["uptime_ms"] = millis();
 
     // Memory information
-    JsonObject memory = microcontroller.createNestedObject("memory");
+    JsonObject memory = microcontroller["memory"].to<JsonObject>();
     memory["free_heap"] = ESP.getFreeHeap();
     memory["total_heap"] = ESP.getHeapSize();
     memory["used_heap"] = ESP.getHeapSize() - ESP.getFreeHeap();
 
     // Flash storage breakdown
-    JsonObject flash = microcontroller.createNestedObject("flash");
+    JsonObject flash = microcontroller["flash"].to<JsonObject>();
 
     // Total flash chip size (4MB on ESP32-C3)
     uint32_t totalFlashSize = ESP.getFlashChipSize();
     flash["total_chip_size"] = totalFlashSize;
 
     // App partition (firmware)
-    JsonObject app_partition = flash.createNestedObject("app_partition");
+    JsonObject app_partition = flash["app_partition"].to<JsonObject>();
     uint32_t appUsed = ESP.getSketchSize();
 
     // Get accurate partition size using ESP-IDF APIs
@@ -154,19 +154,19 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     app_partition["percent_of_total_flash"] = (appTotal * 100) / totalFlashSize;
 
     // File system (LittleFS)
-    JsonObject filesystem = flash.createNestedObject("filesystem");
+    JsonObject filesystem = flash["filesystem"].to<JsonObject>();
     filesystem["used"] = usedBytes;
     filesystem["free"] = totalBytes - usedBytes;
     filesystem["total"] = totalBytes;
     filesystem["percent_of_total_flash"] = (totalBytes * 100) / totalFlashSize;
 
     // === LOGGING CONFIGURATION ===
-    JsonObject logging = doc.createNestedObject("logging");
+    JsonObject logging = doc["logging"].to<JsonObject>();
     logging["level"] = logLevel;
     logging["level_name"] = getLogLevelString(logLevel);
     logging["serial_enabled"] = enableSerialLogging;
     logging["file_enabled"] = enableFileLogging;
-    logging["mqtt_enabled"] = enableMQTTLogging;
+    logging["mqtt_enabled"] = enableMqttLogging;
     logging["betterstack_enabled"] = enableBetterStackLogging;
 
     // Pages and endpoints moved to separate /api/routes endpoint
@@ -182,7 +182,7 @@ void handleRoutes(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "handleRoutes() called - listing pages and API endpoints");
 
     // Use heap allocation for large JSON documents to prevent stack overflow
-    std::unique_ptr<DynamicJsonDocument> doc(new DynamicJsonDocument(8192));
+    std::unique_ptr<JsonDocument> doc(new JsonDocument());
     JsonObject routes = doc->to<JsonObject>();
 
     // === PAGES AND ENDPOINTS ===
@@ -238,7 +238,7 @@ void handlePrintMQTT(AsyncWebServerRequest *request)
     }
 
     // Parse the JSON (we know it's valid now)
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     deserializeJson(doc, body);
 
     String topic = doc["topic"].as<String>();
@@ -316,14 +316,14 @@ void handleWiFiScan(AsyncWebServerRequest *request)
     }
 
     // Create JSON response with scanned networks
-    DynamicJsonDocument doc(2048);
+    JsonDocument doc;
     doc["count"] = networkCount;
 
-    JsonArray networks = doc.createNestedArray("networks");
+    JsonArray networks = doc["networks"].to<JsonArray>();
 
     for (int i = 0; i < networkCount; i++)
     {
-        JsonObject network = networks.createNestedObject();
+        JsonObject network = networks.add<JsonObject>();
         network["ssid"] = WiFi.SSID(i);
         network["rssi"] = WiFi.RSSI(i);
         network["channel"] = WiFi.channel(i);
@@ -447,7 +447,7 @@ void handleTestWiFi(AsyncWebServerRequest *request)
         return;
     }
 
-    DynamicJsonDocument doc(512);
+    JsonDocument doc;
     DeserializationError err = deserializeJson(doc, body);
     if (err)
     {
@@ -516,7 +516,7 @@ void handleTestWiFi(AsyncWebServerRequest *request)
 
     if (connected)
     {
-        DynamicJsonDocument resp(128);
+        JsonDocument resp;
         resp["success"] = true;
         resp["rssi"] = rssi;
         String out;
@@ -550,7 +550,7 @@ void handleTestWiFi(AsyncWebServerRequest *request)
         }
     }
 
-    DynamicJsonDocument resp(128);
+    JsonDocument resp;
     resp["success"] = false;
     resp["message"] = message;
     String out;

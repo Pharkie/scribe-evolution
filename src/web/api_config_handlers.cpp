@@ -77,7 +77,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
         {
             // DEBUG: handleConfigGet - rate limited
         }
-        DynamicJsonDocument errorResponse(256);
+        JsonDocument errorResponse;
         errorResponse["error"] = getRateLimitReason();
 
         String errorString;
@@ -98,10 +98,10 @@ void handleConfigGet(AsyncWebServerRequest *request)
     delay(1);
 
     // Create response with runtime configuration data
-    DynamicJsonDocument configDoc(largeJsonDocumentSize);
+    JsonDocument configDoc;
 
     // Device configuration - main section matching settings.html
-    JsonObject device = configDoc.createNestedObject("device");
+    JsonObject device = configDoc["device"].to<JsonObject>();
     device["owner"] = config.deviceOwner;
     device["timezone"] = config.timezone;
 
@@ -121,7 +121,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     device["printerTxPin"] = config.printerTxPin;
 
     // WiFi configuration - nested under device to match settings structure
-    JsonObject wifi = device.createNestedObject("wifi");
+    JsonObject wifi = device["wifi"].to<JsonObject>();
 
     // In AP mode, encourage fresh setup by showing generic placeholders
     if (isAPMode())
@@ -142,7 +142,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     wifi["fallback_ap_mdns"] = String(getMdnsHostname()) + ".local";
 
     // WiFi status information
-    JsonObject wifiStatus = wifi.createNestedObject("status");
+    JsonObject wifiStatus = wifi["status"].to<JsonObject>();
     wifiStatus["connected"] = (WiFi.status() == WL_CONNECTED);
     wifiStatus["ap_sta_mode"] = isAPMode(); // Indicate if device is in AP-STA setup mode
     wifiStatus["ip_address"] = WiFi.localIP().toString();
@@ -175,7 +175,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     delay(1);
 
     // MQTT configuration - top-level section matching settings.html
-    JsonObject mqtt = configDoc.createNestedObject("mqtt");
+    JsonObject mqtt = configDoc["mqtt"].to<JsonObject>();
     mqtt["enabled"] = config.mqttEnabled;
     mqtt["server"] = config.mqttServer;
     mqtt["port"] = config.mqttPort;
@@ -185,7 +185,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     mqtt["connected"] = (isAPMode() || !config.mqttEnabled) ? false : mqttClient.connected();
 
     // Unbidden Ink configuration - top-level section matching settings.html
-    JsonObject unbiddenInk = configDoc.createNestedObject("unbiddenInk");
+    JsonObject unbiddenInk = configDoc["unbiddenInk"].to<JsonObject>();
     unbiddenInk["enabled"] = config.unbiddenInkEnabled;
     unbiddenInk["startHour"] = config.unbiddenInkStartHour;
     unbiddenInk["endHour"] = config.unbiddenInkEndHour;
@@ -194,7 +194,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     unbiddenInk["chatgptApiToken"] = maskSecret(config.chatgptApiToken);
 
     // Add prompt presets for quick selection
-    JsonObject prompts = unbiddenInk.createNestedObject("promptPresets");
+    JsonObject prompts = unbiddenInk["promptPresets"].to<JsonObject>();
     prompts["creative"] = unbiddenInkPromptCreative;
     prompts["wisdom"] = unbiddenInkPromptWisdom;
     prompts["humor"] = unbiddenInkPromptHumor;
@@ -231,7 +231,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // Memos are now handled by separate /api/memos endpoint
 
     // Buttons configuration - top-level section matching settings.html
-    JsonObject buttons = configDoc.createNestedObject("buttons");
+    JsonObject buttons = configDoc["buttons"].to<JsonObject>();
 
     // Hardware button status information
     buttons["count"] = numHardwareButtons;
@@ -245,7 +245,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     for (int i = 0; i < numHardwareButtons; i++)
     {
         String buttonKey = "button" + String(i + 1);
-        JsonObject button = buttons.createNestedObject(buttonKey);
+        JsonObject button = buttons[buttonKey].to<JsonObject>();
 
         // Add GPIO pin information for each button
         button["gpio"] = config.buttonGpios[i];
@@ -262,7 +262,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
 #if ENABLE_LEDS
     // LEDs configuration - top-level section matching settings.html
-    JsonObject leds = configDoc.createNestedObject("leds");
+    JsonObject leds = configDoc["leds"].to<JsonObject>();
     leds["enabled"] = true; // LED support is compiled in
     leds["pin"] = config.ledPin;
     leds["count"] = config.ledCount;
@@ -270,68 +270,68 @@ void handleConfigGet(AsyncWebServerRequest *request)
     leds["refreshRate"] = config.ledRefreshRate;
 
     // Add effectDefaults structure for frontend LED playground (10-100 scale)
-    JsonObject effectDefaults = leds.createNestedObject("effectDefaults");
+    JsonObject effectDefaults = leds["effectDefaults"].to<JsonObject>();
 
     // Chase Single defaults
-    JsonObject chaseSingle = effectDefaults.createNestedObject("chase_single");
+    JsonObject chaseSingle = effectDefaults["chase_single"].to<JsonObject>();
     chaseSingle["speed"] = 50;
     chaseSingle["intensity"] = 50;
     chaseSingle["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
-    JsonArray chaseSingleColors = chaseSingle.createNestedArray("colors");
+    JsonArray chaseSingleColors = chaseSingle["colors"].to<JsonArray>();
     chaseSingleColors.add(config.ledEffects.chaseSingle.defaultColor);
 
     // Chase Multi defaults
-    JsonObject chaseMulti = effectDefaults.createNestedObject("chase_multi");
+    JsonObject chaseMulti = effectDefaults["chase_multi"].to<JsonObject>();
     chaseMulti["speed"] = 50;
     chaseMulti["intensity"] = 50;
     chaseMulti["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
-    JsonArray chaseMultiColors = chaseMulti.createNestedArray("colors");
+    JsonArray chaseMultiColors = chaseMulti["colors"].to<JsonArray>();
     chaseMultiColors.add(config.ledEffects.chaseMulti.color1);
     chaseMultiColors.add(config.ledEffects.chaseMulti.color2);
     chaseMultiColors.add(config.ledEffects.chaseMulti.color3);
 
     // Matrix defaults
-    JsonObject matrix = effectDefaults.createNestedObject("matrix");
+    JsonObject matrix = effectDefaults["matrix"].to<JsonObject>();
     matrix["speed"] = 50;
     matrix["intensity"] = 50;
     matrix["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
-    JsonArray matrixColors = matrix.createNestedArray("colors");
+    JsonArray matrixColors = matrix["colors"].to<JsonArray>();
     matrixColors.add(config.ledEffects.matrix.defaultColor);
 
     // Twinkle defaults
-    JsonObject twinkle = effectDefaults.createNestedObject("twinkle");
+    JsonObject twinkle = effectDefaults["twinkle"].to<JsonObject>();
     twinkle["speed"] = 50;
     twinkle["intensity"] = 50;
     twinkle["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
-    JsonArray twinkleColors = twinkle.createNestedArray("colors");
+    JsonArray twinkleColors = twinkle["colors"].to<JsonArray>();
     twinkleColors.add(config.ledEffects.twinkle.defaultColor);
 
     // Pulse defaults
-    JsonObject pulse = effectDefaults.createNestedObject("pulse");
+    JsonObject pulse = effectDefaults["pulse"].to<JsonObject>();
     pulse["speed"] = 50;
     pulse["intensity"] = 50;
     pulse["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
-    JsonArray pulseColors = pulse.createNestedArray("colors");
+    JsonArray pulseColors = pulse["colors"].to<JsonArray>();
     pulseColors.add(config.ledEffects.pulse.defaultColor);
 
     // Rainbow defaults
-    JsonObject rainbow = effectDefaults.createNestedObject("rainbow");
+    JsonObject rainbow = effectDefaults["rainbow"].to<JsonObject>();
     rainbow["speed"] = 50;
     rainbow["intensity"] = 50;
     rainbow["cycles"] = DEFAULT_LED_EFFECT_CYCLES;
-    JsonArray rainbowColors = rainbow.createNestedArray("colors");
+    JsonArray rainbowColors = rainbow["colors"].to<JsonArray>();
     rainbowColors.add("#ff0000"); // Rainbow doesn't use colors but needs array
 #else
     // LEDs disabled at compile time - provide minimal config to inform frontend
-    JsonObject leds = configDoc.createNestedObject("leds");
+    JsonObject leds = configDoc["leds"].to<JsonObject>();
     leds["enabled"] = false; // LED support is NOT compiled in
 #endif
 
     // GPIO information for frontend validation
-    JsonObject gpio = configDoc.createNestedObject("gpio");
-    JsonArray availablePins = gpio.createNestedArray("availablePins");
-    JsonArray safePins = gpio.createNestedArray("safePins");
-    JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
+    JsonObject gpio = configDoc["gpio"].to<JsonObject>();
+    JsonArray availablePins = gpio["availablePins"].to<JsonArray>();
+    JsonArray safePins = gpio["safePins"].to<JsonArray>();
+    JsonObject pinDescriptions = gpio["pinDescriptions"].to<JsonObject>();
 
     LOG_VERBOSE("CONFIG", "Adding GPIO info, ESP32C3_GPIO_COUNT: %d", ESP32C3_GPIO_COUNT);
 
@@ -354,9 +354,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
     // Check if JSON document has overflowed before serialization
     if (configDoc.overflowed())
     {
-        LOG_ERROR("CONFIG", "JSON document overflow detected! Size: %d bytes, Capacity: %d bytes",
-                  configDoc.memoryUsage(), configDoc.capacity());
-        sendErrorResponse(request, 500, "Configuration too large for buffer - increase largeJsonDocumentSize");
+        LOG_ERROR("CONFIG", "JSON document overflow detected!");
+        sendErrorResponse(request, 500, "Configuration too large - JSON buffer overflow");
         return;
     }
 
@@ -366,13 +365,12 @@ void handleConfigGet(AsyncWebServerRequest *request)
     String configString;
     size_t jsonSize = serializeJson(configDoc, configString);
 
-    LOG_VERBOSE("CONFIG", "JSON serialized: %d bytes, buffer usage: %d/%d bytes",
-                jsonSize, configDoc.memoryUsage(), configDoc.capacity());
+    LOG_VERBOSE("CONFIG", "JSON serialized: %d bytes", jsonSize);
 
     if (jsonSize == 0)
     {
         LOG_ERROR("WEB", "Failed to serialize config JSON");
-        DynamicJsonDocument errorDoc(256);
+        JsonDocument errorDoc;
         errorDoc["error"] = "JSON serialization failed";
         String errorString;
         serializeJson(errorDoc, errorString);
@@ -404,7 +402,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     }
 
     // Parse JSON to validate structure
-    DynamicJsonDocument doc(largeJsonDocumentSize);
+    JsonDocument doc;
 
     LOG_VERBOSE("WEB", "Config POST body length: %d", body.length());
     LOG_VERBOSE("WEB", "Config POST body (first 200 chars): %s", body.substring(0, 200).c_str());
@@ -438,10 +436,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "MQTT Debug - NewConfig password length after processing: %d", newConfig.mqttPassword.length());
 
     // MQTT password fix: If frontend didn't send password, preserve existing one
-    if (doc.containsKey("mqtt") && doc["mqtt"].is<JsonObject>())
+    if (doc["mqtt"].is<JsonVariant>() && doc["mqtt"].is<JsonObject>())
     {
         JsonObject mqttObj = doc["mqtt"];
-        if (!mqttObj.containsKey("password"))
+        if (!mqttObj["password"].is<JsonVariant>())
         {
             LOG_VERBOSE("WEB", "MQTT password not in request, preserving existing stored password (length: %d)", currentConfig.mqttPassword.length());
             newConfig.mqttPassword = currentConfig.mqttPassword;
@@ -474,7 +472,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     
     // Check if MQTT settings changed (only matters if MQTT is enabled)
     bool mqttSettingsChanged = false;
-    if (doc.containsKey("mqtt") && newConfig.mqttEnabled) {
+    if (doc["mqtt"].is<JsonVariant>() && newConfig.mqttEnabled) {
         mqttSettingsChanged = (
             currentConfig.mqttServer != newConfig.mqttServer ||
             currentConfig.mqttPort != newConfig.mqttPort ||
@@ -488,7 +486,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
     
     // Check if UnbiddenInk settings changed (only matters if UnbiddenInk is enabled)
     bool unbiddenSettingsChanged = false;
-    if (doc.containsKey("unbiddenInk") && newConfig.unbiddenInkEnabled) {
+    if (doc["unbiddenInk"].is<JsonVariant>() && newConfig.unbiddenInkEnabled) {
         unbiddenSettingsChanged = (
             currentConfig.unbiddenInkStartHour != newConfig.unbiddenInkStartHour ||
             currentConfig.unbiddenInkEndHour != newConfig.unbiddenInkEndHour ||
@@ -500,12 +498,12 @@ void handleConfigPost(AsyncWebServerRequest *request)
     
     // Check if WiFi credentials changed
     bool wifiCredentialsChanged = false;
-    if (doc.containsKey("wifi"))
+    if (doc["wifi"].is<JsonVariant>())
     {
         JsonObject wifiObj = doc["wifi"];
         
         // Check if SSID changed
-        if (wifiObj.containsKey("ssid") && 
+        if (wifiObj["ssid"].is<JsonVariant>() && 
             newConfig.wifiSSID != currentConfig.wifiSSID)
         {
             wifiCredentialsChanged = true;
@@ -515,7 +513,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         }
         
         // Check if password changed (only if provided)
-        if (wifiObj.containsKey("password") && 
+        if (wifiObj["password"].is<JsonVariant>() && 
             newConfig.wifiPassword != currentConfig.wifiPassword)
         {
             wifiCredentialsChanged = true;
@@ -615,7 +613,7 @@ void handleConfigPost(AsyncWebServerRequest *request)
         LOG_NOTICE("WEB", "WiFi credentials changed - device will restart to apply new settings");
         
         // Send response with restart flag
-        DynamicJsonDocument response(128);
+        JsonDocument response;
         response["restart"] = true;
         response["reason"] = "wifi_change";
         String jsonResponse;
@@ -653,7 +651,7 @@ void handleMemosGet(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "handleMemosGet() called");
 
     // Create JSON response with all memos
-    DynamicJsonDocument memosDoc(2048);
+    JsonDocument memosDoc;
 
     // Get memo values from centralized config system
     const RuntimeConfig &config = getRuntimeConfig();
@@ -701,7 +699,7 @@ void handleMemosPost(AsyncWebServerRequest *request)
     }
 
     // Parse JSON
-    DynamicJsonDocument memosDoc(2048);
+    JsonDocument memosDoc;
     DeserializationError error = deserializeJson(memosDoc, body);
     if (error)
     {
@@ -717,7 +715,7 @@ void handleMemosPost(AsyncWebServerRequest *request)
     // Update each memo with validation
     for (int i = 0; i < 4; i++)
     {
-        if (memosDoc.containsKey(memoNames[i]))
+        if (memosDoc[memoNames[i]].is<JsonVariant>())
         {
             String memoContent = memosDoc[memoNames[i]].as<String>();
 
@@ -765,7 +763,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
     }
 
     // Parse JSON - minimal buffer since setup only has device config
-    DynamicJsonDocument doc(1024);
+    JsonDocument doc;
 
     LOG_VERBOSE("WEB", "Setup POST body: %s", body.c_str());
 
@@ -778,7 +776,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
     }
 
     // Minimal validation - only require device section for setup
-    if (!doc.containsKey("device"))
+    if (!doc["device"].is<JsonVariant>())
     {
         sendValidationError(request, ValidationResult(false, "Missing required section: device"));
         return;
@@ -793,14 +791,14 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
     // Validate and extract device configuration
     JsonObject device = doc["device"];
-    if (!device.containsKey("owner") || !device.containsKey("timezone"))
+    if (!device["owner"].is<JsonVariant>() || !device["timezone"].is<JsonVariant>())
     {
         sendValidationError(request, ValidationResult(false, "Missing required device configuration fields (owner, timezone)"));
         return;
     }
 
     // Validate WiFi configuration (nested under device)
-    if (!device.containsKey("wifi") || !device["wifi"].containsKey("ssid") || !device["wifi"].containsKey("password"))
+    if (!device["wifi"].is<JsonVariant>() || !device["wifi"]["ssid"].is<JsonVariant>() || !device["wifi"]["password"].is<JsonVariant>())
     {
         sendValidationError(request, ValidationResult(false, "Missing required WiFi configuration (ssid, password)"));
         return;
@@ -825,7 +823,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
     newConfig.wifiPassword = password;
 
     // Parse optional printer TX GPIO (preserve default if not provided)
-    if (device.containsKey("printerTxPin"))
+    if (device["printerTxPin"].is<JsonVariant>())
     {
         int printerTxPin = device["printerTxPin"];
         if (!isValidGPIO(printerTxPin) || !isSafeGPIO(printerTxPin))
@@ -883,15 +881,15 @@ void handleSetupGet(AsyncWebServerRequest *request)
     LOG_VERBOSE("WEB", "handleSetupGet() called - AP-STA mode setup configuration request");
 
     // Create minimal configuration document for setup - only what's needed for initial configuration
-    DynamicJsonDocument setupDoc(512);
+    JsonDocument setupDoc;
 
     // Device section with minimal defaults
-    JsonObject device = setupDoc.createNestedObject("device");
+    JsonObject device = setupDoc["device"].to<JsonObject>();
     device["owner"] = "";                 // Always blank in setup mode
     device["timezone"] = defaultTimezone; // Default from config.h
 
     // WiFi section with blanks for user input
-    JsonObject wifi = device.createNestedObject("wifi");
+    JsonObject wifi = device["wifi"].to<JsonObject>();
     wifi["ssid"] = "";
     wifi["password"] = "";
 
@@ -900,9 +898,9 @@ void handleSetupGet(AsyncWebServerRequest *request)
     device["printerTxPin"] = config.printerTxPin;
 
     // Minimal GPIO info for the printer pin selector
-    JsonObject gpio = setupDoc.createNestedObject("gpio");
-    JsonArray safePins = gpio.createNestedArray("safePins");
-    JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
+    JsonObject gpio = setupDoc["gpio"].to<JsonObject>();
+    JsonArray safePins = gpio["safePins"].to<JsonArray>();
+    JsonObject pinDescriptions = gpio["pinDescriptions"].to<JsonObject>();
 
     // Only include safe pins for setup
     for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
@@ -941,7 +939,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     }
 
     // Parse JSON - small buffer for test data
-    DynamicJsonDocument doc(512);
+    JsonDocument doc;
 
     LOG_VERBOSE("WEB", "MQTT test POST body: %s", body.c_str());
 
@@ -954,7 +952,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     }
 
     // Extract test parameters
-    if (!doc.containsKey("server") || !doc.containsKey("port") || !doc.containsKey("username"))
+    if (!doc["server"].is<JsonVariant>() || !doc["port"].is<JsonVariant>() || !doc["username"].is<JsonVariant>())
     {
         sendValidationError(request, ValidationResult(false, "Missing required MQTT test fields (server, port, username)"));
         return;
@@ -1028,7 +1026,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
         connected = testMqttClient.connect(clientId.c_str(), username.c_str(), "");
     }
 
-    DynamicJsonDocument response(256);
+    JsonDocument response;
 
     // Always clean up test client resources regardless of success/failure
     testMqttClient.disconnect();    // Clean disconnect
@@ -1106,7 +1104,7 @@ void handleTestChatGPT(AsyncWebServerRequest *request)
         return;
     }
 
-    DynamicJsonDocument doc(512);
+    JsonDocument doc;
     DeserializationError err = deserializeJson(doc, body);
     if (err)
     {
@@ -1114,7 +1112,7 @@ void handleTestChatGPT(AsyncWebServerRequest *request)
         return;
     }
 
-    if (!doc.containsKey("token") || !doc["token"].is<const char *>())
+    if (!doc["token"].is<JsonVariant>() || !doc["token"].is<const char *>())
     {
         sendValidationError(request, ValidationResult(false, "Missing required field 'token'"));
         return;
@@ -1132,7 +1130,7 @@ void handleTestChatGPT(AsyncWebServerRequest *request)
     String bearer = String("Bearer ") + token;
     String response = fetchFromAPIWithBearer(chatgptApiTestEndpoint, bearer, apiUserAgent, 6000);
 
-    DynamicJsonDocument out(256);
+    JsonDocument out;
     if (response.length() > 0)
     {
         out["success"] = true;

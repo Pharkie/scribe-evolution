@@ -19,6 +19,9 @@
 #ifndef DEVICE_CONFIG_H
 #define DEVICE_CONFIG_H
 
+#include <ArduinoLog.h>
+#include <esp_log.h>
+
 // ============================================================================
 // DEVICE-SPECIFIC SETTINGS - MUST BE CONFIGURED PER DEVICE
 // ============================================================================
@@ -47,5 +50,32 @@ static const int defaultUnbiddenInkFrequencyMinutes = 60;                       
 
 // BetterStack configuration
 static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
+
+// ============================================================================
+// LOGGING PREFERENCES - Configure debugging and logging behavior
+// ============================================================================
+// NOTE: These are compile-time settings only (not stored in NVS)
+
+// Logging levels for ArduinoLog
+// Options: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
+// VERBOSE = Everything (very noisy, debug only)
+// NOTICE = Important events (default, recommended)
+// WARN = Warnings and errors only
+// ERROR = Errors only
+static const int logLevel = LOG_LEVEL_NOTICE;
+
+// ESP system logging levels
+// Options: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE
+// WARN = Warnings and errors (default, recommended)
+// INFO = More verbose system info
+// ERROR = Errors only
+// NONE = Completely silent
+static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
+
+// Logging destinations - Enable/disable where logs are sent
+static const bool enableSerialLogging = true;        // USB serial console (always recommended)
+static const bool enableFileLogging = false;         // LittleFS file logging (untested, may impact performance)
+static const bool enableMqttLogging = false;         // Send logs to MQTT (requires MQTT enabled)
+static const bool enableBetterStackLogging = false;  // Send logs to BetterStack (slow, debug only)
 
 #endif
