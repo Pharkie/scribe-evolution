@@ -21,8 +21,8 @@ void initializePrinter()
     const RuntimeConfig &config = getRuntimeConfig();
     const BoardPinDefaults &boardDefaults = getBoardDefaults();
 
-    // Initialize UART1 with board-specific RX/TX pins
-    // RX pin is optional (-1 if not used), DTR is configured separately if present
+    // Initialize UART1 with board-specific RX/TX pins for bidirectional communication
+    // RX pin receives printer status and feedback, DTR is configured separately if present
     printer.begin(9600, SERIAL_8N1, boardDefaults.printer.rx, config.printerTxPin);
 
     LOG_VERBOSE("PRINTER", "UART1 initialized (TX=%d, RX=%d, DTR=%d)",

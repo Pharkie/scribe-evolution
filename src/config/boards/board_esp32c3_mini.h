@@ -80,8 +80,8 @@ static const BoardPinDefaults ESP32C3_DEFAULTS = {
     .boardName = "ESP32-C3-mini",
     .boardIdentifier = "C3_MINI",
     .printer = {
-        .tx = 21,  // UART1 TX
-        .rx = -1,  // RX not used
+        .tx = 21,  // UART1 TX (to printer RX)
+        .rx = -1,  // UART1 RX (not connected on C3 builds - bidirectional support available if wired)
         .dtr = -1  // DTR not used
     },
     .ledDataPin = 20,

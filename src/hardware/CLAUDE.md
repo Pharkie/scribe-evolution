@@ -50,13 +50,38 @@ delay(100); // Wait for buffer space
 return false;
 }
 
-// Safe printing
+// Safe printing with bidirectional communication
 bool printMessage(const String& content) {
 if (!printer.connected()) return false;
 
     String mapped = mapSpecialCharacters(content);
     printer.print(mapped);
     return true;
+
+}
+
+// Reading printer status (bidirectional communication)
+// The CSN-A4L supports realtime status queries
+bool checkPrinterStatus() {
+// Request realtime status (DLE EOT n)
+printer.write(0x10); // DLE
+printer.write(0x04); // EOT
+printer.write(0x01); // Status type 1 (printer status)
+
+    // Wait for response
+    unsigned long timeout = millis() + 100;
+    while (!printer.available() && millis() < timeout) {
+        delay(1);
+    }
+
+    if (printer.available()) {
+        uint8_t status = printer.read();
+        // Bit 3: Paper end sensor status
+        // Bit 5: Overheating
+        return (status & 0x28) == 0;  // No paper end, no overheating
+    }
+
+    return false;  // Timeout or no response
 
 }
 </patterns>

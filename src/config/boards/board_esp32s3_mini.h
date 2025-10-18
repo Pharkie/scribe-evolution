@@ -118,8 +118,8 @@ static const BoardPinDefaults ESP32S3_DEFAULTS = {
     .boardName = "ESP32-S3-mini",
     .boardIdentifier = "S3_MINI",
     .printer = {
-        .tx = 44,  // UART1 TX
-        .rx = 43,  // UART1 RX (optional)
+        .tx = 44,  // UART1 TX (to printer RX)
+        .rx = 43,  // UART1 RX (from printer TX - status/feedback)
         .dtr = 15  // DTR for flow control (optional)
     },
     .ledDataPin = 14,      // LED strip data

@@ -77,7 +77,7 @@ struct BoardConstraints
 struct PrinterPinDefaults
 {
     int tx;  // UART TX pin (to printer RX) - required
-    int rx;  // UART RX pin (from printer TX) - optional, -1 if not used
+    int rx;  // UART RX pin (from printer TX) - used for printer status/feedback
     int dtr; // DTR pin for flow control - optional, -1 if not used
 };
 

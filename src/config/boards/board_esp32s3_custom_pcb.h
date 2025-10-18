@@ -54,9 +54,9 @@ static const BoardPinDefaults ESP32S3_CUSTOM_PCB_DEFAULTS = {
     .boardName = "ESP32-S3 Custom PCB",
     .boardIdentifier = "S3_CUSTOM_PCB",
     .printer = {
-        .tx = 44,  // UART1 TX
-        .rx = 43,  // UART1 RX
-        .dtr = 15  // DTR for flow control
+        .tx = 44,  // UART1 TX (to printer RX)
+        .rx = 43,  // UART1 RX (from printer TX - status/feedback)
+        .dtr = 15  // DTR for flow control (optional)
     },
     .ledDataPin = 14,      // LED strip data
     .statusLedPin = 8,     // Status LED
