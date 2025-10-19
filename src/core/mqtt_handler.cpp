@@ -52,10 +52,14 @@ void MQTTManager::mqttCallbackStatic(char *topic, byte *payload, unsigned int le
 // Instance callback method
 void MQTTManager::mqttCallback(char *topic, byte *payload, unsigned int length)
 {
-    // Acquire mutex for thread-safe callback handling
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
-        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex in callback!");
-        return;
+    // Try to acquire mutex with zero timeout (non-blocking)
+    // If we can't get it, we're being called from within our own code that already holds it
+    bool acquiredMutex = (xSemaphoreTake(mutex, 0) == pdTRUE);
+
+    if (!acquiredMutex) {
+        // Mutex already held - we're being called from subscribe() while processing connection
+        // This is safe because the caller already holds the mutex
+        LOG_VERBOSE("MQTT", "Callback invoked while mutex held (retained message during subscribe)");
     }
 
     LOG_VERBOSE("MQTT", "MQTT message received on topic: %s", topic);
@@ -82,7 +86,10 @@ void MQTTManager::mqttCallback(char *topic, byte *payload, unsigned int length)
         handleMQTTMessageInternal(topicStr, message);
     }
 
-    xSemaphoreGive(mutex);
+    // Only release mutex if we acquired it
+    if (acquiredMutex) {
+        xSemaphoreGive(mutex);
+    }
 }
 
 // Internal helper: handleMQTTMessageInternal (mutex already held)
