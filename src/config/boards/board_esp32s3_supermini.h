@@ -1,32 +1,32 @@
 /**
- * @file board_esp32s3_mini.h
- * @brief ESP32-S3-mini board configuration
+ * @file board_esp32s3_supermini.h
+ * @brief ESP32-S3-SuperMini board configuration
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
- * GPIO configuration and hardware defaults for ESP32-S3-mini development board.
+ * GPIO configuration and hardware defaults for ESP32-S3-SuperMini development board.
  *
- * ESP32-S3 Characteristics:
+ * ESP32-S3-SuperMini Board Characteristics:
  * - Dual core Xtensa LX7 @ 240MHz
- * - GPIOs 0-48 (49 total)
- * - 3x UART, 2x I2C, 4x SPI, 8x PWM
- * - USB OTG on GPIO 19/20
- * - Strapping pins: GPIO 0, 45, 46
- * - Flash pins: GPIO 26-37 (octal SPI flash)
- * - More RMT channels (better for LED strips)
+ * - GPIOs 0-48 (49 total on chip)
+ * - **ONLY GPIO 1-13 exposed on solderable headers**
+ * - GPIOs >13 are NOT routed to headers (cannot be used)
+ * - USB D−/D+ use GPIO 19/20 (avoid if USB enabled)
+ * - Flash/PSRAM signals GPIO 8-11 (not safe to repurpose)
+ * - GPIO 0 is boot-strap pin (do not drive at reset)
  *
- * Pin Configuration (from Andrius):
- * - Hardware buttons: GPIO 5, 6, 7, 8 (via JST connector)
- * - LED strip data: GPIO 14
- * - Printer UART: TX=GPIO 44, RX=GPIO 43, DTR=GPIO 15
- * - Status LED: GPIO 8
- * - No eFuse circuits on standard S3-mini
+ * Pin Configuration (SuperMini constraints):
+ * - Hardware buttons: GPIO 5, 6, 7, 8 (sequential layout on headers)
+ * - Printer UART: TX=GPIO 10, RX=GPIO 9 (UART1 on headers)
+ * - Status LED: GPIO 48 (built-in RGB LED - wired internally)
+ * - LED strip data: GPIO 1 (on header)
+ * - No eFuse circuits on SuperMini
  */
 
-#ifndef BOARD_ESP32S3_MINI_H
-#define BOARD_ESP32S3_MINI_H
+#ifndef BOARD_ESP32S3_SUPERMINI_H
+#define BOARD_ESP32S3_SUPERMINI_H
 
 #include "board_interface.h"
 
@@ -105,29 +105,29 @@ static const BoardConstraints ESP32S3_CONSTRAINTS = {
 // BOARD DEFAULT PIN ASSIGNMENTS (from Andrius)
 // ============================================================================
 
-// Default button configuration (same actions as C3, different GPIOs)
+// Default button configuration (SuperMini - sequential GPIO 5,6,7,8)
 static const ButtonConfig ESP32S3_DEFAULT_BUTTONS[] = {
     {5, "JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"},
     {6, "RIDDLE", "", "chase_single", "", "", "pulse"},
     {7, "QUOTE", "", "chase_single", "", "", "pulse"},
-    {8, "QUIZ", "", "chase_single", "", "", "pulse"}
+    {8, "QUIZ", "", "chase_single", "", "", "pulse"}  // GPIO 8 - sequential button layout
 };
 
 // Board pin defaults
 static const BoardPinDefaults ESP32S3_DEFAULTS = {
-    .boardName = "ESP32-S3-mini",
-    .boardIdentifier = "S3_MINI",
+    .boardName = "ESP32-S3-SuperMini",
+    .boardIdentifier = "S3_SUPERMINI",
     .printer = {
-        .tx = 17,  // UART2 TX (to printer RX) - clean pair, not UART0 default
-        .rx = 18,  // UART2 RX (from printer TX - status/feedback)
-        .dtr = 15  // DTR for flow control (optional)
+        .tx = 10,  // UART1 TX (to printer RX) - SuperMini header GPIO 1-13 only
+        .rx = 9,   // UART1 RX (from printer TX) - SuperMini header GPIO 1-13 only
+        .dtr = -1  // DTR not used
     },
-    .ledDataPin = 14,      // LED strip data
-    .statusLedPin = 48,    // Status LED (RGB LED on DevKitC-1)
+    .ledDataPin = 1,       // LED strip data on GPIO 1 (available, safe, on header)
+    .statusLedPin = 48,    // Status LED on GPIO 48 (built-in RGB LED - wired internally)
     .buttons = ESP32S3_DEFAULT_BUTTONS,
     .buttonCount = sizeof(ESP32S3_DEFAULT_BUTTONS) / sizeof(ButtonConfig),
     .efuse = {
-        .printer = -1,  // No eFuse on standard S3-mini
+        .printer = -1,  // No eFuse on SuperMini
         .ledStrip = -1
     }
 };
@@ -190,8 +190,8 @@ inline const BoardPinDefaults &getBoardDefaults()
 // BOARD-SPECIFIC MACROS (for conditional compilation)
 // ============================================================================
 
-#define BOARD_NAME "ESP32-S3-mini"
-#define BOARD_IDENTIFIER "S3_MINI"
+#define BOARD_NAME "ESP32-S3-SuperMini"
+#define BOARD_IDENTIFIER "S3_SUPERMINI"
 #define BOARD_MAX_GPIO 48
 #define BOARD_HAS_PRINTER_EFUSE false
 #define BOARD_HAS_LED_EFUSE false
@@ -205,4 +205,4 @@ inline const BoardPinDefaults &getBoardDefaults()
 #define BOARD_DEFAULT_BUTTONS ESP32S3_DEFAULT_BUTTONS
 #define BOARD_BUTTON_COUNT ESP32S3_DEFAULTS.buttonCount
 
-#endif // BOARD_ESP32S3_MINI_H
+#endif // BOARD_ESP32S3_SUPERMINI_H

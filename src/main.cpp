@@ -131,6 +131,13 @@ void setup()
   // Initialize logging system before other components that use logging
   setupLogging();
 
+  // Initialize mutex for currentMessage (protects against multi-core race conditions)
+  currentMessageMutex = xSemaphoreCreateMutex();
+  if (currentMessageMutex == nullptr)
+  {
+    LOG_ERROR("BOOT", "Failed to create currentMessage mutex!");
+  }
+
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
 #ifdef RELEASE_BUILD
@@ -302,12 +309,25 @@ void loop()
     handlePrinterDiscovery();
   }
 
-  // Check if we have a new message to print
-  if (currentMessage.shouldPrintLocally)
+  // Check if we have a new message to print (protected by mutex for multi-core safety)
+  bool shouldPrint = false;
+  if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+  {
+    shouldPrint = currentMessage.shouldPrintLocally;
+    xSemaphoreGive(currentMessageMutex);
+  }
+
+  if (shouldPrint)
   {
     LOG_VERBOSE("MAIN", "Printing message from main loop");
-    printMessage();
-    currentMessage.shouldPrintLocally = false; // Reset flag
+    printMessage(); // printMessage() will acquire mutex internally to read currentMessage
+
+    // Clear the flag after printing
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+      currentMessage.shouldPrintLocally = false;
+      xSemaphoreGive(currentMessageMutex);
+    }
   }
 
   // Monitor memory usage periodically

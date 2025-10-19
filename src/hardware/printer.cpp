@@ -7,12 +7,15 @@
 #include <content/content_generators.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
+#include <atomic>
 
 // Printer object and configuration
 // Use UART1 on all ESP32 variants
 HardwareSerial printer(1);
 const int maxCharsPerLine = 32;
-volatile bool printerReady = false; // Ready flag to gate all writes (volatile to prevent optimization)
+
+// Use atomic bool for printerReady to ensure thread-safe access without mutex overhead
+std::atomic<bool> printerReady(false);
 
 // === Printer Functions ===
 
@@ -45,16 +48,10 @@ void initializePrinter()
     // Feed watchdog after delay
     esp_task_wdt_reset();
 
-    // Verify printer is available before marking ready
-    if (!printer)
-    {
-        LOG_ERROR("PRINTER", "UART failed to initialize - printer not available");
-        printerReady = false;
-        return;
-    }
-
-    // Mark printer as ready BEFORE any writes
+    // Mark printer as ready - the UART is initialized
     printerReady = true;
+
+    LOG_VERBOSE("PRINTER", "printerReady set to TRUE, value check: %s", printerReady ? "CONFIRMED TRUE" : "ERROR: STILL FALSE!");
 
     LOG_VERBOSE("PRINTER", "UART initialized (TX=%d, RX=%d, DTR=%d)",
                 config.printerTxPin, boardDefaults.printer.rx, boardDefaults.printer.dtr);
@@ -86,30 +83,36 @@ void initializePrinter()
 
 void printMessage()
 {
-    LOG_VERBOSE("PRINTER", "Printing message... (printerReady = %s, address: %p)",
-                printerReady ? "TRUE" : "FALSE", (void*)&printerReady);
+    LOG_VERBOSE("PRINTER", "printMessage() called - printerReady = %s",
+                printerReady.load() ? "TRUE" : "FALSE");
 
-    // Validate printer is ready
-    if (!printerReady)
+    // Copy message data while holding mutex (to avoid holding mutex during slow print operation)
+    // CRITICAL: Must force deep copy since Arduino String uses reference counting
+    String timestamp;
+    String message;
+
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
-        LOG_ERROR("PRINTER", "Printer not ready - cannot print (printerReady = FALSE)");
+        // Force deep copy by creating new String from c_str() to avoid shared buffer issues
+        timestamp = String(currentMessage.timestamp.c_str());
+        message = String(currentMessage.message.c_str());
+        xSemaphoreGive(currentMessageMutex);
+    }
+    else
+    {
+        LOG_ERROR("PRINTER", "Failed to acquire mutex for currentMessage");
         return;
     }
 
-    // Validate currentMessage has valid strings
-    LOG_VERBOSE("PRINTER", "Message timestamp pointer: %p, length: %d",
-                currentMessage.timestamp.c_str(), currentMessage.timestamp.length());
-    LOG_VERBOSE("PRINTER", "Message content pointer: %p, length: %d",
-                currentMessage.message.c_str(), currentMessage.message.length());
-
-    // Check if strings are valid before printing
-    if (currentMessage.timestamp.c_str() == nullptr || currentMessage.message.c_str() == nullptr)
+    // Validate message has valid strings
+    if (timestamp.c_str() == nullptr || message.c_str() == nullptr)
     {
         LOG_ERROR("PRINTER", "currentMessage has NULL string buffers - cannot print");
         return;
     }
 
-    printWithHeader(currentMessage.timestamp, currentMessage.message);
+    LOG_VERBOSE("PRINTER", "Calling printWithHeader...");
+    printWithHeader(timestamp, message);
 
     LOG_VERBOSE("PRINTER", "Message printed successfully");
 }

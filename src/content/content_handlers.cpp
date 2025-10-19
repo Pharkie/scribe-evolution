@@ -264,7 +264,7 @@ void handlePrintLocal(AsyncWebServerRequest *request)
         return;
     }
 
-    // Parse JSON
+    // Parse JSON (ArduinoJson v7 manages memory automatically)
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, body);
     if (error)
@@ -294,13 +294,22 @@ void handlePrintLocal(AsyncWebServerRequest *request)
         return;
     }
 
-    // Set up message data for local printing - content should already be formatted with action headers
-    currentMessage.message = message;
-    currentMessage.timestamp = getFormattedDateTime();
-    currentMessage.shouldPrintLocally = true;
-    
-    LOG_VERBOSE("WEB", "Custom message queued for local printing");
-    request->send(200);
+    // Set up message data for local printing (protected by mutex for multi-core safety)
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+        currentMessage.message = message;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        xSemaphoreGive(currentMessageMutex);
+
+        LOG_VERBOSE("WEB", "Custom message queued for local printing");
+        request->send(200);
+    }
+    else
+    {
+        LOG_ERROR("WEB", "Failed to acquire mutex for currentMessage");
+        sendValidationError(request, ValidationResult(false, "System busy, please try again"));
+    }
 }
 
 // ========================================

@@ -24,9 +24,12 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 // External declarations
 extern AsyncEventSource sseEvents;
+extern SemaphoreHandle_t currentMessageMutex;
 
 /**
  * @brief Initialize web server routes and handlers

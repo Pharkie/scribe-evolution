@@ -38,10 +38,10 @@
     #include "board_esp32c3_mini.h"
     #define BOARD_DETECTED "ESP32-C3-mini"
 
-// ESP32-S3-mini (explicit flag or Arduino define)
+// ESP32-S3-SuperMini (explicit flag or Arduino define)
 #elif defined(BOARD_ESP32S3_MINI) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(ARDUINO_ESP32S3_DEV)
-    #include "board_esp32s3_mini.h"
-    #define BOARD_DETECTED "ESP32-S3-mini"
+    #include "board_esp32s3_supermini.h"
+    #define BOARD_DETECTED "ESP32-S3-SuperMini"
 
 // Unknown board - compile-time error
 #else
@@ -84,7 +84,7 @@ inline bool validateBoardMatch()
 
         case CHIP_ESP32S3:
             detectedChip = "ESP32-S3";
-            #if !defined(BOARD_ESP32S3_MINI_H) && !defined(BOARD_ESP32S3_CUSTOM_PCB_H)
+            #if !defined(BOARD_ESP32S3_SUPERMINI_H) && !defined(BOARD_ESP32S3_CUSTOM_PCB_H)
                 match = false;
                 expectedChip = BOARD_NAME;
             #endif

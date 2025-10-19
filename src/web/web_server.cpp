@@ -48,6 +48,9 @@ AsyncEventSource sseEvents("/mqtt-printers");
 // Global message storage for printing
 Message currentMessage = {"", "", false};
 
+// Mutex to protect concurrent access to currentMessage between cores
+SemaphoreHandle_t currentMessageMutex = nullptr;
+
 // ========================================
 // CAPTIVE PORTAL HANDLER FOR AP MODE
 // ========================================

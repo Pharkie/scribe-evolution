@@ -27,8 +27,8 @@
 #ifndef BOARD_ESP32S3_CUSTOM_PCB_H
 #define BOARD_ESP32S3_CUSTOM_PCB_H
 
-// Inherit everything from S3-mini
-#include "board_esp32s3_mini.h"
+// Inherit everything from S3-SuperMini
+#include "board_esp32s3_supermini.h"
 
 // ============================================================================
 // CUSTOM PCB OVERRIDES

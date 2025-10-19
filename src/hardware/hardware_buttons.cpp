@@ -25,6 +25,7 @@ extern LedEffects ledEffects;
 // External declarations
 extern PubSubClient mqttClient;
 extern Message currentMessage;
+extern SemaphoreHandle_t currentMessageMutex;
 
 // ========================================
 // ASYNC BUTTON ACTION MANAGEMENT
@@ -658,15 +659,24 @@ bool executeButtonActionDirect(const char *actionType, bool shouldSetPrintFlag)
     {
         // Format content for local printing (header + body)
         String formattedContent = result.header + "\n\n" + result.body;
-        
-        // Set currentMessage content and timestamp
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = shouldSetPrintFlag;
 
-        LOG_VERBOSE("BUTTONS", "Content generated (%d chars), shouldPrintLocally = %s", 
-                    formattedContent.length(), shouldSetPrintFlag ? "true" : "false");
-        return true;
+        // Set currentMessage content and timestamp (protected by mutex for multi-core safety)
+        if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+        {
+            currentMessage.message = formattedContent;
+            currentMessage.timestamp = getFormattedDateTime();
+            currentMessage.shouldPrintLocally = shouldSetPrintFlag;
+            xSemaphoreGive(currentMessageMutex);
+
+            LOG_VERBOSE("BUTTONS", "Content generated (%d chars), shouldPrintLocally = %s",
+                        formattedContent.length(), shouldSetPrintFlag ? "true" : "false");
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("BUTTONS", "Failed to acquire mutex for currentMessage");
+            return false;
+        }
     }
     else
     {
