@@ -26,6 +26,38 @@ static const char *NVS_NAMESPACE = "scribe-app";
 static RuntimeConfig g_runtimeConfig;
 bool g_configLoaded = false;
 
+// ============================================================================
+// CONFIGMANAGER SINGLETON IMPLEMENTATION
+// ============================================================================
+
+// Singleton instance (Meyer's singleton - thread-safe in C++11+)
+ConfigManager& ConfigManager::instance() {
+    static ConfigManager instance;
+    return instance;
+}
+
+// Constructor
+ConfigManager::ConfigManager() {
+    // Mutex created in begin()
+}
+
+// Initialize (must be called in setup)
+void ConfigManager::begin() {
+    if (initialized) {
+        LOG_VERBOSE("CONFIG", "ConfigManager already initialized");
+        return;
+    }
+
+    mutex = xSemaphoreCreateMutex();
+    if (mutex == nullptr) {
+        LOG_ERROR("CONFIG", "Failed to create ConfigManager mutex!");
+        return;
+    }
+
+    initialized = true;
+    LOG_NOTICE("CONFIG", "ConfigManager initialized (thread-safe singleton)");
+}
+
 // Helper function to validate and get string from NVS with fallback - saves default if missing
 String getNVSString(Preferences &prefs, const char *key, const String &defaultValue, int maxLength = 1000)
 {
@@ -93,26 +125,43 @@ int getNVSPort(Preferences &prefs, const char *key, int defaultValue)
     return getNVSInt(prefs, key, defaultValue, 1, 65535);
 }
 
-bool loadRuntimeConfig()
+// Public method: loadRuntimeConfig (thread-safe)
+bool ConfigManager::loadRuntimeConfig()
 {
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return false;
+    }
+
     LOG_NOTICE("CONFIG", "Loading runtime configuration from NVS");
 
     // Load configuration from NVS (with auto-initialization of missing keys)
-    if (!loadNVSConfig())
+    bool success = true;
+    if (!loadNVSConfigInternal())
     {
         LOG_WARNING("CONFIG", "Failed to load from NVS, using defaults");
-        loadDefaultConfig();
+        loadDefaultConfigInternal();
         g_configLoaded = true;
         LOG_NOTICE("CONFIG", "Runtime configuration loaded from defaults");
-        return true; // Still successful - we have valid configuration
+    }
+    else
+    {
+        g_configLoaded = true;
+        LOG_NOTICE("CONFIG", "Runtime configuration loaded from NVS");
     }
 
-    g_configLoaded = true;
-    LOG_NOTICE("CONFIG", "Runtime configuration loaded from NVS");
-    return true;
+    xSemaphoreGive(mutex);
+    return success;
 }
 
-bool loadNVSConfig()
+// Internal helper: loadNVSConfigInternal (mutex already held)
+bool ConfigManager::loadNVSConfigInternal()
 {
     Preferences prefs;
 
@@ -266,7 +315,8 @@ bool loadNVSConfig()
     return true;
 }
 
-void loadDefaultConfig()
+// Internal helper: loadDefaultConfigInternal (mutex already held)
+void ConfigManager::loadDefaultConfigInternal()
 {
     // Get board-specific defaults
     const BoardPinDefaults &boardDefaults = getBoardDefaults();
@@ -337,7 +387,28 @@ void loadDefaultConfig()
     LOG_NOTICE("CONFIG", "Using default configuration from config.h");
 }
 
-bool saveNVSConfig(const RuntimeConfig &config)
+// Public method: saveNVSConfig (thread-safe)
+bool ConfigManager::saveNVSConfig(const RuntimeConfig &config)
+{
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return false;
+    }
+
+    bool result = saveNVSConfigInternal(config);
+
+    xSemaphoreGive(mutex);
+    return result;
+}
+
+// Internal helper: saveNVSConfigInternal (mutex already held)
+bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
 {
     Preferences prefs;
     if (!prefs.begin(NVS_NAMESPACE, false))
@@ -414,30 +485,55 @@ bool saveNVSConfig(const RuntimeConfig &config)
     return true;
 }
 
-const RuntimeConfig &getRuntimeConfig()
+// Public method: setRuntimeConfig (thread-safe)
+void ConfigManager::setRuntimeConfig(const RuntimeConfig &config)
 {
-    if (!g_configLoaded)
-    {
-        // Don't use LOG_NOTICE here to avoid recursive calls during logging initialization
-        // First-time startup: Loading default configuration from config.h
-        loadDefaultConfig();
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return;
     }
-    return g_runtimeConfig;
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return;
+    }
+
+    g_runtimeConfig = config;
+    g_configLoaded = true;
+
+    xSemaphoreGive(mutex);
 }
 
-bool initializeConfigSystem()
+// Public method: factoryResetNVS (thread-safe)
+bool ConfigManager::factoryResetNVS()
+{
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return false;
+    }
+
+    bool result = factoryResetNVSInternal();
+
+    xSemaphoreGive(mutex);
+    return result;
+}
+
+// Public method: initializeConfigSystem
+bool ConfigManager::initializeConfigSystem()
 {
     // Initialize NVS-based configuration system
     return loadRuntimeConfig();
 }
 
-void setRuntimeConfig(const RuntimeConfig &config)
-{
-    g_runtimeConfig = config;
-    g_configLoaded = true;
-}
-
-bool initializeNVSConfig()
+// Public method: initializeNVSConfig
+bool ConfigManager::initializeNVSConfig()
 {
     // Initialize NVS partition
     esp_err_t err = nvs_flash_init();
@@ -458,7 +554,8 @@ bool initializeNVSConfig()
     return true;
 }
 
-bool checkAndMigrateNVSSchema()
+// Public method: checkAndMigrateNVSSchema
+bool ConfigManager::checkAndMigrateNVSSchema()
 {
     // For now, just return true - migration logic would go here if needed
     // This could check version numbers, migrate old key names, etc.
@@ -466,7 +563,29 @@ bool checkAndMigrateNVSSchema()
     return true;
 }
 
-bool factoryResetNVS()
+// ============================================================================
+// DIRECT ACCESS FUNCTIONS (NO MUTEX - READ-ONLY)
+// ============================================================================
+
+const RuntimeConfig &getRuntimeConfig()
+{
+    if (!g_configLoaded)
+    {
+        // Don't use LOG_NOTICE here to avoid recursive calls during logging initialization
+        // First-time startup: Loading default configuration from config.h
+        loadDefaultConfig();
+    }
+    return g_runtimeConfig;
+}
+
+void loadDefaultConfig()
+{
+    // Call internal version directly (this is only called during initialization before mutex exists)
+    ConfigManager::instance().loadDefaultConfigInternal();
+}
+
+// Internal helper: factoryResetNVSInternal (mutex already held)
+bool ConfigManager::factoryResetNVSInternal()
 {
     LOG_NOTICE("CONFIG", "Performing factory reset - erasing all NVS data");
 
@@ -487,7 +606,7 @@ bool factoryResetNVS()
     }
 
     // Load defaults from config.h
-    if (!loadNVSConfig())
+    if (!loadNVSConfigInternal())
     {
         LOG_ERROR("CONFIG", "Failed to load default configuration after factory reset");
         return false;

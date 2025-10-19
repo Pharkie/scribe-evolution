@@ -209,7 +209,7 @@ void handlePrintMQTT(AsyncWebServerRequest *request)
         return;
     }
     
-    if (!mqttClient.connected())
+    if (!MQTTManager::instance().isConnected())
     {
         sendErrorResponse(request, 503, "MQTT client not connected");
         return;

@@ -3,7 +3,7 @@
 <system_context>
 ESP32-C3/S3 system fundamentals: configuration, network, MQTT, logging.
 Memory-constrained environment with dual-layer config architecture.
-Thread-safe logging via LogManager singleton.
+Thread-safe singletons: LogManager (logging), APIClient (HTTP), ConfigManager (NVS/LittleFS), MQTTManager (MQTT).
 </system_context>
 
 <critical_notes>
@@ -73,15 +73,42 @@ Adding new configuration:
 - Direct Serial.print() = Concurrent write corruption, garbled output
   </fatal_implications>
 
-<logging_architecture>
-LogManager Singleton:
+<thread_safe_architecture>
+Thread-Safe Singleton Managers (prevent concurrent access corruption):
 
-- Thread-safe serial output via FreeRTOS queue
-- Single writer task prevents concurrent Serial corruption
-- Non-blocking LOG\_\* macros (drops on queue overflow)
-- ISR-safe logfISR() for interrupt contexts
-- Captures ESP_LOGx macros from ESP-IDF
+1. **LogManager** - Serial logging
+   - FreeRTOS queue + dedicated writer task
+   - Non-blocking LOG\_\* macros (fire-and-forget)
+   - ISR-safe logfISR() for interrupt contexts
+   - NEVER use Serial.print() directly!
 
-NEVER use Serial.print() - ALWAYS use LOG_NOTICE, LOG_ERROR, LOG_WARNING, or LOG_VERBOSE
-See docs/logging-system.md for complete documentation
-</logging_architecture>
+2. **APIClient** - HTTP operations
+   - Singleton + mutex pattern
+   - Thread-safe HTTP GET/POST with Bearer auth
+   - Single WiFiClientSecure + HTTPClient instance
+   - Usage: APIClient::instance().fetchFromAPI(url, userAgent, timeout)
+
+3. **ConfigManager** - NVS/LittleFS operations
+   - Singleton + mutex pattern
+   - Thread-safe config save/load/reset
+   - Direct read access (no mutex) for getRuntimeConfig()
+   - Usage: ConfigManager::instance().saveNVSConfig(config)
+
+4. **MQTTManager** - MQTT operations
+   - Singleton + mutex pattern
+   - Thread-safe publish/subscribe/connect/disconnect
+   - State machine encapsulated in singleton
+   - Usage: MQTTManager::instance().publishMessage(topic, header, body)
+
+All managers initialized in main.cpp setup():
+
+```cpp
+LogManager::instance().begin(115200, 256, 512);
+APIClient::instance().begin();
+ConfigManager::instance().begin();
+MQTTManager::instance().begin();
+```
+
+Backward-compatible wrapper functions exist for all managers.
+See docs/logging-system.md for complete LogManager documentation.
+</thread_safe_architecture>

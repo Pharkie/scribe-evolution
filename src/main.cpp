@@ -132,6 +132,15 @@ void setup()
   // Initialize LogManager - provides thread-safe single-writer logging
   LogManager::instance().begin(115200, 256, 512);
 
+  // Initialize APIClient - provides thread-safe HTTP operations
+  APIClient::instance().begin();
+
+  // Initialize ConfigManager - provides thread-safe NVS/LittleFS operations
+  ConfigManager::instance().begin();
+
+  // Initialize MQTTManager - provides thread-safe MQTT operations
+  MQTTManager::instance().begin();
+
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
 #ifdef RELEASE_BUILD

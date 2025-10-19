@@ -87,13 +87,29 @@ depend on.
 - System configuration and validation
 - Network connectivity (WiFi, mDNS)
 - MQTT communication for remote printing
-- Thread-safe serial logging via LogManager singleton
+- Thread-safe operations via singleton managers:
+  - **LogManager**: Serial logging (queue + dedicated writer task)
+  - **APIClient**: HTTP operations (mutex-protected)
+  - **ConfigManager**: NVS/LittleFS operations (mutex-protected)
+  - **MQTTManager**: MQTT operations (mutex-protected)
 - Shared data structures used across components
 
 ### Global Variables:
 
 - `Message currentMessage`: Shared message structure for printing
 - Configuration variables: WiFi credentials, MQTT settings, logging level
+
+### Thread Safety:
+
+All shared resources (HTTP, Config, MQTT, Logging) use thread-safe singleton pattern to prevent concurrent access corruption from:
+
+- AsyncWebServer handlers (Core 1)
+- Button tasks
+- Main loop
+- MQTT callbacks
+
+Pattern: Singleton + mutex (except LogManager which uses queue + dedicated writer task).
+All singletons initialized in main.cpp setup() before concurrent access begins.
 
 ## Web Layer (HTTP + Auth)
 
@@ -195,13 +211,13 @@ Utility functions provide common functionality used across multiple components.
 - **`time_utils.h`** & **`time_utils.cpp`**: Time and date management
 - **`character_mapping.h`** & **`character_mapping.cpp`**: Character set
   conversions
-- **`api_client.{h,cpp}`**: HTTP client for external API calls (retry/backoff)
+- **`api_client.{h,cpp}`**: Thread-safe HTTP client for external API calls (APIClient singleton with mutex)
 
 ### Key Functions:
 
 - **Time Management**: NTP sync, timezone handling, DST support
 - **Character Processing**: ASCII to printer character mapping
-- **API Communication**: Secure HTTPS client for external services
+- **API Communication**: Thread-safe HTTPS client via APIClient singleton (retry/backoff logic)
 - **Date Formatting**: Consistent timestamp generation
 
 ## Build System
@@ -221,7 +237,11 @@ The application entry point that orchestrates all components:
 2. Hardware stabilization (printer pins)
 3. Configuration validation
 4. WiFi connection establishment
-5. Logging system setup
+5. Thread-safe singleton initialization:
+   - LogManager (serial logging)
+   - APIClient (HTTP operations)
+   - ConfigManager (NVS/LittleFS)
+   - MQTTManager (MQTT operations)
 6. Timezone and NTP synchronization
 7. Component initialization (printer, buttons, web server)
 8. Service startup (MQTT, mDNS, web server)

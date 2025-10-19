@@ -181,7 +181,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     mqtt["username"] = config.mqttUsername;
     mqtt["password"] = maskSecret(config.mqttPassword);
     // Skip MQTT connection check in AP mode to avoid potential blocking
-    mqtt["connected"] = (isAPMode() || !config.mqttEnabled) ? false : mqttClient.connected();
+    mqtt["connected"] = (isAPMode() || !config.mqttEnabled) ? false : MQTTManager::instance().isConnected();
 
     // Unbidden Ink configuration - top-level section matching settings.html
     JsonObject unbiddenInk = configDoc["unbiddenInk"].to<JsonObject>();

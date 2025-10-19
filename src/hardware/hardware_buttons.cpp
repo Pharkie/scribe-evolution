@@ -567,7 +567,7 @@ void buttonActionTask(void *parameter)
             {
                 LOG_WARNING("BUTTONS", "MQTT disabled, cannot send button action to topic: %s", params->mqttTopic.c_str());
             }
-            else if (!mqttClient.connected())
+            else if (!MQTTManager::instance().isConnected())
             {
                 LOG_WARNING("BUTTONS", "MQTT not connected, cannot send button action to topic: %s", params->mqttTopic.c_str());
             }

@@ -42,7 +42,7 @@ void publishPrinterStatus()
 {
     LOG_VERBOSE("DISCOVERY", "publishPrinterStatus() called");
 
-    if (!mqttClient.connected())
+    if (!MQTTManager::instance().isConnected())
     {
         LOG_WARNING("DISCOVERY", "MQTT not connected, cannot publish status");
         return;
@@ -65,7 +65,7 @@ void publishPrinterStatus()
     serializeJson(doc, payload);
     LOG_VERBOSE("DISCOVERY", "Status payload: %s", payload.c_str());
 
-    bool published = mqttClient.publish(statusTopic.c_str(), payload.c_str(), true);
+    bool published = MQTTManager::instance().publishRawMessage(statusTopic, payload, true);
     if (published)
     {
         LOG_VERBOSE("DISCOVERY", "Published status to %s", statusTopic.c_str());

@@ -1,16 +1,18 @@
 # Utilities - CLAUDE.md
 
 <system_context>
-Utility functions: time management, character mapping, API client.
+Utility functions: time management, character mapping, thread-safe API client.
 Reusable components for consistent functionality across modules.
+APIClient singleton provides thread-safe HTTP operations with mutex protection.
 </system_context>
 
 <critical_notes>
 
 - Time utilities handle timezone conversion and formatting
 - Character mapping ensures printer compatibility
-- API client manages ChatGPT integration with error handling
-- All utilities should be stateless where possible
+- APIClient singleton (thread-safe) manages external API integration with retry/backoff
+- NEVER create multiple WiFiClientSecure/HTTPClient instances - use APIClient::instance()
+- All utilities except APIClient should be stateless
   </critical_notes>
 
 <paved_path>
@@ -41,24 +43,24 @@ result.replace(""", "\""); // Smart quote to regular
 return result;
 }
 
-// API client pattern
-class APIClient {
-bool makeRequest(const String& url, const String& payload, String& response) {
-if (!WiFi.isConnected()) return false;
+// Thread-safe API client - singleton pattern with mutex
+// Usage: APIClient::instance().fetchFromAPI(url, userAgent, timeout)
+String response = APIClient::instance().fetchFromAPI(
+"https://api.example.com/data",
+"ScribeEvolution/1.0",
+5000 // timeout in ms
+);
 
-        HTTPClient http;
-        http.begin(url);
-        http.addHeader("Content-Type", "application/json");
+// POST with Bearer auth
+String result = APIClient::instance().postToAPIWithBearer(
+"https://api.example.com/endpoint",
+bearerToken,
+jsonPayload,
+"ScribeEvolution/1.0"
+);
 
-        int responseCode = http.POST(payload);
-        if (responseCode == 200) {
-            response = http.getString();
-            return true;
-        }
-        return false;
-    }
-
-};
+// Backward-compatible wrapper functions also available:
+String data = fetchFromAPI(url, userAgent, timeout);
 </patterns>
 
 <common_tasks>

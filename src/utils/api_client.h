@@ -1,6 +1,6 @@
 /**
  * @file api_client.h
- * @brief HTTP client utilities for external API communication
+ * @brief Thread-safe HTTP client singleton for external API communication
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -22,43 +22,99 @@
 #define API_CLIENT_H
 
 #include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+
+// Forward declarations (keep includes in .cpp)
+class WiFiClientSecure;
+class HTTPClient;
 
 /**
- * @brief HTTP client utilities for external API communication
+ * @brief Thread-safe HTTP client singleton for external API communication
  *
- * This module provides functions for making HTTPS requests to external APIs
- * and processing template strings.
+ * Provides mutex-protected HTTPS requests to prevent concurrent access
+ * from multiple tasks (AsyncWebServer, button tasks, Unbidden Ink).
+ *
+ * Thread-safe for multi-core ESP32 operation (S3 and C3):
+ * - Public methods acquire mutex before HTTP operations
+ * - Single WiFiClientSecure/HTTPClient instance prevents resource conflicts
+ * - Prevents concurrent SSL/TCP operations
+ *
+ * Pattern follows LedEffects singleton for consistency.
  */
+class APIClient
+{
+public:
+    /**
+     * @brief Get singleton instance
+     * @return Reference to the singleton APIClient instance
+     */
+    static APIClient& instance();
 
-/**
- * @brief Make HTTPS API calls with JSON response
- * @param url The API endpoint URL
- * @param userAgent User agent string for the request
- * @param timeoutMs Request timeout in milliseconds (default: 5000)
- * @return String containing the API response, or empty string on failure
- */
-String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs = 5000);
+    /**
+     * @brief Initialize HTTP client (must be called in setup)
+     */
+    void begin();
 
-/**
- * @brief Make HTTPS API calls with Bearer token authorization
- * @param url The API endpoint URL
- * @param bearerToken The Bearer token (including "Bearer " prefix)
- * @param userAgent User agent string for the request
- * @param timeoutMs Request timeout in milliseconds (default: 5000)
- * @return String containing the API response, or empty string on failure
- */
-String fetchFromAPIWithBearer(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs = 5000);
+    /**
+     * @brief Make HTTPS API calls with JSON response
+     * @param url The API endpoint URL
+     * @param userAgent User agent string for the request
+     * @param timeoutMs Request timeout in milliseconds (default: 5000)
+     * @return String containing the API response, or empty string on failure
+     */
+    String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs = 5000);
 
-/**
- * @brief Make HTTPS POST API calls with Bearer token authorization and JSON payload
- * @param url The API endpoint URL
- * @param bearerToken The Bearer token (including "Bearer " prefix)
- * @param jsonPayload The JSON payload to send in the POST body
- * @param userAgent User agent string for the request
- * @param timeoutMs Request timeout in milliseconds (default: 5000)
- * @return String containing the API response, or empty string on failure
- */
-String postToAPIWithBearer(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs = 5000);
+    /**
+     * @brief Make HTTPS API calls with Bearer token authorization
+     * @param url The API endpoint URL
+     * @param bearerToken The Bearer token (including "Bearer " prefix)
+     * @param userAgent User agent string for the request
+     * @param timeoutMs Request timeout in milliseconds (default: 5000)
+     * @return String containing the API response, or empty string on failure
+     */
+    String fetchFromAPIWithBearer(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs = 5000);
+
+    /**
+     * @brief Make HTTPS POST API calls with Bearer token authorization and JSON payload
+     * @param url The API endpoint URL
+     * @param bearerToken The Bearer token (including "Bearer " prefix)
+     * @param jsonPayload The JSON payload to send in the POST body
+     * @param userAgent User agent string for the request
+     * @param timeoutMs Request timeout in milliseconds (default: 5000)
+     * @return String containing the API response, or empty string on failure
+     */
+    String postToAPIWithBearer(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs = 5000);
+
+private:
+    APIClient();
+    ~APIClient() = default;
+    APIClient(const APIClient&) = delete;
+    APIClient& operator=(const APIClient&) = delete;
+
+    // Internal helper methods (assume mutex already held)
+    bool performSingleAPIRequest(const String &url, const String &userAgent, int timeoutMs, String &result);
+    bool performSingleBearerAPIRequest(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs, String &result);
+    bool performSinglePostAPIRequest(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs, String &result);
+
+    SemaphoreHandle_t mutex = nullptr;
+    WiFiClientSecure* wifiClient = nullptr;
+    HTTPClient* httpClient = nullptr;
+    bool initialized = false;
+};
+
+// Backward-compatible wrapper functions (delegate to singleton)
+inline String fetchFromAPI(const String &url, const String &userAgent, int timeoutMs = 5000) {
+    return APIClient::instance().fetchFromAPI(url, userAgent, timeoutMs);
+}
+
+inline String fetchFromAPIWithBearer(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs = 5000) {
+    return APIClient::instance().fetchFromAPIWithBearer(url, bearerToken, userAgent, timeoutMs);
+}
+
+inline String postToAPIWithBearer(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs = 5000) {
+    return APIClient::instance().postToAPIWithBearer(url, bearerToken, jsonPayload, userAgent, timeoutMs);
+}
 
 /**
  * @brief Simple template replacement function

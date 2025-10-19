@@ -4,6 +4,7 @@
 Multi-board ESP32 thermal printer with web interface. Alpine.js + Tailwind CSS frontend, C++ backend.
 Supports ESP32-C3-mini, ESP32-S3-mini, and custom PCB variants.
 Memory-constrained embedded system with dual configuration layers.
+Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT) use singleton + mutex pattern.
 </system_context>
 
 <critical_notes>
@@ -82,6 +83,15 @@ Backend Stack:
 - PlatformIO build system with multi-board support
 - Express.js 5.1.0 (mock server)
 - Unity test framework
+
+Thread-Safe Singletons:
+
+- **LogManager** - Serial logging (queue + dedicated writer task)
+- **APIClient** - HTTP operations (mutex-protected WiFiClientSecure/HTTPClient)
+- **ConfigManager** - NVS/LittleFS operations (mutex-protected config save/load)
+- **MQTTManager** - MQTT operations (mutex-protected PubSubClient/WiFiClientSecure)
+- All initialized in main.cpp setup() before any concurrent access
+- Backward-compatible wrapper functions exist for legacy code
 
 Board Configuration System:
 

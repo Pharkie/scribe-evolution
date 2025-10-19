@@ -9,252 +9,55 @@
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 
-// MQTT objects
-WiFiClientSecure wifiSecureClient;
-PubSubClient mqttClient(wifiSecureClient);
+// ============================================================================
+// MQTTMANAGER SINGLETON IMPLEMENTATION
+// ============================================================================
 
-// MQTT State Machine
-enum MQTTState {
-    MQTT_STATE_DISABLED,
-    MQTT_STATE_ENABLED_DISCONNECTED, 
-    MQTT_STATE_CONNECTING,
-    MQTT_STATE_CONNECTED,
-    MQTT_STATE_DISCONNECTING
-};
+// Singleton instance (Meyer's singleton - thread-safe in C++11+)
+MQTTManager& MQTTManager::instance() {
+    static MQTTManager instance;
+    return instance;
+}
 
-static MQTTState mqttState = MQTT_STATE_DISABLED;
-static unsigned long stateChangeTime = 0;
-
-// MQTT connection management (using config.h values)
-unsigned long lastMQTTReconnectAttempt = 0;
-static int consecutiveFailures = 0;
-static unsigned long lastFailureTime = 0;
-
-// Track current subscription
-String currentSubscribedTopic = "";
-
-// Persistent CA certificate buffer (must outlive wifiSecureClient)
-static String caCertificateBuffer;
-
-// Guard to prevent duplicate MQTT initialization
-static bool mqttSetupCompleted = false;
-
-// === MQTT Functions ===
-void setupMQTT()
-{
-    // Prevent duplicate initialization
-    if (mqttSetupCompleted) {
-        LOG_VERBOSE("MQTT", "MQTT already configured, skipping setup");
-        return;
-    }
-    // Load CA certificate exactly like test - local String variable
-    LOG_VERBOSE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
-    File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
-    if (!certFile) {
-        LOG_ERROR("MQTT", "Failed to open CA certificate file");
-        return;
-    }
-    
-    String certContent = certFile.readString();
-    certFile.close();
-    
-    LOG_VERBOSE("MQTT", "CA certificate loaded, length: %d bytes", certContent.length());
-    
-    if (certContent.length() == 0) {
-        LOG_ERROR("MQTT", "CA certificate file is empty");
-        return;
-    }
-    
-    // Validate certificate format
-    bool validCert = certContent.indexOf("-----BEGIN CERTIFICATE-----") != -1 && 
-                     certContent.indexOf("-----END CERTIFICATE-----") != -1 &&
-                     certContent.length() > 100;
-    
-    if (!validCert) {
-        LOG_ERROR("MQTT", "CA certificate file format is invalid");
-        return;
-    }
-    
-    LOG_VERBOSE("MQTT", "CA certificate validation passed, configuring WiFiClientSecure");
-    
-    // Store in static buffer to ensure lifetime during connection attempts
-    caCertificateBuffer = certContent;
-    
-    // Configure exactly like test - local string passed to setCACert
-    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
-    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
-    
-    // Ensure MQTT client uses the refreshed secure client
+// Constructor
+MQTTManager::MQTTManager() {
+    // mqttClient must be initialized with wifiSecureClient
+    // This is done automatically since both are member variables
     mqttClient.setClient(wifiSecureClient);
-    
-    // Configure MQTT client
-    const RuntimeConfig &config = getRuntimeConfig();
-    mqttClient.setServer(config.mqttServer.c_str(), config.mqttPort);
-    mqttClient.setCallback(mqttCallback);
-    mqttClient.setBufferSize(mqttBufferSize);
-
-    // Don't call connectToMQTT() here anymore - let state machine handle it
-
-    const char* tlsMode = mqttClient.connected() ? "Secure (TLS with CA verification)" : "Secure (TLS configured, connection pending)";
-    LOG_NOTICE("MQTT", "MQTT server configured: %s:%d | Inbox topic: %s | TLS mode: %s | Buffer size: %d bytes", config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), tlsMode, mqttBufferSize);
-    
-    // Mark setup as completed
-    mqttSetupCompleted = true;
 }
 
-void connectToMQTT()
-{
-    LOG_VERBOSE("MQTT", "=== connectToMQTT() ENTRY ===");
-    
-    // State machine handles duplicate prevention - no static flags needed
-    if (mqttState != MQTT_STATE_CONNECTING) {
-        LOG_ERROR("MQTT", "connectToMQTT called in wrong state: %d", mqttState);
+// Initialize (must be called in setup)
+void MQTTManager::begin() {
+    if (initialized) {
+        LOG_VERBOSE("MQTT", "MQTTManager already initialized");
         return;
     }
-    
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        LOG_WARNING("MQTT", "WiFi not connected, aborting MQTT connection");
-        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+
+    mutex = xSemaphoreCreateMutex();
+    if (mutex == nullptr) {
+        LOG_ERROR("MQTT", "Failed to create MQTTManager mutex!");
         return;
     }
-    
-    // Check if we should skip connection due to consecutive failures
-    if (consecutiveFailures >= mqttMaxConsecutiveFailures)
-    {
-        if (millis() - lastFailureTime < mqttFailureCooldownMs)
-        {
-            LOG_VERBOSE("MQTT", "Still in cooldown period, returning to disconnected state");
-            mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
-            return;
-        }
-        else
-        {
-            LOG_NOTICE("MQTT", "Cooldown period expired, resetting failure count and attempting reconnection");
-            consecutiveFailures = 0;
-        }
-    }
 
-    // Debug socket state before connection attempt
-    LOG_VERBOSE("MQTT", "Connection attempt - WiFi status: %d, wifiSecureClient.connected(): %d", 
-               WiFi.status(), wifiSecureClient.connected());
-    
-    // Always clean the client state like test does with fresh object
-    if (wifiSecureClient.connected()) {
-        LOG_VERBOSE("MQTT", "Stopping existing WiFiClientSecure connection");
-        wifiSecureClient.stop();
-    }
-    
-    // Force clean state by recreating the secure client (match test behavior)
-    wifiSecureClient = WiFiClientSecure();
-    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
-    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
-    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
-    
-    LOG_VERBOSE("MQTT", "WiFiClientSecure reset to clean state");
-
-    String printerId = getPrinterId();
-    String clientId = "ScribePrinter-" + printerId; // Use consistent ID based on printer ID
-
-    // Feed watchdog before potentially blocking MQTT connection
-    esp_task_wdt_reset();
-
-    bool connected = false;
-
-    // Set up LWT for printer discovery
-    String statusTopic = "scribe/printer-status/" + printerId;
-
-    // Use the same offline payload format as graceful shutdown
-    String lwtPayload = createOfflinePayload();
-
-    // Try connection with or without credentials, including LWT
-    const RuntimeConfig &config = getRuntimeConfig();
-    
-    // Set timeout to prevent blocking (already set above, but ensuring consistency)
-    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
-    
-    try {
-        if (config.mqttUsername.length() > 0 && config.mqttPassword.length() > 0)
-        {
-            connected = mqttClient.connect(clientId.c_str(),
-                                           config.mqttUsername.c_str(),
-                                           config.mqttPassword.c_str(),
-                                           statusTopic.c_str(),
-                                           0,
-                                           true,
-                                           lwtPayload.c_str());
-        }
-        else
-        {
-            connected = mqttClient.connect(clientId.c_str(),
-                                           statusTopic.c_str(),
-                                           0,
-                                           true,
-                                           lwtPayload.c_str());
-        }
-    } catch (...) {
-        LOG_ERROR("MQTT", "MQTT connection threw exception, treating as failed");
-        connected = false;
-    }
-    
-    // Feed watchdog again after connection attempt
-    esp_task_wdt_reset();
-
-    if (connected)
-    {
-        // Connection successful - update state
-        mqttState = MQTT_STATE_CONNECTED;
-        consecutiveFailures = 0;
-        
-        LOG_NOTICE("MQTT", "✅ Connected to broker");
-        
-        // Subscribe to the print topic
-        String newTopic = String(getLocalPrinterTopic());
-        if (!mqttClient.subscribe(newTopic.c_str()))
-        {
-            LOG_ERROR("MQTT", "MQTT connected. Failed to subscribe to topic: %s", newTopic.c_str());
-        }
-        else
-        {
-            currentSubscribedTopic = newTopic;
-            LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
-        }
-
-        // Subscribe to printer discovery topics to immediately process retained messages
-        if (!mqttClient.subscribe("scribe/printer-status/+"))
-        {
-            LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
-        }
-        else
-        {
-            LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics. Should receive retained messages immediately");
-        }
-
-        // Publish initial online status immediately after connection
-        LOG_NOTICE("MQTT", "Publishing initial online status after connection");
-        publishPrinterStatus();
-    }
-    else
-    {
-        // Connection failed - return to disconnected state
-        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
-        consecutiveFailures++;
-        lastFailureTime = millis();
-        
-        int state = mqttClient.state();
-        LOG_WARNING("MQTT", "MQTT connection failed (attempt %d/%d), state: %d - Will retry in %lums", 
-                   consecutiveFailures, mqttMaxConsecutiveFailures, state, mqttReconnectIntervalMs);
-        
-        if (consecutiveFailures >= mqttMaxConsecutiveFailures)
-        {
-            LOG_ERROR("MQTT", "Too many consecutive MQTT failures (%d), entering cooldown mode for %lums to prevent system instability", 
-                     mqttMaxConsecutiveFailures, mqttFailureCooldownMs);
-        }
-    }
+    initialized = true;
+    LOG_NOTICE("MQTT", "MQTTManager initialized (thread-safe singleton)");
 }
 
-void mqttCallback(char *topic, byte *payload, unsigned int length)
+// Static callback wrapper
+void MQTTManager::mqttCallbackStatic(char *topic, byte *payload, unsigned int length) {
+    // Forward to instance method
+    instance().mqttCallback(topic, payload, length);
+}
+
+// Instance callback method
+void MQTTManager::mqttCallback(char *topic, byte *payload, unsigned int length)
 {
+    // Acquire mutex for thread-safe callback handling
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex in callback!");
+        return;
+    }
+
     LOG_VERBOSE("MQTT", "MQTT message received on topic: %s", topic);
 
     // Convert payload to string
@@ -276,11 +79,14 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
     else
     {
         // Handle regular print messages - pass topic to extract sender
-        handleMQTTMessage(topicStr, message);
+        handleMQTTMessageInternal(topicStr, message);
     }
+
+    xSemaphoreGive(mutex);
 }
 
-void handleMQTTMessage(String topic, String message)
+// Internal helper: handleMQTTMessageInternal (mutex already held)
+void MQTTManager::handleMQTTMessageInternal(String topic, String message)
 {
     // Parse JSON message
     JsonDocument doc;
@@ -329,15 +135,230 @@ void handleMQTTMessage(String topic, String message)
                finalHeader.c_str(), printMessage.length());
 }
 
-// === MQTT Connection Handler ===
-void handleMQTTConnection()
+// Internal helper: setupMQTTInternal (mutex already held)
+void MQTTManager::setupMQTTInternal()
+{
+    // Prevent duplicate initialization
+    if (mqttSetupCompleted) {
+        LOG_VERBOSE("MQTT", "MQTT already configured, skipping setup");
+        return;
+    }
+    // Load CA certificate exactly like test - local String variable
+    LOG_VERBOSE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
+    File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
+    if (!certFile) {
+        LOG_ERROR("MQTT", "Failed to open CA certificate file");
+        return;
+    }
+
+    String certContent = certFile.readString();
+    certFile.close();
+
+    LOG_VERBOSE("MQTT", "CA certificate loaded, length: %d bytes", certContent.length());
+
+    if (certContent.length() == 0) {
+        LOG_ERROR("MQTT", "CA certificate file is empty");
+        return;
+    }
+
+    // Validate certificate format
+    bool validCert = certContent.indexOf("-----BEGIN CERTIFICATE-----") != -1 &&
+                     certContent.indexOf("-----END CERTIFICATE-----") != -1 &&
+                     certContent.length() > 100;
+
+    if (!validCert) {
+        LOG_ERROR("MQTT", "CA certificate file format is invalid");
+        return;
+    }
+
+    LOG_VERBOSE("MQTT", "CA certificate validation passed, configuring WiFiClientSecure");
+
+    // Store in buffer to ensure lifetime during connection attempts
+    caCertificateBuffer = certContent;
+
+    // Configure exactly like test - local string passed to setCACert
+    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
+    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
+
+    // Ensure MQTT client uses the refreshed secure client
+    mqttClient.setClient(wifiSecureClient);
+
+    // Configure MQTT client
+    const RuntimeConfig &config = getRuntimeConfig();
+    mqttClient.setServer(config.mqttServer.c_str(), config.mqttPort);
+    mqttClient.setCallback(mqttCallbackStatic);
+    mqttClient.setBufferSize(mqttBufferSize);
+
+    // Don't call connectToMQTT() here anymore - let state machine handle it
+
+    const char* tlsMode = mqttClient.connected() ? "Secure (TLS with CA verification)" : "Secure (TLS configured, connection pending)";
+    LOG_NOTICE("MQTT", "MQTT server configured: %s:%d | Inbox topic: %s | TLS mode: %s | Buffer size: %d bytes", config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), tlsMode, mqttBufferSize);
+
+    // Mark setup as completed
+    mqttSetupCompleted = true;
+}
+
+// Internal helper: connectToMQTTInternal (mutex already held)
+void MQTTManager::connectToMQTTInternal()
+{
+    LOG_VERBOSE("MQTT", "=== connectToMQTT() ENTRY ===");
+
+    // State machine handles duplicate prevention - no static flags needed
+    if (mqttState != MQTT_STATE_CONNECTING) {
+        LOG_ERROR("MQTT", "connectToMQTT called in wrong state: %d", mqttState);
+        return;
+    }
+
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        LOG_WARNING("MQTT", "WiFi not connected, aborting MQTT connection");
+        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+        return;
+    }
+
+    // Check if we should skip connection due to consecutive failures
+    if (consecutiveFailures >= mqttMaxConsecutiveFailures)
+    {
+        if (millis() - lastFailureTime < mqttFailureCooldownMs)
+        {
+            LOG_VERBOSE("MQTT", "Still in cooldown period, returning to disconnected state");
+            mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+            return;
+        }
+        else
+        {
+            LOG_NOTICE("MQTT", "Cooldown period expired, resetting failure count and attempting reconnection");
+            consecutiveFailures = 0;
+        }
+    }
+
+    // Debug socket state before connection attempt
+    LOG_VERBOSE("MQTT", "Connection attempt - WiFi status: %d, wifiSecureClient.connected(): %d",
+               WiFi.status(), wifiSecureClient.connected());
+
+    // Always clean the client state like test does with fresh object
+    if (wifiSecureClient.connected()) {
+        LOG_VERBOSE("MQTT", "Stopping existing WiFiClientSecure connection");
+        wifiSecureClient.stop();
+    }
+
+    // Force clean state by recreating the secure client (match test behavior)
+    wifiSecureClient = WiFiClientSecure();
+    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
+    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
+    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
+
+    LOG_VERBOSE("MQTT", "WiFiClientSecure reset to clean state");
+
+    String printerId = getPrinterId();
+    String clientId = "ScribePrinter-" + printerId; // Use consistent ID based on printer ID
+
+    // Feed watchdog before potentially blocking MQTT connection
+    esp_task_wdt_reset();
+
+    bool connected = false;
+
+    // Set up LWT for printer discovery
+    String statusTopic = "scribe/printer-status/" + printerId;
+
+    // Use the same offline payload format as graceful shutdown
+    String lwtPayload = createOfflinePayload();
+
+    // Try connection with or without credentials, including LWT
+    const RuntimeConfig &config = getRuntimeConfig();
+
+    // Set timeout to prevent blocking (already set above, but ensuring consistency)
+    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
+
+    try {
+        if (config.mqttUsername.length() > 0 && config.mqttPassword.length() > 0)
+        {
+            connected = mqttClient.connect(clientId.c_str(),
+                                           config.mqttUsername.c_str(),
+                                           config.mqttPassword.c_str(),
+                                           statusTopic.c_str(),
+                                           0,
+                                           true,
+                                           lwtPayload.c_str());
+        }
+        else
+        {
+            connected = mqttClient.connect(clientId.c_str(),
+                                           statusTopic.c_str(),
+                                           0,
+                                           true,
+                                           lwtPayload.c_str());
+        }
+    } catch (...) {
+        LOG_ERROR("MQTT", "MQTT connection threw exception, treating as failed");
+        connected = false;
+    }
+
+    // Feed watchdog again after connection attempt
+    esp_task_wdt_reset();
+
+    if (connected)
+    {
+        // Connection successful - update state
+        mqttState = MQTT_STATE_CONNECTED;
+        consecutiveFailures = 0;
+
+        LOG_NOTICE("MQTT", "✅ Connected to broker");
+
+        // Subscribe to the print topic
+        String newTopic = String(getLocalPrinterTopic());
+        if (!mqttClient.subscribe(newTopic.c_str()))
+        {
+            LOG_ERROR("MQTT", "MQTT connected. Failed to subscribe to topic: %s", newTopic.c_str());
+        }
+        else
+        {
+            currentSubscribedTopic = newTopic;
+            LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
+        }
+
+        // Subscribe to printer discovery topics to immediately process retained messages
+        if (!mqttClient.subscribe("scribe/printer-status/+"))
+        {
+            LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
+        }
+        else
+        {
+            LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics. Should receive retained messages immediately");
+        }
+
+        // Publish initial online status immediately after connection
+        LOG_NOTICE("MQTT", "Publishing initial online status after connection");
+        publishPrinterStatus();
+    }
+    else
+    {
+        // Connection failed - return to disconnected state
+        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+        consecutiveFailures++;
+        lastFailureTime = millis();
+
+        int state = mqttClient.state();
+        LOG_WARNING("MQTT", "MQTT connection failed (attempt %d/%d), state: %d - Will retry in %lums",
+                   consecutiveFailures, mqttMaxConsecutiveFailures, state, mqttReconnectIntervalMs);
+
+        if (consecutiveFailures >= mqttMaxConsecutiveFailures)
+        {
+            LOG_ERROR("MQTT", "Too many consecutive MQTT failures (%d), entering cooldown mode for %lums to prevent system instability",
+                     mqttMaxConsecutiveFailures, mqttFailureCooldownMs);
+        }
+    }
+}
+
+// Internal helper: handleMQTTConnectionInternal (mutex already held)
+void MQTTManager::handleMQTTConnectionInternal()
 {
     switch(mqttState)
     {
         case MQTT_STATE_DISABLED:
             // Nothing to do
             return;
-            
+
         case MQTT_STATE_ENABLED_DISCONNECTED:
             // Check if it's time to reconnect
             if (millis() - lastMQTTReconnectAttempt > mqttReconnectIntervalMs)
@@ -345,30 +366,30 @@ void handleMQTTConnection()
                 LOG_VERBOSE("MQTT", "Starting connection attempt");
                 mqttState = MQTT_STATE_CONNECTING;
                 stateChangeTime = millis();
-                
+
                 // Setup MQTT if not already done, then connect
                 if (WiFi.status() == WL_CONNECTED)
                 {
-                    setupMQTT();  // Load certs, configure client
-                    connectToMQTT();  // Actually connect
+                    setupMQTTInternal();  // Load certs, configure client
+                    connectToMQTTInternal();  // Actually connect
                 }
                 else
                 {
                     LOG_WARNING("MQTT", "WiFi not connected, returning to disconnected state");
                     mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
                 }
-                
+
                 lastMQTTReconnectAttempt = millis();
             }
             break;
-            
+
         case MQTT_STATE_CONNECTING:
             // Check for timeout
             if (millis() - stateChangeTime > mqttConnectionTimeoutMs)
             {
                 LOG_ERROR("MQTT", "Connection timeout after %lums", mqttConnectionTimeoutMs);
                 mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
-                
+
                 // Clean up stuck connection
                 if (wifiSecureClient.connected())
                 {
@@ -377,11 +398,11 @@ void handleMQTTConnection()
             }
             // Note: connectToMQTT() will change state when connection completes
             break;
-            
+
         case MQTT_STATE_CONNECTED:
             // Process MQTT messages
             mqttClient.loop();
-            
+
             // Check if still connected
             if (!mqttClient.connected())
             {
@@ -389,14 +410,15 @@ void handleMQTTConnection()
                 mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
             }
             break;
-            
+
         case MQTT_STATE_DISCONNECTING:
             // Transitional state - should be brief
             break;
     }
 }
 
-void updateMQTTSubscription()
+// Internal helper: updateMQTTSubscriptionInternal (mutex already held)
+void MQTTManager::updateMQTTSubscriptionInternal()
 {
     if (!mqttClient.connected())
     {
@@ -439,27 +461,200 @@ void updateMQTTSubscription()
     }
 }
 
+// ============================================================================
+// PUBLIC METHODS (THREAD-SAFE WITH MUTEX)
+// ============================================================================
 
-// Dynamic MQTT control functions
-bool isMQTTEnabled()
+// Public method: handleConnection (thread-safe)
+void MQTTManager::handleConnection()
+{
+    if (!initialized) {
+        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
+        return;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return;
+    }
+
+    handleMQTTConnectionInternal();
+
+    xSemaphoreGive(mutex);
+}
+
+// Public method: updateSubscription (thread-safe)
+void MQTTManager::updateSubscription()
+{
+    if (!initialized) {
+        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
+        return;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return;
+    }
+
+    updateMQTTSubscriptionInternal();
+
+    xSemaphoreGive(mutex);
+}
+
+// Public method: publishMessage (thread-safe)
+bool MQTTManager::publishMessage(const String& topic, const String& header, const String& body)
+{
+    if (!initialized) {
+        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Validate inputs
+    if (topic.length() == 0) {
+        LOG_ERROR("MQTT", "publishMQTTMessage: topic cannot be empty");
+        return false;
+    }
+
+    if (header.length() == 0) {
+        LOG_ERROR("MQTT", "publishMQTTMessage: header cannot be empty");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return false;
+    }
+
+    // Check if MQTT is enabled and connected
+    if (!isEnabled()) {
+        LOG_WARNING("MQTT", "MQTT is disabled, cannot publish to topic: %s", topic.c_str());
+        xSemaphoreGive(mutex);
+        return false;
+    }
+
+    if (!mqttClient.connected()) {
+        LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
+        xSemaphoreGive(mutex);
+        return false;
+    }
+
+    // Create standardized JSON payload
+    JsonDocument payloadDoc;
+    payloadDoc["header"] = header;
+    payloadDoc["body"] = body;
+    payloadDoc["timestamp"] = getFormattedDateTime();
+
+    // Add sender information (device owner)
+    const RuntimeConfig &config = getRuntimeConfig();
+    if (config.deviceOwner.length() > 0) {
+        payloadDoc["sender"] = config.deviceOwner;
+    }
+
+    // Serialize payload
+    String payload;
+    serializeJson(payloadDoc, payload);
+
+    // Publish message
+    bool success = mqttClient.publish(topic.c_str(), payload.c_str());
+
+    if (success) {
+        LOG_VERBOSE("MQTT", "Published message to topic: %s (%d characters)",
+                   topic.c_str(), payload.length());
+    } else {
+        LOG_ERROR("MQTT", "Failed to publish message to topic: %s", topic.c_str());
+    }
+
+    xSemaphoreGive(mutex);
+    return success;
+}
+
+// Public method: publishRawMessage (thread-safe)
+bool MQTTManager::publishRawMessage(const String& topic, const String& payload, bool retained)
+{
+    if (!initialized) {
+        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Validate inputs
+    if (topic.length() == 0) {
+        LOG_ERROR("MQTT", "publishRawMessage: topic cannot be empty");
+        return false;
+    }
+
+    if (payload.length() == 0) {
+        LOG_ERROR("MQTT", "publishRawMessage: payload cannot be empty");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return false;
+    }
+
+    // Check if MQTT is enabled and connected
+    if (!isEnabled()) {
+        LOG_WARNING("MQTT", "MQTT is disabled, cannot publish to topic: %s", topic.c_str());
+        xSemaphoreGive(mutex);
+        return false;
+    }
+
+    if (!mqttClient.connected()) {
+        LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
+        xSemaphoreGive(mutex);
+        return false;
+    }
+
+    // Publish raw message with optional retained flag
+    bool success = mqttClient.publish(topic.c_str(), payload.c_str(), retained);
+
+    if (success) {
+        LOG_VERBOSE("MQTT", "Published raw message to topic: %s (%d characters, retained: %s)",
+                   topic.c_str(), payload.length(), retained ? "true" : "false");
+    } else {
+        LOG_ERROR("MQTT", "Failed to publish raw message to topic: %s", topic.c_str());
+    }
+
+    xSemaphoreGive(mutex);
+    return success;
+}
+
+// Public method: isEnabled
+bool MQTTManager::isEnabled()
 {
     const RuntimeConfig &config = getRuntimeConfig();
     return config.mqttEnabled;
 }
 
-void startMQTTClient(bool immediate)
+// Public method: startClient (thread-safe)
+void MQTTManager::startClient(bool immediate)
 {
-    if (!isMQTTEnabled())
+    if (!initialized) {
+        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
+        return;
+    }
+
+    if (!isEnabled())
     {
         LOG_VERBOSE("MQTT", "MQTT is disabled in config, not starting client");
         return;
     }
-    
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return;
+    }
+
     if (mqttState == MQTT_STATE_DISABLED)
     {
         LOG_NOTICE("MQTT", "Enabling MQTT client (immediate=%s)", immediate ? "true" : "false");
         mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
-        
+
         if (immediate)
         {
             // Force immediate connection on next loop iteration
@@ -471,87 +666,65 @@ void startMQTTClient(bool immediate)
             lastMQTTReconnectAttempt = millis();
         }
     }
+
+    xSemaphoreGive(mutex);
 }
 
-void stopMQTTClient()
+// Public method: stopClient (thread-safe)
+void MQTTManager::stopClient()
 {
+    if (!initialized) {
+        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
+        return;
+    }
+
     LOG_NOTICE("MQTT", "Stopping MQTT client");
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return;
+    }
+
     mqttState = MQTT_STATE_DISCONNECTING;
-    
+
     // Disconnect MQTT
     if (mqttClient.connected())
     {
         mqttClient.disconnect();
     }
-    
+
     // Clean up SSL connection
     if (wifiSecureClient.connected())
     {
         wifiSecureClient.stop();
     }
-    
+
     // Reset ALL state variables
     mqttState = MQTT_STATE_DISABLED;
     currentSubscribedTopic = "";
     consecutiveFailures = 0;
     lastMQTTReconnectAttempt = 0;
     lastFailureTime = 0;
+
+    xSemaphoreGive(mutex);
 }
 
-// ========================================
-// CENTRALIZED MQTT MESSAGE PUBLISHING
-// ========================================
-
-bool publishMQTTMessage(const String& topic, const String& header, const String& body)
+// Public method: isConnected
+bool MQTTManager::isConnected()
 {
-    // Validate inputs
-    if (topic.length() == 0) {
-        LOG_ERROR("MQTT", "publishMQTTMessage: topic cannot be empty");
+    if (!initialized) {
         return false;
     }
-    
-    if (header.length() == 0) {
-        LOG_ERROR("MQTT", "publishMQTTMessage: header cannot be empty");
-        return false;
-    }
-    
-    // Check if MQTT is enabled and connected
-    if (!isMQTTEnabled()) {
-        LOG_WARNING("MQTT", "MQTT is disabled, cannot publish to topic: %s", topic.c_str());
-        return false;
-    }
-    
-    if (!mqttClient.connected()) {
-        LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
-        return false;
-    }
-    
-    // Create standardized JSON payload
-    JsonDocument payloadDoc;
-    payloadDoc["header"] = header;
-    payloadDoc["body"] = body;
-    payloadDoc["timestamp"] = getFormattedDateTime();
-    
-    // Add sender information (device owner)
-    const RuntimeConfig &config = getRuntimeConfig();
-    if (config.deviceOwner.length() > 0) {
-        payloadDoc["sender"] = config.deviceOwner;
-    }
-    
-    // Serialize payload
-    String payload;
-    serializeJson(payloadDoc, payload);
-    
-    // Publish message
-    bool success = mqttClient.publish(topic.c_str(), payload.c_str());
-    
-    if (success) {
-        LOG_VERBOSE("MQTT", "Published message to topic: %s (%d characters)", 
-                   topic.c_str(), payload.length());
-    } else {
-        LOG_ERROR("MQTT", "Failed to publish message to topic: %s", topic.c_str());
-    }
-    
-    return success;
-}
 
+    // Acquire mutex for safe access
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return false;
+    }
+
+    bool connected = mqttClient.connected();
+
+    xSemaphoreGive(mutex);
+    return connected;
+}
