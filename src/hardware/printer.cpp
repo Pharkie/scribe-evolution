@@ -20,9 +20,9 @@ PrinterLock::PrinterLock(SemaphoreHandle_t m, uint32_t timeoutMs)
     if (mutex != nullptr)
     {
         // Use LogManager to avoid deadlock with logging mutex
-        LogManager::instance().logf("[PrinterLock] Attempting to acquire mutex (timeout: %dms)...\n", timeoutMs);
+        LogManager::instance().logfVerbose("[PrinterLock] Attempting to acquire mutex (timeout: %dms)...\n", timeoutMs);
         locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
-        LogManager::instance().logf("[PrinterLock] Mutex acquire result: %s\n", locked ? "SUCCESS" : "TIMEOUT");
+        LogManager::instance().logfVerbose("[PrinterLock] Mutex acquire result: %s\n", locked ? "SUCCESS" : "TIMEOUT");
     }
 }
 
@@ -32,7 +32,7 @@ PrinterLock::~PrinterLock()
     {
         xSemaphoreGive(mutex);
         // Use LogManager to avoid deadlock with logging mutex
-        LogManager::instance().logf("[PrinterLock] Mutex released in destructor\n");
+        LogManager::instance().logfVerbose("[PrinterLock] Mutex released in destructor\n");
     }
 }
 
@@ -254,6 +254,9 @@ void PrinterManager::printWithHeader(const String& headerText, const String& bod
         LOG_ERROR("PRINTER", "Failed to acquire printer mutex - print aborted");
         return;
     }
+
+    // Log what we're printing at info level
+    LOG_INFO("PRINTER", "Printing: %s", headerText.c_str());
 
     // Clean both header and body text before printing
     String cleanHeaderText = cleanString(headerText);

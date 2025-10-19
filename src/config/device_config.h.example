@@ -62,7 +62,7 @@ static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
 // NOTICE = Important events (default, recommended)
 // WARN = Warnings and errors only
 // ERROR = Errors only
-static const int logLevel = LOG_LEVEL_VERBOSE;
+static const int logLevel = LOG_LEVEL_NOTICE;
 
 // ESP system logging levels
 // Options: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE
