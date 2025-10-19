@@ -140,12 +140,8 @@ void setup()
 #endif
 
   // Log logging configuration (LogManager is now ready)
-  LOG_VERBOSE("BOOT", "Logging configured - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
-              getLogLevelString(logLevel).c_str(),
-              enableSerialLogging ? "ON" : "OFF",
-              enableFileLogging ? "ON" : "OFF",
-              enableMqttLogging ? "ON" : "OFF",
-              enableBetterStackLogging ? "ON" : "OFF");
+  LOG_VERBOSE("BOOT", "Logging configured - Level: %s (serial output only)",
+              getLogLevelString(logLevel).c_str());
 
   // Initialize mutex for currentMessage (protects against multi-core race conditions)
   currentMessageMutex = xSemaphoreCreateMutex();

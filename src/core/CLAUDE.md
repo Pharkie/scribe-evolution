@@ -1,8 +1,9 @@
 # Core System - CLAUDE.md
 
 <system_context>
-ESP32-C3 system fundamentals: configuration, network, MQTT, logging.
+ESP32-C3/S3 system fundamentals: configuration, network, MQTT, logging.
 Memory-constrained environment with dual-layer config architecture.
+Thread-safe logging via LogManager singleton.
 </system_context>
 
 <critical_notes>
@@ -11,6 +12,7 @@ Memory-constrained environment with dual-layer config architecture.
 - Never hardcode values - always reference config constants
 - Use appropriate JSON buffer sizes for ESP32-C3 memory limits
 - Validate all GPIO pins with safety functions
+- NEVER call Serial.print() directly - always use LOG\_\* macros
   </critical_notes>
 
 <paved_path>
@@ -29,8 +31,10 @@ if (!isValidGPIO(pin) || !isSafeGPIO(pin)) {
     return false;
 }
 
-// JSON document sizing
-DynamicJsonDocument doc(512); // Size for ESP32-C3 constraints
+// JSON document sizing (ArduinoJson 7+)
+JsonDocument doc; // Dynamic size
+// or
+StaticJsonDocument<512> doc; // Stack-allocated for ESP32 constraints
 
 // NVS key access
 preferences.begin("scribe-app", false);
@@ -42,6 +46,12 @@ void loadRuntimeConfig() {
 // Load from NVS with config.h defaults as fallbacks
 runtimeConfig.deviceOwner = getNVSString(NVS_KEY_DEVICE_OWNER, DEFAULT_DEVICE_OWNER);
 }
+
+// Thread-safe logging - ALWAYS use LOG\_\* macros
+LOG_NOTICE("COMPONENT", "Message format: %s", variable);
+LOG_ERROR("COMPONENT", "Error: %d", errorCode);
+LOG_VERBOSE("COMPONENT", "Debug info: %s", details);
+// NEVER: Serial.print() - causes concurrent write corruption!
 </patterns>
 
 <common_tasks>
@@ -60,4 +70,18 @@ Adding new configuration:
 - Skip GPIO validation = Hardware damage (magic smoke)
 - Wrong JSON buffer size = Stack overflow/heap exhaustion
 - Multiple config sources = Inconsistent state
+- Direct Serial.print() = Concurrent write corruption, garbled output
   </fatal_implications>
+
+<logging_architecture>
+LogManager Singleton:
+
+- Thread-safe serial output via FreeRTOS queue
+- Single writer task prevents concurrent Serial corruption
+- Non-blocking LOG\_\* macros (drops on queue overflow)
+- ISR-safe logfISR() for interrupt contexts
+- Captures ESP_LOGx macros from ESP-IDF
+
+NEVER use Serial.print() - ALWAYS use LOG_NOTICE, LOG_ERROR, LOG_WARNING, or LOG_VERBOSE
+See docs/logging-system.md for complete documentation
+</logging_architecture>

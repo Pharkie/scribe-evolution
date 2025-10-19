@@ -206,8 +206,6 @@ bool loadNVSConfig()
     g_runtimeConfig.jokeAPI = jokeAPI;
     g_runtimeConfig.quoteAPI = quoteAPI;
     g_runtimeConfig.triviaAPI = triviaAPI;
-    g_runtimeConfig.betterStackToken = betterStackToken;
-    g_runtimeConfig.betterStackEndpoint = betterStackEndpoint;
     g_runtimeConfig.chatgptApiToken = getNVSString(prefs, NVS_CHATGPT_TOKEN, defaultChatgptApiToken, 300);
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
@@ -299,8 +297,6 @@ void loadDefaultConfig()
     g_runtimeConfig.jokeAPI = jokeAPI;
     g_runtimeConfig.quoteAPI = quoteAPI;
     g_runtimeConfig.triviaAPI = triviaAPI;
-    g_runtimeConfig.betterStackToken = betterStackToken;
-    g_runtimeConfig.betterStackEndpoint = betterStackEndpoint;
     g_runtimeConfig.chatgptApiToken = defaultChatgptApiToken;
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 

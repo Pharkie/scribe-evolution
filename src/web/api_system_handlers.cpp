@@ -164,10 +164,6 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     JsonObject logging = doc["logging"].to<JsonObject>();
     logging["level"] = logLevel;
     logging["level_name"] = getLogLevelString(logLevel);
-    logging["serial_enabled"] = enableSerialLogging;
-    logging["file_enabled"] = enableFileLogging;
-    logging["mqtt_enabled"] = enableMqttLogging;
-    logging["betterstack_enabled"] = enableBetterStackLogging;
 
     // Pages and endpoints moved to separate /api/routes endpoint
 

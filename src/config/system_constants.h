@@ -14,16 +14,14 @@
  * 2. HARDWARE - GPIO, printer, buttons physical settings
  * 3. NETWORK - WiFi, NTP, MQTT connection
  * 4. SECURITY - Sessions, rate limiting
- * 5. LOGGING - All logging configuration
- * 6. EXTERNAL APIS - Third-party service endpoints
- * 7. CONTENT LIMITS - Character limits, validation
- * 8. DEFAULT CONTENT - Button configs, memos, prompts
+ * 5. EXTERNAL APIS - Third-party service endpoints
+ * 6. CONTENT LIMITS - Character limits, validation
+ * 7. DEFAULT CONTENT - Button configs, memos, prompts
  */
 
 #ifndef SYSTEM_CONSTANTS_H
 #define SYSTEM_CONSTANTS_H
 
-#include <ArduinoLog.h>
 #include <esp_log.h>
 #include "boards/board_config.h"
 
@@ -134,18 +132,7 @@ static const unsigned long buttonMaxPerMinute = 10;       // 10 button presses p
 static const unsigned long buttonRateLimitWindow = 60000; // 1 minute rate limit window
 
 // ============================================================================
-// 5. LOGGING - Technical logging constants (NOT user preferences)
-// ============================================================================
-// NOTE: Logging preferences (levels, destinations) are now in device_config.h
-// These are technical constants for logging infrastructure
-
-// Logging file configuration
-static const char *mqttLogTopic = "scribe/log";
-static const char *logFileName = "/logs/scribe.log";
-static const size_t maxLogFileSize = 100000; // 100KB
-
-// ============================================================================
-// 6. EXTERNAL APIS - Third-party service endpoints
+// 5. EXTERNAL APIS - Third-party service endpoints
 // ============================================================================
 
 // Content API endpoints
@@ -158,14 +145,11 @@ static const char *newsAPI = "https://feeds.bbci.co.uk/news/rss.xml";
 static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL
 static const char *chatgptApiTestEndpoint = "https://api.openai.com/v1/models";       // ChatGPT token test URL
 
-// BetterStack logging service
-static const char *betterStackEndpoint = "https://s1451477.eu-nbg-2.betterstackdata.com/";
-
 // User agent for API requests
 static const char *apiUserAgent = "Scribe Thermal Printer (https://github.com/Pharkie/scribe)";
 
 // ============================================================================
-// 7. CONTENT LIMITS - Character limits, validation
+// 6. CONTENT LIMITS - Character limits, validation
 // ============================================================================
 
 // Message length limits
@@ -196,7 +180,7 @@ static const int MEMO_COUNT = 4;        // Number of configurable memos
 static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo
 
 // ============================================================================
-// 8. DEFAULT CONTENT - Button configs, memos, prompts
+// 7. DEFAULT CONTENT - Button configs, memos, prompts
 // ============================================================================
 
 // Unbidden Ink prompt presets (autoprompts)

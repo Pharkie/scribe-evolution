@@ -19,8 +19,16 @@
 #ifndef DEVICE_CONFIG_H
 #define DEVICE_CONFIG_H
 
-#include <ArduinoLog.h>
 #include <esp_log.h>
+
+// ============================================================================
+// LOG LEVEL CONSTANTS
+// ============================================================================
+// Custom log levels for application logging (LOG_* macros)
+#define LOG_LEVEL_ERROR 2
+#define LOG_LEVEL_WARNING 3
+#define LOG_LEVEL_NOTICE 4
+#define LOG_LEVEL_VERBOSE 6
 
 // ============================================================================
 // DEVICE-SPECIFIC SETTINGS - MUST BE CONFIGURED PER DEVICE
@@ -48,34 +56,25 @@ static const int defaultUnbiddenInkStartHour = 10;                              
 static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
 static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window
 
-// BetterStack configuration
-static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
-
 // ============================================================================
 // LOGGING PREFERENCES - Configure debugging and logging behavior
 // ============================================================================
 // NOTE: These are compile-time settings only (not stored in NVS)
 
-// Logging levels for ArduinoLog
-// Options: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
+// Application logging levels (custom LOG_* macros)
+// Options: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR
 // VERBOSE = Everything (very noisy, debug only)
 // NOTICE = Important events (default, recommended)
-// WARN = Warnings and errors only
+// WARNING = Warnings and errors only
 // ERROR = Errors only
 static const int logLevel = LOG_LEVEL_NOTICE;
 
-// ESP system logging levels
+// ESP-IDF system logging levels (ESP_LOGx macros)
 // Options: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE
 // WARN = Warnings and errors (default, recommended)
 // INFO = More verbose system info
 // ERROR = Errors only
 // NONE = Completely silent
 static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
-
-// Logging destinations - Enable/disable where logs are sent
-static const bool enableSerialLogging = true;       // USB serial console (always recommended)
-static const bool enableFileLogging = false;        // LittleFS file logging (untested, may impact performance)
-static const bool enableMqttLogging = false;        // Send logs to MQTT (requires MQTT enabled)
-static const bool enableBetterStackLogging = false; // Send logs to BetterStack (slow, debug only)
 
 #endif

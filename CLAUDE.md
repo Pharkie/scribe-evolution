@@ -67,7 +67,7 @@ Dual Configuration System:
 Configuration Naming Convention:
 
 - `default` prefix = NVS-backed settings that can be overridden via web interface (e.g., `defaultWifiSSID`, `defaultMqttEnabled`)
-- No prefix = Compile-time only settings (e.g., `logLevel`, `betterStackToken`, `jokeAPI`)
+- No prefix = Compile-time only settings (e.g., `logLevel`, `jokeAPI`, `chatgptApiEndpoint`)
 - NEVER use `default` prefix for non-NVS constants
 
 Frontend Stack:

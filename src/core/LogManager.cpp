@@ -113,7 +113,11 @@ void LogManager::logfISR(const char* fmt, ...)
     if (xQueueSendFromISR(logQueue, &line, &xHigherPriorityTaskWoken) != pdTRUE) {
         vPortFree(line);
     }
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    // portYIELD_FROM_ISR signature varies by ESP32 variant:
+    // ESP32-C3 takes no args, ESP32/S3 take xHigherPriorityTaskWoken
+    if (xHigherPriorityTaskWoken) {
+        portYIELD_FROM_ISR();
+    }
 }
 
 void LogManager::writerTask(void* param)

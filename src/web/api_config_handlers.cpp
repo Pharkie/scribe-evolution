@@ -455,8 +455,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.quoteAPI = quoteAPI;
     newConfig.triviaAPI = triviaAPI;
     newConfig.newsAPI = newsAPI;
-    newConfig.betterStackToken = betterStackToken;
-    newConfig.betterStackEndpoint = betterStackEndpoint;
     newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     // maxCharacters remains hardcoded from config.h

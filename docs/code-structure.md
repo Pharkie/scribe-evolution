@@ -87,13 +87,13 @@ depend on.
 - System configuration and validation
 - Network connectivity (WiFi, mDNS)
 - MQTT communication for remote printing
-- Logging to multiple outputs (Serial, File, MQTT, BetterStack)
+- Thread-safe serial logging via LogManager singleton
 - Shared data structures used across components
 
 ### Global Variables:
 
 - `Message currentMessage`: Shared message structure for printing
-- Configuration variables: WiFi credentials, MQTT settings, logging preferences
+- Configuration variables: WiFi credentials, MQTT settings, logging level
 
 ## Web Layer (HTTP + Auth)
 
