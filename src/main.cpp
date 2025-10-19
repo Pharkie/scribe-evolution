@@ -37,6 +37,7 @@
 #include "core/printer_discovery.h"
 #include "utils/time_utils.h"
 #include "core/logging.h"
+#include "core/LogManager.h"
 #include "hardware/hardware_buttons.h"
 #include "content/content_generators.h"
 #include "utils/api_client.h"
@@ -128,6 +129,10 @@ void setup()
 
   // Connect to WiFi (may fallback to AP mode)
   currentWiFiMode = connectToWiFi();
+
+  // Initialize LogManager FIRST - provides thread-safe single-writer logging
+  // Must happen before setupLogging() to prevent deadlocks from concurrent Serial writes
+  LogManager::instance().begin(115200, 128, 512);
 
   // Initialize logging system before other components that use logging
   setupLogging();

@@ -1,6 +1,7 @@
 #include "printer.h"
 #include <utils/time_utils.h>
 #include <core/logging.h>
+#include <core/LogManager.h>
 #include <core/config_utils.h>
 #include <core/shared_types.h>
 #include <core/network.h>
@@ -18,9 +19,10 @@ PrinterLock::PrinterLock(SemaphoreHandle_t m, uint32_t timeoutMs)
 {
     if (mutex != nullptr)
     {
-        Serial.printf("[PrinterLock] Attempting to acquire mutex (timeout: %dms)...\n", timeoutMs);
+        // Use LogManager to avoid deadlock with logging mutex
+        LogManager::instance().logf("[PrinterLock] Attempting to acquire mutex (timeout: %dms)...\n", timeoutMs);
         locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
-        Serial.printf("[PrinterLock] Mutex acquire result: %s\n", locked ? "SUCCESS" : "TIMEOUT");
+        LogManager::instance().logf("[PrinterLock] Mutex acquire result: %s\n", locked ? "SUCCESS" : "TIMEOUT");
     }
 }
 
@@ -29,7 +31,8 @@ PrinterLock::~PrinterLock()
     if (mutex != nullptr && locked)
     {
         xSemaphoreGive(mutex);
-        Serial.println("[PrinterLock] Mutex released in destructor");
+        // Use LogManager to avoid deadlock with logging mutex
+        LogManager::instance().logf("[PrinterLock] Mutex released in destructor\n");
     }
 }
 
