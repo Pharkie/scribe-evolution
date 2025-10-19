@@ -40,28 +40,35 @@ PrinterLock::~PrinterLock()
 // PrinterManager Implementation
 // ============================================================================
 
-// Static UART1 instance for printer hardware
-static HardwareSerial printer(1);
-
 // Global PrinterManager singleton
-PrinterManager printerManager(printer);
+PrinterManager printerManager;
 
-PrinterManager::PrinterManager(HardwareSerial& serial)
-    : uart(serial), mutex(nullptr), ready(false)
+PrinterManager::PrinterManager()
+    : uart(1), mutex(nullptr), ready(false)  // CHANGED: Initialize UART(1) directly in initializer list
 {
     // Mutex will be created in initialize()
 }
 
 PrinterManager::~PrinterManager()
 {
+    Serial.printf("[EMERGENCY-DESTROY] PrinterManager destructor called on object at %p, mutex=%p\n", this, mutex);
+
     if (mutex != nullptr)
     {
+        Serial.printf("[EMERGENCY-DESTROY] Deleting mutex at %p\n", mutex);
         vSemaphoreDelete(mutex);
+        mutex = nullptr;
     }
 }
 
 void PrinterManager::initialize()
 {
+    // EMERGENCY DEBUG: Check object address, field addresses, and core
+    Serial.printf("[EMERGENCY-INIT] PrinterManager at %p on CORE %d\n", this, xPortGetCoreID());
+    Serial.printf("[EMERGENCY-INIT]   &uart=%p (size=%d), &mutex=%p, &ready=%p, &maxCharsPerLine=%p\n",
+                  &uart, sizeof(uart), &mutex, &ready, &maxCharsPerLine);
+    Serial.printf("[EMERGENCY-INIT]   mutex value BEFORE create: %p\n", mutex);
+
     LOG_VERBOSE("PRINTER", "Starting printer initialization...");
     ready = false; // Ensure flag is false during init
 
@@ -69,6 +76,23 @@ void PrinterManager::initialize()
     if (mutex == nullptr)
     {
         mutex = xSemaphoreCreateMutex();
+
+        // EMERGENCY DEBUG: Check if mutex creation succeeded
+        Serial.printf("[EMERGENCY-INIT]   mutex value AFTER create: %p\n", mutex);
+        Serial.printf("[EMERGENCY-INIT]   Verifying &mutex still points to correct location: %p\n", &mutex);
+
+        if (mutex == nullptr)
+        {
+            Serial.printf("[EMERGENCY-INIT] MUTEX CREATION FAILED! Free heap: %d bytes\n", ESP.getFreeHeap());
+        }
+
+        // CRITICAL: Force memory barrier to ensure mutex pointer is visible to other core
+        // ESP32 has weak memory ordering - without this, the other core may see mutex=NULL
+        portMEMORY_BARRIER();
+    }
+    else
+    {
+        Serial.printf("[EMERGENCY-INIT] Mutex already exists at %p\n", mutex);
     }
 
     // Acquire mutex for initialization (prevents concurrent UART access during setup)
@@ -125,6 +149,8 @@ void PrinterManager::initialize()
     uart.write('{');
     uart.write(0x01); // ESC { 1
     delay(50);
+
+    Serial.printf("[EMERGENCY-INIT] END of initialize() - mutex still valid? %p\n", mutex);
 
     LOG_VERBOSE("PRINTER", "Printer initialized successfully - ready = %s (address: %p)",
                 ready.load() ? "TRUE" : "FALSE", (void*)&ready);
@@ -225,8 +251,20 @@ void PrinterManager::printWrappedInternal(const String& text)
 
 void PrinterManager::printWithHeader(const String& headerText, const String& bodyText)
 {
+    // CRITICAL: Force memory barrier to ensure we see latest mutex pointer from other core
+    // ESP32 has weak memory ordering - this ensures we don't see stale NULL value
+    portMEMORY_BARRIER();
+
+    // EMERGENCY DEBUG: Direct Serial write to bypass LogManager
+    Serial.printf("[EMERGENCY] printWithHeader() called on CORE %d, mutex=%p, ready=%d\n",
+                  xPortGetCoreID(), mutex, ready.load());
+
     // Acquire printer mutex using RAII lock
     PrinterLock lock(mutex, 5000);
+
+    // EMERGENCY DEBUG: Check lock result
+    Serial.printf("[EMERGENCY] PrinterLock created, isLocked=%d\n", lock.isLocked());
+
     if (!lock.isLocked())
     {
         LOG_ERROR("PRINTER", "Failed to acquire printer mutex - print aborted");
@@ -343,12 +381,27 @@ void PrinterManager::printStartupMessage()
 }
 
 // ============================================================================
+// Emergency diagnostic function
+void emergencyCheckPrinterMutex()
+{
+    Serial.printf("[EMERGENCY-MAIN] printerManager mutex=%p, ready=%d\n",
+                  printerManager.mutex, printerManager.ready.load());
+}
+
+// ============================================================================
 // Free Function - printMessage()
 // Accesses global currentMessage and calls printerManager
 // ============================================================================
 
 void printMessage()
 {
+    // CRITICAL: Force memory barrier to ensure we see latest printerManager state from other core
+    portMEMORY_BARRIER();
+
+    // EMERGENCY DEBUG: Check printerManager address and core
+    Serial.printf("[EMERGENCY-PRINT] printMessage() called on CORE %d, printerManager at %p, mutex=%p, ready=%d\n",
+                  xPortGetCoreID(), &printerManager, printerManager.mutex, printerManager.ready.load());
+
     LOG_VERBOSE("PRINTER", "printMessage() called - printerReady = %s",
                 printerManager.isReady() ? "TRUE" : "FALSE");
 
@@ -379,6 +432,5 @@ void printMessage()
 
     LOG_VERBOSE("PRINTER", "Calling printerManager.printWithHeader...");
     printerManager.printWithHeader(timestamp, message);
-
-    LOG_VERBOSE("PRINTER", "Message printed successfully");
+    LOG_VERBOSE("PRINTER", "printWithHeader() returned");
 }

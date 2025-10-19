@@ -1,23 +1,13 @@
 #include "logging.h"
+#include "LogManager.h"
 #include <utils/time_utils.h>
 #include "config_utils.h"
 #include <esp_task_wdt.h>
 
-// Global instance of multi-output printer
-MultiOutputPrint multiOutput;
-
-size_t MultiOutputPrint::write(uint8_t c)
-{
-    String message = String((char)c);
-    return write((const uint8_t *)message.c_str(), message.length());
-}
-
-#include "config_utils.h"
-
 // Safe device owner accessor for logging - avoids recursive calls during initialization
-static const char *getSafeDeviceOwner()
+static bool firstCall = true;
+const char *getSafeDeviceOwner()
 {
-    static bool firstCall = true;
     if (firstCall)
     {
         // On first call during initialization, just use the default to avoid recursion
@@ -28,78 +18,9 @@ static const char *getSafeDeviceOwner()
     return getDeviceOwnerKey();
 }
 
-size_t MultiOutputPrint::write(const uint8_t *buffer, size_t size)
-{
-    // Acquire mutex for thread-safe logging (protects against AsyncWebServer concurrency)
-    if (logMutex != nullptr && xSemaphoreTake(logMutex, pdMS_TO_TICKS(100)) != pdTRUE)
-    {
-        // Mutex timeout - skip this log to avoid blocking
-        return size;
-    }
-
-    String message;
-    for (size_t i = 0; i < size; i++)
-    {
-        message += (char)buffer[i];
-    }
-
-    // Output to Serial if enabled
-    if (enableSerialLogging)
-    {
-        Serial.print(message);
-    }
-
-    // Output to file if enabled
-    if (enableFileLogging && message.length() > 0)
-    {
-        logToFile(message.c_str());
-    }
-
-    // Release mutex
-    if (logMutex != nullptr)
-    {
-        xSemaphoreGive(logMutex);
-    }
-
-    return size;
-}
-
-void setupLogging()
-{
-    // Create mutex for thread-safe logging
-    multiOutput.logMutex = xSemaphoreCreateMutex();
-
-    // Initialize ArduinoLog with our custom multi-output
-    Log.begin(logLevel, &multiOutput);
-
-    // Set prefixes and suffixes for clean formatting
-    Log.setPrefix([](Print *_logOutput, int logLevel)
-                  {
-        String timestamp = getFormattedDateTime();
-        String levelStr = getLogLevelString(logLevel);
-        _logOutput->print("[");
-        _logOutput->print(timestamp);
-        _logOutput->print("] [");
-        _logOutput->print(levelStr);
-        _logOutput->print("] "); });
-
-    Log.setSuffix([](Print *_logOutput, int logLevel)
-                  {
-        // Add newline at end of each log message
-        _logOutput->println(); });
-
-    // Create logs directory if logging to file
-    if (enableFileLogging)
-    {
-        // LittleFS is already mounted in main.cpp
-        LittleFS.mkdir("/logs");
-    }
-}
-
 void logToFileSystem(const String &message)
 {
     // LittleFS is already mounted in main.cpp, no need to call begin() again
-
     // Check if log rotation is needed
     if (LittleFS.exists(logFileName))
     {
@@ -114,7 +35,6 @@ void logToFileSystem(const String &message)
             logFile.close();
         }
     }
-
     // Append to log file
     File logFile = LittleFS.open(logFileName, "a");
     if (logFile)
@@ -128,91 +48,72 @@ void logToMQTT(const String &message, const String &level, const String &compone
 {
     if (mqttClient.connected() && message.length() > 0)
     {
-        // Feed watchdog before potentially slow network operation
-        esp_task_wdt_reset();
+        String topic = String(getDeviceOwnerKey()) + "/logs";
+        StaticJsonDocument<512> logDoc;
+        logDoc["level"] = level;
+        logDoc["component"] = component;
+        logDoc["message"] = message;
+        logDoc["device"] = getDeviceOwnerKey();
+        logDoc["timestamp"] = getISOTimestamp();
 
-        // Create JSON log entry
-        JsonDocument doc;
-        doc["device_timestamp"] = getFormattedDateTime();
-        doc["device"] = String(getMdnsHostname());
-        doc["device_owner"] = getSafeDeviceOwner();
-        doc["level"] = level;
-        doc["message"] = message;
-
-        // Add component if provided
-        if (component.length() > 0)
-        {
-            doc["component"] = component;
-        }
-
-        String payload;
-        serializeJson(doc, payload);
-
-        mqttClient.publish(mqttLogTopic, payload.c_str());
+        String jsonString;
+        serializeJson(logDoc, jsonString);
+        mqttClient.publish(topic.c_str(), jsonString.c_str());
     }
 }
 
 void logToBetterStack(const String &message, const String &level, const String &component)
 {
-    if (strlen(betterStackToken) == 0 || WiFi.status() != WL_CONNECTED)
+    // Only send to BetterStack if enabled and configured
+    if (!enableBetterStackLogging || strlen(betterStackToken) == 0)
     {
         return;
     }
 
     WiFiClientSecure client;
-    client.setInsecure();
-    HTTPClient http;
+    client.setInsecure(); // Skip certificate validation
 
-    http.begin(client, betterStackEndpoint);
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("Authorization", "Bearer " + String(betterStackToken));
-
-    String cleanMessage = message;
-    String finalComponent = component;
-
-    // If no component provided, try to extract from message (format: [COMPONENT] message)
-    if (component.length() == 0 && message.startsWith("[") && message.indexOf("] ") > 0)
+    HTTPClient https;
+    if (!https.begin(client, betterStackEndpoint))
     {
-        int endBracket = message.indexOf("] ");
-        finalComponent = message.substring(1, endBracket);
-        cleanMessage = message.substring(endBracket + 2);
+        return; // Failed to begin HTTPS connection
     }
 
-    // Create BetterStack log entry with structured tags
-    JsonDocument doc;
-    doc["device_owner"] = getSafeDeviceOwner();
+    // Build JSON payload
+    StaticJsonDocument<1024> doc;
+    doc["dt"] = getISOTimestamp();
     doc["level"] = level;
-    doc["message"] = cleanMessage;
-    doc["device_timestamp"] = getFormattedDateTime();
-
-    // Add component as a structured tag if present
-    if (finalComponent.length() > 0)
-    {
-        doc["component"] = finalComponent;
-    }
+    doc["message"] = message;
+    doc["component"] = component;
+    doc["device"] = getDeviceOwnerKey();
 
     String payload;
     serializeJson(doc, payload);
 
-    http.POST(payload);
-    http.end();
+    // Set headers
+    https.addHeader("Content-Type", "application/json");
+    https.addHeader("Authorization", String("Bearer ") + betterStackToken);
+
+    // Send POST request
+    int httpCode = https.POST(payload);
+
+    // Don't log the response to avoid infinite recursion
+    // Just cleanup
+    https.end();
 }
 
 void rotateLogFile()
 {
-    // LittleFS is already mounted in main.cpp, no need to call begin() again
-
-    // Remove old backup if it exists
-    String backupName = String(logFileName) + ".old";
-    if (LittleFS.exists(backupName))
+    // Delete old backup if it exists
+    if (LittleFS.exists("/logs/scribe.old.log"))
     {
-        LittleFS.remove(backupName);
+        LittleFS.remove("/logs/scribe.old.log");
     }
 
     // Rename current log to backup
     if (LittleFS.exists(logFileName))
     {
-        LittleFS.rename(logFileName, backupName);
+        LittleFS.rename(logFileName, "/logs/scribe.old.log");
     }
 }
 
@@ -220,18 +121,12 @@ String getLogLevelString(int level)
 {
     switch (level)
     {
-    case LOG_LEVEL_SILENT:
-        return "SILENT";
-    case LOG_LEVEL_FATAL:
-        return "FATAL";
     case LOG_LEVEL_ERROR:
         return "ERROR";
     case LOG_LEVEL_WARNING:
         return "WARNING";
     case LOG_LEVEL_NOTICE:
         return "NOTICE";
-    case LOG_LEVEL_TRACE:
-        return "TRACE";
     case LOG_LEVEL_VERBOSE:
         return "VERBOSE";
     default:
@@ -239,55 +134,26 @@ String getLogLevelString(int level)
     }
 }
 
-void structuredLog(const char *component, int level, const char *format, ...)
+void logToFile(const char *message)
 {
-    // Check if this log level should be processed
-    if (level > logLevel)
+    if (enableFileLogging && message != nullptr)
     {
-        return; // Skip logging if level is higher than configured threshold
+        logToFileSystem(String(message));
     }
+}
 
-    // Format the message
-    va_list args;
-    va_start(args, format);
-    char buffer[512];
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-
-    String message = String(buffer);
-    String levelStr = getLogLevelString(level);
-
-    // Log to Serial/File with component tag (if enabled)
-    if (enableSerialLogging || enableFileLogging)
+void logToMQTT(const char *message, const char *level, const char *component)
+{
+    if (enableMqttLogging && message != nullptr && level != nullptr)
     {
-        String formattedMessage = "[" + String(getSafeDeviceOwner()) + "] [" + String(component) + "] " + message;
-
-        // Use ArduinoLog for Serial/File outputs
-        switch (level)
-        {
-        case LOG_LEVEL_ERROR:
-            Log.error(formattedMessage.c_str());
-            break;
-        case LOG_LEVEL_WARNING:
-            Log.warning(formattedMessage.c_str());
-            break;
-        case LOG_LEVEL_VERBOSE:
-            Log.verbose(formattedMessage.c_str());
-            break;
-        default:
-            Log.notice(formattedMessage.c_str());
-            break;
-        }
+        logToMQTT(String(message), String(level), String(component ? component : ""));
     }
+}
 
-    // Send structured logs to MQTT/BetterStack
-    if (enableMqttLogging && mqttClient.connected())
+void logToBetterStack(const char *message, const char *level, const char *component)
+{
+    if (enableBetterStackLogging && message != nullptr && level != nullptr)
     {
-        logToMQTT(message, levelStr, component);
-    }
-
-    if (enableBetterStackLogging && WiFi.status() == WL_CONNECTED)
-    {
-        logToBetterStack(message, levelStr, component);
+        logToBetterStack(String(message), String(level), String(component ? component : ""));
     }
 }

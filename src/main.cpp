@@ -130,19 +130,8 @@ void setup()
   // Connect to WiFi (may fallback to AP mode)
   currentWiFiMode = connectToWiFi();
 
-  // Initialize LogManager FIRST - provides thread-safe single-writer logging
-  // Must happen before setupLogging() to prevent deadlocks from concurrent Serial writes
-  LogManager::instance().begin(115200, 128, 512);
-
-  // Initialize logging system before other components that use logging
-  setupLogging();
-
-  // Initialize mutex for currentMessage (protects against multi-core race conditions)
-  currentMessageMutex = xSemaphoreCreateMutex();
-  if (currentMessageMutex == nullptr)
-  {
-    LOG_ERROR("BOOT", "Failed to create currentMessage mutex!");
-  }
+  // Initialize LogManager - provides thread-safe single-writer logging
+  LogManager::instance().begin(115200, 256, 512);
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
@@ -151,13 +140,20 @@ void setup()
   esp_log_level_set("vfs", ESP_LOG_NONE);
 #endif
 
-  // Log logging system configuration
-  LOG_VERBOSE("BOOT", "Logging system initialized - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
+  // Log logging configuration (LogManager is now ready)
+  LOG_VERBOSE("BOOT", "Logging configured - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
               getLogLevelString(logLevel).c_str(),
               enableSerialLogging ? "ON" : "OFF",
               enableFileLogging ? "ON" : "OFF",
               enableMqttLogging ? "ON" : "OFF",
               enableBetterStackLogging ? "ON" : "OFF");
+
+  // Initialize mutex for currentMessage (protects against multi-core race conditions)
+  currentMessageMutex = xSemaphoreCreateMutex();
+  if (currentMessageMutex == nullptr)
+  {
+    LOG_ERROR("BOOT", "Failed to create currentMessage mutex!");
+  }
 
   // Enable watchdog timer
   esp_task_wdt_init(watchdogTimeoutSeconds, true);
@@ -196,6 +192,10 @@ void setup()
 
   // Initialize printer
   printerManager.initialize();
+  Serial.printf("[EMERGENCY-MAIN] After printerManager.initialize() returned, checking mutex...\n");
+  // Access mutex via friend function
+  extern void emergencyCheckPrinterMutex();
+  emergencyCheckPrinterMutex();
 
   // Initialize hardware buttons (only in STA mode)
   if (!isAPMode())

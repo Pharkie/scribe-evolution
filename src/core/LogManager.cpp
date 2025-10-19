@@ -140,8 +140,8 @@ int LogManager::espLogVprintf(const char* fmt, va_list args)
 {
     LogManager& mgr = LogManager::instance();
     if (!mgr.logQueue) {
-        // Not initialized yet - fallback to direct Serial
-        return vprintf(fmt, args);
+        // Not initialized yet - drop message silently (no concurrent Serial writes!)
+        return 0;
     }
 
     // Allocate buffer on heap

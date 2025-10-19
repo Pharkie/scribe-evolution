@@ -14,6 +14,7 @@ Memory-constrained embedded system with dual configuration layers.
 - Board type auto-detected at compile-time from PlatformIO build flags
 - Fail fast principle - no fallback values or defensive arrays
 - Always use "Scribe Evolution" (never just "Scribe") in all documentation
+- **NEVER upload firmware or monitor serial - let the user do it**
   </critical_notes>
 
 <file_map>

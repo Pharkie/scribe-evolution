@@ -1,12 +1,12 @@
 /**
  * @file logging.h
- * @brief Multi-output logging system for Scribe ESP32-C3 Thermal Printer
+ * @brief Unified logging system using LogManager for Scribe ESP32 Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
- * This file is part of the Scribe ESP32-C3 Thermal Printer project.
+ * This file is part of the Scribe ESP32 Thermal Printer project.
  *
  * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
  * International License. To view a copy of this license, visit
@@ -27,13 +27,15 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <config/config.h>
+#include "LogManager.h"
+#include "utils/time_utils.h"
 
 /**
  * @file logging.h
  * @brief Centralized logging system for Scribe thermal printer
  *
  * Provides configurable logging to multiple outputs:
- * - Serial console
+ * - Serial console (via LogManager single-writer queue)
  * - LittleFS file
  * - MQTT topic
  * - BetterStack telemetry
@@ -43,20 +45,8 @@
 extern PubSubClient mqttClient;
 
 /**
- * @brief Initialize the logging system with configured outputs
+ * @brief Log message to file
  */
-void setupLogging();
-
-/**
- * @brief ESP32-style component logging functions with structured logging support
- */
-void structuredLog(const char *component, int level, const char *format, ...);
-
-#define LOG_NOTICE(component, format, ...) structuredLog(component, LOG_LEVEL_NOTICE, format, ##__VA_ARGS__)
-#define LOG_ERROR(component, format, ...) structuredLog(component, LOG_LEVEL_ERROR, format, ##__VA_ARGS__)
-#define LOG_WARNING(component, format, ...) structuredLog(component, LOG_LEVEL_WARNING, format, ##__VA_ARGS__)
-#define LOG_VERBOSE(component, format, ...) structuredLog(component, LOG_LEVEL_VERBOSE, format, ##__VA_ARGS__)
-
 void logToFile(const char *message);
 
 /**
@@ -76,15 +66,69 @@ void rotateLogFile();
  */
 String getLogLevelString(int level);
 
-// Custom print class for multi-output logging
-class MultiOutputPrint : public Print
-{
-public:
-    size_t write(uint8_t c) override;
-    size_t write(const uint8_t *buffer, size_t size) override;
-private:
-    SemaphoreHandle_t logMutex = nullptr;
-    friend void setupLogging();
-};
+/**
+ * @brief Get safe device owner name (avoids recursion during init)
+ */
+const char* getSafeDeviceOwner();
+
+// ============================================================================
+// Unified Logging Macros - Direct LogManager Integration
+// ============================================================================
+
+#define LOG_VERBOSE(component, format, ...) \
+    do { \
+        if (LOG_LEVEL_VERBOSE <= logLevel) { \
+            String _timestamp = getFormattedDateTime(); \
+            char _log_buf[512]; \
+            snprintf(_log_buf, sizeof(_log_buf), "[%s] [VERBOSE] V: [%s] [%s] " format, \
+                     _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
+            LogManager::instance().logf("%s\n", _log_buf); \
+            if (enableFileLogging) logToFile(_log_buf); \
+            if (enableMqttLogging && mqttClient.connected()) logToMQTT(_log_buf, "VERBOSE", component); \
+            if (enableBetterStackLogging && WiFi.status() == WL_CONNECTED) logToBetterStack(_log_buf, "VERBOSE", component); \
+        } \
+    } while (0)
+
+#define LOG_NOTICE(component, format, ...) \
+    do { \
+        if (LOG_LEVEL_NOTICE <= logLevel) { \
+            String _timestamp = getFormattedDateTime(); \
+            char _log_buf[512]; \
+            snprintf(_log_buf, sizeof(_log_buf), "[%s] [NOTICE] I: [%s] [%s] " format, \
+                     _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
+            LogManager::instance().logf("%s\n", _log_buf); \
+            if (enableFileLogging) logToFile(_log_buf); \
+            if (enableMqttLogging && mqttClient.connected()) logToMQTT(_log_buf, "NOTICE", component); \
+            if (enableBetterStackLogging && WiFi.status() == WL_CONNECTED) logToBetterStack(_log_buf, "NOTICE", component); \
+        } \
+    } while (0)
+
+#define LOG_WARNING(component, format, ...) \
+    do { \
+        if (LOG_LEVEL_WARNING <= logLevel) { \
+            String _timestamp = getFormattedDateTime(); \
+            char _log_buf[512]; \
+            snprintf(_log_buf, sizeof(_log_buf), "[%s] [WARNING] W: [%s] [%s] " format, \
+                     _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
+            LogManager::instance().logf("%s\n", _log_buf); \
+            if (enableFileLogging) logToFile(_log_buf); \
+            if (enableMqttLogging && mqttClient.connected()) logToMQTT(_log_buf, "WARNING", component); \
+            if (enableBetterStackLogging && WiFi.status() == WL_CONNECTED) logToBetterStack(_log_buf, "WARNING", component); \
+        } \
+    } while (0)
+
+#define LOG_ERROR(component, format, ...) \
+    do { \
+        if (LOG_LEVEL_ERROR <= logLevel) { \
+            String _timestamp = getFormattedDateTime(); \
+            char _log_buf[512]; \
+            snprintf(_log_buf, sizeof(_log_buf), "[%s] [ERROR] E: [%s] [%s] " format, \
+                     _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
+            LogManager::instance().logf("%s\n", _log_buf); \
+            if (enableFileLogging) logToFile(_log_buf); \
+            if (enableMqttLogging && mqttClient.connected()) logToMQTT(_log_buf, "ERROR", component); \
+            if (enableBetterStackLogging && WiFi.status() == WL_CONNECTED) logToBetterStack(_log_buf, "ERROR", component); \
+        } \
+    } while (0)
 
 #endif // LOGGING_H

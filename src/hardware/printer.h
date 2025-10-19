@@ -42,7 +42,7 @@ public:
 class PrinterManager
 {
 private:
-    HardwareSerial& uart;
+    HardwareSerial uart;  // CHANGED: Own the UART object instead of reference
     SemaphoreHandle_t mutex;
     alignas(4) std::atomic<bool> ready;  // 4-byte aligned for ESP32-S3 atomic operations
     const int maxCharsPerLine = 32;
@@ -52,8 +52,12 @@ private:
     void advancePaperInternal(int lines);
     void printWrappedInternal(const String& text);
 
+    // Friend declarations for debugging access
+    friend void printMessage();
+    friend void emergencyCheckPrinterMutex();
+
 public:
-    PrinterManager(HardwareSerial& serial);
+    PrinterManager();  // CHANGED: No parameter needed, constructs own UART
     ~PrinterManager();
 
     // Initialization
