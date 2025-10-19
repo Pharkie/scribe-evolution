@@ -327,9 +327,9 @@ void MQTTManager::connectToMQTTInternal()
             LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics. Should receive retained messages immediately");
         }
 
-        // Publish initial online status immediately after connection
-        LOG_NOTICE("MQTT", "Publishing initial online status after connection");
-        publishPrinterStatus();
+        // Set flag to publish initial online status after mutex is released
+        // This prevents deadlock (can't call publishPrinterStatus() while holding mutex)
+        needPublishStatus = true;
     }
     else
     {
@@ -481,7 +481,19 @@ void MQTTManager::handleConnection()
 
     handleMQTTConnectionInternal();
 
+    // Check if we need to publish status (set by connectToMQTTInternal on successful connection)
+    bool shouldPublish = needPublishStatus;
+    if (shouldPublish) {
+        needPublishStatus = false;  // Clear flag before releasing mutex
+    }
+
     xSemaphoreGive(mutex);
+
+    // Publish status AFTER releasing mutex to avoid deadlock
+    if (shouldPublish) {
+        LOG_NOTICE("MQTT", "Publishing initial online status after connection");
+        publishPrinterStatus();
+    }
 }
 
 // Public method: updateSubscription (thread-safe)
@@ -571,41 +583,28 @@ bool MQTTManager::publishMessage(const String& topic, const String& header, cons
     return success;
 }
 
-// Public method: publishRawMessage (thread-safe)
-bool MQTTManager::publishRawMessage(const String& topic, const String& payload, bool retained)
+// Internal method: publishRawMessageInternal (mutex already held)
+bool MQTTManager::publishRawMessageInternal(const String& topic, const String& payload, bool retained)
 {
-    if (!initialized) {
-        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
-        return false;
-    }
-
     // Validate inputs
     if (topic.length() == 0) {
-        LOG_ERROR("MQTT", "publishRawMessage: topic cannot be empty");
+        LOG_ERROR("MQTT", "publishRawMessageInternal: topic cannot be empty");
         return false;
     }
 
     if (payload.length() == 0) {
-        LOG_ERROR("MQTT", "publishRawMessage: payload cannot be empty");
-        return false;
-    }
-
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
-        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        LOG_ERROR("MQTT", "publishRawMessageInternal: payload cannot be empty");
         return false;
     }
 
     // Check if MQTT is enabled and connected
     if (!isEnabled()) {
         LOG_WARNING("MQTT", "MQTT is disabled, cannot publish to topic: %s", topic.c_str());
-        xSemaphoreGive(mutex);
         return false;
     }
 
     if (!mqttClient.connected()) {
         LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
-        xSemaphoreGive(mutex);
         return false;
     }
 
@@ -618,6 +617,26 @@ bool MQTTManager::publishRawMessage(const String& topic, const String& payload, 
     } else {
         LOG_ERROR("MQTT", "Failed to publish raw message to topic: %s", topic.c_str());
     }
+
+    return success;
+}
+
+// Public method: publishRawMessage (thread-safe)
+bool MQTTManager::publishRawMessage(const String& topic, const String& payload, bool retained)
+{
+    if (!initialized) {
+        LOG_ERROR("MQTT", "MQTTManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+        return false;
+    }
+
+    // Call internal version (mutex already held)
+    bool success = publishRawMessageInternal(topic, payload, retained);
 
     xSemaphoreGive(mutex);
     return success;

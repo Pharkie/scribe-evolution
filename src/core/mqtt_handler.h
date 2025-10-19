@@ -108,6 +108,7 @@ private:
     void handleMQTTMessageInternal(String topic, String message);
     void updateMQTTSubscriptionInternal();
     void handleMQTTConnectionInternal();
+    bool publishRawMessageInternal(const String& topic, const String& payload, bool retained = false);
 
     // Static callback wrapper (forwards to instance method)
     static void mqttCallbackStatic(char *topic, byte *payload, unsigned int length);
@@ -138,6 +139,7 @@ private:
     String currentSubscribedTopic = "";
     String caCertificateBuffer = "";
     bool mqttSetupCompleted = false;
+    bool needPublishStatus = false; // Flag to publish status after mutex release
 };
 
 // ============================================================================
