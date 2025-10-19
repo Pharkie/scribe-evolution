@@ -50,10 +50,14 @@ void MQTTManager::mqttCallbackStatic(char *topic, byte *payload, unsigned int le
 }
 
 // Instance callback method
+// IMPORTANT: This callback can be invoked in two contexts:
+// 1. From subscribe() when retained messages exist (mutex already held by connectToMQTTInternal)
+// 2. From mqttClient.loop() when new messages arrive (mutex NOT held) - NOT USED in this codebase
 void MQTTManager::mqttCallback(char *topic, byte *payload, unsigned int length)
 {
     // Try to acquire mutex with zero timeout (non-blocking)
-    // If we can't get it, we're being called from within our own code that already holds it
+    // If we can't get it, we're being called from subscribe() during connection (context 1)
+    // This prevents deadlock when subscribe() triggers callbacks while we already hold the mutex
     bool acquiredMutex = (xSemaphoreTake(mutex, 0) == pdTRUE);
 
     if (!acquiredMutex) {
