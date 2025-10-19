@@ -112,18 +112,18 @@ void setup() {
   Serial.println();
 
   // TEST 4: REAL Printer Initialization (from printer.cpp)
-  Serial.println("[TEST 4] Initializing printer (REAL initializePrinter)...");
-  initializePrinter();
+  Serial.println("[TEST 4] Initializing printer (REAL printerManager.initialize)...");
+  printerManager.initialize();
   Serial.println("  ✓ Printer initialized successfully\n");
 
   // TEST 5: Test ACTUAL printing with real functions
   Serial.println("[TEST 5] Testing ACTUAL printer output...");
-  if (isPrinterReady())
+  if (printerManager.isReady())
   {
     Serial.println("  Printer is ready - attempting to print...");
 
-    // Use the real printWithHeader function
-    printWithHeader("ESP32-S3 TEST", "This is a test print from the real printer functions!");
+    // Use the real printerManager.printWithHeader function
+    printerManager.printWithHeader("ESP32-S3 TEST", "This is a test print from the real printer functions!");
 
     Serial.println("  ✓ Print sent successfully\n");
   }
@@ -146,10 +146,8 @@ void setup() {
   // TEST 7: Multiple print operations to see if printer BECOMES not ready
   Serial.println("[TEST 7] Testing multiple prints (watching for printerReady changes)...");
 
-  extern std::atomic<bool> printerReady;
-
   for (int i = 0; i < 5; i++) {
-    Serial.printf("  [Iteration %d] Printer ready before: %s\n", i, printerReady.load() ? "TRUE" : "FALSE");
+    Serial.printf("  [Iteration %d] Printer ready before: %s\n", i, printerManager.isReady() ? "TRUE" : "FALSE");
 
     // Set a message using mutex (like web server does)
     if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
@@ -162,10 +160,10 @@ void setup() {
     // Call printMessage like main loop does
     printMessage();
 
-    Serial.printf("  [Iteration %d] Printer ready after: %s\n", i, printerReady.load() ? "TRUE" : "FALSE");
+    Serial.printf("  [Iteration %d] Printer ready after: %s\n", i, printerManager.isReady() ? "TRUE" : "FALSE");
 
     // Check if printer became not ready
-    if (!printerReady.load()) {
+    if (!printerManager.isReady()) {
       Serial.println("  ⚠️  WARNING: Printer became NOT READY during operation!");
       Serial.println("  This is the condition that causes the crash in main app!");
       break;
@@ -208,8 +206,7 @@ void setup() {
   // TEST 9: Simulate ONE web print request
   Serial.println("\n[TEST 9] Simulating web print request...");
 
-  extern std::atomic<bool> printerReady;
-  Serial.printf("  Printer ready BEFORE: %s\n", printerReady.load() ? "TRUE" : "FALSE");
+  Serial.printf("  Printer ready BEFORE: %s\n", printerManager.isReady() ? "TRUE" : "FALSE");
 
   // Queue a message (like web API does)
   if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
@@ -233,7 +230,6 @@ int testLedState = 0;  // 0=Red, 1=Green, 2=Blue
 int autoPrintCount = 0;
 
 void loop() {
-  extern std::atomic<bool> printerReady;
   unsigned long currentMillis = millis();
 
   // Auto-trigger a print every 10 seconds (simulates repeated web requests)
@@ -242,7 +238,7 @@ void loop() {
     autoPrintCount++;
 
     Serial.printf("\n[AUTO-PRINT #%d] Queueing simulated web print...\n", autoPrintCount);
-    Serial.printf("[AUTO-PRINT #%d] Printer ready BEFORE queue: %s\n", autoPrintCount, printerReady.load() ? "TRUE" : "FALSE");
+    Serial.printf("[AUTO-PRINT #%d] Printer ready BEFORE queue: %s\n", autoPrintCount, printerManager.isReady() ? "TRUE" : "FALSE");
 
     // Queue a message (like web API does)
     if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
@@ -263,7 +259,7 @@ void loop() {
 
   if (shouldPrint) {
     Serial.printf("[LOOP] Processing AUTO-PRINT #%d...\n", autoPrintCount);
-    Serial.printf("[LOOP] Printer ready BEFORE print: %s\n", printerReady.load() ? "TRUE" : "FALSE");
+    Serial.printf("[LOOP] Printer ready BEFORE print: %s\n", printerManager.isReady() ? "TRUE" : "FALSE");
 
     printMessage();
 
@@ -273,10 +269,10 @@ void loop() {
       xSemaphoreGive(currentMessageMutex);
     }
 
-    Serial.printf("[LOOP] Printer ready AFTER print: %s\n", printerReady.load() ? "TRUE" : "FALSE");
+    Serial.printf("[LOOP] Printer ready AFTER print: %s\n", printerManager.isReady() ? "TRUE" : "FALSE");
 
     // Check if printer became not ready
-    if (!printerReady.load()) {
+    if (!printerManager.isReady()) {
       Serial.println("\n⚠️⚠️⚠️ PRINTER BECAME NOT READY! This may cause crash! ⚠️⚠️⚠️\n");
     }
     Serial.println();

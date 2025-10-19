@@ -9,37 +9,60 @@
 #include <esp_task_wdt.h>
 #include <atomic>
 
-// Printer object and configuration
-// Use UART1 on all ESP32 variants
-HardwareSerial printer(1);
-const int maxCharsPerLine = 32;
+// ============================================================================
+// PrinterLock RAII Implementation
+// ============================================================================
 
-// Use atomic bool for printerReady to ensure thread-safe access without mutex overhead
-// CRITICAL: Must be aligned to 4-byte boundary on ESP32-S3 for atomic operations
-alignas(4) std::atomic<bool> printerReady(false);
-
-// Mutex to protect printer hardware access on multi-core ESP32-S3
-// Prevents race conditions when AsyncWebServer handlers on Core 0 and main loop on Core 1
-// both try to access the printer UART simultaneously
-SemaphoreHandle_t printerMutex = nullptr;
-
-// === Printer Functions ===
-
-// Check if printer is ready for writes
-bool isPrinterReady()
+PrinterLock::PrinterLock(SemaphoreHandle_t m, uint32_t timeoutMs)
+    : mutex(m), locked(false)
 {
-    return printerReady;
+    if (mutex != nullptr)
+    {
+        locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
+    }
 }
 
-void initializePrinter()
+PrinterLock::~PrinterLock()
+{
+    if (mutex != nullptr && locked)
+    {
+        xSemaphoreGive(mutex);
+    }
+}
+
+// ============================================================================
+// PrinterManager Implementation
+// ============================================================================
+
+// Static UART1 instance for printer hardware
+static HardwareSerial printer(1);
+
+// Global PrinterManager singleton
+PrinterManager printerManager(printer);
+
+PrinterManager::PrinterManager(HardwareSerial& serial)
+    : uart(serial), mutex(nullptr), ready(false)
+{
+    // Mutex will be created in initialize()
+}
+
+PrinterManager::~PrinterManager()
+{
+    if (mutex != nullptr)
+    {
+        vSemaphoreDelete(mutex);
+    }
+}
+
+void PrinterManager::initialize()
 {
     LOG_VERBOSE("PRINTER", "Starting printer initialization...");
-    printerReady = false; // Ensure flag is false during init
+    ready = false; // Ensure flag is false during init
 
     // Create printer mutex for multi-core protection (ESP32-S3)
-    if (printerMutex == nullptr)
+    if (mutex == nullptr)
     {
-        printerMutex = xSemaphoreCreateMutex();
+        mutex = xSemaphoreCreateMutex();
     }
 
     // Get board-specific printer configuration
@@ -47,12 +70,12 @@ void initializePrinter()
     const BoardPinDefaults &boardDefaults = getBoardDefaults();
 
     // Ensure clean state - call end() first to clear any stale state
-    printer.end();
+    uart.end();
     delay(100);
 
     // Initialize UART with board-specific RX/TX pins for bidirectional communication
     // RX pin receives printer status and feedback, DTR is configured separately if present
-    printer.begin(9600, SERIAL_8N1, boardDefaults.printer.rx, config.printerTxPin);
+    uart.begin(9600, SERIAL_8N1, boardDefaults.printer.rx, config.printerTxPin);
 
     // ESP32-S3 requires extra time for UART hardware to fully initialize
     delay(500);
@@ -61,9 +84,9 @@ void initializePrinter()
     esp_task_wdt_reset();
 
     // Mark printer as ready - the UART is initialized
-    printerReady = true;
+    ready = true;
 
-    LOG_VERBOSE("PRINTER", "printerReady set to TRUE, value check: %s", printerReady ? "CONFIRMED TRUE" : "ERROR: STILL FALSE!");
+    LOG_VERBOSE("PRINTER", "printerReady set to TRUE, value check: %s", ready.load() ? "CONFIRMED TRUE" : "ERROR: STILL FALSE!");
 
     LOG_VERBOSE("PRINTER", "UART initialized (TX=%d, RX=%d, DTR=%d)",
                 config.printerTxPin, boardDefaults.printer.rx, boardDefaults.printer.dtr);
@@ -71,133 +94,48 @@ void initializePrinter()
     LOG_VERBOSE("PRINTER", "Sending printer initialization commands...");
 
     // Initialize printer with ESC @ (reset command)
-    printer.write(0x1B);
-    printer.write('@'); // ESC @
+    uart.write(0x1B);
+    uart.write('@'); // ESC @
     delay(100);
 
     // Set printer heating parameters from config
-    printer.write(0x1B);
-    printer.write('7');
-    printer.write(heatingDots);     // Heating dots from config
-    printer.write(heatingTime);     // Heating time from config
-    printer.write(heatingInterval); // Heating interval from config
+    uart.write(0x1B);
+    uart.write('7');
+    uart.write(heatingDots);     // Heating dots from config
+    uart.write(heatingTime);     // Heating time from config
+    uart.write(heatingInterval); // Heating interval from config
     delay(50);
 
     // Enable 180° rotation (which also reverses the line order)
-    printer.write(0x1B);
-    printer.write('{');
-    printer.write(0x01); // ESC { 1
+    uart.write(0x1B);
+    uart.write('{');
+    uart.write(0x01); // ESC { 1
     delay(50);
 
-    LOG_VERBOSE("PRINTER", "Printer initialized successfully - printerReady = %s (address: %p)",
-                printerReady ? "TRUE" : "FALSE", (void*)&printerReady);
+    LOG_VERBOSE("PRINTER", "Printer initialized successfully - ready = %s (address: %p)",
+                ready.load() ? "TRUE" : "FALSE", (void*)&ready);
 }
 
-void printMessage()
+// ============================================================================
+// Internal Methods (assume mutex is already held by caller)
+// ============================================================================
+
+void PrinterManager::setInverseInternal(bool enable)
 {
-    LOG_VERBOSE("PRINTER", "printMessage() called - printerReady = %s",
-                printerReady.load() ? "TRUE" : "FALSE");
-
-    // Copy message data while holding mutex (to avoid holding mutex during slow print operation)
-    // CRITICAL: Must force deep copy since Arduino String uses reference counting
-    String timestamp;
-    String message;
-
-    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
-    {
-        // Force deep copy by creating new String from c_str() to avoid shared buffer issues
-        timestamp = String(currentMessage.timestamp.c_str());
-        message = String(currentMessage.message.c_str());
-        xSemaphoreGive(currentMessageMutex);
-    }
-    else
-    {
-        LOG_ERROR("PRINTER", "Failed to acquire mutex for currentMessage");
-        return;
-    }
-
-    // Validate message has valid strings
-    if (timestamp.c_str() == nullptr || message.c_str() == nullptr)
-    {
-        LOG_ERROR("PRINTER", "currentMessage has NULL string buffers - cannot print");
-        return;
-    }
-
-    LOG_VERBOSE("PRINTER", "Calling printWithHeader...");
-    printWithHeader(timestamp, message);
-
-    LOG_VERBOSE("PRINTER", "Message printed successfully");
+    uart.write(0x1D);
+    uart.write('B');
+    uart.write(enable ? 1 : 0); // GS B n
 }
 
-void printStartupMessage()
-{
-    // Feed watchdog after first log (network logging can be slow)
-    esp_task_wdt_reset();
-
-    if (isAPMode())
-    {
-        // In AP mode, print the proper setup message using existing content generator
-        String apContent = generateAPDetailsContent();
-        if (apContent.length() > 0)
-        {
-            // Feed watchdog before thermal printing (can be slow)
-            esp_task_wdt_reset();
-
-            LOG_VERBOSE("PRINTER", "Printing AP setup message");
-
-            advancePaper(1);
-
-            // Feed watchdog before the actual printing
-            esp_task_wdt_reset();
-
-            String timestamp = getFormattedDateTime();
-            printWithHeader(timestamp, apContent);
-
-            // Feed watchdog after thermal printing completes
-            esp_task_wdt_reset();
-        }
-    }
-    else
-    {
-        // In STA mode, print normal server info
-        String serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
-
-        // Feed watchdog before thermal printing (can be slow)
-        esp_task_wdt_reset();
-
-        LOG_VERBOSE("PRINTER", "Printing startup message");
-
-        advancePaper(1);
-
-        // Feed watchdog before the actual printing
-        esp_task_wdt_reset();
-
-        // Format the startup message with datetime in header and SCRIBE READY in body
-        String timestamp = getFormattedDateTime();
-        String startupMessage = "SCRIBE READY\n\n" + serverInfo;
-        printWithHeader(timestamp, startupMessage);
-
-        // Feed watchdog after thermal printing completes
-        esp_task_wdt_reset();
-    }
-}
-
-void setInverse(bool enable)
-{
-    printer.write(0x1D);
-    printer.write('B');
-    printer.write(enable ? 1 : 0); // GS B n
-}
-
-void advancePaper(int lines)
+void PrinterManager::advancePaperInternal(int lines)
 {
     for (int i = 0; i < lines; i++)
     {
-        printer.write(0x0A); // LF
+        uart.write(0x0A); // LF
     }
 }
 
-void printWrapped(String text)
+void PrinterManager::printWrappedInternal(const String& text)
 {
     std::vector<String> lines;
     lines.reserve(20); // Reserve space to avoid frequent reallocations
@@ -263,15 +201,19 @@ void printWrapped(String text)
     // Print lines in reverse order to compensate for 180° printer rotation
     for (int i = lines.size() - 1; i >= 0; i--)
     {
-        printer.println(lines[i]);
+        uart.println(lines[i]);
     }
 }
 
-void printWithHeader(String headerText, String bodyText)
+// ============================================================================
+// Public Methods (acquire mutex via PrinterLock)
+// ============================================================================
+
+void PrinterManager::printWithHeader(const String& headerText, const String& bodyText)
 {
-    // Acquire printer mutex for multi-core protection (ESP32-S3)
-    // Prevents race conditions when AsyncWebServer handlers and main loop both try to print
-    if (printerMutex != nullptr && xSemaphoreTake(printerMutex, pdMS_TO_TICKS(5000)) != pdTRUE)
+    // Acquire printer mutex using RAII lock
+    PrinterLock lock(mutex, 5000);
+    if (!lock.isLocked())
     {
         LOG_ERROR("PRINTER", "Failed to acquire printer mutex - print aborted");
         return;
@@ -285,24 +227,144 @@ void printWithHeader(String headerText, String bodyText)
     esp_task_wdt_reset();
 
     // Print body text first (appears at bottom after rotation)
-    printWrapped(cleanBodyText);
+    printWrappedInternal(cleanBodyText);
 
     // Feed watchdog between body and header printing
     esp_task_wdt_reset();
 
     // Print header last (appears at top after rotation)
-    setInverse(true);
-    printWrapped(cleanHeaderText);
-    setInverse(false);
+    setInverseInternal(true);
+    printWrappedInternal(cleanHeaderText);
+    setInverseInternal(false);
 
-    advancePaper(2);
+    advancePaperInternal(2);
 
     // Feed watchdog after printing completes
     esp_task_wdt_reset();
 
-    // Release printer mutex
-    if (printerMutex != nullptr)
+    // Mutex automatically released by PrinterLock destructor
+}
+
+void PrinterManager::printStartupMessage()
+{
+    // Acquire printer mutex using RAII lock
+    PrinterLock lock(mutex, 5000);
+    if (!lock.isLocked())
     {
-        xSemaphoreGive(printerMutex);
+        LOG_ERROR("PRINTER", "Failed to acquire printer mutex - startup message aborted");
+        return;
     }
+
+    // Feed watchdog after first log (network logging can be slow)
+    esp_task_wdt_reset();
+
+    if (isAPMode())
+    {
+        // In AP mode, print the proper setup message using existing content generator
+        String apContent = generateAPDetailsContent();
+        if (apContent.length() > 0)
+        {
+            // Feed watchdog before thermal printing (can be slow)
+            esp_task_wdt_reset();
+
+            LOG_VERBOSE("PRINTER", "Printing AP setup message");
+
+            advancePaperInternal(1);
+
+            // Feed watchdog before the actual printing
+            esp_task_wdt_reset();
+
+            String timestamp = getFormattedDateTime();
+
+            // Clean text before printing
+            String cleanTimestamp = cleanString(timestamp);
+            String cleanContent = cleanString(apContent);
+
+            // Print using internal methods (mutex already held)
+            printWrappedInternal(cleanContent);
+            setInverseInternal(true);
+            printWrappedInternal(cleanTimestamp);
+            setInverseInternal(false);
+            advancePaperInternal(2);
+
+            // Feed watchdog after thermal printing completes
+            esp_task_wdt_reset();
+        }
+    }
+    else
+    {
+        // In STA mode, print normal server info
+        String serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
+
+        // Feed watchdog before thermal printing (can be slow)
+        esp_task_wdt_reset();
+
+        LOG_VERBOSE("PRINTER", "Printing startup message");
+
+        advancePaperInternal(1);
+
+        // Feed watchdog before the actual printing
+        esp_task_wdt_reset();
+
+        // Format the startup message with datetime in header and SCRIBE READY in body
+        String timestamp = getFormattedDateTime();
+        String startupMessage = "SCRIBE READY\n\n" + serverInfo;
+
+        // Clean text before printing
+        String cleanTimestamp = cleanString(timestamp);
+        String cleanMessage = cleanString(startupMessage);
+
+        // Print using internal methods (mutex already held)
+        printWrappedInternal(cleanMessage);
+        setInverseInternal(true);
+        printWrappedInternal(cleanTimestamp);
+        setInverseInternal(false);
+        advancePaperInternal(2);
+
+        // Feed watchdog after thermal printing completes
+        esp_task_wdt_reset();
+    }
+
+    // Mutex automatically released by PrinterLock destructor
+}
+
+// ============================================================================
+// Free Function - printMessage()
+// Accesses global currentMessage and calls printerManager
+// ============================================================================
+
+void printMessage()
+{
+    LOG_VERBOSE("PRINTER", "printMessage() called - printerReady = %s",
+                printerManager.isReady() ? "TRUE" : "FALSE");
+
+    // Copy message data while holding mutex (to avoid holding mutex during slow print operation)
+    // CRITICAL: Must force deep copy since Arduino String uses reference counting
+    String timestamp;
+    String message;
+
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+        // Force deep copy by creating new String from c_str() to avoid shared buffer issues
+        timestamp = String(currentMessage.timestamp.c_str());
+        message = String(currentMessage.message.c_str());
+        xSemaphoreGive(currentMessageMutex);
+    }
+    else
+    {
+        LOG_ERROR("PRINTER", "Failed to acquire mutex for currentMessage");
+        return;
+    }
+
+    // Validate message has valid strings
+    if (timestamp.c_str() == nullptr || message.c_str() == nullptr)
+    {
+        LOG_ERROR("PRINTER", "currentMessage has NULL string buffers - cannot print");
+        return;
+    }
+
+    LOG_VERBOSE("PRINTER", "Calling printerManager.printWithHeader...");
+    printerManager.printWithHeader(timestamp, message);
+
+    LOG_VERBOSE("PRINTER", "Message printed successfully");
 }

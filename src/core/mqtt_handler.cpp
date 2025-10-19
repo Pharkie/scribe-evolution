@@ -322,8 +322,8 @@ void handleMQTTMessage(String topic, String message)
     // Format final message: header + body
     String printMessage = finalHeader + "\n\n" + body;
 
-    // Print immediately using the existing printWithHeader function
-    printWithHeader(timestamp, printMessage);
+    // Print immediately using printerManager
+    printerManager.printWithHeader(timestamp, printMessage);
 
     LOG_VERBOSE("MQTT", "Processed structured message: %s (%d chars)",
                finalHeader.c_str(), printMessage.length());

@@ -12,6 +12,7 @@
 /**
  * @brief RAII lock guard for printer mutex
  * Automatically releases mutex when it goes out of scope
+ * Prevents mutex leaks and ensures thread-safety on multi-core ESP32-S3
  */
 class PrinterLock
 {
@@ -31,17 +32,22 @@ public:
 
 /**
  * @brief Printer manager class - encapsulates printer hardware and synchronization
- * Thread-safe for multi-core ESP32-S3 operation
+ * Thread-safe for multi-core ESP32-S3 operation using RAII locking
+ *
+ * Design pattern:
+ * - Public methods acquire mutex using PrinterLock (RAII)
+ * - Internal methods assume mutex is already held by caller
+ * - This prevents double-locking while ensuring thread-safety
  */
 class PrinterManager
 {
 private:
     HardwareSerial& uart;
     SemaphoreHandle_t mutex;
-    alignas(4) std::atomic<bool> ready;
+    alignas(4) std::atomic<bool> ready;  // 4-byte aligned for ESP32-S3 atomic operations
     const int maxCharsPerLine = 32;
 
-    // Private helper methods (must be called with mutex held)
+    // Private helper methods - MUST be called with mutex already held
     void setInverseInternal(bool enable);
     void advancePaperInternal(int lines);
     void printWrappedInternal(const String& text);
@@ -54,23 +60,16 @@ public:
     void initialize();
     bool isReady() const { return ready.load(); }
 
-    // Thread-safe printing operations
+    // Thread-safe printing operations - all acquire mutex internally
     void printWithHeader(const String& headerText, const String& bodyText);
     void printStartupMessage();
-    void printMessage();
-
-    // Get mutex for manual locking if needed
-    SemaphoreHandle_t getMutex() { return mutex; }
 };
 
 // Global printer manager instance
 extern PrinterManager printerManager;
 
-// Legacy function declarations for compatibility
-void initializePrinter();
-bool isPrinterReady();
+// Free function for printing messages from global currentMessage queue
+// This accesses external globals (currentMessage, currentMessageMutex) and calls printerManager
 void printMessage();
-void printStartupMessage();
-void printWithHeader(String headerText, String bodyText);
 
 #endif // PRINTER_H

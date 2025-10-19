@@ -190,7 +190,7 @@ void setup()
   }
 
   // Initialize printer
-  initializePrinter();
+  printerManager.initialize();
 
   // Initialize hardware buttons (only in STA mode)
   if (!isAPMode())
@@ -246,7 +246,7 @@ void setup()
   LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
 
   // Skip startup print to avoid early UART writes that can crash on S3
-  // printStartupMessage();
+  // printerManager.printStartupMessage();
 
   // Initialize Unbidden Ink schedule
   initializeUnbiddenInk();
