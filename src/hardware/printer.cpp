@@ -18,7 +18,9 @@ PrinterLock::PrinterLock(SemaphoreHandle_t m, uint32_t timeoutMs)
 {
     if (mutex != nullptr)
     {
+        Serial.printf("[PrinterLock] Attempting to acquire mutex (timeout: %dms)...\n", timeoutMs);
         locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
+        Serial.printf("[PrinterLock] Mutex acquire result: %s\n", locked ? "SUCCESS" : "TIMEOUT");
     }
 }
 
@@ -27,6 +29,7 @@ PrinterLock::~PrinterLock()
     if (mutex != nullptr && locked)
     {
         xSemaphoreGive(mutex);
+        Serial.println("[PrinterLock] Mutex released in destructor");
     }
 }
 
@@ -65,6 +68,14 @@ void PrinterManager::initialize()
         mutex = xSemaphoreCreateMutex();
     }
 
+    // Acquire mutex for initialization (prevents concurrent UART access during setup)
+    PrinterLock lock(mutex, 10000); // 10 second timeout for init
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("PRINTER", "Failed to acquire mutex during initialization");
+        return;
+    }
+
     // Get board-specific printer configuration
     const RuntimeConfig &config = getRuntimeConfig();
     const BoardPinDefaults &boardDefaults = getBoardDefaults();
@@ -84,9 +95,9 @@ void PrinterManager::initialize()
     esp_task_wdt_reset();
 
     // Mark printer as ready - the UART is initialized
-    ready = true;
+    ready.store(true, std::memory_order_release); // Force memory barrier for multi-core visibility
 
-    LOG_VERBOSE("PRINTER", "printerReady set to TRUE, value check: %s", ready.load() ? "CONFIRMED TRUE" : "ERROR: STILL FALSE!");
+    LOG_VERBOSE("PRINTER", "printerReady set to TRUE, value check: %s", ready.load(std::memory_order_acquire) ? "CONFIRMED TRUE" : "ERROR: STILL FALSE!");
 
     LOG_VERBOSE("PRINTER", "UART initialized (TX=%d, RX=%d, DTR=%d)",
                 config.printerTxPin, boardDefaults.printer.rx, boardDefaults.printer.dtr);

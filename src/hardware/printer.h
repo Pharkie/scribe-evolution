@@ -58,7 +58,7 @@ public:
 
     // Initialization
     void initialize();
-    bool isReady() const { return ready.load(); }
+    bool isReady() const { return ready.load(std::memory_order_acquire); }
 
     // Thread-safe printing operations - all acquire mutex internally
     void printWithHeader(const String& headerText, const String& bodyText);
