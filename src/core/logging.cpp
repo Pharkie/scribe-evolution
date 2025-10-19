@@ -30,6 +30,13 @@ static const char *getSafeDeviceOwner()
 
 size_t MultiOutputPrint::write(const uint8_t *buffer, size_t size)
 {
+    // Acquire mutex for thread-safe logging (protects against AsyncWebServer concurrency)
+    if (logMutex != nullptr && xSemaphoreTake(logMutex, pdMS_TO_TICKS(100)) != pdTRUE)
+    {
+        // Mutex timeout - skip this log to avoid blocking
+        return size;
+    }
+
     String message;
     for (size_t i = 0; i < size; i++)
     {
@@ -48,11 +55,20 @@ size_t MultiOutputPrint::write(const uint8_t *buffer, size_t size)
         logToFile(message.c_str());
     }
 
+    // Release mutex
+    if (logMutex != nullptr)
+    {
+        xSemaphoreGive(logMutex);
+    }
+
     return size;
 }
 
 void setupLogging()
 {
+    // Create mutex for thread-safe logging
+    multiOutput.logMutex = xSemaphoreCreateMutex();
+
     // Initialize ArduinoLog with our custom multi-output
     Log.begin(logLevel, &multiOutput);
 

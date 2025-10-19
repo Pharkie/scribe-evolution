@@ -15,7 +15,13 @@ HardwareSerial printer(1);
 const int maxCharsPerLine = 32;
 
 // Use atomic bool for printerReady to ensure thread-safe access without mutex overhead
-std::atomic<bool> printerReady(false);
+// CRITICAL: Must be aligned to 4-byte boundary on ESP32-S3 for atomic operations
+alignas(4) std::atomic<bool> printerReady(false);
+
+// Mutex to protect printer hardware access on multi-core ESP32-S3
+// Prevents race conditions when AsyncWebServer handlers on Core 0 and main loop on Core 1
+// both try to access the printer UART simultaneously
+SemaphoreHandle_t printerMutex = nullptr;
 
 // === Printer Functions ===
 
@@ -29,6 +35,12 @@ void initializePrinter()
 {
     LOG_VERBOSE("PRINTER", "Starting printer initialization...");
     printerReady = false; // Ensure flag is false during init
+
+    // Create printer mutex for multi-core protection (ESP32-S3)
+    if (printerMutex == nullptr)
+    {
+        printerMutex = xSemaphoreCreateMutex();
+    }
 
     // Get board-specific printer configuration
     const RuntimeConfig &config = getRuntimeConfig();
@@ -257,6 +269,14 @@ void printWrapped(String text)
 
 void printWithHeader(String headerText, String bodyText)
 {
+    // Acquire printer mutex for multi-core protection (ESP32-S3)
+    // Prevents race conditions when AsyncWebServer handlers and main loop both try to print
+    if (printerMutex != nullptr && xSemaphoreTake(printerMutex, pdMS_TO_TICKS(5000)) != pdTRUE)
+    {
+        LOG_ERROR("PRINTER", "Failed to acquire printer mutex - print aborted");
+        return;
+    }
+
     // Clean both header and body text before printing
     String cleanHeaderText = cleanString(headerText);
     String cleanBodyText = cleanString(bodyText);
@@ -279,4 +299,10 @@ void printWithHeader(String headerText, String bodyText)
 
     // Feed watchdog after printing completes
     esp_task_wdt_reset();
+
+    // Release printer mutex
+    if (printerMutex != nullptr)
+    {
+        xSemaphoreGive(printerMutex);
+    }
 }

@@ -82,6 +82,9 @@ class MultiOutputPrint : public Print
 public:
     size_t write(uint8_t c) override;
     size_t write(const uint8_t *buffer, size_t size) override;
+private:
+    SemaphoreHandle_t logMutex = nullptr;
+    friend void setupLogging();
 };
 
 #endif // LOGGING_H

@@ -47,37 +47,38 @@ extern LedEffects ledEffects;
 #endif
 
 // Stabilize printer pin ASAP, before anything else
-class PrinterPinStabilizer
-{
-public:
-  PrinterPinStabilizer()
-  {
-    const RuntimeConfig &config = getRuntimeConfig(); // Fast - returns defaults
-    const BoardPinDefaults &boardDefaults = getBoardDefaults();
+// COMMENTED OUT FOR TESTING - Suspected cause of ESP32-S3 printer crash
+// class PrinterPinStabilizer
+// {
+// public:
+//   PrinterPinStabilizer()
+//   {
+//     const RuntimeConfig &config = getRuntimeConfig(); // Fast - returns defaults
+//     const BoardPinDefaults &boardDefaults = getBoardDefaults();
 
-    // Enable printer eFuse if present (custom PCB only)
-    #if BOARD_HAS_PRINTER_EFUSE
-    if (boardDefaults.efuse.printer != -1)
-    {
-      pinMode(boardDefaults.efuse.printer, OUTPUT);
-      digitalWrite(boardDefaults.efuse.printer, HIGH); // Enable printer power
-      delay(10); // Give eFuse time to stabilize
-    }
-    #endif
+//     // Enable printer eFuse if present (custom PCB only)
+//     #if BOARD_HAS_PRINTER_EFUSE
+//     if (boardDefaults.efuse.printer != -1)
+//     {
+//       pinMode(boardDefaults.efuse.printer, OUTPUT);
+//       digitalWrite(boardDefaults.efuse.printer, HIGH); // Enable printer power
+//       delay(10); // Give eFuse time to stabilize
+//     }
+//     #endif
 
-    // Set up printer UART TX pin
-    pinMode(config.printerTxPin, OUTPUT);
-    digitalWrite(config.printerTxPin, HIGH); // UART idle state
+//     // Set up printer UART TX pin
+//     pinMode(config.printerTxPin, OUTPUT);
+//     digitalWrite(config.printerTxPin, HIGH); // UART idle state
 
-    // Set up DTR pin if present (ESP32-S3 variants)
-    if (boardDefaults.printer.dtr != -1)
-    {
-      pinMode(boardDefaults.printer.dtr, OUTPUT);
-      digitalWrite(boardDefaults.printer.dtr, LOW); // DTR ready
-    }
-  }
-};
-static PrinterPinStabilizer pinStabilizer;
+//     // Set up DTR pin if present (ESP32-S3 variants)
+//     if (boardDefaults.printer.dtr != -1)
+//     {
+//       pinMode(boardDefaults.printer.dtr, OUTPUT);
+//       digitalWrite(boardDefaults.printer.dtr, LOW); // DTR ready
+//     }
+//   }
+// };
+// static PrinterPinStabilizer pinStabilizer;
 
 // === Web Server ===
 AsyncWebServer server(webServerPort);

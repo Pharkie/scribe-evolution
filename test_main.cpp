@@ -14,6 +14,42 @@
 #include "web/web_server.h"  // Add web server components
 #include "core/shared_types.h"
 
+// ============================================================================
+// TEST: Add PrinterPinStabilizer (from main.cpp)
+// This runs BEFORE setup() as a static global initializer
+// ============================================================================
+class PrinterPinStabilizer
+{
+public:
+  PrinterPinStabilizer()
+  {
+    const RuntimeConfig &config = getRuntimeConfig(); // Fast - returns defaults
+    const BoardPinDefaults &boardDefaults = getBoardDefaults();
+
+    // Enable printer eFuse if present (custom PCB only)
+    #if BOARD_HAS_PRINTER_EFUSE
+    if (boardDefaults.efuse.printer != -1)
+    {
+      pinMode(boardDefaults.efuse.printer, OUTPUT);
+      digitalWrite(boardDefaults.efuse.printer, HIGH); // Enable printer power
+      delay(10); // Give eFuse time to stabilize
+    }
+    #endif
+
+    // Set up printer UART TX pin
+    pinMode(config.printerTxPin, OUTPUT);
+    digitalWrite(config.printerTxPin, HIGH); // UART idle state
+
+    // Set up DTR pin if present (ESP32-S3 variants)
+    if (boardDefaults.printer.dtr != -1)
+    {
+      pinMode(boardDefaults.printer.dtr, OUTPUT);
+      digitalWrite(boardDefaults.printer.dtr, LOW); // DTR ready
+    }
+  }
+};
+static PrinterPinStabilizer pinStabilizer;
+
 #define NUM_LEDS 1
 #define LED_PIN 48
 
@@ -54,12 +90,26 @@ void setup() {
   initializePrinterConfig();
   Serial.println("  ✓ Config system initialized\n");
 
-  // TEST 3: WiFi Initialization
-  Serial.println("[TEST 3] Initializing WiFi...");
+  // TEST 3: WiFi Initialization and Connection
+  Serial.println("[TEST 3] Connecting to WiFi...");
   WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-  Serial.println("  ✓ WiFi initialized in STA mode\n");
+
+  const RuntimeConfig &config = getRuntimeConfig();
+  WiFi.begin(config.wifiSSID.c_str(), config.wifiPassword.c_str());
+
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.printf("\n  ✓ WiFi connected: %s\n", WiFi.localIP().toString().c_str());
+  } else {
+    Serial.println("\n  ✗ WiFi connection failed - continuing anyway\n");
+  }
+  Serial.println();
 
   // TEST 4: REAL Printer Initialization (from printer.cpp)
   Serial.println("[TEST 4] Initializing printer (REAL initializePrinter)...");
@@ -154,16 +204,55 @@ void setup() {
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(50);
   Serial.println("FastLED initialized on GPIO 48");
+
+  // TEST 9: Simulate ONE web print request
+  Serial.println("\n[TEST 9] Simulating web print request...");
+
+  extern std::atomic<bool> printerReady;
+  Serial.printf("  Printer ready BEFORE: %s\n", printerReady.load() ? "TRUE" : "FALSE");
+
+  // Queue a message (like web API does)
+  if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+    currentMessage.message = "WEB TEST\n\nThis simulates a web-triggered print request";
+    currentMessage.timestamp = "2025-10-19 02:00";
+    currentMessage.shouldPrintLocally = true;
+    xSemaphoreGive(currentMessageMutex);
+    Serial.println("  Message queued");
+  }
+
+  // Process the print in next loop iteration (like main app)
+  Serial.println("  Print will be processed in loop...\n");
+
   Serial.println("Entering loop mode...\n");
 }
 
 int loopCount = 0;
 unsigned long lastLedChange = 0;
-int ledState = 0;  // 0=Red, 1=Green, 2=Blue
+unsigned long lastAutoPrint = 0;
+int testLedState = 0;  // 0=Red, 1=Green, 2=Blue
+int autoPrintCount = 0;
 
 void loop() {
   extern std::atomic<bool> printerReady;
   unsigned long currentMillis = millis();
+
+  // Auto-trigger a print every 10 seconds (simulates repeated web requests)
+  if (currentMillis - lastAutoPrint >= 10000) {
+    lastAutoPrint = currentMillis;
+    autoPrintCount++;
+
+    Serial.printf("\n[AUTO-PRINT #%d] Queueing simulated web print...\n", autoPrintCount);
+    Serial.printf("[AUTO-PRINT #%d] Printer ready BEFORE queue: %s\n", autoPrintCount, printerReady.load() ? "TRUE" : "FALSE");
+
+    // Queue a message (like web API does)
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+      currentMessage.message = String("AUTO TEST #") + autoPrintCount + "\n\nSimulated web print number " + autoPrintCount;
+      currentMessage.timestamp = "2025-10-19 02:00";
+      currentMessage.shouldPrintLocally = true;
+      xSemaphoreGive(currentMessageMutex);
+      Serial.printf("[AUTO-PRINT #%d] Message queued\n", autoPrintCount);
+    }
+  }
 
   // Check for messages to print (like main app loop)
   bool shouldPrint = false;
@@ -173,8 +262,8 @@ void loop() {
   }
 
   if (shouldPrint) {
-    Serial.println("[LOOP] Message queued, attempting to print...");
-    Serial.printf("[LOOP] Printer ready status: %s\n", printerReady.load() ? "TRUE" : "FALSE");
+    Serial.printf("[LOOP] Processing AUTO-PRINT #%d...\n", autoPrintCount);
+    Serial.printf("[LOOP] Printer ready BEFORE print: %s\n", printerReady.load() ? "TRUE" : "FALSE");
 
     printMessage();
 
@@ -184,14 +273,20 @@ void loop() {
       xSemaphoreGive(currentMessageMutex);
     }
 
-    Serial.printf("[LOOP] After print - Printer ready: %s\n", printerReady.load() ? "TRUE" : "FALSE");
+    Serial.printf("[LOOP] Printer ready AFTER print: %s\n", printerReady.load() ? "TRUE" : "FALSE");
+
+    // Check if printer became not ready
+    if (!printerReady.load()) {
+      Serial.println("\n⚠️⚠️⚠️ PRINTER BECAME NOT READY! This may cause crash! ⚠️⚠️⚠️\n");
+    }
+    Serial.println();
   }
 
   // Cycle LED colors every 1 second
   if (currentMillis - lastLedChange >= 1000) {
     lastLedChange = currentMillis;
 
-    switch(ledState) {
+    switch(testLedState) {
       case 0:
         leds[0] = CRGB::Red;
         break;
@@ -204,13 +299,7 @@ void loop() {
     }
     FastLED.show();
 
-    ledState = (ledState + 1) % 3;
-  }
-
-  // Print status every 100 loops
-  if (loopCount % 100 == 0) {
-    Serial.printf("[LOOP %d] Printer ready: %s, Web server running\n",
-                  loopCount, printerReady.load() ? "TRUE" : "FALSE");
+    testLedState = (testLedState + 1) % 3;
   }
 
   loopCount++;
