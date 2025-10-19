@@ -42,10 +42,10 @@ public:
 class PrinterManager
 {
 private:
-    HardwareSerial uart;  // CHANGED: Own the UART object instead of reference
     SemaphoreHandle_t mutex;
     alignas(4) std::atomic<bool> ready;  // 4-byte aligned for ESP32-S3 atomic operations
     const int maxCharsPerLine = 32;
+    HardwareSerial* uart;  // CHANGED: Use pointer to avoid global constructor issues
 
     // Private helper methods - MUST be called with mutex already held
     void setInverseInternal(bool enable);
@@ -59,6 +59,12 @@ private:
 public:
     PrinterManager();  // CHANGED: No parameter needed, constructs own UART
     ~PrinterManager();
+
+    // Delete copy and move to prevent accidental copying
+    PrinterManager(const PrinterManager&) = delete;
+    PrinterManager& operator=(const PrinterManager&) = delete;
+    PrinterManager(PrinterManager&&) = delete;
+    PrinterManager& operator=(PrinterManager&&) = delete;
 
     // Initialization
     void initialize();

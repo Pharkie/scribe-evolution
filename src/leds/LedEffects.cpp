@@ -1,6 +1,6 @@
 /**
- * @file LedEffectsNew.cpp
- * @brief Refactored LED effects manager using modular effect system
+ * @file LedEffects.cpp
+ * @brief Thread-safe LED effects manager using modular effect system
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -12,15 +12,49 @@
 #if ENABLE_LEDS
 
 #include <core/logging.h>
+#include <core/LogManager.h>
 #include <config/config.h>
 #include <core/config_loader.h>
 #include "effects/EffectRegistry.h"
 #include <utils/color_utils.h>
 
-// Global instance
-LedEffects ledEffects;
+// ============================================================================
+// LedLock RAII Implementation
+// ============================================================================
 
-LedEffects::LedEffects() : leds(nullptr),
+LedLock::LedLock(SemaphoreHandle_t m, uint32_t timeoutMs)
+    : mutex(m), locked(false)
+{
+    if (mutex != nullptr)
+    {
+        locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
+        if (!locked)
+        {
+            LogManager::instance().logf("[LedLock] Mutex acquire TIMEOUT after %dms\n", timeoutMs);
+        }
+    }
+}
+
+LedLock::~LedLock()
+{
+    if (mutex != nullptr && locked)
+    {
+        xSemaphoreGive(mutex);
+    }
+}
+
+// ============================================================================
+// LedEffects Singleton Implementation
+// ============================================================================
+
+LedEffects& LedEffects::getInstance()
+{
+    static LedEffects instance;
+    return instance;
+}
+
+LedEffects::LedEffects() : mutex(nullptr),
+                           leds(nullptr),
                            ledCount(0),
                            ledPin(0),
                            ledBrightness(0),
@@ -49,6 +83,12 @@ LedEffects::LedEffects() : leds(nullptr),
                            finalFadeStart(0),
                            finalFadeBase(nullptr)
 {
+    // Create LED mutex for multi-core protection (ESP32-S3)
+    mutex = xSemaphoreCreateMutex();
+    if (mutex == nullptr)
+    {
+        LogManager::instance().logf("[LEDS] FATAL: Failed to create LED mutex!\n");
+    }
 }
 
 LedEffects::~LedEffects()
@@ -70,22 +110,51 @@ LedEffects::~LedEffects()
         delete[] leds;
         leds = nullptr;
     }
+
+    if (mutex != nullptr)
+    {
+        vSemaphoreDelete(mutex);
+        mutex = nullptr;
+    }
 }
 
 bool LedEffects::begin()
 {
+    LedLock lock(mutex, 2000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in begin()");
+        return false;
+    }
+
     // Load configuration
     const RuntimeConfig &config = getRuntimeConfig();
 
-    return reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
-                        config.ledRefreshRate, config.ledEffects);
+    // Call internal reinitialize (mutex already held)
+    return reinitializeInternal(config.ledPin, config.ledCount, config.ledBrightness,
+                                config.ledRefreshRate, config.ledEffects);
 }
 
 bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRate,
                               const LedEffectsConfig &effectsConfig)
 {
-    // Stop current effect
-    stopEffect();
+    LedLock lock(mutex, 2000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in reinitialize()");
+        return false;
+    }
+
+    return reinitializeInternal(pin, count, brightness, refreshRate, effectsConfig);
+}
+
+bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int refreshRate,
+                                      const LedEffectsConfig &effectsConfig)
+{
+    // IMPORTANT: Mutex must already be held by caller!
+
+    // Stop current effect (internal version - mutex already held)
+    stopEffectInternal();
 
     // Store configuration
     ledPin = pin;
@@ -135,6 +204,11 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         LOG_ERROR("LEDS", "GPIO %d cannot be used for LEDs: %s", ledPin, getGPIODescription(ledPin));
         return false;
     }
+
+    // CRITICAL: Clear FastLED's global controller list before adding new LED strip
+    // If we don't do this, calling addLeds() multiple times causes memory corruption
+    // that can overwrite adjacent globals (like printerManager)
+    FastLED.clear(true);  // true = also clear controller list
 
     LOG_VERBOSE("LEDS", "Initializing FastLED on GPIO %d (Board: %s)", ledPin, BOARD_NAME);
 
@@ -223,6 +297,14 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
 
 void LedEffects::update()
 {
+    // Use shorter timeout for update() since it's called frequently from main loop
+    LedLock lock(mutex, 100);
+    if (!lock.isLocked())
+    {
+        // Don't log on every timeout - would spam the log
+        return;
+    }
+
     if (!effectActive || !currentEffect || !leds)
     {
         return;
@@ -250,7 +332,7 @@ void LedEffects::update()
                 delete[] finalFadeBase;
                 finalFadeBase = nullptr;
             }
-            stopEffect();
+            stopEffectInternal();
             return;
         }
 
@@ -305,7 +387,7 @@ void LedEffects::update()
         }
         else
         {
-            stopEffect();
+            stopEffectInternal();
             return;
         }
     }
@@ -317,14 +399,21 @@ void LedEffects::update()
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,
                                    CRGB color1, CRGB color2, CRGB color3)
 {
+    LedLock lock(mutex, 1000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in startEffectCycles()");
+        return false;
+    }
+
     if (!effectRegistry || !effectRegistry->isValidEffect(effectName))
     {
         LOG_WARNING("LEDS", "Unknown effect name: %s", effectName.c_str());
         return false;
     }
 
-    // Stop current effect
-    stopEffect();
+    // Stop current effect (internal - mutex already held)
+    stopEffectInternal();
 
     // Create new effect
     currentEffect = effectRegistry->createEffect(effectName);
@@ -366,15 +455,25 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
 
 bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
 {
-    // Use autonomous per-effect default colors from registry
-    if (!effectRegistry)
-    {
-        LOG_WARNING("LEDS", "Effect registry not initialized");
-        return false;
-    }
-
+    // Get colors from registry first (no lock needed for read-only operation)
     String h1, h2, h3;
-    effectRegistry->getDefaultColorsHex(effectName, h1, h2, h3);
+    {
+        LedLock lock(mutex, 1000);
+        if (!lock.isLocked())
+        {
+            LOG_ERROR("LEDS", "Failed to acquire LED mutex in startEffectCyclesAuto()");
+            return false;
+        }
+
+        // Use autonomous per-effect default colors from registry
+        if (!effectRegistry)
+        {
+            LOG_WARNING("LEDS", "Effect registry not initialized");
+            return false;
+        }
+
+        effectRegistry->getDefaultColorsHex(effectName, h1, h2, h3);
+    } // Lock released here
 
     // Convert to CRGB (fallbacks if strings are empty)
     CRGB c1 = CRGB::Blue;
@@ -395,11 +494,26 @@ bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
         c3 = hexToRgb(h3);
     }
 
+    // startEffectCycles will acquire its own lock
     return startEffectCycles(effectName, cycles, c1, c2, c3);
 }
 
 void LedEffects::stopEffect()
 {
+    LedLock lock(mutex, 1000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in stopEffect()");
+        return;
+    }
+
+    stopEffectInternal();
+}
+
+void LedEffects::stopEffectInternal()
+{
+    // IMPORTANT: Mutex must already be held by caller!
+
     if (currentEffect)
     {
         delete currentEffect;
@@ -436,16 +550,30 @@ void LedEffects::stopEffect()
 
 bool LedEffects::isEffectRunning() const
 {
+    // Const method can't acquire mutex in typical pattern, but for simple bool read it's atomic enough
+    // On ESP32, aligned 32-bit reads are atomic
     return effectActive;
 }
 
 String LedEffects::getCurrentEffectName() const
 {
+    // String copy needs protection
+    LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
+    if (!lock.isLocked())
+    {
+        return "";
+    }
     return currentEffectName;
 }
 
 unsigned long LedEffects::getRemainingTime() const
 {
+    LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
+    if (!lock.isLocked())
+    {
+        return 0;
+    }
+
     if (!effectActive || effectDuration == 0)
     {
         return 0;
@@ -462,6 +590,13 @@ unsigned long LedEffects::getRemainingTime() const
 
 void LedEffects::updateEffectConfig(const LedEffectsConfig &newConfig)
 {
+    LedLock lock(mutex, 1000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in updateEffectConfig()");
+        return;
+    }
+
     if (effectRegistry)
     {
         effectRegistry->updateConfig(newConfig);

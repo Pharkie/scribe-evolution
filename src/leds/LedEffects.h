@@ -1,17 +1,9 @@
 /**
- * @file LedEffectsNew.h
- * @brief Refactored LED effects manager using modular effect system
+ * @file LedEffects.h
+ * @brief Thread-safe LED effects manager using modular effect system
  * @author Adam Knowles
  * @date 2025
-     // Effect state
-    bool effectActive;
-    String currentEffectName;
-    unsigned long effectStartTime;
-    unsigned long lastUpdate;
-
-    // Cycle tracking
-    int targetCycles;    // Number of cycles to complete (0 = infinite)
-    int completedCycles; // Number of cycles completed so fart Copyright (c) 2025 Adam Knowles. All rights reserved.
+ * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  */
 
@@ -24,29 +16,51 @@
 
 #include <Arduino.h>
 #include <FastLED.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 // Forward declarations
 class EffectBase;
 class EffectRegistry;
 
 /**
- * @brief Non-blocking LED effects manager using modular effect system
+ * @brief RAII lock guard for LED mutex
+ * Automatically releases mutex when it goes out of scope
+ * Prevents mutex leaks and ensures thread-safety on multi-core ESP32-S3
+ */
+class LedLock
+{
+private:
+    SemaphoreHandle_t mutex;
+    bool locked;
+
+public:
+    LedLock(SemaphoreHandle_t m, uint32_t timeoutMs = 1000);
+    ~LedLock();
+    bool isLocked() const { return locked; }
+
+    // Prevent copying
+    LedLock(const LedLock&) = delete;
+    LedLock& operator=(const LedLock&) = delete;
+};
+
+/**
+ * @brief Thread-safe LED effects manager using modular effect system
  *
- * This refactored class provides a cleaner architecture where individual effects
- * are implemented as separate classes, making the code more maintainable and extensible.
+ * Thread-safe for multi-core ESP32-S3 operation using RAII locking:
+ * - Public methods acquire mutex using LedLock (RAII)
+ * - Internal methods assume mutex is already held by caller
+ * - Prevents concurrent access from Core 0 (main loop) and Core 1 (web handlers)
+ * - FastLED is NOT thread-safe - this wrapper protects against race conditions
  */
 class LedEffects
 {
 public:
     /**
-     * @brief Constructor - initializes the LED effects manager
+     * @brief Get singleton instance
+     * @return Reference to the singleton LedEffects instance
      */
-    LedEffects();
-
-    /**
-     * @brief Destructor - cleans up dynamically allocated memory
-     */
-    ~LedEffects();
+    static LedEffects& getInstance();
 
     /**
      * @brief Initialize the LED strip and effects manager
@@ -124,6 +138,18 @@ public:
     void updateEffectConfig(const LedEffectsConfig &newConfig);
 
 private:
+    // Private constructor for singleton pattern
+    LedEffects();
+
+    // Private destructor
+    ~LedEffects();
+
+    // Prevent copying
+    LedEffects(const LedEffects&) = delete;
+    LedEffects& operator=(const LedEffects&) = delete;
+
+    // Thread synchronization
+    SemaphoreHandle_t mutex;
     // LED strip array
     CRGB *leds;
 
@@ -170,9 +196,18 @@ private:
     unsigned long finalFadeStart;
     static constexpr unsigned long finalFadeDurationMs = 3000; // 3s fade-out
     CRGB *finalFadeBase = nullptr; // Snapshot of LEDs at fade start
+
+    // Internal methods - MUST be called with mutex already held
+    bool reinitializeInternal(int pin, int count, int brightness, int refreshRate,
+                              const LedEffectsConfig &effectsConfig);
+    void stopEffectInternal();
 };
 
-extern LedEffects ledEffects;
+// Helper inline function for backward compatibility
+// Allows existing code to use ledEffects without conflicts
+inline LedEffects& ledEffects() {
+    return LedEffects::getInstance();
+}
 
 #endif // ENABLE_LEDS
 

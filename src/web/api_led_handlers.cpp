@@ -22,7 +22,6 @@
 #include <FastLED.h>
 
 // External LED effects instance
-extern LedEffects ledEffects;
 
 // ========================================
 // LED API HANDLERS
@@ -412,7 +411,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
 
         // Apply the playground configuration temporarily
-        ledEffects.updateEffectConfig(playgroundConfig);
+        ledEffects().updateEffectConfig(playgroundConfig);
     }
 #endif
 
@@ -430,13 +429,13 @@ void handleLedEffect(AsyncWebServerRequest *request)
     if (cycles > 0)
     {
         // Run effect for specific number of cycles
-        success = ledEffects.startEffectCycles(effectName, cycles, c1, c2, c3);
+        success = ledEffects().startEffectCycles(effectName, cycles, c1, c2, c3);
         LOG_VERBOSE("LEDS", "Started LED effect: %s for %d cycles", effectName.c_str(), cycles);
     }
     else
     {
         // Run effect continuously (cycles=0 means indefinite)
-        success = ledEffects.startEffectCycles(effectName, 0, c1, c2, c3);
+        success = ledEffects().startEffectCycles(effectName, 0, c1, c2, c3);
         LOG_VERBOSE("LEDS", "Started LED effect: %s continuously", effectName.c_str());
     }
 
@@ -483,7 +482,7 @@ void handleLedOff(AsyncWebServerRequest *request)
     LOG_VERBOSE("LEDS", "LED off request");
 
     // Stop current effect and turn off LEDs
-    ledEffects.stopEffect();
+    ledEffects().stopEffect();
 
     LOG_NOTICE("LEDS", "LEDs turned off");
 

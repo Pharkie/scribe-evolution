@@ -44,7 +44,6 @@
 #include "content/unbidden_ink.h"
 #if ENABLE_LEDS
 #include "leds/LedEffects.h"
-extern LedEffects ledEffects;
 #endif
 
 // Stabilize printer pin ASAP, before anything else
@@ -192,10 +191,6 @@ void setup()
 
   // Initialize printer
   printerManager.initialize();
-  Serial.printf("[EMERGENCY-MAIN] After printerManager.initialize() returned, checking mutex...\n");
-  // Access mutex via friend function
-  extern void emergencyCheckPrinterMutex();
-  emergencyCheckPrinterMutex();
 
   // Initialize hardware buttons (only in STA mode)
   if (!isAPMode())
@@ -209,11 +204,11 @@ void setup()
 
 #if ENABLE_LEDS
   // Initialize LED effects system
-  if (ledEffects.begin())
+  if (ledEffects().begin())
   {
     LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
     // Trigger boot LED effect (chase single for 1 cycle)
-    ledEffects.startEffectCycles("chase_single", 1, 0x0000FF);
+    ledEffects().startEffectCycles("chase_single", 1, 0x0000FF);
     LOG_VERBOSE("BOOT", "Boot LED effect started (chase_single, 1 cycle)");
   }
   else
@@ -300,7 +295,7 @@ void loop()
 
 #if ENABLE_LEDS
   // Update LED effects (non-blocking)
-  ledEffects.update();
+  ledEffects().update();
 #endif
 
   // Handle web server requests - AsyncWebServer handles this automatically

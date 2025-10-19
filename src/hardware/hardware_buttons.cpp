@@ -19,7 +19,6 @@
 
 #if ENABLE_LEDS
 #include <leds/LedEffects.h>
-extern LedEffects ledEffects;
 #endif
 
 // External declarations
@@ -326,7 +325,7 @@ void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
     }
 
     // Trigger configured LED effect for 1 cycle using autonomous defaults
-    if (ledEffects.startEffectCyclesAuto(effectName, 1))
+    if (ledEffects().startEffectCyclesAuto(effectName, 1))
     {
         LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): %s, 1 cycle",
                     buttonIndex, isLongPress ? "long" : "short", effectName.c_str());

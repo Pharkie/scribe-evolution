@@ -56,7 +56,6 @@ extern PubSubClient mqttClient;
 
 #if ENABLE_LEDS
 #include <leds/LedEffects.h>
-extern LedEffects ledEffects;
 #endif
 
 // ========================================
@@ -593,13 +592,13 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
 #if ENABLE_LEDS
     // Reinitialize LED system with new configuration
-    if (ledEffects.reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
+    if (ledEffects().reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
                                 newConfig.ledRefreshRate, newConfig.ledEffects))
     {
         LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
 
         // Trigger green chase single effect as visual confirmation of successful save
-        ledEffects.startEffectCycles("chase_single", 1, CRGB::Green);
+        ledEffects().startEffectCycles("chase_single", 1, CRGB::Green);
         LOG_VERBOSE("WEB", "LED confirmation effect triggered for config save");
     }
     else

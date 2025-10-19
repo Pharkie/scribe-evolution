@@ -41,17 +41,26 @@ PrinterLock::~PrinterLock()
 // ============================================================================
 
 // Global PrinterManager singleton
-PrinterManager printerManager;
+// Force into .data section to prevent re-initialization
+__attribute__((section(".data"))) PrinterManager printerManager;
 
 PrinterManager::PrinterManager()
-    : uart(1), mutex(nullptr), ready(false)  // CHANGED: Initialize UART(1) directly in initializer list
+    : mutex(nullptr), ready(false), uart(nullptr)  // Initialize uart pointer to nullptr
 {
+    // UART will be allocated in initialize()
     // Mutex will be created in initialize()
 }
 
 PrinterManager::~PrinterManager()
 {
     Serial.printf("[EMERGENCY-DESTROY] PrinterManager destructor called on object at %p, mutex=%p\n", this, mutex);
+
+    if (uart != nullptr)
+    {
+        uart->end();
+        delete uart;
+        uart = nullptr;
+    }
 
     if (mutex != nullptr)
     {
@@ -63,36 +72,25 @@ PrinterManager::~PrinterManager()
 
 void PrinterManager::initialize()
 {
-    // EMERGENCY DEBUG: Check object address, field addresses, and core
-    Serial.printf("[EMERGENCY-INIT] PrinterManager at %p on CORE %d\n", this, xPortGetCoreID());
-    Serial.printf("[EMERGENCY-INIT]   &uart=%p (size=%d), &mutex=%p, &ready=%p, &maxCharsPerLine=%p\n",
-                  &uart, sizeof(uart), &mutex, &ready, &maxCharsPerLine);
-    Serial.printf("[EMERGENCY-INIT]   mutex value BEFORE create: %p\n", mutex);
-
     LOG_VERBOSE("PRINTER", "Starting printer initialization...");
     ready = false; // Ensure flag is false during init
+
+    // Allocate UART if not already allocated
+    if (uart == nullptr)
+    {
+        uart = new HardwareSerial(1);  // UART1
+    }
 
     // Create printer mutex for multi-core protection (ESP32-S3)
     if (mutex == nullptr)
     {
         mutex = xSemaphoreCreateMutex();
 
-        // EMERGENCY DEBUG: Check if mutex creation succeeded
-        Serial.printf("[EMERGENCY-INIT]   mutex value AFTER create: %p\n", mutex);
-        Serial.printf("[EMERGENCY-INIT]   Verifying &mutex still points to correct location: %p\n", &mutex);
-
         if (mutex == nullptr)
         {
-            Serial.printf("[EMERGENCY-INIT] MUTEX CREATION FAILED! Free heap: %d bytes\n", ESP.getFreeHeap());
+            LOG_ERROR("PRINTER", "Failed to create printer mutex!");
+            return;
         }
-
-        // CRITICAL: Force memory barrier to ensure mutex pointer is visible to other core
-        // ESP32 has weak memory ordering - without this, the other core may see mutex=NULL
-        portMEMORY_BARRIER();
-    }
-    else
-    {
-        Serial.printf("[EMERGENCY-INIT] Mutex already exists at %p\n", mutex);
     }
 
     // Acquire mutex for initialization (prevents concurrent UART access during setup)
@@ -108,12 +106,12 @@ void PrinterManager::initialize()
     const BoardPinDefaults &boardDefaults = getBoardDefaults();
 
     // Ensure clean state - call end() first to clear any stale state
-    uart.end();
+    uart->end();
     delay(100);
 
     // Initialize UART with board-specific RX/TX pins for bidirectional communication
     // RX pin receives printer status and feedback, DTR is configured separately if present
-    uart.begin(9600, SERIAL_8N1, boardDefaults.printer.rx, config.printerTxPin);
+    uart->begin(9600, SERIAL_8N1, boardDefaults.printer.rx, config.printerTxPin);
 
     // ESP32-S3 requires extra time for UART hardware to fully initialize
     delay(500);
@@ -132,28 +130,26 @@ void PrinterManager::initialize()
     LOG_VERBOSE("PRINTER", "Sending printer initialization commands...");
 
     // Initialize printer with ESC @ (reset command)
-    uart.write(0x1B);
-    uart.write('@'); // ESC @
+    uart->write(0x1B);
+    uart->write('@'); // ESC @
     delay(100);
 
     // Set printer heating parameters from config
-    uart.write(0x1B);
-    uart.write('7');
-    uart.write(heatingDots);     // Heating dots from config
-    uart.write(heatingTime);     // Heating time from config
-    uart.write(heatingInterval); // Heating interval from config
+    uart->write(0x1B);
+    uart->write('7');
+    uart->write(heatingDots);     // Heating dots from config
+    uart->write(heatingTime);     // Heating time from config
+    uart->write(heatingInterval); // Heating interval from config
     delay(50);
 
     // Enable 180° rotation (which also reverses the line order)
-    uart.write(0x1B);
-    uart.write('{');
-    uart.write(0x01); // ESC { 1
+    uart->write(0x1B);
+    uart->write('{');
+    uart->write(0x01); // ESC { 1
     delay(50);
 
-    Serial.printf("[EMERGENCY-INIT] END of initialize() - mutex still valid? %p\n", mutex);
-
-    LOG_VERBOSE("PRINTER", "Printer initialized successfully - ready = %s (address: %p)",
-                ready.load() ? "TRUE" : "FALSE", (void*)&ready);
+    LOG_VERBOSE("PRINTER", "Printer initialized successfully - ready = %s",
+                ready.load() ? "TRUE" : "FALSE");
 }
 
 // ============================================================================
@@ -162,16 +158,16 @@ void PrinterManager::initialize()
 
 void PrinterManager::setInverseInternal(bool enable)
 {
-    uart.write(0x1D);
-    uart.write('B');
-    uart.write(enable ? 1 : 0); // GS B n
+    uart->write(0x1D);
+    uart->write('B');
+    uart->write(enable ? 1 : 0); // GS B n
 }
 
 void PrinterManager::advancePaperInternal(int lines)
 {
     for (int i = 0; i < lines; i++)
     {
-        uart.write(0x0A); // LF
+        uart->write(0x0A); // LF
     }
 }
 
@@ -241,7 +237,7 @@ void PrinterManager::printWrappedInternal(const String& text)
     // Print lines in reverse order to compensate for 180° printer rotation
     for (int i = lines.size() - 1; i >= 0; i--)
     {
-        uart.println(lines[i]);
+        uart->println(lines[i]);
     }
 }
 
@@ -251,20 +247,8 @@ void PrinterManager::printWrappedInternal(const String& text)
 
 void PrinterManager::printWithHeader(const String& headerText, const String& bodyText)
 {
-    // CRITICAL: Force memory barrier to ensure we see latest mutex pointer from other core
-    // ESP32 has weak memory ordering - this ensures we don't see stale NULL value
-    portMEMORY_BARRIER();
-
-    // EMERGENCY DEBUG: Direct Serial write to bypass LogManager
-    Serial.printf("[EMERGENCY] printWithHeader() called on CORE %d, mutex=%p, ready=%d\n",
-                  xPortGetCoreID(), mutex, ready.load());
-
     // Acquire printer mutex using RAII lock
     PrinterLock lock(mutex, 5000);
-
-    // EMERGENCY DEBUG: Check lock result
-    Serial.printf("[EMERGENCY] PrinterLock created, isLocked=%d\n", lock.isLocked());
-
     if (!lock.isLocked())
     {
         LOG_ERROR("PRINTER", "Failed to acquire printer mutex - print aborted");
@@ -381,27 +365,12 @@ void PrinterManager::printStartupMessage()
 }
 
 // ============================================================================
-// Emergency diagnostic function
-void emergencyCheckPrinterMutex()
-{
-    Serial.printf("[EMERGENCY-MAIN] printerManager mutex=%p, ready=%d\n",
-                  printerManager.mutex, printerManager.ready.load());
-}
-
-// ============================================================================
 // Free Function - printMessage()
 // Accesses global currentMessage and calls printerManager
 // ============================================================================
 
 void printMessage()
 {
-    // CRITICAL: Force memory barrier to ensure we see latest printerManager state from other core
-    portMEMORY_BARRIER();
-
-    // EMERGENCY DEBUG: Check printerManager address and core
-    Serial.printf("[EMERGENCY-PRINT] printMessage() called on CORE %d, printerManager at %p, mutex=%p, ready=%d\n",
-                  xPortGetCoreID(), &printerManager, printerManager.mutex, printerManager.ready.load());
-
     LOG_VERBOSE("PRINTER", "printMessage() called - printerReady = %s",
                 printerManager.isReady() ? "TRUE" : "FALSE");
 
