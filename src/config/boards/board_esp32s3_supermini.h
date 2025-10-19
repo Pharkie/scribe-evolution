@@ -31,32 +31,43 @@
 #include "board_interface.h"
 
 // ============================================================================
-// GPIO MAP
+// GPIO MAP (SuperMini-specific: Only GPIO 1-13 + 48 are physically accessible)
 // ============================================================================
 
 static const GPIOInfo ESP32S3_GPIO_MAP[] = {
+    // GPIO 0: Strapping pin - avoid
     {0, GPIO_TYPE_AVOID, "Avoid: Strapping pin"},
-    {1, GPIO_TYPE_SAFE, "Safe"},
-    {2, GPIO_TYPE_SAFE, "Safe"},
-    {3, GPIO_TYPE_SAFE, "Safe"},
-    {4, GPIO_TYPE_SAFE, "Safe"},
-    {5, GPIO_TYPE_SAFE, "Safe"},
-    {6, GPIO_TYPE_SAFE, "Safe"},
-    {7, GPIO_TYPE_SAFE, "Safe"},
-    {8, GPIO_TYPE_SAFE, "Safe"},
-    {9, GPIO_TYPE_SAFE, "Safe"},
-    {10, GPIO_TYPE_SAFE, "Safe"},
-    {11, GPIO_TYPE_SAFE, "Safe"},
-    {12, GPIO_TYPE_SAFE, "Safe"},
-    {13, GPIO_TYPE_SAFE, "Safe"},
-    {14, GPIO_TYPE_SAFE, "Safe"},
-    {15, GPIO_TYPE_SAFE, "Safe"},
-    {16, GPIO_TYPE_SAFE, "Safe"},
-    {17, GPIO_TYPE_SAFE, "Safe"},
-    {18, GPIO_TYPE_SAFE, "Safe"},
+
+    // GPIO 1-13: Exposed on solderable headers - SAFE for user configuration
+    {1, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {2, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {3, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {4, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {5, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {6, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {7, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {8, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {9, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {10, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {11, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {12, GPIO_TYPE_SAFE, "Safe (on header)"},
+    {13, GPIO_TYPE_SAFE, "Safe (on header)"},
+
+    // GPIO 14-18: NOT exposed on SuperMini headers - UNAVAILABLE
+    {14, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {15, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {16, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {17, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {18, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+
+    // GPIO 19-20: USB - avoid
     {19, GPIO_TYPE_AVOID, "Avoid: USB D- (OTG)"},
     {20, GPIO_TYPE_AVOID, "Avoid: USB D+ (OTG)"},
-    {21, GPIO_TYPE_SAFE, "Safe"},
+
+    // GPIO 21: NOT exposed on SuperMini headers - UNAVAILABLE
+    {21, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+
+    // GPIO 26-32: Flash SPI - avoid
     {26, GPIO_TYPE_AVOID, "Avoid: Flash SPI"},
     {27, GPIO_TYPE_AVOID, "Avoid: Flash SPI"},
     {28, GPIO_TYPE_AVOID, "Avoid: Flash SPI"},
@@ -64,22 +75,30 @@ static const GPIOInfo ESP32S3_GPIO_MAP[] = {
     {30, GPIO_TYPE_AVOID, "Avoid: Flash SPI"},
     {31, GPIO_TYPE_AVOID, "Avoid: Flash SPI"},
     {32, GPIO_TYPE_AVOID, "Avoid: Flash SPI"},
-    {33, GPIO_TYPE_SAFE, "Safe"},
-    {34, GPIO_TYPE_SAFE, "Safe"},
-    {35, GPIO_TYPE_SAFE, "Safe"},
-    {36, GPIO_TYPE_SAFE, "Safe"},
-    {37, GPIO_TYPE_SAFE, "Safe"},
-    {38, GPIO_TYPE_SAFE, "Safe"},
-    {39, GPIO_TYPE_SAFE, "Safe"},
-    {40, GPIO_TYPE_SAFE, "Safe"},
-    {41, GPIO_TYPE_SAFE, "Safe"},
-    {42, GPIO_TYPE_SAFE, "Safe"},
-    {43, GPIO_TYPE_SAFE, "Safe"},
-    {44, GPIO_TYPE_SAFE, "Safe"},
+
+    // GPIO 33-44: NOT exposed on SuperMini headers - UNAVAILABLE
+    {33, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {34, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {35, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {36, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {37, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {38, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {39, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {40, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {41, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {42, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {43, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+    {44, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+
+    // GPIO 45-46: Strapping pins - avoid
     {45, GPIO_TYPE_AVOID, "Avoid: Strapping pin"},
     {46, GPIO_TYPE_AVOID, "Avoid: Strapping pin"},
-    {47, GPIO_TYPE_SAFE, "Safe"},
-    {48, GPIO_TYPE_SAFE, "Safe"}
+
+    // GPIO 47: NOT exposed on SuperMini headers - UNAVAILABLE
+    {47, GPIO_TYPE_AVOID, "Unavailable: Not on SuperMini headers"},
+
+    // GPIO 48: Built-in RGB LED (wired internally) - SAFE
+    {48, GPIO_TYPE_SAFE, "Safe (built-in RGB LED)"}
 };
 
 static const int ESP32S3_GPIO_MAP_SIZE = sizeof(ESP32S3_GPIO_MAP) / sizeof(ESP32S3_GPIO_MAP[0]);
