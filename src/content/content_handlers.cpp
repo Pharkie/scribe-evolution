@@ -135,10 +135,13 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
 
     if (result.success)
     {
-        // Always return structured data (header + body separately)
+        // Return structured data (header + optional body)
         JsonDocument doc;
         doc["header"] = result.header;
-        doc["body"] = result.body;
+        // Only include body key if there's actual content
+        if (result.body.length() > 0) {
+            doc["body"] = result.body;
+        }
 
         String response;
         serializeJson(doc, response);

@@ -194,7 +194,7 @@
             >
               <!-- Main Printer Interface -->
               <div
-                class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 border-t-4 border-blue-600 transition-shadow duration-200"
+                class="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl rounded-2xl p-6 transition-shadow duration-200"
               >
                 <form @submit="handleSubmit($event)" class="space-y-4">
                   <!-- Printer Selection -->
@@ -321,7 +321,9 @@
 
                   <!-- Quick Actions -->
                   <div class="space-y-4 mt-4">
-                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-3">
+                    <div
+                      class="grid grid-cols-4 sm:grid-cols-7 gap-3 auto-rows-fr"
+                    >
                       <button
                         type="button"
                         @click="sendQuickAction('riddle')"
