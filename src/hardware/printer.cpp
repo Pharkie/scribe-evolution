@@ -19,10 +19,9 @@ PrinterLock::PrinterLock(SemaphoreHandle_t m, uint32_t timeoutMs)
 {
     if (mutex != nullptr)
     {
-        // Use LogManager to avoid deadlock with logging mutex
-        LogManager::instance().logfVerbose("[PrinterLock] Attempting to acquire mutex (timeout: %dms)...\n", timeoutMs);
+        LOG_VERBOSE("PRINTER", "Attempting to acquire mutex (timeout: %dms)...", timeoutMs);
         locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
-        LogManager::instance().logfVerbose("[PrinterLock] Mutex acquire result: %s\n", locked ? "SUCCESS" : "TIMEOUT");
+        LOG_VERBOSE("PRINTER", "Mutex acquire result: %s", locked ? "SUCCESS" : "TIMEOUT");
     }
 }
 
@@ -31,8 +30,7 @@ PrinterLock::~PrinterLock()
     if (mutex != nullptr && locked)
     {
         xSemaphoreGive(mutex);
-        // Use LogManager to avoid deadlock with logging mutex
-        LogManager::instance().logfVerbose("[PrinterLock] Mutex released in destructor\n");
+        LOG_VERBOSE("PRINTER", "Mutex released in destructor");
     }
 }
 
@@ -255,8 +253,16 @@ void PrinterManager::printWithHeader(const String& headerText, const String& bod
         return;
     }
 
-    // Log what we're printing at info level
-    LOG_INFO("PRINTER", "Printing: %s", headerText.c_str());
+    // Log what we're printing at notice level (show first line of body for context)
+    String preview = bodyText;
+    int newlinePos = preview.indexOf('\n');
+    if (newlinePos > 0) {
+        preview = preview.substring(0, newlinePos);
+    }
+    if (preview.length() > 50) {
+        preview = preview.substring(0, 50) + "...";
+    }
+    LOG_NOTICE("PRINTER", "Printing: %s", preview.c_str());
 
     // Clean both header and body text before printing
     String cleanHeaderText = cleanString(headerText);
