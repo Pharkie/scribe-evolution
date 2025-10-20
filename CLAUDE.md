@@ -4,7 +4,7 @@
 Multi-board ESP32 thermal printer with web interface. Alpine.js + Tailwind CSS frontend, C++ backend.
 Supports ESP32-C3-mini, ESP32-S3-mini, and custom PCB variants.
 Memory-constrained embedded system with dual configuration layers.
-Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT) use singleton + mutex pattern.
+Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT, LEDs) use singleton + mutex pattern.
 </system_context>
 
 <critical_notes>
@@ -16,6 +16,7 @@ Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT) use
 - Fail fast principle - no fallback values or defensive arrays
 - Always use "Scribe Evolution" (never just "Scribe") in all documentation
 - **NEVER upload firmware or monitor serial - let the user do it**
+- **FastLED RMT flags REQUIRED in platformio.ini** - Missing causes ESP32-C3 crashes (see `/src/leds/CLAUDE.md`)
   </critical_notes>
 
 <file_map>

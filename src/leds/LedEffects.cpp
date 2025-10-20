@@ -322,6 +322,7 @@ void LedEffects::update()
         return;
     }
 
+    // ESP32-C3 is single-core - mutex not strictly needed but keep for consistency
     // Use shorter timeout for update() since it's called frequently from main loop
     LedLock lock(mutex, 100);
     if (!lock.isLocked())
@@ -332,6 +333,14 @@ void LedEffects::update()
 
     if (!effectActive || !currentEffect || !leds)
     {
+        return;
+    }
+
+    // Additional safety checks for ESP32-C3
+    if (ledCount <= 0 || ledCount > 300)
+    {
+        LOG_ERROR("LEDS", "Corrupted ledCount: %d - stopping effect", ledCount);
+        stopEffectInternal();
         return;
     }
 
