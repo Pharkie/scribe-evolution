@@ -322,17 +322,32 @@ void LedEffects::update()
         return;
     }
 
+    // CRITICAL: Prevent re-entrant updates (fixes ESP32-C3 boot crash race condition)
+    // This guards against update() being called while already processing an update
+    static bool updateInProgress = false;
+    if (updateInProgress)
+    {
+        LOG_VERBOSE("LEDS", "Skipping update - already in progress (race condition prevented)");
+        return;
+    }
+
+    // Set guard flag
+    updateInProgress = true;
+
     // ESP32-C3 is single-core - mutex not strictly needed but keep for consistency
     // Use shorter timeout for update() since it's called frequently from main loop
     LedLock lock(mutex, 100);
     if (!lock.isLocked())
     {
         // Don't log on every timeout - would spam the log
+        updateInProgress = false;  // Release guard before returning
         return;
     }
 
+    // Validate effect state before proceeding
     if (!effectActive || !currentEffect || !leds)
     {
+        updateInProgress = false;  // Release guard before returning
         return;
     }
 
@@ -341,6 +356,7 @@ void LedEffects::update()
     {
         LOG_ERROR("LEDS", "Corrupted ledCount: %d - stopping effect", ledCount);
         stopEffectInternal();
+        updateInProgress = false;  // Release guard before returning
         return;
     }
 
@@ -349,6 +365,7 @@ void LedEffects::update()
     // Check if it's time to update
     if (now - lastUpdate < ledUpdateInterval)
     {
+        updateInProgress = false;  // Release guard before returning
         return;
     }
 
@@ -367,6 +384,7 @@ void LedEffects::update()
                 finalFadeBase = nullptr;
             }
             stopEffectInternal();
+            updateInProgress = false;  // Release guard before returning
             return;
         }
 
@@ -387,6 +405,7 @@ void LedEffects::update()
         }
 
         FastLED.show();
+        updateInProgress = false;  // Release guard before returning
         return;
     }
 
@@ -419,11 +438,13 @@ void LedEffects::update()
             }
             LOG_VERBOSE("LEDS", "Calling FastLED.show() for rainbow fade");
             FastLED.show();
+            updateInProgress = false;  // Release guard before returning
             return;
         }
         else
         {
             stopEffectInternal();
+            updateInProgress = false;  // Release guard before returning
             return;
         }
     }
@@ -431,6 +452,9 @@ void LedEffects::update()
     // Show the updated LEDs
     // LOG_VERBOSE("LEDS", "Calling FastLED.show() for normal update");
     FastLED.show();
+
+    // Release guard at end of function
+    updateInProgress = false;
 }
 
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,

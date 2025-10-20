@@ -208,15 +208,8 @@ void setup()
   }
 
 #if ENABLE_LEDS
-  // Initialize LED effects system
-  if (ledEffects().begin())
-  {
-    LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
-    // Trigger boot LED effect (chase single for 1 cycle)
-    ledEffects().startEffectCycles("chase_single", 1, 0x0000FF);
-    LOG_VERBOSE("BOOT", "Boot LED effect started (chase_single, 1 cycle)");
-  }
-  else
+  // Initialize LED effects system (boot effect will be triggered in postSetup())
+  if (!ledEffects().begin())
   {
     LOG_WARNING("BOOT", "LED effects system initialization failed");
   }
@@ -250,9 +243,6 @@ void setup()
   server.begin();
   LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
 
-  // Skip startup print to avoid early UART writes that can crash on S3
-  // printerManager.printStartupMessage();
-
   // Initialize Unbidden Ink schedule
   initializeUnbiddenInk();
 
@@ -278,25 +268,50 @@ void setup()
   }
 }
 
+/**
+ * @brief Post-setup initialization - runs once at the start of first loop() iteration
+ *
+ * This function handles initialization tasks that should happen AFTER setup() completes,
+ * allowing setup() to finish quickly without blocking delays. This prevents race conditions
+ * where non-blocking effects (like LED boot animations) are still running when loop() starts.
+ */
+void postSetup()
+{
+#if ENABLE_LEDS
+  // Trigger boot LED effect (chase single for 1 cycle) - non-blocking
+  // This is safe to do here because update() will be called in subsequent loop iterations
+  ledEffects().startEffectCycles("chase_single", 1, 0x0000FF);
+  LOG_VERBOSE("POST_SETUP", "Boot LED effect started (chase_single, 1 cycle)");
+#endif
+
+  // Print startup message to thermal printer
+  // Moved from setup() to avoid early UART writes that can crash on ESP32-S3
+  // TODO: Re-enable after LED crash is fully resolved
+  // printerManager.printStartupMessage();
+  // LOG_VERBOSE("POST_SETUP", "Startup message printed");
+}
+
 void loop()
 {
-  LOG_VERBOSE("LOOP", "-> Feeding watchdog");
+  // Run post-setup tasks once on first loop iteration
+  static bool firstRun = true;
+  if (firstRun)
+  {
+    postSetup();
+    firstRun = false;
+  }
   // Feed the watchdog
   esp_task_wdt_reset();
 
-  LOG_VERBOSE("LOOP", "-> Processing ezTime events");
   // Process ezTime events (for timezone updates)
   events();
 
-  LOG_VERBOSE("LOOP", "-> Checking WiFi reconnection");
   // Check WiFi connection and reconnect if needed
   handleWiFiReconnection();
 
-  LOG_VERBOSE("LOOP", "-> Handling DNS server");
   // Handle DNS server for captive portal in AP mode
   handleDNSServer();
 
-  LOG_VERBOSE("LOOP", "-> Checking hardware buttons");
   // Check hardware buttons (only if not in AP mode - buttons disabled in AP mode)
   if (!isAPMode())
   {
@@ -304,16 +319,13 @@ void loop()
   }
 
 #if ENABLE_LEDS
-  LOG_VERBOSE("LOOP", "-> Updating LED effects");
   // Update LED effects (non-blocking)
   ledEffects().update();
-  LOG_VERBOSE("LOOP", "-> LED effects updated");
 #endif
 
   // Handle web server requests - AsyncWebServer handles this automatically
   // No need to call server.handleClient() with async server
 
-  LOG_VERBOSE("LOOP", "-> Handling MQTT");
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
   {
     // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
@@ -322,8 +334,6 @@ void loop()
     // Handle printer discovery (only in STA mode when MQTT enabled)
     handlePrinterDiscovery();
   }
-
-  LOG_VERBOSE("LOOP", "-> Checking for print messages");
   // Check if we have a new message to print (protected by mutex for multi-core safety)
   bool shouldPrint = false;
   if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(10)) == pdTRUE)
@@ -334,7 +344,6 @@ void loop()
 
   if (shouldPrint)
   {
-    LOG_VERBOSE("MAIN", "Printing message from main loop");
     printMessage(); // printMessage() will acquire mutex internally to read currentMessage
 
     // Clear the flag after printing
@@ -345,7 +354,6 @@ void loop()
     }
   }
 
-  LOG_VERBOSE("LOOP", "-> Checking memory usage");
   // Monitor memory usage periodically
   if (millis() - lastMemCheck > memCheckIntervalMs)
   {
@@ -353,13 +361,10 @@ void loop()
     lastMemCheck = millis();
   }
 
-  LOG_VERBOSE("LOOP", "-> Checking Unbidden Ink");
   // Check Unbidden Ink schedule (only if WiFi connected for API calls)
   if (WiFi.status() == WL_CONNECTED)
   {
     checkUnbiddenInk();
   }
-
-  LOG_VERBOSE("LOOP", "-> Loop iteration complete");
   delay(smallDelayMs); // Small delay to prevent excessive CPU usage
 }
