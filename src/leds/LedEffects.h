@@ -152,7 +152,7 @@ private:
     SemaphoreHandle_t mutex;
     bool initialized;
 
-    // LED strip array
+    // LED strip array pointer
     CRGB *leds;
 
     // Runtime LED configuration

@@ -126,20 +126,21 @@ void setup()
   // Initialize status LED
   initializeStatusLED();
 
-  // Connect to WiFi (may fallback to AP mode)
-  currentWiFiMode = connectToWiFi();
+  // DISABLED: WiFi - minimizing components for ESP32-C3 crash debugging
+  // currentWiFiMode = connectToWiFi();
+  currentWiFiMode = WIFI_MODE_DISCONNECTED;
+  WiFi.mode(WIFI_OFF);
+  Serial.println("[BOOT] WiFi: ❌ Disabled (debugging)");
 
-  // Initialize LogManager - provides thread-safe single-writer logging
-  LogManager::instance().begin(115200, 256, 512);
-
-  // Initialize APIClient - provides thread-safe HTTP operations
-  APIClient::instance().begin();
-
-  // Initialize ConfigManager - provides thread-safe NVS/LittleFS operations
-  ConfigManager::instance().begin();
-
-  // Initialize MQTTManager - provides thread-safe MQTT operations
-  MQTTManager::instance().begin();
+  // TESTING: Crash happens with buttons WHEN managers are enabled - testing buttons ALONE
+  // LogManager::instance().begin(115200, 256, 512);
+  // Serial.println("[BOOT] LogManager: ✅ Enabled");
+  // APIClient::instance().begin();
+  // Serial.println("[BOOT] APIClient: ✅ Enabled");
+  // ConfigManager::instance().begin();
+  // Serial.println("[BOOT] ConfigManager: ✅ Enabled");
+  // MQTTManager::instance().begin();
+  Serial.println("[BOOT] Managers: ❌ Disabled (testing if buttons alone cause crash)");
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
@@ -184,20 +185,30 @@ void setup()
   // Log detailed GPIO summary in verbose mode (now that logging is available)
   logGPIOUsageSummary();
 
-  // Initialize configuration system
-  if (!initializeConfigSystem())
-  {
-    LOG_ERROR("BOOT", "Configuration system initialization failed");
-  }
-  else
-  {
-    LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
-  }
+  // TESTING: Disable config/printer to test buttons alone
+  // if (!initializeConfigSystem())
+  // {
+  //   LOG_ERROR("BOOT", "Configuration system initialization failed");
+  // }
+  // else
+  // {
+  //   LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
+  // }
+  // printerManager.initialize();
+  Serial.println("[BOOT] Config/Printer: ❌ Disabled (testing buttons alone)");
 
-  // Initialize printer
-  printerManager.initialize();
+#if ENABLE_LEDS
+  // ESP32-C3 FIX: Initialize FastLED BEFORE buttons (pinMode is disabled in button init)
+  extern CRGB staticLEDs[];  // Defined in LedEffects.cpp
+  Serial.println("[BOOT] Initializing FastLED directly (pinMode disabled in buttons)...");
+  FastLED.addLeds<WS2812B, 20, GRB>(staticLEDs, 30);
+  FastLED.setBrightness(100);
+  FastLED.clear();
+  FastLED.show();
+  Serial.println("[BOOT] ✅ FastLED initialized directly");
+#endif
 
-  // Initialize hardware buttons (only in STA mode)
+  // TESTING: Re-enable button initialization (with pinMode DISABLED)
   if (!isAPMode())
   {
     initializeHardwareButtons();
@@ -206,45 +217,39 @@ void setup()
   {
     LOG_NOTICE("BOOT", "Buttons: ❌ Disabled (AP mode)");
   }
-
-#if ENABLE_LEDS
-  // Initialize LED effects system (boot effect will be triggered in postSetup())
-  if (!ledEffects().begin())
-  {
-    LOG_WARNING("BOOT", "LED effects system initialization failed");
-  }
-#endif
+  Serial.println("[BOOT] Buttons: ✅ Enabled (testing with pinMode disabled)");
 
   // Setup mDNS
   setupmDNS();
 
-  // Setup MQTT client (only in STA mode and when MQTT enabled)
-  if (!isAPMode() && isMQTTEnabled())
-  {
-    startMQTTClient(true); // true = immediate connection on boot (WiFi is already stable)
-    LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
-  }
-  else
-  {
-    if (isAPMode())
-    {
-      LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (AP mode)");
-    }
-    else
-    {
-      LOG_NOTICE("BOOT", "MQTT: ❌ Disabled");
-    }
-  }
+  // DISABLED: MQTT client - minimizing components for ESP32-C3 crash debugging
+  // if (!isAPMode() && isMQTTEnabled())
+  // {
+  //   startMQTTClient(true); // true = immediate connection on boot (WiFi is already stable)
+  //   LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
+  // }
+  // else
+  // {
+  //   if (isAPMode())
+  //   {
+  //     LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (AP mode)");
+  //   }
+  //   else
+  //   {
+  //     LOG_NOTICE("BOOT", "MQTT: ❌ Disabled");
+  //   }
+  // }
+  LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (debugging)");
 
-  // Setup web server routes
-  setupWebServerRoutes(maxCharacters);
+  // DISABLED: Web server - minimizing components for ESP32-C3 crash debugging
+  // setupWebServerRoutes(maxCharacters);
+  // server.begin();
+  // LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
+  LOG_NOTICE("BOOT", "Web UI: ❌ Disabled (debugging)");
 
-  // Start the server
-  server.begin();
-  LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
-
-  // Initialize Unbidden Ink schedule
-  initializeUnbiddenInk();
+  // DISABLED: Unbidden Ink - minimizing components for ESP32-C3 crash debugging
+  // initializeUnbiddenInk();
+  LOG_NOTICE("BOOT", "Unbidden Ink: ❌ Disabled (debugging)");
 
   // Calculate boot time
   unsigned long bootDuration = millis() - bootStartTime;
@@ -278,15 +283,11 @@ void setup()
 void postSetup()
 {
 #if ENABLE_LEDS
-  // Trigger boot LED effect (chase single for 1 cycle) - non-blocking
-  // This is safe to do here because update() will be called in subsequent loop iterations
-  ledEffects().startEffectCycles("chase_single", 1, 0x0000FF);
-  LOG_VERBOSE("POST_SETUP", "Boot LED effect started (chase_single, 1 cycle)");
+  // FastLED now initialized in setup() (pinMode disabled in button init for ESP32-C3 fix)
+  Serial.println("[POST_SETUP] FastLED already initialized in setup()");
 #endif
 
-  // Print startup message to thermal printer
-  // Moved from setup() to avoid early UART writes that can crash on ESP32-S3
-  // TODO: Re-enable after LED crash is fully resolved
+  // DISABLED: Print startup message - minimizing components for ESP32-C3 crash debugging
   // printerManager.printStartupMessage();
   // LOG_VERBOSE("POST_SETUP", "Startup message printed");
 }
@@ -319,21 +320,39 @@ void loop()
   }
 
 #if ENABLE_LEDS
-  // Update LED effects (non-blocking)
-  ledEffects().update();
+  // TESTING: Direct FastLED chase effect (like the test) instead of ledEffects().update()
+  static unsigned long lastLedUpdate = 0;
+  static int ledPos = 0;
+  extern CRGB staticLEDs[];
+
+  if (millis() - lastLedUpdate > 50) {
+    // Simple chase effect
+    for (int i = 0; i < 30; i++) {
+      staticLEDs[i] = CRGB::Black;
+    }
+    staticLEDs[ledPos] = CRGB::Blue;
+
+    Serial.println("[LOOP] Calling FastLED.show() directly...");
+    FastLED.show();
+    Serial.println("[LOOP] ✓ FastLED.show() succeeded!");
+
+    ledPos = (ledPos + 1) % 30;
+    lastLedUpdate = millis();
+  }
 #endif
 
   // Handle web server requests - AsyncWebServer handles this automatically
   // No need to call server.handleClient() with async server
 
-  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
-  {
-    // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
-    handleMQTTConnection();
-
-    // Handle printer discovery (only in STA mode when MQTT enabled)
-    handlePrinterDiscovery();
-  }
+  // DISABLED: MQTT handling - minimizing components for ESP32-C3 crash debugging
+  // if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
+  // {
+  //   // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
+  //   handleMQTTConnection();
+  //
+  //   // Handle printer discovery (only in STA mode when MQTT enabled)
+  //   handlePrinterDiscovery();
+  // }
   // Check if we have a new message to print (protected by mutex for multi-core safety)
   bool shouldPrint = false;
   if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(10)) == pdTRUE)

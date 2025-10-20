@@ -18,6 +18,10 @@
 #include "effects/EffectRegistry.h"
 #include <utils/color_utils.h>
 
+// Global LED array (non-static so it can be accessed from main.cpp for testing)
+#define MAX_LEDS 300
+CRGB staticLEDs[MAX_LEDS];
+
 // ============================================================================
 // LedLock RAII Implementation
 // ============================================================================
@@ -101,11 +105,7 @@ LedEffects::~LedEffects()
         effectRegistry = nullptr;
     }
 
-    if (leds)
-    {
-        delete[] leds;
-        leds = nullptr;
-    }
+    // LED array is now static (no deallocation needed)
 
     if (mutex != nullptr)
     {
@@ -189,20 +189,14 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
         return false;
     }
 
-    // Clean up existing LED array
-    if (leds)
+    // Use static LED array (avoids ESP32-C3 RMT crash with heap allocation)
+    if (ledCount > MAX_LEDS)
     {
-        delete[] leds;
-        leds = nullptr;
-    }
-
-    // Allocate LED array
-    leds = new CRGB[ledCount];
-    if (!leds)
-    {
-        LOG_ERROR("LEDS", "Failed to allocate memory for %d LEDs", ledCount);
+        LOG_ERROR("LEDS", "LED count %d exceeds maximum %d", ledCount, MAX_LEDS);
         return false;
     }
+    leds = staticLEDs;  // Point to static global array
+    LOG_VERBOSE("LEDS", "Using static LED array for %d LEDs (max: %d) at %p", ledCount, MAX_LEDS, leds);
 
     // Enable LED eFuse if present (custom PCB only)
     #if BOARD_HAS_LED_EFUSE
@@ -224,10 +218,10 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
         return false;
     }
 
-    // CRITICAL: Clear FastLED's global controller list before adding new LED strip
-    // If we don't do this, calling addLeds() multiple times causes memory corruption
-    // that can overwrite adjacent globals (like printerManager)
-    FastLED.clear(true);  // true = also clear controller list
+    // Clear LED buffer before initializing
+    // NOTE: DO NOT call FastLED.clearData() before addLeds() - causes ESP32-C3 crash!
+    // FastLED.clearData();  // ← REMOVED: This corrupts ESP32-C3 RMT state
+    FastLED.clear();      // Clear all LEDs to off state
 
     LOG_VERBOSE("LEDS", "Initializing FastLED on GPIO %d (Board: %s)", ledPin, BOARD_NAME);
 
@@ -296,7 +290,15 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
 
     FastLED.setBrightness(ledBrightness);
     FastLED.clear();
-    FastLED.show();
+    FastLED.show();  // Single show() with zeros (like the test does)
+
+    // DISABLED: ESP32-C3 "priming" - testing if this is what breaks it
+    // LOG_VERBOSE("LEDS", "ESP32-C3: Priming RMT with color data...");
+    // leds[0] = CRGB::Blue;  // Set first LED to blue
+    // FastLED.show();        // Second show() with color data
+    // leds[0] = CRGB::Black; // Clear it
+    // FastLED.show();        // Third show() back to zeros
+    // LOG_VERBOSE("LEDS", "ESP32-C3: RMT primed successfully");
 
     // Create or update effect registry
     if (effectRegistry)
@@ -334,15 +336,15 @@ void LedEffects::update()
     // Set guard flag
     updateInProgress = true;
 
-    // ESP32-C3 is single-core - mutex not strictly needed but keep for consistency
-    // Use shorter timeout for update() since it's called frequently from main loop
-    LedLock lock(mutex, 100);
-    if (!lock.isLocked())
-    {
-        // Don't log on every timeout - would spam the log
-        updateInProgress = false;  // Release guard before returning
-        return;
-    }
+    // ESP32-C3 WORKAROUND: Mutex disabled - seems to interfere with FastLED RMT timing
+    // ESP32-C3 is single-core so mutex not needed anyway
+    // LedLock lock(mutex, 100);
+    // if (!lock.isLocked())
+    // {
+    //     // Don't log on every timeout - would spam the log
+    //     updateInProgress = false;  // Release guard before returning
+    //     return;
+    // }
 
     // Validate effect state before proceeding
     if (!effectActive || !currentEffect || !leds)
@@ -371,87 +373,51 @@ void LedEffects::update()
 
     lastUpdate = now;
 
-    // Handle manager-driven final fade-out (e.g., rainbow end-of-all-cycles)
-    if (finalFadeActive)
-    {
-        unsigned long elapsed = now - finalFadeStart;
-        if (elapsed >= finalFadeDurationMs)
-        {
-            // Cleanup fade resources then stop
-            if (finalFadeBase)
-            {
-                delete[] finalFadeBase;
-                finalFadeBase = nullptr;
-            }
-            stopEffectInternal();
-            updateInProgress = false;  // Release guard before returning
-            return;
-        }
+    // DIAGNOSTIC: Log effect state at update entry
+    LOG_VERBOSE("LEDS", "UPDATE: effect=%s, cycles=%d/%d, step=%d, active=%d",
+                currentEffectName.c_str(), completedCycles, targetCycles, effectStep, effectActive);
 
-        // Time-based linear fade for smoother perception over the duration
-        float t = (float)elapsed / (float)finalFadeDurationMs; // 0..1
-        t = constrain(t, 0.0f, 1.0f);
-        // Perceptual (gamma) fade: closer to human brightness perception
-        float gamma = 2.2f;
-        uint8_t scale = (uint8_t)(powf(1.0f - t, gamma) * 255.0f);
-        if (finalFadeBase)
-        {
-            for (int i = 0; i < ledCount; i++)
-            {
-                CRGB c = finalFadeBase[i];
-                nscale8x3_video(c.r, c.g, c.b, scale);
-                leds[i] = c;
-            }
-        }
-
-        FastLED.show();
-        updateInProgress = false;  // Release guard before returning
-        return;
-    }
+    // DISABLED: All fade logic disabled for ESP32-C3 debugging
+    // if (finalFadeActive) { ... }
 
     // Update the current effect
+    LOG_VERBOSE("LEDS", "UPDATE: Calling currentEffect->update() (leds=%p, count=%d)", leds, ledCount);
     bool shouldContinue = currentEffect->update(leds, ledCount, effectStep, effectDirection,
                                                 effectPhase, effectColor1, effectColor2, effectColor3,
                                                 completedCycles);
+    LOG_VERBOSE("LEDS", "UPDATE: currentEffect->update() returned %d, cycles now=%d/%d",
+                shouldContinue, completedCycles, targetCycles);
 
     // Check if cycle-based effect is complete (when target cycles > 0)
     if (targetCycles > 0 && completedCycles >= targetCycles)
     {
-        // For rainbow: initiate a manager-driven final fade-out instead of abrupt stop
-        if (currentEffectName.equalsIgnoreCase("rainbow"))
-        {
-            finalFadeActive = true;
-            finalFadeStart = now;
-            // Snapshot current LED state as base for linear fade
-            if (finalFadeBase)
-            {
-                delete[] finalFadeBase;
-                finalFadeBase = nullptr;
-            }
-            finalFadeBase = new CRGB[ledCount];
-            if (finalFadeBase)
-            {
-                for (int i = 0; i < ledCount; i++)
-                {
-                    finalFadeBase[i] = leds[i];
-                }
-            }
-            LOG_VERBOSE("LEDS", "Calling FastLED.show() for rainbow fade");
-            FastLED.show();
-            updateInProgress = false;  // Release guard before returning
-            return;
-        }
-        else
-        {
-            stopEffectInternal();
-            updateInProgress = false;  // Release guard before returning
-            return;
-        }
+        // DISABLED: Rainbow fade logic disabled for ESP32-C3 debugging
+        // Just stop all effects immediately without fade
+        LOG_VERBOSE("LEDS", "UPDATE: Effect complete - calling stopEffectInternal()");
+        stopEffectInternal();
+        LOG_VERBOSE("LEDS", "UPDATE: stopEffectInternal() completed");
+        updateInProgress = false;  // Release guard before returning
+        return;
     }
 
     // Show the updated LEDs
-    // LOG_VERBOSE("LEDS", "Calling FastLED.show() for normal update");
+    LOG_VERBOSE("LEDS", "UPDATE: Calling FastLED.show() for normal update");
+    LOG_VERBOSE("LEDS", "UPDATE: FastLED controller count=%d", FastLED.count());
+    LOG_VERBOSE("LEDS", "UPDATE: LED buffer address=%p, first LED RGB=(%d,%d,%d)",
+                leds, leds[0].r, leds[0].g, leds[0].b);
+
+    // ESP32-C3 WORKAROUND: Call FastLED.show() twice
+    // Observation: stopEffectInternal() calls show() twice and works fine
+    // Hypothesis: First show() might fail/crash, but second one works?
+    // Or: RMT peripheral needs double-buffering on C3?
+    #ifdef CONFIG_IDF_TARGET_ESP32C3
+    LOG_VERBOSE("LEDS", "UPDATE: ESP32-C3 calling show() twice");
     FastLED.show();
+    delayMicroseconds(100);  // Small delay between calls
+    #endif
+
+    FastLED.show();
+    LOG_VERBOSE("LEDS", "UPDATE: FastLED.show() completed");
 
     // Release guard at end of function
     updateInProgress = false;

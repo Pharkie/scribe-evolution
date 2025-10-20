@@ -127,9 +127,10 @@ void initializeHardwareButtons()
             continue;
         }
 
-        // Configure GPIO pin with error protection
-        LOG_VERBOSE("BUTTONS", "Configuring button %d GPIO %d...", i, gpio);
-        pinMode(gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
+        // ESP32-C3 FIX: pinMode() corrupts RMT peripheral used by FastLED
+        // Disabling pinMode() to test if FastLED works without it
+        LOG_VERBOSE("BUTTONS", "SKIPPING pinMode() for button %d GPIO %d (ESP32-C3 FastLED fix)...", i, gpio);
+        // pinMode(gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
 
         // Small delay for GPIO stabilization
         delay(10);
