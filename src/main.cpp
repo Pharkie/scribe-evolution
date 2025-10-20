@@ -198,14 +198,22 @@ void setup()
   Serial.println("[BOOT] Config/Printer: ❌ Disabled (testing buttons alone)");
 
 #if ENABLE_LEDS
-  // ESP32-C3 FIX: Initialize FastLED BEFORE buttons (pinMode is disabled in button init)
-  extern CRGB staticLEDs[];  // Defined in LedEffects.cpp
-  Serial.println("[BOOT] Initializing FastLED directly (pinMode disabled in buttons)...");
-  FastLED.addLeds<WS2812B, 20, GRB>(staticLEDs, 30);
-  FastLED.setBrightness(100);
-  FastLED.clear();
-  FastLED.show();
-  Serial.println("[BOOT] ✅ FastLED initialized directly");
+  // DISABLED: Direct FastLED initialization (testing if ledEffects().begin() can do it alone)
+  // extern CRGB staticLEDs[];  // Defined in LedEffects.cpp
+  // Serial.println("[BOOT] Initializing FastLED directly (pinMode disabled in buttons)...");
+  // FastLED.addLeds<WS2812B, 20, GRB>(staticLEDs, 30);
+  // FastLED.setBrightness(100);
+  // FastLED.clear();
+  // FastLED.show();
+  // Serial.println("[BOOT] ✅ FastLED initialized directly");
+
+  // TESTING: ledEffects().begin() WITHOUT direct FastLED init first
+  Serial.println("[BOOT] Testing ledEffects().begin() initialization (no direct FastLED)...");
+  if (ledEffects().begin()) {
+    Serial.println("[BOOT] ✅ ledEffects().begin() succeeded");
+  } else {
+    Serial.println("[BOOT] ❌ ledEffects().begin() FAILED");
+  }
 #endif
 
   // TESTING: Re-enable button initialization (with pinMode DISABLED)
@@ -283,8 +291,10 @@ void setup()
 void postSetup()
 {
 #if ENABLE_LEDS
-  // FastLED now initialized in setup() (pinMode disabled in button init for ESP32-C3 fix)
-  Serial.println("[POST_SETUP] FastLED already initialized in setup()");
+  // TESTING: Trigger boot LED chase effect (1 cycle)
+  Serial.println("[POST_SETUP] Triggering boot LED chase effect...");
+  ledEffects().startEffectCycles("chase_single", 1);
+  Serial.println("[POST_SETUP] ✅ Boot LED effect started");
 #endif
 
   // DISABLED: Print startup message - minimizing components for ESP32-C3 crash debugging
@@ -320,25 +330,30 @@ void loop()
   }
 
 #if ENABLE_LEDS
-  // TESTING: Direct FastLED chase effect (like the test) instead of ledEffects().update()
-  static unsigned long lastLedUpdate = 0;
-  static int ledPos = 0;
-  extern CRGB staticLEDs[];
+  // DISABLED: Direct FastLED chase (keep for comparison with ledEffects)
+  // static unsigned long lastLedUpdate = 0;
+  // static int ledPos = 0;
+  // extern CRGB staticLEDs[];
+  //
+  // if (millis() - lastLedUpdate > 50) {
+  //   // Simple chase effect
+  //   for (int i = 0; i < 30; i++) {
+  //     staticLEDs[i] = CRGB::Black;
+  //   }
+  //   staticLEDs[ledPos] = CRGB::Blue;
+  //
+  //   Serial.println("[LOOP] Calling FastLED.show() directly...");
+  //   FastLED.show();
+  //   Serial.println("[LOOP] ✓ FastLED.show() succeeded!");
+  //
+  //   ledPos = (ledPos + 1) % 30;
+  //   lastLedUpdate = millis();
+  // }
 
-  if (millis() - lastLedUpdate > 50) {
-    // Simple chase effect
-    for (int i = 0; i < 30; i++) {
-      staticLEDs[i] = CRGB::Black;
-    }
-    staticLEDs[ledPos] = CRGB::Blue;
-
-    Serial.println("[LOOP] Calling FastLED.show() directly...");
-    FastLED.show();
-    Serial.println("[LOOP] ✓ FastLED.show() succeeded!");
-
-    ledPos = (ledPos + 1) % 30;
-    lastLedUpdate = millis();
-  }
+  // TESTING: Try ledEffects().update() instead of direct FastLED
+  Serial.println("[LOOP] Calling ledEffects().update()...");
+  ledEffects().update();
+  Serial.println("[LOOP] ✓ ledEffects().update() succeeded!");
 #endif
 
   // Handle web server requests - AsyncWebServer handles this automatically
