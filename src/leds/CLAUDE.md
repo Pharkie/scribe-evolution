@@ -4,7 +4,8 @@
 LED effects system with conditional compilation.
 FastLED-based cycle management and effect registry.
 Thread-safe singleton pattern with RAII mutex locking.
-Multi-board support: ESP32-C3, ESP32-S3 (4MB/8MB variants).
+Multi-board support: ESP32-S3 (4MB/8MB variants).
+**NOT SUPPORTED on ESP32-C3** - FastLED library crashes on this platform.
 </system_context>
 
 <critical_notes>
@@ -122,14 +123,32 @@ FastLED uses the ESP32's RMT (Remote Control) peripheral for WS2812B LED strips.
 
 ### Board Configuration Status
 
-All base environments in platformio.ini have correct RMT flags:
+LED support by platform:
 
-- ✅ esp32c3_base (lines 72-73)
-- ✅ esp32s3_base (lines 95-96)
-- ✅ esp32s3_4mb_base (lines 118-119)
-- ✅ esp32s3-8mb-custom-pcb inherits from esp32s3_base
+- ❌ **ESP32-C3**: DISABLED - FastLED.show() crashes inside library (ENABLE_LEDS=0)
+- ✅ **ESP32-S3** (all variants): ENABLED with RMT driver (ENABLE_LEDS=1)
+  - esp32s3_base (lines 95-96): RMT configured
+  - esp32s3_4mb_base (lines 118-119): RMT configured
+  - esp32s3-8mb-custom-pcb: Inherits from esp32s3_base
 
-**DO NOT remove or modify these flags without testing on hardware!**
+### ESP32-C3 FastLED Issue
+
+**Known Issue**: FastLED 3.10.3 crashes on ESP32-C3 with "Load access fault" inside `CFastLED::show()`.
+
+**Attempted Solutions** (all failed):
+
+- RMT driver configuration (BUILTIN_DRIVER, MAX_CHANNELS)
+- Legacy IDF4 RMT driver
+- I2S driver mode
+- CPU bit-banging mode
+- Interrupt protection around FastLED.show()
+- FastLED version downgrade (3.9.3)
+
+**Root Cause**: FastLED library has broken ESP32-C3 (RISC-V) support. The crash occurs deep inside the FastLED library regardless of configuration.
+
+**Workaround**: LEDs disabled on ESP32-C3 builds (ENABLE_LEDS=0). System functions normally without LED effects.
+
+**Future**: Monitor FastLED GitHub for ESP32-C3 fixes. May require alternative LED library (e.g., NeoPixelBus) for C3 support.
 </fastled_rmt_configuration>
 
 <thread_safe_architecture>

@@ -67,7 +67,7 @@ static const int defaultUnbiddenInkFrequencyMinutes = 60;                       
 // NOTICE = Important events (default, recommended)
 // WARNING = Warnings and errors only
 // ERROR = Errors only
-static const int logLevel = LOG_LEVEL_NOTICE;
+static const int logLevel = LOG_LEVEL_VERBOSE;
 
 // ESP-IDF system logging levels (ESP_LOGx macros)
 // Options: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE

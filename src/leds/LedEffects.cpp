@@ -385,7 +385,17 @@ void LedEffects::update()
                 leds[i] = c;
             }
         }
+
+        #ifdef CONFIG_IDF_TARGET_ESP32C3
+        portDISABLE_INTERRUPTS();
+        #endif
+
         FastLED.show();
+
+        #ifdef CONFIG_IDF_TARGET_ESP32C3
+        portENABLE_INTERRUPTS();
+        #endif
+
         return;
     }
 
@@ -416,7 +426,18 @@ void LedEffects::update()
                     finalFadeBase[i] = leds[i];
                 }
             }
+            LOG_VERBOSE("LEDS", "Calling FastLED.show() for rainbow fade");
+
+            #ifdef CONFIG_IDF_TARGET_ESP32C3
+            portDISABLE_INTERRUPTS();
+            #endif
+
             FastLED.show();
+
+            #ifdef CONFIG_IDF_TARGET_ESP32C3
+            portENABLE_INTERRUPTS();
+            #endif
+
             return;
         }
         else
@@ -427,6 +448,8 @@ void LedEffects::update()
     }
 
     // Show the updated LEDs
+    LOG_VERBOSE("LEDS", "Calling FastLED.show() for normal update");
+
     FastLED.show();
 }
 
@@ -487,8 +510,8 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
     effectDirection = 1;
     effectPhase = 0.0f;
 
-    LOG_VERBOSE("LEDS", "Started LED effect: %s (cycles: %d)",
-                effectName.c_str(), cycles);
+    LOG_NOTICE("LEDS", "Started LED effect: %s (cycles: %d) on GPIO %d with %d LEDs",
+                effectName.c_str(), cycles, ledPin, ledCount);
 
     return true;
 }
