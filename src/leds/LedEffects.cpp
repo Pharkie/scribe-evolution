@@ -81,14 +81,10 @@ LedEffects::LedEffects() : mutex(nullptr),
                            effectRegistry(nullptr),
                            finalFadeActive(false),
                            finalFadeStart(0),
-                           finalFadeBase(nullptr)
+                           finalFadeBase(nullptr),
+                           initialized(false)
 {
-    // Create LED mutex for multi-core protection (ESP32-S3)
-    mutex = xSemaphoreCreateMutex();
-    if (mutex == nullptr)
-    {
-        LogManager::instance().logf("[LEDS] FATAL: Failed to create LED mutex!\n");
-    }
+    // Mutex creation moved to begin() to ensure FreeRTOS is fully initialized
 }
 
 LedEffects::~LedEffects()
@@ -120,6 +116,23 @@ LedEffects::~LedEffects()
 
 bool LedEffects::begin()
 {
+    if (initialized)
+    {
+        LOG_VERBOSE("LEDS", "LedEffects already initialized");
+        return true;
+    }
+
+    // Create LED mutex for multi-core protection (must be done in begin(), not constructor)
+    mutex = xSemaphoreCreateMutex();
+    if (mutex == nullptr)
+    {
+        LOG_ERROR("LEDS", "Failed to create LED mutex!");
+        return false;
+    }
+
+    initialized = true;
+    LOG_NOTICE("LEDS", "LedEffects initialized (thread-safe singleton)");
+
     LedLock lock(mutex, 2000);
     if (!lock.isLocked())
     {
@@ -138,6 +151,12 @@ bool LedEffects::begin()
 bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRate,
                               const LedEffectsConfig &effectsConfig)
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return false;
+    }
+
     LedLock lock(mutex, 2000);
     if (!lock.isLocked())
     {
@@ -297,6 +316,12 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
 
 void LedEffects::update()
 {
+    if (!initialized)
+    {
+        // Not initialized yet - silently return (this is called every loop iteration)
+        return;
+    }
+
     // Use shorter timeout for update() since it's called frequently from main loop
     LedLock lock(mutex, 100);
     if (!lock.isLocked())
@@ -399,6 +424,12 @@ void LedEffects::update()
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,
                                    CRGB color1, CRGB color2, CRGB color3)
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return false;
+    }
+
     LedLock lock(mutex, 1000);
     if (!lock.isLocked())
     {
@@ -455,6 +486,12 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
 
 bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return false;
+    }
+
     // Get colors from registry first (no lock needed for read-only operation)
     String h1, h2, h3;
     {
@@ -500,6 +537,12 @@ bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
 
 void LedEffects::stopEffect()
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return;
+    }
+
     LedLock lock(mutex, 1000);
     if (!lock.isLocked())
     {
@@ -550,6 +593,11 @@ void LedEffects::stopEffectInternal()
 
 bool LedEffects::isEffectRunning() const
 {
+    if (!initialized)
+    {
+        return false;
+    }
+
     // Const method can't acquire mutex in typical pattern, but for simple bool read it's atomic enough
     // On ESP32, aligned 32-bit reads are atomic
     return effectActive;
@@ -557,6 +605,11 @@ bool LedEffects::isEffectRunning() const
 
 String LedEffects::getCurrentEffectName() const
 {
+    if (!initialized)
+    {
+        return "";
+    }
+
     // String copy needs protection
     LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
     if (!lock.isLocked())
@@ -568,6 +621,11 @@ String LedEffects::getCurrentEffectName() const
 
 unsigned long LedEffects::getRemainingTime() const
 {
+    if (!initialized)
+    {
+        return 0;
+    }
+
     LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
     if (!lock.isLocked())
     {
@@ -590,6 +648,12 @@ unsigned long LedEffects::getRemainingTime() const
 
 void LedEffects::updateEffectConfig(const LedEffectsConfig &newConfig)
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return;
+    }
+
     LedLock lock(mutex, 1000);
     if (!lock.isLocked())
     {

@@ -150,6 +150,8 @@ private:
 
     // Thread synchronization
     SemaphoreHandle_t mutex;
+    bool initialized;
+
     // LED strip array
     CRGB *leds;
 
