@@ -386,16 +386,7 @@ void LedEffects::update()
             }
         }
 
-        #ifdef CONFIG_IDF_TARGET_ESP32C3
-        portDISABLE_INTERRUPTS();
-        #endif
-
         FastLED.show();
-
-        #ifdef CONFIG_IDF_TARGET_ESP32C3
-        portENABLE_INTERRUPTS();
-        #endif
-
         return;
     }
 
@@ -427,17 +418,7 @@ void LedEffects::update()
                 }
             }
             LOG_VERBOSE("LEDS", "Calling FastLED.show() for rainbow fade");
-
-            #ifdef CONFIG_IDF_TARGET_ESP32C3
-            portDISABLE_INTERRUPTS();
-            #endif
-
             FastLED.show();
-
-            #ifdef CONFIG_IDF_TARGET_ESP32C3
-            portENABLE_INTERRUPTS();
-            #endif
-
             return;
         }
         else
@@ -448,8 +429,7 @@ void LedEffects::update()
     }
 
     // Show the updated LEDs
-    LOG_VERBOSE("LEDS", "Calling FastLED.show() for normal update");
-
+    // LOG_VERBOSE("LEDS", "Calling FastLED.show() for normal update");
     FastLED.show();
 }
 

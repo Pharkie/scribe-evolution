@@ -69,10 +69,10 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         effectStep = 0;   // Reset for next cycle
         frameCounter = 0; // Reset frame counter
         stepAccumulator = 0.0f; // Reset fractional speed accumulator
-        LOG_VERBOSE("LEDS", "Chase single completed cycle %d/%d", completedCycles, targetCycles);
+        LOG_VERBOSE("LEDS", "Chase single completed cycle %d", completedCycles);
 
-        // Return false if we've completed all requested cycles
-        return completedCycles < targetCycles;
+        // Manager will handle cycle counting - effect just reports completion
+        return true; // Always continue (manager decides when to stop)
     }
 
     return true; // Continue running

@@ -280,18 +280,23 @@ void setup()
 
 void loop()
 {
+  LOG_VERBOSE("LOOP", "-> Feeding watchdog");
   // Feed the watchdog
   esp_task_wdt_reset();
 
+  LOG_VERBOSE("LOOP", "-> Processing ezTime events");
   // Process ezTime events (for timezone updates)
   events();
 
+  LOG_VERBOSE("LOOP", "-> Checking WiFi reconnection");
   // Check WiFi connection and reconnect if needed
   handleWiFiReconnection();
 
+  LOG_VERBOSE("LOOP", "-> Handling DNS server");
   // Handle DNS server for captive portal in AP mode
   handleDNSServer();
 
+  LOG_VERBOSE("LOOP", "-> Checking hardware buttons");
   // Check hardware buttons (only if not in AP mode - buttons disabled in AP mode)
   if (!isAPMode())
   {
@@ -299,13 +304,16 @@ void loop()
   }
 
 #if ENABLE_LEDS
+  LOG_VERBOSE("LOOP", "-> Updating LED effects");
   // Update LED effects (non-blocking)
   ledEffects().update();
+  LOG_VERBOSE("LOOP", "-> LED effects updated");
 #endif
 
   // Handle web server requests - AsyncWebServer handles this automatically
   // No need to call server.handleClient() with async server
 
+  LOG_VERBOSE("LOOP", "-> Handling MQTT");
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
   {
     // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
@@ -315,6 +323,7 @@ void loop()
     handlePrinterDiscovery();
   }
 
+  LOG_VERBOSE("LOOP", "-> Checking for print messages");
   // Check if we have a new message to print (protected by mutex for multi-core safety)
   bool shouldPrint = false;
   if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(10)) == pdTRUE)
@@ -336,6 +345,7 @@ void loop()
     }
   }
 
+  LOG_VERBOSE("LOOP", "-> Checking memory usage");
   // Monitor memory usage periodically
   if (millis() - lastMemCheck > memCheckIntervalMs)
   {
@@ -343,11 +353,13 @@ void loop()
     lastMemCheck = millis();
   }
 
+  LOG_VERBOSE("LOOP", "-> Checking Unbidden Ink");
   // Check Unbidden Ink schedule (only if WiFi connected for API calls)
   if (WiFi.status() == WL_CONNECTED)
   {
     checkUnbiddenInk();
   }
 
+  LOG_VERBOSE("LOOP", "-> Loop iteration complete");
   delay(smallDelayMs); // Small delay to prevent excessive CPU usage
 }
