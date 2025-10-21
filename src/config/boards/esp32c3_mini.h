@@ -67,7 +67,7 @@ static const GPIOInfo BOARD_GPIO_MAP[] = {
     {5, GPIO_TYPE_SAFE, "Safe"},
     {6, GPIO_TYPE_SAFE, "Safe"},
     {7, GPIO_TYPE_SAFE, "Safe"},
-    {8, GPIO_TYPE_AVOID, "Onboard LED"},
+    {8, GPIO_TYPE_SAFE, "Status LED (onboard LED)"},
     {9, GPIO_TYPE_AVOID, "Strapping pin"},
     {10, GPIO_TYPE_SAFE, "Safe"},
     {18, GPIO_TYPE_AVOID, "USB D- (Serial/JTAG)"},
@@ -80,7 +80,7 @@ static const int BOARD_GPIO_MAP_SIZE = sizeof(BOARD_GPIO_MAP) / sizeof(BOARD_GPI
 
 // Strapping and avoid pins
 static const int BOARD_STRAPPING_PINS[] = {0, 9};
-static const int BOARD_AVOID_PINS[] = {0, 1, 3, 8, 9, 18, 19};
+static const int BOARD_AVOID_PINS[] = {0, 1, 3, 9, 18, 19};
 
 // ============================================================================
 // VALIDATION HELPER FUNCTIONS

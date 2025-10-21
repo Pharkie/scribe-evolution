@@ -20,7 +20,6 @@
 
 #include "config_utils.h"
 #include <config/config.h>
-#include <config/board_pins.h>
 #include "config_loader.h"
 #include "logging.h"
 #include <Arduino.h>
@@ -100,10 +99,7 @@ void validateConfig()
         }
 
         // Warn about unsafe GPIOs (strapping, USB, flash, etc.)
-        // Skip warning for status LED if it's using the board's default onboard LED
-        bool isStatusLedOnBoardDefault = (usedGpios[i] == statusLEDPin && statusLEDPin == getStatusLedPin());
-
-        if (!isSafeGPIO(usedGpios[i]) && !isStatusLedOnBoardDefault)
+        if (!isSafeGPIO(usedGpios[i]))
         {
             Serial.printf("⚠️  GPIO %d: %s (intentionally configured)\n", usedGpios[i], getGPIODescription(usedGpios[i]));
         }
