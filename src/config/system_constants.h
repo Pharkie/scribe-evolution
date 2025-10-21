@@ -125,8 +125,7 @@ static const int ntpSyncIntervalSeconds = 3600; // Re-sync interval (1 hour)
 
 // Logging Configuration
 // Logging levels: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
-static const int logLevel = LOG_LEVEL_NOTICE;
-static const esp_log_level_t espLogLevel = ESP_LOG_WARN;
+// Note: logLevel and espLogLevel defined in device_config.h
 static const bool enableSerialLogging = true;       // Serial console
 static const bool enableFileLogging = false;        // LittleFS file (untested)
 static const bool enableMQTTLogging = false;        // MQTT topic
