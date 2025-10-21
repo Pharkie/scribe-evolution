@@ -16,7 +16,7 @@
 #define BOARD_PRINTER_TX_PIN 21
 #define BOARD_STATUS_LED_PIN 8
 
-// Button pins
+// Button pins (button 0=GPIO4, button 1=GPIO5, button 2=GPIO6, button 3=GPIO7)
 static const int BOARD_BUTTON_PINS[4] = {4, 5, 6, 7};
 
 #endif // ESP32C3_MINI_H

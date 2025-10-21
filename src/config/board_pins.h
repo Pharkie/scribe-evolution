@@ -1,10 +1,10 @@
 /**
  * @file board_pins.h
- * @brief Minimal board-specific pin configuration
+ * @brief Board-specific pin configuration selector
  * @author Adam Knowles
  * @date 2025
  *
- * Simple compile-time board pin definitions for ESP32-C3, ESP32-S3-mini, and ESP32-S3-custom-PCB
+ * Includes the appropriate board definition file based on platformio.ini build flags
  */
 
 #ifndef BOARD_PINS_H
@@ -15,32 +15,11 @@
 // ============================================================================
 
 #if defined(BOARD_ESP32C3_MINI)
-    // ESP32-C3-mini (4MB flash)
-    #define BOARD_NAME "ESP32-C3-mini"
-    #define BOARD_LED_STRIP_PIN 20
-    #define BOARD_PRINTER_TX_PIN 21
-    #define BOARD_STATUS_LED_PIN 8
-
-    static const int BOARD_BUTTON_PINS[4] = {4, 5, 6, 7};
-
+    #include "boards/esp32c3_mini.h"
 #elif defined(BOARD_ESP32S3_MINI)
-    // ESP32-S3-mini (4MB flash)
-    #define BOARD_NAME "ESP32-S3-mini"
-    #define BOARD_LED_STRIP_PIN 48
-    #define BOARD_PRINTER_TX_PIN 43
-    #define BOARD_STATUS_LED_PIN 47
-
-    static const int BOARD_BUTTON_PINS[4] = {4, 5, 6, 7};
-
+    #include "boards/esp32s3_mini.h"
 #elif defined(BOARD_ESP32S3_CUSTOM_PCB)
-    // ESP32-S3-custom-PCB (8MB flash)
-    #define BOARD_NAME "ESP32-S3-custom-PCB"
-    #define BOARD_LED_STRIP_PIN 48
-    #define BOARD_PRINTER_TX_PIN 43
-    #define BOARD_STATUS_LED_PIN 47
-
-    static const int BOARD_BUTTON_PINS[4] = {4, 5, 6, 7};
-
+    #include "boards/esp32s3_custom_pcb.h"
 #else
     #error "No board type defined! Set BOARD_ESP32C3_MINI, BOARD_ESP32S3_MINI, or BOARD_ESP32S3_CUSTOM_PCB in platformio.ini"
 #endif
