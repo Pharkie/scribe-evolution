@@ -148,8 +148,8 @@ static const int totalRiddles = 545;        // Total riddles in riddles.ndjson
 static const char *apiUserAgent = "Scribe Thermal Printer (https://github.com/Pharkie/scribe)";
 
 // Hardware Configuration - GPIO Defaults (can be overridden in runtime config)
-static const int defaultPrinterTxPin = 21; // Default TX pin to printer RX (green wire)
-static const int heatingDots = 10;         // Heating dots (7-15, lower = less power)
+static const int defaultPrinterTxPin = BOARD_PRINTER_TX_PIN; // Board-specific printer TX pin
+static const int heatingDots = 10;                           // Heating dots (7-15, lower = less power)
 static const int heatingTime = 150;        // Heating time (80-200ms)
 static const int heatingInterval = 250;    // Heating interval (200-250ms)
 
@@ -159,8 +159,8 @@ static const unsigned long reconnectIntervalMs = ScribeTime::Seconds(5);   // 5 
 static const unsigned long wifiConnectTimeoutMs = ScribeTime::Seconds(15); // 15 seconds timeout for WiFi connection
 static const char *fallbackAPSSID = "Scribe-setup";
 static const char *fallbackAPPassword = "scribe123";
-static const int statusLEDPin = 8;    // ESP32-C3 has built-in LED on GPIO8
-static const int webServerPort = 80;  // HTTP port for web server
+static const int statusLEDPin = BOARD_STATUS_LED_PIN; // Board-specific status LED pin
+static const int webServerPort = 80;                  // HTTP port for web server
 const int watchdogTimeoutSeconds = 8; // Watchdog timeout in seconds
 
 // Printer Discovery Heartbeat

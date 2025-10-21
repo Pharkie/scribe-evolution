@@ -29,7 +29,10 @@
 // Device-specific configuration (WiFi, MQTT, API keys, personal settings)
 #include "device_config.h"
 
-// System constants and hardware settings
+// Board-specific pin configuration (NEW minimal system - must be before system_constants.h)
+#include "board_pins.h"
+
+// System constants and hardware settings (uses BOARD_* macros from board_pins.h)
 #include "system_constants.h"
 
 // GPIO pin mappings
