@@ -42,7 +42,9 @@ static char otherTopics[maxOtherPrinters][topicBufferSize];
 // String building functions
 inline const char *buildMqttTopic(const char *key)
 {
-    snprintf(derivedMqttTopic, sizeof(derivedMqttTopic), "scribe/%s/print", key);
+    String topic = MqttTopics::buildPrintTopic(key);
+    strncpy(derivedMqttTopic, topic.c_str(), sizeof(derivedMqttTopic));
+    derivedMqttTopic[sizeof(derivedMqttTopic) - 1] = '\0'; // Ensure null termination
     return derivedMqttTopic;
 }
 
@@ -50,7 +52,9 @@ inline const char *buildPersistentMqttTopic(int index, const char *key)
 {
     if (index >= 0 && index < maxOtherPrinters)
     {
-        snprintf(otherTopics[index], sizeof(otherTopics[index]), "scribe/%s/print", key);
+        String topic = MqttTopics::buildPrintTopic(key);
+        strncpy(otherTopics[index], topic.c_str(), sizeof(otherTopics[index]));
+        otherTopics[index][sizeof(otherTopics[index]) - 1] = '\0'; // Ensure null termination
         return otherTopics[index];
     }
     return "";
@@ -155,7 +159,19 @@ inline const char *getLocalPrinterTopic()
 
 inline const char *getMdnsHostname()
 {
-    // Build hostname from deviceOwner: "scribe-{deviceOwner}" in lowercase
+    // First, check if we have a registered hostname from setupmDNS()
+    // (requires forward declaration or include of network.h)
+    extern const char* getRegisteredMdnsHostname();
+    const char* registered = getRegisteredMdnsHostname();
+
+    if (registered != nullptr && registered[0] != '\0')
+    {
+        // Return the actual registered hostname (may have conflict suffix like "scribe-pharkie2")
+        return registered;
+    }
+
+    // Fallback: Build desired hostname from deviceOwner for pre-setup calls
+    // This is used by setupmDNS() to determine what name to try first
     snprintf(derivedMdnsHostname, sizeof(derivedMdnsHostname), "scribe-%s", getDeviceOwnerKey());
     // Convert to lowercase for URL compatibility
     for (int i = 0; derivedMdnsHostname[i]; i++)

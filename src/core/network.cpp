@@ -11,6 +11,9 @@ unsigned long lastReconnectAttempt = 0;
 WiFiConnectionMode currentWiFiMode = WIFI_MODE_DISCONNECTED;
 DNSServer dnsServer;
 
+// mDNS status - stores actual registered hostname (may differ from desired if conflict)
+static char g_registeredMdnsHostname[64] = "";
+
 // LED status variables
 unsigned long lastLEDBlink = 0;
 bool ledState = false;
@@ -181,25 +184,80 @@ void setupmDNS()
     if (isAPMode())
     {
         Serial.println("Skipping mDNS setup (AP-STA mode - use IP address instead)");
+        g_registeredMdnsHostname[0] = '\0'; // Clear registered hostname
         return;
     }
 
-    if (MDNS.begin(getMdnsHostname()))
-    {
-        Serial.printf("[BOOT] mDNS: http://%s.local\n", getMdnsHostname());
+    // Get the desired base hostname (e.g., "scribe-pharkie")
+    String baseHostname = String(getMdnsHostname());
+    const int maxAttempts = 3;
 
-        // Add service to MDNS-SD
-        MDNS.addService("http", "tcp", webServerPort);
-    }
-    else
+    for (int attempt = 0; attempt < maxAttempts; attempt++)
     {
-        Serial.println("[BOOT] mDNS: ❌ Setup failed");
+        // Build hostname to try
+        String hostnameToTry;
+        if (attempt == 0)
+        {
+            hostnameToTry = baseHostname; // Try clean name first
+        }
+        else
+        {
+            hostnameToTry = baseHostname + String(attempt + 1); // scribe-pharkie2, scribe-pharkie3, etc.
+        }
+
+        LOG_VERBOSE("NETWORK", "Checking mDNS availability: %s.local", hostnameToTry.c_str());
+
+        // Query network to see if this hostname is already taken (5 second timeout)
+        IPAddress existingHost = MDNS.queryHost(hostnameToTry.c_str(), 5000);
+
+        // Feed watchdog after query (can be slow)
+        esp_task_wdt_reset();
+
+        if (existingHost.toString() == "0.0.0.0")
+        {
+            // Hostname appears to be available, try to claim it
+            if (MDNS.begin(hostnameToTry.c_str()))
+            {
+                // Success! Store the registered hostname
+                strncpy(g_registeredMdnsHostname, hostnameToTry.c_str(), sizeof(g_registeredMdnsHostname) - 1);
+                g_registeredMdnsHostname[sizeof(g_registeredMdnsHostname) - 1] = '\0';
+
+                Serial.printf("[BOOT] mDNS: http://%s.local\n", g_registeredMdnsHostname);
+
+                // Add service to MDNS-SD
+                MDNS.addService("http", "tcp", webServerPort);
+
+                if (attempt > 0)
+                {
+                    LOG_NOTICE("BOOT", "mDNS: Conflict detected, using alternate name");
+                }
+
+                LOG_VERBOSE("NETWORK", "mDNS registered successfully");
+                return;
+            }
+            else
+            {
+                LOG_VERBOSE("NETWORK", "mDNS: MDNS.begin() failed for %s, trying next", hostnameToTry.c_str());
+            }
+        }
+        else
+        {
+            LOG_VERBOSE("NETWORK", "mDNS: %s already in use by %s", hostnameToTry.c_str(), existingHost.toString().c_str());
+        }
     }
 
-    // Feed watchdog after potentially slow mDNS operations
+    // All attempts failed
+    g_registeredMdnsHostname[0] = '\0'; // Clear to indicate failure
+    LOG_ERROR("BOOT", "mDNS: Failed to register after %d attempts - use IP address only", maxAttempts);
+
+    // Feed watchdog after all attempts
     esp_task_wdt_reset();
+}
 
-    LOG_VERBOSE("NETWORK", "mDNS set up");
+// === Get Registered mDNS Hostname ===
+const char* getRegisteredMdnsHostname()
+{
+    return g_registeredMdnsHostname;
 }
 
 // === WiFi Reconnection Handler ===

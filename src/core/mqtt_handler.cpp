@@ -81,7 +81,7 @@ void MQTTManager::mqttCallback(char *topic, byte *payload, unsigned int length)
     String topicStr = String(topic);
 
     // Check if this is a printer status message
-    if (topicStr.startsWith("scribe/printer-status/"))
+    if (MqttTopics::isStatusTopic(topicStr))
     {
         onPrinterStatusMessage(topicStr, message);
     }
@@ -271,7 +271,7 @@ void MQTTManager::connectToMQTTInternal()
     bool connected = false;
 
     // Set up LWT for printer discovery
-    String statusTopic = "scribe/printer-status/" + printerId;
+    String statusTopic = MqttTopics::buildStatusTopic(printerId);
 
     // Use the same offline payload format as graceful shutdown
     String lwtPayload = createOfflinePayload();
@@ -330,7 +330,7 @@ void MQTTManager::connectToMQTTInternal()
         }
 
         // Subscribe to printer discovery topics to immediately process retained messages
-        if (!mqttClient.subscribe("scribe/printer-status/+"))
+        if (!mqttClient.subscribe(MqttTopics::buildStatusSubscription().c_str()))
         {
             LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
         }

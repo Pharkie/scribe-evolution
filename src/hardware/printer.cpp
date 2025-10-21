@@ -315,7 +315,16 @@ void PrinterManager::printStartupMessage()
     else
     {
         // In STA mode, print normal server info
-        String serverInfo = "Web interface: " + String(getMdnsHostname()) + ".local or " + WiFi.localIP().toString();
+        String serverInfo;
+        const char* mdnsHostname = getMdnsHostname();
+        if (mdnsHostname != nullptr && mdnsHostname[0] != '\0')
+        {
+            serverInfo = "Web interface: " + String(mdnsHostname) + ".local or " + WiFi.localIP().toString();
+        }
+        else
+        {
+            serverInfo = "Web interface: " + WiFi.localIP().toString();
+        }
 
         // Feed watchdog before thermal printing (can be slow)
         esp_task_wdt_reset();

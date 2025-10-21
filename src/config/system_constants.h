@@ -190,6 +190,39 @@ static const int maxWifiPasswordLength = 64;                           // Max Wi
 static const int maxTimezoneLength = 64;                               // Max timezone string length
 static const int minJokeLength = 10;                                   // Minimum joke length to be considered valid
 
+// ============================================================================
+// MQTT TOPIC STRUCTURE - DRY Constants
+// ============================================================================
+namespace MqttTopics {
+    // Base namespace
+    static const char* NAMESPACE = "scribevolution";
+
+    // Resource types
+    static const char* PRINT_RESOURCE = "print";
+    static const char* STATUS_RESOURCE = "status";
+
+    // Helper functions
+    inline String buildPrintTopic(const String& printerName) {
+        return String(NAMESPACE) + "/" + PRINT_RESOURCE + "/" + printerName;
+    }
+
+    inline String buildStatusTopic(const String& printerId) {
+        return String(NAMESPACE) + "/" + STATUS_RESOURCE + "/" + printerId;
+    }
+
+    inline String buildStatusSubscription() {
+        return String(NAMESPACE) + "/" + STATUS_RESOURCE + "/+";
+    }
+
+    inline String getStatusPrefix() {
+        return String(NAMESPACE) + "/" + STATUS_RESOURCE + "/";
+    }
+
+    inline bool isStatusTopic(const String& topic) {
+        return topic.startsWith(getStatusPrefix());
+    }
+}
+
 // Memo Configuration
 static const int MEMO_COUNT = 4;        // Number of configurable memos
 static const int MEMO_MAX_LENGTH = 500; // Maximum length per memo

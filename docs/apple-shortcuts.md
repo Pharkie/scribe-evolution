@@ -265,7 +265,7 @@ Use an MQTT client to monitor messages:
 ```bash
 mosquitto_sub -h your-mqtt-broker.com -p 8883 \
   -u username -P password \
-  -t "scribe/+/print"
+  -t "scribevolution/print/+"
 ```
 
 ## Security Considerations

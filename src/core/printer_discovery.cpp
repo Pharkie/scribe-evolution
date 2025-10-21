@@ -50,7 +50,7 @@ void publishPrinterStatus()
     }
 
     String printerId = getPrinterId();
-    String statusTopic = "scribe/printer-status/" + printerId;
+    String statusTopic = MqttTopics::buildStatusTopic(printerId);
     LOG_VERBOSE("DISCOVERY", "Publishing status to topic: %s", statusTopic.c_str());
 
     JsonDocument doc;

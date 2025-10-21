@@ -3,6 +3,7 @@
  * @brief Alpine.js reactive store for index page functionality (ES6 module)
  */
 
+import { buildPrintTopic } from "../config/mqtt.js";
 import {
   loadConfiguration,
   loadMemos,
@@ -224,7 +225,7 @@ export function createIndexStore() {
 
       // Add remote printers from discovered list
       discoveredPrinters.forEach((printer) => {
-        const topic = `scribe/${printer.name}/print`;
+        const topic = buildPrintTopic(printer.name);
         this.printers.push({
           value: topic,
           icon: "megaphone",
@@ -406,7 +407,7 @@ export function createIndexStore() {
 
       const topic =
         printerType === "mqtt"
-          ? `scribe/${this.overlayPrinterName}/print`
+          ? buildPrintTopic(this.overlayPrinterName)
           : null;
       const ipAddress = printerData.ip_address;
       const mdns = printerData.mdns;

@@ -25,6 +25,7 @@ extern DNSServer dnsServer;
 WiFiConnectionMode connectToWiFi();
 void startFallbackAP();
 void setupmDNS();
+const char* getRegisteredMdnsHostname(); // Returns actual registered mDNS hostname (empty if failed)
 void handleWiFiReconnection();
 void updateStatusLED();
 void initializeStatusLED();

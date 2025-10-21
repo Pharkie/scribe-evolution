@@ -95,13 +95,13 @@ To print something, send a structured MQTT message. This might include messages 
 Your printer automatically subscribes to messages sent to:
 
 ```
-scribe/{your-device-name}/print
+scribevolution/print/{your-device-name}
 ```
 
 The device name comes from **Settings** → **Device** → **Owner name**. For example:
 
-- If your device name is "Alice", your topic is `scribe/alice/print`
-- If your device name is "Office-Main", your topic is `scribe/office-main/print`
+- If your device name is "Alice", your topic is `scribevolution/print/alice`
+- If your device name is "Office-Main", your topic is `scribevolution/print/office-main`
 
 ### Message Format Specification
 
@@ -149,7 +149,7 @@ POST `/api/print-mqtt`
 
 ```json
 {
-  "topic": "scribe/alice/print",
+  "topic": "scribevolution/print/alice",
   "header": "MESSAGE",
   "body": "Hello from REST",
   "sender": "API Client"

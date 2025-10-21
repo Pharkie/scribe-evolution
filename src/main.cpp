@@ -183,7 +183,16 @@ void setup()
   server.begin();
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
   {
-    LOG_NOTICE("BOOT", "Web UI: http://%s", WiFi.localIP().toString().c_str());
+    // Check if mDNS registration succeeded
+    const char* mdnsHostname = getMdnsHostname();
+    if (mdnsHostname != nullptr && mdnsHostname[0] != '\0')
+    {
+      LOG_NOTICE("BOOT", "Web UI: http://%s.local or http://%s", mdnsHostname, WiFi.localIP().toString().c_str());
+    }
+    else
+    {
+      LOG_NOTICE("BOOT", "Web UI: http://%s (mDNS failed)", WiFi.localIP().toString().c_str());
+    }
   }
   else
   {
