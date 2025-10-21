@@ -198,20 +198,13 @@ void setup()
   Serial.println("[BOOT] Config/Printer: ✅ Enabled (Checkpoint 2)");
 
 #if ENABLE_LEDS
-  // DISABLED: Direct FastLED initialization (testing if ledEffects().begin() can do it alone)
-  // extern CRGB staticLEDs[];  // Defined in LedEffects.cpp
-  // Serial.println("[BOOT] Initializing FastLED directly (pinMode disabled in buttons)...");
-  // FastLED.addLeds<WS2812B, 20, GRB>(staticLEDs, 30);
-  // FastLED.setBrightness(100);
-  // FastLED.clear();
-  // FastLED.show();
-  // Serial.println("[BOOT] ✅ FastLED initialized directly");
-
-  // TESTING: ledEffects().begin() WITHOUT direct FastLED init first
-  Serial.println("[BOOT] Testing ledEffects().begin() initialization (no direct FastLED)...");
-  if (ledEffects().begin()) {
+  Serial.println("[BOOT] Testing ledEffects().begin() initialization");
+  if (ledEffects().begin())
+  {
     Serial.println("[BOOT] ✅ ledEffects().begin() succeeded");
-  } else {
+  }
+  else
+  {
     Serial.println("[BOOT] ❌ ledEffects().begin() FAILED");
   }
 #endif
@@ -297,9 +290,9 @@ void postSetup()
   Serial.println("[POST_SETUP] ✅ Boot LED effect started");
 #endif
 
-  // DISABLED: Print startup message - minimizing components for ESP32-C3 crash debugging
-  // printerManager.printStartupMessage();
-  // LOG_VERBOSE("POST_SETUP", "Startup message printed");
+  // Print startup message - minimizing components for ESP32-C3 crash debugging
+  printerManager.printStartupMessage();
+  LOG_VERBOSE("POST_SETUP", "Startup message printed");
 }
 
 void loop()
@@ -330,34 +323,10 @@ void loop()
   }
 
 #if ENABLE_LEDS
-  // DISABLED: Direct FastLED chase (keep for comparison with ledEffects)
-  // static unsigned long lastLedUpdate = 0;
-  // static int ledPos = 0;
-  // extern CRGB staticLEDs[];
-  //
-  // if (millis() - lastLedUpdate > 50) {
-  //   // Simple chase effect
-  //   for (int i = 0; i < 30; i++) {
-  //     staticLEDs[i] = CRGB::Black;
-  //   }
-  //   staticLEDs[ledPos] = CRGB::Blue;
-  //
-  //   Serial.println("[LOOP] Calling FastLED.show() directly...");
-  //   FastLED.show();
-  //   Serial.println("[LOOP] ✓ FastLED.show() succeeded!");
-  //
-  //   ledPos = (ledPos + 1) % 30;
-  //   lastLedUpdate = millis();
-  // }
-
-  // TESTING: Try ledEffects().update() instead of direct FastLED
   Serial.println("[LOOP] Calling ledEffects().update()...");
   ledEffects().update();
   Serial.println("[LOOP] ✓ ledEffects().update() succeeded!");
 #endif
-
-  // Handle web server requests - AsyncWebServer handles this automatically
-  // No need to call server.handleClient() with async server
 
   // DISABLED: MQTT handling - minimizing components for ESP32-C3 crash debugging
   // if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())

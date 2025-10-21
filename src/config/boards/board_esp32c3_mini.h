@@ -41,8 +41,7 @@ static const GPIOInfo ESP32C3_GPIO_MAP[] = {
     {18, GPIO_TYPE_AVOID, "Avoid: USB D- (Serial/JTAG)"},
     {19, GPIO_TYPE_AVOID, "Avoid: USB D+ (Serial/JTAG)"},
     {20, GPIO_TYPE_SAFE, "Safe (UART1 TX)"},
-    {21, GPIO_TYPE_SAFE, "Safe (UART1 RX)"}
-};
+    {21, GPIO_TYPE_SAFE, "Safe (UART1 RX)"}};
 
 static const int ESP32C3_GPIO_MAP_SIZE = sizeof(ESP32C3_GPIO_MAP) / sizeof(ESP32C3_GPIO_MAP[0]);
 
@@ -60,8 +59,7 @@ static const BoardConstraints ESP32C3_CONSTRAINTS = {
     .avoidPins = ESP32C3_AVOID_PINS,
     .avoidPinCount = sizeof(ESP32C3_AVOID_PINS) / sizeof(int),
     .gpioMap = ESP32C3_GPIO_MAP,
-    .gpioMapSize = ESP32C3_GPIO_MAP_SIZE
-};
+    .gpioMapSize = ESP32C3_GPIO_MAP_SIZE};
 
 // ============================================================================
 // BOARD DEFAULT PIN ASSIGNMENTS
@@ -69,30 +67,26 @@ static const BoardConstraints ESP32C3_CONSTRAINTS = {
 
 // Default button configuration
 static const ButtonConfig ESP32C3_DEFAULT_BUTTONS[] = {
-    {5, "JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"},
-    {6, "RIDDLE", "", "chase_single", "", "", "pulse"},
-    {7, "QUOTE", "", "chase_single", "", "", "pulse"},
-    {4, "QUIZ", "", "chase_single", "", "", "pulse"}
-};
+    {4, "JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"},
+    {5, "RIDDLE", "", "chase_single", "", "", "pulse"},
+    {6, "QUOTE", "", "chase_single", "", "", "pulse"},
+    {7, "QUIZ", "", "chase_single", "", "", "pulse"}};
 
 // Board pin defaults
 static const BoardPinDefaults ESP32C3_DEFAULTS = {
     .boardName = "ESP32-C3-mini",
     .boardIdentifier = "C3_MINI",
     .printer = {
-        .tx = 21,  // UART1 TX (to printer RX)
-        .rx = -1,  // UART1 RX (not connected on C3 builds - bidirectional support available if wired)
-        .dtr = -1  // DTR not used
+        .tx = 21, // UART1 TX (to printer RX)
+        .rx = -1, // UART1 RX (not connected on C3 builds - bidirectional support available if wired)
+        .dtr = -1 // DTR not used
     },
     .ledDataPin = 20,
     .statusLedPin = 8, // Built-in LED
     .buttons = ESP32C3_DEFAULT_BUTTONS,
     .buttonCount = sizeof(ESP32C3_DEFAULT_BUTTONS) / sizeof(ButtonConfig),
-    .efuse = {
-        .printer = -1,  // No eFuse on standard C3-mini
-        .ledStrip = -1
-    }
-};
+    .efuse = {.printer = -1, // No eFuse on standard C3-mini
+              .ledStrip = -1}};
 
 // ============================================================================
 // VALIDATION FUNCTIONS
