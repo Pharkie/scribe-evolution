@@ -8,34 +8,14 @@
 #include <config/config.h>
 #include <utils/character_mapping.h>
 #include <web/web_server.h>
-
-/**
- * @brief RAII lock guard for printer mutex
- * Automatically releases mutex when it goes out of scope
- * Prevents mutex leaks and ensures thread-safety on multi-core ESP32-S3
- */
-class PrinterLock
-{
-private:
-    SemaphoreHandle_t mutex;
-    bool locked;
-
-public:
-    PrinterLock(SemaphoreHandle_t m, uint32_t timeoutMs = 5000);
-    ~PrinterLock();
-    bool isLocked() const { return locked; }
-
-    // Prevent copying
-    PrinterLock(const PrinterLock&) = delete;
-    PrinterLock& operator=(const PrinterLock&) = delete;
-};
+#include <core/ManagerLock.h>
 
 /**
  * @brief Printer manager class - encapsulates printer hardware and synchronization
  * Thread-safe for multi-core ESP32-S3 operation using RAII locking
  *
  * Design pattern:
- * - Public methods acquire mutex using PrinterLock (RAII)
+ * - Public methods acquire mutex using ManagerLock (RAII)
  * - Internal methods assume mutex is already held by caller
  * - This prevents double-locking while ensuring thread-safety
  */

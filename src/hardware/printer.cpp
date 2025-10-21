@@ -11,30 +11,6 @@
 #include <atomic>
 
 // ============================================================================
-// PrinterLock RAII Implementation
-// ============================================================================
-
-PrinterLock::PrinterLock(SemaphoreHandle_t m, uint32_t timeoutMs)
-    : mutex(m), locked(false)
-{
-    if (mutex != nullptr)
-    {
-        LOG_VERBOSE("PRINTER", "Attempting to acquire mutex (timeout: %dms)...", timeoutMs);
-        locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
-        LOG_VERBOSE("PRINTER", "Mutex acquire result: %s", locked ? "SUCCESS" : "TIMEOUT");
-    }
-}
-
-PrinterLock::~PrinterLock()
-{
-    if (mutex != nullptr && locked)
-    {
-        xSemaphoreGive(mutex);
-        LOG_VERBOSE("PRINTER", "Mutex released in destructor");
-    }
-}
-
-// ============================================================================
 // PrinterManager Implementation
 // ============================================================================
 
@@ -92,7 +68,7 @@ void PrinterManager::initialize()
     }
 
     // Acquire mutex for initialization (prevents concurrent UART access during setup)
-    PrinterLock lock(mutex, 10000); // 10 second timeout for init
+    ManagerLock lock(mutex, "PRINTER", 10000); // 10 second timeout for init
     if (!lock.isLocked())
     {
         LOG_ERROR("PRINTER", "Failed to acquire mutex during initialization");
@@ -240,13 +216,13 @@ void PrinterManager::printWrappedInternal(const String& text)
 }
 
 // ============================================================================
-// Public Methods (acquire mutex via PrinterLock)
+// Public Methods (acquire mutex via ManagerLock)
 // ============================================================================
 
 void PrinterManager::printWithHeader(const String& headerText, const String& bodyText)
 {
     // Acquire printer mutex using RAII lock
-    PrinterLock lock(mutex, 5000);
+    ManagerLock lock(mutex, "PRINTER", 5000);
     if (!lock.isLocked())
     {
         LOG_ERROR("PRINTER", "Failed to acquire printer mutex - print aborted");
@@ -287,13 +263,13 @@ void PrinterManager::printWithHeader(const String& headerText, const String& bod
     // Feed watchdog after printing completes
     esp_task_wdt_reset();
 
-    // Mutex automatically released by PrinterLock destructor
+    // Mutex automatically released by ManagerLock destructor
 }
 
 void PrinterManager::printStartupMessage()
 {
     // Acquire printer mutex using RAII lock
-    PrinterLock lock(mutex, 5000);
+    ManagerLock lock(mutex, "PRINTER", 5000);
     if (!lock.isLocked())
     {
         LOG_ERROR("PRINTER", "Failed to acquire printer mutex - startup message aborted");
@@ -370,7 +346,7 @@ void PrinterManager::printStartupMessage()
         esp_task_wdt_reset();
     }
 
-    // Mutex automatically released by PrinterLock destructor
+    // Mutex automatically released by ManagerLock destructor
 }
 
 // ============================================================================

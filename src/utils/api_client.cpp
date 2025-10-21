@@ -22,6 +22,7 @@
 #include "retry_utils.h"
 #include <config/config.h>
 #include <core/logging.h>
+#include <core/ManagerLock.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
@@ -80,8 +81,9 @@ String APIClient::fetchFromAPI(const String &url, const String &userAgent, int t
         return "";
     }
 
-    // Acquire mutex (blocks until available)
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "API");
+    if (!lock.isLocked()) {
         LOG_ERROR("API", "Failed to acquire HTTP mutex!");
         return "";
     }
@@ -93,8 +95,7 @@ String APIClient::fetchFromAPI(const String &url, const String &userAgent, int t
         return performSingleAPIRequest(url, userAgent, timeoutMs, result);
     });
 
-    xSemaphoreGive(mutex);
-
+    // Mutex automatically released by ManagerLock destructor
     return success ? result : "";
 }
 
@@ -110,8 +111,9 @@ String APIClient::fetchFromAPIWithBearer(const String &url, const String &bearer
         return "";
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "API");
+    if (!lock.isLocked()) {
         LOG_ERROR("API", "Failed to acquire HTTP mutex!");
         return "";
     }
@@ -124,8 +126,7 @@ String APIClient::fetchFromAPIWithBearer(const String &url, const String &bearer
         return performSingleBearerAPIRequest(url, bearerToken, userAgent, timeoutMs, result);
     });
 
-    xSemaphoreGive(mutex);
-
+    // Mutex automatically released by ManagerLock destructor
     return success ? result : "";
 }
 
@@ -141,8 +142,9 @@ String APIClient::postToAPIWithBearer(const String &url, const String &bearerTok
         return "";
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "API");
+    if (!lock.isLocked()) {
         LOG_ERROR("API", "Failed to acquire HTTP mutex!");
         return "";
     }
@@ -156,8 +158,7 @@ String APIClient::postToAPIWithBearer(const String &url, const String &bearerTok
         return performSinglePostAPIRequest(url, bearerToken, jsonPayload, userAgent, timeoutMs, result);
     });
 
-    xSemaphoreGive(mutex);
-
+    // Mutex automatically released by ManagerLock destructor
     return success ? result : "";
 }
 

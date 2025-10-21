@@ -5,6 +5,7 @@
 #include "config_utils.h"
 #include "config_loader.h"
 #include "printer_discovery.h"
+#include "ManagerLock.h"
 #include <content/memo_handler.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
@@ -484,8 +485,9 @@ void MQTTManager::handleConnection()
         return;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "MQTT");
+    if (!lock.isLocked()) {
         LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
         return;
     }
@@ -498,7 +500,7 @@ void MQTTManager::handleConnection()
         needPublishStatus = false;  // Clear flag before releasing mutex
     }
 
-    xSemaphoreGive(mutex);
+    // Mutex released by ManagerLock destructor (before publishPrinterStatus call)
 
     // Publish status AFTER releasing mutex to avoid deadlock
     if (shouldPublish) {
@@ -515,15 +517,16 @@ void MQTTManager::updateSubscription()
         return;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "MQTT");
+    if (!lock.isLocked()) {
         LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
         return;
     }
 
     updateMQTTSubscriptionInternal();
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
 }
 
 // Public method: publishMessage (thread-safe)
@@ -545,8 +548,9 @@ bool MQTTManager::publishMessage(const String& topic, const String& header, cons
         return false;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "MQTT");
+    if (!lock.isLocked()) {
         LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
         return false;
     }
@@ -554,13 +558,11 @@ bool MQTTManager::publishMessage(const String& topic, const String& header, cons
     // Check if MQTT is enabled and connected
     if (!isEnabled()) {
         LOG_WARNING("MQTT", "MQTT is disabled, cannot publish to topic: %s", topic.c_str());
-        xSemaphoreGive(mutex);
         return false;
     }
 
     if (!mqttClient.connected()) {
         LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
-        xSemaphoreGive(mutex);
         return false;
     }
 
@@ -590,7 +592,7 @@ bool MQTTManager::publishMessage(const String& topic, const String& header, cons
         LOG_ERROR("MQTT", "Failed to publish message to topic: %s", topic.c_str());
     }
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
     return success;
 }
 
@@ -640,8 +642,9 @@ bool MQTTManager::publishRawMessage(const String& topic, const String& payload, 
         return false;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "MQTT");
+    if (!lock.isLocked()) {
         LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
         return false;
     }
@@ -649,7 +652,7 @@ bool MQTTManager::publishRawMessage(const String& topic, const String& payload, 
     // Call internal version (mutex already held)
     bool success = publishRawMessageInternal(topic, payload, retained);
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
     return success;
 }
 
@@ -674,8 +677,9 @@ void MQTTManager::startClient(bool immediate)
         return;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "MQTT");
+    if (!lock.isLocked()) {
         LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
         return;
     }
@@ -697,7 +701,7 @@ void MQTTManager::startClient(bool immediate)
         }
     }
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
 }
 
 // Public method: stopClient (thread-safe)
@@ -710,8 +714,9 @@ void MQTTManager::stopClient()
 
     LOG_NOTICE("MQTT", "Stopping MQTT client");
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "MQTT");
+    if (!lock.isLocked()) {
         LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
         return;
     }
@@ -737,7 +742,7 @@ void MQTTManager::stopClient()
     lastMQTTReconnectAttempt = 0;
     lastFailureTime = 0;
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
 }
 
 // Public method: isConnected
@@ -747,14 +752,15 @@ bool MQTTManager::isConnected()
         return false;
     }
 
-    // Acquire mutex for safe access
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex for safe access using RAII
+    ManagerLock lock(mutex, "MQTT");
+    if (!lock.isLocked()) {
         LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
         return false;
     }
 
     bool connected = mqttClient.connected();
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
     return connected;
 }

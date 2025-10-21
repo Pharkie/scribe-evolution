@@ -18,31 +18,11 @@
 #include <FastLED.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+#include <core/ManagerLock.h>
 
 // Forward declarations
 class EffectBase;
 class EffectRegistry;
-
-/**
- * @brief RAII lock guard for LED mutex
- * Automatically releases mutex when it goes out of scope
- * Prevents mutex leaks and ensures thread-safety on multi-core ESP32-S3
- */
-class LedLock
-{
-private:
-    SemaphoreHandle_t mutex;
-    bool locked;
-
-public:
-    LedLock(SemaphoreHandle_t m, uint32_t timeoutMs = 1000);
-    ~LedLock();
-    bool isLocked() const { return locked; }
-
-    // Prevent copying
-    LedLock(const LedLock&) = delete;
-    LedLock& operator=(const LedLock&) = delete;
-};
 
 /**
  * @brief Thread-safe LED effects manager using modular effect system

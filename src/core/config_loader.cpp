@@ -11,6 +11,7 @@
 #include <config/config.h>
 #include "nvs_keys.h"
 #include "logging.h"
+#include "ManagerLock.h"
 #include <Preferences.h>
 #include <nvs_flash.h>
 #include <esp_err.h>
@@ -133,8 +134,9 @@ bool ConfigManager::loadRuntimeConfig()
         return false;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "CONFIG");
+    if (!lock.isLocked()) {
         LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
         return false;
     }
@@ -156,7 +158,7 @@ bool ConfigManager::loadRuntimeConfig()
         LOG_NOTICE("CONFIG", "Runtime configuration loaded from NVS");
     }
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
     return success;
 }
 
@@ -395,15 +397,16 @@ bool ConfigManager::saveNVSConfig(const RuntimeConfig &config)
         return false;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "CONFIG");
+    if (!lock.isLocked()) {
         LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
         return false;
     }
 
     bool result = saveNVSConfigInternal(config);
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
     return result;
 }
 
@@ -493,8 +496,9 @@ void ConfigManager::setRuntimeConfig(const RuntimeConfig &config)
         return;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "CONFIG");
+    if (!lock.isLocked()) {
         LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
         return;
     }
@@ -502,7 +506,7 @@ void ConfigManager::setRuntimeConfig(const RuntimeConfig &config)
     g_runtimeConfig = config;
     g_configLoaded = true;
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
 }
 
 // Public method: factoryResetNVS (thread-safe)
@@ -513,15 +517,16 @@ bool ConfigManager::factoryResetNVS()
         return false;
     }
 
-    // Acquire mutex
-    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "CONFIG");
+    if (!lock.isLocked()) {
         LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
         return false;
     }
 
     bool result = factoryResetNVSInternal();
 
-    xSemaphoreGive(mutex);
+    // Mutex automatically released by ManagerLock destructor
     return result;
 }
 

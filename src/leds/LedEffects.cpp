@@ -23,31 +23,6 @@
 CRGB staticLEDs[MAX_LEDS];
 
 // ============================================================================
-// LedLock RAII Implementation
-// ============================================================================
-
-LedLock::LedLock(SemaphoreHandle_t m, uint32_t timeoutMs)
-    : mutex(m), locked(false)
-{
-    if (mutex != nullptr)
-    {
-        locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
-        if (!locked)
-        {
-            LogManager::instance().logf("[LedLock] Mutex acquire TIMEOUT after %dms\n", timeoutMs);
-        }
-    }
-}
-
-LedLock::~LedLock()
-{
-    if (mutex != nullptr && locked)
-    {
-        xSemaphoreGive(mutex);
-    }
-}
-
-// ============================================================================
 // LedEffects Singleton Implementation
 // ============================================================================
 
@@ -133,7 +108,7 @@ bool LedEffects::begin()
     initialized = true;
     LOG_NOTICE("LEDS", "LedEffects initialized (thread-safe singleton)");
 
-    LedLock lock(mutex, 2000);
+    ManagerLock lock(mutex, "LEDS", 2000);
     if (!lock.isLocked())
     {
         LOG_ERROR("LEDS", "Failed to acquire LED mutex in begin()");
@@ -157,7 +132,7 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         return false;
     }
 
-    LedLock lock(mutex, 2000);
+    ManagerLock lock(mutex, "LEDS", 2000);
     if (!lock.isLocked())
     {
         LOG_ERROR("LEDS", "Failed to acquire LED mutex in reinitialize()");
@@ -432,7 +407,7 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
         return false;
     }
 
-    LedLock lock(mutex, 1000);
+    ManagerLock lock(mutex, "LEDS", 1000);
     if (!lock.isLocked())
     {
         LOG_ERROR("LEDS", "Failed to acquire LED mutex in startEffectCycles()");
@@ -497,7 +472,7 @@ bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
     // Get colors from registry first (no lock needed for read-only operation)
     String h1, h2, h3;
     {
-        LedLock lock(mutex, 1000);
+        ManagerLock lock(mutex, "LEDS", 1000);
         if (!lock.isLocked())
         {
             LOG_ERROR("LEDS", "Failed to acquire LED mutex in startEffectCyclesAuto()");
@@ -545,7 +520,7 @@ void LedEffects::stopEffect()
         return;
     }
 
-    LedLock lock(mutex, 1000);
+    ManagerLock lock(mutex, "LEDS", 1000);
     if (!lock.isLocked())
     {
         LOG_ERROR("LEDS", "Failed to acquire LED mutex in stopEffect()");
@@ -613,7 +588,7 @@ String LedEffects::getCurrentEffectName() const
     }
 
     // String copy needs protection
-    LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
+    ManagerLock lock(const_cast<SemaphoreHandle_t&>(mutex), "LEDS", 100);
     if (!lock.isLocked())
     {
         return "";
@@ -628,7 +603,7 @@ unsigned long LedEffects::getRemainingTime() const
         return 0;
     }
 
-    LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
+    ManagerLock lock(const_cast<SemaphoreHandle_t&>(mutex), "LEDS", 100);
     if (!lock.isLocked())
     {
         return 0;
@@ -656,7 +631,7 @@ void LedEffects::updateEffectConfig(const LedEffectsConfig &newConfig)
         return;
     }
 
-    LedLock lock(mutex, 1000);
+    ManagerLock lock(mutex, "LEDS", 1000);
     if (!lock.isLocked())
     {
         LOG_ERROR("LEDS", "Failed to acquire LED mutex in updateEffectConfig()");

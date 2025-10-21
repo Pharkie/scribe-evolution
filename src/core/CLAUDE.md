@@ -191,4 +191,152 @@ printerManager.initialize();
 
 **Backward-compatible wrapper functions exist for all managers.**
 See docs/logging-system.md for complete LogManager documentation.
+
+## RAII Lock Guard Pattern (REQUIRED for All Managers)
+
+**All thread-safe managers MUST use ManagerLock RAII for mutex protection:**
+
+```cpp
+#include <core/ManagerLock.h>
+
+void MyManager::publicMethod() {
+    ManagerLock lock(mutex, "MYMANAGER", timeoutMs);  // Optional timeout (default: portMAX_DELAY)
+    if (!lock.isLocked()) {
+        LOG_ERROR("MYMANAGER", "Failed to acquire mutex!");
+        return;
+    }
+
+    // ... protected work ...
+
+    // Mutex automatically released when lock goes out of scope
+}
+```
+
+**Benefits**:
+- **Prevents mutex leaks** from missed unlocks on error paths
+- **Exception-safe** (rare on ESP32, but possible)
+- **Cleaner code** - no manual unlock tracking needed
+- **Consistent pattern** across all managers
+- **Better debugging** - manager name in timeout logs
+
+**Never use manual xSemaphoreTake/xSemaphoreGive in manager public methods.**
+
+All managers now use ManagerLock:
+- ✅ **LedEffects** - Uses ManagerLock (formerly LedLock)
+- ✅ **PrinterManager** - Uses ManagerLock (formerly PrinterLock)
+- ✅ **ConfigManager** - Uses ManagerLock (formerly manual locks)
+- ✅ **MQTTManager** - Uses ManagerLock (formerly manual locks)
+- ✅ **APIClient** - Uses ManagerLock (formerly manual locks)
+
+## Deadlock Prevention Guidelines
+
+**CRITICAL**: Follow these rules to prevent mutex deadlocks in multi-threaded code:
+
+### 1. Never Call Other Managers While Holding a Lock
+
+```cpp
+// ❌ DANGEROUS - Can cause deadlock
+void ConfigManager::saveWithLog() {
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    // ... config work ...
+    LogManager::instance().log("Saved config");  // BAD: LogManager may try to access ConfigManager
+    xSemaphoreGive(mutex);
+}
+
+// ✅ SAFE - Release lock before calling other managers
+void ConfigManager::saveWithLog() {
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    // ... config work ...
+    xSemaphoreGive(mutex);
+
+    LogManager::instance().log("Saved config");  // GOOD: Lock released first
+}
+```
+
+### 2. Keep Critical Sections Minimal
+
+```cpp
+// ❌ BAD - Holds lock during slow network I/O
+xSemaphoreTake(mutex, portMAX_DELAY);
+String data = fetchFromAPI(url);  // Blocks for seconds!
+processData(data);
+xSemaphoreGive(mutex);
+
+// ✅ GOOD - Lock only for shared state access
+String url_copy;
+xSemaphoreTake(mutex, portMAX_DELAY);
+url_copy = shared_url;
+xSemaphoreGive(mutex);
+
+String data = fetchFromAPI(url_copy);  // Network I/O outside lock
+processData(data);
+```
+
+### 3. Establish Lock Ordering (If Multiple Locks Required)
+
+If you **must** lock multiple managers, always do it in the **same order** everywhere:
+
+```cpp
+// Define global lock order: Config → MQTT → API → Log
+// ALWAYS follow this order, NEVER reverse it
+
+// ✅ SAFE - Follows lock order
+xSemaphoreTake(ConfigManager::instance().mutex, portMAX_DELAY);
+xSemaphoreTake(MQTTManager::instance().mutex, portMAX_DELAY);
+// ... work ...
+xSemaphoreGive(MQTTManager::instance().mutex);
+xSemaphoreGive(ConfigManager::instance().mutex);
+
+// ❌ DANGER - Reverse order can deadlock with above code
+xSemaphoreTake(MQTTManager::instance().mutex, portMAX_DELAY);
+xSemaphoreTake(ConfigManager::instance().mutex, portMAX_DELAY);  // DEADLOCK!
+```
+
+### 4. FreeRTOS Mutex Limitations
+
+**Note**: This codebase uses FreeRTOS `SemaphoreHandle_t`, not C++ `std::mutex`:
+
+- ✅ Manual `xSemaphoreTake()` / `xSemaphoreGive()` is the correct pattern
+- ❌ No native RAII wrapper like `std::lock_guard` available
+- ⚠️ **Must manually ensure `xSemaphoreGive()` in all code paths** (error returns, early exits)
+- ⚠️ Exception safety is limited - avoid exceptions in critical sections
+
+### 5. Avoid Blocking Operations Inside Locks
+
+```cpp
+// ❌ BAD - Network I/O, file I/O, delays while holding lock
+xSemaphoreTake(mutex, portMAX_DELAY);
+delay(1000);  // BAD: Blocks other tasks
+httpClient->GET();  // BAD: Network I/O
+LittleFS.open(...);  // BAD: File I/O
+xSemaphoreGive(mutex);
+
+// ✅ GOOD - Only protect shared state, not I/O
+String url_copy, token_copy;
+xSemaphoreTake(mutex, portMAX_DELAY);
+url_copy = shared_url;
+token_copy = shared_token;
+xSemaphoreGive(mutex);
+
+// I/O operations outside lock
+int result = httpClient->GET();
+```
+
+### Common Deadlock Scenarios to Avoid
+
+1. **Cross-manager dependencies** - Manager A calls Manager B while holding lock
+2. **Inconsistent lock ordering** - Task 1 locks A→B, Task 2 locks B→A
+3. **Callback chains** - MQTT callback triggers HTTP request while MQTT lock held
+4. **Interrupt handlers** - ISR tries to acquire mutex (use `logfISR()` instead)
+
+### Debugging Deadlocks
+
+If the system freezes:
+
+1. Check serial output for "Failed to acquire mutex" errors
+2. Enable VERBOSE logging to trace lock acquisition order
+3. Look for blocking operations (delay, network, file I/O) inside locks
+4. Verify lock acquisition/release symmetry in all code paths
+5. Check FreeRTOS task states with `vTaskList()` (if deadlock suspected)
+
 </thread_safe_architecture>
