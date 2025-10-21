@@ -1,6 +1,6 @@
 /**
  * @file esp32s3_mini.h
- * @brief Pin definitions for ESP32-S3-mini board
+ * @brief Pin definitions for ESP32-S3-SuperMini board
  * @author Adam Knowles
  * @date 2025
  *
@@ -11,7 +11,13 @@
  * - 8x RMT channels (for FastLED)
  * - Built-in USB Serial/JTAG on GPIO 19/20
  * - Strapping pins: GPIO 0, 3, 45, 46
- * - Built-in RGB LED on GPIO 47/48
+ * - Built-in RGB LED on GPIO 48
+ *
+ * Pin Assignments (from Andrius):
+ * - Printer: TX=10, RX=9 (UART1 on SuperMini header)
+ * - LED Strip: GPIO 1 (data line)
+ * - Buttons: 5 (JOKE), 6 (RIDDLE), 7 (QUOTE), 8 (QUIZ)
+ * - Status LED: GPIO 48 (built-in RGB)
  *
  * GPIO Safety Guide:
  * - SAFE: Most GPIOs 1-46 except strapping pins and USB
@@ -30,15 +36,15 @@
 #define BOARD_MAX_GPIO 48
 
 // ============================================================================
-// PIN ASSIGNMENTS
+// PIN ASSIGNMENTS (from Andrius - ESP32-S3-SuperMini)
 // ============================================================================
 
-#define BOARD_LED_STRIP_PIN 48      // Safe (often used for onboard RGB)
-#define BOARD_PRINTER_TX_PIN 43     // Safe
-#define BOARD_STATUS_LED_PIN 47     // Safe (often used for onboard RGB)
+#define BOARD_LED_STRIP_PIN 1       // LED strip data on GPIO 1 (available, safe, on header)
+#define BOARD_PRINTER_TX_PIN 10     // UART1 TX (to printer RX) - SuperMini header GPIO 1-13 only
+#define BOARD_STATUS_LED_PIN 48     // Status LED on GPIO 48 (built-in RGB LED - wired internally)
 
-// Button pins (physical hardware order: JOKE=5, RIDDLE=6, QUOTE=7, QUIZ=4)
-static const int BOARD_BUTTON_PINS[4] = {5, 6, 7, 4};  // All safe GPIOs
+// Button pins (physical hardware order: sequential GPIO 5,6,7,8)
+static const int BOARD_BUTTON_PINS[4] = {5, 6, 7, 8};  // JOKE, RIDDLE, QUOTE, QUIZ
 
 // ============================================================================
 // GPIO VALIDATION DATA
@@ -60,19 +66,19 @@ struct GPIOInfo {
 // Key GPIO map for ESP32-S3 (not exhaustive - most GPIOs are safe)
 static const GPIOInfo BOARD_GPIO_MAP[] = {
     {0, GPIO_TYPE_AVOID, "Strapping pin"},
+    {1, GPIO_TYPE_SAFE, "LED strip data"},
     {3, GPIO_TYPE_AVOID, "Strapping pin"},
-    {4, GPIO_TYPE_SAFE, "Safe"},
-    {5, GPIO_TYPE_SAFE, "Safe"},
-    {6, GPIO_TYPE_SAFE, "Safe"},
-    {7, GPIO_TYPE_SAFE, "Safe"},
+    {5, GPIO_TYPE_SAFE, "Button 1 (JOKE)"},
+    {6, GPIO_TYPE_SAFE, "Button 2 (RIDDLE)"},
+    {7, GPIO_TYPE_SAFE, "Button 3 (QUOTE)"},
+    {8, GPIO_TYPE_SAFE, "Button 4 (QUIZ)"},
+    {9, GPIO_TYPE_SAFE, "Printer RX (UART1)"},
+    {10, GPIO_TYPE_SAFE, "Printer TX (UART1)"},
     {19, GPIO_TYPE_AVOID, "USB D- (Serial/JTAG)"},
     {20, GPIO_TYPE_AVOID, "USB D+ (Serial/JTAG)"},
-    {43, GPIO_TYPE_SAFE, "Safe (often UART TX)"},
-    {44, GPIO_TYPE_SAFE, "Safe (often UART RX)"},
     {45, GPIO_TYPE_AVOID, "Strapping pin"},
     {46, GPIO_TYPE_AVOID, "Strapping pin"},
-    {47, GPIO_TYPE_SAFE, "Safe (often RGB LED)"},
-    {48, GPIO_TYPE_SAFE, "Safe (often RGB LED)"}
+    {48, GPIO_TYPE_SAFE, "Status LED (built-in RGB)"}
 };
 
 static const int BOARD_GPIO_MAP_SIZE = sizeof(BOARD_GPIO_MAP) / sizeof(BOARD_GPIO_MAP[0]);
