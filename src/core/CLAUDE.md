@@ -213,6 +213,7 @@ void MyManager::publicMethod() {
 ```
 
 **Benefits**:
+
 - **Prevents mutex leaks** from missed unlocks on error paths
 - **Exception-safe** (rare on ESP32, but possible)
 - **Cleaner code** - no manual unlock tracking needed
@@ -222,6 +223,7 @@ void MyManager::publicMethod() {
 **Never use manual xSemaphoreTake/xSemaphoreGive in manager public methods.**
 
 All managers now use ManagerLock:
+
 - ✅ **LedEffects** - Uses ManagerLock (formerly LedLock)
 - ✅ **PrinterManager** - Uses ManagerLock (formerly PrinterLock)
 - ✅ **ConfigManager** - Uses ManagerLock (formerly manual locks)

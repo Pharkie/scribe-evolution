@@ -20,6 +20,7 @@
 
 #include "config_utils.h"
 #include <config/config.h>
+#include <config/board_pins.h>
 #include "config_loader.h"
 #include "logging.h"
 #include <Arduino.h>
@@ -34,11 +35,8 @@ void validateConfig()
         // First-time startup: Loading default configuration from config.h
     }
 
-    // Validate board match (hardware vs firmware)
-    // if (!validateBoardMatch())
-    {
-        Serial.println("[BOOT] ⚠️  Board mismatch detected - see warning above");
-    }
+    // Note: Board validation happens in config_loader.cpp during loadRuntimeConfig()
+    // See LOG_WARNING messages for board mismatch details (lines 208-214)
 
     ValidationResult result = validateDeviceConfig();
 
@@ -102,9 +100,12 @@ void validateConfig()
         }
 
         // Warn about unsafe GPIOs (strapping, USB, flash, etc.)
-        if (!isSafeGPIO(usedGpios[i]))
+        // Skip warning for status LED if it's using the board's default onboard LED
+        bool isStatusLedOnBoardDefault = (usedGpios[i] == statusLEDPin && statusLEDPin == getStatusLedPin());
+
+        if (!isSafeGPIO(usedGpios[i]) && !isStatusLedOnBoardDefault)
         {
-            Serial.printf("⚠️  GPIO %d warning: %s\n", usedGpios[i], getGPIODescription(usedGpios[i]));
+            Serial.printf("⚠️  GPIO %d: %s (intentionally configured)\n", usedGpios[i], getGPIODescription(usedGpios[i]));
         }
     }
 

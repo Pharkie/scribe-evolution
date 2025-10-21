@@ -7,6 +7,7 @@
 #include <web/web_server.h>
 #include <WiFi.h>
 #include <esp_chip_info.h>
+#include <esp_task_wdt.h>
 
 std::vector<DiscoveredPrinter> discoveredPrinters;
 
@@ -66,6 +67,10 @@ void publishPrinterStatus()
     LOG_VERBOSE("DISCOVERY", "Status payload: %s", payload.c_str());
 
     bool published = MQTTManager::instance().publishRawMessage(statusTopic, payload, true);
+
+    // Feed watchdog after potentially blocking MQTT publish operation
+    esp_task_wdt_reset();
+
     if (published)
     {
         LOG_VERBOSE("DISCOVERY", "Published status to %s", statusTopic.c_str());

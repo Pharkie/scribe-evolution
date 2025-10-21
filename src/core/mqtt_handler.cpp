@@ -624,6 +624,9 @@ bool MQTTManager::publishRawMessageInternal(const String& topic, const String& p
     // Publish raw message with optional retained flag
     bool success = mqttClient.publish(topic.c_str(), payload.c_str(), retained);
 
+    // Feed watchdog after potentially blocking MQTT publish operation
+    esp_task_wdt_reset();
+
     if (success) {
         LOG_VERBOSE("MQTT", "Published raw message to topic: %s (%d characters, retained: %s)",
                    topic.c_str(), payload.length(), retained ? "true" : "false");
