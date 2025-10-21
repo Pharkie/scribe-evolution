@@ -132,15 +132,15 @@ void setup()
   WiFi.mode(WIFI_OFF);
   Serial.println("[BOOT] WiFi: ❌ Disabled (debugging)");
 
-  // TESTING: Crash happens with buttons WHEN managers are enabled - testing buttons ALONE
-  // LogManager::instance().begin(115200, 256, 512);
-  // Serial.println("[BOOT] LogManager: ✅ Enabled");
-  // APIClient::instance().begin();
-  // Serial.println("[BOOT] APIClient: ✅ Enabled");
-  // ConfigManager::instance().begin();
-  // Serial.println("[BOOT] ConfigManager: ✅ Enabled");
-  // MQTTManager::instance().begin();
-  Serial.println("[BOOT] Managers: ❌ Disabled (testing if buttons alone cause crash)");
+  // CHECKPOINT 1: Re-enable all managers (needed for getRuntimeConfig)
+  LogManager::instance().begin(115200, 256, 512);
+  Serial.println("[BOOT] LogManager: ✅ Enabled");
+  APIClient::instance().begin();
+  Serial.println("[BOOT] APIClient: ✅ Enabled");
+  ConfigManager::instance().begin();
+  Serial.println("[BOOT] ConfigManager: ✅ Enabled");
+  MQTTManager::instance().begin();
+  Serial.println("[BOOT] Managers: ✅ Enabled (Checkpoint 1)");
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
@@ -185,17 +185,17 @@ void setup()
   // Log detailed GPIO summary in verbose mode (now that logging is available)
   logGPIOUsageSummary();
 
-  // TESTING: Disable config/printer to test buttons alone
-  // if (!initializeConfigSystem())
-  // {
-  //   LOG_ERROR("BOOT", "Configuration system initialization failed");
-  // }
-  // else
-  // {
-  //   LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
-  // }
-  // printerManager.initialize();
-  Serial.println("[BOOT] Config/Printer: ❌ Disabled (testing buttons alone)");
+  // CHECKPOINT 2: Re-enable config system and printer
+  if (!initializeConfigSystem())
+  {
+    LOG_ERROR("BOOT", "Configuration system initialization failed");
+  }
+  else
+  {
+    LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
+  }
+  printerManager.initialize();
+  Serial.println("[BOOT] Config/Printer: ✅ Enabled (Checkpoint 2)");
 
 #if ENABLE_LEDS
   // DISABLED: Direct FastLED initialization (testing if ledEffects().begin() can do it alone)
