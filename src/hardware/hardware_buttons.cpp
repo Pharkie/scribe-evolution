@@ -59,7 +59,7 @@ bool createButtonActionTask(int buttonIndex, bool isLongPress);
 // ========================================
 
 // Button state array - dynamically sized based on numHardwareButtons from config.h
-ButtonState buttonStates[sizeof(defaultButtons) / sizeof(defaultButtons[0])];
+ButtonState buttonStates[sizeof(defaultButtonActions) / sizeof(defaultButtonActions[0])];
 
 void initializeHardwareButtons()
 {

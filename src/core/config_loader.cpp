@@ -129,10 +129,11 @@ bool loadNVSConfig()
     
     // Load hardware GPIO configuration
     g_runtimeConfig.printerTxPin = getNVSInt(prefs, NVS_PRINTER_TX_PIN, defaultPrinterTxPin, 0, 39);
-    g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, defaultButtons[0].gpio, 0, 39);
-    g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, defaultButtons[1].gpio, 0, 39);
-    g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, defaultButtons[2].gpio, 0, 39);
-    g_runtimeConfig.buttonGpios[3] = getNVSInt(prefs, NVS_BUTTON4_GPIO, defaultButtons[3].gpio, 0, 39);
+    // Button GPIOs now come from board config (BOARD_BUTTON_PINS), not system_constants.h
+    g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, BOARD_BUTTON_PINS[0], 0, 39);
+    g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, BOARD_BUTTON_PINS[1], 0, 39);
+    g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, BOARD_BUTTON_PINS[2], 0, 39);
+    g_runtimeConfig.buttonGpios[3] = getNVSInt(prefs, NVS_BUTTON4_GPIO, BOARD_BUTTON_PINS[3], 0, 39);
 
     // Load WiFi configuration
     g_runtimeConfig.wifiSSID = getNVSString(prefs, NVS_WIFI_SSID, defaultWifiSSID, 32);
@@ -179,16 +180,16 @@ bool loadNVSConfig()
         String buttonPrefix = "btn" + String(i + 1) + "_";
 
         // Load button actions from NVS (use defaults if missing)
-        g_runtimeConfig.buttonShortActions[i] = getNVSString(prefs, (buttonPrefix + "short_act").c_str(), defaultButtons[i].shortAction, 20);
-        g_runtimeConfig.buttonLongActions[i] = getNVSString(prefs, (buttonPrefix + "long_act").c_str(), defaultButtons[i].longAction, 20);
+        g_runtimeConfig.buttonShortActions[i] = getNVSString(prefs, (buttonPrefix + "short_act").c_str(), defaultButtonActions[i].shortAction, 20);
+        g_runtimeConfig.buttonLongActions[i] = getNVSString(prefs, (buttonPrefix + "long_act").c_str(), defaultButtonActions[i].longAction, 20);
 
         // Load MQTT topics and LED effects
-        g_runtimeConfig.buttonShortMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "short_mq").c_str(), defaultButtons[i].shortMqttTopic, 128);
-        g_runtimeConfig.buttonLongMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "long_mq").c_str(), defaultButtons[i].longMqttTopic, 128);
+        g_runtimeConfig.buttonShortMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "short_mq").c_str(), defaultButtonActions[i].shortMqttTopic, 128);
+        g_runtimeConfig.buttonLongMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "long_mq").c_str(), defaultButtonActions[i].longMqttTopic, 128);
 
-        // Load LED effect configuration with defaults from ButtonConfig struct
-        g_runtimeConfig.buttonShortLedEffects[i] = getNVSString(prefs, (buttonPrefix + "short_led").c_str(), defaultButtons[i].shortLedEffect, 20);
-        g_runtimeConfig.buttonLongLedEffects[i] = getNVSString(prefs, (buttonPrefix + "long_led").c_str(), defaultButtons[i].longLedEffect, 20);
+        // Load LED effect configuration with defaults from ButtonActionConfig struct
+        g_runtimeConfig.buttonShortLedEffects[i] = getNVSString(prefs, (buttonPrefix + "short_led").c_str(), defaultButtonActions[i].shortLedEffect, 20);
+        g_runtimeConfig.buttonLongLedEffects[i] = getNVSString(prefs, (buttonPrefix + "long_led").c_str(), defaultButtonActions[i].longLedEffect, 20);
     }
 
 #if ENABLE_LEDS
@@ -220,10 +221,11 @@ void loadDefaultConfig()
     
     // Load hardware GPIO defaults
     g_runtimeConfig.printerTxPin = defaultPrinterTxPin;
-    g_runtimeConfig.buttonGpios[0] = defaultButtons[0].gpio;
-    g_runtimeConfig.buttonGpios[1] = defaultButtons[1].gpio;
-    g_runtimeConfig.buttonGpios[2] = defaultButtons[2].gpio;
-    g_runtimeConfig.buttonGpios[3] = defaultButtons[3].gpio;
+    // Button GPIOs from board config
+    g_runtimeConfig.buttonGpios[0] = BOARD_BUTTON_PINS[0];
+    g_runtimeConfig.buttonGpios[1] = BOARD_BUTTON_PINS[1];
+    g_runtimeConfig.buttonGpios[2] = BOARD_BUTTON_PINS[2];
+    g_runtimeConfig.buttonGpios[3] = BOARD_BUTTON_PINS[3];
 
     // Load WiFi defaults (empty by default, must be configured)
     g_runtimeConfig.wifiSSID = defaultWifiSSID;
@@ -259,14 +261,14 @@ void loadDefaultConfig()
     // Load default button configuration
     for (int i = 0; i < 4; i++)
     {
-        g_runtimeConfig.buttonShortActions[i] = defaultButtons[i].shortAction;
-        g_runtimeConfig.buttonShortMqttTopics[i] = defaultButtons[i].shortMqttTopic;
-        g_runtimeConfig.buttonLongActions[i] = defaultButtons[i].longAction;
-        g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtons[i].longMqttTopic;
+        g_runtimeConfig.buttonShortActions[i] = defaultButtonActions[i].shortAction;
+        g_runtimeConfig.buttonShortMqttTopics[i] = defaultButtonActions[i].shortMqttTopic;
+        g_runtimeConfig.buttonLongActions[i] = defaultButtonActions[i].longAction;
+        g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtonActions[i].longMqttTopic;
 
-        // Load default LED effect configuration from ButtonConfig struct
-        g_runtimeConfig.buttonShortLedEffects[i] = defaultButtons[i].shortLedEffect;
-        g_runtimeConfig.buttonLongLedEffects[i] = defaultButtons[i].longLedEffect;
+        // Load default LED effect configuration from ButtonActionConfig struct
+        g_runtimeConfig.buttonShortLedEffects[i] = defaultButtonActions[i].shortLedEffect;
+        g_runtimeConfig.buttonLongLedEffects[i] = defaultButtonActions[i].longLedEffect;
     }
 
 #if ENABLE_LEDS

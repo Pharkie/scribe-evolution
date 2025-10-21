@@ -62,10 +62,11 @@ static const char *unbiddenInkPromptDoctorWho = "Generate content inspired by Do
 // Default prompt (use Creative as default)
 static const char *defaultUnbiddenInkPrompt = unbiddenInkPromptCreative;
 
-// Default button configuration (GPIO, actions, MQTT topics, LED effects)
-struct ButtonConfig
+// Default button ACTION configuration (actions, MQTT topics, LED effects)
+// Note: Button GPIO pins are defined in board config files (BOARD_BUTTON_PINS)
+// This struct only contains user-configurable behavior, NOT hardware wiring
+struct ButtonActionConfig
 {
-    int gpio;
     const char *shortAction; // Direct content action type (JOKE, RIDDLE, etc.) - NOT HTTP endpoints
     const char *shortMqttTopic;
     const char *shortLedEffect;
@@ -78,14 +79,17 @@ struct ButtonConfig
 // Actions are content types (JOKE, RIDDLE, QUOTE, etc.) that map to generateXXXContent() functions
 // HTTP endpoints (/api/joke, etc.) are for web interface and MQTT only
 //
-// Note: GPIO are fixed in config.h, actions can be changed in config.json
+// Note: Button GPIO pins come from board config (BOARD_BUTTON_PINS), actions can be changed in NVS
 // Empty MQTT topic means use local printing (no network calls)
-static const ButtonConfig defaultButtons[] = {
-    {5, "JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"}, // Button 1: Joke → Character Test
-    {6, "RIDDLE", "", "chase_single", "", "", "pulse"},             // Button 2: Riddle → (no long action)
-    {7, "QUOTE", "", "chase_single", "", "", "pulse"},              // Button 3: Quote → (no long action)
-    {4, "QUIZ", "", "chase_single", "", "", "pulse"}                // Button 4: Quiz → (no long action) - GPIO 4 (safe pin)
+static const ButtonActionConfig defaultButtonActions[] = {
+    {"JOKE", "", "chase_single", "CHARACTER_TEST", "", "pulse"}, // Button 0: Joke → Character Test
+    {"RIDDLE", "", "chase_single", "", "", "pulse"},             // Button 1: Riddle → (no long action)
+    {"QUOTE", "", "chase_single", "", "", "pulse"},              // Button 2: Quote → (no long action)
+    {"QUIZ", "", "chase_single", "", "", "pulse"}                // Button 3: Quiz → (no long action)
 };
+
+// For backwards compatibility during migration
+using ButtonConfig = ButtonActionConfig;
 
 // ============================================================================
 // BACKEND CONSTANTS - Fixed at compile time, not user-configurable
@@ -96,7 +100,7 @@ constexpr int minUnbiddenInkFrequencyMinutes = 15; // Minimum frequency: 15 minu
 constexpr int maxUnbiddenInkFrequencyMinutes = 480;
 
 // Hardware button settings
-static const int numHardwareButtons = sizeof(defaultButtons) / sizeof(defaultButtons[0]); // Automatically calculated
+static const int numHardwareButtons = sizeof(defaultButtonActions) / sizeof(defaultButtonActions[0]); // Automatically calculated
 static const unsigned long buttonDebounceMs = 50;                                         // Debounce time in milliseconds
 static const unsigned long buttonLongPressMs = 2000;                                      // Long press threshold in milliseconds
 static const bool buttonActiveLow = true;                                                 // true = button pulls to ground, false = button pulls to VCC
