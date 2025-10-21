@@ -147,14 +147,31 @@ inline const char *getWifiPassword()
 
 inline const char *getLocalPrinterName()
 {
-    // Use the deviceOwner directly for local printer name
+    // Check if we have a registered mDNS hostname (handles conflict resolution)
+    extern const char* getRegisteredMdnsHostname();
+    const char* registered = getRegisteredMdnsHostname();
+
+    if (registered != nullptr && registered[0] != '\0')
+    {
+        // Extract printer name from registered hostname (strip "scribe-" prefix)
+        // e.g., "scribe-pharkie2" -> "pharkie2"
+        if (strncmp(registered, "scribe-", 7) == 0)
+        {
+            return registered + 7; // Return pointer to name after "scribe-"
+        }
+        // Fallback if hostname doesn't have expected prefix
+        return registered;
+    }
+
+    // Fallback: Use deviceOwner (AP mode, early boot before mDNS setup)
     return getDeviceOwnerKey();
 }
 
 inline const char *getLocalPrinterTopic()
 {
-    // Build topic from deviceOwner directly for local printer
-    return buildMqttTopic(getDeviceOwnerKey());
+    // Use printer name (which includes mDNS conflict resolution suffix if present)
+    // This ensures MQTT topics stay synchronized with mDNS hostnames
+    return buildMqttTopic(getLocalPrinterName());
 }
 
 inline const char *getMdnsHostname()
