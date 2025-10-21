@@ -506,6 +506,9 @@ void MQTTManager::handleConnection()
     if (shouldPublish) {
         LOG_NOTICE("MQTT", "Publishing initial online status after connection");
         publishPrinterStatus();
+
+        // Feed watchdog after potentially long MQTT connection and publish sequence
+        esp_task_wdt_reset();
     }
 }
 

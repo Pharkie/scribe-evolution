@@ -14,6 +14,7 @@
 #ifndef SYSTEM_CONSTANTS_H
 #define SYSTEM_CONSTANTS_H
 
+#include <Arduino.h> // For String type
 #include <cstddef>  // For size_t
 #include <esp_log.h>
 

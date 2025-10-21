@@ -5,6 +5,7 @@
 #include <content/content_generators.h>
 #include <utils/content_actions.h>
 #include <esp_task_wdt.h>
+#include <ESP32Ping.h>
 
 // Network status variables
 unsigned long lastReconnectAttempt = 0;
@@ -205,17 +206,19 @@ void setupmDNS()
             hostnameToTry = baseHostname + String(attempt + 1); // scribe-pharkie2, scribe-pharkie3, etc.
         }
 
-        LOG_VERBOSE("NETWORK", "Checking mDNS availability: %s.local", hostnameToTry.c_str());
+        String fqdn = hostnameToTry + ".local";
+        LOG_VERBOSE("NETWORK", "Checking if %s exists via ping...", fqdn.c_str());
 
-        // Query network to see if this hostname is already taken (5 second timeout)
-        IPAddress existingHost = MDNS.queryHost(hostnameToTry.c_str(), 5000);
+        // Ping the hostname with 1 attempt (uses default 1 second timeout)
+        // Returns true if host responds, false if timeout
+        bool hostExists = Ping.ping(fqdn.c_str(), 1);
 
-        // Feed watchdog after query (can be slow)
+        // Feed watchdog after ping (can be slow on timeout)
         esp_task_wdt_reset();
 
-        if (existingHost.toString() == "0.0.0.0")
+        if (!hostExists)
         {
-            // Hostname appears to be available, try to claim it
+            // Hostname doesn't respond - appears to be available, try to claim it
             if (MDNS.begin(hostnameToTry.c_str()))
             {
                 // Success! Store the registered hostname
@@ -242,13 +245,13 @@ void setupmDNS()
         }
         else
         {
-            LOG_VERBOSE("NETWORK", "mDNS: %s already in use by %s", hostnameToTry.c_str(), existingHost.toString().c_str());
+            LOG_VERBOSE("NETWORK", "mDNS: %s already in use (ping succeeded)", fqdn.c_str());
         }
     }
 
     // All attempts failed
     g_registeredMdnsHostname[0] = '\0'; // Clear to indicate failure
-    LOG_ERROR("BOOT", "mDNS: Failed to register after %d attempts - use IP address only", maxAttempts);
+    LOG_ERROR("BOOT", "mDNS: Failed to register after %d hostname attempts - use IP address only", maxAttempts);
 
     // Feed watchdog after all attempts
     esp_task_wdt_reset();
