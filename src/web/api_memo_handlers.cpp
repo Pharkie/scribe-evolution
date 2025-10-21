@@ -56,7 +56,7 @@ void handleMemoGet(AsyncWebServerRequest *request)
     // Use structured format like other content endpoints (joke, quiz, etc.)
     String actionName = "MEMO " + String(memoId);
     
-    DynamicJsonDocument doc(1024);
+    JsonDocument doc;
     doc["header"] = actionName;
     doc["body"] = expandedContent;
 
@@ -103,7 +103,7 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
     }
 
     String jsonBody = request->getParam("body", true)->value();
-    DynamicJsonDocument doc(1024);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, jsonBody);
 
     if (error)
@@ -112,7 +112,7 @@ void handleMemoUpdate(AsyncWebServerRequest *request)
         return;
     }
 
-    if (!doc.containsKey("content"))
+    if (!doc["content"].is<JsonVariant>())
     {
         sendErrorResponse(request, 400, "Missing 'content' field");
         return;
@@ -178,7 +178,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
     }
 
     String jsonBody = request->getParam("body", true)->value();
-    DynamicJsonDocument doc(2048);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, jsonBody);
 
     if (error)
@@ -194,7 +194,7 @@ void handleMemosUpdate(AsyncWebServerRequest *request)
     // Check that all memo fields are present
     for (int i = 0; i < MEMO_COUNT; i++)
     {
-        if (!doc.containsKey(memoFields[i]))
+        if (!doc[memoFields[i]].is<JsonVariant>())
         {
             sendErrorResponse(request, 400, "Missing " + String(memoFields[i]));
             return;

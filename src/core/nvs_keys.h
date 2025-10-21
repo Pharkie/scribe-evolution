@@ -15,6 +15,7 @@
 // Device Configuration Keys
 constexpr const char *NVS_DEVICE_OWNER = "device_owner";
 constexpr const char *NVS_DEVICE_TIMEZONE = "device_timezone"; // Note: stored as device_timezone, not device_tz
+constexpr const char *NVS_BOARD_TYPE = "board_type";           // Board identifier (e.g., "C3_MINI", "S3_MINI", "S3_CUSTOM_PCB")
 
 // Hardware GPIO Configuration Keys
 constexpr const char *NVS_PRINTER_TX_PIN = "printer_tx_pin";

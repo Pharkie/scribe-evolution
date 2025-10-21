@@ -37,27 +37,48 @@
 #include "core/printer_discovery.h"
 #include "utils/time_utils.h"
 #include "core/logging.h"
+#include "core/LogManager.h"
 #include "hardware/hardware_buttons.h"
 #include "content/content_generators.h"
 #include "utils/api_client.h"
 #include "content/unbidden_ink.h"
 #if ENABLE_LEDS
 #include "leds/LedEffects.h"
-extern LedEffects ledEffects;
 #endif
 
 // Stabilize printer pin ASAP, before anything else
-class PrinterPinStabilizer
-{
-public:
-  PrinterPinStabilizer()
-  {
-    const RuntimeConfig &config = getRuntimeConfig(); // Fast - returns defaults
-    pinMode(config.printerTxPin, OUTPUT);
-    digitalWrite(config.printerTxPin, HIGH); // UART idle state
-  }
-};
-static PrinterPinStabilizer pinStabilizer;
+// COMMENTED OUT FOR TESTING - Suspected cause of ESP32-S3 printer crash
+// class PrinterPinStabilizer
+// {
+// public:
+//   PrinterPinStabilizer()
+//   {
+//     const RuntimeConfig &config = getRuntimeConfig(); // Fast - returns defaults
+//     const BoardPinDefaults &boardDefaults = getBoardDefaults();
+
+//     // Enable printer eFuse if present (custom PCB only)
+//     #if BOARD_HAS_PRINTER_EFUSE
+//     if (boardDefaults.efuse.printer != -1)
+//     {
+//       pinMode(boardDefaults.efuse.printer, OUTPUT);
+//       digitalWrite(boardDefaults.efuse.printer, HIGH); // Enable printer power
+//       delay(10); // Give eFuse time to stabilize
+//     }
+//     #endif
+
+//     // Set up printer UART TX pin
+//     pinMode(config.printerTxPin, OUTPUT);
+//     digitalWrite(config.printerTxPin, HIGH); // UART idle state
+
+//     // Set up DTR pin if present (ESP32-S3 variants)
+//     if (boardDefaults.printer.dtr != -1)
+//     {
+//       pinMode(boardDefaults.printer.dtr, OUTPUT);
+//       digitalWrite(boardDefaults.printer.dtr, LOW); // DTR ready
+//     }
+//   }
+// };
+// static PrinterPinStabilizer pinStabilizer;
 
 // === Web Server ===
 AsyncWebServer server(webServerPort);
@@ -88,7 +109,7 @@ void setup()
   // Note: We can't use Log.notice() yet as logging isn't initialized
   Serial.printf("\n=== Scribe Evolution v%s ===\n", FIRMWARE_VERSION);
   Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
-  Serial.printf("[BOOT] System: %s, %d KB free heap\n", getBoardName(), ESP.getFreeHeap() / mediumJsonBuffer);
+  Serial.printf("[BOOT] System: %s, %d KB free heap\n", ESP.getChipModel(), ESP.getFreeHeap() / mediumJsonBuffer);
 
   // Initialize LittleFS so config loading works
   if (!LittleFS.begin(true, "/littlefs", 10, "littlefs")) // true = format if mount fails
@@ -105,22 +126,39 @@ void setup()
   // Initialize status LED
   initializeStatusLED();
 
-  // Connect to WiFi (may fallback to AP mode)
-  currentWiFiMode = connectToWiFi();
+  // DISABLED: WiFi - minimizing components for ESP32-C3 crash debugging
+  // currentWiFiMode = connectToWiFi();
+  currentWiFiMode = WIFI_MODE_DISCONNECTED;
+  WiFi.mode(WIFI_OFF);
+  Serial.println("[BOOT] WiFi: ❌ Disabled (debugging)");
 
-  // Initialize logging system before other components that use logging
-  setupLogging();
+  // CHECKPOINT 1: Re-enable all managers (needed for getRuntimeConfig)
+  LogManager::instance().begin(115200, 256, 512);
+  Serial.println("[BOOT] LogManager: ✅ Enabled");
+  APIClient::instance().begin();
+  Serial.println("[BOOT] APIClient: ✅ Enabled");
+  ConfigManager::instance().begin();
+  Serial.println("[BOOT] ConfigManager: ✅ Enabled");
+  MQTTManager::instance().begin();
+  Serial.println("[BOOT] Managers: ✅ Enabled (Checkpoint 1)");
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
+#ifdef RELEASE_BUILD
+  // Suppress VFS errors in production (AsyncWebServer checks for uncompressed files before serving .gz)
+  esp_log_level_set("vfs", ESP_LOG_NONE);
+#endif
 
-  // Log logging system configuration
-  LOG_VERBOSE("BOOT", "Logging system initialized - Level: %s, Serial: %s, File: %s, MQTT: %s, BetterStack: %s",
-              getLogLevelString(logLevel).c_str(),
-              enableSerialLogging ? "ON" : "OFF",
-              enableFileLogging ? "ON" : "OFF",
-              enableMQTTLogging ? "ON" : "OFF",
-              enableBetterStackLogging ? "ON" : "OFF");
+  // Log logging configuration (LogManager is now ready)
+  LOG_VERBOSE("BOOT", "Logging configured - Level: %s (serial output only)",
+              getLogLevelString(logLevel).c_str());
+
+  // Initialize mutex for currentMessage (protects against multi-core race conditions)
+  currentMessageMutex = xSemaphoreCreateMutex();
+  if (currentMessageMutex == nullptr)
+  {
+    LOG_ERROR("BOOT", "Failed to create currentMessage mutex!");
+  }
 
   // Enable watchdog timer
   esp_task_wdt_init(watchdogTimeoutSeconds, true);
@@ -147,7 +185,7 @@ void setup()
   // Log detailed GPIO summary in verbose mode (now that logging is available)
   logGPIOUsageSummary();
 
-  // Initialize configuration system
+  // CHECKPOINT 2: Re-enable config system and printer
   if (!initializeConfigSystem())
   {
     LOG_ERROR("BOOT", "Configuration system initialization failed");
@@ -156,72 +194,67 @@ void setup()
   {
     LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
   }
+  printerManager.initialize();
+  Serial.println("[BOOT] Config/Printer: ✅ Enabled (Checkpoint 2)");
 
-  // Initialize printer
-  initializePrinter();
-
-  // Initialize hardware buttons (only in STA mode)
+  // TESTING: pinMode() BEFORE ledEffects (ordering fix for ESP32-C3)
   if (!isAPMode())
   {
-    initializeHardwareButtons();
+    Serial.println("[BOOT] Testing pinMode() on GPIOs 5,6,7,8...");
+    pinMode(5, INPUT_PULLUP);   // GPIO 5
+    pinMode(6, INPUT_PULLUP);   // GPIO 6
+    pinMode(7, INPUT_PULLUP);   // GPIO 7
+    pinMode(8, INPUT_PULLUP);   // GPIO 8 (onboard LED)
+    Serial.println("[BOOT] ✅ pinMode() calls completed (5,6,7,8)");
   }
-  else
-  {
-    LOG_NOTICE("BOOT", "Buttons: ❌ Disabled (AP mode)");
-  }
-
-#if ENABLE_LEDS
-  // Initialize LED effects system
-  if (ledEffects.begin())
-  {
-    LOG_VERBOSE("BOOT", "LED effects system initialized successfully");
-    // Trigger boot LED effect (chase single for 1 cycle)
-    ledEffects.startEffectCycles("chase_single", 1, 0x0000FF);
-    LOG_VERBOSE("BOOT", "Boot LED effect started (chase_single, 1 cycle)");
-  }
-  else
-  {
-    LOG_WARNING("BOOT", "LED effects system initialization failed");
-  }
-#endif
 
   // Setup mDNS
   setupmDNS();
 
-  // Setup MQTT client (only in STA mode and when MQTT enabled)
-  if (!isAPMode() && isMQTTEnabled())
-  {
-    startMQTTClient(true); // true = immediate connection on boot (WiFi is already stable)
-    LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
-  }
-  else
-  {
-    if (isAPMode())
-    {
-      LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (AP mode)");
-    }
-    else
-    {
-      LOG_NOTICE("BOOT", "MQTT: ❌ Disabled");
-    }
-  }
+  // DISABLED: MQTT client - minimizing components for ESP32-C3 crash debugging
+  // if (!isAPMode() && isMQTTEnabled())
+  // {
+  //   startMQTTClient(true); // true = immediate connection on boot (WiFi is already stable)
+  //   LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
+  // }
+  // else
+  // {
+  //   if (isAPMode())
+  //   {
+  //     LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (AP mode)");
+  //   }
+  //   else
+  //   {
+  //     LOG_NOTICE("BOOT", "MQTT: ❌ Disabled");
+  //   }
+  // }
+  LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (debugging)");
 
-  // Setup web server routes
-  setupWebServerRoutes(maxCharacters);
+  // DISABLED: Web server - minimizing components for ESP32-C3 crash debugging
+  // setupWebServerRoutes(maxCharacters);
+  // server.begin();
+  // LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
+  LOG_NOTICE("BOOT", "Web UI: ❌ Disabled (debugging)");
 
-  // Start the server
-  server.begin();
-  LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
-
-  // Print startup message (handles both AP mode and normal mode)
-  printStartupMessage();
-
-  // Initialize Unbidden Ink schedule
-  initializeUnbiddenInk();
+  // DISABLED: Unbidden Ink - minimizing components for ESP32-C3 crash debugging
+  // initializeUnbiddenInk();
+  LOG_NOTICE("BOOT", "Unbidden Ink: ❌ Disabled (debugging)");
 
   // Calculate boot time
   unsigned long bootDuration = millis() - bootStartTime;
   float bootSeconds = bootDuration / 1000.0;
+
+#if ENABLE_LEDS
+  Serial.println("[BOOT] Now initializing ledEffects() (after pinMode)...");
+  if (ledEffects().begin())
+  {
+    Serial.println("[BOOT] ✅ ledEffects().begin() succeeded");
+  }
+  else
+  {
+    Serial.println("[BOOT] ❌ ledEffects().begin() FAILED");
+  }
+#endif
 
   // Get device name from config
   const RuntimeConfig &config = getRuntimeConfig();
@@ -241,8 +274,36 @@ void setup()
   }
 }
 
+/**
+ * @brief Post-setup initialization - runs once at the start of first loop() iteration
+ *
+ * This function handles initialization tasks that should happen AFTER setup() completes,
+ * allowing setup() to finish quickly without blocking delays. This prevents race conditions
+ * where non-blocking effects (like LED boot animations) are still running when loop() starts.
+ */
+void postSetup()
+{
+#if ENABLE_LEDS
+  // TESTING: Trigger boot LED chase effect (1 cycle)
+  Serial.println("[POST_SETUP] Triggering boot LED chase effect...");
+  ledEffects().startEffectCycles("chase_single", 1);
+  Serial.println("[POST_SETUP] ✅ Boot LED effect started");
+#endif
+
+  // Print startup message - minimizing components for ESP32-C3 crash debugging
+  printerManager.printStartupMessage();
+  LOG_VERBOSE("POST_SETUP", "Startup message printed");
+}
+
 void loop()
 {
+  // Run post-setup tasks once on first loop iteration
+  static bool firstRun = true;
+  if (firstRun)
+  {
+    postSetup();
+    firstRun = false;
+  }
   // Feed the watchdog
   esp_task_wdt_reset();
 
@@ -262,28 +323,38 @@ void loop()
   }
 
 #if ENABLE_LEDS
-  // Update LED effects (non-blocking)
-  ledEffects.update();
+  Serial.println("[LOOP] Calling ledEffects().update()...");
+  ledEffects().update();
+  Serial.println("[LOOP] ✓ ledEffects().update() succeeded!");
 #endif
 
-  // Handle web server requests - AsyncWebServer handles this automatically
-  // No need to call server.handleClient() with async server
-
-  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
+  // DISABLED: MQTT handling - minimizing components for ESP32-C3 crash debugging
+  // if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
+  // {
+  //   // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
+  //   handleMQTTConnection();
+  //
+  //   // Handle printer discovery (only in STA mode when MQTT enabled)
+  //   handlePrinterDiscovery();
+  // }
+  // Check if we have a new message to print (protected by mutex for multi-core safety)
+  bool shouldPrint = false;
+  if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(10)) == pdTRUE)
   {
-    // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
-    handleMQTTConnection();
-
-    // Handle printer discovery (only in STA mode when MQTT enabled)
-    handlePrinterDiscovery();
+    shouldPrint = currentMessage.shouldPrintLocally;
+    xSemaphoreGive(currentMessageMutex);
   }
 
-  // Check if we have a new message to print
-  if (currentMessage.shouldPrintLocally)
+  if (shouldPrint)
   {
-    LOG_VERBOSE("MAIN", "Printing message from main loop");
-    printMessage();
-    currentMessage.shouldPrintLocally = false; // Reset flag
+    printMessage(); // printMessage() will acquire mutex internally to read currentMessage
+
+    // Clear the flag after printing
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+      currentMessage.shouldPrintLocally = false;
+      xSemaphoreGive(currentMessageMutex);
+    }
   }
 
   // Monitor memory usage periodically
@@ -298,6 +369,5 @@ void loop()
   {
     checkUnbiddenInk();
   }
-
   delay(smallDelayMs); // Small delay to prevent excessive CPU usage
 }

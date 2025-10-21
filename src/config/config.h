@@ -1,14 +1,14 @@
 /**
  * @file config.h
- * @brief Main configuration file for Scribe ESP32-C3 Thermal Printer
+ * @brief Main configuration file for Scribe Evolution Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
  * This file orchestrates all configuration by including device-specific settings,
- * system constants, and GPIO mappings. It serves as the single entry point
- * for all configuration needs throughout the codebase.
+ * system constants, and board-specific GPIO mappings. It serves as the single
+ * entry point for all configuration needs throughout the codebase.
  *
  */
 
@@ -35,7 +35,6 @@
 
 // System constants and hardware settings (uses BOARD_* macros from board_pins.h)
 #include "system_constants.h"
-
 // ============================================================================
 // LED SUPPORT (CONDITIONAL)
 // ============================================================================

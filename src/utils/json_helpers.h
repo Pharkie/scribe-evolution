@@ -11,6 +11,6 @@
 
 void sendErrorResponse(AsyncWebServerRequest* request, int httpCode, const String &errorMessage);
 void sendRateLimitResponse(AsyncWebServerRequest* request);
-DynamicJsonDocument createErrorResponse(const String &errorMessage);
+JsonDocument createErrorResponse(const String &errorMessage);
 
 #endif

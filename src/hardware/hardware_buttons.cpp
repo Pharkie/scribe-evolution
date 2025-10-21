@@ -19,12 +19,12 @@
 
 #if ENABLE_LEDS
 #include <leds/LedEffects.h>
-extern LedEffects ledEffects;
 #endif
 
 // External declarations
 extern PubSubClient mqttClient;
 extern Message currentMessage;
+extern SemaphoreHandle_t currentMessageMutex;
 
 // ========================================
 // ASYNC BUTTON ACTION MANAGEMENT
@@ -82,25 +82,21 @@ void initializeHardwareButtons()
     // Get runtime configuration ONCE after GPIO setup
     const RuntimeConfig &config = getRuntimeConfig();
 
-    // ESP32-C3 GPIO safety validation before initialization
+    // GPIO safety validation before initialization
     for (int i = 0; i < numHardwareButtons; i++)
     {
         int gpio = config.buttonGpios[i];
 
-        // Validate GPIO using centralized configuration
+        // Validate GPIO using centralized board configuration
         if (!isValidGPIO(gpio))
         {
-            LOG_ERROR("BUTTONS", "Button %d GPIO %d: Invalid GPIO - not available on ESP32-C3", i, gpio);
+            LOG_ERROR("BUTTONS", "Button %d GPIO %d: Invalid GPIO - not available on %s", i, gpio, BOARD_NAME);
             continue;
         }
 
         if (!isSafeGPIO(gpio))
         {
             LOG_WARNING("BUTTONS", "Button %d GPIO %d: %s", i, gpio, getGPIODescription(gpio));
-        }
-        if (gpio >= 8 && gpio <= 10)
-        {
-            LOG_WARNING("BUTTONS", "Button %d GPIO %d: Flash connection - may cause stability issues", i, gpio);
         }
         if (gpio == 18 || gpio == 19)
         {
@@ -114,8 +110,8 @@ void initializeHardwareButtons()
     {
         int gpio = config.buttonGpios[i];
 
-        // Skip invalid GPIOs identified above
-        if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
+        // Skip invalid GPIOs identified above - use board-specific validation
+        if (!isValidGPIO(gpio))
         {
             LOG_ERROR("BUTTONS", "Skipping button %d initialization (invalid GPIO %d)", i, gpio);
             // Initialize state as inactive
@@ -131,11 +127,11 @@ void initializeHardwareButtons()
             continue;
         }
 
-        // Configure GPIO pin with error protection
-        LOG_VERBOSE("BUTTONS", "Configuring button %d GPIO %d...", i, gpio);
+        // CHECKPOINT 3: Re-enable pinMode() for buttons
+        LOG_VERBOSE("BUTTONS", "Setting pinMode() for button %d GPIO %d...", i, gpio);
         pinMode(gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
 
-        // Small delay for GPIO stabilization on ESP32-C3
+        // Small delay for GPIO stabilization
         delay(10);
 
         // Initialize button state with safe reading
@@ -184,10 +180,10 @@ void checkHardwareButtons()
     {
         int gpio = config.buttonGpios[i];
 
-        // Skip buttons with invalid GPIOs (safety check)
-        if (gpio < 0 || gpio > 21 || gpio == 18 || gpio == 19)
+        // Skip buttons with invalid GPIOs (board-specific safety check)
+        if (!isValidGPIO(gpio))
         {
-            // Skip this button entirely - GPIO not safe for ESP32-C3
+            // Skip this button entirely - GPIO not valid for this board
             continue;
         }
 
@@ -329,7 +325,7 @@ void triggerButtonLedEffect(int buttonIndex, bool isLongPress)
     }
 
     // Trigger configured LED effect for 1 cycle using autonomous defaults
-    if (ledEffects.startEffectCyclesAuto(effectName, 1))
+    if (ledEffects().startEffectCyclesAuto(effectName, 1))
     {
         LOG_VERBOSE("BUTTONS", "LED effect triggered for button %d (%s press): %s, 1 cycle",
                     buttonIndex, isLongPress ? "long" : "short", effectName.c_str());
@@ -571,7 +567,7 @@ void buttonActionTask(void *parameter)
             {
                 LOG_WARNING("BUTTONS", "MQTT disabled, cannot send button action to topic: %s", params->mqttTopic.c_str());
             }
-            else if (!mqttClient.connected())
+            else if (!MQTTManager::instance().isConnected())
             {
                 LOG_WARNING("BUTTONS", "MQTT not connected, cannot send button action to topic: %s", params->mqttTopic.c_str());
             }
@@ -658,15 +654,24 @@ bool executeButtonActionDirect(const char *actionType, bool shouldSetPrintFlag)
     {
         // Format content for local printing (header + body)
         String formattedContent = result.header + "\n\n" + result.body;
-        
-        // Set currentMessage content and timestamp
-        currentMessage.message = formattedContent;
-        currentMessage.timestamp = getFormattedDateTime();
-        currentMessage.shouldPrintLocally = shouldSetPrintFlag;
 
-        LOG_VERBOSE("BUTTONS", "Content generated (%d chars), shouldPrintLocally = %s", 
-                    formattedContent.length(), shouldSetPrintFlag ? "true" : "false");
-        return true;
+        // Set currentMessage content and timestamp (protected by mutex for multi-core safety)
+        if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+        {
+            currentMessage.message = formattedContent;
+            currentMessage.timestamp = getFormattedDateTime();
+            currentMessage.shouldPrintLocally = shouldSetPrintFlag;
+            xSemaphoreGive(currentMessageMutex);
+
+            LOG_VERBOSE("BUTTONS", "Content generated (%d chars), shouldPrintLocally = %s",
+                        formattedContent.length(), shouldSetPrintFlag ? "true" : "false");
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("BUTTONS", "Failed to acquire mutex for currentMessage");
+            return false;
+        }
     }
     else
     {

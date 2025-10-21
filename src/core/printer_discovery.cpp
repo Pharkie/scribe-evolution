@@ -24,7 +24,7 @@ String getFirmwareVersion()
 String createOfflinePayload()
 {
     // Create simple offline status payload (just name and status)
-    DynamicJsonDocument doc(128);
+    JsonDocument doc;
     doc["name"] = getLocalPrinterName();
     doc["status"] = "offline";
 
@@ -42,7 +42,7 @@ void publishPrinterStatus()
 {
     LOG_VERBOSE("DISCOVERY", "publishPrinterStatus() called");
 
-    if (!mqttClient.connected())
+    if (!MQTTManager::instance().isConnected())
     {
         LOG_WARNING("DISCOVERY", "MQTT not connected, cannot publish status");
         return;
@@ -52,7 +52,7 @@ void publishPrinterStatus()
     String statusTopic = "scribe/printer-status/" + printerId;
     LOG_VERBOSE("DISCOVERY", "Publishing status to topic: %s", statusTopic.c_str());
 
-    DynamicJsonDocument doc(512);
+    JsonDocument doc;
     doc["name"] = getLocalPrinterName();
     doc["firmware_version"] = getFirmwareVersion();
     doc["mdns"] = String(getMdnsHostname()) + ".local";
@@ -65,7 +65,7 @@ void publishPrinterStatus()
     serializeJson(doc, payload);
     LOG_VERBOSE("DISCOVERY", "Status payload: %s", payload.c_str());
 
-    bool published = mqttClient.publish(statusTopic.c_str(), payload.c_str(), true);
+    bool published = MQTTManager::instance().publishRawMessage(statusTopic, payload, true);
     if (published)
     {
         LOG_VERBOSE("DISCOVERY", "Published status to %s", statusTopic.c_str());
@@ -96,7 +96,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
 
     LOG_VERBOSE("DISCOVERY", "Received status from printer %s: %s", printerId.c_str(), payload.c_str());
 
-    DynamicJsonDocument doc(512);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, payload);
 
     if (error)

@@ -135,10 +135,13 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
 
     if (result.success)
     {
-        // Always return structured data (header + body separately)
-        DynamicJsonDocument doc(2048);
+        // Return structured data (header + optional body)
+        JsonDocument doc;
         doc["header"] = result.header;
-        doc["body"] = result.body;
+        // Only include body key if there's actual content
+        if (result.body.length() > 0) {
+            doc["body"] = result.body;
+        }
 
         String response;
         serializeJson(doc, response);
@@ -148,7 +151,7 @@ void handleContentGeneration(AsyncWebServerRequest *request, ContentType content
     }
     else
     {
-        DynamicJsonDocument errorResponse(256);
+        JsonDocument errorResponse;
         errorResponse["error"] = result.errorMessage.length() > 0 ? result.errorMessage : 
                                  String("Failed to generate ") + typeName + " content";
 
@@ -187,7 +190,7 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     if (result.success)
     {
         // Return JSON response in structured format (header + body separately)
-        DynamicJsonDocument responseDoc(2048);
+        JsonDocument responseDoc;
         responseDoc["header"] = result.header;
         responseDoc["body"] = result.body;
 
@@ -200,7 +203,7 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     else
     {
         // Return JSON error response in the same format as other content endpoints
-        DynamicJsonDocument errorDoc(256);
+        JsonDocument errorDoc;
         errorDoc["error"] = result.errorMessage.length() > 0 ? result.errorMessage : 
                            "Failed to generate Unbidden Ink content";
 
@@ -264,8 +267,8 @@ void handlePrintLocal(AsyncWebServerRequest *request)
         return;
     }
 
-    // Parse JSON
-    DynamicJsonDocument doc(1024);
+    // Parse JSON (ArduinoJson v7 manages memory automatically)
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
@@ -274,7 +277,7 @@ void handlePrintLocal(AsyncWebServerRequest *request)
     }
 
     // Validate required message field
-    if (!doc.containsKey("message"))
+    if (!doc["message"].is<JsonVariant>())
     {
         sendValidationError(request, ValidationResult(false, "Missing required field 'message' in JSON"));
         return;
@@ -294,13 +297,22 @@ void handlePrintLocal(AsyncWebServerRequest *request)
         return;
     }
 
-    // Set up message data for local printing - content should already be formatted with action headers
-    currentMessage.message = message;
-    currentMessage.timestamp = getFormattedDateTime();
-    currentMessage.shouldPrintLocally = true;
-    
-    LOG_VERBOSE("WEB", "Custom message queued for local printing");
-    request->send(200);
+    // Set up message data for local printing (protected by mutex for multi-core safety)
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+        currentMessage.message = message;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        xSemaphoreGive(currentMessageMutex);
+
+        LOG_VERBOSE("WEB", "Custom message queued for local printing");
+        request->send(200);
+    }
+    else
+    {
+        LOG_ERROR("WEB", "Failed to acquire mutex for currentMessage");
+        sendValidationError(request, ValidationResult(false, "System busy, please try again"));
+    }
 }
 
 // ========================================

@@ -1,24 +1,29 @@
 # CLAUDE.md
 
 <system_context>
-ESP32-C3 thermal printer with web interface. Alpine.js + Tailwind CSS frontend, C++ backend.
+Multi-board ESP32 thermal printer with web interface. Alpine.js + Tailwind CSS frontend, C++ backend.
+Supports ESP32-C3-mini, ESP32-S3-mini, and custom PCB variants.
 Memory-constrained embedded system with dual configuration layers.
+Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT, LEDs) use singleton + mutex pattern.
 </system_context>
 
 <critical_notes>
 
-- Always run `mcp__ide__getDiagnostics` after ANY code changes
 - Always run `npm run build` after ANY frontend changes
 - Never edit `/data/` directly - edit `/src/data/` instead
-- Never hardcode values - use `config.h` and NVS
+- Never hardcode GPIO pins - use board-specific defaults from `boards/board_config.h`
+- Board type auto-detected at compile-time from PlatformIO build flags
 - Fail fast principle - no fallback values or defensive arrays
 - Always use "Scribe Evolution" (never just "Scribe") in all documentation
+- **NEVER upload firmware or monitor serial - let the user do it**
+- **FastLED RMT flags REQUIRED in platformio.ini** - Missing causes ESP32-C3 crashes (see `/src/leds/CLAUDE.md`)
   </critical_notes>
 
 <file_map>
 Specialized CLAUDE.md files provide focused guidance:
 
 - `/src/core/CLAUDE.md` → System fundamentals (config, network, MQTT, logging)
+- `/src/config/boards/CLAUDE.md` → Multi-board GPIO configuration system
 - `/src/web/CLAUDE.md` → HTTP server, API handlers, validation
 - `/src/content/CLAUDE.md` → Content generation (jokes, riddles, AI integration)
 - `/src/hardware/CLAUDE.md` → Printer interface, physical buttons
@@ -34,15 +39,23 @@ Setup and Development Workflow:
 
 ```bash
 # Initial setup
-cp src/core/config.h.example src/core/config.h
+cp src/config/device_config.h.example src/config/device_config.h
 npm install
 
-# Development cycle
+# Development cycle (choose your board)
 npm run build
-pio run --target upload -e esp32c3-dev && pio run --target uploadfs -e esp32c3-dev
+
+# ESP32-C3-mini (4MB)
+pio run --target upload -e esp32c3-4mb-dev && pio run --target uploadfs -e esp32c3-4mb-dev
+
+# ESP32-S3-mini (4MB)
+pio run --target upload -e esp32s3-4mb-dev && pio run --target uploadfs -e esp32s3-4mb-dev
+
+# ESP32-S3-custom-PCB (8MB)
+pio run --target upload -e esp32s3-8mb-custom-pcb-dev && pio run --target uploadfs -e esp32s3-8mb-custom-pcb-dev
 
 # Testing
-pio test -e esp32c3-test
+pio test -e esp32c3-4mb-test
 pio device monitor
 ```
 
@@ -53,6 +66,12 @@ Dual Configuration System:
 1. Compile-time defaults in `src/core/config.h`
 2. Runtime configuration in NVS (Non-Volatile Storage)
 
+Configuration Naming Convention:
+
+- `default` prefix = NVS-backed settings that can be overridden via web interface (e.g., `defaultWifiSSID`, `defaultMqttEnabled`)
+- No prefix = Compile-time only settings (e.g., `logLevel`, `jokeAPI`, `chatgptApiEndpoint`)
+- NEVER use `default` prefix for non-NVS constants
+
 Frontend Stack:
 
 - Alpine.js 3.14.9 (reactive framework)
@@ -61,9 +80,27 @@ Frontend Stack:
 
 Backend Stack:
 
-- ESP32-C3 with PlatformIO
+- ESP32 variants: C3-mini, S3-mini, S3-custom-PCB (with eFuse protection)
+- PlatformIO build system with multi-board support
 - Express.js 5.1.0 (mock server)
 - Unity test framework
+
+Thread-Safe Singletons:
+
+- **LogManager** - Serial logging (queue + dedicated writer task)
+- **APIClient** - HTTP operations (mutex-protected WiFiClientSecure/HTTPClient)
+- **ConfigManager** - NVS/LittleFS operations (mutex-protected config save/load)
+- **MQTTManager** - MQTT operations (mutex-protected PubSubClient/WiFiClientSecure)
+- All initialized in main.cpp setup() before any concurrent access
+- Backward-compatible wrapper functions exist for legacy code
+
+Board Configuration System:
+
+- Compile-time board selection via PlatformIO build flags
+- Board-specific GPIO mappings (C3: 0-21, S3: 0-48)
+- Runtime board mismatch detection with automatic GPIO reset
+- eFuse support for custom PCB (printer/LED power control)
+- See `/src/config/boards/CLAUDE.md` for details
 
 Content Generation Architecture:
 
@@ -77,16 +114,13 @@ Content Generation Architecture:
 <workflow>
 Code Quality Process:
 1. Make changes to source files
-2. Run `mcp__ide__getDiagnostics` 
-3. Fix any linting/type errors
-4. Run `npm run build` (if frontend changes)
-5. Test with hardware or mock server
-6. Commit with descriptive message
+2. Run `npm run build` (if frontend changes)
+3. Test with hardware or mock server
+4. Commit with descriptive message
 </workflow>
 
 <fatal_implications>
 
-- Skip diagnostics = Broken code ships
 - Edit `/data/` directly = Changes lost on build
 - Hardcode values = Maintenance nightmare
 - Custom reactivity instead of Alpine = You're doing it wrong

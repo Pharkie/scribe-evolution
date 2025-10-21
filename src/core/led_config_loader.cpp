@@ -152,17 +152,17 @@ void loadLedEffectsFromJson(JsonObject leds, LedEffectsConfig &effectsConfig)
 void saveLedEffectsToJson(JsonObject leds, const LedEffectsConfig &effectsConfig)
 {
     // Save per-effect configurations in nested structure
-    JsonObject effects = leds.createNestedObject("effects");
+    JsonObject effects = leds["effects"].to<JsonObject>();
 
     // Chase Single
-    JsonObject chaseSingle = effects.createNestedObject("chaseSingle");
+    JsonObject chaseSingle = effects["chaseSingle"].to<JsonObject>();
     chaseSingle["speed"] = effectsConfig.chaseSingle.speed;
     chaseSingle["trailLength"] = effectsConfig.chaseSingle.trailLength;
     chaseSingle["trailFade"] = effectsConfig.chaseSingle.trailFade;
     chaseSingle["defaultColor"] = effectsConfig.chaseSingle.defaultColor;
 
     // Chase Multi
-    JsonObject chaseMulti = effects.createNestedObject("chaseMulti");
+    JsonObject chaseMulti = effects["chaseMulti"].to<JsonObject>();
     chaseMulti["speed"] = effectsConfig.chaseMulti.speed;
     chaseMulti["trailLength"] = effectsConfig.chaseMulti.trailLength;
     chaseMulti["trailFade"] = effectsConfig.chaseMulti.trailFade;
@@ -172,7 +172,7 @@ void saveLedEffectsToJson(JsonObject leds, const LedEffectsConfig &effectsConfig
     chaseMulti["color3"] = effectsConfig.chaseMulti.color3;
 
     // Matrix
-    JsonObject matrix = effects.createNestedObject("matrix");
+    JsonObject matrix = effects["matrix"].to<JsonObject>();
     matrix["speed"] = effectsConfig.matrix.speed;
     matrix["drops"] = effectsConfig.matrix.drops;
     matrix["backgroundFade"] = effectsConfig.matrix.backgroundFade;
@@ -181,7 +181,7 @@ void saveLedEffectsToJson(JsonObject leds, const LedEffectsConfig &effectsConfig
     matrix["defaultColor"] = effectsConfig.matrix.defaultColor;
 
     // Twinkle
-    JsonObject twinkle = effects.createNestedObject("twinkle");
+    JsonObject twinkle = effects["twinkle"].to<JsonObject>();
     twinkle["density"] = effectsConfig.twinkle.density;
     twinkle["fadeSpeed"] = effectsConfig.twinkle.fadeSpeed;
     twinkle["minBrightness"] = effectsConfig.twinkle.minBrightness;
@@ -189,7 +189,7 @@ void saveLedEffectsToJson(JsonObject leds, const LedEffectsConfig &effectsConfig
     twinkle["defaultColor"] = effectsConfig.twinkle.defaultColor;
 
     // Pulse
-    JsonObject pulse = effects.createNestedObject("pulse");
+    JsonObject pulse = effects["pulse"].to<JsonObject>();
     pulse["speed"] = effectsConfig.pulse.speed;
     pulse["minBrightness"] = effectsConfig.pulse.minBrightness;
     pulse["maxBrightness"] = effectsConfig.pulse.maxBrightness;
@@ -197,7 +197,7 @@ void saveLedEffectsToJson(JsonObject leds, const LedEffectsConfig &effectsConfig
     pulse["defaultColor"] = effectsConfig.pulse.defaultColor;
 
     // Rainbow
-    JsonObject rainbow = effects.createNestedObject("rainbow");
+    JsonObject rainbow = effects["rainbow"].to<JsonObject>();
     rainbow["speed"] = effectsConfig.rainbow.speed;
     rainbow["saturation"] = effectsConfig.rainbow.saturation;
     rainbow["brightness"] = effectsConfig.rainbow.brightness;

@@ -48,6 +48,9 @@ AsyncEventSource sseEvents("/mqtt-printers");
 // Global message storage for printing
 Message currentMessage = {"", "", false};
 
+// Mutex to protect concurrent access to currentMessage between cores
+SemaphoreHandle_t currentMessageMutex = nullptr;
+
 // ========================================
 // CAPTIVE PORTAL HANDLER FOR AP MODE
 // ========================================
@@ -127,21 +130,21 @@ void registerRoute(const char *method, const char *path, const char *description
 
 void addRegisteredRoutesToJson(JsonObject &endpoints)
 {
-    JsonArray webPages = endpoints.createNestedArray("web_pages");
-    JsonArray apiEndpoints = endpoints.createNestedArray("api_endpoints");
+    JsonArray webPages = endpoints["web_pages"].to<JsonArray>();
+    JsonArray apiEndpoints = endpoints["api_endpoints"].to<JsonArray>();
 
     for (const auto &route : registeredRoutes)
     {
         if (route.isAPI)
         {
-            JsonObject api = apiEndpoints.createNestedObject();
+            JsonObject api = apiEndpoints.add<JsonObject>();
             api["method"] = route.method;
             api["path"] = route.path;
             api["description"] = route.description;
         }
         else
         {
-            JsonObject page = webPages.createNestedObject();
+            JsonObject page = webPages.add<JsonObject>();
             page["path"] = route.path;
             page["description"] = route.description;
         }
@@ -493,15 +496,15 @@ static String lastPrinterListHash = "";
 // Helper function to get printer JSON data for SSE
 String getDiscoveredPrintersJson()
 {
-    DynamicJsonDocument doc(2048);
-    JsonArray printersArray = doc.createNestedArray("discovered_printers");
+    JsonDocument doc;
+    JsonArray printersArray = doc["discovered_printers"].to<JsonArray>();
 
     std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
     for (const auto &printer : discovered)
     {
         if (printer.status == "online")
         {
-            JsonObject printerObj = printersArray.createNestedObject();
+            JsonObject printerObj = printersArray.add<JsonObject>();
             printerObj["printer_id"] = printer.printerId;
             printerObj["name"] = printer.name;
             printerObj["firmware_version"] = printer.firmwareVersion;
@@ -541,7 +544,7 @@ void sendSystemStatus(const String &status, const String &message)
 {
     if (sseEvents.count() > 0)
     {
-        DynamicJsonDocument doc(512);
+        JsonDocument doc;
         doc["status"] = status;
         doc["message"] = message;
         doc["timestamp"] = millis();

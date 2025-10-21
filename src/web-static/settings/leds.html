@@ -136,8 +136,8 @@
                   <div class="text-sm text-gray-700 dark:text-gray-300">
                     <span class="font-medium">LED GPIO Pin:</span>
                     <span
-                      x-text="config.leds?.gpio === -1 ? '-1 (Not connected)' : (config.leds?.gpio || 'Not configured')"
                       class="font-mono"
+                      x-text="config.leds?.pin !== undefined ? (config.leds.pin === -1 ? '-1 (Not connected)' : `GPIO ${config.leds.pin}`) : 'Loading...'"
                     ></span>
                     <div class="text-xs text-gray-500 mt-1">
                       Configured in Device Settings

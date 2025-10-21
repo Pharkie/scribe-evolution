@@ -70,24 +70,24 @@ Some thermal paper is treated against fading and can last 35+ years. If using Sc
 
 ### ESP32 to CSN-A4L Printer Connection
 
-The project uses ESP32 UART to communicate with the printer:
+The project uses ESP32 UART for bidirectional communication with the printer:
 
-| Printer Pin | ESP32 Pin                                    | Power Supply Pin | Description   |
-| ----------- | -------------------------------------------- | ---------------- | ------------- |
-| TTL RX      | Configurable in software, defaults to GPIO21 | -                | MCU Transmit  |
-| TTL GND     | GND                                          | GND              | Common Ground |
-| Power VH    | -                                            | 5V               | Printer VIN   |
-| Power GND   | GND                                          | GND              | Printer GND   |
+| Printer Pin | ESP32 Pin                                          | Power Supply Pin | Description                    |
+| ----------- | -------------------------------------------------- | ---------------- | ------------------------------ |
+| TTL RX      | Configurable in software (board-specific defaults) | -                | MCU Transmit to printer        |
+| TTL TX      | Configurable in software (board-specific defaults) | -                | Printer status/feedback to MCU |
+| TTL GND     | GND                                                | GND              | Common Ground                  |
+| Power VH    | -                                                  | 5V               | Printer VIN                    |
+| Power GND   | GND                                                | GND              | Printer GND                    |
 
-**Note:** GPIO21 is available on ESP32-C3, ESP32-S3, and most ESP32 variants. The same default pin works across all supported boards.
+**Note:** Default GPIO pins vary by board type - see board configuration files for your specific ESP32 variant. The printer supports bidirectional communication for status queries and realtime feedback.
 
-**Unused printer connections:**
+**Optional printer connections:**
 
-- TTL TX (the printer doesn't reply to the ESP32 at all, traffic is one-way)
 - TTL NC = Not Connected should be.. not connected.
-- TTL DTR (Data Terminal Ready)
+- TTL DTR (Data Terminal Ready) - optional flow control
 
-These wires can be removed from the connector to reduce clutter and confusion.
+Unused wires can be removed from the connector to reduce clutter and confusion.
 
 ### Power Requirements
 

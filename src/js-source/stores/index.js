@@ -324,14 +324,18 @@ export function createIndexStore() {
         // Format content based on target printer
         if (this.selectedPrinter === "local-direct") {
           // For local printing, combine header + body into formatted string
-          // Handle empty body case (e.g., POKE action)
+          // Handle missing/empty body case (e.g., POKE action has no body key)
           const formattedContent = result.body
             ? result.header + "\n\n" + result.body
             : result.header;
           await printLocalContent(formattedContent);
         } else {
-          // For MQTT printing, use structured data
-          await printMQTT(result.header, result.body, this.selectedPrinter);
+          // For MQTT printing, use structured data (body defaults to empty string if not present)
+          await printMQTT(
+            result.header,
+            result.body || "",
+            this.selectedPrinter,
+          );
         }
 
         // 🎊 Trigger confetti celebration for successful quick action!

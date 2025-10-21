@@ -1,6 +1,6 @@
 /**
- * @file LedEffectsNew.cpp
- * @brief Refactored LED effects manager using modular effect system
+ * @file LedEffects.cpp
+ * @brief Thread-safe LED effects manager using modular effect system
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
@@ -12,15 +12,53 @@
 #if ENABLE_LEDS
 
 #include <core/logging.h>
+#include <core/LogManager.h>
 #include <config/config.h>
 #include <core/config_loader.h>
 #include "effects/EffectRegistry.h"
 #include <utils/color_utils.h>
 
-// Global instance
-LedEffects ledEffects;
+// Global LED array (non-static so it can be accessed from main.cpp for testing)
+#define MAX_LEDS 300
+CRGB staticLEDs[MAX_LEDS];
 
-LedEffects::LedEffects() : leds(nullptr),
+// ============================================================================
+// LedLock RAII Implementation
+// ============================================================================
+
+LedLock::LedLock(SemaphoreHandle_t m, uint32_t timeoutMs)
+    : mutex(m), locked(false)
+{
+    if (mutex != nullptr)
+    {
+        locked = (xSemaphoreTake(mutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
+        if (!locked)
+        {
+            LogManager::instance().logf("[LedLock] Mutex acquire TIMEOUT after %dms\n", timeoutMs);
+        }
+    }
+}
+
+LedLock::~LedLock()
+{
+    if (mutex != nullptr && locked)
+    {
+        xSemaphoreGive(mutex);
+    }
+}
+
+// ============================================================================
+// LedEffects Singleton Implementation
+// ============================================================================
+
+LedEffects& LedEffects::getInstance()
+{
+    static LedEffects instance;
+    return instance;
+}
+
+LedEffects::LedEffects() : mutex(nullptr),
+                           leds(nullptr),
                            ledCount(0),
                            ledPin(0),
                            ledBrightness(0),
@@ -47,8 +85,10 @@ LedEffects::LedEffects() : leds(nullptr),
                            effectRegistry(nullptr),
                            finalFadeActive(false),
                            finalFadeStart(0),
-                           finalFadeBase(nullptr)
+                           finalFadeBase(nullptr),
+                           initialized(false)
 {
+    // Mutex creation moved to begin() to ensure FreeRTOS is fully initialized
 }
 
 LedEffects::~LedEffects()
@@ -65,27 +105,75 @@ LedEffects::~LedEffects()
         effectRegistry = nullptr;
     }
 
-    if (leds)
+    // LED array is now static (no deallocation needed)
+
+    if (mutex != nullptr)
     {
-        delete[] leds;
-        leds = nullptr;
+        vSemaphoreDelete(mutex);
+        mutex = nullptr;
     }
 }
 
 bool LedEffects::begin()
 {
+    if (initialized)
+    {
+        LOG_VERBOSE("LEDS", "LedEffects already initialized");
+        return true;
+    }
+
+    // Create LED mutex for multi-core protection (must be done in begin(), not constructor)
+    mutex = xSemaphoreCreateMutex();
+    if (mutex == nullptr)
+    {
+        LOG_ERROR("LEDS", "Failed to create LED mutex!");
+        return false;
+    }
+
+    initialized = true;
+    LOG_NOTICE("LEDS", "LedEffects initialized (thread-safe singleton)");
+
+    LedLock lock(mutex, 2000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in begin()");
+        return false;
+    }
+
     // Load configuration
     const RuntimeConfig &config = getRuntimeConfig();
 
-    return reinitialize(config.ledPin, config.ledCount, config.ledBrightness,
-                        config.ledRefreshRate, config.ledEffects);
+    // Call internal reinitialize (mutex already held)
+    return reinitializeInternal(config.ledPin, config.ledCount, config.ledBrightness,
+                                config.ledRefreshRate, config.ledEffects);
 }
 
 bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRate,
                               const LedEffectsConfig &effectsConfig)
 {
-    // Stop current effect
-    stopEffect();
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return false;
+    }
+
+    LedLock lock(mutex, 2000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in reinitialize()");
+        return false;
+    }
+
+    return reinitializeInternal(pin, count, brightness, refreshRate, effectsConfig);
+}
+
+bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int refreshRate,
+                                      const LedEffectsConfig &effectsConfig)
+{
+    // IMPORTANT: Mutex must already be held by caller!
+
+    // Stop current effect (internal version - mutex already held)
+    stopEffectInternal();
 
     // Store configuration
     ledPin = pin;
@@ -101,20 +189,26 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         return false;
     }
 
-    // Clean up existing LED array
-    if (leds)
+    // Use static LED array (avoids ESP32-C3 RMT crash with heap allocation)
+    if (ledCount > MAX_LEDS)
     {
-        delete[] leds;
-        leds = nullptr;
-    }
-
-    // Allocate LED array
-    leds = new CRGB[ledCount];
-    if (!leds)
-    {
-        LOG_ERROR("LEDS", "Failed to allocate memory for %d LEDs", ledCount);
+        LOG_ERROR("LEDS", "LED count %d exceeds maximum %d", ledCount, MAX_LEDS);
         return false;
     }
+    leds = staticLEDs;  // Point to static global array
+    LOG_VERBOSE("LEDS", "Using static LED array for %d LEDs (max: %d) at %p", ledCount, MAX_LEDS, leds);
+
+    // Enable LED eFuse if present (custom PCB only)
+    #if BOARD_HAS_LED_EFUSE
+    const BoardPinDefaults &boardDefaults = getBoardDefaults();
+    if (boardDefaults.efuse.ledStrip != -1)
+    {
+        LOG_VERBOSE("LEDS", "Enabling LED strip eFuse on GPIO %d", boardDefaults.efuse.ledStrip);
+        pinMode(boardDefaults.efuse.ledStrip, OUTPUT);
+        digitalWrite(boardDefaults.efuse.ledStrip, HIGH); // Enable LED power
+        delay(10); // Give eFuse time to stabilize
+    }
+    #endif
 
     // Initialize FastLED
     // Validate GPIO pin using configuration system
@@ -124,54 +218,69 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         return false;
     }
 
-    // Dynamic FastLED initialization using template magic
-    // This avoids the massive switch statement and supports all valid GPIO pins
+    // Clear LED buffer before initializing
+    // NOTE: DO NOT call FastLED.clearData() before addLeds() - causes ESP32-C3 crash!
+    // FastLED.clearData();  // ← REMOVED: This corrupts ESP32-C3 RMT state
+    FastLED.clear();      // Clear all LEDs to off state
+
+    LOG_VERBOSE("LEDS", "Initializing FastLED on GPIO %d (Board: %s)", ledPin, BOARD_NAME);
+
+    // FastLED requires GPIO pin as compile-time template parameter
+    // Use macro to reduce repetition
+    #define FASTLED_INIT_CASE(pin) \
+        case pin: FastLED.addLeds<WS2812B, pin, GRB>(leds, ledCount); break;
+
     bool initSuccess = false;
     switch (ledPin)
     {
-    case 0:
-        initSuccess = (FastLED.addLeds<WS2812B, 0, GRB>(leds, ledCount), true);
-        break;
-    case 1:
-        initSuccess = (FastLED.addLeds<WS2812B, 1, GRB>(leds, ledCount), true);
-        break;
-    case 2:
-        initSuccess = (FastLED.addLeds<WS2812B, 2, GRB>(leds, ledCount), true);
-        break;
-    case 3:
-        initSuccess = (FastLED.addLeds<WS2812B, 3, GRB>(leds, ledCount), true);
-        break;
-    case 4:
-        initSuccess = (FastLED.addLeds<WS2812B, 4, GRB>(leds, ledCount), true);
-        break;
-    case 5:
-        initSuccess = (FastLED.addLeds<WS2812B, 5, GRB>(leds, ledCount), true);
-        break;
-    case 6:
-        initSuccess = (FastLED.addLeds<WS2812B, 6, GRB>(leds, ledCount), true);
-        break;
-    case 7:
-        initSuccess = (FastLED.addLeds<WS2812B, 7, GRB>(leds, ledCount), true);
-        break;
-    case 8:
-        initSuccess = (FastLED.addLeds<WS2812B, 8, GRB>(leds, ledCount), true);
-        break;
-    case 9:
-        initSuccess = (FastLED.addLeds<WS2812B, 9, GRB>(leds, ledCount), true);
-        break;
-    case 10:
-        initSuccess = (FastLED.addLeds<WS2812B, 10, GRB>(leds, ledCount), true);
-        break;
-    case 20:
-        initSuccess = (FastLED.addLeds<WS2812B, 20, GRB>(leds, ledCount), true);
-        break;
-    case 21:
-        initSuccess = (FastLED.addLeds<WS2812B, 21, GRB>(leds, ledCount), true);
-        break;
+    // Common GPIO pins (0-10, 20-21) - available on all ESP32 boards
+    FASTLED_INIT_CASE(0)
+    FASTLED_INIT_CASE(1)
+    FASTLED_INIT_CASE(2)
+    FASTLED_INIT_CASE(3)
+    FASTLED_INIT_CASE(4)
+    FASTLED_INIT_CASE(5)
+    FASTLED_INIT_CASE(6)
+    FASTLED_INIT_CASE(7)
+    FASTLED_INIT_CASE(8)
+    FASTLED_INIT_CASE(9)
+    FASTLED_INIT_CASE(10)
+    FASTLED_INIT_CASE(20)
+    FASTLED_INIT_CASE(21)
+
+    // ESP32-S3 additional GPIO pins - only compile for boards with GPIO > 21
+    #if BOARD_MAX_GPIO > 21
+    FASTLED_INIT_CASE(11)
+    FASTLED_INIT_CASE(12)
+    FASTLED_INIT_CASE(13)
+    FASTLED_INIT_CASE(14)
+    FASTLED_INIT_CASE(15)
+    FASTLED_INIT_CASE(16)
+    FASTLED_INIT_CASE(17)
+    FASTLED_INIT_CASE(18)
+    FASTLED_INIT_CASE(33)
+    FASTLED_INIT_CASE(34)
+    FASTLED_INIT_CASE(35)
+    FASTLED_INIT_CASE(36)
+    FASTLED_INIT_CASE(37)
+    FASTLED_INIT_CASE(38)
+    FASTLED_INIT_CASE(39)
+    FASTLED_INIT_CASE(40)
+    FASTLED_INIT_CASE(41)
+    FASTLED_INIT_CASE(42)
+    FASTLED_INIT_CASE(43)
+    FASTLED_INIT_CASE(44)
+    FASTLED_INIT_CASE(47)
+    FASTLED_INIT_CASE(48)
+    #endif
+
     default:
         LOG_ERROR("LEDS", "GPIO %d not implemented in FastLED switch (this is a code bug)", ledPin);
         return false;
     }
+
+    initSuccess = true;
+    #undef FASTLED_INIT_CASE
 
     if (!initSuccess)
     {
@@ -181,7 +290,15 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
 
     FastLED.setBrightness(ledBrightness);
     FastLED.clear();
-    FastLED.show();
+    FastLED.show();  // Single show() with zeros (like the test does)
+
+    // DISABLED: ESP32-C3 "priming" - testing if this is what breaks it
+    // LOG_VERBOSE("LEDS", "ESP32-C3: Priming RMT with color data...");
+    // leds[0] = CRGB::Blue;  // Set first LED to blue
+    // FastLED.show();        // Second show() with color data
+    // leds[0] = CRGB::Black; // Clear it
+    // FastLED.show();        // Third show() back to zeros
+    // LOG_VERBOSE("LEDS", "ESP32-C3: RMT primed successfully");
 
     // Create or update effect registry
     if (effectRegistry)
@@ -201,8 +318,47 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
 
 void LedEffects::update()
 {
+    if (!initialized)
+    {
+        // Not initialized yet - silently return (this is called every loop iteration)
+        return;
+    }
+
+    // CRITICAL: Prevent re-entrant updates (fixes ESP32-C3 boot crash race condition)
+    // This guards against update() being called while already processing an update
+    static bool updateInProgress = false;
+    if (updateInProgress)
+    {
+        LOG_VERBOSE("LEDS", "Skipping update - already in progress (race condition prevented)");
+        return;
+    }
+
+    // Set guard flag
+    updateInProgress = true;
+
+    // ESP32-C3 WORKAROUND: Mutex disabled - seems to interfere with FastLED RMT timing
+    // ESP32-C3 is single-core so mutex not needed anyway
+    // LedLock lock(mutex, 100);
+    // if (!lock.isLocked())
+    // {
+    //     // Don't log on every timeout - would spam the log
+    //     updateInProgress = false;  // Release guard before returning
+    //     return;
+    // }
+
+    // Validate effect state before proceeding
     if (!effectActive || !currentEffect || !leds)
     {
+        updateInProgress = false;  // Release guard before returning
+        return;
+    }
+
+    // Additional safety checks for ESP32-C3
+    if (ledCount <= 0 || ledCount > 300)
+    {
+        LOG_ERROR("LEDS", "Corrupted ledCount: %d - stopping effect", ledCount);
+        stopEffectInternal();
+        updateInProgress = false;  // Release guard before returning
         return;
     }
 
@@ -211,98 +367,86 @@ void LedEffects::update()
     // Check if it's time to update
     if (now - lastUpdate < ledUpdateInterval)
     {
+        updateInProgress = false;  // Release guard before returning
         return;
     }
 
     lastUpdate = now;
 
-    // Handle manager-driven final fade-out (e.g., rainbow end-of-all-cycles)
-    if (finalFadeActive)
-    {
-        unsigned long elapsed = now - finalFadeStart;
-        if (elapsed >= finalFadeDurationMs)
-        {
-            // Cleanup fade resources then stop
-            if (finalFadeBase)
-            {
-                delete[] finalFadeBase;
-                finalFadeBase = nullptr;
-            }
-            stopEffect();
-            return;
-        }
+    // DIAGNOSTIC: Log effect state at update entry
+    LOG_VERBOSE("LEDS", "UPDATE: effect=%s, cycles=%d/%d, step=%d, active=%d",
+                currentEffectName.c_str(), completedCycles, targetCycles, effectStep, effectActive);
 
-        // Time-based linear fade for smoother perception over the duration
-        float t = (float)elapsed / (float)finalFadeDurationMs; // 0..1
-        t = constrain(t, 0.0f, 1.0f);
-        // Perceptual (gamma) fade: closer to human brightness perception
-        float gamma = 2.2f;
-        uint8_t scale = (uint8_t)(powf(1.0f - t, gamma) * 255.0f);
-        if (finalFadeBase)
-        {
-            for (int i = 0; i < ledCount; i++)
-            {
-                CRGB c = finalFadeBase[i];
-                nscale8x3_video(c.r, c.g, c.b, scale);
-                leds[i] = c;
-            }
-        }
-        FastLED.show();
-        return;
-    }
+    // DISABLED: All fade logic disabled for ESP32-C3 debugging
+    // if (finalFadeActive) { ... }
 
     // Update the current effect
+    LOG_VERBOSE("LEDS", "UPDATE: Calling currentEffect->update() (leds=%p, count=%d)", leds, ledCount);
     bool shouldContinue = currentEffect->update(leds, ledCount, effectStep, effectDirection,
                                                 effectPhase, effectColor1, effectColor2, effectColor3,
                                                 completedCycles);
+    LOG_VERBOSE("LEDS", "UPDATE: currentEffect->update() returned %d, cycles now=%d/%d",
+                shouldContinue, completedCycles, targetCycles);
 
     // Check if cycle-based effect is complete (when target cycles > 0)
     if (targetCycles > 0 && completedCycles >= targetCycles)
     {
-        // For rainbow: initiate a manager-driven final fade-out instead of abrupt stop
-        if (currentEffectName.equalsIgnoreCase("rainbow"))
-        {
-            finalFadeActive = true;
-            finalFadeStart = now;
-            // Snapshot current LED state as base for linear fade
-            if (finalFadeBase)
-            {
-                delete[] finalFadeBase;
-                finalFadeBase = nullptr;
-            }
-            finalFadeBase = new CRGB[ledCount];
-            if (finalFadeBase)
-            {
-                for (int i = 0; i < ledCount; i++)
-                {
-                    finalFadeBase[i] = leds[i];
-                }
-            }
-            FastLED.show();
-            return;
-        }
-        else
-        {
-            stopEffect();
-            return;
-        }
+        // DISABLED: Rainbow fade logic disabled for ESP32-C3 debugging
+        // Just stop all effects immediately without fade
+        LOG_VERBOSE("LEDS", "UPDATE: Effect complete - calling stopEffectInternal()");
+        stopEffectInternal();
+        LOG_VERBOSE("LEDS", "UPDATE: stopEffectInternal() completed");
+        updateInProgress = false;  // Release guard before returning
+        return;
     }
 
     // Show the updated LEDs
+    LOG_VERBOSE("LEDS", "UPDATE: Calling FastLED.show() for normal update");
+    LOG_VERBOSE("LEDS", "UPDATE: FastLED controller count=%d", FastLED.count());
+    LOG_VERBOSE("LEDS", "UPDATE: LED buffer address=%p, first LED RGB=(%d,%d,%d)",
+                leds, leds[0].r, leds[0].g, leds[0].b);
+
+    // ESP32-C3 WORKAROUND: Call FastLED.show() twice
+    // Observation: stopEffectInternal() calls show() twice and works fine
+    // Hypothesis: First show() might fail/crash, but second one works?
+    // Or: RMT peripheral needs double-buffering on C3?
+    #ifdef CONFIG_IDF_TARGET_ESP32C3
+    LOG_VERBOSE("LEDS", "UPDATE: ESP32-C3 calling show() twice");
     FastLED.show();
+    delayMicroseconds(100);  // Small delay between calls
+    #endif
+
+    FastLED.show();
+    LOG_VERBOSE("LEDS", "UPDATE: FastLED.show() completed");
+
+    // Release guard at end of function
+    updateInProgress = false;
 }
 
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,
                                    CRGB color1, CRGB color2, CRGB color3)
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return false;
+    }
+
+    LedLock lock(mutex, 1000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in startEffectCycles()");
+        return false;
+    }
+
     if (!effectRegistry || !effectRegistry->isValidEffect(effectName))
     {
         LOG_WARNING("LEDS", "Unknown effect name: %s", effectName.c_str());
         return false;
     }
 
-    // Stop current effect
-    stopEffect();
+    // Stop current effect (internal - mutex already held)
+    stopEffectInternal();
 
     // Create new effect
     currentEffect = effectRegistry->createEffect(effectName);
@@ -336,23 +480,39 @@ bool LedEffects::startEffectCycles(const String &effectName, int cycles,
     effectDirection = 1;
     effectPhase = 0.0f;
 
-    LOG_VERBOSE("LEDS", "Started LED effect: %s (cycles: %d)",
-                effectName.c_str(), cycles);
+    LOG_NOTICE("LEDS", "Started LED effect: %s (cycles: %d) on GPIO %d with %d LEDs",
+                effectName.c_str(), cycles, ledPin, ledCount);
 
     return true;
 }
 
 bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
 {
-    // Use autonomous per-effect default colors from registry
-    if (!effectRegistry)
+    if (!initialized)
     {
-        LOG_WARNING("LEDS", "Effect registry not initialized");
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
         return false;
     }
 
+    // Get colors from registry first (no lock needed for read-only operation)
     String h1, h2, h3;
-    effectRegistry->getDefaultColorsHex(effectName, h1, h2, h3);
+    {
+        LedLock lock(mutex, 1000);
+        if (!lock.isLocked())
+        {
+            LOG_ERROR("LEDS", "Failed to acquire LED mutex in startEffectCyclesAuto()");
+            return false;
+        }
+
+        // Use autonomous per-effect default colors from registry
+        if (!effectRegistry)
+        {
+            LOG_WARNING("LEDS", "Effect registry not initialized");
+            return false;
+        }
+
+        effectRegistry->getDefaultColorsHex(effectName, h1, h2, h3);
+    } // Lock released here
 
     // Convert to CRGB (fallbacks if strings are empty)
     CRGB c1 = CRGB::Blue;
@@ -373,11 +533,32 @@ bool LedEffects::startEffectCyclesAuto(const String &effectName, int cycles)
         c3 = hexToRgb(h3);
     }
 
+    // startEffectCycles will acquire its own lock
     return startEffectCycles(effectName, cycles, c1, c2, c3);
 }
 
 void LedEffects::stopEffect()
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return;
+    }
+
+    LedLock lock(mutex, 1000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in stopEffect()");
+        return;
+    }
+
+    stopEffectInternal();
+}
+
+void LedEffects::stopEffectInternal()
+{
+    // IMPORTANT: Mutex must already be held by caller!
+
     if (currentEffect)
     {
         delete currentEffect;
@@ -414,16 +595,45 @@ void LedEffects::stopEffect()
 
 bool LedEffects::isEffectRunning() const
 {
+    if (!initialized)
+    {
+        return false;
+    }
+
+    // Const method can't acquire mutex in typical pattern, but for simple bool read it's atomic enough
+    // On ESP32, aligned 32-bit reads are atomic
     return effectActive;
 }
 
 String LedEffects::getCurrentEffectName() const
 {
+    if (!initialized)
+    {
+        return "";
+    }
+
+    // String copy needs protection
+    LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
+    if (!lock.isLocked())
+    {
+        return "";
+    }
     return currentEffectName;
 }
 
 unsigned long LedEffects::getRemainingTime() const
 {
+    if (!initialized)
+    {
+        return 0;
+    }
+
+    LedLock lock(const_cast<SemaphoreHandle_t&>(mutex), 100);
+    if (!lock.isLocked())
+    {
+        return 0;
+    }
+
     if (!effectActive || effectDuration == 0)
     {
         return 0;
@@ -440,6 +650,19 @@ unsigned long LedEffects::getRemainingTime() const
 
 void LedEffects::updateEffectConfig(const LedEffectsConfig &newConfig)
 {
+    if (!initialized)
+    {
+        LOG_ERROR("LEDS", "LedEffects not initialized - call begin() first!");
+        return;
+    }
+
+    LedLock lock(mutex, 1000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("LEDS", "Failed to acquire LED mutex in updateEffectConfig()");
+        return;
+    }
+
     if (effectRegistry)
     {
         effectRegistry->updateConfig(newConfig);

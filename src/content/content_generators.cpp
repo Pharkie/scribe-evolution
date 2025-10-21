@@ -55,10 +55,10 @@ String generateRiddleContent()
 
         if (current == target)
         {
-            DynamicJsonDocument doc(jsonDocumentSize);
+            JsonDocument doc;
             DeserializationError error = deserializeJson(doc, line);
 
-            if (!error && doc.containsKey("riddle"))
+            if (!error && doc["riddle"].is<JsonVariant>())
             {
                 String extracted = doc["riddle"].as<String>();
                 if (extracted.length() > 0)
@@ -67,7 +67,7 @@ String generateRiddleContent()
                 }
 
                 // Also extract the answer if available
-                if (doc.containsKey("answer"))
+                if (doc["answer"].is<JsonVariant>())
                 {
                     String extractedAnswer = doc["answer"].as<String>();
                     if (extractedAnswer.length() > 0)
@@ -104,10 +104,10 @@ String generateJokeContent(int timeoutMs)
 
     if (response.length() > 0)
     {
-        DynamicJsonDocument doc(jsonDocumentSize);
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, response);
 
-        if (!error && doc.containsKey("joke"))
+        if (!error && doc["joke"].is<JsonVariant>())
         {
             String apiJoke = doc["joke"].as<String>();
             apiJoke.trim();
@@ -131,13 +131,13 @@ String generateQuoteContent(int timeoutMs)
     if (response.length() > 0)
     {
         // Parse JSON response (expecting array format)
-        DynamicJsonDocument doc(largeJsonDocumentSize);
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, response);
 
         if (!error && doc.is<JsonArray>() && doc.size() > 0)
         {
             JsonObject quoteObj = doc[0];
-            if (quoteObj.containsKey("q") && quoteObj.containsKey("a"))
+            if (quoteObj["q"].is<JsonVariant>() && quoteObj["a"].is<JsonVariant>())
             {
                 String quoteText = quoteObj["q"].as<String>();
                 String author = quoteObj["a"].as<String>();
@@ -166,15 +166,15 @@ String generateQuizContent(int timeoutMs)
 
     if (response.length() > 0)
     {
-        DynamicJsonDocument doc(largeJsonDocumentSize);
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, response);
 
         if (!error && doc.is<JsonArray>() && doc.size() > 0)
         {
             JsonObject questionObj = doc[0];
-            if (questionObj.containsKey("question") &&
-                questionObj.containsKey("correctAnswer") &&
-                questionObj.containsKey("incorrectAnswers"))
+            if (questionObj["question"].is<JsonVariant>() &&
+                questionObj["correctAnswer"].is<JsonVariant>() &&
+                questionObj["incorrectAnswers"].is<JsonVariant>())
             {
                 String question = questionObj["question"].as<String>();
                 String correctAnswer = questionObj["correctAnswer"].as<String>();
@@ -239,13 +239,13 @@ String generateUnbiddenInkContent(const String &customPrompt)
     LOG_VERBOSE("UNBIDDENINK", "Using prompt: %s", prompt.c_str());
 
     // Build JSON payload for OpenAI ChatGPT API
-    DynamicJsonDocument payloadDoc(largeJsonDocumentSize);
+    JsonDocument payloadDoc;
     payloadDoc["model"] = "gpt-4o-mini";
     payloadDoc["max_tokens"] = 150;
     payloadDoc["temperature"] = 0.7;
 
-    JsonArray messages = payloadDoc.createNestedArray("messages");
-    JsonObject userMessage = messages.createNestedObject();
+    JsonArray messages = payloadDoc["messages"].to<JsonArray>();
+    JsonObject userMessage = messages.add<JsonObject>();
     userMessage["role"] = "user";
     userMessage["content"] = prompt;
 
@@ -260,13 +260,13 @@ String generateUnbiddenInkContent(const String &customPrompt)
         LOG_VERBOSE("UNBIDDENINK", "API response received: %s", response.c_str());
 
         // Parse OpenAI ChatGPT JSON response
-        DynamicJsonDocument doc(largeJsonDocumentSize);
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, response);
 
-        if (!error && doc.containsKey("choices") && doc["choices"].size() > 0)
+        if (!error && doc["choices"].is<JsonVariant>() && doc["choices"].size() > 0)
         {
             JsonObject firstChoice = doc["choices"][0];
-            if (firstChoice.containsKey("message") && firstChoice["message"].containsKey("content"))
+            if (firstChoice["message"].is<JsonVariant>() && firstChoice["message"]["content"].is<JsonVariant>())
             {
                 String apiMessage = firstChoice["message"]["content"].as<String>();
                 apiMessage.trim();

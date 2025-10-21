@@ -56,7 +56,7 @@ extern PubSubClient mqttClient;
 
 #if ENABLE_LEDS
 #include <leds/LedEffects.h>
-extern LedEffects ledEffects;
+// Note: ledEffects() is a singleton accessor function, not an extern object
 #endif
 
 // ========================================
@@ -457,8 +457,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     newConfig.quoteAPI = quoteAPI;
     newConfig.triviaAPI = triviaAPI;
     newConfig.newsAPI = newsAPI;
-    newConfig.betterStackToken = betterStackToken;
-    newConfig.betterStackEndpoint = betterStackEndpoint;
+        // configDoc["betterStackToken"] = config.betterStackToken; // Removed
+        // configDoc["betterStackEndpoint"] = config.betterStackEndpoint; // Removed
     newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     // maxCharacters remains hardcoded from config.h
@@ -594,13 +594,13 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
 #if ENABLE_LEDS
     // Reinitialize LED system with new configuration
-    if (ledEffects.reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
+    if (ledEffects().reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
                                 newConfig.ledRefreshRate, newConfig.ledEffects))
     {
         LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
 
         // Trigger green chase single effect as visual confirmation of successful save
-        ledEffects.startEffectCycles("chase_single", 1, CRGB::Green);
+        ledEffects().startEffectCycles("chase_single", 1, CRGB::Green);
         LOG_VERBOSE("WEB", "LED confirmation effect triggered for config save");
     }
     else

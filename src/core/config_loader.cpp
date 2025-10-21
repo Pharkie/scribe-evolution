@@ -26,6 +26,38 @@ static const char *NVS_NAMESPACE = "scribe-app";
 static RuntimeConfig g_runtimeConfig;
 bool g_configLoaded = false;
 
+// ============================================================================
+// CONFIGMANAGER SINGLETON IMPLEMENTATION
+// ============================================================================
+
+// Singleton instance (Meyer's singleton - thread-safe in C++11+)
+ConfigManager& ConfigManager::instance() {
+    static ConfigManager instance;
+    return instance;
+}
+
+// Constructor
+ConfigManager::ConfigManager() {
+    // Mutex created in begin()
+}
+
+// Initialize (must be called in setup)
+void ConfigManager::begin() {
+    if (initialized) {
+        LOG_VERBOSE("CONFIG", "ConfigManager already initialized");
+        return;
+    }
+
+    mutex = xSemaphoreCreateMutex();
+    if (mutex == nullptr) {
+        LOG_ERROR("CONFIG", "Failed to create ConfigManager mutex!");
+        return;
+    }
+
+    initialized = true;
+    LOG_NOTICE("CONFIG", "ConfigManager initialized (thread-safe singleton)");
+}
+
 // Helper function to validate and get string from NVS with fallback - saves default if missing
 String getNVSString(Preferences &prefs, const char *key, const String &defaultValue, int maxLength = 1000)
 {
@@ -93,26 +125,43 @@ int getNVSPort(Preferences &prefs, const char *key, int defaultValue)
     return getNVSInt(prefs, key, defaultValue, 1, 65535);
 }
 
-bool loadRuntimeConfig()
+// Public method: loadRuntimeConfig (thread-safe)
+bool ConfigManager::loadRuntimeConfig()
 {
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return false;
+    }
+
     LOG_NOTICE("CONFIG", "Loading runtime configuration from NVS");
 
     // Load configuration from NVS (with auto-initialization of missing keys)
-    if (!loadNVSConfig())
+    bool success = true;
+    if (!loadNVSConfigInternal())
     {
         LOG_WARNING("CONFIG", "Failed to load from NVS, using defaults");
-        loadDefaultConfig();
+        loadDefaultConfigInternal();
         g_configLoaded = true;
         LOG_NOTICE("CONFIG", "Runtime configuration loaded from defaults");
-        return true; // Still successful - we have valid configuration
+    }
+    else
+    {
+        g_configLoaded = true;
+        LOG_NOTICE("CONFIG", "Runtime configuration loaded from NVS");
     }
 
-    g_configLoaded = true;
-    LOG_NOTICE("CONFIG", "Runtime configuration loaded from NVS");
-    return true;
+    xSemaphoreGive(mutex);
+    return success;
 }
 
-bool loadNVSConfig()
+// Internal helper: loadNVSConfigInternal (mutex already held)
+bool ConfigManager::loadNVSConfigInternal()
 {
     Preferences prefs;
 
@@ -123,17 +172,73 @@ bool loadNVSConfig()
         return false;
     }
 
+    // Board type detection and mismatch handling
+    // const BoardPinDefaults &boardDefaults = getBoardDefaults();
+    String currentBoardType = String(BOARD_NAME);
+    // const BoardPinDefaults &boardDefaults = getBoardDefaults();
+
+    // Check if board_type exists - we need to know this BEFORE getNVSString changes it
+    bool boardTypeWasMissing = !prefs.isKey(NVS_BOARD_TYPE);
+
+    // Load saved board type (getNVSString will save currentBoardType if missing)
+    String savedBoardType = getNVSString(prefs, NVS_BOARD_TYPE, currentBoardType, 50);
+
+    // Validate GPIO pins match current board (detect stale GPIO values from wrong board)
+    bool gpioMismatch = false;
+    if (!boardTypeWasMissing && savedBoardType == currentBoardType)
+    {
+        // Board type matches, but verify GPIO pins are correct for this board
+        int savedPrinterTx = prefs.getInt(NVS_PRINTER_TX_PIN, -1);
+        if (savedPrinterTx != -1 && savedPrinterTx != defaultPrinterTxPin)
+        {
+            LOG_WARNING("CONFIG", "GPIO mismatch detected: printer TX is %d, expected %d for %s",
+                        savedPrinterTx, defaultPrinterTxPin, currentBoardType.c_str());
+            gpioMismatch = true;
+        }
+    }
+
+    // Reset GPIO pins if board type was missing, mismatched, OR GPIO pins don't match board
+    if (boardTypeWasMissing || savedBoardType != currentBoardType || gpioMismatch)
+    {
+        if (!boardTypeWasMissing)
+        {
+            // Board mismatch - show warning
+            LOG_WARNING("CONFIG", "╔═══════════════════════════════════════════════════════════╗");
+            LOG_WARNING("CONFIG", "║  ⚠️  BOARD MISMATCH DETECTED - RESETTING GPIO CONFIGS  ⚠️  ║");
+            LOG_WARNING("CONFIG", "╠═══════════════════════════════════════════════════════════╣");
+            LOG_WARNING("CONFIG", "║  Saved Board:   %-41s ║", savedBoardType.c_str());
+            LOG_WARNING("CONFIG", "║  Current Board: %-41s ║", currentBoardType.c_str());
+            LOG_WARNING("CONFIG", "║  Resetting all GPIO pins to new board defaults...        ║");
+            LOG_WARNING("CONFIG", "╚═══════════════════════════════════════════════════════════╝");
+
+            // Update board type in NVS (getNVSString already did this if it was missing)
+            prefs.putString(NVS_BOARD_TYPE, currentBoardType);
+        }
+
+        // Reset GPIO configurations to current board defaults
+        prefs.putInt(NVS_PRINTER_TX_PIN, defaultPrinterTxPin);
+        prefs.putInt(NVS_BUTTON1_GPIO, BOARD_BUTTON_PINS[0]);
+        prefs.putInt(NVS_BUTTON2_GPIO, BOARD_BUTTON_PINS[1]);
+        prefs.putInt(NVS_BUTTON3_GPIO, BOARD_BUTTON_PINS[2]);
+        prefs.putInt(NVS_BUTTON4_GPIO, BOARD_BUTTON_PINS[3]);
+
+        #if ENABLE_LEDS
+        prefs.putInt(NVS_LED_PIN, BOARD_LED_STRIP_PIN);
+        #endif
+
+        LOG_NOTICE("CONFIG", "GPIO configurations initialized for %s", currentBoardType.c_str());
+    }
+
     // Load device configuration
     g_runtimeConfig.deviceOwner = getNVSString(prefs, NVS_DEVICE_OWNER, defaultDeviceOwner, 50);
     g_runtimeConfig.timezone = getNVSString(prefs, NVS_DEVICE_TIMEZONE, defaultTimezone, 50);
-    
-    // Load hardware GPIO configuration
-    g_runtimeConfig.printerTxPin = getNVSInt(prefs, NVS_PRINTER_TX_PIN, defaultPrinterTxPin, 0, 39);
-    // Button GPIOs now come from board config (BOARD_BUTTON_PINS), not system_constants.h
-    g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, BOARD_BUTTON_PINS[0], 0, 39);
-    g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, BOARD_BUTTON_PINS[1], 0, 39);
-    g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, BOARD_BUTTON_PINS[2], 0, 39);
-    g_runtimeConfig.buttonGpios[3] = getNVSInt(prefs, NVS_BUTTON4_GPIO, BOARD_BUTTON_PINS[3], 0, 39);
+
+    // Load hardware GPIO configuration (now board-aware)
+    g_runtimeConfig.printerTxPin = getNVSInt(prefs, NVS_PRINTER_TX_PIN, defaultPrinterTxPin, 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, BOARD_BUTTON_PINS[0], 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, BOARD_BUTTON_PINS[1], 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, BOARD_BUTTON_PINS[2], 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.buttonGpios[3] = getNVSInt(prefs, NVS_BUTTON4_GPIO, BOARD_BUTTON_PINS[3], 0, BOARD_MAX_GPIO);
 
     // Load WiFi configuration
     g_runtimeConfig.wifiSSID = getNVSString(prefs, NVS_WIFI_SSID, defaultWifiSSID, 32);
@@ -151,8 +256,6 @@ bool loadNVSConfig()
     g_runtimeConfig.jokeAPI = jokeAPI;
     g_runtimeConfig.quoteAPI = quoteAPI;
     g_runtimeConfig.triviaAPI = triviaAPI;
-    g_runtimeConfig.betterStackToken = betterStackToken;
-    g_runtimeConfig.betterStackEndpoint = betterStackEndpoint;
     g_runtimeConfig.chatgptApiToken = getNVSString(prefs, NVS_CHATGPT_TOKEN, defaultChatgptApiToken, 300);
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
@@ -187,14 +290,14 @@ bool loadNVSConfig()
         g_runtimeConfig.buttonShortMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "short_mq").c_str(), defaultButtonActions[i].shortMqttTopic, 128);
         g_runtimeConfig.buttonLongMqttTopics[i] = getNVSString(prefs, (buttonPrefix + "long_mq").c_str(), defaultButtonActions[i].longMqttTopic, 128);
 
-        // Load LED effect configuration with defaults from ButtonActionConfig struct
+        // Load LED effect configuration with defaults from ButtonConfig struct
         g_runtimeConfig.buttonShortLedEffects[i] = getNVSString(prefs, (buttonPrefix + "short_led").c_str(), defaultButtonActions[i].shortLedEffect, 20);
         g_runtimeConfig.buttonLongLedEffects[i] = getNVSString(prefs, (buttonPrefix + "long_led").c_str(), defaultButtonActions[i].longLedEffect, 20);
     }
 
 #if ENABLE_LEDS
-    // Load LED configuration
-    g_runtimeConfig.ledPin = getNVSInt(prefs, NVS_LED_PIN, DEFAULT_LED_PIN, 0, 39);
+    // Load LED configuration (board-aware GPIO limits)
+    g_runtimeConfig.ledPin = getNVSInt(prefs, NVS_LED_PIN, DEFAULT_LED_PIN, 0, BOARD_MAX_GPIO);
     g_runtimeConfig.ledCount = getNVSInt(prefs, NVS_LED_COUNT, DEFAULT_LED_COUNT, 1, 1000);
     g_runtimeConfig.ledBrightness = getNVSInt(prefs, NVS_LED_BRIGHTNESS, DEFAULT_LED_BRIGHTNESS, 1, 255);
     g_runtimeConfig.ledRefreshRate = getNVSInt(prefs, NVS_LED_REFRESH_RATE, DEFAULT_LED_REFRESH_RATE, 10, 120);
@@ -213,15 +316,17 @@ bool loadNVSConfig()
     return true;
 }
 
-void loadDefaultConfig()
+// Internal helper: loadDefaultConfigInternal (mutex already held)
+void ConfigManager::loadDefaultConfigInternal()
 {
+    // const BoardPinDefaults &boardDefaults = getBoardDefaults();
+
     // Load device defaults
     g_runtimeConfig.deviceOwner = defaultDeviceOwner;
     g_runtimeConfig.timezone = defaultTimezone;
-    
-    // Load hardware GPIO defaults
+
+    // Load hardware GPIO defaults (board-specific)
     g_runtimeConfig.printerTxPin = defaultPrinterTxPin;
-    // Button GPIOs from board config
     g_runtimeConfig.buttonGpios[0] = BOARD_BUTTON_PINS[0];
     g_runtimeConfig.buttonGpios[1] = BOARD_BUTTON_PINS[1];
     g_runtimeConfig.buttonGpios[2] = BOARD_BUTTON_PINS[2];
@@ -242,8 +347,6 @@ void loadDefaultConfig()
     g_runtimeConfig.jokeAPI = jokeAPI;
     g_runtimeConfig.quoteAPI = quoteAPI;
     g_runtimeConfig.triviaAPI = triviaAPI;
-    g_runtimeConfig.betterStackToken = betterStackToken;
-    g_runtimeConfig.betterStackEndpoint = betterStackEndpoint;
     g_runtimeConfig.chatgptApiToken = defaultChatgptApiToken;
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
@@ -266,7 +369,7 @@ void loadDefaultConfig()
         g_runtimeConfig.buttonLongActions[i] = defaultButtonActions[i].longAction;
         g_runtimeConfig.buttonLongMqttTopics[i] = defaultButtonActions[i].longMqttTopic;
 
-        // Load default LED effect configuration from ButtonActionConfig struct
+        // Load default LED effect configuration from ButtonConfig struct
         g_runtimeConfig.buttonShortLedEffects[i] = defaultButtonActions[i].shortLedEffect;
         g_runtimeConfig.buttonLongLedEffects[i] = defaultButtonActions[i].longLedEffect;
     }
@@ -284,7 +387,28 @@ void loadDefaultConfig()
     LOG_NOTICE("CONFIG", "Using default configuration from config.h");
 }
 
-bool saveNVSConfig(const RuntimeConfig &config)
+// Public method: saveNVSConfig (thread-safe)
+bool ConfigManager::saveNVSConfig(const RuntimeConfig &config)
+{
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return false;
+    }
+
+    bool result = saveNVSConfigInternal(config);
+
+    xSemaphoreGive(mutex);
+    return result;
+}
+
+// Internal helper: saveNVSConfigInternal (mutex already held)
+bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
 {
     Preferences prefs;
     if (!prefs.begin(NVS_NAMESPACE, false))
@@ -361,30 +485,55 @@ bool saveNVSConfig(const RuntimeConfig &config)
     return true;
 }
 
-const RuntimeConfig &getRuntimeConfig()
+// Public method: setRuntimeConfig (thread-safe)
+void ConfigManager::setRuntimeConfig(const RuntimeConfig &config)
 {
-    if (!g_configLoaded)
-    {
-        // Don't use LOG_NOTICE here to avoid recursive calls during logging initialization
-        // First-time startup: Loading default configuration from config.h
-        loadDefaultConfig();
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return;
     }
-    return g_runtimeConfig;
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return;
+    }
+
+    g_runtimeConfig = config;
+    g_configLoaded = true;
+
+    xSemaphoreGive(mutex);
 }
 
-bool initializeConfigSystem()
+// Public method: factoryResetNVS (thread-safe)
+bool ConfigManager::factoryResetNVS()
+{
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        return false;
+    }
+
+    // Acquire mutex
+    if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        return false;
+    }
+
+    bool result = factoryResetNVSInternal();
+
+    xSemaphoreGive(mutex);
+    return result;
+}
+
+// Public method: initializeConfigSystem
+bool ConfigManager::initializeConfigSystem()
 {
     // Initialize NVS-based configuration system
     return loadRuntimeConfig();
 }
 
-void setRuntimeConfig(const RuntimeConfig &config)
-{
-    g_runtimeConfig = config;
-    g_configLoaded = true;
-}
-
-bool initializeNVSConfig()
+// Public method: initializeNVSConfig
+bool ConfigManager::initializeNVSConfig()
 {
     // Initialize NVS partition
     esp_err_t err = nvs_flash_init();
@@ -405,7 +554,8 @@ bool initializeNVSConfig()
     return true;
 }
 
-bool checkAndMigrateNVSSchema()
+// Public method: checkAndMigrateNVSSchema
+bool ConfigManager::checkAndMigrateNVSSchema()
 {
     // For now, just return true - migration logic would go here if needed
     // This could check version numbers, migrate old key names, etc.
@@ -413,7 +563,29 @@ bool checkAndMigrateNVSSchema()
     return true;
 }
 
-bool factoryResetNVS()
+// ============================================================================
+// DIRECT ACCESS FUNCTIONS (NO MUTEX - READ-ONLY)
+// ============================================================================
+
+const RuntimeConfig &getRuntimeConfig()
+{
+    if (!g_configLoaded)
+    {
+        // Don't use LOG_NOTICE here to avoid recursive calls during logging initialization
+        // First-time startup: Loading default configuration from config.h
+        loadDefaultConfig();
+    }
+    return g_runtimeConfig;
+}
+
+void loadDefaultConfig()
+{
+    // Call internal version directly (this is only called during initialization before mutex exists)
+    ConfigManager::instance().loadDefaultConfigInternal();
+}
+
+// Internal helper: factoryResetNVSInternal (mutex already held)
+bool ConfigManager::factoryResetNVSInternal()
 {
     LOG_NOTICE("CONFIG", "Performing factory reset - erasing all NVS data");
 
@@ -434,7 +606,7 @@ bool factoryResetNVS()
     }
 
     // Load defaults from config.h
-    if (!loadNVSConfig())
+    if (!loadNVSConfigInternal())
     {
         LOG_ERROR("CONFIG", "Failed to load default configuration after factory reset");
         return false;

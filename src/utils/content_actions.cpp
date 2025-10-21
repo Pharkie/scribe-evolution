@@ -14,10 +14,14 @@
 #include <utils/time_utils.h>
 #include <core/shared_types.h>
 #include <core/logging.h>
+#include <web/web_server.h>
 #include <ArduinoJson.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
-// External variable reference
+// External variable references
 extern Message currentMessage;
+extern SemaphoreHandle_t currentMessageMutex;
 
 ContentActionResult executeContentAction(ContentActionType actionType,
                                          const String &customData,
@@ -133,13 +137,24 @@ bool queueContentForPrinting(const ContentActionResult &result)
     if (finalBody.length() > 0) {
         formattedContent += "\n\n" + finalBody;
     }
-    currentMessage.message = formattedContent;
-    currentMessage.timestamp = getFormattedDateTime();
-    currentMessage.shouldPrintLocally = true;
 
-    LOG_VERBOSE("CONTENT_ACTION", "Content queued for local printing (%d chars)",
-                formattedContent.length());
-    return true;
+    // Protect currentMessage write with mutex for multi-core safety
+    if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+    {
+        currentMessage.message = formattedContent;
+        currentMessage.timestamp = getFormattedDateTime();
+        currentMessage.shouldPrintLocally = true;
+        xSemaphoreGive(currentMessageMutex);
+
+        LOG_VERBOSE("CONTENT_ACTION", "Content queued for local printing (%d chars)",
+                    formattedContent.length());
+        return true;
+    }
+    else
+    {
+        LOG_ERROR("CONTENT_ACTION", "Failed to acquire mutex for currentMessage");
+        return false;
+    }
 }
 
 bool executeAndQueueContent(ContentActionType actionType, const String &customData)
