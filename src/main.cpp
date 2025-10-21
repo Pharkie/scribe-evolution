@@ -197,28 +197,16 @@ void setup()
   printerManager.initialize();
   Serial.println("[BOOT] Config/Printer: ✅ Enabled (Checkpoint 2)");
 
-#if ENABLE_LEDS
-  Serial.println("[BOOT] Testing ledEffects().begin() initialization");
-  if (ledEffects().begin())
-  {
-    Serial.println("[BOOT] ✅ ledEffects().begin() succeeded");
-  }
-  else
-  {
-    Serial.println("[BOOT] ❌ ledEffects().begin() FAILED");
-  }
-#endif
-
-  // TESTING: Re-enable button initialization (with pinMode DISABLED)
+  // TESTING: pinMode() BEFORE ledEffects (ordering fix for ESP32-C3)
   if (!isAPMode())
   {
-    initializeHardwareButtons();
+    Serial.println("[BOOT] Testing pinMode() on GPIOs 5,6,7,8...");
+    pinMode(5, INPUT_PULLUP);   // GPIO 5
+    pinMode(6, INPUT_PULLUP);   // GPIO 6
+    pinMode(7, INPUT_PULLUP);   // GPIO 7
+    pinMode(8, INPUT_PULLUP);   // GPIO 8 (onboard LED)
+    Serial.println("[BOOT] ✅ pinMode() calls completed (5,6,7,8)");
   }
-  else
-  {
-    LOG_NOTICE("BOOT", "Buttons: ❌ Disabled (AP mode)");
-  }
-  Serial.println("[BOOT] Buttons: ✅ Enabled (testing with pinMode disabled)");
 
   // Setup mDNS
   setupmDNS();
@@ -255,6 +243,18 @@ void setup()
   // Calculate boot time
   unsigned long bootDuration = millis() - bootStartTime;
   float bootSeconds = bootDuration / 1000.0;
+
+#if ENABLE_LEDS
+  Serial.println("[BOOT] Now initializing ledEffects() (after pinMode)...");
+  if (ledEffects().begin())
+  {
+    Serial.println("[BOOT] ✅ ledEffects().begin() succeeded");
+  }
+  else
+  {
+    Serial.println("[BOOT] ❌ ledEffects().begin() FAILED");
+  }
+#endif
 
   // Get device name from config
   const RuntimeConfig &config = getRuntimeConfig();
