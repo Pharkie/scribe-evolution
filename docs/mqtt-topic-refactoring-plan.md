@@ -7,7 +7,7 @@
 ## Objective
 
 1. **Consolidate hardcoded MQTT topics** into DRY constants (single source of truth)
-2. **Rebrand** from `scribe/` to `scribevolution/`
+2. **Rebrand** from `scribe/` to `scribe-evolution/`
 3. **Restructure** to RESTful pattern: resource-first hierarchy
 4. **Update all documentation** to reflect new topic structure
 
@@ -19,8 +19,8 @@ OLD PATTERN:
   scribe/printer-status/{printerId}       → scribe/printer-status/243d0813
 
 NEW PATTERN:
-  scribevolution/print/{printerName}      → scribevolution/print/Pharkie
-  scribevolution/status/{printerId}       → scribevolution/status/243d0813
+  scribe-evolution/print/{printerName}      → scribe-evolution/print/Pharkie
+  scribe-evolution/status/{printerId}       → scribe-evolution/status/243d0813
 ```
 
 ## Benefits
@@ -30,7 +30,7 @@ NEW PATTERN:
 ✅ **Type-safe:** Helper functions prevent typos
 ✅ **Self-documenting:** Function names explain purpose
 ✅ **RESTful:** Resource-first hierarchy (`resource/identifier`)
-✅ **Branded:** Uses `scribevolution` namespace
+✅ **Branded:** Uses `scribe-evolution` namespace
 ✅ **Consistent:** Same pattern for all topics
 ✅ **Documented:** All examples updated to match new structure
 
@@ -49,7 +49,7 @@ NEW PATTERN:
 // ============================================================================
 namespace MqttTopics {
     // Base namespace
-    static const char* NAMESPACE = "scribevolution";
+    static const char* NAMESPACE = "scribe-evolution";
 
     // Resource types
     static const char* PRINT_RESOURCE = "print";
@@ -91,14 +91,14 @@ namespace MqttTopics {
  */
 
 // Base namespace
-export const MQTT_NAMESPACE = "scribevolution";
+export const MQTT_NAMESPACE = "scribe-evolution";
 
 // Resource types
 export const MQTT_PRINT_RESOURCE = "print";
 export const MQTT_STATUS_RESOURCE = "status";
 
 /**
- * Build print topic: scribevolution/print/{printerName}
+ * Build print topic: scribe-evolution/print/{printerName}
  * @param {string} printerName - Human-readable printer name
  * @returns {string} Full MQTT topic
  */
@@ -107,7 +107,7 @@ export function buildPrintTopic(printerName) {
 }
 
 /**
- * Build status topic: scribevolution/status/{printerId}
+ * Build status topic: scribe-evolution/status/{printerId}
  * @param {string} printerId - Unique printer ID (from MAC)
  * @returns {string} Full MQTT topic
  */
@@ -116,7 +116,7 @@ export function buildStatusTopic(printerId) {
 }
 
 /**
- * Build status subscription wildcard: scribevolution/status/+
+ * Build status subscription wildcard: scribe-evolution/status/+
  * @returns {string} MQTT subscription pattern
  */
 export function buildStatusSubscription() {
@@ -228,49 +228,49 @@ const topic = buildPrintTopic(printer.name);
 
 #### 5.1: docs/mqtt-integration.md (4 changes)
 
-- **Line 98:** `scribe/{your-device-name}/print` → `scribevolution/print/{your-device-name}`
-- **Line 103:** `scribe/alice/print` → `scribevolution/print/alice`
-- **Line 104:** `scribe/office-main/print` → `scribevolution/print/office-main`
-- **Line 152:** `"topic": "scribe/alice/print"` → `"topic": "scribevolution/print/alice"`
+- **Line 98:** `scribe/{your-device-name}/print` → `scribe-evolution/print/{your-device-name}`
+- **Line 103:** `scribe/alice/print` → `scribe-evolution/print/alice`
+- **Line 104:** `scribe/office-main/print` → `scribe-evolution/print/office-main`
+- **Line 152:** `"topic": "scribe/alice/print"` → `"topic": "scribe-evolution/print/alice"`
 
 #### 5.2: docs/troubleshooting.md (2 changes)
 
-- **Line 283:** `"scribe/+/print"` → `"scribevolution/print/+"`
-- **Line 287:** `"scribe/yourprinter/print"` → `"scribevolution/print/yourprinter"`
+- **Line 283:** `"scribe/+/print"` → `"scribe-evolution/print/+"`
+- **Line 287:** `"scribe/yourprinter/print"` → `"scribe-evolution/print/yourprinter"`
 
 #### 5.3: docs/apple-shortcuts.md (1 change)
 
-- **Line 268:** `"scribe/+/print"` → `"scribevolution/print/+"`
+- **Line 268:** `"scribe/+/print"` → `"scribe-evolution/print/+"`
 
 #### 5.4: docs/pipedream-integration.md (3 changes)
 
-- **Line 105:** `scribe/YourName/print` → `scribevolution/print/YourName`
-- **Line 179:** `"scribe/Pharkie/print"` → `"scribevolution/print/Pharkie"`
-- **Line 232:** `scribe/Pharkie/print` → `scribevolution/print/Pharkie`
+- **Line 105:** `scribe/YourName/print` → `scribe-evolution/print/YourName`
+- **Line 179:** `"scribe/Pharkie/print"` → `"scribe-evolution/print/Pharkie"`
+- **Line 232:** `scribe/Pharkie/print` → `scribe-evolution/print/Pharkie`
 
 #### 5.5: docs/home-assistant/ha-core.md (2 changes)
 
-- **Line 170:** `"scribe/YourPrinterName/print"` → `"scribevolution/print/YourPrinterName"`
-- **Line 184:** `scribe/Krists/print` → `scribevolution/print/Krists`
+- **Line 170:** `"scribe/YourPrinterName/print"` → `"scribe-evolution/print/YourPrinterName"`
+- **Line 184:** `scribe/Krists/print` → `scribe-evolution/print/Krists`
 
 #### 5.6: docs/home-assistant/ha-supervised.md (2 changes)
 
-- **Line 157:** `"scribe/YourPrinterName/print"` → `"scribevolution/print/YourPrinterName"`
-- **Line 171:** `scribe/Krists/print` → `scribevolution/print/Krists`
+- **Line 157:** `"scribe/YourPrinterName/print"` → `"scribe-evolution/print/YourPrinterName"`
+- **Line 171:** `scribe/Krists/print` → `scribe-evolution/print/Krists`
 
 #### 5.7: docs/home-assistant/ha-container.md (2 changes)
 
-- **Line 436:** `"scribe/YourPrinterName/print"` → `"scribevolution/print/YourPrinterName"`
-- **Line 450:** `scribe/Krists/print` → `scribevolution/print/Krists`
+- **Line 436:** `"scribe/YourPrinterName/print"` → `"scribe-evolution/print/YourPrinterName"`
+- **Line 450:** `scribe/Krists/print` → `scribe-evolution/print/Krists`
 
 ### PART 6: Build & Test
 
 1. **Build frontend:** `npm run build`
 2. **Build firmware:** `pio run -e esp32s3-4mb-dev`
 3. **Verify logs show new topics:**
-   - Print: `scribevolution/print/Pharkie`
-   - Status: `scribevolution/status/243d0813`
-   - Subscription: `scribevolution/status/+`
+   - Print: `scribe-evolution/print/Pharkie`
+   - Status: `scribe-evolution/status/243d0813`
+   - Subscription: `scribe-evolution/status/+`
 4. **Test MQTT publish** to new topic structure
 5. **Verify documentation** examples are accurate
 
@@ -286,8 +286,8 @@ OLD:
   Status: scribe/printer-status/{id}
 
 NEW:
-  Print:  scribevolution/print/{name}
-  Status: scribevolution/status/{id}
+  Print:  scribe-evolution/print/{name}
+  Status: scribe-evolution/status/{id}
 ```
 
 ## Files Modified Summary
@@ -335,7 +335,7 @@ After this refactoring, any new MQTT topics should:
 
 1. Use the `MqttTopics` namespace helpers in C++
 2. Use the `mqtt.js` helper functions in JavaScript
-3. Follow the `scribevolution/{resource}/{identifier}` pattern
+3. Follow the `scribe-evolution/{resource}/{identifier}` pattern
 4. Be documented in all relevant places
 
 This ensures consistency and maintainability going forward.

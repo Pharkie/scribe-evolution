@@ -4,14 +4,14 @@
  */
 
 // Base namespace
-export const MQTT_NAMESPACE = "scribevolution";
+export const MQTT_NAMESPACE = "scribe-evolution";
 
 // Resource types
 export const MQTT_PRINT_RESOURCE = "print";
 export const MQTT_STATUS_RESOURCE = "status";
 
 /**
- * Build print topic: scribevolution/print/{printerName}
+ * Build print topic: scribe-evolution/print/{printerName}
  * @param {string} printerName - Human-readable printer name
  * @returns {string} Full MQTT topic
  */
@@ -20,7 +20,7 @@ export function buildPrintTopic(printerName) {
 }
 
 /**
- * Build status topic: scribevolution/status/{printerId}
+ * Build status topic: scribe-evolution/status/{printerId}
  * @param {string} printerId - Unique printer ID (from MAC)
  * @returns {string} Full MQTT topic
  */
@@ -29,7 +29,7 @@ export function buildStatusTopic(printerId) {
 }
 
 /**
- * Build status subscription wildcard: scribevolution/status/+
+ * Build status subscription wildcard: scribe-evolution/status/+
  * @returns {string} MQTT subscription pattern
  */
 export function buildStatusSubscription() {

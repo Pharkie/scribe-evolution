@@ -16,6 +16,7 @@ Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT, LED
 - Fail fast principle - no fallback values or defensive arrays
 - Always use "Scribe Evolution" (never just "Scribe") in all documentation
 - **NEVER upload firmware or monitor serial - let the user do it**
+- **IMPORTANT: HTML/JS/CSS changes require BOTH firmware upload AND filesystem upload (`uploadfs`)** - Filesystem contains the web interface!
 - **FastLED RMT flags REQUIRED in platformio.ini** - Missing causes ESP32-C3 crashes (see `/src/leds/CLAUDE.md`)
   </critical_notes>
 

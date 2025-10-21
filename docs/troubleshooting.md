@@ -280,11 +280,11 @@ Printer Issues:
 
 ```bash
 # Subscribe to printer topic
-mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribevolution/print/+"
+mosquitto_sub -h your-broker.com -p 8883 -u username -P password -t "scribe-evolution/print/+"
 
 # Publish test message
 mosquitto_pub -h your-broker.com -p 8883 -u username -P password \
-  -t "scribevolution/print/yourprinter" \
+  -t "scribe-evolution/print/yourprinter" \
   -m '{"header":"MESSAGE","body":"Test from command line","sender":"CLI"}'
 ```
 

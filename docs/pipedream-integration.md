@@ -102,7 +102,7 @@ Test that it works:
 3. Select **"Send Test Event"**
 4. Check the execution logs - you should see:
    - ✅ "Published" status
-   - Topic showing `scribevolution/print/YourName`
+   - Topic showing `scribe-evolution/print/YourName`
    - No errors
 
 5. **Your Scribe Evolution printer should print the test message!**
@@ -176,7 +176,7 @@ Content-Type: application/json
 ```json
 {
   "status": "Published",
-  "topic": "scribevolution/print/Pharkie",
+  "topic": "scribe-evolution/print/Pharkie",
   "payload": "{\"header\":\"MESSAGE\",\"body\":\"Hello!\",\"sender\":\"API\"}"
 }
 ```
@@ -229,7 +229,7 @@ Content-Type: application/json
 
 ```bash
 mosquitto_pub -h your-mqtt-broker.com -p 8883 -u username -P password \
-  -t scribevolution/print/Pharkie \
+  -t scribe-evolution/print/Pharkie \
   -m '{"header":"MESSAGE","body":"Test","sender":"Manual"}'
 ```
 

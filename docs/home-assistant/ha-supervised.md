@@ -154,7 +154,7 @@ automation:
     action:
       - service: mqtt.publish
         data:
-          topic: "scribevolution/print/YourPrinterName"
+          topic: "scribe-evolution/print/YourPrinterName"
           payload: >
             {
               "header": "GOOD MORNING",
@@ -168,7 +168,7 @@ automation:
 Manually publish to your Scribe topic using **Developer Tools** → **Actions**:
 
 1. Type "mqtt" in search bar and choose "Publish" action
-2. Set topic: `scribevolution/print/Krists`
+2. Set topic: `scribe-evolution/print/Krists`
 3. Tick **Payload** then paste:
    ```json
    {

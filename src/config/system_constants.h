@@ -196,7 +196,7 @@ static const int minJokeLength = 10;                                   // Minimu
 // ============================================================================
 namespace MqttTopics {
     // Base namespace
-    static const char* NAMESPACE = "scribevolution";
+    static const char* NAMESPACE = "scribe-evolution";
 
     // Resource types
     static const char* PRINT_RESOURCE = "print";

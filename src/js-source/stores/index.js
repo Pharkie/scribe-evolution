@@ -1037,8 +1037,8 @@ export function createIndexStore() {
 
     updatePrintersFromData(data) {
       if (data && data.discovered_printers) {
-        // Update the store's printers array directly
-        this.printers = data.discovered_printers;
+        // Use updatePrinterList to properly build topics with buildPrintTopic()
+        this.updatePrinterList(data.discovered_printers);
 
         // Also dispatch custom event for backward compatibility if needed
         const event = new CustomEvent("printersUpdated", {
