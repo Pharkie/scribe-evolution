@@ -28,7 +28,6 @@
 
 // External declarations
 extern AsyncWebServer server;
-extern PubSubClient mqttClient;
 extern String getFormattedDateTime();
 extern String formatCustomDate(String customDate);
 

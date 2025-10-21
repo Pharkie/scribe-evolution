@@ -1,12 +1,12 @@
 /**
  * @file main.cpp
- * @brief Main application entry point for Scribe Evolution ESP32-C3 Thermal Printer
+ * @brief Main application entry point for Scribe Evolution ESP32 Thermal Printer
  * @author Adam Knowles
  * @date 2025
  * @copyright Copyright (c) 2025 Adam Knowles. All rights reserved.
  * @license Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
  *
- * This file is part of the Scribe Evolution ESP32-C3 Thermal Printer project.
+ * This file is part of the Scribe Evolution ESP32 Thermal Printer project.
  *
  * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0
  * International License. To view a copy of this license, visit
@@ -46,40 +46,6 @@
 #include "leds/LedEffects.h"
 #endif
 
-// Stabilize printer pin ASAP, before anything else
-// COMMENTED OUT FOR TESTING - Suspected cause of ESP32-S3 printer crash
-// class PrinterPinStabilizer
-// {
-// public:
-//   PrinterPinStabilizer()
-//   {
-//     const RuntimeConfig &config = getRuntimeConfig(); // Fast - returns defaults
-//     const BoardPinDefaults &boardDefaults = getBoardDefaults();
-
-//     // Enable printer eFuse if present (custom PCB only)
-//     #if BOARD_HAS_PRINTER_EFUSE
-//     if (boardDefaults.efuse.printer != -1)
-//     {
-//       pinMode(boardDefaults.efuse.printer, OUTPUT);
-//       digitalWrite(boardDefaults.efuse.printer, HIGH); // Enable printer power
-//       delay(10); // Give eFuse time to stabilize
-//     }
-//     #endif
-
-//     // Set up printer UART TX pin
-//     pinMode(config.printerTxPin, OUTPUT);
-//     digitalWrite(config.printerTxPin, HIGH); // UART idle state
-
-//     // Set up DTR pin if present (ESP32-S3 variants)
-//     if (boardDefaults.printer.dtr != -1)
-//     {
-//       pinMode(boardDefaults.printer.dtr, OUTPUT);
-//       digitalWrite(boardDefaults.printer.dtr, LOW); // DTR ready
-//     }
-//   }
-// };
-// static PrinterPinStabilizer pinStabilizer;
-
 // === Web Server ===
 AsyncWebServer server(webServerPort);
 
@@ -97,24 +63,22 @@ void setup()
   // Initialize serial communication first (USB CDC)
   Serial.begin(115200);
 
-  // Allow USB-C connection to send logs back to monitor on host computer
-  // Wait for USB CDC connection
-  // Needed due to ARDUINO_USB_CDC_ON_BOOT=1 in platformio.ini
+  // Wait for USB CDC connection (needed due to ARDUINO_USB_CDC_ON_BOOT=1 in platformio.ini)
   unsigned long serialStartTime = millis();
   while (!Serial && (millis() - serialStartTime < serialTimeoutMs))
   {
     delay(smallDelayMs); // Wait up to 5 seconds for serial connection
   }
 
-  // Note: We can't use Log.notice() yet as logging isn't initialized
+  // Initial boot message (can't use LogManager yet - not initialized)
   Serial.printf("\n=== Scribe Evolution v%s ===\n", FIRMWARE_VERSION);
   Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
   Serial.printf("[BOOT] System: %s, %d KB free heap\n", ESP.getChipModel(), ESP.getFreeHeap() / mediumJsonBuffer);
 
-  // Initialize LittleFS so config loading works
+  // Initialize LittleFS for config and web file storage
   if (!LittleFS.begin(true, "/littlefs", 10, "littlefs")) // true = format if mount fails
   {
-    Serial.println("LittleFS Mount Failed");
+    Serial.println("[BOOT] LittleFS Mount Failed");
   }
 
   // Validate configuration
@@ -126,21 +90,15 @@ void setup()
   // Initialize status LED
   initializeStatusLED();
 
-  // DISABLED: WiFi - minimizing components for ESP32-C3 crash debugging
-  // currentWiFiMode = connectToWiFi();
-  currentWiFiMode = WIFI_MODE_DISCONNECTED;
-  WiFi.mode(WIFI_OFF);
-  Serial.println("[BOOT] WiFi: ❌ Disabled (debugging)");
+  // Connect to WiFi
+  currentWiFiMode = connectToWiFi();
 
-  // CHECKPOINT 1: Re-enable all managers (needed for getRuntimeConfig)
+  // Initialize thread-safe singleton managers (MUST be called before any singleton usage)
   LogManager::instance().begin(115200, 256, 512);
-  Serial.println("[BOOT] LogManager: ✅ Enabled");
   APIClient::instance().begin();
-  Serial.println("[BOOT] APIClient: ✅ Enabled");
   ConfigManager::instance().begin();
-  Serial.println("[BOOT] ConfigManager: ✅ Enabled");
   MQTTManager::instance().begin();
-  Serial.println("[BOOT] Managers: ✅ Enabled (Checkpoint 1)");
+  LOG_NOTICE("BOOT", "Thread-safe singleton managers initialized");
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
@@ -172,7 +130,7 @@ void setup()
   }
   else
   {
-    LOG_VERBOSE("BOOT", "Skipping NTP sync - no internet connection (AP-STA mode)");
+    LOG_VERBOSE("BOOT", "Skipping NTP sync - no internet connection (AP mode)");
   }
 
   // Record boot time for consistent reporting (after timezone is set)
@@ -185,7 +143,7 @@ void setup()
   // Log detailed GPIO summary in verbose mode (now that logging is available)
   logGPIOUsageSummary();
 
-  // CHECKPOINT 2: Re-enable config system and printer
+  // Initialize configuration system and load config from NVS
   if (!initializeConfigSystem())
   {
     LOG_ERROR("BOOT", "Configuration system initialization failed");
@@ -194,65 +152,60 @@ void setup()
   {
     LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
   }
-  printerManager.initialize();
-  Serial.println("[BOOT] Config/Printer: ✅ Enabled (Checkpoint 2)");
 
-  // TESTING: pinMode() BEFORE ledEffects (ordering fix for ESP32-C3)
-  if (!isAPMode())
-  {
-    Serial.println("[BOOT] Testing pinMode() on GPIOs 5,6,7,8...");
-    pinMode(5, INPUT_PULLUP);   // GPIO 5
-    pinMode(6, INPUT_PULLUP);   // GPIO 6
-    pinMode(7, INPUT_PULLUP);   // GPIO 7
-    pinMode(8, INPUT_PULLUP);   // GPIO 8 (onboard LED)
-    Serial.println("[BOOT] ✅ pinMode() calls completed (5,6,7,8)");
-  }
+  // Initialize printer hardware
+  printerManager.initialize();
+  LOG_NOTICE("BOOT", "Printer initialized");
 
   // Setup mDNS
   setupmDNS();
 
-  // DISABLED: MQTT client - minimizing components for ESP32-C3 crash debugging
-  // if (!isAPMode() && isMQTTEnabled())
-  // {
-  //   startMQTTClient(true); // true = immediate connection on boot (WiFi is already stable)
-  //   LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
-  // }
-  // else
-  // {
-  //   if (isAPMode())
-  //   {
-  //     LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (AP mode)");
-  //   }
-  //   else
-  //   {
-  //     LOG_NOTICE("BOOT", "MQTT: ❌ Disabled");
-  //   }
-  // }
-  LOG_NOTICE("BOOT", "MQTT: ❌ Disabled (debugging)");
+  // Start MQTT client (if enabled and not in AP mode)
+  if (!isAPMode() && isMQTTEnabled())
+  {
+    startMQTTClient(true); // true = immediate connection on boot (WiFi is already stable)
+    LOG_NOTICE("BOOT", "MQTT: Connecting to broker...");
+  }
+  else
+  {
+    if (isAPMode())
+    {
+      LOG_NOTICE("BOOT", "MQTT: Disabled (AP mode)");
+    }
+    else
+    {
+      LOG_NOTICE("BOOT", "MQTT: Disabled");
+    }
+  }
 
-  // DISABLED: Web server - minimizing components for ESP32-C3 crash debugging
-  // setupWebServerRoutes(maxCharacters);
-  // server.begin();
-  // LOG_NOTICE("BOOT", "Web UI: ✅ http://%s", WiFi.localIP().toString().c_str());
-  LOG_NOTICE("BOOT", "Web UI: ❌ Disabled (debugging)");
+  // Start web server
+  setupWebServerRoutes(maxCharacters);
+  server.begin();
+  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
+  {
+    LOG_NOTICE("BOOT", "Web UI: http://%s", WiFi.localIP().toString().c_str());
+  }
+  else
+  {
+    LOG_NOTICE("BOOT", "Web UI: http://%s (AP mode)", WiFi.softAPIP().toString().c_str());
+  }
 
-  // DISABLED: Unbidden Ink - minimizing components for ESP32-C3 crash debugging
-  // initializeUnbiddenInk();
-  LOG_NOTICE("BOOT", "Unbidden Ink: ❌ Disabled (debugging)");
+  // Initialize Unbidden Ink (AI-generated content scheduler)
+  initializeUnbiddenInk();
 
   // Calculate boot time
   unsigned long bootDuration = millis() - bootStartTime;
   float bootSeconds = bootDuration / 1000.0;
 
 #if ENABLE_LEDS
-  Serial.println("[BOOT] Now initializing ledEffects() (after pinMode)...");
+  // Initialize LED effects system
   if (ledEffects().begin())
   {
-    Serial.println("[BOOT] ✅ ledEffects().begin() succeeded");
+    LOG_VERBOSE("BOOT", "LED effects initialized");
   }
   else
   {
-    Serial.println("[BOOT] ❌ ledEffects().begin() FAILED");
+    LOG_ERROR("BOOT", "LED effects initialization failed");
   }
 #endif
 
@@ -284,13 +237,12 @@ void setup()
 void postSetup()
 {
 #if ENABLE_LEDS
-  // TESTING: Trigger boot LED chase effect (1 cycle)
-  Serial.println("[POST_SETUP] Triggering boot LED chase effect...");
+  // Trigger boot LED chase effect (1 cycle)
   ledEffects().startEffectCycles("chase_single", 1);
-  Serial.println("[POST_SETUP] ✅ Boot LED effect started");
+  LOG_VERBOSE("POST_SETUP", "Boot LED effect started");
 #endif
 
-  // Print startup message - minimizing components for ESP32-C3 crash debugging
+  // Print startup message
   printerManager.printStartupMessage();
   LOG_VERBOSE("POST_SETUP", "Startup message printed");
 }
@@ -304,6 +256,7 @@ void loop()
     postSetup();
     firstRun = false;
   }
+
   // Feed the watchdog
   esp_task_wdt_reset();
 
@@ -316,27 +269,24 @@ void loop()
   // Handle DNS server for captive portal in AP mode
   handleDNSServer();
 
-  // Check hardware buttons (only if not in AP mode - buttons disabled in AP mode)
+  // Check hardware buttons (disabled in AP mode)
   if (!isAPMode())
   {
     checkHardwareButtons();
   }
 
 #if ENABLE_LEDS
-  Serial.println("[LOOP] Calling ledEffects().update()...");
+  // Update LED effects
   ledEffects().update();
-  Serial.println("[LOOP] ✓ ledEffects().update() succeeded!");
 #endif
 
-  // DISABLED: MQTT handling - minimizing components for ESP32-C3 crash debugging
-  // if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
-  // {
-  //   // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
-  //   handleMQTTConnection();
-  //
-  //   // Handle printer discovery (only in STA mode when MQTT enabled)
-  //   handlePrinterDiscovery();
-  // }
+  // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
+  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
+  {
+    handleMQTTConnection();
+    handlePrinterDiscovery();
+  }
+
   // Check if we have a new message to print (protected by mutex for multi-core safety)
   bool shouldPrint = false;
   if (xSemaphoreTake(currentMessageMutex, pdMS_TO_TICKS(10)) == pdTRUE)
@@ -369,5 +319,6 @@ void loop()
   {
     checkUnbiddenInk();
   }
+
   delay(smallDelayMs); // Small delay to prevent excessive CPU usage
 }

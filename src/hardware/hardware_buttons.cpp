@@ -22,7 +22,6 @@
 #endif
 
 // External declarations
-extern PubSubClient mqttClient;
 extern Message currentMessage;
 extern SemaphoreHandle_t currentMessageMutex;
 

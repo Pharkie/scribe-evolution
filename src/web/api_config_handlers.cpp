@@ -51,9 +51,6 @@ String maskSecret(const String &secret)
 #include <utils/api_client.h>
 #include <config/system_constants.h>
 
-// External references
-extern PubSubClient mqttClient;
-
 #if ENABLE_LEDS
 #include <leds/LedEffects.h>
 // Note: ledEffects() is a singleton accessor function, not an extern object
@@ -182,7 +179,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     mqtt["username"] = config.mqttUsername;
     mqtt["password"] = maskSecret(config.mqttPassword);
     // Skip MQTT connection check in AP mode to avoid potential blocking
-    mqtt["connected"] = (isAPMode() || !config.mqttEnabled) ? false : mqttClient.connected();
+    mqtt["connected"] = (isAPMode() || !config.mqttEnabled) ? false : MQTTManager::instance().isConnected();
 
     // Unbidden Ink configuration - top-level section matching settings.html
     JsonObject unbiddenInk = configDoc.createNestedObject("unbiddenInk");
