@@ -485,22 +485,27 @@ void MQTTManager::handleConnection()
         return;
     }
 
-    // Acquire mutex using RAII
-    ManagerLock lock(mutex, "MQTT");
-    if (!lock.isLocked()) {
-        LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
-        return;
+    bool shouldPublish = false;
+
+    // Nested scope to ensure mutex is released before publishPrinterStatus()
+    {
+        // Acquire mutex using RAII
+        ManagerLock lock(mutex, "MQTT");
+        if (!lock.isLocked()) {
+            LOG_ERROR("MQTT", "Failed to acquire MQTT mutex!");
+            return;
+        }
+
+        handleMQTTConnectionInternal();
+
+        // Check if we need to publish status (set by connectToMQTTInternal on successful connection)
+        shouldPublish = needPublishStatus;
+        if (shouldPublish) {
+            needPublishStatus = false;  // Clear flag before releasing mutex
+        }
+
+        // Mutex released by ManagerLock destructor when this scope exits
     }
-
-    handleMQTTConnectionInternal();
-
-    // Check if we need to publish status (set by connectToMQTTInternal on successful connection)
-    bool shouldPublish = needPublishStatus;
-    if (shouldPublish) {
-        needPublishStatus = false;  // Clear flag before releasing mutex
-    }
-
-    // Mutex released by ManagerLock destructor (before publishPrinterStatus call)
 
     // Publish status AFTER releasing mutex to avoid deadlock
     if (shouldPublish) {
