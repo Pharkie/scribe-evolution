@@ -333,14 +333,14 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonArray safePins = gpio.createNestedArray("safePins");
     JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
 
-    LOG_VERBOSE("CONFIG", "Adding GPIO info, ESP32C3_GPIO_COUNT: %d", ESP32C3_GPIO_COUNT);
+    LOG_VERBOSE("CONFIG", "Adding GPIO info, BOARD_GPIO_MAP_SIZE: %d", BOARD_GPIO_MAP_SIZE);
 
-    // Add all ESP32-C3 GPIO information
-    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    // Add all GPIO information for current board
+    for (int i = 0; i < BOARD_GPIO_MAP_SIZE; i++)
     {
-        int pin = ESP32C3_GPIO_MAP[i].pin;
+        int pin = BOARD_GPIO_MAP[i].pin;
         availablePins.add(pin);
-        pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
+        pinDescriptions[String(pin)] = BOARD_GPIO_MAP[i].description;
 
         if (isSafeGPIO(pin))
         {
@@ -905,13 +905,13 @@ void handleSetupGet(AsyncWebServerRequest *request)
     JsonObject pinDescriptions = gpio.createNestedObject("pinDescriptions");
 
     // Only include safe pins for setup
-    for (int i = 0; i < ESP32C3_GPIO_COUNT; i++)
+    for (int i = 0; i < BOARD_GPIO_MAP_SIZE; i++)
     {
-        int pin = ESP32C3_GPIO_MAP[i].pin;
+        int pin = BOARD_GPIO_MAP[i].pin;
         if (isSafeGPIO(pin))
         {
             safePins.add(pin);
-            pinDescriptions[String(pin)] = ESP32C3_GPIO_MAP[i].description;
+            pinDescriptions[String(pin)] = BOARD_GPIO_MAP[i].description;
         }
     }
 

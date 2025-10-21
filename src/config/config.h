@@ -30,13 +30,11 @@
 #include "device_config.h"
 
 // Board-specific pin configuration (NEW minimal system - must be before system_constants.h)
+// Now includes GPIO validation helpers (isValidGPIO, isSafeGPIO, getGPIODescription)
 #include "board_pins.h"
 
 // System constants and hardware settings (uses BOARD_* macros from board_pins.h)
 #include "system_constants.h"
-
-// GPIO pin mappings
-#include "gpio_map.h"
 
 // ============================================================================
 // LED SUPPORT (CONDITIONAL)
