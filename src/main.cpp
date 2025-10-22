@@ -239,12 +239,12 @@ void setup()
   // Print final boot banner
   if (isAPMode())
   {
-    LOG_NOTICE("BOOT", "========================================\n    %s Ready (Setup Mode) in %.1f seconds\n%s\n========================================",
+    LOG_NOTICE("BOOT", "\n========================================\n    %s Ready (Setup Mode) in %.1f seconds\n%s\n========================================",
                deviceName.c_str(), bootSeconds, webUILine.c_str());
   }
   else
   {
-    LOG_NOTICE("BOOT", "========================================\n    %s Ready in %.1f seconds\n%s\n========================================",
+    LOG_NOTICE("BOOT", "\n========================================\n    %s Ready in %.1f seconds\n%s\n========================================",
                deviceName.c_str(), bootSeconds, webUILine.c_str());
   }
 }

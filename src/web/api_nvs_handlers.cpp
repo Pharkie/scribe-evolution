@@ -39,7 +39,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
     (*doc)["namespace"] = "scribe-app";
     (*doc)["timestamp"] = getFormattedDateTime();
 
-    JsonObject keys = doc->createNestedObject("keys");
+    JsonObject keys = (*doc)["keys"].to<JsonObject>();
     int totalKeys = 0;
     int validKeys = 0;
     int correctedKeys = 0;

@@ -187,6 +187,7 @@ bool APIClient::performSingleAPIRequest(const String &url, const String &userAge
     if (httpResponseCode == 200) {
         result = httpClient->getString();
         httpClient->end();
+        wifiClient->stop();  // Close SSL socket and free mbedtls memory
         esp_task_wdt_reset();
         return true;
     } else if (httpResponseCode == 301 || httpResponseCode == 302) {
@@ -198,6 +199,7 @@ bool APIClient::performSingleAPIRequest(const String &url, const String &userAge
     }
 
     httpClient->end();
+    wifiClient->stop();  // Close SSL socket and free mbedtls memory
     esp_task_wdt_reset();
 
     return false;
@@ -233,6 +235,7 @@ bool APIClient::performSingleBearerAPIRequest(const String &url, const String &b
         result = httpClient->getString();
         LOG_VERBOSE("API", "Bearer API call successful, response length: %d", result.length());
         httpClient->end();
+        wifiClient->stop();  // Close SSL socket and free mbedtls memory
         esp_task_wdt_reset();
         return true;
     } else if (httpResponseCode == 301 || httpResponseCode == 302) {
@@ -250,6 +253,7 @@ bool APIClient::performSingleBearerAPIRequest(const String &url, const String &b
     }
 
     httpClient->end();
+    wifiClient->stop();  // Close SSL socket and free mbedtls memory
     esp_task_wdt_reset();
 
     return false;
@@ -286,6 +290,7 @@ bool APIClient::performSinglePostAPIRequest(const String &url, const String &bea
         result = httpClient->getString();
         LOG_VERBOSE("API", "Bearer POST API call successful, response length: %d", result.length());
         httpClient->end();
+        wifiClient->stop();  // Close SSL socket and free mbedtls memory
         esp_task_wdt_reset();
         return true;
     } else if (httpResponseCode == 301 || httpResponseCode == 302) {
@@ -303,6 +308,7 @@ bool APIClient::performSinglePostAPIRequest(const String &url, const String &bea
     }
 
     httpClient->end();
+    wifiClient->stop();  // Close SSL socket and free mbedtls memory
     esp_task_wdt_reset();
 
     return false;
