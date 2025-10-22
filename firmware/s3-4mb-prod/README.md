@@ -1,6 +1,6 @@
 # Scribe Firmware Release
 
-Built on: 2025-09-08 18:21:17
+Built on: 2025-10-22 23:31:04
 
 ## Flashing Instructions:
 
@@ -13,7 +13,7 @@ esptool --port /dev/cu.usbmodem1101 erase-flash
 **Step 2: Flash firmware**
 
 ```bash
-esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-esp32c3-prod-no-leds-complete.bin
+esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-c3-4mb-prod-complete.bin
 ```
 
 Replace `/dev/cu.usbmodem1101` with your actual port e.g. Windows: COM3, macOS: /dev/cu.usbserial-\*

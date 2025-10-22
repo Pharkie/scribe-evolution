@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 """
 Build firmware releases for distribution.
+
 This script manages secrets by:
-1. Backing up the personal config.h to config.h.adam
-2. Generating a clean config.h without secrets
+1. Backing up the personal device_config.h to device_config.h.adam
+2. Generating a clean device_config.h without secrets
 3. Building firmware for multiple targets
 4. Copying firmware to organized output directories
-5. Restoring the original config.h
+5. Restoring the original device_config.h
 """
 
+import csv
+import re
 import shutil
 import subprocess
-import re
 import sys
 from pathlib import Path
-import csv
 
 # Add scripts root to path for importing lib modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from lib.config_cleaner import clean_secrets_from_content, add_example_file_metadata
+from lib.config_cleaner import (  # noqa: E402
+    clean_secrets_from_content,
+    add_example_file_metadata,
+)
 
 
 def log(message, level="INFO"):
@@ -34,11 +38,11 @@ def fatal_error(message, code=1):
 
 
 def get_production_environments():
-    """Parse platformio.ini to get production environments from default_envs."""
+    """Parse platformio.ini to get production envs from default_envs."""
     ini_path = Path("platformio.ini")
     if not ini_path.exists():
         fatal_error("platformio.ini not found")
-    
+
     try:
         with open(ini_path, 'r', encoding='utf-8') as f:
             for line in f:
@@ -47,18 +51,21 @@ def get_production_environments():
                     envs = [e.strip() for e in envs_str.split(',')]
                     log(f"Found production environments: {', '.join(envs)}")
                     return envs
-        
-        # Fallback to hardcoded list if not found
-        fallback = ["esp32c3-prod", "esp32c3-prod-no-leds", "lolin32lite-no-leds"]
-        log(f"No default_envs found, using fallback: {', '.join(fallback)}", "WARNING")
+
+        # Fallback to current production environments if not found
+        fallback = ["c3-4mb-prod", "s3-4mb-prod", "s3-pcb-prod"]
+        log(
+            f"No default_envs found, using fallback: {', '.join(fallback)}",
+            "WARNING",
+        )
         return fallback
-        
+
     except Exception as e:
         fatal_error(f"Failed to parse platformio.ini: {e}")
 
 
 def is_config_already_clean(config_path):
-    """Check if config.h appears to already be cleaned (no secrets)."""
+    """Check if device_config.h appears already cleaned (no secrets)."""
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -88,7 +95,7 @@ def is_config_already_clean(config_path):
 
 
 def backup_config():
-    """Backup the current device_config.h to device_config.h.adam, with safety checks."""
+    """Backup current device_config.h to device_config.h.adam safely."""
     config_path = Path("src/config/device_config.h")
     backup_path = Path("src/config/device_config.h.adam")
 
@@ -98,38 +105,58 @@ def backup_config():
     # Check if current config appears to already be cleaned
     if is_config_already_clean(config_path):
         log(
-            "⚠️  Current config.h appears to already be cleaned (contains placeholders)",
+            "⚠️  Current config.h appears to already be cleaned "
+            "(contains placeholders)",
             "WARNING",
         )
 
         if backup_path.exists():
-            log("Found existing config.h.adam backup - will use that instead", "INFO")
             log(
-                "Current config.h will be overwritten with clean version for build",
+                "Found existing config.h.adam backup - will use that instead",
+                "INFO",
+            )
+            log(
+                "Current config.h will be overwritten with clean version "
+                "for build",
                 "INFO",
             )
             return True
         else:
-            fatal_error("No backup found and current config appears clean! Cannot proceed - would lose your original configuration. Please restore your original config.h with secrets and try again")
+            fatal_error(
+                "No backup found and current config appears clean! "
+                "Cannot proceed - would lose your original configuration. "
+                "Please restore your original config.h with secrets and "
+                "try again"
+            )
 
     # Check if we're about to overwrite a good backup with a bad one
     if backup_path.exists():
         if is_config_already_clean(backup_path):
             log(
-                "⚠️  Existing backup also appears to be cleaned - creating timestamped backup",
+                "⚠️  Existing backup also appears to be cleaned - "
+                "creating timestamped backup",
                 "WARNING",
             )
             import datetime
 
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            timestamped_backup = Path(f"src/config/device_config.h.adam.{timestamp}")
+            timestamped_backup = Path(
+                f"src/config/device_config.h.adam.{timestamp}"
+            )
             try:
                 shutil.copy2(config_path, timestamped_backup)
-                log(f"Created timestamped backup: {timestamped_backup}", "SUCCESS")
+                log(
+                    f"Created timestamped backup: {timestamped_backup}",
+                    "SUCCESS",
+                )
             except Exception as e:
                 log(f"Failed to create timestamped backup: {e}", "WARNING")
         else:
-            log("Existing backup appears to contain secrets - keeping it safe", "INFO")
+            log(
+                "Existing backup appears to contain secrets - "
+                "keeping it safe",
+                "INFO",
+            )
             return True  # Don't overwrite good backup
 
     try:
@@ -160,7 +187,7 @@ def restore_config():
 
 
 def generate_clean_config():
-    """Generate device_config.h.example with secrets cleaned, then replace device_config.h with it."""
+    """Generate clean device_config.h.example, then replace device_config.h."""
     config_path = Path("src/config/device_config.h")
     example_path = Path("src/config/device_config.h.example")
 
@@ -183,7 +210,7 @@ def generate_clean_config():
         else:
             log("Secrets successfully cleaned from configuration", "SUCCESS")
 
-        # Step 1: Write clean config to .example file (with example metadata/instructions)
+        # Step 1: Write clean config to .example file (with metadata)
         example_content = add_example_file_metadata(cleaned_content)
         with open(example_path, "w", encoding="utf-8") as f:
             f.write(example_content)
@@ -192,8 +219,11 @@ def generate_clean_config():
         # Step 2: Replace device_config.h with the clean version for build
         with open(config_path, "w", encoding="utf-8") as f:
             f.write(cleaned_content)
-        log(f"Replaced {config_path} with clean version for build", "SUCCESS")
-        
+        log(
+            f"Replaced {config_path} with clean version for build",
+            "SUCCESS",
+        )
+
         return True
 
     except Exception as e:
@@ -227,22 +257,27 @@ def build_firmware(environment):
             log(f"STDERR: {e.stderr}", "ERROR")
         return False
     except FileNotFoundError:
-        log("PlatformIO not found. Please install it: pip install platformio", "ERROR")
+        log(
+            "PlatformIO not found. Please install it: pip install platformio",
+            "ERROR",
+        )
         return False
 
 
 def copy_firmware(environment):
-    """Copy the built firmware, bootloader, and partitions and create merged binary."""
+    """Copy built firmware, bootloader, and partitions for merged binary."""
     firmware_source = Path(f".pio/build/{environment}/firmware.bin")
     firmware_dest = Path(f"firmware/{environment}/firmware.bin")
-    
+
     bootloader_source = Path(f".pio/build/{environment}/bootloader.bin")
     bootloader_dest = Path(f"firmware/{environment}/bootloader.bin")
-    
+
     partitions_source = Path(f".pio/build/{environment}/partitions.bin")
     partitions_dest = Path(f"firmware/{environment}/partitions.bin")
-    
-    merged_dest = Path(f"firmware/{environment}/scribe-{environment}-complete.bin")
+
+    merged_dest = Path(
+        f"firmware/{environment}/scribe-{environment}-complete.bin"
+    )
 
     if not firmware_source.exists():
         log(f"Warning: Firmware not found at {firmware_source}", "WARNING")
@@ -256,20 +291,29 @@ def copy_firmware(environment):
         shutil.copy2(firmware_source, firmware_dest)
         size = firmware_dest.stat().st_size
         size_kb = size / 1024
-        log(f"Copied firmware to {firmware_dest} ({size_kb:.1f} KB)", "SUCCESS")
-        
+        log(
+            f"Copied firmware to {firmware_dest} ({size_kb:.1f} KB)",
+            "SUCCESS",
+        )
+
         if bootloader_source.exists():
             shutil.copy2(bootloader_source, bootloader_dest)
             log(f"Copied bootloader to {bootloader_dest}", "SUCCESS")
         else:
-            log(f"Warning: Bootloader not found at {bootloader_source}", "WARNING")
+            log(
+                f"Warning: Bootloader not found at {bootloader_source}",
+                "WARNING",
+            )
             return False
-        
+
         if partitions_source.exists():
             shutil.copy2(partitions_source, partitions_dest)
             log(f"Copied partition table to {partitions_dest}", "SUCCESS")
         else:
-            log(f"Warning: Partition table not found at {partitions_source}", "WARNING")
+            log(
+                f"Warning: Partition table not found at {partitions_source}",
+                "WARNING",
+            )
             return False
 
         return True
@@ -280,17 +324,19 @@ def copy_firmware(environment):
 
 
 def _get_partitions_file_for_env(environment: str) -> Path:
-    """Return the partitions CSV path for a given PlatformIO environment by reading platformio.ini.
+    """Return partitions CSV path for PlatformIO environment.
 
-    Falls back to partitions_no_ota.csv if not found.
+    Falls back to partitions_4mb_no_ota.csv if not found.
     """
     ini_path = Path("platformio.ini")
-    default = Path("partitions_no_ota.csv")
+    default = Path("partitions_4mb_no_ota.csv")
     try:
         content = ini_path.read_text(encoding="utf-8")
-        # crude parse: find section header then look for board_build.partitions = file
-        import re
-        pattern = rf"\[env:{re.escape(environment)}\][\s\S]*?board_build\.partitions\s*=\s*(.+)"
+        # crude parse: find section then look for board_build.partitions
+        pattern = (
+            rf"\[env:{re.escape(environment)}\][\s\S]*?"
+            r"board_build\.partitions\s*=\s*(.+)"
+        )
         m = re.search(pattern, content)
         if m:
             candidate = Path(m.group(1).strip())
@@ -302,11 +348,12 @@ def _get_partitions_file_for_env(environment: str) -> Path:
 
 
 def _get_fs_offset_from_partitions(csv_path: Path) -> str:
-    """Parse the partitions CSV and return the LittleFS filesystem offset as hex string (e.g., '0x210000').
-    
-    IMPORTANT: ESP32 partition tables use "spiffs" as the SUBTYPE for filesystem partitions
-    even when using LittleFS. We look for partition NAME "littlefs" but the subtype will be "spiffs".
-    This is an ESP32 platform requirement - don't be confused by this apparent mismatch!
+    """Parse partitions CSV and return LittleFS offset as hex string.
+
+    IMPORTANT: ESP32 partition tables use "spiffs" as the SUBTYPE for
+    filesystem partitions even when using LittleFS. We look for partition
+    NAME "littlefs" but the subtype will be "spiffs". This is an ESP32
+    platform requirement - don't be confused by this apparent mismatch!
     """
     try:
         with csv_path.open("r", encoding="utf-8") as f:
@@ -324,66 +371,94 @@ def _get_fs_offset_from_partitions(csv_path: Path) -> str:
                             offset = hex(int(offset, 0))
                         return offset
         # If we get here, no littlefs partition was found - fail fast
-        fatal_error(f"No 'littlefs' partition found in {csv_path}. Expected partition name must be exactly 'littlefs'")
+        fatal_error(
+            f"No 'littlefs' partition found in {csv_path}. "
+            "Expected partition name must be exactly 'littlefs'"
+        )
     except Exception as e:
         fatal_error(f"Failed to parse partitions file {csv_path}: {e}")
 
 
 def create_merged_binary(environment):
-    """Create a merged binary file containing all components for easy flashing."""
+    """Create merged binary file with all components for easy flashing."""
     bootloader_source = Path(f".pio/build/{environment}/bootloader.bin")
     partitions_source = Path(f".pio/build/{environment}/partitions.bin")
     firmware_source = Path(f".pio/build/{environment}/firmware.bin")
     littlefs_source = Path(f".pio/build/{environment}/littlefs.bin")
-    
-    merged_dest = Path(f"firmware/{environment}/scribe-{environment}-complete.bin")
-    
-    # Check all required files exist (no boot_app0.bin needed - we're not using OTA)
-    required_files = [bootloader_source, partitions_source, firmware_source, littlefs_source]
+
+    merged_dest = Path(
+        f"firmware/{environment}/scribe-{environment}-complete.bin"
+    )
+
+    # Check all required files exist (no boot_app0.bin - not using OTA)
+    required_files = [
+        bootloader_source,
+        partitions_source,
+        firmware_source,
+        littlefs_source,
+    ]
     for file in required_files:
         if not file.exists():
             log(f"Warning: Required file not found: {file}", "WARNING")
             return False
-    
+
     try:
         # Create merged binary using esptool merge-bin
         log(f"Creating complete merged binary for {environment}...", "INFO")
 
         # Determine chip type and bootloader address for merge-bin command
         if environment.startswith("c3-"):
-            chip_type = "ESP32C3"
+            chip_type = "esp32c3"
             bootloader_addr = "0x0000"  # ESP32-C3 uses 0x0000
         elif environment.startswith("s3-"):
-            chip_type = "ESP32S3"
+            chip_type = "esp32s3"
             bootloader_addr = "0x0000"  # ESP32-S3 uses 0x0000
         else:
-            chip_type = "ESP32"
+            chip_type = "esp32"
             bootloader_addr = "0x1000"  # Original ESP32 uses 0x1000
         # Determine filesystem offset from the environment's partitions file
         partitions_csv = _get_partitions_file_for_env(environment)
         fs_offset = _get_fs_offset_from_partitions(partitions_csv)
 
         # Determine flash size based on environment
-        if environment == "s3-pcb-prod" or environment == "s3-pcb-dev":
+        # s3-pcb-* environments use 8MB flash, all others use 4MB
+        if "pcb" in environment:
             flash_size = "8MB"
         else:
             flash_size = "4MB"
 
         merge_cmd = [
-            "esptool", "--chip", chip_type, "merge-bin",
-            "-o", str(merged_dest),
-            "--flash-mode", "dio", "--flash-size", flash_size,
-            bootloader_addr, str(bootloader_source),
-            "0x8000", str(partitions_source),
-            "0x10000", str(firmware_source),
-            fs_offset, str(littlefs_source)
+            "esptool",
+            "--chip",
+            chip_type,
+            "merge-bin",
+            "-o",
+            str(merged_dest),
+            "--flash-mode",
+            "dio",
+            "--flash-size",
+            flash_size,
+            bootloader_addr,
+            str(bootloader_source),
+            "0x8000",
+            str(partitions_source),
+            "0x10000",
+            str(firmware_source),
+            fs_offset,
+            str(littlefs_source),
         ]
-        
-        result = subprocess.run(merge_cmd, capture_output=True, text=True, check=True)
-        
+
+        result = subprocess.run(
+            merge_cmd, capture_output=True, text=True, check=True
+        )
+
         merged_size = merged_dest.stat().st_size
         merged_size_kb = merged_size / 1024
-        log(f"Created complete binary: {merged_dest} ({merged_size_kb:.1f} KB)", "SUCCESS")
+        log(
+            f"Created complete binary: {merged_dest} "
+            f"({merged_size_kb:.1f} KB)",
+            "SUCCESS",
+        )
 
         return True
 
@@ -418,9 +493,15 @@ def build_filesystem(environment):
             shutil.copy2(fs_source, fs_dest)
             size = fs_dest.stat().st_size
             size_kb = size / 1024
-            log(f"Copied filesystem to {fs_dest} ({size_kb:.1f} KB)", "SUCCESS")
+            log(
+                f"Copied filesystem to {fs_dest} ({size_kb:.1f} KB)",
+                "SUCCESS",
+            )
         else:
-            log(f"Warning: Filesystem image not found at {fs_source}", "WARNING")
+            log(
+                f"Warning: Filesystem image not found at {fs_source}",
+                "WARNING",
+            )
 
         return True
 
@@ -433,10 +514,14 @@ def create_release_info(targets):
     """Create release information files in firmware directories."""
     import datetime
 
-    # Load template from file (prefer scripts/templates/, fall back to scripts/bin/templates/)
+    # Load template (prefer scripts/templates/, fall back to bin/templates/)
     candidates = [
-        Path(__file__).resolve().parents[1] / "templates" / "firmware_readme.md",  # scripts/templates
-        Path(__file__).parent / "templates" / "firmware_readme.md",               # scripts/bin/templates (legacy)
+        # scripts/templates
+        Path(__file__).resolve().parents[1]
+        / "templates"
+        / "firmware_readme.md",
+        # scripts/bin/templates (legacy)
+        Path(__file__).parent / "templates" / "firmware_readme.md",
     ]
     template = None
     template_path = None
@@ -451,7 +536,11 @@ def create_release_info(targets):
             if template is not None:
                 break
     if template is None:
-        log("Warning: Template not found in expected locations (no README will be created)", "WARNING")
+        log(
+            "Warning: Template not found in expected locations "
+            "(no README will be created)",
+            "WARNING",
+        )
         return  # Do not create any README without the template
     else:
         # Prefer macOS default port in README examples
@@ -462,7 +551,9 @@ def create_release_info(targets):
 
     for env in targets:
         # Format template for this specific environment
-        release_info = template.format(build_date=build_date, environment=env)
+        release_info = template.format(
+            build_date=build_date, environment=env
+        )
 
         info_file = Path(f"firmware/{env}/README.md")
         try:
@@ -470,11 +561,14 @@ def create_release_info(targets):
                 f.write(release_info)
             log(f"Created release info: {info_file}", "SUCCESS")
         except Exception as e:
-            log(f"Failed to create release info for {env}: {e}", "WARNING")
+            log(
+                f"Failed to create release info for {env}: {e}",
+                "WARNING",
+            )
 
 
 def recover_config():
-    """Emergency recovery - restore config.h from backup."""
+    """Emergency recovery - restore device_config.h from backup."""
     backup_path = Path("src/config/device_config.h.adam")
     config_path = Path("src/config/device_config.h")
 
@@ -484,7 +578,8 @@ def recover_config():
 
     if is_config_already_clean(backup_path):
         log(
-            "⚠️  Backup also appears to be cleaned - check for timestamped backups:",
+            "⚠️  Backup also appears to be cleaned - "
+            "check for timestamped backups:",
             "WARNING",
         )
         backup_dir = Path("src/config")
@@ -493,7 +588,10 @@ def recover_config():
             log("Found timestamped backups:", "INFO")
             for backup in sorted(timestamped_backups):
                 log(f"  - {backup}", "INFO")
-            log("You may want to manually restore from one of these", "INFO")
+            log(
+                "You may want to manually restore from one of these",
+                "INFO",
+            )
         return False
 
     try:
@@ -540,10 +638,18 @@ def main():
             # Step 3: Build frontend assets first
             log("Building frontend assets...")
             try:
-                result = subprocess.run(["npm", "run", "build"], check=True, capture_output=True, text=True)
+                result = subprocess.run(
+                    ["npm", "run", "build"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
                 log("Frontend assets built successfully", "SUCCESS")
             except subprocess.CalledProcessError as e:
-                log("❌ Frontend build failed - this is a fatal error", "ERROR")
+                log(
+                    "❌ Frontend build failed - this is a fatal error",
+                    "ERROR",
+                )
                 log(f"❌ Return code: {e.returncode}", "ERROR")
                 if e.stdout:
                     log(f"❌ STDOUT: {e.stdout}", "ERROR")
@@ -552,11 +658,14 @@ def main():
                 log("❌ Cannot continue without frontend assets", "ERROR")
                 success = False
             except FileNotFoundError:
-                log("❌ npm not found - frontend build is required", "ERROR")
+                log(
+                    "❌ npm not found - frontend build is required",
+                    "ERROR",
+                )
                 log("❌ Please install Node.js and npm", "ERROR")
                 success = False
 
-            # Step 4: Build firmware for each target (only if frontend succeeded)
+            # Step 4: Build firmware for each target (frontend succeeded)
             if success:
                 for target in targets:
                     log(f"\\n--- Building {target} ---")
@@ -570,7 +679,10 @@ def main():
                     else:
                         success = False
             else:
-                log("⏭️  Skipping firmware builds due to frontend failure", "WARNING")
+                log(
+                    "⏭️  Skipping firmware builds due to frontend failure",
+                    "WARNING",
+                )
 
         # Step 5: Create release information
         create_release_info(targets)
@@ -580,7 +692,10 @@ def main():
         restore_config()
 
     if success:
-        log("\\n🎉 Firmware release build completed successfully!", "SUCCESS")
+        log(
+            "\\n🎉 Firmware release build completed successfully!",
+            "SUCCESS",
+        )
         log("\\nFirmware files are available in:")
         for target in targets:
             firmware_path = Path(f"firmware/{target}/firmware.bin")

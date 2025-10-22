@@ -108,7 +108,7 @@ void setup()
   ConfigManager::instance().begin();
 
   // Configure ESP32 system component log levels
-  esp_log_level_set("WebServer", espLogLevel);
+  esp_log_level_set("WebServer", static_cast<esp_log_level_t>(espLogLevel));
 #ifdef RELEASE_BUILD
   // Suppress VFS errors in production (AsyncWebServer checks for uncompressed files before serving .gz)
   esp_log_level_set("vfs", ESP_LOG_NONE);

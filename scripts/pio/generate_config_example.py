@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 """
-Generate config.h.example from config.h by replacing secrets with placeholders.
-This script uses the shared config_cleaner module for consistent secret handling.
+Generate device_config.h.example by replacing secrets with placeholders.
+
+This script uses the shared config_cleaner module for consistent secret
+handling.
 """
 
 import os
 import sys
-from pathlib import Path
 
 # Ensure scripts/ is on sys.path and import shared cleaner from scripts/lib
 # Use absolute path since __file__ may not be available in PlatformIO context
-script_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else 'scripts/pio'
-scripts_root = os.path.join(script_dir, '..')
+if "__file__" in globals():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+else:
+    script_dir = "scripts/pio"
+scripts_root = os.path.join(script_dir, "..")
 sys.path.insert(0, scripts_root)
-from lib.config_cleaner import clean_secrets_from_content, add_example_file_metadata
+from lib.config_cleaner import (  # noqa: E402
+    clean_secrets_from_content,
+    add_example_file_metadata,
+)
 
 # This import is required for PlatformIO extra scripts
 # Import is only available when run by PlatformIO, not in regular Python context
@@ -34,7 +41,7 @@ def generate_example_config():
 
     # Clean secrets using shared logic
     content = clean_secrets_from_content(content)
-    
+
     # Add example-specific metadata and instructions
     content = add_example_file_metadata(content)
 
@@ -51,5 +58,5 @@ if __name__ == "__main__":
     generate_example_config()
 else:
     # This runs when PlatformIO imports this script
-    print("🔧 Running pre-build script: generating device_config.h.example...")
+    print("🔧 Running pre-build script: " "generating device_config.h.example...")
     generate_example_config()
