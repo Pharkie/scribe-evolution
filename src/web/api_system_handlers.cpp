@@ -121,6 +121,22 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     memory["totalHeap"] = ESP.getHeapSize();
     memory["usedHeap"] = ESP.getHeapSize() - ESP.getFreeHeap();
 
+    // Heap fragmentation monitoring (critical for WiFiClientSecure SSL operations)
+    size_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+    memory["largestFreeBlock"] = largestBlock;
+    memory["heapFragmented"] = (largestBlock < 40960);  // Warn if <40KB (SSL threshold)
+
+    // Fragmentation risk assessment
+    if (largestBlock < 40960) {
+        memory["fragmentationRisk"] = "critical";  // SSL operations may fail
+    } else if (largestBlock < 51200) {
+        memory["fragmentationRisk"] = "high";      // Close to SSL threshold
+    } else if (largestBlock < 102400) {
+        memory["fragmentationRisk"] = "medium";    // Moderate fragmentation
+    } else {
+        memory["fragmentationRisk"] = "low";       // Healthy heap
+    }
+
     // Flash storage breakdown
     JsonObject flash = microcontroller["flash"].to<JsonObject>();
 

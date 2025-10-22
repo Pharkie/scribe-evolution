@@ -23,6 +23,7 @@
 #include <ESPmDNS.h>
 #include <esp_task_wdt.h>
 #include <esp_log.h>
+#include <esp_bt.h>
 #include <ezTime.h>
 #include <LittleFS.h>
 #include "config/config.h"
@@ -56,6 +57,11 @@ String deviceBootTime = "";
 
 void setup()
 {
+  // === Disable Bluetooth/BLE to free ~70KB heap ===
+  // ESP32-C3 has BT controller pre-allocated even if unused
+  // This permanently releases that memory to heap (irreversible but we don't use BT)
+  esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);  // Release both BT Classic + BLE
+
   // Track boot time
   unsigned long bootStartTime = millis();
 
@@ -72,7 +78,12 @@ void setup()
   // Initial boot message (can't use LogManager yet - not initialized)
   Serial.printf("\n=== Scribe Evolution v%s ===\n", FIRMWARE_VERSION);
   Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
-  Serial.printf("[BOOT] System: %s, %d KB free heap\n", ESP.getChipModel(), ESP.getFreeHeap() / mediumJsonBuffer);
+
+  // Early heap fragmentation check
+  size_t freeHeap = ESP.getFreeHeap();
+  size_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+  Serial.printf("[BOOT] System: %s, %d KB free heap, %d KB largest block\n",
+                ESP.getChipModel(), freeHeap / 1024, largestBlock / 1024);
 
   // Initialize LittleFS for config and web file storage
   if (!LittleFS.begin(true, "/littlefs", 10, "littlefs")) // true = format if mount fails
@@ -93,7 +104,7 @@ void setup()
   currentWiFiMode = connectToWiFi();
 
   // Initialize thread-safe singleton managers (MUST be called before any singleton usage)
-  LogManager::instance().begin(115200, 256, 512);
+  LogManager::instance().begin(115200, 8, 512);  // Queue: 256→8 entries (saves 124KB)
   ConfigManager::instance().begin();
 
   // Configure ESP32 system component log levels
@@ -139,8 +150,11 @@ void setup()
   deviceBootTime = getISOTimestamp();
   LOG_VERBOSE("BOOT", "Device boot time recorded: %s", deviceBootTime.c_str());
 
-  // Log initial memory status
-  LOG_VERBOSE("BOOT", "Free heap: %d bytes", ESP.getFreeHeap());
+  // Log initial memory status with fragmentation
+  size_t heapAfterInit = ESP.getFreeHeap();
+  size_t largestAfterInit = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+  LOG_NOTICE("BOOT", "Heap after init: %d KB free, %d KB largest block",
+             heapAfterInit / 1024, largestAfterInit / 1024);
 
   // Log detailed GPIO summary in verbose mode (now that logging is available)
   logGPIOUsageSummary();

@@ -695,50 +695,40 @@ export function createIndexStore() {
             const graySrc = makeTickerTapeSrc("#9ca3af");
             const blackSrc = makeTickerTapeSrc("#000000");
 
-            await Promise.all([
-              fireConfetti3D({
-                ...base,
-                count: 20, // white
-                shapeOptions: {
-                  image: [
-                    {
-                      src: whiteSrc,
-                      replaceColor: false,
-                      width: 50,
-                      height: 30,
-                    },
-                  ],
-                },
-              }),
-              fireConfetti3D({
-                ...base,
-                count: 40, // gray (2x)
-                shapeOptions: {
-                  image: [
-                    {
-                      src: graySrc,
-                      replaceColor: false,
-                      width: 50,
-                      height: 30,
-                    },
-                  ],
-                },
-              }),
-              fireConfetti3D({
-                ...base,
-                count: 20, // black
-                shapeOptions: {
-                  image: [
-                    {
-                      src: blackSrc,
-                      replaceColor: false,
-                      width: 50,
-                      height: 30,
-                    },
-                  ],
-                },
-              }),
-            ]);
+            // Fire all confetti bursts simultaneously with all three colors in each burst
+            // This avoids race conditions with separate Promise.all calls
+            await fireConfetti3D({
+              ...base,
+              count: 80, // Total count: 20 white + 40 gray + 20 black
+              shapeOptions: {
+                image: [
+                  {
+                    src: whiteSrc,
+                    replaceColor: false,
+                    width: 50,
+                    height: 30,
+                  },
+                  {
+                    src: graySrc,
+                    replaceColor: false,
+                    width: 50,
+                    height: 30,
+                  },
+                  {
+                    src: graySrc,
+                    replaceColor: false,
+                    width: 50,
+                    height: 30,
+                  },
+                  {
+                    src: blackSrc,
+                    replaceColor: false,
+                    width: 50,
+                    height: 30,
+                  },
+                ],
+              },
+            });
             break;
 
           case "memo":

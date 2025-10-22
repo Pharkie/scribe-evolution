@@ -28,29 +28,16 @@ extern SemaphoreHandle_t currentMessageMutex;
 // ASYNC BUTTON ACTION MANAGEMENT
 // ========================================
 
-// Thread-safe task tracking with mutex protection
+// Thread-safe action tracking with mutex protection
 static volatile bool buttonActionRunning = false;
 static SemaphoreHandle_t buttonActionMutex = nullptr;
 
-// Task configuration
-static const int BUTTON_TASK_STACK_SIZE = 8192;   // 8KB stack
-static const int BUTTON_TASK_PRIORITY = 1;        // Lower priority than main loop
-static const int BUTTON_ACTION_TIMEOUT_MS = 3000; // 3s timeout
-
-// Task parameter structure
-struct ButtonActionParams
-{
-    int buttonIndex;
-    bool isLongPress;
-    String actionType;
-    String mqttTopic;
-    String ledEffect;
-};
+// Action timeout configuration
+static const int BUTTON_ACTION_TIMEOUT_MS = 3000; // 3s timeout for content generation
 
 // Forward declarations
-void buttonActionTask(void *parameter);
 bool executeButtonActionDirect(const char *actionType, bool shouldSetPrintFlag = true);
-bool createButtonActionTask(int buttonIndex, bool isLongPress);
+bool handleButtonActionSync(int buttonIndex, bool isLongPress);
 
 // ========================================
 // HARDWARE BUTTON IMPLEMENTATION
@@ -353,17 +340,17 @@ void handleButtonPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // **KEY CHANGE**: Process action asynchronously instead of immediate execution
-    // This keeps the main loop responsive and prevents blocking operations
-    bool started = createButtonActionTask(buttonIndex, false);
+    // Execute action synchronously with mutex protection
+    // If another action is running, this button press is ignored
+    bool started = handleButtonActionSync(buttonIndex, false);
 
     if (started)
     {
-        LOG_VERBOSE("BUTTONS", "Button %d SHORT press started async processing", buttonIndex);
+        LOG_VERBOSE("BUTTONS", "Button %d SHORT press completed", buttonIndex);
     }
     else
     {
-        LOG_WARNING("BUTTONS", "Failed to start async task for button %d SHORT press (task busy?)", buttonIndex);
+        LOG_WARNING("BUTTONS", "Button %d SHORT press ignored (action already running)", buttonIndex);
     }
 
     // Feed watchdog after quick, non-blocking button handling
@@ -391,17 +378,17 @@ void handleButtonLongPress(int buttonIndex)
         return; // Rate limited, ignore this press
     }
 
-    // **KEY CHANGE**: Process action asynchronously instead of immediate execution
-    // This keeps the main loop responsive and prevents blocking operations
-    bool started = createButtonActionTask(buttonIndex, true);
+    // Execute action synchronously with mutex protection
+    // If another action is running, this button press is ignored
+    bool started = handleButtonActionSync(buttonIndex, true);
 
     if (started)
     {
-        LOG_VERBOSE("BUTTONS", "Button %d LONG press started async processing", buttonIndex);
+        LOG_VERBOSE("BUTTONS", "Button %d LONG press completed", buttonIndex);
     }
     else
     {
-        LOG_WARNING("BUTTONS", "Failed to start async task for button %d LONG press (task busy?)", buttonIndex);
+        LOG_WARNING("BUTTONS", "Button %d LONG press ignored (action already running)", buttonIndex);
     }
 
     // Feed watchdog after quick, non-blocking button handling
@@ -409,17 +396,18 @@ void handleButtonLongPress(int buttonIndex)
 }
 
 // ========================================
-// ASYNC BUTTON ACTION IMPLEMENTATION
+// SYNCHRONOUS BUTTON ACTION IMPLEMENTATION
 // ========================================
 
 /**
- * @brief Create async task to handle button action (non-blocking)
+ * @brief Handle button action synchronously with mutex protection
+ * @return true if action was executed, false if rejected (action already running)
  */
-bool createButtonActionTask(int buttonIndex, bool isLongPress)
+bool handleButtonActionSync(int buttonIndex, bool isLongPress)
 {
-    // Thread-safe check if another task is running
-    if (buttonActionMutex == nullptr || 
-        xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(10)) != pdTRUE)
+    // Thread-safe check if another action is running
+    if (buttonActionMutex == nullptr ||
+        xSemaphoreTake(buttonActionMutex, 0) != pdTRUE)
     {
         LOG_WARNING("BUTTONS", "Button action mutex unavailable - rejecting button %d press", buttonIndex);
         return false;
@@ -433,13 +421,14 @@ bool createButtonActionTask(int buttonIndex, bool isLongPress)
         return false;
     }
 
-    // Set flag while still holding mutex
+    // Set flag while holding mutex
     buttonActionRunning = true;
     xSemaphoreGive(buttonActionMutex);
 
+    // Validate button index
     if (buttonIndex < 0 || buttonIndex >= numHardwareButtons)
     {
-        // Reset flag on error since we already set it
+        // Reset flag on error
         if (xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(10)) == pdTRUE)
         {
             buttonActionRunning = false;
@@ -449,161 +438,95 @@ bool createButtonActionTask(int buttonIndex, bool isLongPress)
         return false;
     }
 
-    // Get configuration for this button immediately
+    // Get configuration for this button
     const RuntimeConfig &config = getRuntimeConfig();
 
-    // Create task parameters (will be freed by task)
-    ButtonActionParams *params = new ButtonActionParams();
-    params->buttonIndex = buttonIndex;
-    params->isLongPress = isLongPress;
-
+    String actionType, mqttTopic, ledEffect;
     if (isLongPress)
     {
-        params->actionType = config.buttonLongActions[buttonIndex];
-        params->mqttTopic = config.buttonLongMqttTopics[buttonIndex];
-        params->ledEffect = config.buttonLongLedEffects[buttonIndex];
+        actionType = config.buttonLongActions[buttonIndex];
+        mqttTopic = config.buttonLongMqttTopics[buttonIndex];
+        ledEffect = config.buttonLongLedEffects[buttonIndex];
     }
     else
     {
-        params->actionType = config.buttonShortActions[buttonIndex];
-        params->mqttTopic = config.buttonShortMqttTopics[buttonIndex];
-        params->ledEffect = config.buttonShortLedEffects[buttonIndex];
+        actionType = config.buttonShortActions[buttonIndex];
+        mqttTopic = config.buttonShortMqttTopics[buttonIndex];
+        ledEffect = config.buttonShortLedEffects[buttonIndex];
     }
-
-    // Create one-shot task to handle this action
-    TaskHandle_t taskHandle = NULL;
-    BaseType_t result = xTaskCreate(
-        buttonActionTask,       // Task function
-        "ButtonAction",         // Task name
-        BUTTON_TASK_STACK_SIZE, // Stack size
-        params,                 // Parameters (will be freed by task)
-        BUTTON_TASK_PRIORITY,   // Priority
-        &taskHandle             // Task handle
-    );
-
-    if (result != pdPASS)
-    {
-        // Reset flag on task creation failure
-        if (xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(10)) == pdTRUE)
-        {
-            buttonActionRunning = false;
-            xSemaphoreGive(buttonActionMutex);
-        }
-        LOG_ERROR("BUTTONS", "Failed to create button action task");
-        delete params;
-        return false;
-    }
-
-    LOG_VERBOSE("BUTTONS", "Created async task for %s press on button %d: '%s'",
-                isLongPress ? "long" : "short", buttonIndex, params->actionType.c_str());
-
-    return true;
-}
-
-/**
- * @brief One-shot task function for processing a single button action
- */
-void buttonActionTask(void *parameter)
-{
-    // Flag is already set in createButtonActionTask under mutex protection
-    
-    // Get parameters
-    ButtonActionParams *params = (ButtonActionParams *)parameter;
 
     LOG_VERBOSE("BUTTONS", "Processing %s press for button %d: '%s'",
-                params->isLongPress ? "long" : "short",
-                params->buttonIndex, params->actionType.c_str());
+                isLongPress ? "long" : "short", buttonIndex, actionType.c_str());
 
     // Trigger LED effect immediately (non-blocking)
-    triggerButtonLedEffect(params->buttonIndex, params->isLongPress);
+    triggerButtonLedEffect(buttonIndex, isLongPress);
 
-    // FIXED: Execute action based on MQTT configuration
-    // If MQTT topic is set, send ONLY via MQTT. If not set, print locally.
-    if (params->mqttTopic.length() > 0)
+    // Execute action based on MQTT configuration
+    if (mqttTopic.length() > 0)
     {
         // MQTT path: generate content and send via MQTT only
-        if (params->actionType.length() > 0)
+        if (actionType.length() > 0)
         {
-            // Execute content action for MQTT (don't set print flag)
-            bool success = executeButtonActionDirect(params->actionType.c_str(), false);
+            bool success = executeButtonActionDirect(actionType.c_str(), false);
 
             if (success)
             {
-                // Parse message content into header and body (format: "header\n\nbody")
+                // Parse message content into header and body
                 String message = currentMessage.message;
                 int separatorPos = message.indexOf("\n\n");
-                
+
                 String header, body;
                 if (separatorPos != -1) {
                     header = message.substring(0, separatorPos);
                     body = message.substring(separatorPos + 2);
                 } else {
-                    // Fallback: use action type as header if no separator found
-                    header = params->actionType.c_str();
+                    header = actionType.c_str();
                     body = message;
                 }
-                
-                // Use centralized MQTT publishing function
-                bool mqttSuccess = publishMQTTMessage(params->mqttTopic, header, body);
-                
+
+                bool mqttSuccess = publishMQTTMessage(mqttTopic, header, body);
+
                 if (mqttSuccess) {
-                    const RuntimeConfig &config = getRuntimeConfig();
-                    int gpio = config.buttonGpios[params->buttonIndex];
-                    LOG_NOTICE("BUTTONS", "Button %d (GPIO%d) sent %s via MQTT to: %s", 
-                              params->buttonIndex + 1, gpio, params->actionType.c_str(), params->mqttTopic.c_str());
+                    int gpio = config.buttonGpios[buttonIndex];
+                    LOG_NOTICE("BUTTONS", "Button %d (GPIO%d) sent %s via MQTT to: %s",
+                              buttonIndex + 1, gpio, actionType.c_str(), mqttTopic.c_str());
                 } else {
-                    LOG_ERROR("BUTTONS", "Failed to send button action via MQTT to topic: %s", params->mqttTopic.c_str());
+                    LOG_ERROR("BUTTONS", "Failed to send button action via MQTT to topic: %s", mqttTopic.c_str());
                 }
-            }
-            else if (!isMQTTEnabled())
-            {
-                LOG_WARNING("BUTTONS", "MQTT disabled, cannot send button action to topic: %s", params->mqttTopic.c_str());
-            }
-            else if (!MQTTManager::instance().isConnected())
-            {
-                LOG_WARNING("BUTTONS", "MQTT not connected, cannot send button action to topic: %s", params->mqttTopic.c_str());
             }
             else
             {
-                LOG_WARNING("BUTTONS", "Content generation failed for MQTT button action: %s", params->actionType.c_str());
+                LOG_WARNING("BUTTONS", "Content generation failed for MQTT button action: %s", actionType.c_str());
             }
         }
     }
     else
     {
         // Local printing path: no MQTT topic set, print directly
-        if (params->actionType.length() > 0)
+        if (actionType.length() > 0)
         {
-            // Execute content action directly with timeout
-            bool success = executeButtonActionDirect(params->actionType.c_str());
+            bool success = executeButtonActionDirect(actionType.c_str());
 
             if (success)
             {
-                LOG_NOTICE("BUTTONS", "Button action completed for LOCAL printing: %s", params->actionType.c_str());
-                // executeButtonActionDirect already sets shouldPrintLocally = true
+                LOG_NOTICE("BUTTONS", "Button action completed for LOCAL printing: %s", actionType.c_str());
             }
             else
             {
-                LOG_WARNING("BUTTONS", "Button action failed or timed out: %s", params->actionType.c_str());
+                LOG_WARNING("BUTTONS", "Button action failed: %s", actionType.c_str());
             }
         }
     }
 
-    // Cleanup and mark complete
-    delete params;
-
-    // Thread-safe reset of running flag
-    if (buttonActionMutex != nullptr && 
+    // Reset running flag
+    if (buttonActionMutex != nullptr &&
         xSemaphoreTake(buttonActionMutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
         buttonActionRunning = false;
         xSemaphoreGive(buttonActionMutex);
     }
 
-    LOG_VERBOSE("BUTTONS", "Button action task completed, deleting task");
-
-    // Delete this task
-    vTaskDelete(NULL);
+    return true;
 }
 
 /**

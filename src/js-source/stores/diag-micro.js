@@ -69,6 +69,9 @@ export function createDiagnosticsMicrocontrollerStore() {
           flashUsagePercent,
           heapUsageText: `${this.formatBytes(memory.usedHeap)} / ${this.formatBytes(memory.totalHeap)}`,
           heapUsagePercent,
+          largestFreeBlockText: this.formatBytes(memory.largestFreeBlock),
+          fragmentationRisk: memory.fragmentationRisk || "unknown",
+          heapFragmented: memory.heapFragmented || false,
         };
         this.config = config;
         this.logging = diagnostics.logging || {};
@@ -151,6 +154,36 @@ export function createDiagnosticsMicrocontrollerStore() {
       if (tempCelsius < 40) return "text-blue-600 dark:text-blue-400";
       if (tempCelsius > 50) return "text-red-600 dark:text-red-400";
       return "text-green-600 dark:text-green-400";
+    },
+
+    getFragmentationClass(risk) {
+      switch (risk?.toLowerCase()) {
+        case "critical":
+          return "text-red-600 dark:text-red-400";
+        case "high":
+          return "text-orange-600 dark:text-orange-400";
+        case "medium":
+          return "text-yellow-600 dark:text-yellow-400";
+        case "low":
+          return "text-green-600 dark:text-green-400";
+        default:
+          return "text-gray-600 dark:text-gray-400";
+      }
+    },
+
+    getFragmentationBadgeClass(risk) {
+      switch (risk?.toLowerCase()) {
+        case "critical":
+          return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700 animate-pulse";
+        case "high":
+          return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700";
+        case "medium":
+          return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700";
+        case "low":
+          return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700";
+        default:
+          return "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700";
+      }
     },
 
     // ================== LOGGING UTILITY FUNCTIONS ==================

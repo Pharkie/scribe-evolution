@@ -297,6 +297,41 @@
                       :style="`will-change: width; transition-delay: 50ms; width: ${animateBars ? Math.min(Math.max(memoryUsage?.heapUsagePercent || 0, 0), 100) : 0}%`"
                     ></div>
                   </div>
+
+                  <!-- Heap Fragmentation Info -->
+                  <div class="mt-3">
+                    <div class="flex justify-between items-center mb-2">
+                      <span
+                        class="text-gray-600 dark:text-gray-400 font-medium text-sm"
+                        >Largest Free Block:</span
+                      >
+                      <span
+                        class="text-gray-900 dark:text-gray-100 font-semibold text-sm"
+                        x-text="memoryUsage?.largestFreeBlockText || 'Loading...'"
+                      ></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span
+                        class="text-gray-600 dark:text-gray-400 font-medium text-sm"
+                        >Fragmentation Risk:</span
+                      >
+                      <span
+                        class="px-2 py-1 rounded-full text-xs font-semibold uppercase border"
+                        :class="getFragmentationBadgeClass(memoryUsage?.fragmentationRisk)"
+                        x-text="memoryUsage?.fragmentationRisk || 'Unknown'"
+                      ></span>
+                    </div>
+                    <template x-if="memoryUsage?.heapFragmented">
+                      <div
+                        class="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+                      >
+                        <p class="text-xs text-red-700 dark:text-red-300">
+                          ⚠️ Heap fragmentation detected. SSL operations may
+                          fail. Consider restarting the device.
+                        </p>
+                      </div>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>

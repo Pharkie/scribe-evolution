@@ -39,7 +39,7 @@ static const int defaultBaseDelayMs = 1000;                       // Default bas
 static const int mqttTestCleanupDelayMs = ScribeTime::Seconds(1); // MQTT test cleanup delay (1s)
 
 // Session management constants
-static const int maxConcurrentSessions = 5;                                           // Maximum concurrent user sessions
+static const int maxConcurrentSessions = 3;                                           // Maximum concurrent user sessions (reduced for C3 heap)
 static const int sessionTokenLength = 32;                                             // Session token length (bytes)
 static const unsigned int sessionTimeoutHours = 4;                                    // Session timeout in hours (canonical)
 static const unsigned long sessionTimeoutMs = ScribeTime::Hours(sessionTimeoutHours); // Derived ms
