@@ -91,7 +91,10 @@ void setup()
     Serial.println("[BOOT] LittleFS Mount Failed");
   }
 
-  // Validate configuration
+  // Initialize ConfigManager FIRST (required for loading NVS config)
+  ConfigManager::instance().begin();
+
+  // Validate configuration (loads from NVS - requires ConfigManager to be initialized)
   validateConfig();
 
   // Initialize printer configuration lookup functions
@@ -100,12 +103,11 @@ void setup()
   // Initialize status LED
   initializeStatusLED();
 
-  // Connect to WiFi
+  // Connect to WiFi (uses config loaded from NVS above)
   currentWiFiMode = connectToWiFi();
 
-  // Initialize thread-safe singleton managers (MUST be called before any singleton usage)
+  // Initialize LogManager after WiFi (needs to know connection mode for logging context)
   LogManager::instance().begin(115200, 8, 512);  // Queue: 256→8 entries (saves 124KB)
-  ConfigManager::instance().begin();
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", static_cast<esp_log_level_t>(espLogLevel));

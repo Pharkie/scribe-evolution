@@ -1,6 +1,6 @@
 # Scribe Firmware Release
 
-Built on: 2025-10-22 23:42:25
+Built on: 2025-10-23 00:09:11
 
 ## Flashing Instructions:
 
@@ -13,12 +13,12 @@ esptool --port /dev/cu.usbmodem1101 erase-flash
 **Step 2: Flash firmware**
 
 ```bash
-esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-c3-4mb-prod-complete.bin
+esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-s3-pcb-prod-complete.bin
 ```
 
 Replace `/dev/cu.usbmodem1101` with your actual port e.g. Windows: COM3, macOS: /dev/cu.usbserial-\*
 
-Your Scribe Evolution will start a wifi network "Scribe-setup" with password "scribe123" and go from there.
+Your Scribe Evolution will start a wifi network "Scribe-setup" with password "scribe123". Connect to it and navigate to http://192.168.4.1 to access the setup screen if it doesn't appear automatically.
 
 ## More details
 

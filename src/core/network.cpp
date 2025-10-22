@@ -77,7 +77,7 @@ WiFiConnectionMode connectToWiFi()
     String password = config.wifiPassword;
     unsigned long timeout = config.wifiConnectTimeoutMs;
 
-    Serial.printf("[BOOT] Network: Connecting to WiFi (timeout: %lus)\n", timeout/1000);
+    Serial.printf("[BOOT] Network: Connecting to '%s' (timeout: %lus)\n", ssid.c_str(), timeout/1000);
 
     if (ssid.length() == 0)
     {
@@ -108,7 +108,7 @@ WiFiConnectionMode connectToWiFi()
 
     if (!ssidPresent)
     {
-        Serial.println("[BOOT] Network: Target SSID not found - starting AP mode");
+        Serial.printf("[BOOT] Network: Target SSID '%s' not found in scan - starting AP mode\n", ssid.c_str());
         startFallbackAP();
         return WIFI_MODE_AP_FALLBACK;
     }

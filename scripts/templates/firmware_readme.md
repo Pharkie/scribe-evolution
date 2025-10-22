@@ -13,7 +13,7 @@ esptool --port /dev/cu.usbmodem1101 erase-flash
 **Step 2: Flash firmware**
 
 ```bash
-esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-c3-4mb-prod-complete.bin
+esptool --port /dev/cu.usbmodem1101 --baud 460800 write-flash 0x0 scribe-{environment}-complete.bin
 ```
 
 Replace `/dev/cu.usbmodem1101` with your actual port e.g. Windows: COM3, macOS: /dev/cu.usbserial-\*
