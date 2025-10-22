@@ -165,7 +165,7 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     logging["levelName"] = getLogLevelString(logLevel);
     logging["serialEnabled"] = enableSerialLogging;
     logging["fileEnabled"] = enableFileLogging;
-    logging["betterstackEnabled"] = enableBetterstackLogging;
+    logging["betterstackEnabled"] = enableBetterStackLogging;
 
     // Pages and endpoints moved to separate /api/routes endpoint
 
