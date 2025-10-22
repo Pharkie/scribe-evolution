@@ -25,8 +25,8 @@ export function createDiagnosticsRoutesStore() {
         const routes = await loadRoutes();
 
         // Transform the routes data to include computed properties expected by the template
-        const apiEndpoints = routes.api_endpoints || [];
-        const webPages = routes.web_pages || [];
+        const apiEndpoints = routes.apiEndpoints || [];
+        const webPages = routes.webPages || [];
 
         // Sort endpoints by method (GET first, then POST) and alphabetically within each group
         const sortedEndpoints = [...apiEndpoints].sort((a, b) => {

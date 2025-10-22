@@ -17,7 +17,7 @@
       "fallbackApSsid": "Scribe-setup",
       "fallbackApPassword": "scribe123",
       "fallbackApMdns": "scribe-mockuser.local",
-      "fallback_ap_ip": "192.168.4.1",
+      "fallbackApIp": "192.168.4.1",
       "status": {
         "connected": true,
         "apStaMode": false,
@@ -54,11 +54,11 @@
   },
   "buttons": {
     "count": 4,
-    "debounce_time": 50,
-    "long_press_time": 2000,
-    "active_low": true,
-    "min_interval": 3000,
-    "max_per_minute": 20,
+    "debounceTime": 50,
+    "longPressTime": 2000,
+    "activeLow": true,
+    "minInterval": 3000,
+    "maxPerMinute": 20,
     "button1": {
       "gpio": 5,
       "shortAction": "JOKE",

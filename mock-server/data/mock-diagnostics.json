@@ -1,39 +1,39 @@
 {
   "microcontroller": {
     "chipModel": "ESP32-C3",
-    "chip_revision": 4,
-    "cpu_frequency_mhz": 160,
-    "sdk_version": "v4.4.7-dirty",
-    "reset_reason": "Power-on Reset",
+    "chipRevision": 4,
+    "cpuFrequencyMhz": 160,
+    "sdkVersion": "v4.4.7-dirty",
+    "resetReason": "Power-on Reset",
     "temperature": 42.3,
-    "uptime_ms": 0,
+    "uptimeMs": 0,
     "memory": {
-      "free_heap": 114024,
-      "total_heap": 282740,
-      "used_heap": 168716
+      "freeHeap": 114024,
+      "totalHeap": 282740,
+      "usedHeap": 168716
     },
     "flash": {
-      "total_chip_size": 4194304,
-      "app_partition": {
+      "totalChipSize": 4194304,
+      "appPartition": {
         "used": 1510298,
         "free": 1242214,
         "total": 2752512,
-        "percent_of_total_flash": 65
+        "percentOfTotalFlash": 65
       },
       "filesystem": {
         "used": 913408,
         "free": 462848,
         "total": 1376256,
-        "percent_of_total_flash": 32
+        "percentOfTotalFlash": 32
       }
     }
   },
   "logging": {
     "level": 4,
-    "level_name": "NOTICE",
-    "serial_enabled": true,
-    "file_enabled": false,
+    "levelName": "NOTICE",
+    "serialEnabled": true,
+    "fileEnabled": false,
     "mqtt_enabled": false,
-    "betterstack_enabled": false
+    "betterstackEnabled": false
   }
 }

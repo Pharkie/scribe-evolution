@@ -163,6 +163,9 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     JsonObject logging = doc["logging"].to<JsonObject>();
     logging["level"] = logLevel;
     logging["levelName"] = getLogLevelString(logLevel);
+    logging["serialEnabled"] = enableSerialLogging;
+    logging["fileEnabled"] = enableFileLogging;
+    logging["betterstackEnabled"] = enableBetterstackLogging;
 
     // Pages and endpoints moved to separate /api/routes endpoint
 
@@ -381,7 +384,7 @@ void handleWiFiScan(AsyncWebServerRequest *request)
             signalStrength = "Weak";
         }
 
-        network["signal_strength"] = signalStrength;
+        network["signalStrength"] = signalStrength;
     }
 
     String response;

@@ -483,13 +483,13 @@
                   class="text-2xl font-bold mb-6 flex items-center space-x-2 text-green-600 dark:text-green-400"
                 >
                   <span
-                    x-text="config.device?.wifi?.status?.ap_sta_mode ? 'AP Setup Mode' : 'Current WiFi Status'"
+                    x-text="config.device?.wifi?.status?.apStaMode ? 'AP Setup Mode' : 'Current WiFi Status'"
                   ></span>
                 </h2>
 
                 <!-- AP Mode Status -->
                 <div
-                  x-show="config.device?.wifi?.status?.ap_sta_mode"
+                  x-show="config.device?.wifi?.status?.apStaMode"
                   class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4"
                 >
                   <div class="text-sm space-y-2">
@@ -502,7 +502,7 @@
                       >
                       <span
                         class="text-gray-900 dark:text-gray-200"
-                        x-text="config.device?.wifi?.fallback_ap_ssid"
+                        x-text="config.device?.wifi?.fallbackApSsid"
                       ></span>
                     </div>
                     <div>
@@ -511,7 +511,7 @@
                       >
                       <span
                         class="text-gray-900 dark:text-gray-200"
-                        x-text="config.device?.wifi?.status?.ip_address || '192.168.4.1'"
+                        x-text="config.device?.wifi?.status?.ipAddress || '192.168.4.1'"
                       ></span>
                     </div>
                     <div>
@@ -520,7 +520,7 @@
                       >
                       <span
                         class="text-gray-900 dark:text-gray-200"
-                        x-text="config.device?.wifi?.status?.mac_address || '-'"
+                        x-text="config.device?.wifi?.status?.macAddress || '-'"
                       ></span>
                     </div>
                   </div>
@@ -528,7 +528,7 @@
 
                 <!-- Normal WiFi Status -->
                 <div
-                  x-show="!config.device?.wifi?.status?.ap_sta_mode"
+                  x-show="!config.device?.wifi?.status?.apStaMode"
                   class="grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
                   <div class="space-y-2">
@@ -538,7 +538,7 @@
                       >
                       <span
                         class="text-gray-900 dark:text-gray-200"
-                        x-text="config.device?.wifi?.status?.ip_address || '-'"
+                        x-text="config.device?.wifi?.status?.ipAddress || '-'"
                       ></span>
                     </div>
                     <div class="text-sm">
@@ -547,7 +547,7 @@
                       >
                       <span
                         class="text-gray-900 dark:text-gray-200"
-                        x-text="config.device?.wifi?.status?.signal_strength || '-'"
+                        x-text="config.device?.wifi?.status?.signalStrength || '-'"
                       ></span>
                     </div>
                     <div class="text-sm">
@@ -556,7 +556,7 @@
                       >
                       <span
                         class="text-gray-900 dark:text-gray-200"
-                        x-text="config.device?.wifi?.status?.mac_address || '-'"
+                        x-text="config.device?.wifi?.status?.macAddress || '-'"
                       ></span>
                     </div>
                   </div>
@@ -621,14 +621,14 @@
                       >
                       <span
                         class="font-mono text-yellow-800 dark:text-yellow-200 ml-1"
-                        x-text="config?.device?.wifi?.fallback_ap_ssid || 'Scribe-setup'"
+                        x-text="config?.device?.wifi?.fallbackApSsid || 'Scribe-setup'"
                       ></span>
                       <span class="text-yellow-700 dark:text-yellow-300"
                         >/</span
                       >
                       <span
                         class="font-mono text-yellow-800 dark:text-yellow-200"
-                        x-text="config?.device?.wifi?.fallback_ap_password || 'scribe123'"
+                        x-text="config?.device?.wifi?.fallbackApPassword || 'scribe123'"
                       ></span>
                     </div>
                   </div>

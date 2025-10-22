@@ -130,8 +130,8 @@ void registerRoute(const char *method, const char *path, const char *description
 
 void addRegisteredRoutesToJson(JsonObject &endpoints)
 {
-    JsonArray webPages = endpoints["web_pages"].to<JsonArray>();
-    JsonArray apiEndpoints = endpoints["api_endpoints"].to<JsonArray>();
+    JsonArray webPages = endpoints["webPages"].to<JsonArray>();
+    JsonArray apiEndpoints = endpoints["apiEndpoints"].to<JsonArray>();
 
     for (const auto &route : registeredRoutes)
     {

@@ -291,9 +291,8 @@ export function createSettingsWifiStore() {
         this.apPrintStatus = "scribing";
 
         // Get fallback AP details from configuration - error if not available
-        const fallbackSSID = this.config?.device?.wifi?.fallback_ap_ssid;
-        const fallbackPassword =
-          this.config?.device?.wifi?.fallback_ap_password;
+        const fallbackSSID = this.config?.device?.wifi?.fallbackApSsid;
+        const fallbackPassword = this.config?.device?.wifi?.fallbackApPassword;
 
         if (!fallbackSSID || !fallbackPassword) {
           throw new Error("WiFi fallback AP credentials not configured");

@@ -7,7 +7,7 @@
       "channel": 6,
       "secure": true,
       "encryption": "WPA2",
-      "signal_strength": "Good"
+      "signalStrength": "Good"
     },
     {
       "ssid": "MooseCave",
@@ -15,7 +15,7 @@
       "channel": 5,
       "secure": true,
       "encryption": "Unknown",
-      "signal_strength": "Good"
+      "signalStrength": "Good"
     },
     {
       "ssid": "VM7279940",
@@ -23,7 +23,7 @@
       "channel": 6,
       "secure": true,
       "encryption": "WPA2",
-      "signal_strength": "Fair"
+      "signalStrength": "Fair"
     },
     {
       "ssid": "Hyperoptic Fibre 42E3 2.4G",
@@ -31,7 +31,7 @@
       "channel": 10,
       "secure": true,
       "encryption": "Unknown",
-      "signal_strength": "Weak"
+      "signalStrength": "Weak"
     },
     {
       "ssid": "MooseCave",
@@ -39,7 +39,7 @@
       "channel": 5,
       "secure": true,
       "encryption": "Unknown",
-      "signal_strength": "Weak"
+      "signalStrength": "Weak"
     },
     {
       "ssid": "VM7205911",
@@ -47,7 +47,7 @@
       "channel": 1,
       "secure": true,
       "encryption": "WPA2",
-      "signal_strength": "Weak"
+      "signalStrength": "Weak"
     },
     {
       "ssid": "Hyperoptic Fibre 6BE3",
@@ -55,7 +55,7 @@
       "channel": 10,
       "secure": true,
       "encryption": "Unknown",
-      "signal_strength": "Weak"
+      "signalStrength": "Weak"
     },
     {
       "ssid": "Vodafone 2",
@@ -63,7 +63,7 @@
       "channel": 6,
       "secure": true,
       "encryption": "WPA2",
-      "signal_strength": "Weak"
+      "signalStrength": "Weak"
     },
     {
       "ssid": "VM8550338",
@@ -71,7 +71,7 @@
       "channel": 6,
       "secure": true,
       "encryption": "WPA2",
-      "signal_strength": "Weak"
+      "signalStrength": "Weak"
     }
   ]
 }

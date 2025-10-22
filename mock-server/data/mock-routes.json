@@ -1,5 +1,5 @@
 {
-  "web_pages": [
+  "webPages": [
     {
       "path": "/favicon.ico",
       "description": "Favicon ICO file"
@@ -45,7 +45,7 @@
       "description": "Image assets"
     }
   ],
-  "api_endpoints": [
+  "apiEndpoints": [
     {
       "method": "GET",
       "path": "/mqtt-printers",

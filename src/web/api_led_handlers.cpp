@@ -452,7 +452,7 @@ void handleLedEffect(AsyncWebServerRequest *request)
         }
 
         // Include the resolved colors used
-        JsonArray used = response["colors_used"].to<JsonArray>();
+        JsonArray used = response["colorsUsed"].to<JsonArray>();
         used.add(String("#") + String(c1.r, HEX) + String(c1.g, HEX) + String(c1.b, HEX));
         used.add(String("#") + String(c2.r, HEX) + String(c2.g, HEX) + String(c2.b, HEX));
         used.add(String("#") + String(c3.r, HEX) + String(c3.g, HEX) + String(c3.b, HEX));

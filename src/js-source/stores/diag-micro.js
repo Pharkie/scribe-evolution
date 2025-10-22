@@ -37,37 +37,37 @@ export function createDiagnosticsMicrocontrollerStore() {
         const tempCelsius = mc.temperature;
 
         this.microcontrollerInfo = {
-          chipModel: mc.chip_model,
-          chipRevision: mc.chip_revision,
-          cpuFrequency: `${mc.cpu_frequency_mhz} MHz`,
-          sdkVersion: mc.sdk_version,
-          resetReason: mc.reset_reason,
+          chipModel: mc.chipModel,
+          chipRevision: mc.chipRevision,
+          cpuFrequency: `${mc.cpuFrequencyMhz} MHz`,
+          sdkVersion: mc.sdkVersion,
+          resetReason: mc.resetReason,
           temperature: tempCelsius
             ? `${tempCelsius.toFixed(1)}°C ${this.getTemperatureStatus(tempCelsius)}`
             : "Not available",
           temperatureRaw: tempCelsius,
-          uptime: this.formatUptime(mc.uptime_ms),
-          flashSize: this.formatBytes(mc.flash?.total_chip_size),
-          firmwareVersion: mc.sdk_version,
+          uptime: this.formatUptime(mc.uptimeMs),
+          flashSize: this.formatBytes(mc.flash?.totalChipSize),
+          firmwareVersion: mc.sdkVersion,
         };
 
         // Calculate memory usage percentages and formatted text
         const memory = mc.memory || {};
         const flashUsed =
-          (mc.flash?.app_partition?.used || 0) +
+          (mc.flash?.appPartition?.used || 0) +
           (mc.flash?.filesystem?.used || 0);
-        const flashTotal = mc.flash?.total_chip_size || 1;
+        const flashTotal = mc.flash?.totalChipSize || 1;
         const flashUsagePercent = (flashUsed / flashTotal) * 100;
 
-        const heapUsagePercent = memory.total_heap
-          ? ((memory.used_heap || 0) / memory.total_heap) * 100
+        const heapUsagePercent = memory.totalHeap
+          ? ((memory.usedHeap || 0) / memory.totalHeap) * 100
           : 0;
 
         this.memoryUsage = {
           ...memory,
           flashUsageText: `${this.formatBytes(flashUsed)} / ${this.formatBytes(flashTotal)}`,
           flashUsagePercent,
-          heapUsageText: `${this.formatBytes(memory.used_heap)} / ${this.formatBytes(memory.total_heap)}`,
+          heapUsageText: `${this.formatBytes(memory.usedHeap)} / ${this.formatBytes(memory.totalHeap)}`,
           heapUsagePercent,
         };
         this.config = config;
@@ -114,9 +114,9 @@ export function createDiagnosticsMicrocontrollerStore() {
     },
 
     // ================== UTILITY FUNCTIONS ==================
-    formatUptime(uptime_ms) {
-      if (!uptime_ms) return "0ms";
-      const seconds = Math.floor(uptime_ms / 1000);
+    formatUptime(uptimeMs) {
+      if (!uptimeMs) return "0ms";
+      const seconds = Math.floor(uptimeMs / 1000);
       const minutes = Math.floor(seconds / 60);
       const hours = Math.floor(minutes / 60);
       const days = Math.floor(hours / 24);

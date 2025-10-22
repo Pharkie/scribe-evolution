@@ -168,7 +168,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         signalStrength += " (Weak)";
     }
-    wifiStatus["signal_strength"] = signalStrength;
+    wifiStatus["signalStrength"] = signalStrength;
 
     // Feed watchdog after WiFi processing
     delay(1);
@@ -234,11 +234,11 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     // Hardware button status information
     buttons["count"] = numHardwareButtons;
-    buttons["debounce_time"] = buttonDebounceMs;
-    buttons["long_press_time"] = buttonLongPressMs;
-    buttons["active_low"] = buttonActiveLow;
-    buttons["min_interval"] = buttonMinInterval;
-    buttons["max_per_minute"] = buttonMaxPerMinute;
+    buttons["debounceTime"] = buttonDebounceMs;
+    buttons["longPressTime"] = buttonLongPressMs;
+    buttons["activeLow"] = buttonActiveLow;
+    buttons["minInterval"] = buttonMinInterval;
+    buttons["maxPerMinute"] = buttonMaxPerMinute;
 
     // Button action configuration
     for (int i = 0; i < numHardwareButtons; i++)

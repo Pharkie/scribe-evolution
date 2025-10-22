@@ -67,7 +67,7 @@ export function processNetworks(rawNetworks) {
   // Add signal strength information and unique keys
   return sortedNetworks.map((network, index) => ({
     ...network,
-    signal_strength: formatSignalStrength(network.rssi),
+    signalStrength: formatSignalStrength(network.rssi),
     signal_display: `${formatSignalStrength(network.rssi)} (${network.rssi} dBm)`,
     uniqueKey: `${network.ssid}-${network.rssi}-${index}`, // Unique key for Alpine rendering
   }));

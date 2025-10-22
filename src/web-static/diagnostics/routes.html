@@ -362,7 +362,7 @@
               </h3>
               <div class="space-y-3">
                 <template
-                  x-for="(route, index) in routes?.web_pages || []"
+                  x-for="(route, index) in routes?.webPages || []"
                   :key="`static-${index}-${route.path}`"
                 >
                   <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -390,7 +390,7 @@
                     </template>
                   </div>
                 </template>
-                <template x-if="!routes?.web_pages?.length">
+                <template x-if="!routes?.webPages?.length">
                   <div class="text-center py-8">
                     <svg
                       class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600"
