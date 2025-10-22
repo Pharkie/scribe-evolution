@@ -36,7 +36,7 @@ The factory partition starts at `0x10000` instead of `0x12000` (which would caus
 ### Production Build
 
 ```bash
-pio run -e esp32s3-mini-prod
+pio run -e s3-4mb-prod
 ```
 
 - Optimized size (`-Os`)
@@ -47,7 +47,7 @@ pio run -e esp32s3-mini-prod
 ### Development Build
 
 ```bash
-pio run -e esp32s3-mini-dev
+pio run -e s3-4mb-dev
 ```
 
 - Debug symbols (`-g3 -ggdb`)
@@ -59,7 +59,7 @@ pio run -e esp32s3-mini-dev
 ## npm Scripts
 
 ```bash
-npm run firmware:esp32s3      # Build production firmware
+npm run firmware:s3           # Build production firmware
 npm run firmware              # Build all targets (including S3)
 ```
 
@@ -75,13 +75,13 @@ esptool --port /dev/cu.usbmodem1101 --baud 921600 write-flash 0x0 scribe-esp32s3
 ### Firmware Only Update
 
 ```bash
-pio run -e esp32s3-mini-prod --target upload
+pio run -e s3-4mb-prod --target upload
 ```
 
 ### Filesystem Only Update
 
 ```bash
-pio run -e esp32s3-mini-prod --target uploadfs
+pio run -e s3-4mb-prod --target uploadfs
 ```
 
 ## Memory Usage

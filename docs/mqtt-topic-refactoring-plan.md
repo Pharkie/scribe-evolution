@@ -266,7 +266,7 @@ const topic = buildPrintTopic(printer.name);
 ### PART 6: Build & Test
 
 1. **Build frontend:** `npm run build`
-2. **Build firmware:** `pio run -e esp32s3-4mb-dev`
+2. **Build firmware:** `pio run -e s3-4mb-dev`
 3. **Verify logs show new topics:**
    - Print: `scribe-evolution/print/Pharkie`
    - Status: `scribe-evolution/status/243d0813`

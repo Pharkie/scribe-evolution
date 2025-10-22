@@ -114,17 +114,19 @@ The firmware can be built for different environments:
 
 ```bash
 # Production builds (optimized, minified)
-pio run -e esp32c3-prod              # ESP32-C3 with LEDs
-pio run -e esp32c3-prod-no-leds      # ESP32-C3 without LEDs
-pio run -e esp32s3-mini-prod         # ESP32-S3 Mini with LEDs
-pio run -e lolin32lite-no-leds       # Lolin32 Lite without LEDs
+pio run -e c3-4mb-prod               # ESP32-C3 with 4MB flash
+pio run -e s3-4mb-prod               # ESP32-S3 with 4MB flash
+pio run -e s3-pcb-prod               # ESP32-S3 custom PCB with 8MB flash
 
 # Development builds (debug symbols, verbose logging)
-pio run -e esp32c3-dev               # ESP32-C3 development
-pio run -e esp32s3-mini-dev          # ESP32-S3 development
+pio run -e c3-4mb-dev                # ESP32-C3 development
+pio run -e s3-4mb-dev                # ESP32-S3 development
+pio run -e s3-pcb-dev                # ESP32-S3 custom PCB development
 
-# Test environment
-pio run -e esp32c3-test              # Run unit tests
+# Test environments
+pio run -e c3-4mb-test               # Run unit tests
+pio run -e s3-printer-test           # Minimal printer test
+pio run -e c3-fastled-test           # FastLED crash investigation
 ```
 
 ### Quick Build Commands
@@ -134,7 +136,7 @@ pio run -e esp32c3-test              # Run unit tests
 pio run
 
 # Upload firmware to specific target
-pio run -e esp32s3-mini-prod --target upload
+pio run -e s3-4mb-prod --target upload
 
 # Monitor serial output
 pio device monitor

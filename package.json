@@ -6,12 +6,12 @@
   "scripts": {
     "build": "npx @tailwindcss/cli --input ./src/css-source/input.css --output ./data/css/app.css --minify && node scripts/esbuild.config.js prod && python3 scripts/bin/optimize_filesystem.py",
     "dev": "npx @tailwindcss/cli --input ./src/css-source/input.css --output ./data/css/app.css && node scripts/esbuild.config.js dev && python3 scripts/bin/optimize_filesystem.py",
-    "test": "pio test -e esp32c3-test",
+    "test": "pio test -e c3-4mb-test",
     "firmware": "python3 scripts/bin/build_firmware_release.py",
     "firmware:recover": "python3 scripts/bin/build_firmware_release.py --recover",
-    "firmware:esp32c3": "pio run -e esp32c3-prod",
-    "firmware:esp32s3": "pio run -e esp32s3-mini-prod",
-    "firmware:lolin32lite": "pio run -e lolin32lite-no-leds"
+    "firmware:c3": "pio run -e c3-4mb-prod",
+    "firmware:s3": "pio run -e s3-4mb-prod",
+    "firmware:s3-pcb": "pio run -e s3-pcb-prod"
   },
   "dependencies": {
     "@alpinejs/collapse": "^3.14.9",

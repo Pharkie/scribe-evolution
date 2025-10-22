@@ -17,6 +17,7 @@
 #include <core/config_loader.h>
 #include "effects/EffectRegistry.h"
 #include <utils/color_utils.h>
+#include <esp_task_wdt.h>
 
 // Global LED array (non-static so it can be accessed from main.cpp for testing)
 #define MAX_LEDS 300
@@ -265,15 +266,7 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
 
     FastLED.setBrightness(ledBrightness);
     FastLED.clear();
-    FastLED.show();  // Single show() with zeros (like the test does)
-
-    // DISABLED: ESP32-C3 "priming" - testing if this is what breaks it
-    // LOG_VERBOSE("LEDS", "ESP32-C3: Priming RMT with color data...");
-    // leds[0] = CRGB::Blue;  // Set first LED to blue
-    // FastLED.show();        // Second show() with color data
-    // leds[0] = CRGB::Black; // Clear it
-    // FastLED.show();        // Third show() back to zeros
-    // LOG_VERBOSE("LEDS", "ESP32-C3: RMT primed successfully");
+    FastLED.show();
 
     // Create or update effect registry
     if (effectRegistry)
@@ -293,47 +286,38 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
 
 void LedEffects::update()
 {
+    unsigned long funcStart = millis();
+
     if (!initialized)
     {
         // Not initialized yet - silently return (this is called every loop iteration)
         return;
     }
 
-    // CRITICAL: Prevent re-entrant updates (fixes ESP32-C3 boot crash race condition)
-    // This guards against update() being called while already processing an update
-    static bool updateInProgress = false;
-    if (updateInProgress)
+    LOG_VERBOSE("LEDS", "update() called at %lu ms", funcStart);
+
+    // Try to acquire LED mutex (non-blocking to prevent loop delays)
+    unsigned long lockStart = millis();
+    ManagerLock lock(mutex, "LEDS", 100);
+    if (!lock.isLocked())
     {
-        LOG_VERBOSE("LEDS", "Skipping update - already in progress (race condition prevented)");
+        LOG_VERBOSE("LEDS", "Failed to acquire mutex (took %lu ms)", millis() - lockStart);
         return;
     }
-
-    // Set guard flag
-    updateInProgress = true;
-
-    // ESP32-C3 WORKAROUND: Mutex disabled - seems to interfere with FastLED RMT timing
-    // ESP32-C3 is single-core so mutex not needed anyway
-    // LedLock lock(mutex, 100);
-    // if (!lock.isLocked())
-    // {
-    //     // Don't log on every timeout - would spam the log
-    //     updateInProgress = false;  // Release guard before returning
-    //     return;
-    // }
+    LOG_VERBOSE("LEDS", "Mutex acquired in %lu ms", millis() - lockStart);
 
     // Validate effect state before proceeding
     if (!effectActive || !currentEffect || !leds)
     {
-        updateInProgress = false;  // Release guard before returning
+        LOG_VERBOSE("LEDS", "No active effect, returning");
         return;
     }
 
-    // Additional safety checks for ESP32-C3
+    // Validate LED count
     if (ledCount <= 0 || ledCount > 300)
     {
         LOG_ERROR("LEDS", "Corrupted ledCount: %d - stopping effect", ledCount);
         stopEffectInternal();
-        updateInProgress = false;  // Release guard before returning
         return;
     }
 
@@ -342,60 +326,40 @@ void LedEffects::update()
     // Check if it's time to update
     if (now - lastUpdate < ledUpdateInterval)
     {
-        updateInProgress = false;  // Release guard before returning
+        LOG_VERBOSE("LEDS", "Skipping update (interval not reached, delta=%lu ms)", now - lastUpdate);
         return;
     }
 
+    LOG_VERBOSE("LEDS", "Updating effect '%s' (cycles: %d/%d)", currentEffectName.c_str(), completedCycles, targetCycles);
     lastUpdate = now;
 
-    // DIAGNOSTIC: Log effect state at update entry
-    LOG_VERBOSE("LEDS", "UPDATE: effect=%s, cycles=%d/%d, step=%d, active=%d",
-                currentEffectName.c_str(), completedCycles, targetCycles, effectStep, effectActive);
-
-    // DISABLED: All fade logic disabled for ESP32-C3 debugging
-    // if (finalFadeActive) { ... }
-
     // Update the current effect
-    LOG_VERBOSE("LEDS", "UPDATE: Calling currentEffect->update() (leds=%p, count=%d)", leds, ledCount);
+    unsigned long effectStart = millis();
     bool shouldContinue = currentEffect->update(leds, ledCount, effectStep, effectDirection,
                                                 effectPhase, effectColor1, effectColor2, effectColor3,
                                                 completedCycles);
-    LOG_VERBOSE("LEDS", "UPDATE: currentEffect->update() returned %d, cycles now=%d/%d",
-                shouldContinue, completedCycles, targetCycles);
+    LOG_VERBOSE("LEDS", "Effect update took %lu ms", millis() - effectStart);
 
     // Check if cycle-based effect is complete (when target cycles > 0)
     if (targetCycles > 0 && completedCycles >= targetCycles)
     {
-        // DISABLED: Rainbow fade logic disabled for ESP32-C3 debugging
-        // Just stop all effects immediately without fade
-        LOG_VERBOSE("LEDS", "UPDATE: Effect complete - calling stopEffectInternal()");
+        LOG_VERBOSE("LEDS", "Effect complete, stopping");
         stopEffectInternal();
-        LOG_VERBOSE("LEDS", "UPDATE: stopEffectInternal() completed");
-        updateInProgress = false;  // Release guard before returning
         return;
     }
 
+    // Feed watchdog before potentially slow FastLED.show() operation
+    LOG_VERBOSE("LEDS", "Resetting watchdog before FastLED.show()");
+    esp_task_wdt_reset();
+
     // Show the updated LEDs
-    LOG_VERBOSE("LEDS", "UPDATE: Calling FastLED.show() for normal update");
-    LOG_VERBOSE("LEDS", "UPDATE: FastLED controller count=%d", FastLED.count());
-    LOG_VERBOSE("LEDS", "UPDATE: LED buffer address=%p, first LED RGB=(%d,%d,%d)",
-                leds, leds[0].r, leds[0].g, leds[0].b);
-
-    // ESP32-C3 WORKAROUND: Call FastLED.show() twice
-    // Observation: stopEffectInternal() calls show() twice and works fine
-    // Hypothesis: First show() might fail/crash, but second one works?
-    // Or: RMT peripheral needs double-buffering on C3?
-    #ifdef CONFIG_IDF_TARGET_ESP32C3
-    LOG_VERBOSE("LEDS", "UPDATE: ESP32-C3 calling show() twice");
+    unsigned long showStart = millis();
+    LOG_VERBOSE("LEDS", ">>> Calling FastLED.show() at %lu ms", showStart);
     FastLED.show();
-    delayMicroseconds(100);  // Small delay between calls
-    #endif
+    unsigned long showEnd = millis();
+    LOG_VERBOSE("LEDS", "<<< FastLED.show() took %lu ms", showEnd - showStart);
 
-    FastLED.show();
-    LOG_VERBOSE("LEDS", "UPDATE: FastLED.show() completed");
-
-    // Release guard at end of function
-    updateInProgress = false;
+    LOG_VERBOSE("LEDS", "update() total time: %lu ms", millis() - funcStart);
 }
 
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,

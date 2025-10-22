@@ -27,7 +27,7 @@ This project uses the **PlatformIO Unity Testing Framework** for embedded tests 
 Tests run under a dedicated PlatformIO environment (see `platformio.ini`). Example:
 
 ```ini
-[env:esp32c3-test]
+[env:c3-4mb-test]
 platform = espressif32
 board = esp32-c3-devkitc-02
 framework = arduino
@@ -113,13 +113,13 @@ file linking resolution:
 
 ```bash
 # Run complete test suite
-pio test -e esp32c3-test
+pio test -e c3-4mb-test
 
 # Verbose output
-pio test -e esp32c3-test --verbose
+pio test -e c3-4mb-test --verbose
 
 # Filter specific tests
-pio test -e esp32c3-test --filter "*basic*"
+pio test -e c3-4mb-test --filter "*basic*"
 ```
 
 ### Offline vs Online Runs
@@ -131,7 +131,7 @@ Use a project option to define a skip flag at invocation time:
 
 ```bash
 # Skip WiFi/HTTP/network-dependent tests
-pio test -e esp32c3-test -v -o "build_flags=-DTEST_SKIP_NETWORK_TESTS=1"
+pio test -e c3-4mb-test -v -o "build_flags=-DTEST_SKIP_NETWORK_TESTS=1"
 ```
 
 This flag:
@@ -145,13 +145,13 @@ This flag:
 Run just “unit” style suites (no network):
 
 ```bash
-pio test -e esp32c3-test --filter "*character_mapping*" "*config_validation*" "*web_validation*" "*time_utils*" "*nvs_config*" "*memo_handler*"
+pio test -e c3-4mb-test --filter "*character_mapping*" "*config_validation*" "*web_validation*" "*time_utils*" "*nvs_config*" "*memo_handler*"
 ```
 
 Run only the networked endpoint tests:
 
 ```bash
-pio test -e esp32c3-test --filter "*endpoint_integration*"
+pio test -e c3-4mb-test --filter "*endpoint_integration*"
 ```
 
 ### Automated Test Script

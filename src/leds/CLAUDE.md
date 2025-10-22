@@ -4,8 +4,8 @@
 LED effects system with conditional compilation.
 FastLED-based cycle management and effect registry.
 Thread-safe singleton pattern with RAII mutex locking.
-Multi-board support: ESP32-S3 (4MB/8MB variants).
-**NOT SUPPORTED on ESP32-C3** - FastLED library crashes on this platform.
+Multi-board support: ESP32-C3, ESP32-S3 (4MB/8MB variants).
+**Platform-agnostic code**: Same codebase works on both single-core C3 and dual-core S3.
 </system_context>
 
 <critical_notes>
@@ -14,8 +14,11 @@ Multi-board support: ESP32-S3 (4MB/8MB variants).
 - All LED GPIO pins must pass safety validation
 - Effects use cycle-based timing for consistency
 - Effect registry pattern allows extensibility
-- **Thread-safe singleton**: Mutex created in begin(), NOT constructor (prevents ESP32-C3 crashes)
+- **Thread-safe singleton**: Mutex created in begin(), NOT constructor (critical for initialization order)
+- **Mutex required for S3 (dual-core)**: No-op overhead on C3 (single-core) but prevents race conditions on S3
 - **FastLED RMT configuration REQUIRED**: See platformio.ini for board-specific settings
+- **Watchdog feeding**: LED operations can be slow, esp_task_wdt_reset() before FastLED.show()
+- **NO platform-specific workarounds**: Clean code with proper watchdog management instead of hacks
   </critical_notes>
 
 <paved_path>
@@ -125,30 +128,31 @@ FastLED uses the ESP32's RMT (Remote Control) peripheral for WS2812B LED strips.
 
 LED support by platform:
 
-- ❌ **ESP32-C3**: DISABLED - FastLED.show() crashes inside library (ENABLE_LEDS=0)
+- ✅ **ESP32-C3**: ENABLED with RMT driver (ENABLE_LEDS=1) - Watchdog timeout fix applied
 - ✅ **ESP32-S3** (all variants): ENABLED with RMT driver (ENABLE_LEDS=1)
   - esp32s3_base (lines 95-96): RMT configured
   - esp32s3_4mb_base (lines 118-119): RMT configured
   - esp32s3-8mb-custom-pcb: Inherits from esp32s3_base
 
-### ESP32-C3 FastLED Issue
+### ESP32-C3 Historical Issue (RESOLVED)
 
-**Known Issue**: FastLED 3.10.3 crashes on ESP32-C3 with "Load access fault" inside `CFastLED::show()`.
+**Previous Issue**: ESP32-C3 experienced watchdog timeouts due to accumulated debugging workarounds and missing watchdog resets.
 
-**Attempted Solutions** (all failed):
+**Root Cause**:
 
-- RMT driver configuration (BUILTIN_DRIVER, MAX_CHANNELS)
-- Legacy IDF4 RMT driver
-- I2S driver mode
-- CPU bit-banging mode
-- Interrupt protection around FastLED.show()
-- FastLED version downgrade (3.9.3)
+- Multiple FastLED.show() calls with delays
+- Disabled mutex causing potential issues
+- No watchdog reset before slow LED operations
+- Accumulated debugging code from past investigation attempts
 
-**Root Cause**: FastLED library has broken ESP32-C3 (RISC-V) support. The crash occurs deep inside the FastLED library regardless of configuration.
+**Solution**:
 
-**Workaround**: LEDs disabled on ESP32-C3 builds (ENABLE_LEDS=0). System functions normally without LED effects.
+- Removed all platform-specific workarounds and hacks
+- Re-enabled proper mutex locking (required for S3, harmless on C3)
+- Added esp_task_wdt_reset() before FastLED.show() in update()
+- Clean, platform-agnostic codebase
 
-**Future**: Monitor FastLED GitHub for ESP32-C3 fixes. May require alternative LED library (e.g., NeoPixelBus) for C3 support.
+**Key Principle**: One clean codebase for all platforms - proper watchdog feeding instead of conditional compilation hacks.
 </fastled_rmt_configuration>
 
 <thread_safe_architecture>

@@ -47,16 +47,16 @@ npm install
 npm run build
 
 # ESP32-C3-mini (4MB)
-pio run --target upload -e esp32c3-4mb-dev && pio run --target uploadfs -e esp32c3-4mb-dev
+pio run --target upload -e c3-4mb-dev && pio run --target uploadfs -e c3-4mb-dev
 
 # ESP32-S3-mini (4MB)
-pio run --target upload -e esp32s3-4mb-dev && pio run --target uploadfs -e esp32s3-4mb-dev
+pio run --target upload -e s3-4mb-dev && pio run --target uploadfs -e s3-4mb-dev
 
 # ESP32-S3-custom-PCB (8MB)
-pio run --target upload -e esp32s3-8mb-custom-pcb-dev && pio run --target uploadfs -e esp32s3-8mb-custom-pcb-dev
+pio run --target upload -e s3-pcb-dev && pio run --target uploadfs -e s3-pcb-dev
 
 # Testing
-pio test -e esp32c3-4mb-test
+pio test -e c3-4mb-test
 pio device monitor
 ```
 

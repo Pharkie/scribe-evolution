@@ -121,14 +121,14 @@ static const ButtonConfig *defaultButtons = BOARD_DEFAULT_BUTTONS;
 ### PlatformIO Environments
 
 ```ini
-[env:esp32c3-4mb-prod]
+[env:c3-4mb-prod]
 extends = env:esp32c3_base
 build_flags =
     ${env:esp32c3_base.build_flags}
     -DBOARD_ESP32C3_MINI  # Required!
     -DENABLE_LEDS=1
 
-[env:esp32s3-8mb-custom-pcb-prod]
+[env:s3-pcb-prod]
 extends = env:esp32s3_base
 build_flags =
     ${env:esp32s3_base.build_flags}

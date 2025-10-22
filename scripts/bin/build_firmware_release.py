@@ -350,10 +350,10 @@ def create_merged_binary(environment):
         log(f"Creating complete merged binary for {environment}...", "INFO")
 
         # Determine chip type and bootloader address for merge-bin command
-        if environment.startswith("esp32c3"):
+        if environment.startswith("c3-"):
             chip_type = "ESP32C3"
             bootloader_addr = "0x0000"  # ESP32-C3 uses 0x0000
-        elif environment.startswith("esp32s3"):
+        elif environment.startswith("s3-"):
             chip_type = "ESP32S3"
             bootloader_addr = "0x0000"  # ESP32-S3 uses 0x0000
         else:
@@ -364,7 +364,7 @@ def create_merged_binary(environment):
         fs_offset = _get_fs_offset_from_partitions(partitions_csv)
 
         # Determine flash size based on environment
-        if environment.startswith("esp32s3"):
+        if environment == "s3-pcb-prod" or environment == "s3-pcb-dev":
             flash_size = "8MB"
         else:
             flash_size = "4MB"

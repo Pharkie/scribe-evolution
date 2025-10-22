@@ -262,22 +262,38 @@ void MQTTManager::connectToMQTTInternal()
 
     LOG_VERBOSE("MQTT", "WiFiClientSecure reset to clean state");
 
+    // CRITICAL: Feed watchdog immediately after TLS setup (can be slow on C3)
+    LOG_VERBOSE("MQTT", "Feeding watchdog after TLS setup");
+    esp_task_wdt_reset();
+
+    LOG_VERBOSE("MQTT", "Getting printer ID...");
     String printerId = getPrinterId();
+    LOG_VERBOSE("MQTT", "Printer ID: %s", printerId.c_str());
+
     String clientId = "ScribePrinter-" + printerId; // Use consistent ID based on printer ID
+    LOG_VERBOSE("MQTT", "Client ID: %s", clientId.c_str());
 
     // Feed watchdog before potentially blocking MQTT connection
+    LOG_VERBOSE("MQTT", "Resetting watchdog before connection attempt");
     esp_task_wdt_reset();
+    LOG_VERBOSE("MQTT", "Watchdog reset complete");
 
     bool connected = false;
 
     // Set up LWT for printer discovery
+    LOG_VERBOSE("MQTT", "Building status topic...");
     String statusTopic = MqttTopics::buildStatusTopic(printerId);
+    LOG_VERBOSE("MQTT", "Status topic: %s", statusTopic.c_str());
 
     // Use the same offline payload format as graceful shutdown
+    LOG_VERBOSE("MQTT", "Creating offline payload...");
     String lwtPayload = createOfflinePayload();
+    LOG_VERBOSE("MQTT", "LWT payload created, length: %d bytes", lwtPayload.length());
 
     // Try connection with or without credentials, including LWT
+    LOG_VERBOSE("MQTT", "Getting runtime config...");
     const RuntimeConfig &config = getRuntimeConfig();
+    LOG_VERBOSE("MQTT", "Runtime config retrieved");
 
     // Set timeout to prevent blocking (already set above, but ensuring consistency)
     wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
