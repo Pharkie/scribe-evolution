@@ -133,9 +133,13 @@ bool queueContentForPrinting(const ContentActionResult &result)
     }
 
     // Format content for local printing (header + optional body)
-    String formattedContent = result.header;
+    // Pre-reserve capacity to avoid reallocation during concatenation
+    String formattedContent;
+    formattedContent.reserve(result.header.length() + finalBody.length() + 4);
+    formattedContent = result.header;
     if (finalBody.length() > 0) {
-        formattedContent += "\n\n" + finalBody;
+        formattedContent += "\n\n";
+        formattedContent += finalBody;
     }
 
     // Protect currentMessage write with mutex for multi-core safety
