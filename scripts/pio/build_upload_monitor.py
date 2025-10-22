@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+# pylint: disable=undefined-variable
 import subprocess
+
 
 def build_upload_monitor(source, target, env):  # pylint: disable=unused-argument
     print("🚀 Starting build_upload_monitor workflow...")
@@ -37,13 +39,14 @@ def build_upload_monitor(source, target, env):  # pylint: disable=unused-argumen
     # Step 4/4: Start serial monitor
     print("\n🛰️  [4/4] Starting serial monitor...")
     # Use upload_port if available, otherwise let pio auto-detect
-    upload_port = env.GetProjectOption('upload_port', None)
-    monitor_speed = env.GetProjectOption('monitor_speed')
+    upload_port = env.GetProjectOption("upload_port", None)
+    monitor_speed = env.GetProjectOption("monitor_speed")
 
     if upload_port:
         env.Execute(f"pio device monitor -p {upload_port} -b {monitor_speed}")
     else:
         env.Execute(f"pio device monitor -b {monitor_speed}")
+
 
 Import("env")  # type: ignore # pylint: disable=undefined-variable
 env.AddCustomTarget(
@@ -52,4 +55,3 @@ env.AddCustomTarget(
     build_upload_monitor,
     "Build frontend + Upload filesystem + Upload firmware + Start monitor",
 )
-

@@ -19,10 +19,12 @@ from pathlib import Path
 
 # Add scripts root to path for importing lib modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from lib.config_cleaner import (  # noqa: E402
+# pylint: disable=wrong-import-position
+from lib.config_cleaner import (
     clean_secrets_from_content,
     add_example_file_metadata,
 )
+# pylint: enable=wrong-import-position
 
 
 def log(message, level="INFO"):

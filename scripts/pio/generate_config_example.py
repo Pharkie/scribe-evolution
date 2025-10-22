@@ -17,10 +17,13 @@ else:
     script_dir = "scripts/pio"
 scripts_root = os.path.join(script_dir, "..")
 sys.path.insert(0, scripts_root)
-from lib.config_cleaner import (  # noqa: E402
+# pylint: disable=wrong-import-position
+from lib.config_cleaner import (
     clean_secrets_from_content,
     add_example_file_metadata,
 )
+
+# pylint: enable=wrong-import-position
 
 # This import is required for PlatformIO extra scripts
 # Import is only available when run by PlatformIO, not in regular Python context
