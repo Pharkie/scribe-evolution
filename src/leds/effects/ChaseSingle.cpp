@@ -24,24 +24,16 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
                          float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
                          int &completedCycles)
 {
-    LOG_VERBOSE("CHASE", "ChaseSingle::update() entry: leds=%p, ledCount=%d, step=%d, color=(%d,%d,%d)",
-                leds, ledCount, effectStep, color1.r, color1.g, color1.b);
-
     clearAllLEDs(leds, ledCount);
 
     // Cycle-based: run from start to end, then wait for trail to completely exit
     int totalSteps = ledCount + config.trailLength; // Include trail length for complete exit
     int currentPosition = effectStep;
 
-    LOG_VERBOSE("CHASE", "Setting LED at position %d to color (%d,%d,%d)",
-                currentPosition, color1.r, color1.g, color1.b);
-
     if (currentPosition < ledCount)
     {
         // Main LED (only show if within strip bounds)
         leds[currentPosition] = color1;
-        LOG_VERBOSE("CHASE", "Set leds[%d] = (%d,%d,%d)",
-                    currentPosition, leds[currentPosition].r, leds[currentPosition].g, leds[currentPosition].b);
     }
 
     // Add trailing dots with linearly fading brightness (tip -> tail)

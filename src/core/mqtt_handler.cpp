@@ -25,7 +25,6 @@ void onMqttConnect(esp_mqtt_client_handle_t client) {
 // Message callback wrapper - called by ESP32MQTTClient for incoming messages
 // Signature must match MessageReceivedCallbackWithTopic: void(const std::string&, const std::string&)
 void onMqttMessageCallback(const std::string &topic, const std::string &payload) {
-    LOG_VERBOSE("MQTT", "Message callback: topic=%s, payload length=%d", topic.c_str(), payload.length());
     // Convert std::string to Arduino String for internal handling
     MQTTManager::instance().onMessageReceived(String(topic.c_str()), String(payload.c_str()));
 }
@@ -93,26 +92,30 @@ void MQTTManager::onConnectionEstablished() {
     // Subscribe to the print topic
     String newTopic = String(getLocalPrinterTopic());
     std::string newTopicStd = newTopic.c_str();
-    if (!mqttClient.subscribe(newTopicStd, onMqttMessageCallback, 0))
+    bool printTopicOk = mqttClient.subscribe(newTopicStd, onMqttMessageCallback, 0);
+    if (printTopicOk)
     {
-        LOG_ERROR("MQTT", "Failed to subscribe to topic: %s", newTopic.c_str());
+        currentSubscribedTopic = newTopic;
     }
     else
     {
-        currentSubscribedTopic = newTopic;
-        LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
+        LOG_ERROR("MQTT", "Failed to subscribe to topic: %s", newTopic.c_str());
     }
 
     // Subscribe to printer discovery topics
     String statusSubscription = MqttTopics::buildStatusSubscription();
     std::string statusSubscriptionStd = statusSubscription.c_str();
-    if (!mqttClient.subscribe(statusSubscriptionStd, onMqttMessageCallback, 0))
+    bool statusTopicOk = mqttClient.subscribe(statusSubscriptionStd, onMqttMessageCallback, 0);
+
+    if (!statusTopicOk)
     {
         LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
     }
-    else
+
+    // Log success summary for both subscriptions
+    if (printTopicOk && statusTopicOk)
     {
-        LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics");
+        LOG_VERBOSE("MQTT", "Subscribed to MQTT topics: %s, discovery", currentSubscribedTopic.c_str());
     }
 
     // Set flag to publish initial online status after mutex is released
@@ -130,8 +133,7 @@ void MQTTManager::onMessageReceived(String topic, String message) {
         return;
     }
 
-    LOG_VERBOSE("MQTT", "MQTT message received on topic: %s", topic.c_str());
-    LOG_VERBOSE("MQTT", "MQTT payload: %s", message.c_str());
+    LOG_VERBOSE("MQTT", "MQTT message received: topic=%s, payload=%s", topic.c_str(), message.c_str());
 
     // Check if this is a printer status message
     if (MqttTopics::isStatusTopic(topic))
@@ -205,7 +207,6 @@ void MQTTManager::setupMQTTInternal()
     }
 
     // Load CA certificate
-    LOG_VERBOSE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
     if (!certFile) {
         LOG_ERROR("MQTT", "Failed to open CA certificate file");
@@ -214,8 +215,6 @@ void MQTTManager::setupMQTTInternal()
 
     String certContent = certFile.readString();
     certFile.close();
-
-    LOG_VERBOSE("MQTT", "CA certificate loaded, length: %d bytes", certContent.length());
 
     if (certContent.length() == 0) {
         LOG_ERROR("MQTT", "CA certificate file is empty");
@@ -232,7 +231,7 @@ void MQTTManager::setupMQTTInternal()
         return;
     }
 
-    LOG_VERBOSE("MQTT", "CA certificate validation passed, configuring ESP32MQTTClient");
+    LOG_VERBOSE("MQTT", "CA certificate loaded and validated (%d bytes)", certContent.length());
 
     // Store in buffer to ensure lifetime during connection attempts
     caCertificateBuffer = certContent;
@@ -263,8 +262,6 @@ void MQTTManager::setupMQTTInternal()
 // Internal helper: connectToMQTTInternal (mutex already held)
 void MQTTManager::connectToMQTTInternal()
 {
-    LOG_VERBOSE("MQTT", "=== connectToMQTT() ENTRY ===");
-
     // State machine handles duplicate prevention
     if (mqttState != MQTT_STATE_CONNECTING) {
         LOG_ERROR("MQTT", "connectToMQTT called in wrong state: %d", mqttState);
@@ -297,16 +294,14 @@ void MQTTManager::connectToMQTTInternal()
     // Get printer ID for client ID and LWT
     String printerId = getPrinterId();
     String clientId = "ScribePrinter-" + printerId;
-
-    LOG_VERBOSE("MQTT", "Setting client ID: %s", clientId.c_str());
     mqttClient.setMqttClientName(clientId.c_str());
 
     // Set up Last Will and Testament (LWT) for printer discovery
     String statusTopic = MqttTopics::buildStatusTopic(printerId);
     String lwtPayload = createOfflinePayload();
-
-    LOG_VERBOSE("MQTT", "Setting LWT: topic=%s, payload length=%d", statusTopic.c_str(), lwtPayload.length());
     mqttClient.enableLastWillMessage(statusTopic.c_str(), lwtPayload.c_str(), true);
+
+    LOG_VERBOSE("MQTT", "MQTT client configured: ID=%s, LWT=%s", clientId.c_str(), statusTopic.c_str());
 
     // Start MQTT client (non-blocking!)
     // This creates a separate FreeRTOS task for MQTT operations
@@ -337,7 +332,6 @@ void MQTTManager::handleMQTTConnectionInternal()
             // Check if it's time to reconnect
             if (millis() - lastMQTTReconnectAttempt > mqttReconnectIntervalMs)
             {
-                LOG_VERBOSE("MQTT", "Starting connection attempt");
                 mqttState = MQTT_STATE_CONNECTING;
                 stateChangeTime = millis();
 
@@ -608,10 +602,8 @@ bool MQTTManager::publishRawMessageInternal(const String& topic, const String& p
     int qos = 0; // QoS 0 = at most once
     bool success = mqttClient.publish(topicStd, payloadStd, qos, retained);
 
-    if (success) {
-        LOG_VERBOSE("MQTT", "Published raw message to topic: %s (%d characters, retained: %s)",
-                   topic.c_str(), payload.length(), retained ? "true" : "false");
-    } else {
+    // Note: Success is logged by the caller (e.g., publishPrinterStatus) for better context
+    if (!success) {
         LOG_ERROR("MQTT", "Failed to publish raw message to topic: %s", topic.c_str());
     }
 

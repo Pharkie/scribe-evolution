@@ -117,31 +117,22 @@ void validateConfig()
 
 void logGPIOUsageSummary()
 {
-    LOG_VERBOSE("BOOT", "📍 GPIO Usage Summary (Board: %s):", BOARD_NAME);
-
     // Get current configuration
     const RuntimeConfig &config = getRuntimeConfig();
 
-    // Button GPIOs
-    LOG_VERBOSE("BOOT", "  Buttons:");
+    // Build condensed GPIO summary
+    String buttonGpios = "";
     for (int i = 0; i < numHardwareButtons; i++)
     {
-        int gpio = config.buttonGpios[i];
-        LOG_VERBOSE("BOOT", "    GPIO %d: Button %d (%s) - %s",
-                      gpio, i + 1, config.buttonShortActions[i].c_str(), getGPIODescription(gpio));
+        if (i > 0) buttonGpios += ", ";
+        buttonGpios += String(config.buttonGpios[i]);
     }
 
-    // Status LED GPIO
-    LOG_VERBOSE("BOOT", "  Status LED:");
-    LOG_VERBOSE("BOOT", "    GPIO %d: Status LED - %s", statusLEDPin, getGPIODescription(statusLEDPin));
-
-// LED Strip GPIO (if LEDs enabled)
 #if ENABLE_LEDS
-    LOG_VERBOSE("BOOT", "  LED Strip:");
-    LOG_VERBOSE("BOOT", "    GPIO %d: LED Strip - %s", config.ledPin, getGPIODescription(config.ledPin));
+    LOG_VERBOSE("BOOT", "📍 GPIO Summary (%s): Buttons=%s, Status=%d, LEDs=%d, Printer=%d",
+                BOARD_NAME, buttonGpios.c_str(), statusLEDPin, config.ledPin, config.printerTxPin);
+#else
+    LOG_VERBOSE("BOOT", "📍 GPIO Summary (%s): Buttons=%s, Status=%d, Printer=%d",
+                BOARD_NAME, buttonGpios.c_str(), statusLEDPin, config.printerTxPin);
 #endif
-
-    // Printer GPIO
-    LOG_VERBOSE("BOOT", "  Printer:");
-    LOG_VERBOSE("BOOT", "    GPIO %d: Printer TX - %s", config.printerTxPin, getGPIODescription(config.printerTxPin));
 }

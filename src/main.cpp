@@ -94,10 +94,7 @@ void setup()
 
   // Initialize thread-safe singleton managers (MUST be called before any singleton usage)
   LogManager::instance().begin(115200, 256, 512);
-  APIClient::instance().begin();
   ConfigManager::instance().begin();
-  MQTTManager::instance().begin();
-  LOG_NOTICE("BOOT", "Thread-safe singleton managers initialized");
 
   // Configure ESP32 system component log levels
   esp_log_level_set("WebServer", espLogLevel);
@@ -123,6 +120,7 @@ void setup()
   LOG_VERBOSE("BOOT", "Watchdog timer enabled (%ds timeout)", watchdogTimeoutSeconds);
 
   // Initialize timezone with conditional NTP sync (only in STA mode)
+  // NOTE: Must run BEFORE APIClient/MQTTManager init to ensure correct timestamps in their logs
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
   {
     setupTime();
@@ -131,6 +129,11 @@ void setup()
   {
     LOG_VERBOSE("BOOT", "Skipping NTP sync - no internet connection (AP mode)");
   }
+
+  // Initialize remaining singleton managers (after time is set for correct timestamps)
+  APIClient::instance().begin();
+  MQTTManager::instance().begin();
+  LOG_NOTICE("BOOT", "Thread-safe singleton managers initialized")
 
   // Record boot time for consistent reporting (after timezone is set)
   deviceBootTime = getISOTimestamp();
@@ -184,6 +187,9 @@ void setup()
   // Initialize Unbidden Ink (AI-generated content scheduler)
   initializeUnbiddenInk();
 
+  // Initialize hardware buttons (GPIOs, mutex, state array)
+  initializeHardwareButtons();
+
   // Calculate boot time
   unsigned long bootDuration = millis() - bootStartTime;
   float bootSeconds = bootDuration / 1000.0;
@@ -233,12 +239,12 @@ void setup()
   // Print final boot banner
   if (isAPMode())
   {
-    LOG_NOTICE("BOOT", "=== %s Ready (Setup Mode) in %.1f seconds ===\n%s\n    setup() complete, entering loop()",
+    LOG_NOTICE("BOOT", "========================================\n    %s Ready (Setup Mode) in %.1f seconds\n%s\n========================================",
                deviceName.c_str(), bootSeconds, webUILine.c_str());
   }
   else
   {
-    LOG_NOTICE("BOOT", "=== %s Ready in %.1f seconds ===\n%s\n    setup() complete, entering loop()",
+    LOG_NOTICE("BOOT", "========================================\n    %s Ready in %.1f seconds\n%s\n========================================",
                deviceName.c_str(), bootSeconds, webUILine.c_str());
   }
 }

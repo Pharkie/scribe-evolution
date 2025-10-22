@@ -177,11 +177,14 @@ void setupTime()
     LOG_VERBOSE("time_utils", "Setting up time synchronization...");
 
     // Configure NTP servers from config
+    String ntpServerList = "";
     for (int i = 0; i < ntpServerCount; i++)
     {
         setServer(ntpServers[i]);
-        LOG_VERBOSE("time_utils", "NTP server %d: %s", i + 1, ntpServers[i]);
+        if (i > 0) ntpServerList += ", ";
+        ntpServerList += ntpServers[i];
     }
+    LOG_VERBOSE("time_utils", "NTP servers: %s", ntpServerList.c_str());
 
     // Set timeout for initial sync
     setInterval(ntpSyncTimeoutSeconds);
@@ -239,30 +242,28 @@ void setupTime()
             timezoneStr = defaultTimezone; // Fallback to config.h default
         }
         
-        LOG_VERBOSE("time_utils", "Setting timezone to: %s", timezoneStr.c_str());
-        
         // Enable caching to NVS location 0 (50 bytes storage)
-        LOG_VERBOSE("time_utils", "Attempting to load timezone from cache...");
         bool cacheLoaded = localTZ.setCache(0);
-        
+
         bool timezoneSet = false;
         if (cacheLoaded) {
-            LOG_VERBOSE("time_utils", "Timezone loaded from cache");
             timezoneSet = true;
             timezoneConfigured = true;
+            LOG_VERBOSE("time_utils", "Timezone configured: %s (from cache)", timezoneStr.c_str());
         } else {
-            LOG_VERBOSE("time_utils", "Cache miss - fetching timezone from network with retry");
-            
             // Use shared retry utility with exponential backoff
             timezoneSet = retryWithBackoff([&]() -> bool {
                 return localTZ.setLocation(timezoneStr);
             }, 3, 1000); // 3 retries, 1s base delay
+
+            if (timezoneSet) {
+                timezoneConfigured = true;
+                LOG_VERBOSE("time_utils", "Timezone configured: %s (from network)", timezoneStr.c_str());
+            }
         }
-        
+
         if (timezoneSet)
         {
-            timezoneConfigured = true;
-            LOG_VERBOSE("time_utils", "Timezone successfully configured for %s", timezoneStr.c_str());
             LOG_VERBOSE("time_utils", "Current local time: %s", localTZ.dateTime().c_str());
         }
         else

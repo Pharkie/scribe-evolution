@@ -69,8 +69,6 @@ String getNVSString(Preferences &prefs, const char *key, const String &defaultVa
         return defaultValue;
     }
     String result = prefs.getString(key, defaultValue);
-    LOG_VERBOSE("CONFIG", "DEBUG: getNVSString('%s') key exists, value length=%d, default length=%d",
-                key, result.length(), defaultValue.length());
 
     // Validate string length and basic sanity
     if (result.length() > maxLength)
@@ -265,19 +263,11 @@ bool ConfigManager::loadNVSConfigInternal()
     g_runtimeConfig.maxCharacters = maxCharacters;
 
     // Load Unbidden Ink settings
-    LOG_VERBOSE("CONFIG", "DEBUG: Default values - startHour=%d, endHour=%d, frequency=%d",
-                defaultUnbiddenInkStartHour, defaultUnbiddenInkEndHour, defaultUnbiddenInkFrequencyMinutes);
-
     g_runtimeConfig.unbiddenInkEnabled = getNVSBool(prefs, NVS_UNBIDDEN_ENABLED, defaultEnableUnbiddenInk);
     g_runtimeConfig.unbiddenInkStartHour = getNVSInt(prefs, NVS_UNBIDDEN_START_HOUR, defaultUnbiddenInkStartHour, 0, 24);
     g_runtimeConfig.unbiddenInkEndHour = getNVSInt(prefs, NVS_UNBIDDEN_END_HOUR, defaultUnbiddenInkEndHour, 0, 24);
     g_runtimeConfig.unbiddenInkFrequencyMinutes = getNVSInt(prefs, NVS_UNBIDDEN_FREQUENCY, defaultUnbiddenInkFrequencyMinutes, minUnbiddenInkFrequencyMinutes, maxUnbiddenInkFrequencyMinutes);
-
-    LOG_VERBOSE("CONFIG", "DEBUG: Loaded values - startHour=%d, endHour=%d, frequency=%d",
-                g_runtimeConfig.unbiddenInkStartHour, g_runtimeConfig.unbiddenInkEndHour, g_runtimeConfig.unbiddenInkFrequencyMinutes);
     g_runtimeConfig.unbiddenInkPrompt = getNVSString(prefs, NVS_UNBIDDEN_PROMPT, defaultUnbiddenInkPrompt, 500);
-    LOG_VERBOSE("CONFIG", "DEBUG: Loaded prompt length=%d, first 50 chars='%s'",
-                g_runtimeConfig.unbiddenInkPrompt.length(), g_runtimeConfig.unbiddenInkPrompt.substring(0, 50).c_str());
 
     // Load button configuration (4 buttons, 6 fields each = 24 keys)
     for (int i = 0; i < 4; i++)
@@ -353,9 +343,6 @@ void ConfigManager::loadDefaultConfigInternal()
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
 
     g_runtimeConfig.maxCharacters = maxCharacters;
-
-    LOG_VERBOSE("CONFIG", "DEBUG: Setting defaults - startHour=%d, endHour=%d, frequency=%d",
-                defaultUnbiddenInkStartHour, defaultUnbiddenInkEndHour, defaultUnbiddenInkFrequencyMinutes);
 
     g_runtimeConfig.unbiddenInkEnabled = defaultEnableUnbiddenInk;
     g_runtimeConfig.unbiddenInkStartHour = defaultUnbiddenInkStartHour;

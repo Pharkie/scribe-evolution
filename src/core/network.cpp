@@ -207,7 +207,6 @@ void setupmDNS()
         }
 
         String fqdn = hostnameToTry + ".local";
-        LOG_VERBOSE("NETWORK", "Checking if %s exists via ping...", fqdn.c_str());
 
         // Ping the hostname with 5 attempts (uses default 1 second timeout per attempt)
         // Returns true if host responds, false if timeout

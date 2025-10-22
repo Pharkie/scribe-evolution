@@ -125,7 +125,7 @@ void registerRoute(const char *method, const char *path, const char *description
     route.description = String(description);
     route.isAPI = isAPI;
     registeredRoutes.push_back(route);
-    LOG_VERBOSE("WEB", "Registered route: %s %s - %s", method, path, description);
+    // Individual route logging removed - see summary in setupRoutes()
 }
 
 void addRegisteredRoutesToJson(JsonObject &endpoints)
@@ -210,6 +210,9 @@ void setupWebServerRoutes(int maxChars)
 
     LOG_NOTICE("WEB", "Setting up %s mode routes", isAP ? "AP (captive portal)" : "STA (full web interface)");
 
+    // Clear previous routes and count
+    int routesBeforeSetup = registeredRoutes.size();
+
     if (isAP)
     {
         setupAPModeRoutes();
@@ -219,7 +222,9 @@ void setupWebServerRoutes(int maxChars)
         setupSTAModeRoutes();
     }
 
-    LOG_VERBOSE("WEB", "Web server routes configured for %s mode", isAP ? "AP" : "STA");
+    // Log summary of registered routes
+    int totalRoutes = registeredRoutes.size() - routesBeforeSetup;
+    LOG_VERBOSE("WEB", "Registered %d HTTP routes for %s mode", totalRoutes, isAP ? "AP" : "STA");
 }
 
 void setupAPModeRoutes()

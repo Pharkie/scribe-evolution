@@ -46,7 +46,6 @@ PrinterManager::~PrinterManager()
 
 void PrinterManager::initialize()
 {
-    LOG_VERBOSE("PRINTER", "Starting printer initialization...");
     ready = false; // Ensure flag is false during init
 
     // Allocate UART if not already allocated
@@ -96,12 +95,8 @@ void PrinterManager::initialize()
     // Mark printer as ready - the UART is initialized
     ready.store(true, std::memory_order_release); // Force memory barrier for multi-core visibility
 
-    LOG_VERBOSE("PRINTER", "printerReady set to TRUE, value check: %s", ready.load(std::memory_order_acquire) ? "CONFIRMED TRUE" : "ERROR: STILL FALSE!");
-
     LOG_VERBOSE("PRINTER", "UART initialized (TX=%d, RX=%d, DTR=%d)",
                 config.printerTxPin, -1, -1);
-
-    LOG_VERBOSE("PRINTER", "Sending printer initialization commands...");
 
     // Initialize printer with ESC @ (reset command)
     uart->write(0x1B);

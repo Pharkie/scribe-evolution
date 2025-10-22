@@ -71,11 +71,8 @@ void initializeHardwareButtons()
         }
     }
 
-    LOG_NOTICE("BUTTONS", "Buttons: Initializing %d hardware buttons", numHardwareButtons);
-    LOG_VERBOSE("BUTTONS", "Button count: %d", numHardwareButtons);
-    LOG_VERBOSE("BUTTONS", "Button debounce: %lu ms", buttonDebounceMs);
-    LOG_VERBOSE("BUTTONS", "Button long press: %lu ms", buttonLongPressMs);
-    LOG_VERBOSE("BUTTONS", "Button active low: %s", buttonActiveLow ? "true" : "false");
+    LOG_VERBOSE("BUTTONS", "Button config: %d buttons, debounce=%lums, long press=%lums, active %s",
+                numHardwareButtons, buttonDebounceMs, buttonLongPressMs, buttonActiveLow ? "low" : "high");
 
     // Get runtime configuration ONCE after GPIO setup
     const RuntimeConfig &config = getRuntimeConfig();
@@ -126,7 +123,6 @@ void initializeHardwareButtons()
         }
 
         // CHECKPOINT 3: Re-enable pinMode() for buttons
-        LOG_VERBOSE("BUTTONS", "Setting pinMode() for button %d GPIO %d...", i, gpio);
         pinMode(gpio, buttonActiveLow ? INPUT_PULLUP : INPUT_PULLDOWN);
 
         // Small delay for GPIO stabilization
@@ -145,8 +141,6 @@ void initializeHardwareButtons()
 
         // Feed watchdog after each button to prevent timeout
         esp_task_wdt_reset();
-
-        LOG_VERBOSE("BUTTONS", "Button %d GPIO %d initialized", i, config.buttonGpios[i]);
     }
 
     // Log button configuration (verbose detail)
@@ -161,7 +155,7 @@ void initializeHardwareButtons()
         esp_task_wdt_reset();
     }
 
-    LOG_NOTICE("BUTTONS", "Buttons: ✅ All %d buttons ready", numHardwareButtons);
+    LOG_NOTICE("BUTTONS", "%d hardware buttons initialized ✅", numHardwareButtons);
 }
 
 void checkHardwareButtons()

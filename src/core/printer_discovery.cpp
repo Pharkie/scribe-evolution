@@ -37,22 +37,19 @@ String createOfflinePayload()
 
 void setupPrinterDiscovery()
 {
-    LOG_VERBOSE("DISCOVERY", "Printer discovery system initialized");
+    LOG_VERBOSE("MQTT", "Printer discovery system initialized");
 }
 
 void publishPrinterStatus()
 {
-    LOG_VERBOSE("DISCOVERY", "publishPrinterStatus() called");
-
     if (!MQTTManager::instance().isConnected())
     {
-        LOG_WARNING("DISCOVERY", "MQTT not connected, cannot publish status");
+        LOG_WARNING("MQTT", "MQTT not connected, cannot publish status");
         return;
     }
 
     String printerId = getPrinterId();
     String statusTopic = MqttTopics::buildStatusTopic(printerId);
-    LOG_VERBOSE("DISCOVERY", "Publishing status to topic: %s", statusTopic.c_str());
 
     JsonDocument doc;
     doc["printerId"] = printerId;
@@ -67,7 +64,6 @@ void publishPrinterStatus()
 
     String payload;
     serializeJson(doc, payload);
-    LOG_VERBOSE("DISCOVERY", "Status payload: %s", payload.c_str());
 
     bool published = MQTTManager::instance().publishRawMessage(statusTopic, payload, true);
 
@@ -76,11 +72,11 @@ void publishPrinterStatus()
 
     if (published)
     {
-        LOG_VERBOSE("DISCOVERY", "Published status to %s", statusTopic.c_str());
+        LOG_VERBOSE("MQTT", "Published printer status to %s (%d chars, retained)", statusTopic.c_str(), payload.length());
     }
     else
     {
-        LOG_ERROR("DISCOVERY", "Failed to publish status to %s", statusTopic.c_str());
+        LOG_ERROR("MQTT", "Failed to publish status to %s", statusTopic.c_str());
     }
 }
 
@@ -98,18 +94,16 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
     // Check for empty payload
     if (payload.length() == 0)
     {
-        LOG_WARNING("DISCOVERY", "Received empty status payload from printer %s - ignoring", printerId.c_str());
+        LOG_WARNING("MQTT", "Received empty status payload from printer %s - ignoring", printerId.c_str());
         return;
     }
-
-    LOG_VERBOSE("DISCOVERY", "Received status from printer %s: %s", printerId.c_str(), payload.c_str());
 
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, payload);
 
     if (error)
     {
-        LOG_WARNING("DISCOVERY", "Failed to parse printer status JSON: %s", error.c_str());
+        LOG_WARNING("MQTT", "Failed to parse printer status JSON: %s", error.c_str());
         return;
     }
 
@@ -126,7 +120,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
             if (status == "offline")
             {
                 printer.status = "offline";
-                LOG_VERBOSE("DISCOVERY", "Printer %s went offline (payload: %s)", printer.name.c_str(), payload.c_str());
+                LOG_VERBOSE("MQTT", "Printer %s went offline (payload: %s)", printer.name.c_str(), payload.c_str());
 
                 // Notify web clients via SSE
                 sendPrinterUpdate();
@@ -143,7 +137,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
                 printer.timezone = doc["timezone"] | printer.timezone;
                 printer.lastSeen = currentTime;
 
-                LOG_VERBOSE("DISCOVERY", "Updated printer %s (%s)", printer.name.c_str(), printer.ipAddress.c_str());
+                LOG_VERBOSE("MQTT", "Updated printer %s (%s)", printer.name.c_str(), printer.ipAddress.c_str());
 
                 // Notify web clients via SSE
                 sendPrinterUpdate();
@@ -169,7 +163,7 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
         newPrinter.lastSeen = currentTime;
 
         discoveredPrinters.push_back(newPrinter);
-        LOG_VERBOSE("DISCOVERY", "Discovered new printer %s (%s)", newPrinter.name.c_str(), newPrinter.ipAddress.c_str());
+        LOG_VERBOSE("MQTT", "Discovered new printer %s (%s)", newPrinter.name.c_str(), newPrinter.ipAddress.c_str());
 
         // Notify web clients via SSE
         sendPrinterUpdate();

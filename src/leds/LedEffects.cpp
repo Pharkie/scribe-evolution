@@ -107,7 +107,6 @@ bool LedEffects::begin()
     }
 
     initialized = true;
-    LOG_NOTICE("LEDS", "LedEffects initialized (thread-safe singleton)");
 
     ManagerLock lock(mutex, "LEDS", 2000);
     if (!lock.isLocked())
@@ -172,7 +171,6 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
         return false;
     }
     leds = staticLEDs;  // Point to static global array
-    LOG_VERBOSE("LEDS", "Using static LED array for %d LEDs (max: %d) at %p", ledCount, MAX_LEDS, leds);
 
     // Enable LED eFuse if present (custom PCB only)
     #if BOARD_HAS_LED_EFUSE

@@ -46,14 +46,10 @@ void loadUnbiddenInkSettings()
     currentSettings.startHour = config.unbiddenInkStartHour;
     currentSettings.endHour = config.unbiddenInkEndHour;
     currentSettings.frequencyMinutes = config.unbiddenInkFrequencyMinutes;
-
-    LOG_VERBOSE("UNBIDDENINK", "Loaded settings from runtime configuration");
 }
 
 void initializeUnbiddenInk()
 {
-    LOG_VERBOSE("UNBIDDENINK", "Initializing Unbidden Ink system");
-    
     // Use the new manager function for consistent behavior
     startUnbiddenInk(false); // false = don't schedule immediately, use normal timing
 }
@@ -151,16 +147,16 @@ unsigned long getNextUnbiddenInkTime()
 
 void startUnbiddenInk(bool immediate)
 {
-    LOG_VERBOSE("UNBIDDENINK", "Starting Unbidden Ink (immediate=%s)", immediate ? "true" : "false");
-    
     // Load current settings from runtime config
     loadUnbiddenInkSettings();
-    
+
     if (!currentSettings.enabled)
     {
-        LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink is disabled in config, not starting");
+        LOG_VERBOSE("UNBIDDENINK", "Unbidden Ink: disabled in config");
         return;
     }
+
+    LOG_VERBOSE("UNBIDDENINK", "Starting Unbidden Ink (immediate=%s)", immediate ? "true" : "false");
     
     // Schedule the first/next print
     if (immediate)
