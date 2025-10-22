@@ -21,6 +21,7 @@
 #include <core/network.h>
 #include <core/mqtt_handler.h>
 
+
 // Utility function to mask secrets for API responses
 String maskSecret(const String &secret)
 {
@@ -977,10 +978,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 
     LOG_NOTICE("WEB", "Testing MQTT connection to %s:%d with username: %s", server.c_str(), port, username.c_str());
 
-    // Create temporary MQTT client for testing with proper certificate verification
-    WiFiClientSecure testWifiClient;
-
-    // Load same CA certificate as main MQTT client
+    // Load CA certificate for TLS verification
     LOG_VERBOSE("WEB", "TEST: Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
     if (!certFile)
@@ -1002,38 +1000,41 @@ void handleTestMQTT(AsyncWebServerRequest *request)
         return;
     }
 
-    LOG_VERBOSE("WEB", "TEST: Configuring test WiFiClientSecure with CA certificate");
+    // Create temporary ESP32MQTTClient for testing
+    ESP32MQTTClient testMqttClient;
 
-    testWifiClient.setCACert(certContent.c_str());
-    testWifiClient.setHandshakeTimeout(10000); // 10 second timeout for proper certificate verification
-
-    PubSubClient testMqttClient(testWifiClient);
-    testMqttClient.setServer(server.c_str(), port);
-    testMqttClient.setBufferSize(4096); // Match main client buffer size
+    // Configure client
+    testMqttClient.setURL(server.c_str(), port, username.c_str(), password.c_str());
+    testMqttClient.setCaCert(certContent.c_str());
+    testMqttClient.setMaxPacketSize(4096);
 
     // Generate unique client ID for test
     String clientId = "ScribeTest_" + String(random(0xffff), HEX);
+    testMqttClient.setMqttClientName(clientId.c_str());
 
-    // Attempt connection (match main startup code - no LWT for test)
+    // Start non-blocking connection
+    LOG_VERBOSE("WEB", "TEST: Starting MQTT test connection");
+    testMqttClient.loopStart();
+
+    // Wait up to 10 seconds for connection, checking isConnected()
+    unsigned long testStart = millis();
     bool connected = false;
-    if (password.length() > 0)
+    while (!connected && (millis() - testStart < 10000))
     {
-        connected = testMqttClient.connect(clientId.c_str(), username.c_str(), password.c_str());
+        connected = testMqttClient.isConnected();
+        if (!connected)
+        {
+            delay(100);
+        }
     }
-    else
-    {
-        connected = testMqttClient.connect(clientId.c_str(), username.c_str(), "");
-    }
 
-    DynamicJsonDocument response(256);
+    // Stop MQTT loop
+    testMqttClient.disableAutoReconnect();
 
-    // Always clean up test client resources regardless of success/failure
-    testMqttClient.disconnect();    // Clean disconnect
-    testWifiClient.stop();          // Explicitly close SSL connection
-    testWifiClient.setCACert(NULL); // Clear certificate to avoid state pollution
+    // Give it a moment to clean up
+    delay(mqttTestCleanupDelayMs);
 
-    // Add delay to ensure socket resources are completely released
-    delay(mqttTestCleanupDelayMs); // Delay to prevent socket reuse/racing with main MQTT connection
+    JsonDocument response;
 
     if (connected)
     {
@@ -1050,41 +1051,8 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     }
     else
     {
-        int state = testMqttClient.state();
-        String errorMsg = "Connection failed (code: " + String(state) + ")";
-
-        switch (state)
-        {
-        case MQTT_CONNECTION_TIMEOUT:
-            errorMsg = "Connection timeout - check server address and port";
-            break;
-        case MQTT_CONNECTION_LOST:
-            errorMsg = "Connection lost during handshake";
-            break;
-        case MQTT_CONNECT_FAILED:
-            errorMsg = "Network connection failed";
-            break;
-        case MQTT_DISCONNECTED:
-            errorMsg = "Disconnected - check network connectivity";
-            break;
-        case MQTT_CONNECT_BAD_PROTOCOL:
-            errorMsg = "Bad protocol version";
-            break;
-        case MQTT_CONNECT_BAD_CLIENT_ID:
-            errorMsg = "Bad client ID";
-            break;
-        case MQTT_CONNECT_UNAVAILABLE:
-            errorMsg = "Server unavailable";
-            break;
-        case MQTT_CONNECT_BAD_CREDENTIALS:
-            errorMsg = "Invalid username or password";
-            break;
-        case MQTT_CONNECT_UNAUTHORIZED:
-            errorMsg = "Client not authorized";
-            break;
-        }
-
-        LOG_WARNING("WEB", "MQTT test connection failed: %s", errorMsg.c_str());
+        String errorMsg = "Connection failed - check server address, port, and credentials";
+        LOG_WARNING("WEB", "MQTT test connection failed");
         sendErrorResponse(request, 400, errorMsg);
     }
 }

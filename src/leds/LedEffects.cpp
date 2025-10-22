@@ -286,30 +286,22 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
 
 void LedEffects::update()
 {
-    unsigned long funcStart = millis();
-
     if (!initialized)
     {
         // Not initialized yet - silently return (this is called every loop iteration)
         return;
     }
 
-    LOG_VERBOSE("LEDS", "update() called at %lu ms", funcStart);
-
     // Try to acquire LED mutex (non-blocking to prevent loop delays)
-    unsigned long lockStart = millis();
     ManagerLock lock(mutex, "LEDS", 100);
     if (!lock.isLocked())
     {
-        LOG_VERBOSE("LEDS", "Failed to acquire mutex (took %lu ms)", millis() - lockStart);
         return;
     }
-    LOG_VERBOSE("LEDS", "Mutex acquired in %lu ms", millis() - lockStart);
 
     // Validate effect state before proceeding
     if (!effectActive || !currentEffect || !leds)
     {
-        LOG_VERBOSE("LEDS", "No active effect, returning");
         return;
     }
 
@@ -326,40 +318,29 @@ void LedEffects::update()
     // Check if it's time to update
     if (now - lastUpdate < ledUpdateInterval)
     {
-        LOG_VERBOSE("LEDS", "Skipping update (interval not reached, delta=%lu ms)", now - lastUpdate);
         return;
     }
 
-    LOG_VERBOSE("LEDS", "Updating effect '%s' (cycles: %d/%d)", currentEffectName.c_str(), completedCycles, targetCycles);
     lastUpdate = now;
 
     // Update the current effect
-    unsigned long effectStart = millis();
     bool shouldContinue = currentEffect->update(leds, ledCount, effectStep, effectDirection,
                                                 effectPhase, effectColor1, effectColor2, effectColor3,
                                                 completedCycles);
-    LOG_VERBOSE("LEDS", "Effect update took %lu ms", millis() - effectStart);
 
     // Check if cycle-based effect is complete (when target cycles > 0)
     if (targetCycles > 0 && completedCycles >= targetCycles)
     {
-        LOG_VERBOSE("LEDS", "Effect complete, stopping");
+        LOG_NOTICE("LEDS", "Effect '%s' complete after %d cycles", currentEffectName.c_str(), completedCycles);
         stopEffectInternal();
         return;
     }
 
     // Feed watchdog before potentially slow FastLED.show() operation
-    LOG_VERBOSE("LEDS", "Resetting watchdog before FastLED.show()");
     esp_task_wdt_reset();
 
     // Show the updated LEDs
-    unsigned long showStart = millis();
-    LOG_VERBOSE("LEDS", ">>> Calling FastLED.show() at %lu ms", showStart);
     FastLED.show();
-    unsigned long showEnd = millis();
-    LOG_VERBOSE("LEDS", "<<< FastLED.show() took %lu ms", showEnd - showStart);
-
-    LOG_VERBOSE("LEDS", "update() total time: %lu ms", millis() - funcStart);
 }
 
 bool LedEffects::startEffectCycles(const String &effectName, int cycles,

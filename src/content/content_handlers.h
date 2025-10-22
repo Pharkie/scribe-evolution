@@ -11,7 +11,6 @@
 #define CONTENT_HANDLERS_H
 
 #include <Arduino.h>
-#include <PubSubClient.h>
 #include <ESPAsyncWebServer.h>
 #include <core/shared_types.h>
 #include <web/api_memo_handlers.h>  // For MEMO_COUNT definition

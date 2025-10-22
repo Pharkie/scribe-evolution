@@ -11,7 +11,6 @@
 #include <utils/time_utils.h>
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
-#include <PubSubClient.h>
 #include <WiFi.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>

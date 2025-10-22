@@ -4,28 +4,32 @@
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
-
-// Increase MQTT packet size before including PubSubClient
-#ifdef MQTT_MAX_PACKET_SIZE
-#undef MQTT_MAX_PACKET_SIZE
-#endif
-#define MQTT_MAX_PACKET_SIZE 4096
-
-#include <PubSubClient.h>
-#include <WiFiClientSecure.h>
+#include <ESP32MQTTClient.h>
 #include <ArduinoJson.h>
 #include <config/config.h>
+
+// Forward declare global event handlers required by ESP32MQTTClient
+void onMqttConnect(esp_mqtt_client_handle_t client);
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+esp_err_t handleMQTT(esp_mqtt_event_handle_t event);
+#else
+void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
+#endif
 
 /**
  * @class MQTTManager
  * @brief Thread-safe singleton for MQTT operations
  *
- * Provides mutex-protected access to WiFiClientSecure and PubSubClient for
- * MQTT operations. Encapsulates all MQTT state machine logic.
+ * Provides mutex-protected access to ESP32MQTTClient for non-blocking
+ * MQTT operations. Uses event-driven architecture via ESP-IDF's esp-mqtt.
  *
  * Thread Safety:
  * - All operations (publish, connect, disconnect, state machine) use mutex protection
  * - Safe for concurrent access from AsyncWebServer, buttons, and main loop
+ *
+ * Non-Blocking Architecture:
+ * - loopStart() runs MQTT in separate FreeRTOS task - no watchdog timeouts
+ * - Event callbacks handle connection/message events asynchronously
  *
  * Usage:
  *   MQTTManager::instance().begin();  // Call once in setup()
@@ -110,9 +114,12 @@ private:
     void handleMQTTConnectionInternal();
     bool publishRawMessageInternal(const String& topic, const String& payload, bool retained = false);
 
-    // Static callback wrapper (forwards to instance method)
-    static void mqttCallbackStatic(char *topic, byte *payload, unsigned int length);
-    void mqttCallback(char *topic, byte *payload, unsigned int length);
+public:
+    // Event callbacks (called by global handlers - must be public)
+    void onConnectionEstablished();
+    void onMessageReceived(String topic, String message);
+
+private:
 
     // MQTT state machine
     enum MQTTState {
@@ -126,9 +133,8 @@ private:
     SemaphoreHandle_t mutex = nullptr;
     bool initialized = false;
 
-    // MQTT objects (encapsulated in singleton)
-    WiFiClientSecure wifiSecureClient;
-    PubSubClient mqttClient;
+    // MQTT client (encapsulated in singleton)
+    ESP32MQTTClient mqttClient;
 
     // MQTT state
     MQTTState mqttState = MQTT_STATE_DISABLED;
@@ -140,6 +146,15 @@ private:
     String caCertificateBuffer = "";
     bool mqttSetupCompleted = false;
     bool needPublishStatus = false; // Flag to publish status after mutex release
+    bool mqttLoopStarted = false; // Track if loopStart() has been called
+
+    // Friend declarations for global event handlers
+    friend void ::onMqttConnect(esp_mqtt_client_handle_t client);
+    #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+    friend esp_err_t ::handleMQTT(esp_mqtt_event_handle_t event);
+    #else
+    friend void ::handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
+    #endif
 };
 
 // ============================================================================

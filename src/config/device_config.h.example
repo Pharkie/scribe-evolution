@@ -76,7 +76,7 @@ static const bool enableBetterStackLogging = false; // BetterStack (slow but use
 // NOTICE = Important events (default, recommended)
 // WARNING = Warnings and errors only
 // ERROR = Errors only
-static const int logLevel = LOG_LEVEL_VERBOSE;  // DIAGNOSTIC: Changed to VERBOSE for C3 watchdog debugging
+static const int logLevel = LOG_LEVEL_NOTICE;
 
 // ESP-IDF system logging levels (ESP_LOGx macros)
 // Options: ESP_LOG_VERBOSE, ESP_LOG_INFO, ESP_LOG_WARN, ESP_LOG_ERROR, ESP_LOG_NONE

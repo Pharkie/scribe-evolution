@@ -91,9 +91,16 @@ Thread-Safe Singletons:
 - **LogManager** - Serial logging (queue + dedicated writer task)
 - **APIClient** - HTTP operations (mutex-protected WiFiClientSecure/HTTPClient)
 - **ConfigManager** - NVS/LittleFS operations (mutex-protected config save/load)
-- **MQTTManager** - MQTT operations (mutex-protected PubSubClient/WiFiClientSecure)
+- **MQTTManager** - MQTT operations (uses ESP32MQTTClient library: https://github.com/cyijun/ESP32MQTTClient)
 - All initialized in main.cpp setup() before any concurrent access
 - Backward-compatible wrapper functions exist for legacy code
+
+MQTT Architecture:
+
+- Non-blocking FreeRTOS task-based (loopStart() returns immediately)
+- Thread-safe wrapper via MQTTManager singleton
+- Requires std::string (not Arduino String)
+- Solves watchdog timeout issues on single-core ESP32-C3
 
 Board Configuration System:
 

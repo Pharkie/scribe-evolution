@@ -23,7 +23,6 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
-#include <PubSubClient.h>
 #include <esp_task_wdt.h>
 
 // External declarations

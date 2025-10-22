@@ -25,7 +25,6 @@
 #include <esp_log.h>
 #include <ezTime.h>
 #include <LittleFS.h>
-#include <PubSubClient.h>
 #include "config/config.h"
 #include "core/config_loader.h"
 #include "core/config_utils.h"
@@ -181,23 +180,6 @@ void setup()
   // Start web server
   setupWebServerRoutes(maxCharacters);
   server.begin();
-  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
-  {
-    // Check if mDNS registration succeeded
-    const char* mdnsHostname = getMdnsHostname();
-    if (mdnsHostname != nullptr && mdnsHostname[0] != '\0')
-    {
-      LOG_NOTICE("BOOT", "Web UI: http://%s.local or http://%s", mdnsHostname, WiFi.localIP().toString().c_str());
-    }
-    else
-    {
-      LOG_NOTICE("BOOT", "Web UI: http://%s (mDNS failed)", WiFi.localIP().toString().c_str());
-    }
-  }
-  else
-  {
-    LOG_NOTICE("BOOT", "Web UI: http://%s (AP mode)", WiFi.softAPIP().toString().c_str());
-  }
 
   // Initialize Unbidden Ink (AI-generated content scheduler)
   initializeUnbiddenInk();
@@ -226,13 +208,38 @@ void setup()
     deviceName = "Unknown";
   }
 
-  if (isAPMode())
+  // Build Web UI URLs
+  String webUILine = "    Web UI: ";
+  if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
   {
-    LOG_NOTICE("BOOT", "=== %s Ready (Setup Mode) in %.1f seconds ===", deviceName.c_str(), bootSeconds);
+    const char* mdnsHostname = getMdnsHostname();
+    if (mdnsHostname != nullptr && mdnsHostname[0] != '\0')
+    {
+      // mDNS successfully registered
+      webUILine += "http://" + String(mdnsHostname) + ".local | http://" + WiFi.localIP().toString();
+    }
+    else
+    {
+      // mDNS registration failed (ERROR already logged by setupmDNS)
+      webUILine += "http://" + WiFi.localIP().toString() + " (mDNS failed)";
+    }
   }
   else
   {
-    LOG_NOTICE("BOOT", "=== %s Ready in %.1f seconds ===", deviceName.c_str(), bootSeconds);
+    // AP mode (mDNS intentionally skipped)
+    webUILine += "http://" + WiFi.softAPIP().toString() + " (AP mode)";
+  }
+
+  // Print final boot banner
+  if (isAPMode())
+  {
+    LOG_NOTICE("BOOT", "=== %s Ready (Setup Mode) in %.1f seconds ===\n%s\n    setup() complete, entering loop()",
+               deviceName.c_str(), bootSeconds, webUILine.c_str());
+  }
+  else
+  {
+    LOG_NOTICE("BOOT", "=== %s Ready in %.1f seconds ===\n%s\n    setup() complete, entering loop()",
+               deviceName.c_str(), bootSeconds, webUILine.c_str());
   }
 }
 
@@ -262,64 +269,38 @@ void loop()
   static bool firstRun = true;
   if (firstRun)
   {
-    unsigned long postSetupStart = millis();
-    LOG_VERBOSE("LOOP", ">>> Starting postSetup() at %lu ms", postSetupStart);
     postSetup();
-    unsigned long postSetupEnd = millis();
-    LOG_VERBOSE("LOOP", "<<< postSetup() completed in %lu ms", postSetupEnd - postSetupStart);
     firstRun = false;
   }
 
   // Feed the watchdog
-  unsigned long loopStart = millis();
-  LOG_VERBOSE("LOOP", "=== Loop iteration start at %lu ms (uptime: %lu s)", loopStart, loopStart / 1000);
   esp_task_wdt_reset();
-  LOG_VERBOSE("LOOP", "Watchdog reset at %lu ms", millis());
 
   // Process ezTime events (for timezone updates)
-  unsigned long eventStart = millis();
   events();
-  LOG_VERBOSE("LOOP", "events() took %lu ms", millis() - eventStart);
 
   // Check WiFi connection and reconnect if needed
-  unsigned long wifiStart = millis();
   handleWiFiReconnection();
-  LOG_VERBOSE("LOOP", "handleWiFiReconnection() took %lu ms", millis() - wifiStart);
 
   // Handle DNS server for captive portal in AP mode
-  unsigned long dnsStart = millis();
   handleDNSServer();
-  LOG_VERBOSE("LOOP", "handleDNSServer() took %lu ms", millis() - dnsStart);
 
   // Check hardware buttons (disabled in AP mode)
   if (!isAPMode())
   {
-    unsigned long buttonStart = millis();
     checkHardwareButtons();
-    LOG_VERBOSE("LOOP", "checkHardwareButtons() took %lu ms", millis() - buttonStart);
   }
 
 #if ENABLE_LEDS
   // Update LED effects
-  unsigned long ledStart = millis();
-  LOG_VERBOSE("LOOP", ">>> Calling ledEffects().update() at %lu ms", ledStart);
   ledEffects().update();
-  unsigned long ledEnd = millis();
-  LOG_VERBOSE("LOOP", "<<< ledEffects().update() took %lu ms", ledEnd - ledStart);
 #endif
 
   // Handle MQTT connection and messages (only in STA mode when MQTT enabled)
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED && isMQTTEnabled())
   {
-    unsigned long mqttStart = millis();
-    LOG_VERBOSE("LOOP", ">>> Calling handleMQTTConnection() at %lu ms", mqttStart);
     handleMQTTConnection();
-    unsigned long mqttEnd = millis();
-    LOG_VERBOSE("LOOP", "<<< handleMQTTConnection() took %lu ms", mqttEnd - mqttStart);
-
-    unsigned long discoveryStart = millis();
     handlePrinterDiscovery();
-    LOG_VERBOSE("LOOP", "handlePrinterDiscovery() took %lu ms", millis() - discoveryStart);
   }
 
   // Check if we have a new message to print (protected by mutex for multi-core safety)

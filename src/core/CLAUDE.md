@@ -160,6 +160,7 @@ private:
 4. **MQTTManager** - MQTT operations
    - Thread-safe publish/subscribe/connect/disconnect
    - State machine encapsulated in singleton
+   - Uses ESP32MQTTClient library (https://github.com/cyijun/ESP32MQTTClient)
    - Usage: MQTTManager::instance().publishMessage(topic, header, body)
    - Pattern: ✅ Mutex in begin()
 

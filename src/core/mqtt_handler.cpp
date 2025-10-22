@@ -11,6 +11,39 @@
 #include <esp_task_wdt.h>
 
 // ============================================================================
+// GLOBAL EVENT HANDLERS (Required by ESP32MQTTClient)
+// ============================================================================
+
+// Connection callback - called when MQTT connection is established
+void onMqttConnect(esp_mqtt_client_handle_t client) {
+    if (MQTTManager::instance().mqttClient.isMyTurn(client)) {
+        LOG_NOTICE("MQTT", "Connected to MQTT broker");
+        MQTTManager::instance().onConnectionEstablished();
+    }
+}
+
+// Message callback wrapper - called by ESP32MQTTClient for incoming messages
+// Signature must match MessageReceivedCallbackWithTopic: void(const std::string&, const std::string&)
+void onMqttMessageCallback(const std::string &topic, const std::string &payload) {
+    LOG_VERBOSE("MQTT", "Message callback: topic=%s, payload length=%d", topic.c_str(), payload.length());
+    // Convert std::string to Arduino String for internal handling
+    MQTTManager::instance().onMessageReceived(String(topic.c_str()), String(payload.c_str()));
+}
+
+// Event handler - routes all MQTT events to ESP32MQTTClient
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+esp_err_t handleMQTT(esp_mqtt_event_handle_t event) {
+    MQTTManager::instance().mqttClient.onEventCallback(event);
+    return ESP_OK;
+}
+#else  // IDF CHECK
+void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
+    auto *event = static_cast<esp_mqtt_event_handle_t>(event_data);
+    MQTTManager::instance().mqttClient.onEventCallback(event);
+}
+#endif // IDF CHECK
+
+// ============================================================================
 // MQTTMANAGER SINGLETON IMPLEMENTATION
 // ============================================================================
 
@@ -22,9 +55,7 @@ MQTTManager& MQTTManager::instance() {
 
 // Constructor
 MQTTManager::MQTTManager() {
-    // mqttClient must be initialized with wifiSecureClient
-    // This is done automatically since both are member variables
-    mqttClient.setClient(wifiSecureClient);
+    // ESP32MQTTClient initialization happens in begin()
 }
 
 // Initialize (must be called in setup)
@@ -44,56 +75,73 @@ void MQTTManager::begin() {
     LOG_NOTICE("MQTT", "MQTTManager initialized (thread-safe singleton)");
 }
 
-// Static callback wrapper
-void MQTTManager::mqttCallbackStatic(char *topic, byte *payload, unsigned int length) {
-    // Forward to instance method
-    instance().mqttCallback(topic, payload, length);
+// Event callback: Connection established
+void MQTTManager::onConnectionEstablished() {
+    // Note: This is called from global onMqttConnect which runs in ESP-MQTT task
+    // We need thread-safe access
+
+    ManagerLock lock(mutex, "MQTT-Connect");
+    if (!lock.isLocked()) {
+        LOG_ERROR("MQTT", "Failed to acquire mutex in onConnectionEstablished");
+        return;
+    }
+
+    // Update state
+    mqttState = MQTT_STATE_CONNECTED;
+    consecutiveFailures = 0;
+
+    // Subscribe to the print topic
+    String newTopic = String(getLocalPrinterTopic());
+    std::string newTopicStd = newTopic.c_str();
+    if (!mqttClient.subscribe(newTopicStd, onMqttMessageCallback, 0))
+    {
+        LOG_ERROR("MQTT", "Failed to subscribe to topic: %s", newTopic.c_str());
+    }
+    else
+    {
+        currentSubscribedTopic = newTopic;
+        LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
+    }
+
+    // Subscribe to printer discovery topics
+    String statusSubscription = MqttTopics::buildStatusSubscription();
+    std::string statusSubscriptionStd = statusSubscription.c_str();
+    if (!mqttClient.subscribe(statusSubscriptionStd, onMqttMessageCallback, 0))
+    {
+        LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
+    }
+    else
+    {
+        LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics");
+    }
+
+    // Set flag to publish initial online status after mutex is released
+    needPublishStatus = true;
 }
 
-// Instance callback method
-// IMPORTANT: This callback can be invoked in two contexts:
-// 1. From subscribe() when retained messages exist (mutex already held by connectToMQTTInternal)
-// 2. From mqttClient.loop() when new messages arrive (mutex NOT held) - NOT USED in this codebase
-void MQTTManager::mqttCallback(char *topic, byte *payload, unsigned int length)
-{
-    // Try to acquire mutex with zero timeout (non-blocking)
-    // If we can't get it, we're being called from subscribe() during connection (context 1)
-    // This prevents deadlock when subscribe() triggers callbacks while we already hold the mutex
-    bool acquiredMutex = (xSemaphoreTake(mutex, 0) == pdTRUE);
+// Event callback: Message received
+void MQTTManager::onMessageReceived(String topic, String message) {
+    // Note: This is called from ESP-MQTT task via onMqttMessageCallback
+    // We need thread-safe access
 
-    if (!acquiredMutex) {
-        // Mutex already held - we're being called from subscribe() while processing connection
-        // This is safe because the caller already holds the mutex
-        LOG_VERBOSE("MQTT", "Callback invoked while mutex held (retained message during subscribe)");
+    ManagerLock lock(mutex, "MQTT-Message");
+    if (!lock.isLocked()) {
+        LOG_ERROR("MQTT", "Failed to acquire mutex in onMessageReceived");
+        return;
     }
 
-    LOG_VERBOSE("MQTT", "MQTT message received on topic: %s", topic);
-
-    // Convert payload to string
-    String message = "";
-    for (unsigned int i = 0; i < length; i++)
-    {
-        message += (char)payload[i];
-    }
-
+    LOG_VERBOSE("MQTT", "MQTT message received on topic: %s", topic.c_str());
     LOG_VERBOSE("MQTT", "MQTT payload: %s", message.c_str());
 
-    String topicStr = String(topic);
-
     // Check if this is a printer status message
-    if (MqttTopics::isStatusTopic(topicStr))
+    if (MqttTopics::isStatusTopic(topic))
     {
-        onPrinterStatusMessage(topicStr, message);
+        onPrinterStatusMessage(topic, message);
     }
     else
     {
         // Handle regular print messages - pass topic to extract sender
-        handleMQTTMessageInternal(topicStr, message);
-    }
-
-    // Only release mutex if we acquired it
-    if (acquiredMutex) {
-        xSemaphoreGive(mutex);
+        handleMQTTMessageInternal(topic, message);
     }
 }
 
@@ -155,7 +203,8 @@ void MQTTManager::setupMQTTInternal()
         LOG_VERBOSE("MQTT", "MQTT already configured, skipping setup");
         return;
     }
-    // Load CA certificate exactly like test - local String variable
+
+    // Load CA certificate
     LOG_VERBOSE("MQTT", "Loading CA certificate from /resources/isrg-root-x1.pem");
     File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
     if (!certFile) {
@@ -183,28 +232,29 @@ void MQTTManager::setupMQTTInternal()
         return;
     }
 
-    LOG_VERBOSE("MQTT", "CA certificate validation passed, configuring WiFiClientSecure");
+    LOG_VERBOSE("MQTT", "CA certificate validation passed, configuring ESP32MQTTClient");
 
     // Store in buffer to ensure lifetime during connection attempts
     caCertificateBuffer = certContent;
 
-    // Configure exactly like test - local string passed to setCACert
-    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
-    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
-
-    // Ensure MQTT client uses the refreshed secure client
-    mqttClient.setClient(wifiSecureClient);
-
-    // Configure MQTT client
+    // Configure ESP32MQTTClient with TLS
     const RuntimeConfig &config = getRuntimeConfig();
-    mqttClient.setServer(config.mqttServer.c_str(), config.mqttPort);
-    mqttClient.setCallback(mqttCallbackStatic);
-    mqttClient.setBufferSize(mqttBufferSize);
 
-    // Don't call connectToMQTT() here anymore - let state machine handle it
+    // Set broker URL (port 8883 automatically uses mqtts://)
+    mqttClient.setURL(config.mqttServer.c_str(), config.mqttPort,
+                      config.mqttUsername.c_str(), config.mqttPassword.c_str());
 
-    const char* tlsMode = mqttClient.connected() ? "Secure (TLS with CA verification)" : "Secure (TLS configured, connection pending)";
-    LOG_NOTICE("MQTT", "MQTT server configured: %s:%d | Inbox topic: %s | TLS mode: %s | Buffer size: %d bytes", config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), tlsMode, mqttBufferSize);
+    // Set CA certificate for TLS
+    mqttClient.setCaCert(caCertificateBuffer.c_str());
+
+    // Set buffer size for large messages
+    mqttClient.setMaxPacketSize(mqttBufferSize);
+
+    // Set keepalive timeout (30 seconds default)
+    mqttClient.setKeepAlive(30);
+
+    LOG_VERBOSE("MQTT", "ESP32MQTTClient configured: %s:%d | Inbox topic: %s | TLS: Enabled | Buffer: %d bytes",
+                config.mqttServer.c_str(), config.mqttPort, getLocalPrinterTopic(), mqttBufferSize);
 
     // Mark setup as completed
     mqttSetupCompleted = true;
@@ -215,7 +265,7 @@ void MQTTManager::connectToMQTTInternal()
 {
     LOG_VERBOSE("MQTT", "=== connectToMQTT() ENTRY ===");
 
-    // State machine handles duplicate prevention - no static flags needed
+    // State machine handles duplicate prevention
     if (mqttState != MQTT_STATE_CONNECTING) {
         LOG_ERROR("MQTT", "connectToMQTT called in wrong state: %d", mqttState);
         return;
@@ -244,138 +294,34 @@ void MQTTManager::connectToMQTTInternal()
         }
     }
 
-    // Debug socket state before connection attempt
-    LOG_VERBOSE("MQTT", "Connection attempt - WiFi status: %d, wifiSecureClient.connected(): %d",
-               WiFi.status(), wifiSecureClient.connected());
-
-    // Always clean the client state like test does with fresh object
-    if (wifiSecureClient.connected()) {
-        LOG_VERBOSE("MQTT", "Stopping existing WiFiClientSecure connection");
-        wifiSecureClient.stop();
-    }
-
-    // Force clean state by recreating the secure client (match test behavior)
-    wifiSecureClient = WiFiClientSecure();
-    wifiSecureClient.setCACert(caCertificateBuffer.c_str());
-    wifiSecureClient.setHandshakeTimeout(mqttTlsHandshakeTimeoutMs);
-    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
-
-    LOG_VERBOSE("MQTT", "WiFiClientSecure reset to clean state");
-
-    // CRITICAL: Feed watchdog immediately after TLS setup (can be slow on C3)
-    LOG_VERBOSE("MQTT", "Feeding watchdog after TLS setup");
-    esp_task_wdt_reset();
-
-    LOG_VERBOSE("MQTT", "Getting printer ID...");
+    // Get printer ID for client ID and LWT
     String printerId = getPrinterId();
-    LOG_VERBOSE("MQTT", "Printer ID: %s", printerId.c_str());
+    String clientId = "ScribePrinter-" + printerId;
 
-    String clientId = "ScribePrinter-" + printerId; // Use consistent ID based on printer ID
-    LOG_VERBOSE("MQTT", "Client ID: %s", clientId.c_str());
+    LOG_VERBOSE("MQTT", "Setting client ID: %s", clientId.c_str());
+    mqttClient.setMqttClientName(clientId.c_str());
 
-    // Feed watchdog before potentially blocking MQTT connection
-    LOG_VERBOSE("MQTT", "Resetting watchdog before connection attempt");
-    esp_task_wdt_reset();
-    LOG_VERBOSE("MQTT", "Watchdog reset complete");
-
-    bool connected = false;
-
-    // Set up LWT for printer discovery
-    LOG_VERBOSE("MQTT", "Building status topic...");
+    // Set up Last Will and Testament (LWT) for printer discovery
     String statusTopic = MqttTopics::buildStatusTopic(printerId);
-    LOG_VERBOSE("MQTT", "Status topic: %s", statusTopic.c_str());
-
-    // Use the same offline payload format as graceful shutdown
-    LOG_VERBOSE("MQTT", "Creating offline payload...");
     String lwtPayload = createOfflinePayload();
-    LOG_VERBOSE("MQTT", "LWT payload created, length: %d bytes", lwtPayload.length());
 
-    // Try connection with or without credentials, including LWT
-    LOG_VERBOSE("MQTT", "Getting runtime config...");
-    const RuntimeConfig &config = getRuntimeConfig();
-    LOG_VERBOSE("MQTT", "Runtime config retrieved");
+    LOG_VERBOSE("MQTT", "Setting LWT: topic=%s, payload length=%d", statusTopic.c_str(), lwtPayload.length());
+    mqttClient.enableLastWillMessage(statusTopic.c_str(), lwtPayload.c_str(), true);
 
-    // Set timeout to prevent blocking (already set above, but ensuring consistency)
-    wifiSecureClient.setTimeout(mqttTlsHandshakeTimeoutMs);
-
-    try {
-        if (config.mqttUsername.length() > 0 && config.mqttPassword.length() > 0)
-        {
-            connected = mqttClient.connect(clientId.c_str(),
-                                           config.mqttUsername.c_str(),
-                                           config.mqttPassword.c_str(),
-                                           statusTopic.c_str(),
-                                           0,
-                                           true,
-                                           lwtPayload.c_str());
-        }
-        else
-        {
-            connected = mqttClient.connect(clientId.c_str(),
-                                           statusTopic.c_str(),
-                                           0,
-                                           true,
-                                           lwtPayload.c_str());
-        }
-    } catch (...) {
-        LOG_ERROR("MQTT", "MQTT connection threw exception, treating as failed");
-        connected = false;
+    // Start MQTT client (non-blocking!)
+    // This creates a separate FreeRTOS task for MQTT operations
+    if (mqttLoopStarted) {
+        LOG_WARNING("MQTT", "loopStart already called, skipping duplicate call");
+        // Connection will be handled by onMqttConnect callback when ready
+        return;
     }
 
-    // Feed watchdog again after connection attempt
-    esp_task_wdt_reset();
+    LOG_VERBOSE("MQTT", "MQTT connecting asynchronously (loopStart)");
+    mqttClient.loopStart();
+    mqttLoopStarted = true;
 
-    if (connected)
-    {
-        // Connection successful - update state
-        mqttState = MQTT_STATE_CONNECTED;
-        consecutiveFailures = 0;
-
-        LOG_NOTICE("MQTT", "✅ Connected to broker");
-
-        // Subscribe to the print topic
-        String newTopic = String(getLocalPrinterTopic());
-        if (!mqttClient.subscribe(newTopic.c_str()))
-        {
-            LOG_ERROR("MQTT", "MQTT connected. Failed to subscribe to topic: %s", newTopic.c_str());
-        }
-        else
-        {
-            currentSubscribedTopic = newTopic;
-            LOG_VERBOSE("MQTT", "Successfully subscribed to topic: %s", newTopic.c_str());
-        }
-
-        // Subscribe to printer discovery topics to immediately process retained messages
-        if (!mqttClient.subscribe(MqttTopics::buildStatusSubscription().c_str()))
-        {
-            LOG_WARNING("MQTT", "Failed to subscribe to printer status topics");
-        }
-        else
-        {
-            LOG_VERBOSE("MQTT", "Subscribed to printer discovery topics. Should receive retained messages immediately");
-        }
-
-        // Set flag to publish initial online status after mutex is released
-        // This prevents deadlock (can't call publishPrinterStatus() while holding mutex)
-        needPublishStatus = true;
-    }
-    else
-    {
-        // Connection failed - return to disconnected state
-        mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
-        consecutiveFailures++;
-        lastFailureTime = millis();
-
-        int state = mqttClient.state();
-        LOG_WARNING("MQTT", "MQTT connection failed (attempt %d/%d), state: %d - Will retry in %lums",
-                   consecutiveFailures, mqttMaxConsecutiveFailures, state, mqttReconnectIntervalMs);
-
-        if (consecutiveFailures >= mqttMaxConsecutiveFailures)
-        {
-            LOG_ERROR("MQTT", "Too many consecutive MQTT failures (%d), entering cooldown mode for %lums to prevent system instability",
-                     mqttMaxConsecutiveFailures, mqttFailureCooldownMs);
-        }
-    }
+    // Note: State will be updated to MQTT_STATE_CONNECTED by onConnectionEstablished callback
+    // No need to handle connection success/failure here - it's all event-driven now
 }
 
 // Internal helper: handleMQTTConnectionInternal (mutex already held)
@@ -399,7 +345,7 @@ void MQTTManager::handleMQTTConnectionInternal()
                 if (WiFi.status() == WL_CONNECTED)
                 {
                     setupMQTTInternal();  // Load certs, configure client
-                    connectToMQTTInternal();  // Actually connect
+                    connectToMQTTInternal();  // Start non-blocking connection
                 }
                 else
                 {
@@ -412,30 +358,35 @@ void MQTTManager::handleMQTTConnectionInternal()
             break;
 
         case MQTT_STATE_CONNECTING:
-            // Check for timeout
+            // With ESP32MQTTClient, connection happens asynchronously
+            // onMqttConnect callback will update state to CONNECTED when ready
+            // Just check for timeout here
             if (millis() - stateChangeTime > mqttConnectionTimeoutMs)
             {
                 LOG_ERROR("MQTT", "Connection timeout after %lums", mqttConnectionTimeoutMs);
                 mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+                consecutiveFailures++;
+                lastFailureTime = millis();
 
-                // Clean up stuck connection
-                if (wifiSecureClient.connected())
-                {
-                    wifiSecureClient.stop();
+                // Disable auto-reconnect to stop connection attempts
+                if (mqttLoopStarted) {
+                    mqttClient.disableAutoReconnect();
+                    mqttLoopStarted = false;
+                    LOG_VERBOSE("MQTT", "Disabled auto-reconnect after timeout");
                 }
             }
-            // Note: connectToMQTT() will change state when connection completes
             break;
 
         case MQTT_STATE_CONNECTED:
-            // Process MQTT messages
-            mqttClient.loop();
+            // ESP32MQTTClient handles message processing in its own task
+            // No need to call loop() - it's non-blocking!
 
-            // Check if still connected
-            if (!mqttClient.connected())
+            // Check if still connected (ESP32MQTTClient provides isConnected())
+            if (!mqttClient.isConnected())
             {
                 LOG_WARNING("MQTT", "Connection lost");
                 mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+                mqttLoopStarted = false; // Reset flag for next connection attempt
             }
             break;
 
@@ -448,7 +399,7 @@ void MQTTManager::handleMQTTConnectionInternal()
 // Internal helper: updateMQTTSubscriptionInternal (mutex already held)
 void MQTTManager::updateMQTTSubscriptionInternal()
 {
-    if (!mqttClient.connected())
+    if (!mqttClient.isConnected())
     {
         LOG_VERBOSE("MQTT", "MQTT not connected, subscription will be updated on next connection");
         return;
@@ -466,7 +417,8 @@ void MQTTManager::updateMQTTSubscriptionInternal()
     // Unsubscribe from old topic if we were subscribed to something
     if (currentSubscribedTopic.length() > 0)
     {
-        if (mqttClient.unsubscribe(currentSubscribedTopic.c_str()))
+        std::string oldTopicStd = currentSubscribedTopic.c_str();
+        if (mqttClient.unsubscribe(oldTopicStd))
         {
             LOG_NOTICE("MQTT", "Unsubscribed from old topic: %s", currentSubscribedTopic.c_str());
         }
@@ -476,8 +428,9 @@ void MQTTManager::updateMQTTSubscriptionInternal()
         }
     }
 
-    // Subscribe to new topic
-    if (mqttClient.subscribe(newTopic.c_str()))
+    // Subscribe to new topic with callback
+    std::string newTopicStd = newTopic.c_str();
+    if (mqttClient.subscribe(newTopicStd, onMqttMessageCallback, 0))
     {
         currentSubscribedTopic = newTopic;
         LOG_NOTICE("MQTT", "Successfully subscribed to new topic: %s", newTopic.c_str());
@@ -525,7 +478,7 @@ void MQTTManager::handleConnection()
 
     // Publish status AFTER releasing mutex to avoid deadlock
     if (shouldPublish) {
-        LOG_NOTICE("MQTT", "Publishing initial online status after connection");
+        LOG_VERBOSE("MQTT", "Publishing initial online status after connection");
         publishPrinterStatus();
 
         // Feed watchdog after potentially long MQTT connection and publish sequence
@@ -585,7 +538,7 @@ bool MQTTManager::publishMessage(const String& topic, const String& header, cons
         return false;
     }
 
-    if (!mqttClient.connected()) {
+    if (!mqttClient.isConnected()) {
         LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
         return false;
     }
@@ -606,8 +559,10 @@ bool MQTTManager::publishMessage(const String& topic, const String& header, cons
     String payload;
     serializeJson(payloadDoc, payload);
 
-    // Publish message
-    bool success = mqttClient.publish(topic.c_str(), payload.c_str());
+    // Publish message (convert to std::string)
+    std::string topicStd = topic.c_str();
+    std::string payloadStd = payload.c_str();
+    bool success = mqttClient.publish(topicStd, payloadStd, 0, false);
 
     if (success) {
         LOG_VERBOSE("MQTT", "Published message to topic: %s (%d characters)",
@@ -640,16 +595,18 @@ bool MQTTManager::publishRawMessageInternal(const String& topic, const String& p
         return false;
     }
 
-    if (!mqttClient.connected()) {
+    if (!mqttClient.isConnected()) {
         LOG_WARNING("MQTT", "MQTT not connected, cannot publish to topic: %s", topic.c_str());
         return false;
     }
 
     // Publish raw message with optional retained flag
-    bool success = mqttClient.publish(topic.c_str(), payload.c_str(), retained);
-
-    // Feed watchdog after potentially blocking MQTT publish operation
-    esp_task_wdt_reset();
+    // ESP32MQTTClient publish signature: publish(topic, payload, qos, retain)
+    // Convert Arduino String to std::string
+    std::string topicStd = topic.c_str();
+    std::string payloadStd = payload.c_str();
+    int qos = 0; // QoS 0 = at most once
+    bool success = mqttClient.publish(topicStd, payloadStd, qos, retained);
 
     if (success) {
         LOG_VERBOSE("MQTT", "Published raw message to topic: %s (%d characters, retained: %s)",
@@ -750,16 +707,12 @@ void MQTTManager::stopClient()
 
     mqttState = MQTT_STATE_DISCONNECTING;
 
-    // Disconnect MQTT
-    if (mqttClient.connected())
+    // Disable auto-reconnect so client doesn't try to reconnect
+    if (mqttLoopStarted)
     {
-        mqttClient.disconnect();
-    }
-
-    // Clean up SSL connection
-    if (wifiSecureClient.connected())
-    {
-        wifiSecureClient.stop();
+        mqttClient.disableAutoReconnect();
+        mqttLoopStarted = false;
+        LOG_VERBOSE("MQTT", "MQTT auto-reconnect disabled, client will disconnect");
     }
 
     // Reset ALL state variables
@@ -768,6 +721,7 @@ void MQTTManager::stopClient()
     consecutiveFailures = 0;
     lastMQTTReconnectAttempt = 0;
     lastFailureTime = 0;
+    mqttSetupCompleted = false; // Allow reconfiguration on next start
 
     // Mutex automatically released by ManagerLock destructor
 }
@@ -786,7 +740,7 @@ bool MQTTManager::isConnected()
         return false;
     }
 
-    bool connected = mqttClient.connected();
+    bool connected = mqttClient.isConnected();
 
     // Mutex automatically released by ManagerLock destructor
     return connected;
