@@ -204,7 +204,7 @@
                     >
                       <template
                         x-for="printer in printers"
-                        :key="printer.data?.printerId || printer.value"
+                        :key="printer.printerId"
                       >
                         <div
                           @click="selectPrinter(printer.value)"
