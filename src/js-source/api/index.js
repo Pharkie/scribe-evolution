@@ -97,7 +97,7 @@ export async function executeQuickAction(action) {
   try {
     console.log(`API: Executing quick action: ${action}`);
 
-    const response = await fetch(`/api/${action}`, {
+    const response = await fetch(`/api/content/${action}`, {
       method: "GET",
     });
 
@@ -131,7 +131,7 @@ export async function generateUserMessage(message, target = "local-direct") {
       params.set("target", target);
     }
 
-    const response = await fetch(`/api/user-message?${params}`, {
+    const response = await fetch(`/api/content/user-message?${params}`, {
       method: "GET",
     });
 

@@ -212,6 +212,61 @@ void handleUnbiddenInk(AsyncWebServerRequest *request)
     }
 }
 
+// Unified content handler - extracts type from path parameter
+void handleContent(AsyncWebServerRequest *request)
+{
+    // Extract content type from path (e.g., /api/content/joke -> "joke")
+    String path = request->url();
+    int lastSlashIndex = path.lastIndexOf('/');
+    if (lastSlashIndex == -1)
+    {
+        request->send(400, "application/json", "{\"error\":\"Invalid content type path\"}");
+        return;
+    }
+
+    String contentType = path.substring(lastSlashIndex + 1);
+    contentType.trim();
+    contentType.toLowerCase();
+
+    // Route to appropriate handler based on content type
+    if (contentType == "riddle")
+    {
+        handleRiddle(request);
+    }
+    else if (contentType == "joke")
+    {
+        handleJoke(request);
+    }
+    else if (contentType == "quote")
+    {
+        handleQuote(request);
+    }
+    else if (contentType == "quiz")
+    {
+        handleQuiz(request);
+    }
+    else if (contentType == "news")
+    {
+        handleNews(request);
+    }
+    else if (contentType == "poke")
+    {
+        handlePoke(request);
+    }
+    else if (contentType == "unbidden-ink")
+    {
+        handleUnbiddenInk(request);
+    }
+    else if (contentType == "user-message")
+    {
+        handleUserMessage(request);
+    }
+    else
+    {
+        request->send(400, "application/json", "{\"error\":\"Unknown content type: " + contentType + "\"}");
+    }
+}
+
 bool generateAndQueueUnbiddenInk()
 {
     LOG_VERBOSE("UNBIDDENINK", "generateAndQueueUnbiddenInk() called");

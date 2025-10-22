@@ -96,6 +96,13 @@ bool generateAndQueueMemo(int memoId);
 void handleUserMessage(AsyncWebServerRequest* request);
 
 /**
+ * @brief Unified content generation handler (handles all content types via path parameter)
+ * @details Replaces individual handlers: riddle, joke, quote, quiz, news, poke, unbidden-ink, user-message
+ * Route: /api/content/:type where type = riddle|joke|quote|quiz|news|poke|unbidden-ink|user-message
+ */
+void handleContent(AsyncWebServerRequest* request);
+
+/**
  * @brief Handle local content printing (generic handler for any pre-formatted content)
  * @details Endpoint for printing content locally only. For MQTT operations, use /api/print-mqtt.
  *          Content should already have action headers (MESSAGE, JOKE, etc.)

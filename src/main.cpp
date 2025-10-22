@@ -198,6 +198,12 @@ void setup()
   setupWebServerRoutes(maxCharacters);
   server.begin();
 
+  // Check heap after web server setup (route handlers fragment heap)
+  size_t heapAfterWeb = ESP.getFreeHeap();
+  size_t largestAfterWeb = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+  LOG_NOTICE("BOOT", "Heap after web server: %d KB free, %d KB largest block",
+             heapAfterWeb / 1024, largestAfterWeb / 1024);
+
   // Initialize Unbidden Ink (AI-generated content scheduler)
   initializeUnbiddenInk();
 

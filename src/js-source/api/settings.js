@@ -92,8 +92,8 @@ export async function testUnbiddenInkGeneration(prompt) {
   try {
     // Build query parameter for custom prompt
     const url = prompt
-      ? `/api/unbidden-ink?prompt=${encodeURIComponent(prompt)}`
-      : "/api/unbidden-ink";
+      ? `/api/content/unbidden-ink?prompt=${encodeURIComponent(prompt)}`
+      : "/api/content/unbidden-ink";
 
     const response = await fetch(url, {
       method: "GET",

@@ -308,39 +308,12 @@ void setupAPIRoutes()
     }, NULL, handleChunkedUpload);
     registerRoute("POST", "/api/print-local", "Print custom message");
 
-    // Content generation (with authentication)
-    server.on("/api/riddle", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleRiddle);
+    // Content generation - unified endpoint (with authentication)
+    // Matches: /api/content/riddle, /api/content/joke, /api/content/quote, etc.
+    server.on("^\\/api\\/content\\/(riddle|joke|quote|quiz|news|poke|unbidden-ink|user-message)$", HTTP_GET, [](AsyncWebServerRequest *request) {
+        authenticatedHandler(request, handleContent);
     });
-    registerRoute("GET", "/api/riddle", "Generate random riddle");
-    server.on("/api/joke", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleJoke);
-    });
-    registerRoute("GET", "/api/joke", "Generate random joke");
-    server.on("/api/quote", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleQuote);
-    });
-    registerRoute("GET", "/api/quote", "Generate random quote");
-    server.on("/api/quiz", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleQuiz);
-    });
-    registerRoute("GET", "/api/quiz", "Generate random quiz");
-    server.on("/api/news", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleNews);
-    });
-    registerRoute("GET", "/api/news", "Generate BBC news headlines");
-    server.on("/api/poke", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handlePoke);
-    });
-    registerRoute("GET", "/api/poke", "Generate poke message");
-    server.on("/api/unbidden-ink", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleUnbiddenInk);
-    });
-    registerRoute("GET", "/api/unbidden-ink", "Generate unbidden ink content");
-    server.on("/api/user-message", HTTP_GET, [](AsyncWebServerRequest *request) {
-        authenticatedHandler(request, handleUserMessage);
-    });
-    registerRoute("GET", "/api/user-message", "Generate user message");
+    registerRoute("GET", "/api/content/{type}", "Generate content (riddle|joke|quote|quiz|news|poke|unbidden-ink|user-message)");
 
     // Memo endpoints (regex for path parameters)
     server.on("^\\/api\\/memo\\/([1-4])$", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -435,23 +408,12 @@ void setupAPIRoutes()
 
 void setupStaticAssets()
 {
-    // Explicit favicon handling (no compression needed)
-    server.serveStatic("/favicon.ico", LittleFS, "/favicon.ico")
-        .setCacheControl("max-age=604800");
-    registerRoute("GET", "/favicon.ico", "Favicon ICO file", false);
-    server.serveStatic("/favicon-96x96.png", LittleFS, "/favicon-96x96.png")
-        .setCacheControl("max-age=604800");
-    registerRoute("GET", "/favicon-96x96.png", "Favicon PNG file", false);
-    server.serveStatic("/apple-touch-icon.png", LittleFS, "/apple-touch-icon.png")
-        .setCacheControl("max-age=604800");
-    registerRoute("GET", "/apple-touch-icon.png", "Apple touch icon", false);
-
     // Font: explicitly disable gzip fallback (no .woff2.gz present / immutable)
     server.serveStatic("/fonts/outfit-variable.woff2", LittleFS, "/fonts/outfit-variable.woff2")
         .setCacheControl("max-age=31536000");
     registerRoute("GET", "/fonts/outfit-variable.woff2", "Outfit variable font", false);
 
-    // All other static files
+    // All other static files (including favicons with better 1-year caching)
     setupStaticFileServing(false);
 
     // Register major static routes
