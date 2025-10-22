@@ -505,19 +505,19 @@ String getDiscoveredPrintersJson()
         if (printer.status == "online")
         {
             JsonObject printerObj = printersArray.add<JsonObject>();
-            printerObj["printer_id"] = printer.printerId;
+            printerObj["printerId"] = printer.printerId;
             printerObj["name"] = printer.name;
-            printerObj["firmware_version"] = printer.firmwareVersion;
+            printerObj["firmwareVersion"] = printer.firmwareVersion;
             printerObj["mdns"] = printer.mdns;
-            printerObj["ip_address"] = printer.ipAddress;
+            printerObj["ipAddress"] = printer.ipAddress;
             printerObj["status"] = printer.status;
-            printerObj["last_power_on"] = printer.lastPowerOn;
+            printerObj["lastPowerOn"] = printer.lastPowerOn;
             printerObj["timezone"] = printer.timezone;
         }
     }
 
     doc["count"] = printersArray.size();
-    doc["our_printer_id"] = getPrinterId();
+    doc["ourPrinterId"] = getPrinterId();
 
     String response;
     serializeJson(doc, response);

@@ -54,6 +54,7 @@ void publishPrinterStatus()
     LOG_VERBOSE("DISCOVERY", "Publishing status to topic: %s", statusTopic.c_str());
 
     JsonDocument doc;
+    doc["printerId"] = printerId;
     doc["name"] = getLocalPrinterName();
     doc["firmware_version"] = getFirmwareVersion();
     doc["mdns"] = String(getMdnsHostname()) + ".local";

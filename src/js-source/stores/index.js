@@ -377,12 +377,12 @@ export function createIndexStore() {
       const deviceConfig = this.data.config.device;
       const localPrinterData = {
         name: deviceConfig.printer_name || deviceConfig.owner,
-        ip_address: deviceConfig.ip_address,
+        ipAddress: deviceConfig.ip_address,
         mdns: deviceConfig.mdns,
         status: "online",
-        firmware_version: deviceConfig.firmware_version,
+        firmwareVersion: deviceConfig.firmware_version,
         timezone: deviceConfig.timezone,
-        last_power_on: deviceConfig.boot_time,
+        lastPowerOn: deviceConfig.boot_time,
       };
 
       this.showPrinterOverlay(localPrinterData, localPrinterData.name, "local");
@@ -411,9 +411,9 @@ export function createIndexStore() {
         printerType === "mqtt"
           ? buildPrintTopic(this.overlayPrinterName)
           : null;
-      const ipAddress = printerData.ip_address;
+      const ipAddress = printerData.ipAddress;
       const mdns = printerData.mdns;
-      const firmwareVersion = printerData.firmware_version;
+      const firmwareVersion = printerData.firmwareVersion;
       const printerIcon =
         printerType === "local"
           ? window.getIcon("home", "w-6 h-6")
@@ -421,19 +421,19 @@ export function createIndexStore() {
 
       // Format last power on time
       let lastPowerOnText = "Not available";
-      if (printerData.last_power_on) {
+      if (printerData.lastPowerOn) {
         try {
           let powerOnTime;
-          if (typeof printerData.last_power_on === "string") {
-            powerOnTime = new Date(printerData.last_power_on);
-          } else if (typeof printerData.last_power_on === "number") {
+          if (typeof printerData.lastPowerOn === "string") {
+            powerOnTime = new Date(printerData.lastPowerOn);
+          } else if (typeof printerData.lastPowerOn === "number") {
             const timestamp =
-              printerData.last_power_on < 10000000000
-                ? printerData.last_power_on * 1000
-                : printerData.last_power_on;
+              printerData.lastPowerOn < 10000000000
+                ? printerData.lastPowerOn * 1000
+                : printerData.lastPowerOn;
             powerOnTime = new Date(timestamp);
           } else {
-            powerOnTime = new Date(printerData.last_power_on);
+            powerOnTime = new Date(printerData.lastPowerOn);
           }
 
           const now = new Date();
