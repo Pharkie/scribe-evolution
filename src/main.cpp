@@ -133,7 +133,7 @@ void setup()
   // Initialize remaining singleton managers (after time is set for correct timestamps)
   APIClient::instance().begin();
   MQTTManager::instance().begin();
-  LOG_NOTICE("BOOT", "Thread-safe singleton managers initialized")
+  LOG_NOTICE("BOOT", "Thread-safe singleton managers initialized");
 
   // Record boot time for consistent reporting (after timezone is set)
   deviceBootTime = getISOTimestamp();
