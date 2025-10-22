@@ -24,9 +24,10 @@ String getFirmwareVersion()
 
 String createOfflinePayload()
 {
-    // Create simple offline status payload (just name and status)
+    // Create simple offline status payload (just name, chipModel and status)
     JsonDocument doc;
     doc["name"] = getLocalPrinterName();
+    doc["chipModel"] = ESP.getChipModel();
     doc["status"] = "offline";
 
     String payload;
@@ -56,11 +57,12 @@ void publishPrinterStatus()
     JsonDocument doc;
     doc["printerId"] = printerId;
     doc["name"] = getLocalPrinterName();
-    doc["firmware_version"] = getFirmwareVersion();
+    doc["firmwareVersion"] = getFirmwareVersion();
+    doc["chipModel"] = ESP.getChipModel();
     doc["mdns"] = String(getMdnsHostname()) + ".local";
-    doc["ip_address"] = WiFi.localIP().toString();
+    doc["ipAddress"] = WiFi.localIP().toString();
     doc["status"] = "online";
-    doc["last_power_on"] = getDeviceBootTime();
+    doc["lastPowerOn"] = getDeviceBootTime();
     doc["timezone"] = getTimezone();
 
     String payload;
@@ -132,11 +134,12 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
             else
             {
                 printer.name = doc["name"] | printer.name;
-                printer.firmwareVersion = doc["firmware_version"] | printer.firmwareVersion;
+                printer.firmwareVersion = doc["firmwareVersion"] | printer.firmwareVersion;
+                printer.chipModel = doc["chipModel"] | printer.chipModel;
                 printer.mdns = doc["mdns"] | printer.mdns;
-                printer.ipAddress = doc["ip_address"] | printer.ipAddress;
+                printer.ipAddress = doc["ipAddress"] | printer.ipAddress;
                 printer.status = "online";
-                printer.lastPowerOn = doc["last_power_on"] | printer.lastPowerOn;
+                printer.lastPowerOn = doc["lastPowerOn"] | printer.lastPowerOn;
                 printer.timezone = doc["timezone"] | printer.timezone;
                 printer.lastSeen = currentTime;
 
@@ -156,11 +159,12 @@ void onPrinterStatusMessage(const String &topic, const String &payload)
         DiscoveredPrinter newPrinter;
         newPrinter.printerId = printerId;
         newPrinter.name = doc["name"] | "Unknown";
-        newPrinter.firmwareVersion = doc["firmware_version"] | "Unknown";
+        newPrinter.firmwareVersion = doc["firmwareVersion"] | "Unknown";
+        newPrinter.chipModel = doc["chipModel"] | "Unknown";
         newPrinter.mdns = doc["mdns"] | "";
-        newPrinter.ipAddress = doc["ip_address"] | "";
+        newPrinter.ipAddress = doc["ipAddress"] | "";
         newPrinter.status = "online";
-        newPrinter.lastPowerOn = doc["last_power_on"] | "";
+        newPrinter.lastPowerOn = doc["lastPowerOn"] | "";
         newPrinter.timezone = doc["timezone"] | "";
         newPrinter.lastSeen = currentTime;
 

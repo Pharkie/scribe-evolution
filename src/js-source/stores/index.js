@@ -173,7 +173,7 @@ export function createIndexStore() {
         // Use ES6 imported API function instead of window.IndexAPI
         this.data.config = await loadConfiguration();
 
-        if (this.data.config?.device?.printer_name === undefined) {
+        if (this.data.config?.device?.printerName === undefined) {
           throw new Error("Printer name configuration is missing from server");
         }
         if (this.data.config?.device?.maxCharacters === undefined) {
@@ -185,7 +185,7 @@ export function createIndexStore() {
           throw new Error("Device configuration is missing from server");
         }
 
-        this.localPrinterName = this.data.config.device.printer_name;
+        this.localPrinterName = this.data.config.device.printerName;
 
         // Load memos from separate API endpoint
         await this.loadMemosFromAPI();
@@ -376,13 +376,14 @@ export function createIndexStore() {
 
       const deviceConfig = this.data.config.device;
       const localPrinterData = {
-        name: deviceConfig.printer_name || deviceConfig.owner,
-        ipAddress: deviceConfig.ip_address,
+        name: deviceConfig.printerName || deviceConfig.owner,
+        ipAddress: deviceConfig.ipAddress,
         mdns: deviceConfig.mdns,
         status: "online",
-        firmwareVersion: deviceConfig.firmware_version,
+        firmwareVersion: deviceConfig.firmwareVersion,
+        chipModel: deviceConfig.chipModel,
         timezone: deviceConfig.timezone,
-        lastPowerOn: deviceConfig.boot_time,
+        lastPowerOn: deviceConfig.bootTime,
       };
 
       this.showPrinterOverlay(localPrinterData, localPrinterData.name, "local");
@@ -414,6 +415,7 @@ export function createIndexStore() {
       const ipAddress = printerData.ipAddress;
       const mdns = printerData.mdns;
       const firmwareVersion = printerData.firmwareVersion;
+      const chipModel = printerData.chipModel;
       const printerIcon =
         printerType === "local"
           ? window.getIcon("home", "w-6 h-6")
@@ -462,6 +464,7 @@ export function createIndexStore() {
         ipAddress,
         mdns,
         firmwareVersion,
+        chipModel,
         printerIcon,
         lastPowerOnText,
         timezone,
@@ -1038,14 +1041,14 @@ export function createIndexStore() {
     },
 
     updatePrintersFromData(data) {
-      if (data && data.discovered_printers) {
+      if (data && data.discoveredPrinters) {
         // Use updatePrinterList to properly build topics with buildPrintTopic()
-        this.updatePrinterList(data.discovered_printers);
+        this.updatePrinterList(data.discoveredPrinters);
 
         // Also dispatch custom event for backward compatibility if needed
         const event = new CustomEvent("printersUpdated", {
           detail: {
-            printers: data.discovered_printers,
+            printers: data.discoveredPrinters,
           },
         });
         document.dispatchEvent(event);

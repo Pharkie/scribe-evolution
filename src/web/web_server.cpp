@@ -497,7 +497,7 @@ static String lastPrinterListHash = "";
 String getDiscoveredPrintersJson()
 {
     JsonDocument doc;
-    JsonArray printersArray = doc["discovered_printers"].to<JsonArray>();
+    JsonArray printersArray = doc["discoveredPrinters"].to<JsonArray>();
 
     std::vector<DiscoveredPrinter> discovered = getDiscoveredPrinters();
     for (const auto &printer : discovered)
@@ -508,6 +508,7 @@ String getDiscoveredPrintersJson()
             printerObj["printerId"] = printer.printerId;
             printerObj["name"] = printer.name;
             printerObj["firmwareVersion"] = printer.firmwareVersion;
+            printerObj["chipModel"] = printer.chipModel;
             printerObj["mdns"] = printer.mdns;
             printerObj["ipAddress"] = printer.ipAddress;
             printerObj["status"] = printer.status;

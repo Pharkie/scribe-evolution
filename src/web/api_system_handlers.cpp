@@ -49,10 +49,10 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     JsonObject microcontroller = doc["microcontroller"].to<JsonObject>();
 
     // Hardware information
-    microcontroller["chip_model"] = ESP.getChipModel();
-    microcontroller["chip_revision"] = ESP.getChipRevision();
-    microcontroller["cpu_frequency_mhz"] = ESP.getCpuFreqMHz();
-    microcontroller["sdk_version"] = ESP.getSdkVersion();
+    microcontroller["chipModel"] = ESP.getChipModel();
+    microcontroller["chipRevision"] = ESP.getChipRevision();
+    microcontroller["cpuFrequencyMhz"] = ESP.getCpuFreqMHz();
+    microcontroller["sdkVersion"] = ESP.getSdkVersion();
 
     // Reset reason
     esp_reset_reason_t resetReason = esp_reset_reason();
@@ -93,7 +93,7 @@ void handleDiagnostics(AsyncWebServerRequest *request)
         resetReasonStr = "Unknown";
         break;
     }
-    microcontroller["reset_reason"] = resetReasonStr;
+    microcontroller["resetReason"] = resetReasonStr;
 
     // Temperature (ESP32-C3 internal sensor)
     float temp = temperatureRead();
@@ -113,23 +113,23 @@ void handleDiagnostics(AsyncWebServerRequest *request)
     }
 
     // System status
-    microcontroller["uptime_ms"] = millis();
+    microcontroller["uptimeMs"] = millis();
 
     // Memory information
     JsonObject memory = microcontroller["memory"].to<JsonObject>();
-    memory["free_heap"] = ESP.getFreeHeap();
-    memory["total_heap"] = ESP.getHeapSize();
-    memory["used_heap"] = ESP.getHeapSize() - ESP.getFreeHeap();
+    memory["freeHeap"] = ESP.getFreeHeap();
+    memory["totalHeap"] = ESP.getHeapSize();
+    memory["usedHeap"] = ESP.getHeapSize() - ESP.getFreeHeap();
 
     // Flash storage breakdown
     JsonObject flash = microcontroller["flash"].to<JsonObject>();
 
     // Total flash chip size (4MB on ESP32-C3)
     uint32_t totalFlashSize = ESP.getFlashChipSize();
-    flash["total_chip_size"] = totalFlashSize;
+    flash["totalChipSize"] = totalFlashSize;
 
     // App partition (firmware)
-    JsonObject app_partition = flash["app_partition"].to<JsonObject>();
+    JsonObject appPartition = flash["appPartition"].to<JsonObject>();
     uint32_t appUsed = ESP.getSketchSize();
 
     // Get accurate partition size using ESP-IDF APIs
@@ -147,22 +147,22 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     uint32_t appFree = appTotal - appUsed;
 
-    app_partition["used"] = appUsed;
-    app_partition["free"] = appFree;
-    app_partition["total"] = appTotal;
-    app_partition["percent_of_total_flash"] = (appTotal * 100) / totalFlashSize;
+    appPartition["used"] = appUsed;
+    appPartition["free"] = appFree;
+    appPartition["total"] = appTotal;
+    appPartition["percentOfTotalFlash"] = (appTotal * 100) / totalFlashSize;
 
     // File system (LittleFS)
     JsonObject filesystem = flash["filesystem"].to<JsonObject>();
     filesystem["used"] = usedBytes;
     filesystem["free"] = totalBytes - usedBytes;
     filesystem["total"] = totalBytes;
-    filesystem["percent_of_total_flash"] = (totalBytes * 100) / totalFlashSize;
+    filesystem["percentOfTotalFlash"] = (totalBytes * 100) / totalFlashSize;
 
     // === LOGGING CONFIGURATION ===
     JsonObject logging = doc["logging"].to<JsonObject>();
     logging["level"] = logLevel;
-    logging["level_name"] = getLogLevelString(logLevel);
+    logging["levelName"] = getLogLevelString(logLevel);
 
     // Pages and endpoints moved to separate /api/routes endpoint
 

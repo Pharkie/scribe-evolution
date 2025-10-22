@@ -10,8 +10,8 @@ function handleSSE(req, res, mockPrinterDiscovery) {
   });
 
   const data = { ...mockPrinterDiscovery };
-  if (!Array.isArray(data.discovered_printers)) {
-    data.discovered_printers = [];
+  if (!Array.isArray(data.discoveredPrinters)) {
+    data.discoveredPrinters = [];
   }
 
   // Send initial data immediately
@@ -26,10 +26,10 @@ function handleSSE(req, res, mockPrinterDiscovery) {
       return clearInterval(interval);
     }
     if (
-      Array.isArray(data.discovered_printers) &&
-      data.discovered_printers.length > 0
+      Array.isArray(data.discoveredPrinters) &&
+      data.discoveredPrinters.length > 0
     ) {
-      data.discovered_printers[0].last_power_on = new Date().toISOString();
+      data.discoveredPrinters[0].lastPowerOn = new Date().toISOString();
     }
     const updatePayload = `event: printer-update\ndata: ${JSON.stringify(data)}\n\n`;
     console.log("📡 Mock: Sending SSE update");

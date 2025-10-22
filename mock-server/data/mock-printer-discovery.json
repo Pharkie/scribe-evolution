@@ -1,16 +1,17 @@
 {
-  "discovered_printers": [
+  "discoveredPrinters": [
     {
-      "printer_id": "mock123456",
+      "printerId": "mock123456",
       "name": "Mock Scribe Printer",
-      "firmware_version": "1.0.0-dev",
+      "firmwareVersion": "1.0.0-dev",
+      "chipModel": "ESP32-C3",
       "mdns": "scribe-mockuser.local",
-      "ip_address": "192.168.1.100",
+      "ipAddress": "192.168.1.100",
       "status": "online",
-      "last_power_on": "2025-08-21T12:50:47Z",
+      "lastPowerOn": "2025-08-21T12:50:47Z",
       "timezone": "America/New_York"
     }
   ],
   "count": 1,
-  "our_printer_id": "mock123456"
+  "ourPrinterId": "mock123456"
 }

@@ -1,6 +1,6 @@
 {
   "microcontroller": {
-    "chip_model": "ESP32-C3",
+    "chipModel": "ESP32-C3",
     "chip_revision": 4,
     "cpu_frequency_mhz": 160,
     "sdk_version": "v4.4.7-dirty",

@@ -107,12 +107,13 @@ void handleConfigGet(AsyncWebServerRequest *request)
     device["maxCharacters"] = config.maxCharacters;
 
     // Add runtime device information
-    device["firmware_version"] = getFirmwareVersion();
-    device["boot_time"] = getDeviceBootTime();
+    device["firmwareVersion"] = getFirmwareVersion();
+    device["chipModel"] = ESP.getChipModel();
+    device["bootTime"] = getDeviceBootTime();
     device["mdns"] = String(getMdnsHostname()) + ".local";
-    device["ip_address"] = WiFi.localIP().toString();
-    device["printer_name"] = getLocalPrinterName();
-    device["mqtt_topic"] = getLocalPrinterTopic();
+    device["ipAddress"] = WiFi.localIP().toString();
+    device["printerName"] = getLocalPrinterName();
+    device["mqttTopic"] = getLocalPrinterTopic();
     device["type"] = "local";
 
     // Hardware GPIO configuration
@@ -134,17 +135,17 @@ void handleConfigGet(AsyncWebServerRequest *request)
     }
 
     // Include fallback AP details for client use - always available regardless of current mode
-    wifi["fallback_ap_ssid"] = fallbackAPSSID;
-    wifi["fallback_ap_password"] = fallbackAPPassword;
+    wifi["fallbackApSsid"] = fallbackAPSSID;
+    wifi["fallbackApPassword"] = fallbackAPPassword;
     // Always provide mDNS hostname as it's consistent and preferred
-    wifi["fallback_ap_mdns"] = String(getMdnsHostname()) + ".local";
+    wifi["fallbackApMdns"] = String(getMdnsHostname()) + ".local";
 
     // WiFi status information
     JsonObject wifiStatus = wifi.createNestedObject("status");
     wifiStatus["connected"] = (WiFi.status() == WL_CONNECTED);
-    wifiStatus["ap_sta_mode"] = isAPMode(); // Indicate if device is in AP-STA setup mode
-    wifiStatus["ip_address"] = WiFi.localIP().toString();
-    wifiStatus["mac_address"] = WiFi.macAddress();
+    wifiStatus["apStaMode"] = isAPMode(); // Indicate if device is in AP-STA setup mode
+    wifiStatus["ipAddress"] = WiFi.localIP().toString();
+    wifiStatus["macAddress"] = WiFi.macAddress();
     wifiStatus["gateway"] = WiFi.gatewayIP().toString();
     wifiStatus["dns"] = WiFi.dnsIP().toString();
 

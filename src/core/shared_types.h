@@ -43,6 +43,7 @@ struct DiscoveredPrinter
     String printerId;
     String name;
     String firmwareVersion;
+    String chipModel;
     String mdns;
     String ipAddress;
     String status;
