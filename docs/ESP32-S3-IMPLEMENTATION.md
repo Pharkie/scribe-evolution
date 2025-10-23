@@ -1,16 +1,29 @@
-# ESP32-S3 Mini Implementation Guide
+# ESP32-S3 Implementation Guide
 
-This document describes the ESP32-S3 Mini (8MB, no PSRAM) support implementation for Scribe Evolution.
+This document describes the ESP32-S3 variants support implementation for Scribe Evolution.
 
 ## Overview
 
-The ESP32-S3 Mini variant provides:
+Scribe Evolution supports two ESP32-S3 configurations:
 
-- **8MB flash** (double the ESP32-C3's 4MB)
-- **OTA support** via dual app partitions
-- **More processing power** - Dual-core Xtensa LX7 @ 240MHz
-- **Same GPIO compatibility** - GPIO21 works identically to ESP32-C3
+### ESP32-S3R8 SuperMini (4MB Flash + 2MB PSRAM)
+
+- **4MB flash**
+- **2MB PSRAM** - Enabled for expanded memory capacity (~2.5MB total RAM)
+- **Dual-core Xtensa LX7 @ 240MHz**
 - **USB CDC** - Native USB support for programming and serial output
+- **No OTA support** (4MB flash is too constrained for dual partitions)
+- **Use case**: Development boards with PSRAM chip
+
+### ESP32-S3 Custom PCB (8MB Flash, no PSRAM)
+
+- **8MB flash** (double the 4MB variant)
+- **No PSRAM** - Cost-optimized design (~512KB internal RAM only)
+- **OTA support** via dual app partitions
+- **eFuse protection circuits** for printer and LED power
+- **Dual-core Xtensa LX7 @ 240MHz**
+- **USB CDC** support
+- **Use case**: Production custom PCB with eFuse protection
 
 ## Partition Layout
 

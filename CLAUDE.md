@@ -2,8 +2,8 @@
 
 <system_context>
 Multi-board ESP32 thermal printer with web interface. Alpine.js + Tailwind CSS frontend, C++ backend.
-Supports ESP32-C3-mini, ESP32-S3-mini, and custom PCB variants.
-Memory-constrained embedded system with dual configuration layers.
+Supports ESP32-C3-mini (4MB, no PSRAM), ESP32-S3R8-mini (4MB + 2MB PSRAM), and custom S3 PCB (8MB, no PSRAM).
+ESP32-S3R8 has PSRAM enabled for expanded memory capacity (~2.5MB total RAM vs ~512KB).
 Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT, LEDs) use singleton + mutex pattern.
 </system_context>
 
