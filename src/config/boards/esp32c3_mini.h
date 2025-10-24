@@ -28,6 +28,7 @@
 
 #define BOARD_NAME "ESP32-C3-mini"
 #define BOARD_MAX_GPIO 21
+#define BOARD_HAS_EFUSES false
 
 // ============================================================================
 // PIN ASSIGNMENTS

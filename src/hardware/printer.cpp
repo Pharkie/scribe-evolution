@@ -78,6 +78,13 @@ void PrinterManager::initialize()
     const RuntimeConfig &config = getRuntimeConfig();
     // const BoardPinDefaults &boardDefaults = getBoardDefaults();
 
+    // Enable printer eFuse if present (custom PCB only)
+#if BOARD_HAS_EFUSES
+    pinMode(BOARD_EFUSE_PRINTER_PIN, OUTPUT);
+    digitalWrite(BOARD_EFUSE_PRINTER_PIN, HIGH);
+    LOG_VERBOSE("PRINTER", "Printer eFuse enabled (GPIO %d)", BOARD_EFUSE_PRINTER_PIN);
+#endif
+
     // Ensure clean state - call end() first to clear any stale state
     uart->end();
     delay(100);

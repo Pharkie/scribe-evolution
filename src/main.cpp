@@ -110,15 +110,17 @@ void setup()
   LogManager::instance().begin(115200, 8, 512);  // Queue: 256→8 entries (saves 124KB)
 
   // Configure ESP32 system component log levels
-  esp_log_level_set("WebServer", static_cast<esp_log_level_t>(espLogLevel));
+  // CORE_DEBUG_LEVEL is set in platformio.ini (varies by build type)
+  esp_log_level_set("WebServer", static_cast<esp_log_level_t>(CORE_DEBUG_LEVEL));
 #ifdef RELEASE_BUILD
   // Suppress VFS errors in production (AsyncWebServer checks for uncompressed files before serving .gz)
   esp_log_level_set("vfs", ESP_LOG_NONE);
 #endif
 
   // Log logging configuration (LogManager is now ready)
+  // APP_LOG_LEVEL is set in platformio.ini (varies by build type)
   LOG_VERBOSE("BOOT", "Logging configured - Level: %s (serial output only)",
-              getLogLevelString(logLevel).c_str());
+              getLogLevelString(APP_LOG_LEVEL).c_str());
 
   // Initialize mutex for currentMessage (protects against multi-core race conditions)
   currentMessageMutex = xSemaphoreCreateMutex();

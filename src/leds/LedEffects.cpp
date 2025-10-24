@@ -118,6 +118,13 @@ bool LedEffects::begin()
     // Load configuration
     const RuntimeConfig &config = getRuntimeConfig();
 
+    // Enable LED eFuse if present (custom PCB only) - one-time init
+#if BOARD_HAS_EFUSES
+    pinMode(BOARD_EFUSE_LED_PIN, OUTPUT);
+    digitalWrite(BOARD_EFUSE_LED_PIN, HIGH);
+    LOG_VERBOSE("LEDS", "LED strip eFuse enabled (GPIO %d)", BOARD_EFUSE_LED_PIN);
+#endif
+
     // Call internal reinitialize (mutex already held)
     return reinitializeInternal(config.ledPin, config.ledCount, config.ledBrightness,
                                 config.ledRefreshRate, config.ledEffects);
@@ -171,18 +178,6 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
         return false;
     }
     leds = staticLEDs;  // Point to static global array
-
-    // Enable LED eFuse if present (custom PCB only)
-    #if BOARD_HAS_LED_EFUSE
-    const BoardPinDefaults &boardDefaults = getBoardDefaults();
-    if (boardDefaults.efuse.ledStrip != -1)
-    {
-        LOG_VERBOSE("LEDS", "Enabling LED strip eFuse on GPIO %d", boardDefaults.efuse.ledStrip);
-        pinMode(boardDefaults.efuse.ledStrip, OUTPUT);
-        digitalWrite(boardDefaults.efuse.ledStrip, HIGH); // Enable LED power
-        delay(10); // Give eFuse time to stabilize
-    }
-    #endif
 
     // Initialize FastLED
     // Validate GPIO pin using configuration system

@@ -34,6 +34,7 @@
 
 #define BOARD_NAME "ESP32-S3-mini"
 #define BOARD_MAX_GPIO 48
+#define BOARD_HAS_EFUSES false
 
 // ============================================================================
 // PIN ASSIGNMENTS (from Andrius - ESP32-S3-SuperMini)

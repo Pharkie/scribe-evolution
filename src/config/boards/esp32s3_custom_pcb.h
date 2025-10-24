@@ -28,7 +28,11 @@
 
 #define BOARD_NAME "ESP32-S3-custom-PCB"
 #define BOARD_MAX_GPIO 48
-#define BOARD_HAS_EFUSE true  // Custom PCB has eFuse power control
+#define BOARD_HAS_EFUSES true  // Custom PCB has eFuse power control
+
+// eFuse GPIO pins for power control
+#define BOARD_EFUSE_PRINTER_PIN 9
+#define BOARD_EFUSE_LED_PIN 10
 
 // ============================================================================
 // PIN ASSIGNMENTS

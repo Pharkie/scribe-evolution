@@ -177,8 +177,8 @@ void handleDiagnostics(AsyncWebServerRequest *request)
 
     // === LOGGING CONFIGURATION ===
     JsonObject logging = doc["logging"].to<JsonObject>();
-    logging["level"] = logLevel;
-    logging["levelName"] = getLogLevelString(logLevel);
+    logging["level"] = APP_LOG_LEVEL;
+    logging["levelName"] = getLogLevelString(APP_LOG_LEVEL);
     logging["serialEnabled"] = enableSerialLogging;
     logging["fileEnabled"] = enableFileLogging;
     logging["betterstackEnabled"] = enableBetterStackLogging;

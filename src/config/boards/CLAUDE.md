@@ -60,43 +60,44 @@ Compile-time board selection with runtime validation.
 
 ### Key Files
 
-**Board Interface** (`board_interface.h`)
+**Board Selector** (`board_pins.h`)
 
-- Defines common structures all boards must implement
-- `GPIOInfo`, `BoardConstraints`, `BoardPinDefaults`
-- Validation function signatures: `isValidGPIO()`, `isSafeGPIO()`, `getGPIODescription()`
-
-**Board Selector** (`board_config.h`)
-
-- Auto-detects board type from build flags
+- Auto-detects board type from PlatformIO build flags
 - Includes correct board-specific header
-- Provides `validateBoardMatch()` for runtime checking
-- Compile-time error if board unsupported
+- Provides simple accessor functions (optional convenience)
+- Compile-time error if no board flag set
 
-**Individual Board Files**
+**Individual Board Headers** (`esp32c3_mini.h`, `esp32s3_mini.h`, `esp32s3_custom_pcb.h`)
 
-- Implement board interface
-- Define GPIO maps (safe/avoid classification)
-- Provide hardware constraints (strapping pins, max GPIO, etc.)
-- Set board-specific defaults (printer, LEDs, buttons)
+- Define compile-time macros for all pin assignments (`BOARD_*` macros)
+- Define board characteristics (`BOARD_NAME`, `BOARD_MAX_GPIO`, `BOARD_HAS_EFUSE`)
+- Define `GPIOInfo` struct and map for GPIO safety documentation
+- Implement inline validation functions: `isValidGPIO()`, `isSafeGPIO()`, `getGPIODescription()`
+- Simple, self-contained, no complex interfaces
 
 ## Usage Patterns
 
 ### In Code - Use Board Macros
 
 ```cpp
-// Get board-specific defaults
-const BoardPinDefaults &defaults = getBoardDefaults();
+// Access board-specific pin macros directly
+int printerTX = BOARD_PRINTER_TX_PIN;
+int ledPin = BOARD_LED_STRIP_PIN;
+int statusLED = BOARD_STATUS_LED_PIN;
+int button0 = BOARD_BUTTON_PINS[0];  // Array of button pins
+int button1 = BOARD_BUTTON_PINS[1];
 
-// Access printer configuration
-int printerTX = defaults.printer.tx;
-int printerRX = defaults.printer.rx;  // -1 if not used
-int printerDTR = defaults.printer.dtr; // -1 if not present
+// Check board characteristics
+const char* boardName = BOARD_NAME;          // "ESP32-C3-mini", etc.
+int maxGPIO = BOARD_MAX_GPIO;                // 21 or 48
 
 // Check eFuse support (compile-time)
-#if BOARD_HAS_PRINTER_EFUSE
-    pinMode(defaults.efuse.printer, OUTPUT);
-    digitalWrite(defaults.efuse.printer, HIGH);
+#if BOARD_HAS_EFUSE
+    // Custom PCB only - enable power control
+    pinMode(BOARD_EFUSE_PRINTER_PIN, OUTPUT);
+    digitalWrite(BOARD_EFUSE_PRINTER_PIN, HIGH);
+    pinMode(BOARD_EFUSE_LED_PIN, OUTPUT);
+    digitalWrite(BOARD_EFUSE_LED_PIN, HIGH);
 #endif
 
 // Validate GPIO at runtime
@@ -109,13 +110,19 @@ if (!isSafeGPIO(pin)) {
 }
 ```
 
-### In Configuration - Reference Board Defaults
+### In Configuration - Reference Board Macros
 
 ```cpp
-// system_constants.h
-static const int defaultPrinterTxPin = BOARD_DEFAULT_PRINTER_TX;
+// config.h or system_constants.h
+// Board macros are available after including board_pins.h
+static const int defaultPrinterTxPin = BOARD_PRINTER_TX_PIN;
 static const int statusLEDPin = BOARD_STATUS_LED_PIN;
-static const ButtonConfig *defaultButtons = BOARD_DEFAULT_BUTTONS;
+static const int defaultButtons[4] = {
+    BOARD_BUTTON_PINS[0],
+    BOARD_BUTTON_PINS[1],
+    BOARD_BUTTON_PINS[2],
+    BOARD_BUTTON_PINS[3]
+};
 ```
 
 ### PlatformIO Environments
@@ -161,64 +168,92 @@ When firmware detects board type doesn't match saved NVS:
 
 ### Step 1: Create Board Header
 
-Create `board_yourboard.h` implementing the interface:
+Create `boards/yourboard.h` following the simple pattern:
 
 ```cpp
-#include "board_interface.h"
+#ifndef YOURBOARD_H
+#define YOURBOARD_H
 
-// GPIO map with safety classifications
-static const GPIOInfo YOURBOARD_GPIO_MAP[] = {
-    {0, GPIO_TYPE_AVOID, "Avoid: Strapping pin"},
-    {1, GPIO_TYPE_SAFE, "Safe"},
-    // ... all GPIOs
-};
-
-// Hardware constraints
-static const BoardConstraints YOURBOARD_CONSTRAINTS = {
-    .maxGPIO = 21,
-    .strappingPins = ...,
-    .avoidPins = ...,
-    .gpioMap = YOURBOARD_GPIO_MAP,
-    .gpioMapSize = sizeof(YOURBOARD_GPIO_MAP) / sizeof(GPIOInfo)
-};
-
-// Default pin assignments
-static const BoardPinDefaults YOURBOARD_DEFAULTS = {
-    .boardName = "Your Board Name",
-    .boardIdentifier = "YOURBOARD",
-    .printer = {.tx = 21, .rx = -1, .dtr = -1},
-    .ledDataPin = 20,
-    .statusLedPin = 8,
-    .buttons = ...,
-    .buttonCount = 4,
-    .efuse = {.printer = -1, .ledStrip = -1}
-};
-
-// Implement validation functions
-inline bool isValidGPIO(int pin) { /* ... */ }
-inline bool isSafeGPIO(int pin) { /* ... */ }
-inline const char *getGPIODescription(int pin) { /* ... */ }
-inline const BoardConstraints &getBoardConstraints() { return YOURBOARD_CONSTRAINTS; }
-inline const BoardPinDefaults &getBoardDefaults() { return YOURBOARD_DEFAULTS; }
-
-// Define macros for compile-time access
+// ============================================================================
+// BOARD IDENTIFICATION
+// ============================================================================
 #define BOARD_NAME "Your Board Name"
-#define BOARD_IDENTIFIER "YOURBOARD"
 #define BOARD_MAX_GPIO 21
-#define BOARD_HAS_PRINTER_EFUSE false
-#define BOARD_HAS_LED_EFUSE false
-#define BOARD_DEFAULT_PRINTER_TX YOURBOARD_DEFAULTS.printer.tx
-// ... etc
+#define BOARD_HAS_EFUSE false  // true only if board has eFuse power control
+
+// ============================================================================
+// PIN ASSIGNMENTS (customize for your board)
+// ============================================================================
+#define BOARD_LED_STRIP_PIN 20
+#define BOARD_PRINTER_TX_PIN 21
+#define BOARD_STATUS_LED_PIN 8
+static const int BOARD_BUTTON_PINS[4] = {4, 5, 6, 7};
+
+// Optional: eFuse pins (only if BOARD_HAS_EFUSE is true)
+// #define BOARD_EFUSE_PRINTER_PIN 9
+// #define BOARD_EFUSE_LED_PIN 10
+
+// ============================================================================
+// GPIO VALIDATION DATA
+// ============================================================================
+enum GPIOType {
+    GPIO_TYPE_SAFE = 0,
+    GPIO_TYPE_AVOID = 1
+};
+
+struct GPIOInfo {
+    int pin;
+    GPIOType type;
+    const char* description;
+};
+
+// GPIO map (for documentation and validation)
+static const GPIOInfo BOARD_GPIO_MAP[] = {
+    {0, GPIO_TYPE_AVOID, "Strapping pin"},
+    {4, GPIO_TYPE_SAFE, "Button 0"},
+    {5, GPIO_TYPE_SAFE, "Button 1"},
+    // ... document all pins
+};
+
+static const int BOARD_GPIO_MAP_SIZE = sizeof(BOARD_GPIO_MAP) / sizeof(BOARD_GPIO_MAP[0]);
+static const int BOARD_AVOID_PINS[] = {0, 9, 18, 19};  // Pins to avoid
+
+// ============================================================================
+// VALIDATION FUNCTIONS (inline for zero runtime cost)
+// ============================================================================
+inline bool isValidGPIO(int pin) {
+    return (pin >= 0 && pin <= BOARD_MAX_GPIO);
+}
+
+inline bool isSafeGPIO(int pin) {
+    for (int i = 0; i < sizeof(BOARD_AVOID_PINS) / sizeof(int); i++) {
+        if (pin == BOARD_AVOID_PINS[i]) return false;
+    }
+    return isValidGPIO(pin);
+}
+
+inline const char* getGPIODescription(int pin) {
+    for (int i = 0; i < BOARD_GPIO_MAP_SIZE; i++) {
+        if (BOARD_GPIO_MAP[i].pin == pin) {
+            return BOARD_GPIO_MAP[i].description;
+        }
+    }
+    return "Unknown GPIO";
+}
+
+#endif // YOURBOARD_H
 ```
 
 ### Step 2: Update Board Selector
 
-Add detection to `board_config.h`:
+Add detection to `board_pins.h`:
 
 ```cpp
-#elif defined(BOARD_YOURBOARD) || defined(ARDUINO_YOURBOARD)
-    #include "board_yourboard.h"
-    #define BOARD_DETECTED "Your Board Name"
+#elif defined(BOARD_YOURBOARD)
+    #include "boards/yourboard.h"
+#else
+    #error "No board type defined!"
+#endif
 ```
 
 ### Step 3: Add PlatformIO Environment

@@ -130,7 +130,8 @@ static const int ntpSyncIntervalSeconds = 3600; // Re-sync interval (1 hour)
 
 // Logging Configuration
 // Logging levels: LOG_LEVEL_VERBOSE, LOG_LEVEL_NOTICE, LOG_LEVEL_WARN, LOG_LEVEL_ERROR
-// Note: logLevel, espLogLevel, and enable* flags defined in device_config.h
+// Note: APP_LOG_LEVEL and CORE_DEBUG_LEVEL defined in platformio.ini build flags
+// Note: enable* flags defined in device_config.h
 static const char *mqttLogTopic = "scribe/log";
 static const char *logFileName = "/logs/scribe.log";
 static const size_t maxLogFileSize = 100000; // 100KB
