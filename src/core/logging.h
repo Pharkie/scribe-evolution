@@ -34,7 +34,19 @@
  * - Single writer task prevents concurrent Serial corruption
  * - ISR-safe logging support
  * - Non-blocking message enqueueing
+ *
+ * Logging levels are controlled at compile-time via platformio.ini:
+ * - APP_LOG_LEVEL: Controls application logging (LOG_VERBOSE, LOG_NOTICE, etc.)
+ * - CORE_DEBUG_LEVEL: Controls ESP32 framework logging (ESP_LOGx macros)
+ *
+ * Release builds use LOG_LEVEL_ERROR for both, enabling dead code elimination.
+ * Debug builds use LOG_LEVEL_NOTICE for verbose output during development.
  */
+
+// Validate that APP_LOG_LEVEL is defined by build system
+#ifndef APP_LOG_LEVEL
+#error "APP_LOG_LEVEL must be defined in platformio.ini build flags (e.g., -DAPP_LOG_LEVEL=LOG_LEVEL_NOTICE)"
+#endif
 
 /**
  * @brief Get log level string from numeric level
@@ -52,7 +64,7 @@ const char* getSafeDeviceOwner();
 
 #define LOG_VERBOSE(component, format, ...) \
     do { \
-        if (LOG_LEVEL_VERBOSE <= logLevel) { \
+        if (LOG_LEVEL_VERBOSE <= APP_LOG_LEVEL) { \
             String _timestamp = getFormattedDateTime(); \
             LogManager::instance().logf("[%s] [VERBOSE] V: [%s] [%s] " format "\n", \
                      _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
@@ -61,7 +73,7 @@ const char* getSafeDeviceOwner();
 
 #define LOG_NOTICE(component, format, ...) \
     do { \
-        if (LOG_LEVEL_NOTICE <= logLevel) { \
+        if (LOG_LEVEL_NOTICE <= APP_LOG_LEVEL) { \
             String _timestamp = getFormattedDateTime(); \
             LogManager::instance().logf("[%s] [NOTICE] I: [%s] [%s] " format "\n", \
                      _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
@@ -70,7 +82,7 @@ const char* getSafeDeviceOwner();
 
 #define LOG_WARNING(component, format, ...) \
     do { \
-        if (LOG_LEVEL_WARNING <= logLevel) { \
+        if (LOG_LEVEL_WARNING <= APP_LOG_LEVEL) { \
             String _timestamp = getFormattedDateTime(); \
             LogManager::instance().logf("[%s] [WARNING] W: [%s] [%s] " format "\n", \
                      _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
@@ -79,7 +91,7 @@ const char* getSafeDeviceOwner();
 
 #define LOG_ERROR(component, format, ...) \
     do { \
-        if (LOG_LEVEL_ERROR <= logLevel) { \
+        if (LOG_LEVEL_ERROR <= APP_LOG_LEVEL) { \
             String _timestamp = getFormattedDateTime(); \
             LogManager::instance().logf("[%s] [ERROR] E: [%s] [%s] " format "\n", \
                      _timestamp.c_str(), getSafeDeviceOwner(), component, ##__VA_ARGS__); \
