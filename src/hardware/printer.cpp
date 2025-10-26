@@ -90,8 +90,16 @@ void PrinterManager::initialize()
     delay(100);
 
     // Initialize UART with board-specific RX/TX pins for bidirectional communication
-    // RX pin receives printer status and feedback, DTR is configured separately if present
-    uart->begin(9600, SERIAL_8N1, -1, config.printerTxPin);
+    // RX pin receives printer status and feedback
+    uart->begin(9600, SERIAL_8N1, config.printerRxPin, config.printerTxPin);
+
+    // Configure DTR pin for hardware flow control (if present)
+    if (config.printerDtrPin != -1)
+    {
+        pinMode(config.printerDtrPin, OUTPUT);
+        digitalWrite(config.printerDtrPin, HIGH);  // DTR active = ready to receive
+        LOG_VERBOSE("PRINTER", "DTR pin configured (GPIO %d)", config.printerDtrPin);
+    }
 
     // ESP32-S3 requires extra time for UART hardware to fully initialize
     delay(500);
@@ -103,7 +111,7 @@ void PrinterManager::initialize()
     ready.store(true, std::memory_order_release); // Force memory barrier for multi-core visibility
 
     LOG_VERBOSE("PRINTER", "UART initialized (TX=%d, RX=%d, DTR=%d)",
-                config.printerTxPin, -1, -1);
+                config.printerTxPin, config.printerRxPin, config.printerDtrPin);
 
     // Initialize printer with ESC @ (reset command)
     uart->write(0x1B);

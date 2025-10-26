@@ -118,6 +118,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
 
     // Hardware GPIO configuration
     device["printerTxPin"] = config.printerTxPin;
+    device["printerRxPin"] = config.printerRxPin;
+    device["printerDtrPin"] = config.printerDtrPin;
 
     // WiFi configuration - nested under device to match settings structure
     JsonObject wifi = device["wifi"].to<JsonObject>();
@@ -821,7 +823,7 @@ void handleSetupPost(AsyncWebServerRequest *request)
     newConfig.wifiSSID = ssid;
     newConfig.wifiPassword = password;
 
-    // Parse optional printer TX GPIO (preserve default if not provided)
+    // Parse optional printer GPIO pins (preserve defaults if not provided)
     if (device["printerTxPin"].is<int>())
     {
         int printerTxPin = device["printerTxPin"];
@@ -831,6 +833,30 @@ void handleSetupPost(AsyncWebServerRequest *request)
             return;
         }
         newConfig.printerTxPin = printerTxPin;
+    }
+
+    if (device["printerRxPin"].is<int>())
+    {
+        int printerRxPin = device["printerRxPin"];
+        // Allow -1 for disabled RX
+        if (printerRxPin != -1 && (!isValidGPIO(printerRxPin) || !isSafeGPIO(printerRxPin)))
+        {
+            sendValidationError(request, ValidationResult(false, "Invalid printer RX GPIO pin"));
+            return;
+        }
+        newConfig.printerRxPin = printerRxPin;
+    }
+
+    if (device["printerDtrPin"].is<int>())
+    {
+        int printerDtrPin = device["printerDtrPin"];
+        // Allow -1 for disabled DTR
+        if (printerDtrPin != -1 && (!isValidGPIO(printerDtrPin) || !isSafeGPIO(printerDtrPin)))
+        {
+            sendValidationError(request, ValidationResult(false, "Invalid printer DTR GPIO pin"));
+            return;
+        }
+        newConfig.printerDtrPin = printerDtrPin;
     }
 
     // Save the updated configuration
@@ -892,9 +918,11 @@ void handleSetupGet(AsyncWebServerRequest *request)
     wifi["ssid"] = "";
     wifi["password"] = "";
 
-    // Optional printer settings with current runtime config default
+    // Optional printer settings with current runtime config defaults
     const RuntimeConfig &config = getRuntimeConfig();
     device["printerTxPin"] = config.printerTxPin;
+    device["printerRxPin"] = config.printerRxPin;
+    device["printerDtrPin"] = config.printerDtrPin;
 
     // Minimal GPIO info for the printer pin selector
     JsonObject gpio = setupDoc["gpio"].to<JsonObject>();

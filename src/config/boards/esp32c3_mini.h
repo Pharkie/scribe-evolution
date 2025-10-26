@@ -36,6 +36,8 @@
 
 #define BOARD_LED_STRIP_PIN 20      // Safe: UART1 TX
 #define BOARD_PRINTER_TX_PIN 21     // Safe: UART1 RX
+#define BOARD_PRINTER_RX_PIN -1     // Not used (TX-only mode)
+#define BOARD_PRINTER_DTR_PIN -1    // Not used (no hardware flow control)
 #define BOARD_STATUS_LED_PIN 8      // Built-in LED (avoid for other uses)
 
 // Button pins (button 0=GPIO4, button 1=GPIO5, button 2=GPIO6, button 3=GPIO7)

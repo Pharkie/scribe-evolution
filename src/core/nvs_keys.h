@@ -19,6 +19,8 @@ constexpr const char *NVS_BOARD_TYPE = "board_type";           // Board identifi
 
 // Hardware GPIO Configuration Keys
 constexpr const char *NVS_PRINTER_TX_PIN = "printer_tx_pin";
+constexpr const char *NVS_PRINTER_RX_PIN = "printer_rx_pin";
+constexpr const char *NVS_PRINTER_DTR_PIN = "printer_dtr_pin";
 constexpr const char *NVS_BUTTON1_GPIO = "btn1_gpio";
 constexpr const char *NVS_BUTTON2_GPIO = "btn2_gpio";
 constexpr const char *NVS_BUTTON3_GPIO = "btn3_gpio";

@@ -217,6 +217,8 @@ bool ConfigManager::loadNVSConfigInternal()
 
         // Reset GPIO configurations to current board defaults
         prefs.putInt(NVS_PRINTER_TX_PIN, defaultPrinterTxPin);
+        prefs.putInt(NVS_PRINTER_RX_PIN, BOARD_PRINTER_RX_PIN);
+        prefs.putInt(NVS_PRINTER_DTR_PIN, BOARD_PRINTER_DTR_PIN);
         prefs.putInt(NVS_BUTTON1_GPIO, BOARD_BUTTON_PINS[0]);
         prefs.putInt(NVS_BUTTON2_GPIO, BOARD_BUTTON_PINS[1]);
         prefs.putInt(NVS_BUTTON3_GPIO, BOARD_BUTTON_PINS[2]);
@@ -235,6 +237,8 @@ bool ConfigManager::loadNVSConfigInternal()
 
     // Load hardware GPIO configuration (now board-aware)
     g_runtimeConfig.printerTxPin = getNVSInt(prefs, NVS_PRINTER_TX_PIN, defaultPrinterTxPin, 0, BOARD_MAX_GPIO);
+    g_runtimeConfig.printerRxPin = getNVSInt(prefs, NVS_PRINTER_RX_PIN, BOARD_PRINTER_RX_PIN, -1, BOARD_MAX_GPIO);
+    g_runtimeConfig.printerDtrPin = getNVSInt(prefs, NVS_PRINTER_DTR_PIN, BOARD_PRINTER_DTR_PIN, -1, BOARD_MAX_GPIO);
     g_runtimeConfig.buttonGpios[0] = getNVSInt(prefs, NVS_BUTTON1_GPIO, BOARD_BUTTON_PINS[0], 0, BOARD_MAX_GPIO);
     g_runtimeConfig.buttonGpios[1] = getNVSInt(prefs, NVS_BUTTON2_GPIO, BOARD_BUTTON_PINS[1], 0, BOARD_MAX_GPIO);
     g_runtimeConfig.buttonGpios[2] = getNVSInt(prefs, NVS_BUTTON3_GPIO, BOARD_BUTTON_PINS[2], 0, BOARD_MAX_GPIO);
@@ -319,6 +323,8 @@ void ConfigManager::loadDefaultConfigInternal()
 
     // Load hardware GPIO defaults (board-specific)
     g_runtimeConfig.printerTxPin = defaultPrinterTxPin;
+    g_runtimeConfig.printerRxPin = BOARD_PRINTER_RX_PIN;
+    g_runtimeConfig.printerDtrPin = BOARD_PRINTER_DTR_PIN;
     g_runtimeConfig.buttonGpios[0] = BOARD_BUTTON_PINS[0];
     g_runtimeConfig.buttonGpios[1] = BOARD_BUTTON_PINS[1];
     g_runtimeConfig.buttonGpios[2] = BOARD_BUTTON_PINS[2];
@@ -413,6 +419,8 @@ bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
     
     // Save hardware GPIO configuration
     prefs.putInt(NVS_PRINTER_TX_PIN, config.printerTxPin);
+    prefs.putInt(NVS_PRINTER_RX_PIN, config.printerRxPin);
+    prefs.putInt(NVS_PRINTER_DTR_PIN, config.printerDtrPin);
     prefs.putInt(NVS_BUTTON1_GPIO, config.buttonGpios[0]);
     prefs.putInt(NVS_BUTTON2_GPIO, config.buttonGpios[1]);
     prefs.putInt(NVS_BUTTON3_GPIO, config.buttonGpios[2]);

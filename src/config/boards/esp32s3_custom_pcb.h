@@ -38,12 +38,14 @@
 // PIN ASSIGNMENTS
 // ============================================================================
 
-#define BOARD_LED_STRIP_PIN 48      // Safe (custom PCB LED output)
-#define BOARD_PRINTER_TX_PIN 43     // Safe
+#define BOARD_LED_STRIP_PIN 14      // Safe (custom PCB LED strip data)
+#define BOARD_PRINTER_TX_PIN 43     // Safe (UART TX to printer RX)
+#define BOARD_PRINTER_RX_PIN 44     // Safe (UART RX from printer TX)
+#define BOARD_PRINTER_DTR_PIN 15    // Safe (DTR for hardware flow control)
 #define BOARD_STATUS_LED_PIN 47     // Safe (custom PCB status LED)
 
-// Button pins (button 0=GPIO4, button 1=GPIO5, button 2=GPIO6, button 3=GPIO7)
-static const int BOARD_BUTTON_PINS[4] = {4, 5, 6, 7};  // All safe GPIOs
+// Button pins (button 0=GPIO5, button 1=GPIO6, button 2=GPIO7, button 3=GPIO8)
+static const int BOARD_BUTTON_PINS[4] = {5, 6, 7, 8};  // All safe GPIOs
 
 // ============================================================================
 // GPIO VALIDATION DATA
@@ -62,22 +64,26 @@ struct GPIOInfo {
     const char* description;
 };
 
-// Key GPIO map for ESP32-S3 (not exhaustive - most GPIOs are safe)
+// Key GPIO map for ESP32-S3 custom PCB (not exhaustive - most GPIOs are safe)
 static const GPIOInfo BOARD_GPIO_MAP[] = {
     {0, GPIO_TYPE_AVOID, "Strapping pin"},
     {3, GPIO_TYPE_AVOID, "Strapping pin"},
-    {4, GPIO_TYPE_SAFE, "Safe"},
-    {5, GPIO_TYPE_SAFE, "Safe"},
-    {6, GPIO_TYPE_SAFE, "Safe"},
-    {7, GPIO_TYPE_SAFE, "Safe"},
+    {5, GPIO_TYPE_SAFE, "Button 1 (JOKE)"},
+    {6, GPIO_TYPE_SAFE, "Button 2 (RIDDLE)"},
+    {7, GPIO_TYPE_SAFE, "Button 3 (QUOTE)"},
+    {8, GPIO_TYPE_SAFE, "Button 4 (QUIZ)"},
+    {9, GPIO_TYPE_SAFE, "Printer eFuse enable"},
+    {10, GPIO_TYPE_SAFE, "LED strip eFuse enable"},
+    {14, GPIO_TYPE_SAFE, "LED strip data"},
+    {15, GPIO_TYPE_SAFE, "Printer DTR"},
     {19, GPIO_TYPE_AVOID, "USB D- (Serial/JTAG)"},
     {20, GPIO_TYPE_AVOID, "USB D+ (Serial/JTAG)"},
-    {43, GPIO_TYPE_SAFE, "Safe (Printer TX)"},
-    {44, GPIO_TYPE_SAFE, "Safe"},
+    {43, GPIO_TYPE_SAFE, "Printer TX"},
+    {44, GPIO_TYPE_SAFE, "Printer RX"},
     {45, GPIO_TYPE_AVOID, "Strapping pin"},
     {46, GPIO_TYPE_AVOID, "Strapping pin"},
-    {47, GPIO_TYPE_SAFE, "Safe (Status LED)"},
-    {48, GPIO_TYPE_SAFE, "Safe (LED strip)"}
+    {47, GPIO_TYPE_SAFE, "Status LED"},
+    {48, GPIO_TYPE_SAFE, "Safe"}
 };
 
 static const int BOARD_GPIO_MAP_SIZE = sizeof(BOARD_GPIO_MAP) / sizeof(BOARD_GPIO_MAP[0]);

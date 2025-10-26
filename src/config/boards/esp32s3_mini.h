@@ -42,6 +42,8 @@
 
 #define BOARD_LED_STRIP_PIN 1       // LED strip data on GPIO 1 (available, safe, on header)
 #define BOARD_PRINTER_TX_PIN 10     // UART1 TX (to printer RX) - SuperMini header GPIO 1-13 only
+#define BOARD_PRINTER_RX_PIN -1     // Not used (TX-only mode)
+#define BOARD_PRINTER_DTR_PIN -1    // Not used (no hardware flow control)
 #define BOARD_STATUS_LED_PIN 48     // Status LED on GPIO 48 (built-in RGB LED - wired internally)
 
 // Button pins (physical hardware order: sequential GPIO 5,6,7,8)

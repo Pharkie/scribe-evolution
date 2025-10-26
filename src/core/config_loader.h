@@ -26,6 +26,8 @@ struct RuntimeConfig
     
     // Hardware GPIO Configuration
     int printerTxPin;    // GPIO pin for printer TX (UART communication)
+    int printerRxPin;    // GPIO pin for printer RX (bidirectional comms, -1 if disabled)
+    int printerDtrPin;   // GPIO pin for printer DTR (hardware flow control, -1 if disabled)
     int buttonGpios[4];  // GPIO pins for buttons 1-4
 
     // WiFi Configuration

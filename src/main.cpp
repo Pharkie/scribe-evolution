@@ -57,10 +57,8 @@ String deviceBootTime = "";
 
 void setup()
 {
-  // === Disable Bluetooth/BLE to free ~70KB heap ===
-  // ESP32-C3 has BT controller pre-allocated even if unused
-  // This permanently releases that memory to heap (irreversible but we don't use BT)
-  esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);  // Release both BT Classic + BLE
+  // === Disable Bluetooth/BLE to try and free heap ===
+  esp_bt_controller_mem_release(ESP_BT_MODE_BTDM); // Release both BT Classic + BLE
 
   // Track boot time
   unsigned long bootStartTime = millis();
@@ -91,7 +89,7 @@ void setup()
     Serial.println("[BOOT] LittleFS Mount Failed");
   }
 
-  // Initialize ConfigManager FIRST (required for loading NVS config)
+  // Initialize ConfigManager first (required for loading NVS config)
   ConfigManager::instance().begin();
 
   // Validate configuration (loads from NVS - requires ConfigManager to be initialized)
@@ -107,7 +105,7 @@ void setup()
   currentWiFiMode = connectToWiFi();
 
   // Initialize LogManager after WiFi (needs to know connection mode for logging context)
-  LogManager::instance().begin(115200, 8, 512);  // Queue: 256→8 entries (saves 124KB)
+  LogManager::instance().begin(115200, 8, 512); // Queue: 256→8 entries (saves 124KB)
 
   // Configure ESP32 system component log levels
   // CORE_DEBUG_LEVEL is set in platformio.ini (varies by build type)
@@ -135,7 +133,7 @@ void setup()
   LOG_VERBOSE("BOOT", "Watchdog timer enabled (%ds timeout)", watchdogTimeoutSeconds);
 
   // Initialize timezone with conditional NTP sync (only in STA mode)
-  // NOTE: Must run BEFORE APIClient/MQTTManager init to ensure correct timestamps in their logs
+  // Run BEFORE APIClient/MQTTManager init to ensure correct timestamps in their logs
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
   {
     setupTime();
@@ -242,7 +240,7 @@ void setup()
   String webUILine = "    Web UI: ";
   if (currentWiFiMode == WIFI_MODE_STA_CONNECTED)
   {
-    const char* mdnsHostname = getMdnsHostname();
+    const char *mdnsHostname = getMdnsHostname();
     if (mdnsHostname != nullptr && mdnsHostname[0] != '\0')
     {
       // mDNS successfully registered
