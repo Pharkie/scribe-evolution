@@ -42,7 +42,7 @@
 #define BOARD_PRINTER_TX_PIN 43     // Safe (UART TX to printer RX)
 #define BOARD_PRINTER_RX_PIN 44     // Safe (UART RX from printer TX)
 #define BOARD_PRINTER_DTR_PIN 15    // Safe (DTR for hardware flow control)
-#define BOARD_STATUS_LED_PIN 47     // Safe (custom PCB status LED)
+#define BOARD_STATUS_LED_PIN 16     // Safe (WS2812 RGB status LED)
 
 // Button pins (button 0=GPIO5, button 1=GPIO6, button 2=GPIO7, button 3=GPIO8)
 static const int BOARD_BUTTON_PINS[4] = {5, 6, 7, 8};  // All safe GPIOs
@@ -76,14 +76,13 @@ static const GPIOInfo BOARD_GPIO_MAP[] = {
     {10, GPIO_TYPE_SAFE, "LED strip eFuse enable"},
     {14, GPIO_TYPE_SAFE, "LED strip data"},
     {15, GPIO_TYPE_SAFE, "Printer DTR"},
+    {16, GPIO_TYPE_SAFE, "Status LED (WS2812 RGB)"},
     {19, GPIO_TYPE_AVOID, "USB D- (Serial/JTAG)"},
     {20, GPIO_TYPE_AVOID, "USB D+ (Serial/JTAG)"},
     {43, GPIO_TYPE_SAFE, "Printer TX"},
     {44, GPIO_TYPE_SAFE, "Printer RX"},
     {45, GPIO_TYPE_AVOID, "Strapping pin"},
-    {46, GPIO_TYPE_AVOID, "Strapping pin"},
-    {47, GPIO_TYPE_SAFE, "Status LED"},
-    {48, GPIO_TYPE_SAFE, "Safe"}
+    {46, GPIO_TYPE_AVOID, "Strapping pin"}
 };
 
 static const int BOARD_GPIO_MAP_SIZE = sizeof(BOARD_GPIO_MAP) / sizeof(BOARD_GPIO_MAP[0]);

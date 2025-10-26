@@ -3,6 +3,7 @@
 <system_context>
 Hardware interfaces: thermal printer and physical buttons.
 Direct GPIO control with safety validation.
+Printer supports bidirectional communication (RX) and hardware flow control (DTR) on custom PCB.
 </system_context>
 
 <critical_notes>
@@ -11,6 +12,8 @@ Direct GPIO control with safety validation.
 - Use debouncing for all button inputs
 - Check printer buffer availability before sending
 - ESP32-C3 has limited safe GPIO pins
+- Custom PCB has eFuse power control - enabled in `printer.cpp` before UART init
+- RX/DTR pins configurable: -1 = disabled (mini boards), GPIO = enabled (custom PCB)
   </critical_notes>
 
 <paved_path>
@@ -22,9 +25,11 @@ Button Pattern:
 
 Printer Pattern:
 
-1. Initialize UART with correct baud rate
-2. Check buffer space before writing
-3. Use character mapping for special characters
+1. Enable eFuse (custom PCB only) before UART init
+2. Initialize UART with TX (always), RX (optional), DTR (optional)
+3. Configure DTR pin HIGH if enabled (ready to receive)
+4. Check buffer space before writing
+5. Use character mapping for special characters
    </paved_path>
 
 <patterns>
@@ -60,13 +65,35 @@ if (!printer.connected()) return false;
 
 }
 
+// eFuse power control (custom PCB only)
+#if BOARD_HAS_EFUSES
+pinMode(BOARD_EFUSE_PRINTER_PIN, OUTPUT);
+digitalWrite(BOARD_EFUSE_PRINTER_PIN, HIGH);
+LOG_VERBOSE("PRINTER", "Printer eFuse enabled (GPIO %d)", BOARD_EFUSE_PRINTER_PIN);
+#endif
+
+// UART initialization with optional RX/DTR
+uart->begin(9600, SERIAL_8N1, config.printerRxPin, config.printerTxPin);
+
+// DTR hardware flow control (optional)
+if (config.printerDtrPin != -1) {
+pinMode(config.printerDtrPin, OUTPUT);
+digitalWrite(config.printerDtrPin, HIGH); // DTR active = ready to receive
+LOG_VERBOSE("PRINTER", "DTR enabled on GPIO %d", config.printerDtrPin);
+}
+
 // Reading printer status (bidirectional communication)
 // The CSN-A4L supports realtime status queries
+// NOTE: Requires RX pin configured (printerRxPin != -1)
 bool checkPrinterStatus() {
-// Request realtime status (DLE EOT n)
-printer.write(0x10); // DLE
-printer.write(0x04); // EOT
-printer.write(0x01); // Status type 1 (printer status)
+if (config.printerRxPin == -1) {
+return false; // RX not configured
+}
+
+    // Request realtime status (DLE EOT n)
+    printer.write(0x10); // DLE
+    printer.write(0x04); // EOT
+    printer.write(0x01); // Status type 1 (printer status)
 
     // Wait for response
     unsigned long timeout = millis() + 100;

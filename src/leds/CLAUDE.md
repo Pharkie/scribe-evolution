@@ -6,6 +6,7 @@ FastLED-based cycle management and effect registry.
 Thread-safe singleton pattern with RAII mutex locking.
 Multi-board support: ESP32-C3, ESP32-S3 (4MB/8MB variants).
 **Platform-agnostic code**: Same codebase works on both single-core C3 and dual-core S3.
+**Status LED**: Custom PCB uses WS2812 RGB LED with color-coded WiFi status; mini boards use simple digital output.
 </system_context>
 
 <critical_notes>
@@ -198,3 +199,122 @@ ledEffects().stopEffect();
 
 See src/core/CLAUDE.md for complete singleton pattern documentation.
 </thread_safe_architecture>
+
+<status_led_module>
+
+## StatusLed Module (Custom PCB Only)
+
+**Location**: `src/leds/StatusLed.h`, `src/leds/StatusLed.cpp`
+
+The StatusLed module provides WS2812 RGB LED control for the custom PCB's status indicator. This is separate from the main LED strip and only compiles when `BOARD_ESP32S3_CUSTOM_PCB && ENABLE_LEDS`.
+
+### Architecture
+
+**Static Class Pattern**:
+
+- All methods are static - no instance needed
+- Separate `CRGB statusLed[1]` array from main LED strip
+- Compile-time GPIO pin selection via switch statement (FastLED requirement)
+
+**Usage in network.cpp**:
+
+```cpp
+#if defined(BOARD_ESP32S3_CUSTOM_PCB) && ENABLE_LEDS
+    // Custom PCB: WS2812 RGB status LED
+    #include "leds/StatusLed.h"
+
+    void initializeStatusLED() {
+        StatusLed::begin();
+    }
+
+    void updateStatusLED() {
+        switch (currentWiFiMode) {
+        case WIFI_MODE_CONNECTING:
+            StatusLed::setBlink(CRGB::Orange, 250);  // Fast orange blink
+            StatusLed::update();
+            break;
+        case WIFI_MODE_STA_CONNECTED:
+            StatusLed::setSolid(CRGB::Green);        // Solid green
+            break;
+        case WIFI_MODE_AP_FALLBACK:
+            StatusLed::setBlink(CRGB::Blue, 1000);   // Slow blue blink
+            StatusLed::update();
+            break;
+        case WIFI_MODE_DISCONNECTED:
+            StatusLed::off();                         // Off
+            break;
+        }
+    }
+#else
+    // Mini boards: Simple digital output
+    void initializeStatusLED() {
+        pinMode(statusLEDPin, OUTPUT);
+        digitalWrite(statusLEDPin, LOW);
+    }
+
+    void updateStatusLED() {
+        // Simple on/off/blink logic with digitalWrite
+    }
+#endif
+```
+
+### API Reference
+
+**Initialization**:
+
+```cpp
+StatusLed::begin();  // Initialize FastLED for status LED
+```
+
+**Solid Color**:
+
+```cpp
+StatusLed::setSolid(CRGB::Green);  // Set solid color, shows immediately
+```
+
+**Blinking**:
+
+```cpp
+StatusLed::setBlink(CRGB::Orange, 250);  // Set blink color and interval (ms)
+StatusLed::update();                      // Must call in loop to handle timing
+```
+
+**Turn Off**:
+
+```cpp
+StatusLed::off();  // Turn LED off immediately
+```
+
+### Color Coding (WiFi Status)
+
+- **Orange blink (250ms)**: Connecting to WiFi
+- **Solid green**: Connected to WiFi
+- **Blue blink (1000ms)**: AP mode (fallback)
+- **Off**: Disconnected
+
+### Key Design Points
+
+1. **Separate from LED strip**: Uses independent `CRGB statusLed[1]` array
+2. **100% brightness**: Maximum visibility for status indication
+3. **Fast blink**: 250ms interval clearer than slow pulse
+4. **Conditional compilation**: Zero overhead on mini boards
+5. **Static methods**: No singleton needed, simpler than LedEffects
+
+### FastLED Compile-Time GPIO Selection
+
+FastLED requires compile-time GPIO pin selection via template parameters. StatusLed uses a switch statement to handle this:
+
+```cpp
+void StatusLed::begin() {
+    switch (BOARD_STATUS_LED_PIN) {
+        case 16: FastLED.addLeds<WS2812, 16, GRB>(statusLed, 1); break;
+        // Add more cases if needed for other GPIO pins
+        default: break;
+    }
+    FastLED.setBrightness(255);  // 100% brightness
+}
+```
+
+This pattern allows runtime board configuration while satisfying FastLED's compile-time requirements.
+
+</status_led_module>

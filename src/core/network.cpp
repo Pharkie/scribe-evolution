@@ -7,6 +7,10 @@
 #include <esp_task_wdt.h>
 #include <ESP32Ping.h>
 
+#if defined(BOARD_ESP32S3_CUSTOM_PCB) && ENABLE_LEDS
+#include "leds/StatusLed.h"
+#endif
+
 // Network status variables
 unsigned long lastReconnectAttempt = 0;
 WiFiConnectionMode currentWiFiMode = WIFI_MODE_DISCONNECTED;
@@ -22,13 +26,47 @@ bool ledState = false;
 // === LED Status Management ===
 void initializeStatusLED()
 {
+#if defined(BOARD_ESP32S3_CUSTOM_PCB) && ENABLE_LEDS
+    // WS2812 RGB LED on custom PCB - initialized via StatusLed class
+    StatusLed::begin();
+#else
+    // Simple digital output LED on mini boards
     pinMode(statusLEDPin, OUTPUT);
     digitalWrite(statusLEDPin, LOW);
-    // Status LED initialized
+#endif
 }
 
 void updateStatusLED()
 {
+#if defined(BOARD_ESP32S3_CUSTOM_PCB) && ENABLE_LEDS
+    // WS2812 RGB LED on custom PCB - color-coded status
+    switch (currentWiFiMode)
+    {
+    case WIFI_MODE_CONNECTING:
+        // Orange fast blink when trying to connect
+        StatusLed::setBlink(CRGB::Orange, 250);
+        StatusLed::update();
+        break;
+
+    case WIFI_MODE_STA_CONNECTED:
+        // Solid green when connected to WiFi
+        StatusLed::setSolid(CRGB::Green);
+        break;
+
+    case WIFI_MODE_AP_FALLBACK:
+        // Blue blink when in AP mode
+        StatusLed::setBlink(CRGB::Blue, 1000);
+        StatusLed::update();
+        break;
+
+    case WIFI_MODE_DISCONNECTED:
+    default:
+        // LED off when disconnected
+        StatusLed::off();
+        break;
+    }
+#else
+    // Simple digital output LED on mini boards
     unsigned long now = millis();
 
     switch (currentWiFiMode)
@@ -64,6 +102,7 @@ void updateStatusLED()
         digitalWrite(statusLEDPin, LOW);
         break;
     }
+#endif
 }
 
 // === Configuration Validation ===

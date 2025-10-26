@@ -34,10 +34,10 @@ Compile-time board selection with runtime validation.
 - **File**: `board_esp32s3_mini.h`
 - **Build Flag**: `-DBOARD_ESP32S3_MINI`
 - **GPIO Range**: 0-48 (49 pins)
-- **Default Printer**: TX=GPIO 44, RX=GPIO 43, DTR=GPIO 15 (UART1)
+- **Default Printer**: TX=GPIO 44, RX=-1 (disabled), DTR=-1 (disabled) (UART1)
 - **Default LED Data**: GPIO 14
 - **Default Buttons**: GPIO 5, 6, 7, 8
-- **Status LED**: GPIO 8
+- **Status LED**: GPIO 8 (simple digital output)
 - **eFuse Support**: None
 - **Features**: Dual core Xtensa, more RMT channels, USB OTG
 
@@ -46,8 +46,13 @@ Compile-time board selection with runtime validation.
 - **File**: `board_esp32s3_custom_pcb.h`
 - **Build Flag**: `-DBOARD_ESP32S3_CUSTOM_PCB`
 - **Base**: Extends ESP32-S3-mini
-- **eFuse Enables**: Printer=GPIO 9, LED strip=GPIO 10
-- **Features**: All S3-mini features + overcurrent protection
+- **Default Printer**: TX=GPIO 43, RX=GPIO 44, DTR=GPIO 15 (bidirectional UART with flow control)
+- **Default LED Data**: GPIO 14 (WS2812 strip)
+- **Default Buttons**: GPIO 5, 6, 7, 8
+- **Status LED**: GPIO 16 (WS2812 RGB LED with color-coded WiFi status)
+- **eFuse Enables**: Printer=GPIO 9, LED strip=GPIO 10 (overcurrent protection)
+- **eFuse Support**: Yes (BOARD_HAS_EFUSES=true)
+- **Features**: All S3-mini features + overcurrent protection + bidirectional printer comms + RGB status LED
 
 ## Architecture
 
@@ -92,12 +97,10 @@ const char* boardName = BOARD_NAME;          // "ESP32-C3-mini", etc.
 int maxGPIO = BOARD_MAX_GPIO;                // 21 or 48
 
 // Check eFuse support (compile-time)
-#if BOARD_HAS_EFUSE
+#if BOARD_HAS_EFUSES
     // Custom PCB only - enable power control
-    pinMode(BOARD_EFUSE_PRINTER_PIN, OUTPUT);
-    digitalWrite(BOARD_EFUSE_PRINTER_PIN, HIGH);
-    pinMode(BOARD_EFUSE_LED_PIN, OUTPUT);
-    digitalWrite(BOARD_EFUSE_LED_PIN, HIGH);
+    // NOTE: eFuses are enabled in peripheral init (printer.cpp, LedEffects.cpp)
+    // NOT in main.cpp - they enable right before peripheral initialization
 #endif
 
 // Validate GPIO at runtime
@@ -179,7 +182,7 @@ Create `boards/yourboard.h` following the simple pattern:
 // ============================================================================
 #define BOARD_NAME "Your Board Name"
 #define BOARD_MAX_GPIO 21
-#define BOARD_HAS_EFUSE false  // true only if board has eFuse power control
+#define BOARD_HAS_EFUSES false  // true only if board has eFuse power control
 
 // ============================================================================
 // PIN ASSIGNMENTS (customize for your board)
@@ -302,6 +305,7 @@ Custom PCB feature for overcurrent protection:
 - HIGH = power enabled
 - LOW = power disabled
 - Protects against printer shorts/overcurrent
+- Enabled in `printer.cpp` `initialize()` method
 
 **LED Strip eFuse** (GPIO 10 on custom S3 PCB)
 
@@ -309,12 +313,28 @@ Custom PCB feature for overcurrent protection:
 - HIGH = power enabled
 - LOW = power disabled
 - Protects against LED strip shorts/overcurrent
+- Enabled in `LedEffects.cpp` `begin()` method
 
-**Initialization Order**:
+**Initialization Pattern**:
 
-1. Enable eFuse (HIGH)
-2. Wait 10ms for stabilization
-3. Initialize peripheral (UART/FastLED)
+```cpp
+#if BOARD_HAS_EFUSES
+    // Enable eFuse right before peripheral initialization
+    pinMode(BOARD_EFUSE_PRINTER_PIN, OUTPUT);
+    digitalWrite(BOARD_EFUSE_PRINTER_PIN, HIGH);
+    LOG_VERBOSE("PRINTER", "Printer eFuse enabled (GPIO %d)", BOARD_EFUSE_PRINTER_PIN);
+#endif
+
+// Existing peripheral initialization delays provide sufficient stabilization
+uart->begin(9600, SERIAL_8N1, config.printerRxPin, config.printerTxPin);
+```
+
+**Key Design Points**:
+
+- eFuses enabled in peripheral initialization methods, not in main.cpp setup()
+- No explicit stabilization delay needed - peripheral init provides sufficient time
+- One-time setup functions (`initialize()`, `begin()`) ensure no repeated enables
+- Compile-time conditionals ensure zero overhead on boards without eFuses
 
 ## Extensibility
 
