@@ -1,6 +1,6 @@
 # Scribe Firmware Release
 
-Built on: 2025-10-23 00:09:11
+Built on: 2025-10-27 21:24:47
 
 ## Flashing Instructions:
 
