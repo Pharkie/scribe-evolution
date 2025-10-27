@@ -17,6 +17,17 @@ void handleMQTT(void *handler_args, esp_event_base_t base, int32_t event_id, voi
 #endif
 
 /**
+ * @struct MQTTTestCredentials
+ * @brief Test credentials for MQTT connection testing
+ */
+struct MQTTTestCredentials {
+    String server;
+    int port;
+    String username;
+    String password;
+};
+
+/**
  * @class MQTTManager
  * @brief Thread-safe singleton for MQTT operations
  *
@@ -100,6 +111,16 @@ public:
      */
     bool isConnected();
 
+    /**
+     * @brief Test MQTT connection with provided credentials (thread-safe)
+     * Temporarily stops production MQTT (if running), tests credentials, then restores state.
+     * Blocks for up to 5 seconds while testing connection.
+     * @param testCreds Test credentials (server, port, username, password)
+     * @param errorMsg Output parameter for error message if test fails
+     * @return true if connection successful, false otherwise
+     */
+    bool testConnection(const MQTTTestCredentials& testCreds, String& errorMsg);
+
 private:
     MQTTManager();
     ~MQTTManager() = default;
@@ -108,6 +129,7 @@ private:
 
     // Internal helpers (mutex already held by caller)
     void setupMQTTInternal();
+    void setupMQTTInternalWithTestCreds(const MQTTTestCredentials& testCreds);
     void connectToMQTTInternal();
     void handleMQTTMessageInternal(String topic, String message);
     void updateMQTTSubscriptionInternal();

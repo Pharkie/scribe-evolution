@@ -1003,69 +1003,23 @@ void handleTestMQTT(AsyncWebServerRequest *request)
         return;
     }
 
-    LOG_NOTICE("WEB", "Testing MQTT connection to %s:%d with username: %s", server.c_str(), port, username.c_str());
+    // Build test credentials struct
+    MQTTTestCredentials testCreds;
+    testCreds.server = server;
+    testCreds.port = port;
+    testCreds.username = username;
+    testCreds.password = password;
 
-    // Load CA certificate for TLS verification
-    LOG_VERBOSE("WEB", "TEST: Loading CA certificate from /resources/isrg-root-x1.pem");
-    File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
-    if (!certFile)
-    {
-        LOG_ERROR("WEB", "TEST: Failed to open CA certificate file for MQTT test");
-        sendErrorResponse(request, 500, "CA certificate file not found");
-        return;
-    }
+    // Use MQTTManager singleton to test connection
+    // This is thread-safe and properly handles state save/restore
+    String errorMsg;
+    bool success = MQTTManager::instance().testConnection(testCreds, errorMsg);
 
-    String certContent = certFile.readString();
-    certFile.close();
-
-    LOG_VERBOSE("WEB", "TEST: CA certificate loaded, length: %d bytes", certContent.length());
-
-    if (certContent.length() == 0)
-    {
-        LOG_ERROR("WEB", "TEST: CA certificate file is empty for MQTT test");
-        sendErrorResponse(request, 500, "CA certificate file is empty");
-        return;
-    }
-
-    // Create temporary ESP32MQTTClient for testing
-    ESP32MQTTClient testMqttClient;
-
-    // Configure client
-    testMqttClient.setURL(server.c_str(), port, username.c_str(), password.c_str());
-    testMqttClient.setCaCert(certContent.c_str());
-    testMqttClient.setMaxPacketSize(4096);
-
-    // Generate unique client ID for test
-    String clientId = "ScribeTest_" + String(random(0xffff), HEX);
-    testMqttClient.setMqttClientName(clientId.c_str());
-
-    // Start non-blocking connection
-    LOG_VERBOSE("WEB", "TEST: Starting MQTT test connection");
-    testMqttClient.loopStart();
-
-    // Wait up to 10 seconds for connection, checking isConnected()
-    unsigned long testStart = millis();
-    bool connected = false;
-    while (!connected && (millis() - testStart < 10000))
-    {
-        connected = testMqttClient.isConnected();
-        if (!connected)
-        {
-            delay(100);
-        }
-    }
-
-    // Stop MQTT loop
-    testMqttClient.disableAutoReconnect();
-
-    // Give it a moment to clean up
-    delay(mqttTestCleanupDelayMs);
-
+    // Build response
     JsonDocument response;
 
-    if (connected)
+    if (success)
     {
-        LOG_NOTICE("WEB", "MQTT test connection successful");
         response["success"] = true;
         response["message"] = "Successfully connected to MQTT broker";
 
@@ -1078,8 +1032,7 @@ void handleTestMQTT(AsyncWebServerRequest *request)
     }
     else
     {
-        String errorMsg = "Connection failed - check server address, port, and credentials";
-        LOG_WARNING("WEB", "MQTT test connection failed");
+        LOG_WARNING("WEB", "MQTT test connection failed: %s", errorMsg.c_str());
         sendErrorResponse(request, 400, errorMsg);
     }
 }

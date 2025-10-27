@@ -259,6 +259,65 @@ void MQTTManager::setupMQTTInternal()
     mqttSetupCompleted = true;
 }
 
+// Internal helper: setupMQTTInternalWithTestCreds (mutex already held)
+void MQTTManager::setupMQTTInternalWithTestCreds(const MQTTTestCredentials& testCreds)
+{
+    // Prevent duplicate initialization
+    if (mqttSetupCompleted) {
+        LOG_VERBOSE("MQTT", "MQTT already configured, skipping setup");
+        return;
+    }
+
+    // Load CA certificate
+    File certFile = LittleFS.open("/resources/isrg-root-x1.pem", "r");
+    if (!certFile) {
+        LOG_ERROR("MQTT", "TEST: Failed to open CA certificate file");
+        return;
+    }
+
+    String certContent = certFile.readString();
+    certFile.close();
+
+    if (certContent.length() == 0) {
+        LOG_ERROR("MQTT", "TEST: CA certificate file is empty");
+        return;
+    }
+
+    // Validate certificate format
+    bool validCert = certContent.indexOf("-----BEGIN CERTIFICATE-----") != -1 &&
+                     certContent.indexOf("-----END CERTIFICATE-----") != -1 &&
+                     certContent.length() > 100;
+
+    if (!validCert) {
+        LOG_ERROR("MQTT", "TEST: CA certificate file format is invalid");
+        return;
+    }
+
+    LOG_VERBOSE("MQTT", "TEST: CA certificate loaded and validated (%d bytes)", certContent.length());
+
+    // Store in buffer to ensure lifetime during connection attempts
+    caCertificateBuffer = certContent;
+
+    // Configure ESP32MQTTClient with test credentials
+    mqttClient.setURL(testCreds.server.c_str(), testCreds.port,
+                      testCreds.username.c_str(), testCreds.password.c_str());
+
+    // Set CA certificate for TLS
+    mqttClient.setCaCert(caCertificateBuffer.c_str());
+
+    // Set buffer size for large messages
+    mqttClient.setMaxPacketSize(mqttBufferSize);
+
+    // Set keepalive timeout (shorter for testing)
+    mqttClient.setKeepAlive(10);
+
+    LOG_VERBOSE("MQTT", "TEST: ESP32MQTTClient configured: %s:%d | TLS: Enabled",
+                testCreds.server.c_str(), testCreds.port);
+
+    // Mark setup as completed
+    mqttSetupCompleted = true;
+}
+
 // Internal helper: connectToMQTTInternal (mutex already held)
 void MQTTManager::connectToMQTTInternal()
 {
@@ -735,5 +794,142 @@ bool MQTTManager::isConnected()
     bool connected = mqttClient.isConnected();
 
     // Mutex automatically released by ManagerLock destructor
+    return connected;
+}
+
+// Test MQTT connection with provided credentials
+bool MQTTManager::testConnection(const MQTTTestCredentials& testCreds, String& errorMsg)
+{
+    if (!initialized) {
+        errorMsg = "MQTTManager not initialized";
+        LOG_ERROR("MQTT", "TEST: MQTTManager not initialized - call begin() first!");
+        return false;
+    }
+
+    LOG_NOTICE("MQTT", "TEST: Testing MQTT connection to %s:%d", testCreds.server.c_str(), testCreds.port);
+
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "MQTT-Test");
+    if (!lock.isLocked()) {
+        errorMsg = "Failed to acquire MQTT mutex";
+        LOG_ERROR("MQTT", "TEST: Failed to acquire MQTT mutex!");
+        return false;
+    }
+
+    // Save current state
+    MQTTState savedState = mqttState;
+    bool wasLoopStarted = mqttLoopStarted;
+    String savedTopic = currentSubscribedTopic;
+
+    LOG_VERBOSE("MQTT", "TEST: Saved state: state=%d, loopStarted=%d", savedState, wasLoopStarted);
+
+    // Stop MQTT if currently running
+    if (mqttLoopStarted)
+    {
+        LOG_VERBOSE("MQTT", "TEST: Stopping production MQTT client");
+        mqttClient.disableAutoReconnect();
+        vTaskDelay(pdMS_TO_TICKS(500));  // Allow time to disconnect
+        mqttLoopStarted = false;
+    }
+
+    // Reset setup flag to allow reconfiguration
+    mqttSetupCompleted = false;
+    mqttState = MQTT_STATE_DISABLED;
+
+    // Setup with test credentials
+    LOG_VERBOSE("MQTT", "TEST: Configuring test client");
+    setupMQTTInternalWithTestCreds(testCreds);
+
+    if (!mqttSetupCompleted) {
+        errorMsg = "Failed to configure MQTT test client (check logs for CA cert errors)";
+        LOG_ERROR("MQTT", "TEST: Setup failed, restoring state");
+
+        // Restore state
+        mqttSetupCompleted = false;
+        mqttState = savedState;
+
+        // Restore production client if it was running
+        if (wasLoopStarted) {
+            setupMQTTInternal();  // Re-setup with NVS config
+            if (savedState == MQTT_STATE_CONNECTED || savedState == MQTT_STATE_CONNECTING) {
+                mqttState = MQTT_STATE_CONNECTING;
+                connectToMQTTInternal();
+            }
+        }
+
+        return false;
+    }
+
+    // Generate unique test client ID
+    String testClientId = "ScribeTest_" + String(random(0xffff), HEX);
+    mqttClient.setMqttClientName(testClientId.c_str());
+
+    // Start test connection
+    LOG_VERBOSE("MQTT", "TEST: Starting test connection");
+    mqttClient.loopStart();
+    mqttLoopStarted = true;
+
+    // Wait up to 5 seconds for connection with watchdog feeding
+    unsigned long testStart = millis();
+    bool connected = false;
+    while (!connected && (millis() - testStart < 5000))
+    {
+        connected = mqttClient.isConnected();
+        if (!connected)
+        {
+            esp_task_wdt_reset();  // Feed watchdog
+            vTaskDelay(pdMS_TO_TICKS(100));  // Yield to other tasks
+        }
+    }
+
+    // Stop test client
+    LOG_VERBOSE("MQTT", "TEST: Stopping test client (connected=%d)", connected);
+    mqttClient.disableAutoReconnect();
+    vTaskDelay(pdMS_TO_TICKS(500));  // Allow time to disconnect gracefully
+    mqttLoopStarted = false;
+    mqttSetupCompleted = false;
+
+    // Restore original state
+    LOG_VERBOSE("MQTT", "TEST: Restoring production MQTT state");
+    mqttState = MQTT_STATE_DISABLED;
+    currentSubscribedTopic = "";
+
+    if (savedState != MQTT_STATE_DISABLED)
+    {
+        // Re-setup with NVS configuration
+        LOG_VERBOSE("MQTT", "TEST: Re-configuring production client");
+        setupMQTTInternal();
+
+        if (!mqttSetupCompleted) {
+            errorMsg = "Test successful, but failed to restore production MQTT";
+            LOG_ERROR("MQTT", "TEST: Failed to restore production MQTT configuration!");
+            mqttState = MQTT_STATE_DISABLED;
+            return connected;  // Return test result, but log error about restore
+        }
+
+        // Reconnect if it was connected before
+        if (savedState == MQTT_STATE_CONNECTED || savedState == MQTT_STATE_CONNECTING)
+        {
+            LOG_VERBOSE("MQTT", "TEST: Restarting production MQTT connection");
+            mqttState = MQTT_STATE_CONNECTING;
+            connectToMQTTInternal();
+        }
+        else
+        {
+            mqttState = MQTT_STATE_ENABLED_DISCONNECTED;
+        }
+    }
+
+    // Set result
+    if (connected)
+    {
+        LOG_NOTICE("MQTT", "TEST: Connection successful");
+    }
+    else
+    {
+        errorMsg = "Connection failed - check server address, port, and credentials";
+        LOG_WARNING("MQTT", "TEST: Connection failed after 5 second timeout");
+    }
+
     return connected;
 }
