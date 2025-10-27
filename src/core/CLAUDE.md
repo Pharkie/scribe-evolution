@@ -161,6 +161,10 @@ private:
    - Thread-safe publish/subscribe/connect/disconnect
    - State machine encapsulated in singleton
    - Uses ESP32MQTTClient library (https://github.com/cyijun/ESP32MQTTClient)
+   - Test connection: MQTTManager::instance().testConnection(testCreds, errorMsg)
+     - Safely tests credentials by stopping production client, testing, then restoring
+     - Thread-safe, blocks for max 5 seconds while testing
+     - Feeds watchdog timer during test to prevent timeout
    - Usage: MQTTManager::instance().publishMessage(topic, header, body)
    - Pattern: ✅ Mutex in begin()
 

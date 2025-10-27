@@ -68,7 +68,25 @@ Adding new endpoint:
 3. Test success and error cases
 4. Verify rate limiting works
 5. Check JSON buffer sizes
-   </common_tasks>
+
+Testing MQTT Connections:
+
+The `/api/test-mqtt` endpoint uses `MQTTManager::instance().testConnection()` to safely test credentials:
+
+- Temporarily stops production MQTT (if running)
+- Tests new credentials with 5-second timeout
+- Feeds watchdog timer during test (prevents timeout)
+- Restores production MQTT state after test
+- Thread-safe via MQTTManager mutex
+- Returns error message on failure for user feedback
+
+Frontend UX Pattern:
+
+- Button stays enabled after failure (allows retry)
+- Error shown in helper text (yellow), not on button
+- Button label: "Test Connection" / "Testing..." / "MQTT Connected"
+- Fail-fast: test required before save when MQTT enabled
+  </common_tasks>
 
 <fatal_implications>
 
