@@ -111,7 +111,7 @@ void validateConfig()
     }
     else
     {
-        Serial.printf("[BOOT] ✅ Hardware: %d GPIOs validated on %s\n", usedCount, BOARD_NAME);
+        Serial.printf("[BOOT] ✅ Hardware: %d GPIOs configured (no conflicts, ranges OK)\n", usedCount);
     }
 }
 
