@@ -75,7 +75,7 @@ void setup()
 
   // Initial boot message (can't use LogManager yet - not initialized)
   Serial.printf("\n=== Scribe Evolution v%s ===\n", FIRMWARE_VERSION);
-  Serial.printf("[BOOT] Built: %s %s\n", BUILD_DATE, BUILD_TIME);
+  Serial.printf("[BOOT] Built: %s %s for %s\n", BUILD_DATE, BUILD_TIME, BOARD_NAME);
 
   // Early heap fragmentation check
   size_t freeHeap = ESP.getFreeHeap();
