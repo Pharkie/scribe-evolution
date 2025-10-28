@@ -55,7 +55,7 @@ def get_production_environments():
                     return envs
 
         # Fallback to current production environments if not found
-        fallback = ["c3-4mb-prod", "s3-4mb-prod", "s3-pcb-prod"]
+        fallback = ["c3-4mb-prod", "s3-4mb-prod", "s3-pcb-prod", "s3-pcb-dev"]
         log(
             f"No default_envs found, using fallback: {', '.join(fallback)}",
             "WARNING",

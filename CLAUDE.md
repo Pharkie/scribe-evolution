@@ -125,7 +125,21 @@ Code Quality Process:
 2. Run `npm run build` (if frontend changes)
 3. Test with hardware or mock server
 4. Commit with descriptive message
-</workflow>
+
+Git Commit Guidelines:
+
+- Create commits proactively at reasonable checkpoints (e.g., after completing a feature, fixing a bug, or making significant changes)
+- Use clear, descriptive commit messages that explain the "why" behind changes
+- Follow the project's commit message style (check recent commits with `git log`)
+- Include the Claude Code attribution footer:
+
+  ```
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+  Co-Authored-By: Claude <noreply@anthropic.com>
+  ```
+
+  </workflow>
 
 <fatal_implications>
 
