@@ -328,22 +328,43 @@ def copy_firmware(environment):
 def _get_partitions_file_for_env(environment: str) -> Path:
     """Return partitions CSV path for PlatformIO environment.
 
+    Follows 'extends' chain to find board_build.partitions.
     Falls back to partitions_4mb_no_ota.csv if not found.
     """
     ini_path = Path("platformio.ini")
     default = Path("partitions_4mb_no_ota.csv")
     try:
         content = ini_path.read_text(encoding="utf-8")
-        # crude parse: find section then look for board_build.partitions
-        pattern = (
-            rf"\[env:{re.escape(environment)}\][\s\S]*?"
-            r"board_build\.partitions\s*=\s*(.+)"
-        )
-        m = re.search(pattern, content)
-        if m:
-            candidate = Path(m.group(1).strip())
-            if candidate.exists():
-                return candidate
+
+        # Follow extends chain to find partitions file
+        current_env = environment
+        visited = set()  # Prevent infinite loops
+
+        while current_env and current_env not in visited:
+            visited.add(current_env)
+
+            # Look for board_build.partitions in current environment
+            partition_pattern = (
+                rf"\[env:{re.escape(current_env)}\][\s\S]*?"
+                r"board_build\.partitions\s*=\s*(.+?)(?:\n|$)"
+            )
+            m = re.search(partition_pattern, content)
+            if m:
+                candidate = Path(m.group(1).strip())
+                if candidate.exists():
+                    return candidate
+
+            # Check if this env extends another
+            extends_pattern = (
+                rf"\[env:{re.escape(current_env)}\][\s\S]*?"
+                r"extends\s*=\s*env:(.+?)(?:\n|$)"
+            )
+            m = re.search(extends_pattern, content)
+            if m:
+                current_env = m.group(1).strip()
+            else:
+                break
+
     except Exception:
         pass
     return default

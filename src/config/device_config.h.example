@@ -49,23 +49,20 @@ static const int defaultUnbiddenInkFrequencyMinutes = 60;                       
 static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
 
 // ============================================================================
-// LOGGING CONFIGURATION
+// LOGGING CONFIGURATION (COMPILE-TIME ONLY)
 // ============================================================================
-// NOTE: Logging levels (APP_LOG_LEVEL, CORE_DEBUG_LEVEL) are now defined in
-// platformio.ini build flags for proper compile-time optimization:
-// - Release builds: APP_LOG_LEVEL=LOG_LEVEL_ERROR, CORE_DEBUG_LEVEL=ARDUHAL_LOG_LEVEL_ERROR
-// - Debug builds: APP_LOG_LEVEL=LOG_LEVEL_NOTICE, CORE_DEBUG_LEVEL=ARDUHAL_LOG_LEVEL_INFO
-//
-// This allows:
-// - Dead code elimination in release builds (smaller binary, better performance)
-// - Board-specific tuning if needed
-// - Build-type specific verbosity without code changes
 
-// Logging level constants (for use in platformio.ini)
+// Logging level constants
 #define LOG_LEVEL_VERBOSE 4
 #define LOG_LEVEL_NOTICE 3
 #define LOG_LEVEL_WARNING 2
 #define LOG_LEVEL_ERROR 1
+
+// Current log level (compile-time setting - not stored in NVS)
+static const int logLevel = LOG_LEVEL_NOTICE;
+
+// ESP32 core logging level (0=None, 1=Error, 2=Warn, 3=Info, 4=Debug, 5=Verbose)
+static const int espLogLevel = 3; // ARDUHAL_LOG_LEVEL_INFO
 
 // Feature enable flags (compile-time settings - not stored in NVS)
 static const bool enableSerialLogging = true;

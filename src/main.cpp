@@ -88,6 +88,10 @@ void setup()
   {
     Serial.println("[BOOT] LittleFS Mount Failed");
   }
+  else
+  {
+    Serial.println("[BOOT] LittleFS mounted successfully");
+  }
 
   // Initialize ConfigManager first (required for loading NVS config)
   ConfigManager::instance().begin();
