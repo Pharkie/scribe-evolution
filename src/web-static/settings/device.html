@@ -329,10 +329,43 @@
               >
                 GPIO Pins
               </h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Select GPIO pin for your hardware. Each GPIO can only be
                 assigned once.
               </p>
+              <div
+                class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-6"
+              >
+                <svg
+                  class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+                <div class="text-sm text-amber-800 dark:text-amber-200">
+                  <strong>Pin Safety:</strong> Pins marked with
+                  <span class="inline-flex items-center">
+                    <svg
+                      class="w-4 h-4 mx-1 text-amber-600 dark:text-amber-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  </span>
+                  should be avoided (strapping pins, USB, built-in peripherals).
+                  Use only if you know what you're doing.
+                </div>
+              </div>
 
               <!-- GPIO Assignment Interface -->
               <div class="space-y-6">
@@ -358,12 +391,13 @@
                         <!-- Available GPIO pins in grid -->
                         <div class="grid grid-cols-2 gap-1">
                           <template
-                            x-for="pin in config.gpio.safePins.filter(p => p !== -1).sort((a,b) => a-b)"
+                            x-for="pin in config.gpio.availablePins.filter(p => p !== -1).sort((a,b) => a-b)"
                             :key="'printer-' + pin"
                           >
                             <label
-                              class="flex items-center p-2 rounded-lg transition-colors duration-200"
+                              class="flex items-center p-2 rounded-lg transition-colors duration-200 relative group"
                               :class="usedGpioPins.has(pin) && config.device.printerTxPin !== pin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'"
+                              :title="config.gpio.pinDescriptions[pin]"
                             >
                               <input
                                 type="radio"
@@ -375,7 +409,7 @@
                                 class="sr-only"
                               />
                               <div
-                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200"
+                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200 flex-shrink-0"
                                 :class="config.device.printerTxPin === pin ? 'border-blue-600 bg-blue-600' : (usedGpioPins.has(pin) && config.device.printerTxPin !== pin ? 'border-gray-300' : 'border-gray-400')"
                               ></div>
                               <span
@@ -386,22 +420,32 @@
                                                           ]"
                                 x-text="pin"
                               ></span>
-                              <span
-                                x-show="usedGpioPins.has(pin) && config.device.printerTxPin !== pin"
-                                class="ml-1 text-xs text-gray-400 flex items-center"
+                              <!-- Warning icon for unsafe pins -->
+                              <svg
+                                x-show="!config.gpio.safePins.includes(pin)"
+                                class="w-3 h-3 ml-1 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
                               >
-                                <svg
-                                  class="w-3 h-3 mr-1"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fill-rule="evenodd"
-                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                    clip-rule="evenodd"
-                                  ></path>
-                                </svg>
-                              </span>
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
+                              <!-- Lock icon for pins in use -->
+                              <svg
+                                x-show="usedGpioPins.has(pin) && config.device.printerTxPin !== pin"
+                                class="w-3 h-3 ml-1 text-gray-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
                             </label>
                           </template>
                         </div>
@@ -449,12 +493,13 @@
                         <!-- Available GPIO pins in grid -->
                         <div class="grid grid-cols-2 gap-1">
                           <template
-                            x-for="pin in config.gpio.safePins.filter(p => p !== -1).sort((a,b) => a-b)"
+                            x-for="pin in config.gpio.availablePins.filter(p => p !== -1).sort((a,b) => a-b)"
                             :key="'led-' + pin"
                           >
                             <label
-                              class="flex items-center p-2 rounded-lg transition-colors duration-200"
+                              class="flex items-center p-2 rounded-lg transition-colors duration-200 relative group"
                               :class="usedGpioPins.has(pin) && config.leds?.pin !== pin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'"
+                              :title="config.gpio.pinDescriptions[pin]"
                             >
                               <input
                                 type="radio"
@@ -466,7 +511,7 @@
                                 class="sr-only"
                               />
                               <div
-                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200"
+                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200 flex-shrink-0"
                                 :class="config.leds?.pin === pin ? 'border-blue-600 bg-blue-600' : (usedGpioPins.has(pin) && config.leds?.pin !== pin ? 'border-gray-300' : 'border-gray-400')"
                               ></div>
                               <span
@@ -477,22 +522,32 @@
                                                           ]"
                                 x-text="pin"
                               ></span>
-                              <span
-                                x-show="usedGpioPins.has(pin) && config.leds?.pin !== pin"
-                                class="ml-1 text-xs text-gray-400 flex items-center"
+                              <!-- Warning icon for unsafe pins -->
+                              <svg
+                                x-show="!config.gpio.safePins.includes(pin)"
+                                class="w-3 h-3 ml-1 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
                               >
-                                <svg
-                                  class="w-3 h-3 mr-1"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fill-rule="evenodd"
-                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                    clip-rule="evenodd"
-                                  ></path>
-                                </svg>
-                              </span>
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
+                              <!-- Lock icon for pins in use -->
+                              <svg
+                                x-show="usedGpioPins.has(pin) && config.leds?.pin !== pin"
+                                class="w-3 h-3 ml-1 text-gray-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
                             </label>
                           </template>
                         </div>
@@ -540,12 +595,13 @@
                         <!-- Available GPIO pins in grid -->
                         <div class="grid grid-cols-2 gap-1">
                           <template
-                            x-for="pin in config.gpio.safePins.filter(p => p !== -1).sort((a,b) => a-b)"
+                            x-for="pin in config.gpio.availablePins.filter(p => p !== -1).sort((a,b) => a-b)"
                             :key="'button1-' + pin"
                           >
                             <label
-                              class="flex items-center p-2 rounded-lg transition-colors duration-200"
+                              class="flex items-center p-2 rounded-lg transition-colors duration-200 relative group"
                               :class="usedGpioPins.has(pin) && config.buttons.button1?.gpio !== pin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'"
+                              :title="config.gpio.pinDescriptions[pin]"
                             >
                               <input
                                 type="radio"
@@ -557,7 +613,7 @@
                                 class="sr-only"
                               />
                               <div
-                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200"
+                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200 flex-shrink-0"
                                 :class="config.buttons.button1?.gpio === pin ? 'border-blue-600 bg-blue-600' : (usedGpioPins.has(pin) && config.buttons.button1?.gpio !== pin ? 'border-gray-300' : 'border-gray-400')"
                               ></div>
                               <span
@@ -568,9 +624,23 @@
                                                           ]"
                                 x-text="pin"
                               ></span>
+                              <!-- Warning icon for unsafe pins -->
+                              <svg
+                                x-show="!config.gpio.safePins.includes(pin)"
+                                class="w-3 h-3 ml-1 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
+                              <!-- Lock icon for pins in use -->
                               <svg
                                 x-show="usedGpioPins.has(pin) && config.buttons.button1?.gpio !== pin"
-                                class="w-3 h-3 ml-1 text-gray-400"
+                                class="w-3 h-3 ml-1 text-gray-400 flex-shrink-0"
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -624,12 +694,13 @@
                         <!-- Available GPIO pins in grid -->
                         <div class="grid grid-cols-2 gap-1">
                           <template
-                            x-for="pin in config.gpio.safePins.filter(p => p !== -1).sort((a,b) => a-b)"
+                            x-for="pin in config.gpio.availablePins.filter(p => p !== -1).sort((a,b) => a-b)"
                             :key="'button2-' + pin"
                           >
                             <label
-                              class="flex items-center p-2 rounded-lg transition-colors duration-200"
+                              class="flex items-center p-2 rounded-lg transition-colors duration-200 relative group"
                               :class="usedGpioPins.has(pin) && config.buttons.button2?.gpio !== pin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'"
+                              :title="config.gpio.pinDescriptions[pin]"
                             >
                               <input
                                 type="radio"
@@ -641,7 +712,7 @@
                                 class="sr-only"
                               />
                               <div
-                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200"
+                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200 flex-shrink-0"
                                 :class="config.buttons.button2?.gpio === pin ? 'border-blue-600 bg-blue-600' : (usedGpioPins.has(pin) && config.buttons.button2?.gpio !== pin ? 'border-gray-300' : 'border-gray-400')"
                               ></div>
                               <span
@@ -652,9 +723,23 @@
                                                           ]"
                                 x-text="pin"
                               ></span>
+                              <!-- Warning icon for unsafe pins -->
+                              <svg
+                                x-show="!config.gpio.safePins.includes(pin)"
+                                class="w-3 h-3 ml-1 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
+                              <!-- Lock icon for pins in use -->
                               <svg
                                 x-show="usedGpioPins.has(pin) && config.buttons.button2?.gpio !== pin"
-                                class="w-3 h-3 ml-1 text-gray-400"
+                                class="w-3 h-3 ml-1 text-gray-400 flex-shrink-0"
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -711,12 +796,13 @@
                         <!-- Available GPIO pins in grid -->
                         <div class="grid grid-cols-2 gap-1">
                           <template
-                            x-for="pin in config.gpio.safePins.filter(p => p !== -1).sort((a,b) => a-b)"
+                            x-for="pin in config.gpio.availablePins.filter(p => p !== -1).sort((a,b) => a-b)"
                             :key="'button3-' + pin"
                           >
                             <label
-                              class="flex items-center p-2 rounded-lg transition-colors duration-200"
+                              class="flex items-center p-2 rounded-lg transition-colors duration-200 relative group"
                               :class="usedGpioPins.has(pin) && config.buttons.button3?.gpio !== pin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'"
+                              :title="config.gpio.pinDescriptions[pin]"
                             >
                               <input
                                 type="radio"
@@ -728,7 +814,7 @@
                                 class="sr-only"
                               />
                               <div
-                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200"
+                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200 flex-shrink-0"
                                 :class="config.buttons.button3?.gpio === pin ? 'border-blue-600 bg-blue-600' : (usedGpioPins.has(pin) && config.buttons.button3?.gpio !== pin ? 'border-gray-300' : 'border-gray-400')"
                               ></div>
                               <span
@@ -739,22 +825,32 @@
                                                           ]"
                                 x-text="pin"
                               ></span>
-                              <span
-                                x-show="usedGpioPins.has(pin) && config.buttons.button3?.gpio !== pin"
-                                class="ml-1 text-xs text-gray-400 flex items-center"
+                              <!-- Warning icon for unsafe pins -->
+                              <svg
+                                x-show="!config.gpio.safePins.includes(pin)"
+                                class="w-3 h-3 ml-1 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
                               >
-                                <svg
-                                  class="w-3 h-3 mr-1"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fill-rule="evenodd"
-                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                    clip-rule="evenodd"
-                                  ></path>
-                                </svg>
-                              </span>
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
+                              <!-- Lock icon for pins in use -->
+                              <svg
+                                x-show="usedGpioPins.has(pin) && config.buttons.button3?.gpio !== pin"
+                                class="w-3 h-3 ml-1 text-gray-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
                             </label>
                           </template>
                         </div>
@@ -799,12 +895,13 @@
                         <!-- Available GPIO pins in grid -->
                         <div class="grid grid-cols-2 gap-1">
                           <template
-                            x-for="pin in config.gpio.safePins.filter(p => p !== -1).sort((a,b) => a-b)"
+                            x-for="pin in config.gpio.availablePins.filter(p => p !== -1).sort((a,b) => a-b)"
                             :key="'button4-' + pin"
                           >
                             <label
-                              class="flex items-center p-2 rounded-lg transition-colors duration-200"
+                              class="flex items-center p-2 rounded-lg transition-colors duration-200 relative group"
                               :class="usedGpioPins.has(pin) && config.buttons.button4?.gpio !== pin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700'"
+                              :title="config.gpio.pinDescriptions[pin]"
                             >
                               <input
                                 type="radio"
@@ -816,7 +913,7 @@
                                 class="sr-only"
                               />
                               <div
-                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200"
+                                class="w-4 h-4 border-2 rounded-full mr-2 transition-all duration-200 flex-shrink-0"
                                 :class="config.buttons.button4?.gpio === pin ? 'border-blue-600 bg-blue-600' : (usedGpioPins.has(pin) && config.buttons.button4?.gpio !== pin ? 'border-gray-300' : 'border-gray-400')"
                               ></div>
                               <span
@@ -827,22 +924,32 @@
                                                           ]"
                                 x-text="pin"
                               ></span>
-                              <span
-                                x-show="usedGpioPins.has(pin) && config.buttons.button4?.gpio !== pin"
-                                class="ml-1 text-xs text-gray-400 flex items-center"
+                              <!-- Warning icon for unsafe pins -->
+                              <svg
+                                x-show="!config.gpio.safePins.includes(pin)"
+                                class="w-3 h-3 ml-1 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
                               >
-                                <svg
-                                  class="w-3 h-3 mr-1"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fill-rule="evenodd"
-                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                    clip-rule="evenodd"
-                                  ></path>
-                                </svg>
-                              </span>
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
+                              <!-- Lock icon for pins in use -->
+                              <svg
+                                x-show="usedGpioPins.has(pin) && config.buttons.button4?.gpio !== pin"
+                                class="w-3 h-3 ml-1 text-gray-400 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                  clip-rule="evenodd"
+                                ></path>
+                              </svg>
                             </label>
                           </template>
                         </div>
