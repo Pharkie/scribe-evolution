@@ -84,13 +84,50 @@ void setup()
                 ESP.getChipModel(), freeHeap / 1024, largestBlock / 1024);
 
   // Initialize LittleFS for config and web file storage
-  if (!LittleFS.begin(true, "/littlefs", 10, "littlefs")) // true = format if mount fails
+  // CRITICAL: ESP32-Arduino uses "spiffs" partition type (0x82) but we name it "littlefs"
+  // This is standard ESP32 practice - partition subtype is always "spiffs" for any filesystem
+
+  // First attempt: Try mounting existing filesystem (from uploadfs)
+  Serial.println("[BOOT] Attempting to mount LittleFS partition 'littlefs'...");
+  bool littlefsOk = LittleFS.begin(false, "/littlefs", 10, "littlefs");
+
+  if (!littlefsOk)
   {
-    Serial.println("[BOOT] LittleFS Mount Failed");
+    Serial.println("[BOOT] Mount failed - filesystem may not be initialized");
+    Serial.println("[BOOT] This is normal on first boot or after erase");
+    Serial.println("[BOOT] Attempting to format partition...");
+
+    // Format the partition from scratch
+    if (LittleFS.format())
+    {
+      Serial.println("[BOOT] Format successful - retrying mount...");
+      littlefsOk = LittleFS.begin(false, "/littlefs", 10, "littlefs");
+
+      if (littlefsOk)
+      {
+        Serial.println("[BOOT] ✅ LittleFS mounted after format");
+        Serial.println("[BOOT] ⚠️  Web interface files missing - run 'pio run --target uploadfs -e s3-pcb-dev'");
+      }
+      else
+      {
+        Serial.println("[BOOT] ❌ Mount failed even after format - partition may be corrupted");
+      }
+    }
+    else
+    {
+      Serial.println("[BOOT] ❌ Format failed - possible hardware or partition table issue");
+      Serial.println("[BOOT] Try: pio run --target erase -e s3-pcb-dev (erases entire flash)");
+    }
   }
   else
   {
-    Serial.println("[BOOT] LittleFS mounted successfully");
+    Serial.println("[BOOT] ✅ LittleFS mounted successfully (files present)");
+  }
+
+  // Continue boot regardless of filesystem status (device still works, just no web UI)
+  if (!littlefsOk)
+  {
+    Serial.println("[BOOT] ⚠️  Continuing without filesystem - API-only mode");
   }
 
   // Initialize ConfigManager first (required for loading NVS config)
