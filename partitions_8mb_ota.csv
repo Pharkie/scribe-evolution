@@ -2,23 +2,22 @@
 #
 # IMPORTANT: ESP32 FILESYSTEM NAMING CONFUSION:
 # - We use LittleFS as our actual filesystem (see platformio.ini: board_build.filesystem = littlefs)
-# - The partition subtype MUST be "spiffs" (0x82) - this is ESP32's standard filesystem partition type
-# - The partition name is "littlefs" to match what we actually use
-# - This is NOT a mistake - ESP32 requires "spiffs" as subtype even when using LittleFS!
+# - The partition subtype MUST be "spiffs" (0x82) - this is the only valid filesystem subtype
+# - The partition name is "littlefs" for clarity, but the subtype must remain "spiffs"
 #
 # ESP32-S3 8MB Flash Layout with OTA:
 # - Total: 8MB (0x800000)
-# - NVS: 20KB (config storage - reduced to fit alignment)
+# - NVS: 20KB (config storage)
 # - OTA Data: 8KB (OTA boot selector)
-# - Factory App: 2.5MB (main firmware - MUST be 64KB aligned at 0x10000)
-# - OTA_0: 2.5MB (OTA update partition - MUST be 64KB aligned)
-# - LittleFS: ~3MB (filesystem for web assets)
+# - OTA_0: 2.5MB (primary firmware slot - MUST be 64KB aligned at 0x10000)
+# - OTA_1: 2.5MB (secondary firmware slot for OTA updates - MUST be 64KB aligned)
+# - LittleFS: ~2.94MB (filesystem for web assets)
 #
 # IMPORTANT: App partitions MUST start at 0x10000-aligned addresses on ESP32-S3
 #
 # Name,     Type, SubType,  Offset,   Size
-nvs,      data, nvs,     0x9000,  0x5000
-otadata,  data, ota,     0xe000,  0x2000
-factory,  app,  factory, 0x10000, 0x280000
-ota_0,    app,  ota_0,   0x290000, 0x280000
-littlefs, data, spiffs,  0x510000, 0x2F0000
+nvs,        data, nvs,      0x9000,   0x5000
+otadata,    data, ota,      0xE000,   0x2000
+ota_0,      app,  ota_0,    0x10000,  0x280000
+ota_1,      app,  ota_1,    0x290000, 0x280000
+littlefs,   data, spiffs,   0x510000, 0x2F0000
