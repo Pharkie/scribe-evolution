@@ -5,19 +5,19 @@
 # - The partition subtype MUST be "spiffs" (0x82) - this is the only valid filesystem subtype
 # - The partition name is "littlefs" for clarity, but the subtype must remain "spiffs"
 #
-# ESP32-S3 8MB Flash Layout with OTA:
+# ESP32-S3 8MB Flash Layout with OTA (VERIFIED WORKING):
 # - Total: 8MB (0x800000)
 # - NVS: 20KB (config storage)
 # - OTA Data: 8KB (OTA boot selector)
-# - OTA_0: 2.5MB (primary firmware slot - MUST be 64KB aligned at 0x10000)
-# - OTA_1: 2.5MB (secondary firmware slot for OTA updates - MUST be 64KB aligned)
-# - LittleFS: ~2.94MB (filesystem for web assets)
+# - app0: 2.375MB (primary firmware slot - MUST be 64KB aligned at 0x10000)
+# - app1: 2.375MB (secondary firmware slot for OTA updates - MUST be 64KB aligned)
+# - LittleFS: ~3.19MB (filesystem for web assets)
 #
 # IMPORTANT: App partitions MUST start at 0x10000-aligned addresses on ESP32-S3
 #
-# Name,     Type, SubType,  Offset,   Size
-nvs,        data, nvs,      0x9000,   0x5000
-otadata,    data, ota,      0xE000,   0x2000
-ota_0,      app,  ota_0,    0x10000,  0x280000
-ota_1,      app,  ota_1,    0x290000, 0x280000
-spiffs,     data, spiffs,   0x510000, 0x2EC000
+# Name,     Type, SubType,  Offset,   Size,     Flags
+nvs,        data, nvs,      0x9000,   0x5000,
+otadata,    data, ota,      0xE000,   0x2000,
+app0,       app,  ota_0,    0x10000,  0x260000,
+app1,       app,  ota_1,    0x270000, 0x260000,
+littlefs,   data, spiffs,   0x4D0000, 0x330000,
