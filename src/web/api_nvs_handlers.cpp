@@ -64,7 +64,7 @@ void handleNVSDump(AsyncWebServerRequest *request)
         // WiFi Configuration
         {NVS_WIFI_SSID, "string", "WiFi network SSID", false, 0, 0},
         {NVS_WIFI_PASSWORD, "string", "WiFi network password", true, 0, 0},
-        {NVS_WIFI_TIMEOUT, "int", "WiFi connect timeout (ms)", false, 5000, 60000},
+        // Note: wifi_timeout removed - it's a compile-time constant in system_constants.h
 
         // MQTT Configuration
         {NVS_MQTT_ENABLED, "bool", "MQTT enabled flag", false, 0, 0},
