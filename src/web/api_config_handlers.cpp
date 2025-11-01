@@ -334,8 +334,6 @@ void handleConfigGet(AsyncWebServerRequest *request)
     JsonArray safePins = gpio["safePins"].to<JsonArray>();
     JsonObject pinDescriptions = gpio["pinDescriptions"].to<JsonObject>();
 
-    LOG_VERBOSE("CONFIG", "Adding GPIO info, BOARD_GPIO_MAP_SIZE: %d", BOARD_GPIO_MAP_SIZE);
-
     // Add all GPIO information for current board
     for (int i = 0; i < BOARD_GPIO_MAP_SIZE; i++)
     {
@@ -346,11 +344,8 @@ void handleConfigGet(AsyncWebServerRequest *request)
         if (isSafeGPIO(pin))
         {
             safePins.add(pin);
-            LOG_VERBOSE("CONFIG", "Added safe GPIO pin: %d", pin);
         }
     }
-
-    LOG_VERBOSE("CONFIG", "GPIO info complete - %d available pins, %d safe pins", availablePins.size(), safePins.size());
 
     // Check if JSON document has overflowed before serialization
     if (configDoc.overflowed())

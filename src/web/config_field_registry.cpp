@@ -76,6 +76,8 @@ const ConfigFieldDef CONFIG_FIELDS[] = {
     {"device.owner", ValidationType::NON_EMPTY_STRING, offsetof(RuntimeConfig, deviceOwner), 0, 0, nullptr, 0},
     {"device.timezone", ValidationType::IANA_TIMEZONE, offsetof(RuntimeConfig, timezone), 0, 0, nullptr, 0},
     {"device.printerTxPin", ValidationType::GPIO, offsetof(RuntimeConfig, printerTxPin), 0, 0, nullptr, 0},
+    {"device.printerRxPin", ValidationType::GPIO, offsetof(RuntimeConfig, printerRxPin), 0, 0, nullptr, 0},
+    {"device.printerDtrPin", ValidationType::GPIO, offsetof(RuntimeConfig, printerDtrPin), 0, 0, nullptr, 0},
     
     // WiFi configuration
     {"wifi.ssid", ValidationType::NON_EMPTY_STRING, offsetof(RuntimeConfig, wifiSSID), 0, 0, nullptr, 0},

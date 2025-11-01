@@ -67,10 +67,23 @@ Dual Configuration System:
 1. Compile-time defaults in `src/core/config.h`
 2. Runtime configuration in NVS (Non-Volatile Storage)
 
+Configuration Architecture:
+
+- **NVS-Backed Settings (~51 keys)** - User-configurable via web interface, persisted across reboots
+  - Examples: WiFi credentials, MQTT config, GPIO pins, button actions, Unbidden Ink settings
+  - Exposed in `config_field_registry.cpp` for web API access
+  - Initial values from `device_config.h`, runtime values from NVS
+- **Runtime-Only Constants** - Compile-time configuration, NEVER saved to NVS
+  - Examples: API endpoints, system timeouts, buffer sizes, validation limits
+  - Fixed for security, performance, and simplicity
+  - Loaded from `system_constants.h` at startup
+- **Single Source of Truth**: `RuntimeConfig` struct intentionally contains BOTH types for unified access
+- See `/src/core/CLAUDE.md` for complete configuration architecture documentation
+
 Configuration Naming Convention:
 
-- `default` prefix = NVS-backed settings that can be overridden via web interface (e.g., `defaultWifiSSID`, `defaultMqttEnabled`)
-- No prefix = Compile-time only settings (e.g., `logLevel`, `jokeAPI`, `chatgptApiEndpoint`)
+- `default` prefix = NVS-backed settings (e.g., `defaultWifiSSID`, `defaultMqttEnabled`)
+- No prefix = Compile-time only settings (e.g., `logLevel`, `jokeAPI`, `wifiConnectTimeoutMs`)
 - NEVER use `default` prefix for non-NVS constants
 
 Frontend Stack:

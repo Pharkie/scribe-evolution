@@ -25,6 +25,270 @@ Include pattern: #include "core/config.h"
 NVS namespace: "scribe-app"
 </paved_path>
 
+<configuration_architecture>
+
+## Configuration System: NVS-Backed vs Runtime-Only Settings
+
+The Scribe Evolution configuration system uses a **dual-layer architecture** that combines user-configurable settings with compile-time constants in a single `RuntimeConfig` struct.
+
+### Two Types of Configuration
+
+#### 1. NVS-Backed Settings (User-Configurable)
+
+**Characteristics:**
+
+- Saved to ESP32 Non-Volatile Storage (NVS) across reboots
+- Exposed in web configuration interface (see `config_field_registry.cpp`)
+- Initial values from `device_config.h`, runtime values from NVS
+- **Total: ~51 NVS keys** (see `nvs_keys.h` for complete list)
+
+**Examples:**
+
+- `deviceOwner` - Web: `device.owner`
+- `wifiSSID` / `wifiPassword` - Web: `wifi.ssid`, `wifi.password`
+- `mqttServer` / `mqttPort` - Web: `mqtt.server`, `mqtt.port`
+- `printerTxPin` / `printerRxPin` / `printerDtrPin` - Web: `device.printer*Pin`
+- `buttonGpios[4]` - Web: `buttons.button{1-4}.gpio`
+- `chatgptApiToken` - Web: `unbiddenInk.chatgptApiToken`
+- Button actions, MQTT topics, LED effects (24 keys)
+- LED configuration (4 keys when `ENABLE_LEDS=1`)
+- Memos (4 keys, not in web registry - use `/api/print-memo`)
+
+**Naming Convention:**
+
+- Constants in `device_config.h` use `default` prefix: `defaultWifiSSID`, `defaultMqttEnabled`
+- NVS keys in `nvs_keys.h` use descriptive names: `NVS_WIFI_SSID`, `NVS_MQTT_ENABLED`
+
+#### 2. Runtime-Only Constants (Compile-Time Configuration)
+
+**Characteristics:**
+
+- Always loaded from `system_constants.h` at runtime
+- **NEVER saved to or loaded from NVS**
+- **NOT exposed in web configuration interface**
+- Fixed for security, performance, and simplicity
+
+**Examples:**
+
+- API endpoints: `jokeAPI`, `quoteAPI`, `triviaAPI`, `chatgptApiEndpoint`
+- System timeouts: `wifiConnectTimeoutMs`, `serialTimeoutMs`
+- Buffer sizes: `mqttBufferSize`, `jsonDocumentSize`
+- Validation limits: `maxCharacters`, `minJokeLength`
+- Rate limiting: `buttonMinInterval`, `maxRequestsPerMinute`
+- Logging config: `logLevel`, `espLogLevel`, `enable*Logging`
+
+**Naming Convention:**
+
+- NO `default` prefix (e.g., `jokeAPI`, `maxCharacters`, `wifiConnectTimeoutMs`)
+- Defined directly in `system_constants.h` as constants
+
+### Why This Architecture?
+
+**Benefits:**
+
+1. **Single Source of Truth** - All config accessed via `getRuntimeConfig()`
+2. **Type Safety** - No need to check if a field exists at runtime
+3. **Performance** - No NVS lookups for constants, direct memory access
+4. **Security** - API endpoints cannot be changed by users (prevents abuse)
+5. **Simplicity** - Same access pattern for all settings in application code
+
+**Design Philosophy:**
+
+- User-facing settings (credentials, GPIO pins, behavior) → NVS
+- System internals (endpoints, timeouts, limits) → Compile-time constants
+- RuntimeConfig struct intentionally contains BOTH types
+
+### NVS Key Inventory (51 total)
+
+| Category      | Count | NVS Keys                                                                               |
+| ------------- | ----- | -------------------------------------------------------------------------------------- |
+| Device        | 2     | `device_owner`, `device_timezone`                                                      |
+| Hardware GPIO | 7     | `printer_tx_pin`, `printer_rx_pin`, `printer_dtr_pin`, `btn{1-4}_gpio`                 |
+| WiFi          | 2     | `wifi_ssid`, `wifi_password`                                                           |
+| MQTT          | 5     | `mqtt_enabled`, `mqtt_server`, `mqtt_port`, `mqtt_username`, `mqtt_password`           |
+| API           | 1     | `chatgpt_token`                                                                        |
+| Unbidden Ink  | 5     | `unbid_enabled`, `unbid_start_hr`, `unbid_end_hr`, `unbid_freq_min`, `unbidden_prompt` |
+| Buttons       | 24    | `btn{1-4}_{short/long}_{act/mq/led}` (4 buttons × 6 fields)                            |
+| LEDs          | 4     | `led_pin`, `led_count`, `led_brightness`, `led_refresh` (when `ENABLE_LEDS=1`)         |
+| Memos         | 4     | `memo_{1-4}`                                                                           |
+| Internal      | 1     | `board_type` (hardware mismatch detection - NOT user-configurable)                     |
+
+**Special Case: `board_type`**
+
+- Saved to NVS but NOT in web registry
+- Used for automatic GPIO reset when hardware changes (e.g., flashing different board)
+- This is intentional - it's internal state, not a user setting
+
+### Adding New Configuration Settings
+
+#### Decision Tree: NVS-Backed or Runtime-Only?
+
+Ask these questions:
+
+1. **Should users be able to change this via web interface?**
+   - YES → NVS-backed setting
+   - NO → Continue to question 2
+
+2. **Does this value need to persist across reboots?**
+   - YES → NVS-backed setting
+   - NO → Continue to question 3
+
+3. **Could different users/deployments need different values?**
+   - YES → NVS-backed setting
+   - NO → Runtime-only constant
+
+4. **Is this a security-sensitive value that shouldn't be user-modifiable?**
+   - YES → Runtime-only constant (even if it seems user-facing)
+   - NO → Consider NVS-backed
+
+**Examples:**
+
+- WiFi credentials → NVS (user-specific, must persist)
+- Joke API endpoint → Runtime-only (fixed service URL, security)
+- WiFi timeout → Runtime-only (technical parameter, well-tested default)
+- Button GPIO pins → NVS (hardware-specific, user may need to change)
+- Max characters → Runtime-only (DoS protection, should not be user-modifiable)
+
+#### How to Add NVS-Backed Setting
+
+1. **Add default value to `device_config.h.example`:**
+
+   ```cpp
+   static const int defaultNewSetting = 42;
+   ```
+
+2. **Add NVS key to `nvs_keys.h`:**
+
+   ```cpp
+   constexpr const char *NVS_NEW_SETTING = "new_setting";
+   ```
+
+3. **Add field to `RuntimeConfig` struct in `config_loader.h`:**
+
+   ```cpp
+   // In NVS-BACKED SETTINGS section
+   int newSetting;  // Web: section.newSetting
+   ```
+
+4. **Add to web registry in `config_field_registry.cpp`:**
+
+   ```cpp
+   {"section.newSetting", ValidationType::RANGE_INT,
+    offsetof(RuntimeConfig, newSetting), 1, 100, nullptr, 0},
+   ```
+
+5. **Add load logic in `config_loader.cpp::loadNVSConfigInternal()`:**
+
+   ```cpp
+   g_runtimeConfig.newSetting = getNVSInt(prefs, NVS_NEW_SETTING,
+                                          defaultNewSetting, 1, 100);
+   ```
+
+6. **Add save logic in `config_loader.cpp::saveNVSConfigInternal()`:**
+
+   ```cpp
+   prefs.putInt(NVS_NEW_SETTING, config.newSetting);
+   ```
+
+7. **Add to default loader in `config_loader.cpp::loadDefaultConfigInternal()`:**
+   ```cpp
+   g_runtimeConfig.newSetting = defaultNewSetting;
+   ```
+
+#### How to Add Runtime-Only Constant
+
+1. **Add constant to `system_constants.h`:**
+
+   ```cpp
+   static const int newConstant = 42;
+   ```
+
+2. **Add field to `RuntimeConfig` struct in `config_loader.h`:**
+
+   ```cpp
+   // In RUNTIME-ONLY CONSTANTS section
+   int newConstant;  // Compile-time constant from system_constants.h
+   ```
+
+3. **Add to load functions in `config_loader.cpp`:**
+
+   ```cpp
+   // In loadNVSConfigInternal()
+   g_runtimeConfig.newConstant = newConstant;
+
+   // In loadDefaultConfigInternal()
+   g_runtimeConfig.newConstant = newConstant;
+   ```
+
+4. **DO NOT add to:**
+   - `nvs_keys.h` (not saved to NVS)
+   - `config_field_registry.cpp` (not in web interface)
+   - `saveNVSConfigInternal()` (not persisted)
+
+### Common Mistakes to Avoid
+
+❌ **Adding runtime-only values to NVS**
+
+- Wastes NVS storage
+- Creates confusion about configurability
+- Example: `wifi_timeout` was incorrectly in NVS (fixed in 2025)
+
+❌ **Using `default` prefix for non-NVS constants**
+
+- Violates naming convention
+- Makes grep-based searches unreliable
+
+❌ **Exposing system internals in web interface**
+
+- Security risk (e.g., allowing users to change API endpoints)
+- Stability risk (e.g., allowing buffer size changes)
+
+❌ **Hardcoding values instead of using RuntimeConfig**
+
+- Defeats purpose of configuration system
+- Makes testing and maintenance harder
+
+✅ **Correct Pattern:**
+
+```cpp
+// Access any config value the same way
+const RuntimeConfig& config = getRuntimeConfig();
+
+// NVS-backed (can be changed by user via web)
+printer.begin(config.printerTxPin, config.printerRxPin);
+
+// Runtime-only (fixed at compile time)
+String joke = fetchFromAPI(config.jokeAPI, apiUserAgent, 5000);
+```
+
+### Verification Commands
+
+**Check NVS keys at runtime:**
+
+```
+GET http://scribe-device.local/api/nvs-dump
+```
+
+**Grep for NVS-backed settings:**
+
+```bash
+grep "^constexpr const char \*NVS_" src/core/nvs_keys.h
+```
+
+**Grep for default values:**
+
+```bash
+grep "^static const.*default" src/config/device_config.h.example
+```
+
+**Count web-configurable fields:**
+
+```bash
+grep '{"' src/web/config_field_registry.cpp | wc -l
+```
+
+</configuration_architecture>
+
 <patterns>
 // GPIO validation - ALWAYS use these functions
 if (!isValidGPIO(pin) || !isSafeGPIO(pin)) {

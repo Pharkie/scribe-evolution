@@ -4,14 +4,14 @@
 #include <esp_task_wdt.h>
 #include <Arduino.h>
 
-bool retryWithBackoff(std::function<bool()> operation, int maxRetries, int baseDelayMs)
+bool retryWithBackoff(std::function<bool()> operation, int maxRetriesParam, int baseDelayMsParam)
 {
-    // Use system defaults if not specified
-    if (maxRetries == -1) maxRetries = defaultMaxRetries;
-    if (baseDelayMs == -1) baseDelayMs = defaultBaseDelayMs;
-    
-    int delayMs = baseDelayMs;
-    for (int attempt = 0; attempt < maxRetries; attempt++)
+    // Use system constants if not specified (-1 sentinel value)
+    int effectiveMaxRetries = (maxRetriesParam == -1) ? ::maxRetries : maxRetriesParam;
+    int effectiveBaseDelayMs = (baseDelayMsParam == -1) ? ::baseDelayMs : baseDelayMsParam;
+
+    int delayMs = effectiveBaseDelayMs;
+    for (int attempt = 0; attempt < effectiveMaxRetries; attempt++)
     {
         if (operation())
         {
@@ -21,8 +21,8 @@ bool retryWithBackoff(std::function<bool()> operation, int maxRetries, int baseD
             }
             return true;
         }
-        
-        if (attempt < maxRetries - 1) // Don't delay after the last attempt
+
+        if (attempt < effectiveMaxRetries - 1) // Don't delay after the last attempt
         {
             LOG_VERBOSE("RETRY", "Retry attempt %d failed, waiting %dms", attempt + 1, delayMs);
             esp_task_wdt_reset(); // Keep watchdog happy during delays
@@ -30,7 +30,7 @@ bool retryWithBackoff(std::function<bool()> operation, int maxRetries, int baseD
             delayMs *= 2; // Exponential backoff
         }
     }
-    
-    LOG_WARNING("RETRY", "Operation failed after %d retries", maxRetries);
+
+    LOG_WARNING("RETRY", "Operation failed after %d retries", effectiveMaxRetries);
     return false;
 }

@@ -34,8 +34,8 @@ namespace ScribeTime
 static const int serialTimeoutMs = 5000;                          // Serial connection timeout (5s)
 static const int smallDelayMs = 50;                               // Small delay for CPU/power management
 static const int mediumJsonBuffer = 1024;                         // Medium JSON buffer size divisor
-static const int defaultMaxRetries = 3;                           // Default max retries for API calls
-static const int defaultBaseDelayMs = 1000;                       // Default base delay for backoff (1s)
+static const int maxRetries = 3;                                  // Max retries for API calls (runtime-only, not NVS)
+static const int baseDelayMs = 1000;                              // Base delay for backoff (1s) (runtime-only, not NVS)
 static const int mqttTestCleanupDelayMs = ScribeTime::Seconds(1); // MQTT test cleanup delay (1s)
 
 // Session management constants

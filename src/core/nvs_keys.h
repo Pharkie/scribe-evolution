@@ -29,7 +29,7 @@ constexpr const char *NVS_BUTTON4_GPIO = "btn4_gpio";
 // WiFi Configuration Keys
 constexpr const char *NVS_WIFI_SSID = "wifi_ssid";
 constexpr const char *NVS_WIFI_PASSWORD = "wifi_password";
-constexpr const char *NVS_WIFI_TIMEOUT = "wifi_timeout";
+// Note: wifi_timeout is NOT in NVS - it's a compile-time constant in system_constants.h
 
 // MQTT Configuration Keys
 constexpr const char *NVS_MQTT_ENABLED = "mqtt_enabled";

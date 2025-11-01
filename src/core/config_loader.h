@@ -17,71 +17,95 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
-// Runtime configuration structure
+/**
+ * @brief Runtime configuration structure combining NVS-backed and compile-time settings
+ *
+ * This struct intentionally contains TWO types of configuration:
+ *
+ * 1. NVS-BACKED SETTINGS (User-Configurable via Web Interface)
+ *    - Saved to ESP32 Non-Volatile Storage across reboots
+ *    - Exposed in config_field_registry.cpp for web API access
+ *    - Initial values from device_config.h, runtime values from NVS
+ *    - ~51 total NVS keys (see nvs_keys.h for complete list)
+ *
+ * 2. RUNTIME-ONLY CONSTANTS (Compile-Time Configuration)
+ *    - Always loaded from system_constants.h at runtime
+ *    - NEVER saved to or loaded from NVS
+ *    - NOT exposed in web configuration interface
+ *    - Examples: API endpoints, timeouts, buffer sizes, validation limits
+ *
+ * This design provides a single source of truth for all configuration while
+ * maintaining clear separation between user-configurable and system constants.
+ */
 struct RuntimeConfig
 {
-    // Device Configuration
-    String deviceOwner;
-    String timezone;
-    
-    // Hardware GPIO Configuration
-    int printerTxPin;    // GPIO pin for printer TX (UART communication)
-    int printerRxPin;    // GPIO pin for printer RX (bidirectional comms, -1 if disabled)
-    int printerDtrPin;   // GPIO pin for printer DTR (hardware flow control, -1 if disabled)
-    int buttonGpios[4];  // GPIO pins for buttons 1-4
+    // ===== NVS-BACKED SETTINGS (User-Configurable) =====
 
-    // WiFi Configuration
-    String wifiSSID;
-    String wifiPassword;
-    unsigned long wifiConnectTimeoutMs;
+    // Device Configuration (web: device.*)
+    String deviceOwner;              // Web: device.owner
+    String timezone;                 // Web: device.timezone (IANA format)
 
-    // MQTT Configuration
-    bool mqttEnabled;
-    String mqttServer;
-    int mqttPort;
-    String mqttUsername;
-    String mqttPassword;
+    // Hardware GPIO Configuration (web: device.*)
+    int printerTxPin;                // Web: device.printerTxPin
+    int printerRxPin;                // Web: device.printerRxPin (bidirectional comms, -1 if disabled)
+    int printerDtrPin;               // Web: device.printerDtrPin (hardware flow control, -1 if disabled)
+    int buttonGpios[4];              // Web: buttons.button{1-4}.gpio
 
-    // API Configuration
-    String jokeAPI;
-    String quoteAPI;
-    String triviaAPI;
-    String newsAPI;
-    String chatgptApiToken;
-    String chatgptApiEndpoint;
+    // WiFi Configuration (web: wifi.*)
+    String wifiSSID;                 // Web: wifi.ssid
+    String wifiPassword;             // Web: wifi.password
 
-    // Validation Configuration (only user-configurable parts)
-    int maxCharacters;
+    // MQTT Configuration (web: mqtt.*)
+    bool mqttEnabled;                // Web: mqtt.enabled
+    String mqttServer;               // Web: mqtt.server
+    int mqttPort;                    // Web: mqtt.port
+    String mqttUsername;             // Web: mqtt.username
+    String mqttPassword;             // Web: mqtt.password
 
-    // Unbidden Ink Configuration
-    bool unbiddenInkEnabled;
-    int unbiddenInkStartHour;
-    int unbiddenInkEndHour;
-    int unbiddenInkFrequencyMinutes;
-    String unbiddenInkPrompt;
+    // API Configuration (web: unbiddenInk.chatgptApiToken)
+    String chatgptApiToken;          // Web: unbiddenInk.chatgptApiToken
 
-    // Button Configuration (exactly 4 buttons)
-    String buttonShortActions[4];    // Short press actions for buttons 1-4
-    String buttonLongActions[4];     // Long press actions for buttons 1-4 (empty string = no action)
-    String buttonShortMqttTopics[4]; // MQTT topics for short press actions (empty string = use local print)
-    String buttonLongMqttTopics[4];  // MQTT topics for long press actions (empty string = use local print)
+    // Unbidden Ink Configuration (web: unbiddenInk.*)
+    bool unbiddenInkEnabled;         // Web: unbiddenInk.enabled
+    int unbiddenInkStartHour;        // Web: unbiddenInk.startHour (0-24)
+    int unbiddenInkEndHour;          // Web: unbiddenInk.endHour (0-24)
+    int unbiddenInkFrequencyMinutes; // Web: unbiddenInk.frequencyMinutes (15-480)
+    String unbiddenInkPrompt;        // Web: unbiddenInk.prompt
 
-    // Button LED Effects Configuration (exactly 4 buttons)
-    String buttonShortLedEffects[4]; // LED effects for short press actions (default: simple_chase)
-    String buttonLongLedEffects[4];  // LED effects for long press actions (default: simple_chase)
+    // Button Configuration (web: buttons.button{1-4}.*)
+    String buttonShortActions[4];    // Web: buttons.button{1-4}.shortAction
+    String buttonLongActions[4];     // Web: buttons.button{1-4}.longAction
+    String buttonShortMqttTopics[4]; // Web: buttons.button{1-4}.shortMqttTopic
+    String buttonLongMqttTopics[4];  // Web: buttons.button{1-4}.longMqttTopic
+    String buttonShortLedEffects[4]; // Web: buttons.button{1-4}.shortLedEffect
+    String buttonLongLedEffects[4];  // Web: buttons.button{1-4}.longLedEffect
 
-    // Memo Configuration (4 memo slots)
-    String memos[4]; // Memo content for slots 1-4
+    // Memo Configuration (NOT in web registry - use /api/print-memo endpoint)
+    String memos[4];                 // Memo content for slots 1-4
 
 #if ENABLE_LEDS
-    // LED Configuration (runtime configurable)
-    int ledPin;         // GPIO pin for LED strip data
-    int ledCount;       // Number of LEDs in the strip
-    int ledBrightness;  // LED brightness (0-255)
-    int ledRefreshRate; // Refresh rate in Hz
-    // Per-effect autonomous configuration
-    LedEffectsConfig ledEffects; // Contains all effect-specific settings
+    // LED Configuration (web: leds.*)
+    int ledPin;                      // Web: leds.pin
+    int ledCount;                    // Web: leds.count (1-300)
+    int ledBrightness;               // Web: leds.brightness (0-255)
+    int ledRefreshRate;              // Web: leds.refreshRate (10-120 Hz)
+    LedEffectsConfig ledEffects;     // Per-effect autonomous configuration
 #endif
+
+    // ===== RUNTIME-ONLY CONSTANTS (NOT in NVS or Web Config) =====
+
+    // WiFi Constants (from system_constants.h)
+    unsigned long wifiConnectTimeoutMs; // Compile-time constant (15 seconds)
+
+    // API Endpoints (from system_constants.h)
+    String jokeAPI;                  // Fixed: https://icanhazdadjoke.com/
+    String quoteAPI;                 // Fixed: https://zenquotes.io/api/random
+    String triviaAPI;                // Fixed: https://the-trivia-api.com/...
+    String newsAPI;                  // Fixed: https://feeds.bbci.co.uk/news/rss.xml
+    String chatgptApiEndpoint;       // Fixed: https://api.openai.com/v1/chat/completions
+
+    // Validation Configuration (from system_constants.h)
+    int maxCharacters;               // Maximum characters for text input
 };
 
 /**

@@ -235,7 +235,7 @@ bool ConfigManager::loadNVSConfigInternal()
     // Load WiFi configuration
     g_runtimeConfig.wifiSSID = getNVSString(prefs, NVS_WIFI_SSID, defaultWifiSSID, 32);
     g_runtimeConfig.wifiPassword = getNVSString(prefs, NVS_WIFI_PASSWORD, defaultWifiPassword, 63);
-    g_runtimeConfig.wifiConnectTimeoutMs = getNVSInt(prefs, NVS_WIFI_TIMEOUT, wifiConnectTimeoutMs, 5000, 60000);
+    g_runtimeConfig.wifiConnectTimeoutMs = wifiConnectTimeoutMs; // Runtime-only constant from system_constants.h
 
     // Load MQTT configuration (write default if missing)
     g_runtimeConfig.mqttEnabled = getNVSBool(prefs, NVS_MQTT_ENABLED, defaultMqttEnabled);
@@ -417,7 +417,7 @@ bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
     // Save WiFi configuration
     prefs.putString(NVS_WIFI_SSID, config.wifiSSID);
     prefs.putString(NVS_WIFI_PASSWORD, config.wifiPassword);
-    prefs.putULong(NVS_WIFI_TIMEOUT, config.wifiConnectTimeoutMs);
+    // Note: wifiConnectTimeoutMs is NOT saved - it's a runtime-only constant
 
     // Save MQTT configuration
     prefs.putBool(NVS_MQTT_ENABLED, config.mqttEnabled);
