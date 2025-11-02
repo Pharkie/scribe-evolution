@@ -65,8 +65,6 @@ bool isRateLimited()
     }
 
     lastRequestTime = currentTime;
-    LOG_VERBOSE("WEB", "Rate limit OK: %lums since last, request #%lu in window",
-                timeSinceLastRequest, requestCount);
     return false;
 }
 

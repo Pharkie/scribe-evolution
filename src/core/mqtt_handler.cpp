@@ -60,7 +60,6 @@ MQTTManager::MQTTManager() {
 // Initialize (must be called in setup)
 void MQTTManager::begin() {
     if (initialized) {
-        LOG_VERBOSE("MQTT", "MQTTManager already initialized");
         return;
     }
 

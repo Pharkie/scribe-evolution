@@ -361,8 +361,6 @@ void handleConfigGet(AsyncWebServerRequest *request)
     String configString;
     size_t jsonSize = serializeJson(configDoc, configString);
 
-    LOG_VERBOSE("CONFIG", "JSON serialized: %d bytes", jsonSize);
-
     if (jsonSize == 0)
     {
         LOG_ERROR("WEB", "Failed to serialize config JSON");
@@ -374,7 +372,6 @@ void handleConfigGet(AsyncWebServerRequest *request)
         return;
     }
 
-    LOG_VERBOSE("WEB", "Configuration from NVS, returning %d bytes", configString.length());
     request->send(200, "application/json", configString);
 }
 
@@ -400,9 +397,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
     // Parse JSON to validate structure
     JsonDocument doc;
 
-    LOG_VERBOSE("WEB", "Config POST body length: %d", body.length());
-    LOG_VERBOSE("WEB", "Config POST body (first 200 chars): %s", body.substring(0, 200).c_str());
-
     DeserializationError error = deserializeJson(doc, body);
     if (error)
     {
@@ -427,22 +421,13 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Debug: Check MQTT password before and after processing
-    LOG_VERBOSE("WEB", "MQTT Debug - Current password length: %d", newConfig.mqttPassword.length());
-    LOG_VERBOSE("WEB", "MQTT Debug - NewConfig password length after processing: %d", newConfig.mqttPassword.length());
-
     // MQTT password fix: If frontend didn't send password, preserve existing one
     if (doc["mqtt"].is<JsonObject>())
     {
         JsonObject mqttObj = doc["mqtt"];
         if (!mqttObj["password"].is<const char*>())
         {
-            LOG_VERBOSE("WEB", "MQTT password not in request, preserving existing stored password (length: %d)", currentConfig.mqttPassword.length());
             newConfig.mqttPassword = currentConfig.mqttPassword;
-        }
-        else
-        {
-            LOG_NOTICE("WEB", "MQTT password provided in request");
         }
     }
 
@@ -591,11 +576,8 @@ void handleConfigPost(AsyncWebServerRequest *request)
     if (ledEffects().reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
                                 newConfig.ledRefreshRate, newConfig.ledEffects))
     {
-        LOG_VERBOSE("WEB", "LED system reinitialized with new configuration");
-
         // Trigger green chase single effect as visual confirmation of successful save
         ledEffects().startEffectCycles("chase_single", 1, CRGB::Green);
-        LOG_VERBOSE("WEB", "LED confirmation effect triggered for config save");
     }
     else
     {
@@ -644,8 +626,6 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
 void handleMemosGet(AsyncWebServerRequest *request)
 {
-    LOG_VERBOSE("WEB", "handleMemosGet() called");
-
     // Create JSON response with all memos
     JsonDocument memosDoc;
 
@@ -676,15 +656,12 @@ void handleMemosGet(AsyncWebServerRequest *request)
         return;
     }
 
-    LOG_VERBOSE("WEB", "Memos sent to client (%zu bytes)", jsonSize);
     request->send(200, "application/json", memosString);
 }
 
 void handleMemosPost(AsyncWebServerRequest *request)
 {
     extern String getRequestBody(AsyncWebServerRequest * request);
-
-    LOG_VERBOSE("WEB", "handleMemosPost() called");
 
     // Get request body
     String body = getRequestBody(request);
@@ -724,7 +701,6 @@ void handleMemosPost(AsyncWebServerRequest *request)
             }
 
             currentConfig.memos[i] = memoContent;
-            LOG_VERBOSE("WEB", "Updated memo %d (%d characters)", i + 1, memoContent.length());
         }
     }
 
@@ -747,8 +723,6 @@ void handleSetupPost(AsyncWebServerRequest *request)
 {
     extern String getRequestBody(AsyncWebServerRequest * request);
 
-    LOG_VERBOSE("WEB", "handleSetupPost() called - initial device setup");
-
     // Get request body
     String body = getRequestBody(request);
     if (body.length() == 0)
@@ -760,8 +734,6 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
     // Parse JSON - minimal buffer since setup only has device config
     JsonDocument doc;
-
-    LOG_VERBOSE("WEB", "Setup POST body: %s", body.c_str());
 
     DeserializationError error = deserializeJson(doc, body);
     if (error)
@@ -898,8 +870,6 @@ void handleSetupPost(AsyncWebServerRequest *request)
 
 void handleSetupGet(AsyncWebServerRequest *request)
 {
-    LOG_VERBOSE("WEB", "handleSetupGet() called - AP-STA mode setup configuration request");
-
     // Create minimal configuration document for setup - only what's needed for initial configuration
     JsonDocument setupDoc;
 
@@ -941,15 +911,11 @@ void handleSetupGet(AsyncWebServerRequest *request)
     AsyncWebServerResponse *res = request->beginResponse(200, "application/json", response);
     res->addHeader("Access-Control-Allow-Origin", "*");
     request->send(res);
-
-    LOG_VERBOSE("WEB", "Setup configuration sent (minimal for AP-STA mode)");
 }
 
 void handleTestMQTT(AsyncWebServerRequest *request)
 {
     extern String getRequestBody(AsyncWebServerRequest * request);
-
-    LOG_VERBOSE("WEB", "handleTestMQTT() called - testing MQTT connection");
 
     // Get request body
     String body = getRequestBody(request);
@@ -962,8 +928,6 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 
     // Parse JSON - small buffer for test data
     JsonDocument doc;
-
-    LOG_VERBOSE("WEB", "MQTT test POST body: %s", body.c_str());
 
     DeserializationError error = deserializeJson(doc, body);
     if (error)
@@ -1035,8 +999,6 @@ void handleTestMQTT(AsyncWebServerRequest *request)
 void handleTestChatGPT(AsyncWebServerRequest *request)
 {
     extern String getRequestBody(AsyncWebServerRequest * request);
-
-    LOG_VERBOSE("WEB", "handleTestChatGPT() called - testing ChatGPT API token");
 
     // Read body
     String body = getRequestBody(request);

@@ -229,11 +229,8 @@ bool APIClient::performSingleBearerAPIRequest(const String &url, const String &b
 
     esp_task_wdt_reset();
 
-    LOG_VERBOSE("API", "HTTP response code: %d", httpResponseCode);
-
     if (httpResponseCode == 200) {
         result = httpClient->getString();
-        LOG_VERBOSE("API", "Bearer API call successful, response length: %d", result.length());
         httpClient->end();
         wifiClient->stop();  // Close SSL socket and free mbedtls memory
         esp_task_wdt_reset();
@@ -276,19 +273,14 @@ bool APIClient::performSinglePostAPIRequest(const String &url, const String &bea
     httpClient->addHeader("User-Agent", userAgent);
     httpClient->setTimeout(timeoutMs);
 
-    LOG_VERBOSE("API", "Sending POST request with headers set");
-
     esp_task_wdt_reset();
 
     int httpResponseCode = httpClient->POST(jsonPayload);
 
     esp_task_wdt_reset();
 
-    LOG_VERBOSE("API", "HTTP POST response code: %d", httpResponseCode);
-
     if (httpResponseCode == 200) {
         result = httpClient->getString();
-        LOG_VERBOSE("API", "Bearer POST API call successful, response length: %d", result.length());
         httpClient->end();
         wifiClient->stop();  // Close SSL socket and free mbedtls memory
         esp_task_wdt_reset();

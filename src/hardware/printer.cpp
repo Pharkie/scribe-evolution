@@ -403,7 +403,5 @@ void printMessage()
         return;
     }
 
-    LOG_VERBOSE("PRINTER", "Calling printerManager.printWithHeader...");
     printerManager.printWithHeader(timestamp, message);
-    LOG_VERBOSE("PRINTER", "printWithHeader() returned");
 }

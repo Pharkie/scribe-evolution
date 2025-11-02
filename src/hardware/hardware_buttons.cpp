@@ -344,11 +344,7 @@ void handleButtonPress(int buttonIndex)
     // If another action is running, this button press is ignored
     bool started = handleButtonActionSync(buttonIndex, false);
 
-    if (started)
-    {
-        LOG_VERBOSE("BUTTONS", "Button %d SHORT press completed", buttonIndex);
-    }
-    else
+    if (!started)
     {
         LOG_WARNING("BUTTONS", "Button %d SHORT press ignored (action already running)", buttonIndex);
     }
@@ -382,11 +378,7 @@ void handleButtonLongPress(int buttonIndex)
     // If another action is running, this button press is ignored
     bool started = handleButtonActionSync(buttonIndex, true);
 
-    if (started)
-    {
-        LOG_VERBOSE("BUTTONS", "Button %d LONG press completed", buttonIndex);
-    }
-    else
+    if (!started)
     {
         LOG_WARNING("BUTTONS", "Button %d LONG press ignored (action already running)", buttonIndex);
     }

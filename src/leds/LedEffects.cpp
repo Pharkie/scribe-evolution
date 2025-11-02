@@ -94,7 +94,6 @@ bool LedEffects::begin()
 {
     if (initialized)
     {
-        LOG_VERBOSE("LEDS", "LedEffects already initialized");
         return true;
     }
 
