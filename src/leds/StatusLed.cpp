@@ -30,7 +30,10 @@ bool StatusLed::heartbeatState = false;
 // Previous state tracking for logging
 CRGB StatusLed::previousColor = CRGB::Black;
 bool StatusLed::previousIsBlinking = false;
+bool StatusLed::previousIsHeartbeat = false;
 uint16_t StatusLed::previousBlinkInterval = 0;
+uint16_t StatusLed::previousHeartbeatPeriod = 0;
+uint16_t StatusLed::previousHeartbeatDuration = 0;
 
 void StatusLed::begin()
 {
@@ -104,9 +107,14 @@ void StatusLed::logColorChange(const char* mode, CRGB newColor, uint16_t interva
 {
     // Build previous state description
     char prevState[64];
-    if (previousColor == CRGB::Black && !previousIsBlinking)
+    if (previousColor == CRGB::Black && !previousIsBlinking && !previousIsHeartbeat)
     {
         snprintf(prevState, sizeof(prevState), "OFF");
+    }
+    else if (previousIsHeartbeat)
+    {
+        snprintf(prevState, sizeof(prevState), "HEARTBEAT %s (%dms/%dms)",
+                 colorToString(previousColor), previousHeartbeatDuration, previousHeartbeatPeriod);
     }
     else if (previousIsBlinking)
     {
@@ -158,7 +166,10 @@ void StatusLed::setSolid(CRGB color, const char* reason)
     // Update previous state
     previousColor = currentColor;
     previousIsBlinking = isBlinking;
+    previousIsHeartbeat = isHeartbeat;
     previousBlinkInterval = blinkInterval;
+    previousHeartbeatPeriod = heartbeatPeriod;
+    previousHeartbeatDuration = heartbeatDuration;
 
     // Set new state
     isBlinking = false;
@@ -181,7 +192,10 @@ void StatusLed::setBlink(CRGB color, uint16_t intervalMs, const char* reason)
     // Update previous state
     previousColor = currentColor;
     previousIsBlinking = isBlinking;
+    previousIsHeartbeat = isHeartbeat;
     previousBlinkInterval = blinkInterval;
+    previousHeartbeatPeriod = heartbeatPeriod;
+    previousHeartbeatDuration = heartbeatDuration;
 
     // Set new state
     currentColor = color;
@@ -204,7 +218,10 @@ void StatusLed::off(const char* reason)
     // Update previous state
     previousColor = currentColor;
     previousIsBlinking = isBlinking;
+    previousIsHeartbeat = isHeartbeat;
     previousBlinkInterval = blinkInterval;
+    previousHeartbeatPeriod = heartbeatPeriod;
+    previousHeartbeatDuration = heartbeatDuration;
 
     // Set new state
     isBlinking = false;
@@ -222,27 +239,46 @@ void StatusLed::setHeartbeat(CRGB color, uint16_t flashDurationMs, uint16_t peri
         return;
     }
 
-    // Log as heartbeat pattern
-    char buffer[32];
-    snprintf(buffer, sizeof(buffer), "HEARTBEAT %s (%dms/%dms)", colorToString(color), flashDurationMs, periodMs);
-
-    if (reason && reason[0] != '\0')
+    // Log using custom heartbeat format (logColorChange doesn't handle heartbeat in "new state")
+    char prevState[64];
+    if (previousColor == CRGB::Black && !previousIsBlinking && !previousIsHeartbeat)
     {
-        LOG_VERBOSE("STATUS_LED", "%s -> %s (%s)",
-                   previousIsBlinking ? "BLINK" : (previousColor == CRGB::Black ? "OFF" : "SOLID"),
-                   buffer, reason);
+        snprintf(prevState, sizeof(prevState), "OFF");
+    }
+    else if (previousIsHeartbeat)
+    {
+        snprintf(prevState, sizeof(prevState), "HEARTBEAT %s (%dms/%dms)",
+                 colorToString(previousColor), previousHeartbeatDuration, previousHeartbeatPeriod);
+    }
+    else if (previousIsBlinking)
+    {
+        snprintf(prevState, sizeof(prevState), "BLINK %s (%dms)",
+                 colorToString(previousColor), previousBlinkInterval);
     }
     else
     {
-        LOG_VERBOSE("STATUS_LED", "%s -> %s",
-                   previousIsBlinking ? "BLINK" : (previousColor == CRGB::Black ? "OFF" : "SOLID"),
-                   buffer);
+        snprintf(prevState, sizeof(prevState), "SOLID %s", colorToString(previousColor));
+    }
+
+    char newState[64];
+    snprintf(newState, sizeof(newState), "HEARTBEAT %s (%dms/%dms)", colorToString(color), flashDurationMs, periodMs);
+
+    if (reason && reason[0] != '\0')
+    {
+        LOG_VERBOSE("STATUS_LED", "%s -> %s (%s)", prevState, newState, reason);
+    }
+    else
+    {
+        LOG_VERBOSE("STATUS_LED", "%s -> %s", prevState, newState);
     }
 
     // Update previous state
     previousColor = currentColor;
     previousIsBlinking = isBlinking;
+    previousIsHeartbeat = isHeartbeat;
     previousBlinkInterval = blinkInterval;
+    previousHeartbeatPeriod = heartbeatPeriod;
+    previousHeartbeatDuration = heartbeatDuration;
 
     // Set new heartbeat state
     isBlinking = false;

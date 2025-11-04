@@ -80,7 +80,10 @@ private:
     // Previous state for logging transitions
     static CRGB previousColor;
     static bool previousIsBlinking;
+    static bool previousIsHeartbeat;
     static uint16_t previousBlinkInterval;
+    static uint16_t previousHeartbeatPeriod;
+    static uint16_t previousHeartbeatDuration;
 
     // Helper to log color changes
     static void logColorChange(const char* mode, CRGB newColor, uint16_t intervalMs = 0, const char* reason = nullptr);
