@@ -20,6 +20,18 @@ unsigned long StatusLed::lastBlink = 0;
 bool StatusLed::blinkState = false;
 bool StatusLed::isBlinking = false;
 
+// Heartbeat state tracking
+bool StatusLed::isHeartbeat = false;
+uint16_t StatusLed::heartbeatPeriod = 0;
+uint16_t StatusLed::heartbeatDuration = 0;
+unsigned long StatusLed::lastHeartbeat = 0;
+bool StatusLed::heartbeatState = false;
+
+// Previous state tracking for logging
+CRGB StatusLed::previousColor = CRGB::Black;
+bool StatusLed::previousIsBlinking = false;
+uint16_t StatusLed::previousBlinkInterval = 0;
+
 void StatusLed::begin()
 {
     // Initialize FastLED for single WS2812 LED on status LED pin
@@ -67,44 +79,226 @@ void StatusLed::begin()
     LOG_VERBOSE("STATUS_LED", "Initialized WS2812 status LED on GPIO %d", BOARD_STATUS_LED_PIN);
 }
 
-void StatusLed::setSolid(CRGB color)
+// Helper to convert CRGB to human-readable color name for logging
+static const char* colorToString(CRGB color)
 {
+    // Check common named colors
+    if (color == CRGB::Black)       return "Black";
+    if (color == CRGB::Red)         return "Red";
+    if (color == CRGB::Green)       return "Green";
+    if (color == CRGB::Blue)        return "Blue";
+    if (color == CRGB::Yellow)      return "Yellow";
+    if (color == CRGB::Orange)      return "Orange";
+    if (color == CRGB::Purple)      return "Purple";
+    if (color == CRGB::Cyan)        return "Cyan";
+    if (color == CRGB::Magenta)     return "Magenta";
+    if (color == CRGB::White)       return "White";
+
+    // For unknown colors, return hex
+    static char buffer[16];
+    snprintf(buffer, sizeof(buffer), "#%02X%02X%02X", color.r, color.g, color.b);
+    return buffer;
+}
+
+void StatusLed::logColorChange(const char* mode, CRGB newColor, uint16_t intervalMs, const char* reason)
+{
+    // Build previous state description
+    char prevState[64];
+    if (previousColor == CRGB::Black && !previousIsBlinking)
+    {
+        snprintf(prevState, sizeof(prevState), "OFF");
+    }
+    else if (previousIsBlinking)
+    {
+        snprintf(prevState, sizeof(prevState), "BLINK %s (%dms)",
+                 colorToString(previousColor), previousBlinkInterval);
+    }
+    else
+    {
+        snprintf(prevState, sizeof(prevState), "SOLID %s", colorToString(previousColor));
+    }
+
+    // Build new state description
+    char newState[64];
+    if (newColor == CRGB::Black)
+    {
+        snprintf(newState, sizeof(newState), "OFF");
+    }
+    else if (intervalMs > 0)
+    {
+        snprintf(newState, sizeof(newState), "BLINK %s (%dms)",
+                 colorToString(newColor), intervalMs);
+    }
+    else
+    {
+        snprintf(newState, sizeof(newState), "SOLID %s", colorToString(newColor));
+    }
+
+    // Log with or without reason
+    if (reason && reason[0] != '\0')
+    {
+        LOG_VERBOSE("STATUS_LED", "%s -> %s (%s)", prevState, newState, reason);
+    }
+    else
+    {
+        LOG_VERBOSE("STATUS_LED", "%s -> %s", prevState, newState);
+    }
+}
+
+void StatusLed::setSolid(CRGB color, const char* reason)
+{
+    // Skip if already in this exact state (prevents logging spam)
+    if (!isBlinking && !isHeartbeat && currentColor == color)
+    {
+        return;
+    }
+
+    logColorChange("setSolid", color, 0, reason);
+
+    // Update previous state
+    previousColor = currentColor;
+    previousIsBlinking = isBlinking;
+    previousBlinkInterval = blinkInterval;
+
+    // Set new state
     isBlinking = false;
+    isHeartbeat = false;
     currentColor = color;
     led[0] = color;
     FastLED.show();
 }
 
-void StatusLed::setBlink(CRGB color, uint16_t intervalMs)
+void StatusLed::setBlink(CRGB color, uint16_t intervalMs, const char* reason)
 {
+    // Skip if already in this exact state (prevents logging spam)
+    if (isBlinking && !isHeartbeat && currentColor == color && blinkInterval == intervalMs)
+    {
+        return;
+    }
+
+    logColorChange("setBlink", color, intervalMs, reason);
+
+    // Update previous state
+    previousColor = currentColor;
+    previousIsBlinking = isBlinking;
+    previousBlinkInterval = blinkInterval;
+
+    // Set new state
     currentColor = color;
     blinkInterval = intervalMs;
     isBlinking = true;
+    isHeartbeat = false;
     // Don't update immediately - let update() handle timing
 }
 
-void StatusLed::off()
+void StatusLed::off(const char* reason)
 {
+    // Skip if already off (prevents logging spam)
+    if (!isBlinking && !isHeartbeat && currentColor == CRGB::Black)
+    {
+        return;
+    }
+
+    logColorChange("off", CRGB::Black, 0, reason);
+
+    // Update previous state
+    previousColor = currentColor;
+    previousIsBlinking = isBlinking;
+    previousBlinkInterval = blinkInterval;
+
+    // Set new state
     isBlinking = false;
+    isHeartbeat = false;
     currentColor = CRGB::Black;
+    led[0] = CRGB::Black;
+    FastLED.show();
+}
+
+void StatusLed::setHeartbeat(CRGB color, uint16_t flashDurationMs, uint16_t periodMs, const char* reason)
+{
+    // Skip if already in this exact heartbeat state (prevents logging spam)
+    if (isHeartbeat && currentColor == color && heartbeatDuration == flashDurationMs && heartbeatPeriod == periodMs)
+    {
+        return;
+    }
+
+    // Log as heartbeat pattern
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "HEARTBEAT %s (%dms/%dms)", colorToString(color), flashDurationMs, periodMs);
+
+    if (reason && reason[0] != '\0')
+    {
+        LOG_VERBOSE("STATUS_LED", "%s -> %s (%s)",
+                   previousIsBlinking ? "BLINK" : (previousColor == CRGB::Black ? "OFF" : "SOLID"),
+                   buffer, reason);
+    }
+    else
+    {
+        LOG_VERBOSE("STATUS_LED", "%s -> %s",
+                   previousIsBlinking ? "BLINK" : (previousColor == CRGB::Black ? "OFF" : "SOLID"),
+                   buffer);
+    }
+
+    // Update previous state
+    previousColor = currentColor;
+    previousIsBlinking = isBlinking;
+    previousBlinkInterval = blinkInterval;
+
+    // Set new heartbeat state
+    isBlinking = false;
+    isHeartbeat = true;
+    currentColor = color;
+    heartbeatDuration = flashDurationMs;
+    heartbeatPeriod = periodMs;
+    lastHeartbeat = millis();
+    heartbeatState = false; // Start with LED off
     led[0] = CRGB::Black;
     FastLED.show();
 }
 
 void StatusLed::update()
 {
-    if (!isBlinking)
+    unsigned long now = millis();
+
+    // Handle blinking mode
+    if (isBlinking)
     {
+        if (now - lastBlink >= blinkInterval)
+        {
+            blinkState = !blinkState;
+            led[0] = blinkState ? currentColor : CRGB::Black;
+            FastLED.show();
+            lastBlink = now;
+        }
         return;
     }
 
-    unsigned long now = millis();
-    if (now - lastBlink >= blinkInterval)
+    // Handle heartbeat mode
+    if (isHeartbeat)
     {
-        blinkState = !blinkState;
-        led[0] = blinkState ? currentColor : CRGB::Black;
-        FastLED.show();
-        lastBlink = now;
+        if (heartbeatState)
+        {
+            // LED is currently on - check if flash duration has elapsed
+            if (now - lastHeartbeat >= heartbeatDuration)
+            {
+                // Turn LED off
+                heartbeatState = false;
+                led[0] = CRGB::Black;
+                FastLED.show();
+            }
+        }
+        else
+        {
+            // LED is currently off - check if period has elapsed
+            if (now - lastHeartbeat >= heartbeatPeriod)
+            {
+                // Start new flash
+                heartbeatState = true;
+                led[0] = currentColor;
+                FastLED.show();
+                lastHeartbeat = now;
+            }
+        }
     }
 }
 

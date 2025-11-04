@@ -44,6 +44,9 @@
 #include "content/unbidden_ink.h"
 #if ENABLE_LEDS
 #include "leds/LedEffects.h"
+#if defined(BOARD_ESP32S3_CUSTOM_PCB)
+#include "leds/StatusLed.h"
+#endif
 #endif
 
 // === Web Server ===
@@ -141,6 +144,11 @@ void setup()
 
   // Initialize status LED
   initializeStatusLED();
+
+#if defined(BOARD_ESP32S3_CUSTOM_PCB) && ENABLE_LEDS
+  // Show purple blink during boot sequence
+  StatusLed::setBlink(CRGB::Purple, 500, "Booting");
+#endif
 
   // Connect to WiFi (uses config loaded from NVS above)
   currentWiFiMode = connectToWiFi();
@@ -303,6 +311,13 @@ void setup()
     // AP mode (mDNS intentionally skipped)
     webUILine += "http://" + WiFi.softAPIP().toString() + " (AP mode)";
   }
+
+  // Boot complete - show brief white flash before transitioning to WiFi status
+#if defined(BOARD_ESP32S3_CUSTOM_PCB) && ENABLE_LEDS
+  StatusLed::setSolid(CRGB::White, "Boot complete");
+  delay(200);
+  // Now updateStatusLED() in loop() will take over with WiFi status
+#endif
 
   // Print final boot banner
   if (isAPMode())

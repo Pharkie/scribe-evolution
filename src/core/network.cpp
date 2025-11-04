@@ -44,25 +44,26 @@ void updateStatusLED()
     {
     case WIFI_MODE_CONNECTING:
         // Orange fast blink when trying to connect
-        StatusLed::setBlink(CRGB::Orange, 250);
+        StatusLed::setBlink(CRGB::Orange, 250, "WiFi connecting");
         StatusLed::update();
         break;
 
     case WIFI_MODE_STA_CONNECTED:
-        // Solid green when connected to WiFi
-        StatusLed::setSolid(CRGB::Green);
+        // Green heartbeat when connected to WiFi (500ms flash every 3s)
+        StatusLed::setHeartbeat(CRGB::Green, 500, 3000, "WiFi connected (heartbeat)");
+        StatusLed::update();
         break;
 
     case WIFI_MODE_AP_FALLBACK:
         // Blue blink when in AP mode
-        StatusLed::setBlink(CRGB::Blue, 1000);
+        StatusLed::setBlink(CRGB::Blue, 1000, "AP mode fallback");
         StatusLed::update();
         break;
 
     case WIFI_MODE_DISCONNECTED:
     default:
         // LED off when disconnected
-        StatusLed::off();
+        StatusLed::off("WiFi disconnected");
         break;
     }
 #else
