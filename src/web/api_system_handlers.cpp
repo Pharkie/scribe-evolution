@@ -267,17 +267,21 @@ void handlePrintMQTT(AsyncWebServerRequest *request)
 
     String header = doc["header"].as<String>();
     String bodyContent = doc["body"].as<String>();
-    
-    // Validate content
+
+    // Validate header (always required)
     ValidationResult headerValidation = validateMessage(header);
-    ValidationResult bodyValidation = validateMessage(bodyContent);
     if (!headerValidation.isValid) {
         sendValidationError(request, headerValidation);
         return;
     }
-    if (!bodyValidation.isValid) {
-        sendValidationError(request, bodyValidation);
-        return;
+
+    // Validate body ONLY if not empty (body is optional, e.g., for POKE action)
+    if (bodyContent.length() > 0) {
+        ValidationResult bodyValidation = validateMessage(bodyContent);
+        if (!bodyValidation.isValid) {
+            sendValidationError(request, bodyValidation);
+            return;
+        }
     }
     
     // Use centralized MQTT publishing function
