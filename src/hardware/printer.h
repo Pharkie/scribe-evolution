@@ -28,6 +28,7 @@ private:
     HardwareSerial* uart;  // CHANGED: Use pointer to avoid global constructor issues
 
     // Private helper methods - MUST be called with mutex already held
+    void sendRotationCommandInternal();
     void setInverseInternal(bool enable);
     void advancePaperInternal(int lines);
     void printWrappedInternal(const String& text);
@@ -48,11 +49,15 @@ public:
 
     // Initialization
     void initialize();
+    void configurePrinter(); // Send reset, heating params, rotation (call after other boot tasks)
     bool isReady() const { return ready.load(std::memory_order_acquire); }
 
     // Thread-safe printing operations - all acquire mutex internally
     void printWithHeader(const String& headerText, const String& bodyText);
     void printStartupMessage();
+
+    // Send rotation command to printer (180° mode for upside-down mounting)
+    void sendRotationCommand();
 };
 
 // Global printer manager instance

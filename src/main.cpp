@@ -212,9 +212,9 @@ void setup()
     LOG_VERBOSE("BOOT", "Configuration system initialized successfully");
   }
 
-  // Initialize printer hardware
+  // Initialize printer hardware (eFuse + UART only, no commands sent yet)
   printerManager.initialize();
-  LOG_NOTICE("BOOT", "Printer initialized");
+  LOG_NOTICE("BOOT", "Printer hardware initialized");
 
   // Setup mDNS
   setupmDNS();
@@ -252,6 +252,11 @@ void setup()
 
   // Initialize hardware buttons (GPIOs, mutex, state array)
   initializeHardwareButtons();
+
+  // Configure printer (send reset, heating params, rotation)
+  // Called here after other boot tasks to give printer time to wake up
+  printerManager.configurePrinter();
+  LOG_NOTICE("BOOT", "Printer configured");
 
   // Calculate boot time
   unsigned long bootDuration = millis() - bootStartTime;
@@ -326,10 +331,6 @@ void postSetup()
   ledEffects().startEffectCycles("chase_single", 1);
   LOG_VERBOSE("POST_SETUP", "Boot LED effect started");
 #endif
-
-  // Allow printer to stabilize before first print
-  delay(100);
-  LOG_VERBOSE("POST_SETUP", "Printer ready for operation");
 
   // Print startup message
   printerManager.printStartupMessage();

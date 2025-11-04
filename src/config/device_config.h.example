@@ -59,6 +59,8 @@ static const char *betterStackToken = "YOUR_BETTERSTACK_TOKEN";
 #define LOG_LEVEL_ERROR 1
 
 // Current log level (compile-time setting - not stored in NVS)
+// NOTE: This is overridden by APP_LOG_LEVEL in platformio.ini build flags
+// Dev builds use LOG_LEVEL_VERBOSE, release builds use LOG_LEVEL_ERROR
 static const int logLevel = LOG_LEVEL_NOTICE;
 
 // ESP32 core logging level (0=None, 1=Error, 2=Warn, 3=Info, 4=Debug, 5=Verbose)

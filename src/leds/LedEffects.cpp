@@ -118,7 +118,7 @@ bool LedEffects::begin()
     // Load configuration
     const RuntimeConfig &config = getRuntimeConfig();
 
-    // Enable LED eFuse if present (custom PCB only) - one-time init
+    // Enable LED eFuse if present (custom PCB only)
 #if BOARD_HAS_EFUSES
     pinMode(BOARD_EFUSE_LED_PIN, OUTPUT);
     digitalWrite(BOARD_EFUSE_LED_PIN, HIGH);

@@ -79,6 +79,7 @@ void PrinterManager::initialize()
     // const BoardPinDefaults &boardDefaults = getBoardDefaults();
 
     // Enable printer eFuse if present (custom PCB only)
+    // MUST happen immediately before UART init to prevent printer boot gibberish
 #if BOARD_HAS_EFUSES
     pinMode(BOARD_EFUSE_PRINTER_PIN, OUTPUT);
     digitalWrite(BOARD_EFUSE_PRINTER_PIN, HIGH);
@@ -113,12 +114,26 @@ void PrinterManager::initialize()
     LOG_VERBOSE("PRINTER", "UART initialized (TX=%d, RX=%d, DTR=%d)",
                 config.printerTxPin, config.printerRxPin, config.printerDtrPin);
 
+    LOG_VERBOSE("PRINTER", "Printer hardware init complete - ready = %s",
+                ready.load() ? "TRUE" : "FALSE");
+}
+
+void PrinterManager::configurePrinter()
+{
+    // Acquire printer mutex using RAII lock
+    ManagerLock lock(mutex, "PRINTER", 10000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("PRINTER", "Failed to acquire mutex during configuration");
+        return;
+    }
+
     // Initialize printer with ESC @ (reset command)
     uart->write(0x1B);
     uart->write('@'); // ESC @
     delay(100);
 
-    // Set printer heating parameters from config
+    // Set printer heating parameters from system constants
     uart->write(0x1B);
     uart->write('7');
     uart->write(heatingDots);     // Heating dots from config
@@ -127,20 +142,24 @@ void PrinterManager::initialize()
     delay(50);
 
     // Enable 180° rotation (which also reverses the line order)
+    sendRotationCommandInternal();
+
+    LOG_VERBOSE("PRINTER", "Printer configured and ready for printing");
+}
+
+// ============================================================================
+// Internal Methods (assume mutex is already held by caller)
+// ============================================================================
+
+void PrinterManager::sendRotationCommandInternal()
+{
     LOG_VERBOSE("PRINTER", "Setting printer to 180° rotation mode (reverse line order)");
     uart->write(0x1B);
     uart->write('{');
     uart->write(0x01); // ESC { 1
     delay(200);
     LOG_VERBOSE("PRINTER", "Printer rotation mode configured");
-
-    LOG_VERBOSE("PRINTER", "Printer initialized successfully - ready = %s",
-                ready.load() ? "TRUE" : "FALSE");
 }
-
-// ============================================================================
-// Internal Methods (assume mutex is already held by caller)
-// ============================================================================
 
 void PrinterManager::setInverseInternal(bool enable)
 {
@@ -230,6 +249,19 @@ void PrinterManager::printWrappedInternal(const String& text)
 // ============================================================================
 // Public Methods (acquire mutex via ManagerLock)
 // ============================================================================
+
+void PrinterManager::sendRotationCommand()
+{
+    // Acquire printer mutex using RAII lock
+    ManagerLock lock(mutex, "PRINTER", 5000);
+    if (!lock.isLocked())
+    {
+        LOG_ERROR("PRINTER", "Failed to acquire printer mutex - rotation command aborted");
+        return;
+    }
+
+    sendRotationCommandInternal();
+}
 
 void PrinterManager::printWithHeader(const String& headerText, const String& bodyText)
 {
