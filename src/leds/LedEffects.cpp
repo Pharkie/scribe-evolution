@@ -17,6 +17,7 @@
 #include <core/config_loader.h>
 #include "effects/EffectRegistry.h"
 #include <utils/color_utils.h>
+#include <utils/heap_utils.h>
 #include <esp_task_wdt.h>
 
 // Global LED array (non-static so it can be accessed from main.cpp for testing)
@@ -155,6 +156,18 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
 
     // Stop current effect (internal version - mutex already held)
     stopEffectInternal();
+
+    // Check heap availability BEFORE FastLED allocation
+    // FastLED RMT buffer: 96 bytes per LED (24 bits RGB × 4 bytes per RMT bit)
+    // Examples: 100 LEDs = 9.6KB, 130 LEDs = 12.5KB, 300 LEDs = 28.8KB
+    const size_t fastledBufferSize = count * 96;
+    const size_t safetyMargin = 10240; // 10KB for effects + HTTP
+
+    if (!checkContiguousHeap(fastledBufferSize, safetyMargin, "LEDS", "FastLED init"))
+    {
+        LOG_ERROR("LEDS", "Maximum LEDs with current fragmentation: %d", ESP.getMaxAllocHeap() / 96);
+        return false;
+    }
 
     // Store configuration
     ledPin = pin;

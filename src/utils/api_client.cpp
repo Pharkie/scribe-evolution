@@ -20,6 +20,7 @@
 
 #include "api_client.h"
 #include "retry_utils.h"
+#include "heap_utils.h"
 #include <config/config.h>
 #include <core/logging.h>
 #include <core/ManagerLock.h>
@@ -166,6 +167,15 @@ String APIClient::postToAPIWithBearer(const String &url, const String &bearerTok
 bool APIClient::performSingleAPIRequest(const String &url, const String &userAgent, int timeoutMs, String &result) {
     esp_task_wdt_reset();
 
+    // Check heap availability BEFORE SSL connection
+    // mbedTLS handshake requires 16-32KB contiguous memory
+    const size_t sslHandshakeMemory = 32768; // 32KB for mbedTLS
+    const size_t safetyMargin = 8192;        // 8KB for request/response buffers
+
+    if (!checkContiguousHeap(sslHandshakeMemory, safetyMargin, "API", "SSL connection")) {
+        return false;
+    }
+
     // Use singleton's WiFiClientSecure and HTTPClient
     if (!httpClient->begin(*wifiClient, url)) {
         LOG_ERROR("API", "Failed to begin HTTPS connection");
@@ -208,6 +218,14 @@ bool APIClient::performSingleAPIRequest(const String &url, const String &userAge
 // Internal helper: performSingleBearerAPIRequest (mutex already held)
 bool APIClient::performSingleBearerAPIRequest(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs, String &result) {
     esp_task_wdt_reset();
+
+    // Check heap availability BEFORE SSL connection
+    const size_t sslHandshakeMemory = 32768; // 32KB for mbedTLS
+    const size_t safetyMargin = 8192;        // 8KB for buffers
+
+    if (!checkContiguousHeap(sslHandshakeMemory, safetyMargin, "API", "SSL connection (Bearer)")) {
+        return false;
+    }
 
     if (!httpClient->begin(*wifiClient, url)) {
         LOG_ERROR("API", "Failed to begin HTTPS connection for Bearer request");
@@ -259,6 +277,14 @@ bool APIClient::performSingleBearerAPIRequest(const String &url, const String &b
 // Internal helper: performSinglePostAPIRequest (mutex already held)
 bool APIClient::performSinglePostAPIRequest(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs, String &result) {
     esp_task_wdt_reset();
+
+    // Check heap availability BEFORE SSL connection
+    const size_t sslHandshakeMemory = 32768; // 32KB for mbedTLS
+    const size_t safetyMargin = 8192;        // 8KB for buffers
+
+    if (!checkContiguousHeap(sslHandshakeMemory, safetyMargin, "API", "SSL connection (POST)")) {
+        return false;
+    }
 
     if (!httpClient->begin(*wifiClient, url)) {
         LOG_ERROR("API", "Failed to begin HTTPS connection for POST");
