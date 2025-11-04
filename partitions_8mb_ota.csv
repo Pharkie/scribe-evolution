@@ -7,17 +7,19 @@
 #
 # ESP32-S3 8MB Flash Layout with OTA:
 # - Total: 8MB (0x800000)
-# - NVS: 20KB (config storage)
+# - NVS: 32KB (config storage - increased from 20KB to prevent exhaustion)
 # - OTA Data: 8KB (OTA boot selector)
-# - app0: 3MB (primary firmware slot - starts at standard 0x10000)
-# - app1: 3MB (secondary firmware slot for OTA updates)
-# - LittleFS: 1.94MB (filesystem for web assets - ends exactly at 0x800000)
+# - app0: 2.5MB (primary firmware slot - starts at 0x20000 due to NVS size)
+# - app1: 2.5MB (secondary firmware slot for OTA updates)
+# - LittleFS: 2.88MB (filesystem for web assets)
 #
-# IMPORTANT: App partitions MUST start at 0x10000-aligned addresses on ESP32-S3
+# CRITICAL: App partitions MUST start at 0x10000 (64KB) aligned addresses!
+# Valid: 0x10000, 0x20000, 0x30000, 0x2A0000, etc.
+# Invalid: 0x12000, 0x13000, 0x15000 (causes "Offset not aligned" build error)
 #
 # Name,     Type, SubType,  Offset,   Size,     Flags
-nvs,        data, nvs,      0x9000,   0x5000,
-otadata,    data, ota,      0xE000,   0x2000,
-app0,       app,  ota_0,    0x10000,  0x300000,
-app1,       app,  ota_1,    0x310000, 0x300000,
-littlefs,   data, spiffs,   0x610000, 0x1F0000,
+nvs,        data, nvs,      0x9000,   0x8000,
+otadata,    data, ota,      0x11000,  0x2000,
+app0,       app,  ota_0,    0x20000,  0x280000,
+app1,       app,  ota_1,    0x2A0000, 0x280000,
+littlefs,   data, spiffs,   0x520000, 0x2E0000,

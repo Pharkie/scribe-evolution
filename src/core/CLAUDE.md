@@ -611,3 +611,79 @@ If the system freezes:
 5. Check FreeRTOS task states with `vTaskList()` (if deadlock suspected)
 
 </thread_safe_architecture>
+
+<partition_tables>
+
+## Partition Tables and Flash Layout
+
+### Critical Alignment Requirement
+
+**App partitions MUST start at 0x10000 (64KB) aligned addresses.**
+
+This is a bootloader requirement for ESP32/ESP32-S3. Incorrect alignment causes build failure:
+
+```
+Partition app0 invalid: Offset 0x13000 is not aligned to 0x10000
+*** [partitions.bin] Error 2
+```
+
+### Valid Alignment Examples
+
+✅ **Valid offsets** (multiples of 0x10000):
+
+- `0x10000` (64KB) - Can be used if NVS+otadata fit before it
+- `0x20000` (128KB) - **Used in our partition tables** (NVS expanded to 32KB)
+- `0x30000` (192KB)
+- `0x2A0000` (2.625MB) - **Used for app1 in 8MB OTA layout**
+- `0x400000` (4MB)
+
+❌ **Invalid offsets** (NOT multiples of 0x10000):
+
+- `0x12000` ← Will fail
+- `0x13000` ← Will fail
+- `0x15000` ← Will fail
+- `0x402000` ← Will fail for app partitions (OK for data partitions)
+
+**Important:** With 32KB NVS (0x9000-0x11000) + 8KB OTA data (0x11000-0x13000), the first aligned app partition start is **0x20000**, not 0x10000.
+
+### Partition Table Files
+
+**Three partition table variants** (see CSV files in project root for details):
+
+- `partitions_8mb_ota.csv` - ESP32-S3-custom-PCB (OTA support)
+- `partitions_4mb_no_ota.csv` - ESP32-C3/S3-mini boards
+- `partitions_8mb_no_ota.csv` - ESP32-S3 8MB without OTA
+
+**Key constraint:** All use **32KB NVS** starting at 0x9000, which pushes app partitions to start at **0x20000** (next aligned boundary after NVS + phy_init/otadata).
+
+### NVS Storage Notes
+
+**Current size: 32KB (0x8000)** - Increased from 20KB to prevent exhaustion.
+
+NVS stores ~52 configuration keys (see `nvs_keys.h`):
+
+- Device settings (owner, timezone, board_type)
+- GPIO pin assignments (printer, buttons, LEDs)
+- WiFi credentials (SSID, password)
+- MQTT configuration (server, port, credentials)
+- Button actions and LED effects (24 keys)
+- Memos (4 slots, 500 chars each)
+- Unbidden Ink settings
+
+**Why 32KB?**
+
+- NVS uses write-once pages with wear leveling
+- Repeated config saves create invalid entries that consume space
+- 32KB provides 2.67× headroom (12KB typical usage → 32KB capacity)
+- Optimized `saveNVSConfigInternal()` only writes changed keys to reduce churn
+
+### Partition Layout Changes
+
+When modifying partition tables:
+
+1. **Always maintain 0x10000 alignment** for app partitions
+2. Update size comments to reflect actual partition sizes
+3. Test build: `pio run -e <environment>`
+4. **Require full flash erase** after partition changes: `pio run --target erase -e <env>`
+
+</partition_tables>

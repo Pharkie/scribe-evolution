@@ -8,13 +8,17 @@
 #
 # ESP32-S3 8MB Flash Layout (No OTA):
 # - Total: 8MB (0x800000)
-# - NVS: 24KB (config storage)
+# - NVS: 32KB (config storage - increased from 24KB to prevent exhaustion)
 # - PHY Init: 4KB (RF calibration data)
-# - Factory App: 3.93MB (single firmware slot at standard 0x10000 address)
-# - LittleFS: 4.04MB (filesystem for web assets)
+# - Factory App: 3.88MB (single firmware slot at 0x20000 for alignment)
+# - LittleFS: 4MB (filesystem for web assets)
+#
+# CRITICAL: App partitions MUST start at 0x10000 (64KB) aligned addresses!
+# Valid: 0x10000, 0x20000, 0x30000, etc.
+# Invalid: 0x12000, 0x13000, 0x15000 (causes "Offset not aligned" build error)
 #
 # Name,     Type, SubType,  Offset,   Size
-nvs,      data, nvs,     0x9000,  0x6000
-phy_init, data, phy,     0xF000,  0x1000
-factory,  app,  factory, 0x10000, 0x3F0000
+nvs,      data, nvs,     0x9000,  0x8000
+phy_init, data, phy,     0x11000, 0x1000
+factory,  app,  factory, 0x20000, 0x3E0000
 littlefs, data, spiffs,  0x400000, 0x400000

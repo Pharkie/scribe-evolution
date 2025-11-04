@@ -18,6 +18,7 @@ Thread-safe architecture: All shared resources (logging, HTTP, config, MQTT, LED
 - **NEVER upload firmware or monitor serial - let the user do it**
 - **IMPORTANT: HTML/JS/CSS changes require BOTH firmware upload AND filesystem upload (`uploadfs`)** - Filesystem contains the web interface!
 - **FastLED RMT flags REQUIRED in platformio.ini** - Missing causes ESP32-C3 crashes (see `/src/leds/CLAUDE.md`)
+- **PARTITION TABLE ALIGNMENT: App partitions MUST start at 0x10000 (64KB) aligned addresses** - ESP32 bootloader requirement. Use 0x10000, 0x20000, 0x310000, etc. NOT 0x12000, 0x13000!
   </critical_notes>
 
 <file_map>

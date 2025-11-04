@@ -392,6 +392,7 @@ bool ConfigManager::saveNVSConfig(const RuntimeConfig &config)
 }
 
 // Internal helper: saveNVSConfigInternal (mutex already held)
+// Optimized to only write changed values to reduce NVS wear and fragmentation
 bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
 {
     Preferences prefs;
@@ -401,73 +402,135 @@ bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
         return false;
     }
 
-    // Save device configuration
-    prefs.putString(NVS_DEVICE_OWNER, config.deviceOwner);
-    prefs.putString(NVS_DEVICE_TIMEZONE, config.timezone);
-    
-    // Save hardware GPIO configuration
-    prefs.putInt(NVS_PRINTER_TX_PIN, config.printerTxPin);
-    prefs.putInt(NVS_PRINTER_RX_PIN, config.printerRxPin);
-    prefs.putInt(NVS_PRINTER_DTR_PIN, config.printerDtrPin);
-    prefs.putInt(NVS_BUTTON1_GPIO, config.buttonGpios[0]);
-    prefs.putInt(NVS_BUTTON2_GPIO, config.buttonGpios[1]);
-    prefs.putInt(NVS_BUTTON3_GPIO, config.buttonGpios[2]);
-    prefs.putInt(NVS_BUTTON4_GPIO, config.buttonGpios[3]);
+    int keysWritten = 0;
+    int keysFailed = 0;
 
-    // Save WiFi configuration
-    prefs.putString(NVS_WIFI_SSID, config.wifiSSID);
-    prefs.putString(NVS_WIFI_PASSWORD, config.wifiPassword);
+    // Helper macro to write only if value changed
+    #define WRITE_IF_CHANGED_STRING(key, newValue) \
+        do { \
+            String currentValue = prefs.getString(key, ""); \
+            if (currentValue != newValue) { \
+                size_t written = prefs.putString(key, newValue); \
+                if (written == 0) { \
+                    LOG_ERROR("CONFIG", "Failed to write '%s' to NVS (storage may be full)", key); \
+                    keysFailed++; \
+                } else { \
+                    keysWritten++; \
+                } \
+            } \
+        } while(0)
+
+    #define WRITE_IF_CHANGED_INT(key, newValue) \
+        do { \
+            int currentValue = prefs.getInt(key, -999999); \
+            if (currentValue != newValue) { \
+                size_t written = prefs.putInt(key, newValue); \
+                if (written == 0) { \
+                    LOG_ERROR("CONFIG", "Failed to write '%s' to NVS (storage may be full)", key); \
+                    keysFailed++; \
+                } else { \
+                    keysWritten++; \
+                } \
+            } \
+        } while(0)
+
+    #define WRITE_IF_CHANGED_BOOL(key, newValue) \
+        do { \
+            bool currentValue = prefs.getBool(key, !newValue); \
+            if (currentValue != newValue) { \
+                size_t written = prefs.putBool(key, newValue); \
+                if (written == 0) { \
+                    LOG_ERROR("CONFIG", "Failed to write '%s' to NVS (storage may be full)", key); \
+                    keysFailed++; \
+                } else { \
+                    keysWritten++; \
+                } \
+            } \
+        } while(0)
+
+    // Save device configuration (only if changed)
+    WRITE_IF_CHANGED_STRING(NVS_DEVICE_OWNER, config.deviceOwner);
+    WRITE_IF_CHANGED_STRING(NVS_DEVICE_TIMEZONE, config.timezone);
+
+    // Save hardware GPIO configuration (only if changed)
+    WRITE_IF_CHANGED_INT(NVS_PRINTER_TX_PIN, config.printerTxPin);
+    WRITE_IF_CHANGED_INT(NVS_PRINTER_RX_PIN, config.printerRxPin);
+    WRITE_IF_CHANGED_INT(NVS_PRINTER_DTR_PIN, config.printerDtrPin);
+    WRITE_IF_CHANGED_INT(NVS_BUTTON1_GPIO, config.buttonGpios[0]);
+    WRITE_IF_CHANGED_INT(NVS_BUTTON2_GPIO, config.buttonGpios[1]);
+    WRITE_IF_CHANGED_INT(NVS_BUTTON3_GPIO, config.buttonGpios[2]);
+    WRITE_IF_CHANGED_INT(NVS_BUTTON4_GPIO, config.buttonGpios[3]);
+
+    // Save WiFi configuration (only if changed)
+    WRITE_IF_CHANGED_STRING(NVS_WIFI_SSID, config.wifiSSID);
+    WRITE_IF_CHANGED_STRING(NVS_WIFI_PASSWORD, config.wifiPassword);
     // Note: wifiConnectTimeoutMs is NOT saved - it's a runtime-only constant
 
-    // Save MQTT configuration
-    prefs.putBool(NVS_MQTT_ENABLED, config.mqttEnabled);
-    prefs.putString(NVS_MQTT_SERVER, config.mqttServer);
-    prefs.putInt(NVS_MQTT_PORT, config.mqttPort);
-    prefs.putString(NVS_MQTT_USERNAME, config.mqttUsername);
-    prefs.putString(NVS_MQTT_PASSWORD, config.mqttPassword);
+    // Save MQTT configuration (only if changed)
+    WRITE_IF_CHANGED_BOOL(NVS_MQTT_ENABLED, config.mqttEnabled);
+    WRITE_IF_CHANGED_STRING(NVS_MQTT_SERVER, config.mqttServer);
+    WRITE_IF_CHANGED_INT(NVS_MQTT_PORT, config.mqttPort);
+    WRITE_IF_CHANGED_STRING(NVS_MQTT_USERNAME, config.mqttUsername);
+    WRITE_IF_CHANGED_STRING(NVS_MQTT_PASSWORD, config.mqttPassword);
 
-    // Save ChatGPT API token (other APIs are constants)
-    prefs.putString(NVS_CHATGPT_TOKEN, config.chatgptApiToken);
+    // Save ChatGPT API token (other APIs are constants) (only if changed)
+    WRITE_IF_CHANGED_STRING(NVS_CHATGPT_TOKEN, config.chatgptApiToken);
 
-    // Save Unbidden Ink configuration
-    prefs.putBool(NVS_UNBIDDEN_ENABLED, config.unbiddenInkEnabled);
-    prefs.putInt(NVS_UNBIDDEN_START_HOUR, config.unbiddenInkStartHour);
-    prefs.putInt(NVS_UNBIDDEN_END_HOUR, config.unbiddenInkEndHour);
-    prefs.putInt(NVS_UNBIDDEN_FREQUENCY, config.unbiddenInkFrequencyMinutes);
-    prefs.putString(NVS_UNBIDDEN_PROMPT, config.unbiddenInkPrompt);
+    // Save Unbidden Ink configuration (only if changed)
+    WRITE_IF_CHANGED_BOOL(NVS_UNBIDDEN_ENABLED, config.unbiddenInkEnabled);
+    WRITE_IF_CHANGED_INT(NVS_UNBIDDEN_START_HOUR, config.unbiddenInkStartHour);
+    WRITE_IF_CHANGED_INT(NVS_UNBIDDEN_END_HOUR, config.unbiddenInkEndHour);
+    WRITE_IF_CHANGED_INT(NVS_UNBIDDEN_FREQUENCY, config.unbiddenInkFrequencyMinutes);
+    WRITE_IF_CHANGED_STRING(NVS_UNBIDDEN_PROMPT, config.unbiddenInkPrompt);
 
-    // Save button configuration
+    // Save button configuration (only if changed)
     for (int i = 0; i < 4; i++)
     {
         String buttonPrefix = "btn" + String(i + 1) + "_";
-        prefs.putString((buttonPrefix + "short_act").c_str(), config.buttonShortActions[i]);
-        prefs.putString((buttonPrefix + "short_mq").c_str(), config.buttonShortMqttTopics[i]);
-        prefs.putString((buttonPrefix + "long_act").c_str(), config.buttonLongActions[i]);
-        prefs.putString((buttonPrefix + "long_mq").c_str(), config.buttonLongMqttTopics[i]);
+        WRITE_IF_CHANGED_STRING((buttonPrefix + "short_act").c_str(), config.buttonShortActions[i]);
+        WRITE_IF_CHANGED_STRING((buttonPrefix + "short_mq").c_str(), config.buttonShortMqttTopics[i]);
+        WRITE_IF_CHANGED_STRING((buttonPrefix + "long_act").c_str(), config.buttonLongActions[i]);
+        WRITE_IF_CHANGED_STRING((buttonPrefix + "long_mq").c_str(), config.buttonLongMqttTopics[i]);
 
-        // Save LED effect configuration
-        prefs.putString((buttonPrefix + "short_led").c_str(), config.buttonShortLedEffects[i]);
-        prefs.putString((buttonPrefix + "long_led").c_str(), config.buttonLongLedEffects[i]);
+        // Save LED effect configuration (only if changed)
+        WRITE_IF_CHANGED_STRING((buttonPrefix + "short_led").c_str(), config.buttonShortLedEffects[i]);
+        WRITE_IF_CHANGED_STRING((buttonPrefix + "long_led").c_str(), config.buttonLongLedEffects[i]);
     }
 
 #if ENABLE_LEDS
-    // Save LED configuration
-    prefs.putInt(NVS_LED_PIN, config.ledPin);
-    prefs.putInt(NVS_LED_COUNT, config.ledCount);
-    prefs.putInt(NVS_LED_BRIGHTNESS, config.ledBrightness);
-    prefs.putInt(NVS_LED_REFRESH_RATE, config.ledRefreshRate);
+    // Save LED configuration (only if changed)
+    WRITE_IF_CHANGED_INT(NVS_LED_PIN, config.ledPin);
+    WRITE_IF_CHANGED_INT(NVS_LED_COUNT, config.ledCount);
+    WRITE_IF_CHANGED_INT(NVS_LED_BRIGHTNESS, config.ledBrightness);
+    WRITE_IF_CHANGED_INT(NVS_LED_REFRESH_RATE, config.ledRefreshRate);
 
     // TODO: Save LED effects configuration if needed
 #endif
 
-    // Save memo configuration (4 memo slots)
-    prefs.putString(NVS_MEMO_1, config.memos[0]);
-    prefs.putString(NVS_MEMO_2, config.memos[1]);
-    prefs.putString(NVS_MEMO_3, config.memos[2]);
-    prefs.putString(NVS_MEMO_4, config.memos[3]);
+    // Save memo configuration (4 memo slots) (only if changed)
+    WRITE_IF_CHANGED_STRING(NVS_MEMO_1, config.memos[0]);
+    WRITE_IF_CHANGED_STRING(NVS_MEMO_2, config.memos[1]);
+    WRITE_IF_CHANGED_STRING(NVS_MEMO_3, config.memos[2]);
+    WRITE_IF_CHANGED_STRING(NVS_MEMO_4, config.memos[3]);
+
+    #undef WRITE_IF_CHANGED_STRING
+    #undef WRITE_IF_CHANGED_INT
+    #undef WRITE_IF_CHANGED_BOOL
 
     prefs.end();
-    LOG_NOTICE("CONFIG", "Configuration saved to NVS");
+
+    // Report results
+    if (keysFailed > 0) {
+        LOG_ERROR("CONFIG", "Configuration save FAILED: %d keys failed to write (NVS storage may be full)", keysFailed);
+        return false;
+    }
+
+    if (keysWritten == 0) {
+        LOG_VERBOSE("CONFIG", "Configuration unchanged - no NVS writes needed");
+    } else {
+        LOG_NOTICE("CONFIG", "Configuration saved to NVS (%d keys updated)", keysWritten);
+    }
+
     return true;
 }
 
