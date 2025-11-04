@@ -43,8 +43,8 @@ void updateStatusLED()
     switch (currentWiFiMode)
     {
     case WIFI_MODE_CONNECTING:
-        // Orange fast blink when trying to connect
-        StatusLed::setBlink(CRGB::Orange, 250, "WiFi connecting");
+        // Blue fast blink when trying to connect
+        StatusLed::setBlink(CRGB::Blue, 250, "WiFi connecting");
         StatusLed::update();
         break;
 
@@ -55,8 +55,8 @@ void updateStatusLED()
         break;
 
     case WIFI_MODE_AP_FALLBACK:
-        // Blue blink when in AP mode
-        StatusLed::setBlink(CRGB::Blue, 1000, "AP mode fallback");
+        // Orange blink when in AP mode (fallback/warning state)
+        StatusLed::setBlink(CRGB::Orange, 1000, "AP mode fallback");
         StatusLed::update();
         break;
 
