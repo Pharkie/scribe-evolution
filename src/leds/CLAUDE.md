@@ -318,3 +318,77 @@ void StatusLed::begin() {
 This pattern allows runtime board configuration while satisfying FastLED's compile-time requirements.
 
 </status_led_module>
+
+<heap_memory_considerations>
+
+## FastLED Memory Requirements and Heap Fragmentation
+
+### Critical Discovery: Contiguous Memory Requirement
+
+**FastLED's RMT buffer requires CONTIGUOUS heap memory**, not just total free heap.
+
+#### Memory Calculation
+
+- **96 bytes per LED** (24 bits RGB × 4 bytes per RMT bit)
+- Examples:
+  - 100 LEDs = 9,600 bytes (9.4KB) contiguous
+  - 130 LEDs = 12,480 bytes (12.2KB) contiguous
+  - 160 LEDs = 15,360 bytes (15KB) contiguous
+  - 300 LEDs = 28,800 bytes (28.1KB) contiguous
+
+#### Proper Heap Checking Pattern
+
+**WRONG** (only checks total free):
+
+```cpp
+if (ESP.getFreeHeap() < neededBytes) {
+    return false;  // Misleading! May have free heap but fragmented
+}
+```
+
+**CORRECT** (checks largest contiguous block):
+
+```cpp
+size_t largestBlock = ESP.getMaxAllocHeap();
+if (largestBlock < neededBytes) {
+    LOG_ERROR("Heap too fragmented: %d bytes free, %d largest block, need %d",
+              ESP.getFreeHeap(), largestBlock, neededBytes);
+    return false;
+}
+```
+
+#### Real-World Example
+
+This pattern fixed a crash at 130 LEDs:
+
+- Total free heap: 198KB (looked fine!)
+- Largest contiguous block: ~11KB (too small for 12.5KB RMT buffer)
+- FastLED allocation failed with heap corruption
+
+After optimization (zero-copy config + response-first pattern):
+
+- Total free heap: 170KB
+- Largest contiguous block: 159KB
+- 130+ LEDs work perfectly ✅
+
+#### When to Use This Pattern
+
+**Required for allocations >4KB:**
+
+- FastLED RMT buffers
+- DMA buffers
+- Large arrays/structs
+- Image buffers
+- File buffers
+
+**Not needed for:**
+
+- Small objects (<1KB)
+- Arduino String allocations
+- JSON documents (ArduinoJson handles fragmentation internally)
+
+#### Implementation Location
+
+See [src/leds/LedEffects.cpp:159-192](../leds/LedEffects.cpp#L159-L192) for reference implementation.
+
+</heap_memory_considerations>

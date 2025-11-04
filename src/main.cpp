@@ -327,6 +327,10 @@ void postSetup()
   LOG_VERBOSE("POST_SETUP", "Boot LED effect started");
 #endif
 
+  // Allow printer to stabilize before first print
+  delay(100);
+  LOG_VERBOSE("POST_SETUP", "Printer ready for operation");
+
   // Print startup message
   printerManager.printStartupMessage();
   LOG_VERBOSE("POST_SETUP", "Startup message printed");

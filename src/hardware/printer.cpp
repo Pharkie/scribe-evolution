@@ -127,10 +127,12 @@ void PrinterManager::initialize()
     delay(50);
 
     // Enable 180° rotation (which also reverses the line order)
+    LOG_VERBOSE("PRINTER", "Setting printer to 180° rotation mode (reverse line order)");
     uart->write(0x1B);
     uart->write('{');
     uart->write(0x01); // ESC { 1
-    delay(50);
+    delay(200);
+    LOG_VERBOSE("PRINTER", "Printer rotation mode configured");
 
     LOG_VERBOSE("PRINTER", "Printer initialized successfully - ready = %s",
                 ready.load() ? "TRUE" : "FALSE");

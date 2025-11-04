@@ -574,25 +574,11 @@ void handleConfigPost(AsyncWebServerRequest *request)
         restartUnbiddenInk();
     }
 
-#if ENABLE_LEDS
-    // Reinitialize LED system with new configuration
-    if (ledEffects().reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
-                                newConfig.ledRefreshRate, newConfig.ledEffects))
-    {
-        // Trigger green chase single effect as visual confirmation of successful save
-        ledEffects().startEffectCycles("chase_single", 1, CRGB::Green);
-    }
-    else
-    {
-        LOG_WARNING("WEB", "Failed to reinitialize LED system with new configuration");
-    }
-#endif
-
     // Handle WiFi credential changes requiring restart
     if (wifiCredentialsChanged && !isAPMode())
     {
         LOG_NOTICE("WEB", "WiFi credentials changed - device will restart to apply new settings");
-        
+
         // Send response with restart flag
         JsonDocument response;
         response["restart"] = true;
@@ -600,10 +586,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
         String jsonResponse;
         serializeJson(response, jsonResponse);
         request->send(200, "application/json", jsonResponse);
-        
+
         // Schedule restart after response is sent
         delay(2000);  // Give frontend time to show overlay
-        LOG_NOTICE("WEB", "Restarting to connect to new WiFi network: %s", 
+        LOG_NOTICE("WEB", "Restarting to connect to new WiFi network: %s",
                    newConfig.wifiSSID.c_str());
         ESP.restart();
         return;
@@ -621,6 +607,21 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
     // Normal success response (no restart needed)
     request->send(200);
+
+#if ENABLE_LEDS
+    // Reinitialize LED system with new configuration
+    // Heap check inside reinitialize() will catch insufficient memory
+    if (!ledEffects().reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
+                                    newConfig.ledRefreshRate, newConfig.ledEffects))
+    {
+        LOG_ERROR("WEB", "Failed to reinitialize LED system - insufficient heap");
+        LOG_ERROR("WEB", "LED configuration saved to NVS but not active until reboot");
+        return;
+    }
+
+    // Trigger green chase single effect as visual confirmation of successful save
+    ledEffects().startEffectCycles("chase_single", 1, CRGB::Green);
+#endif
 }
 
 // ========================================

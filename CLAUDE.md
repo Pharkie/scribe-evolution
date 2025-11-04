@@ -138,20 +138,33 @@ Code Quality Process:
 1. Make changes to source files
 2. Run `npm run build` (if frontend changes)
 3. Test with hardware or mock server
-4. Commit with descriptive message
+4. **Commit regularly** with clear, concise messages
 
 Git Commit Guidelines:
 
-- Create commits proactively at reasonable checkpoints (e.g., after completing a feature, fixing a bug, or making significant changes)
-- Use clear, descriptive commit messages that explain the "why" behind changes
-- Follow the project's commit message style (check recent commits with `git log`)
-- Include the Claude Code attribution footer:
+- **Commit often** - Create commits at logical checkpoints:
+  - After completing a feature or fix
+  - After refactoring that works
+  - Before switching tasks
+  - When code is in a working state
+- **Keep commits focused** - One logical change per commit (easier to review/revert)
+- **Write clear messages** - Explain the "why" behind changes, not just the "what"
+  - Good: "Add heap fragmentation check to prevent SSL crashes"
+  - Bad: "Fix bug" or "Update code"
+- **Follow project style** - Check recent commits with `git log` for formatting
+- **Include Claude Code attribution** footer:
 
   ```
   🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
   Co-Authored-By: Claude <noreply@anthropic.com>
   ```
+
+**IMPORTANT**: Regular commits are critical for ESP32 development:
+
+- Hardware failures can lose uncommitted work
+- Easier to bisect issues when commits are granular
+- Cleaner history helps track down memory/timing bugs
 
   </workflow>
 
