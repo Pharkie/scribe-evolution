@@ -132,8 +132,9 @@ WiFiConnectionMode connectToWiFi()
 
     // Quick scan to avoid long blind wait if SSID isn't around
     LOG_NOTICE("NETWORK", "Scanning for target SSID before connecting...");
-    // Blocking scan; typically a few seconds total, much less than a 15s timeout
-    int16_t foundCount = WiFi.scanNetworks();
+    // Optimized blocking scan: async=false, show_hidden=false, passive=true, max_ms_per_chan=120
+    // Reduces scan time from ~6s to ~2s while still finding all active networks
+    int16_t foundCount = WiFi.scanNetworks(false, false, true, 120);
     bool ssidPresent = false;
     for (int i = 0; i < foundCount; i++)
     {
@@ -247,9 +248,10 @@ void setupmDNS()
 
         String fqdn = hostnameToTry + ".local";
 
-        // Ping the hostname with 5 attempts (uses default 1 second timeout per attempt)
+        // Ping the hostname with 2 attempts (uses default 1 second timeout per attempt)
+        // Reduced from 5 to 2 attempts to speed up boot (saves ~3 seconds)
         // Returns true if host responds, false if timeout
-        bool hostExists = Ping.ping(fqdn.c_str(), 5);
+        bool hostExists = Ping.ping(fqdn.c_str(), 2);
 
         // Feed watchdog after ping (can be slow on timeout)
         esp_task_wdt_reset();
