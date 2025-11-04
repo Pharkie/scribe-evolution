@@ -14,6 +14,8 @@
 #define STATUS_LED_H
 
 #include <FastLED.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 // Only compiled for custom PCB with LED support
 #if defined(BOARD_ESP32S3_CUSTOM_PCB) && ENABLE_LEDS
@@ -84,6 +86,9 @@ private:
     static uint16_t previousBlinkInterval;
     static uint16_t previousHeartbeatPeriod;
     static uint16_t previousHeartbeatDuration;
+
+    // Thread safety (critical for dual-core ESP32-S3)
+    static SemaphoreHandle_t mutex;
 
     // Helper to log color changes
     static void logColorChange(const char* mode, CRGB newColor, uint16_t intervalMs = 0, const char* reason = nullptr);

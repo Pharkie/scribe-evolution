@@ -35,8 +35,23 @@ uint16_t StatusLed::previousBlinkInterval = 0;
 uint16_t StatusLed::previousHeartbeatPeriod = 0;
 uint16_t StatusLed::previousHeartbeatDuration = 0;
 
+// Thread safety
+SemaphoreHandle_t StatusLed::mutex = nullptr;
+
 void StatusLed::begin()
 {
+    // Create mutex for thread safety (critical for dual-core ESP32-S3)
+    // Must be created in begin(), NOT in static initialization (initialization order issue)
+    if (mutex == nullptr)
+    {
+        mutex = xSemaphoreCreateMutex();
+        if (mutex == nullptr)
+        {
+            LOG_ERROR("STATUS_LED", "Failed to create mutex");
+            return;
+        }
+    }
+
     // Initialize FastLED for single WS2812 LED on status LED pin
     // Use compile-time switch based on GPIO pin number (FastLED requirement)
     #define STATUS_LED_INIT(pin) case pin: FastLED.addLeds<WS2812B, pin, GRB>(led, 1); break;
@@ -155,186 +170,221 @@ void StatusLed::logColorChange(const char* mode, CRGB newColor, uint16_t interva
 
 void StatusLed::setSolid(CRGB color, const char* reason)
 {
-    // Skip if already in this exact state (prevents logging spam)
-    if (!isBlinking && !isHeartbeat && currentColor == color)
+    // Thread-safe access (critical for dual-core ESP32-S3)
+    if (mutex != nullptr && xSemaphoreTake(mutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
-        return;
+        // Skip if already in this exact state (prevents logging spam)
+        if (!isBlinking && !isHeartbeat && currentColor == color)
+        {
+            xSemaphoreGive(mutex);
+            return;
+        }
+
+        logColorChange("setSolid", color, 0, reason);
+
+        // Update previous state
+        previousColor = currentColor;
+        previousIsBlinking = isBlinking;
+        previousIsHeartbeat = isHeartbeat;
+        previousBlinkInterval = blinkInterval;
+        previousHeartbeatPeriod = heartbeatPeriod;
+        previousHeartbeatDuration = heartbeatDuration;
+
+        // Set new state
+        isBlinking = false;
+        isHeartbeat = false;
+        currentColor = color;
+        led[0] = color;
+        FastLED.show();
+
+        xSemaphoreGive(mutex);
     }
-
-    logColorChange("setSolid", color, 0, reason);
-
-    // Update previous state
-    previousColor = currentColor;
-    previousIsBlinking = isBlinking;
-    previousIsHeartbeat = isHeartbeat;
-    previousBlinkInterval = blinkInterval;
-    previousHeartbeatPeriod = heartbeatPeriod;
-    previousHeartbeatDuration = heartbeatDuration;
-
-    // Set new state
-    isBlinking = false;
-    isHeartbeat = false;
-    currentColor = color;
-    led[0] = color;
-    FastLED.show();
 }
 
 void StatusLed::setBlink(CRGB color, uint16_t intervalMs, const char* reason)
 {
-    // Skip if already in this exact state (prevents logging spam)
-    if (isBlinking && !isHeartbeat && currentColor == color && blinkInterval == intervalMs)
+    // Thread-safe access (critical for dual-core ESP32-S3)
+    if (mutex != nullptr && xSemaphoreTake(mutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
-        return;
+        // Skip if already in this exact state (prevents logging spam)
+        if (isBlinking && !isHeartbeat && currentColor == color && blinkInterval == intervalMs)
+        {
+            xSemaphoreGive(mutex);
+            return;
+        }
+
+        logColorChange("setBlink", color, intervalMs, reason);
+
+        // Update previous state
+        previousColor = currentColor;
+        previousIsBlinking = isBlinking;
+        previousIsHeartbeat = isHeartbeat;
+        previousBlinkInterval = blinkInterval;
+        previousHeartbeatPeriod = heartbeatPeriod;
+        previousHeartbeatDuration = heartbeatDuration;
+
+        // Set new state
+        currentColor = color;
+        blinkInterval = intervalMs;
+        isBlinking = true;
+        isHeartbeat = false;
+        // Don't update immediately - let update() handle timing
+
+        xSemaphoreGive(mutex);
     }
-
-    logColorChange("setBlink", color, intervalMs, reason);
-
-    // Update previous state
-    previousColor = currentColor;
-    previousIsBlinking = isBlinking;
-    previousIsHeartbeat = isHeartbeat;
-    previousBlinkInterval = blinkInterval;
-    previousHeartbeatPeriod = heartbeatPeriod;
-    previousHeartbeatDuration = heartbeatDuration;
-
-    // Set new state
-    currentColor = color;
-    blinkInterval = intervalMs;
-    isBlinking = true;
-    isHeartbeat = false;
-    // Don't update immediately - let update() handle timing
 }
 
 void StatusLed::off(const char* reason)
 {
-    // Skip if already off (prevents logging spam)
-    if (!isBlinking && !isHeartbeat && currentColor == CRGB::Black)
+    // Thread-safe access (critical for dual-core ESP32-S3)
+    if (mutex != nullptr && xSemaphoreTake(mutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
-        return;
+        // Skip if already off (prevents logging spam)
+        if (!isBlinking && !isHeartbeat && currentColor == CRGB::Black)
+        {
+            xSemaphoreGive(mutex);
+            return;
+        }
+
+        logColorChange("off", CRGB::Black, 0, reason);
+
+        // Update previous state
+        previousColor = currentColor;
+        previousIsBlinking = isBlinking;
+        previousIsHeartbeat = isHeartbeat;
+        previousBlinkInterval = blinkInterval;
+        previousHeartbeatPeriod = heartbeatPeriod;
+        previousHeartbeatDuration = heartbeatDuration;
+
+        // Set new state
+        isBlinking = false;
+        isHeartbeat = false;
+        currentColor = CRGB::Black;
+        led[0] = CRGB::Black;
+        FastLED.show();
+
+        xSemaphoreGive(mutex);
     }
-
-    logColorChange("off", CRGB::Black, 0, reason);
-
-    // Update previous state
-    previousColor = currentColor;
-    previousIsBlinking = isBlinking;
-    previousIsHeartbeat = isHeartbeat;
-    previousBlinkInterval = blinkInterval;
-    previousHeartbeatPeriod = heartbeatPeriod;
-    previousHeartbeatDuration = heartbeatDuration;
-
-    // Set new state
-    isBlinking = false;
-    isHeartbeat = false;
-    currentColor = CRGB::Black;
-    led[0] = CRGB::Black;
-    FastLED.show();
 }
 
 void StatusLed::setHeartbeat(CRGB color, uint16_t flashDurationMs, uint16_t periodMs, const char* reason)
 {
-    // Skip if already in this exact heartbeat state (prevents logging spam)
-    if (isHeartbeat && currentColor == color && heartbeatDuration == flashDurationMs && heartbeatPeriod == periodMs)
+    // Thread-safe access (critical for dual-core ESP32-S3)
+    if (mutex != nullptr && xSemaphoreTake(mutex, pdMS_TO_TICKS(100)) == pdTRUE)
     {
-        return;
-    }
+        // Skip if already in this exact heartbeat state (prevents logging spam)
+        if (isHeartbeat && currentColor == color && heartbeatDuration == flashDurationMs && heartbeatPeriod == periodMs)
+        {
+            xSemaphoreGive(mutex);
+            return;
+        }
 
-    // Log using custom heartbeat format (logColorChange doesn't handle heartbeat in "new state")
-    char prevState[64];
-    if (previousColor == CRGB::Black && !previousIsBlinking && !previousIsHeartbeat)
-    {
-        snprintf(prevState, sizeof(prevState), "OFF");
-    }
-    else if (previousIsHeartbeat)
-    {
-        snprintf(prevState, sizeof(prevState), "HEARTBEAT %s (%dms/%dms)",
-                 colorToString(previousColor), previousHeartbeatDuration, previousHeartbeatPeriod);
-    }
-    else if (previousIsBlinking)
-    {
-        snprintf(prevState, sizeof(prevState), "BLINK %s (%dms)",
-                 colorToString(previousColor), previousBlinkInterval);
-    }
-    else
-    {
-        snprintf(prevState, sizeof(prevState), "SOLID %s", colorToString(previousColor));
-    }
+        // Log using custom heartbeat format (logColorChange doesn't handle heartbeat in "new state")
+        char prevState[64];
+        if (previousColor == CRGB::Black && !previousIsBlinking && !previousIsHeartbeat)
+        {
+            snprintf(prevState, sizeof(prevState), "OFF");
+        }
+        else if (previousIsHeartbeat)
+        {
+            snprintf(prevState, sizeof(prevState), "HEARTBEAT %s (%dms/%dms)",
+                     colorToString(previousColor), previousHeartbeatDuration, previousHeartbeatPeriod);
+        }
+        else if (previousIsBlinking)
+        {
+            snprintf(prevState, sizeof(prevState), "BLINK %s (%dms)",
+                     colorToString(previousColor), previousBlinkInterval);
+        }
+        else
+        {
+            snprintf(prevState, sizeof(prevState), "SOLID %s", colorToString(previousColor));
+        }
 
-    char newState[64];
-    snprintf(newState, sizeof(newState), "HEARTBEAT %s (%dms/%dms)", colorToString(color), flashDurationMs, periodMs);
+        char newState[64];
+        snprintf(newState, sizeof(newState), "HEARTBEAT %s (%dms/%dms)", colorToString(color), flashDurationMs, periodMs);
 
-    if (reason && reason[0] != '\0')
-    {
-        LOG_VERBOSE("STATUS_LED", "%s -> %s (%s)", prevState, newState, reason);
+        if (reason && reason[0] != '\0')
+        {
+            LOG_VERBOSE("STATUS_LED", "%s -> %s (%s)", prevState, newState, reason);
+        }
+        else
+        {
+            LOG_VERBOSE("STATUS_LED", "%s -> %s", prevState, newState);
+        }
+
+        // Update previous state
+        previousColor = currentColor;
+        previousIsBlinking = isBlinking;
+        previousIsHeartbeat = isHeartbeat;
+        previousBlinkInterval = blinkInterval;
+        previousHeartbeatPeriod = heartbeatPeriod;
+        previousHeartbeatDuration = heartbeatDuration;
+
+        // Set new heartbeat state
+        isBlinking = false;
+        isHeartbeat = true;
+        currentColor = color;
+        heartbeatDuration = flashDurationMs;
+        heartbeatPeriod = periodMs;
+        lastHeartbeat = millis();
+        heartbeatState = false; // Start with LED off
+        led[0] = CRGB::Black;
+        FastLED.show();
+
+        xSemaphoreGive(mutex);
     }
-    else
-    {
-        LOG_VERBOSE("STATUS_LED", "%s -> %s", prevState, newState);
-    }
-
-    // Update previous state
-    previousColor = currentColor;
-    previousIsBlinking = isBlinking;
-    previousIsHeartbeat = isHeartbeat;
-    previousBlinkInterval = blinkInterval;
-    previousHeartbeatPeriod = heartbeatPeriod;
-    previousHeartbeatDuration = heartbeatDuration;
-
-    // Set new heartbeat state
-    isBlinking = false;
-    isHeartbeat = true;
-    currentColor = color;
-    heartbeatDuration = flashDurationMs;
-    heartbeatPeriod = periodMs;
-    lastHeartbeat = millis();
-    heartbeatState = false; // Start with LED off
-    led[0] = CRGB::Black;
-    FastLED.show();
 }
 
 void StatusLed::update()
 {
-    unsigned long now = millis();
-
-    // Handle blinking mode
-    if (isBlinking)
+    // Thread-safe access (critical for dual-core ESP32-S3)
+    if (mutex != nullptr && xSemaphoreTake(mutex, pdMS_TO_TICKS(10)) == pdTRUE)
     {
-        if (now - lastBlink >= blinkInterval)
-        {
-            blinkState = !blinkState;
-            led[0] = blinkState ? currentColor : CRGB::Black;
-            FastLED.show();
-            lastBlink = now;
-        }
-        return;
-    }
+        unsigned long now = millis();
 
-    // Handle heartbeat mode
-    if (isHeartbeat)
-    {
-        if (heartbeatState)
+        // Handle blinking mode
+        if (isBlinking)
         {
-            // LED is currently on - check if flash duration has elapsed
-            if (now - lastHeartbeat >= heartbeatDuration)
+            if (now - lastBlink >= blinkInterval)
             {
-                // Turn LED off
-                heartbeatState = false;
-                led[0] = CRGB::Black;
+                blinkState = !blinkState;
+                led[0] = blinkState ? currentColor : CRGB::Black;
                 FastLED.show();
+                lastBlink = now;
+            }
+            xSemaphoreGive(mutex);
+            return;
+        }
+
+        // Handle heartbeat mode
+        if (isHeartbeat)
+        {
+            if (heartbeatState)
+            {
+                // LED is currently on - check if flash duration has elapsed
+                if (now - lastHeartbeat >= heartbeatDuration)
+                {
+                    // Turn LED off
+                    heartbeatState = false;
+                    led[0] = CRGB::Black;
+                    FastLED.show();
+                }
+            }
+            else
+            {
+                // LED is currently off - check if period has elapsed
+                if (now - lastHeartbeat >= heartbeatPeriod)
+                {
+                    // Start new flash
+                    heartbeatState = true;
+                    led[0] = currentColor;
+                    FastLED.show();
+                    lastHeartbeat = now;
+                }
             }
         }
-        else
-        {
-            // LED is currently off - check if period has elapsed
-            if (now - lastHeartbeat >= heartbeatPeriod)
-            {
-                // Start new flash
-                heartbeatState = true;
-                led[0] = currentColor;
-                FastLED.show();
-                lastHeartbeat = now;
-            }
-        }
+
+        xSemaphoreGive(mutex);
     }
 }
 
