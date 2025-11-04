@@ -49,8 +49,8 @@ void updateStatusLED()
         break;
 
     case WIFI_MODE_STA_CONNECTED:
-        // Green heartbeat when connected to WiFi (500ms flash every 3s)
-        StatusLed::setHeartbeat(CRGB::Green, 500, 3000, "WiFi connected (heartbeat)");
+        // Green heartbeat when connected to WiFi (100ms flash every 3s)
+        StatusLed::setHeartbeat(CRGB::Green, 100, 3000, "WiFi connected (heartbeat)");
         StatusLed::update();
         break;
 
