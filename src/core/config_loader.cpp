@@ -15,6 +15,7 @@
 #include <Preferences.h>
 #include <nvs_flash.h>
 #include <esp_err.h>
+#include <web/config_field_registry.h>
 
 #if ENABLE_LEDS
 #include "led_config_loader.h"
@@ -553,6 +554,47 @@ void ConfigManager::setRuntimeConfig(const RuntimeConfig &config)
     g_configLoaded = true;
 
     // Mutex automatically released by ManagerLock destructor
+}
+
+// Public method: applyConfigChanges (thread-safe, zero-copy)
+bool ConfigManager::applyConfigChanges(JsonObject jsonObj, String& errorMsg)
+{
+    if (!initialized) {
+        LOG_ERROR("CONFIG", "ConfigManager not initialized - call begin() first!");
+        errorMsg = "ConfigManager not initialized";
+        return false;
+    }
+
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "CONFIG");
+    if (!lock.isLocked()) {
+        LOG_ERROR("CONFIG", "Failed to acquire ConfigManager mutex!");
+        errorMsg = "Failed to acquire configuration lock";
+        return false;
+    }
+
+    // Apply changes directly to g_runtimeConfig (in-place mutation)
+    // processJsonObject uses pointer arithmetic (offsetof) for efficient field updates
+    if (!processJsonObject("", jsonObj, g_runtimeConfig, errorMsg)) {
+        // Validation failed - rollback by reloading from NVS
+        LOG_WARNING("CONFIG", "Validation failed, rolling back: %s", errorMsg.c_str());
+        loadNVSConfigInternal();
+        return false;
+    }
+
+    // Set runtime-only constants (these are NEVER in NVS or JSON)
+    g_runtimeConfig.jokeAPI = jokeAPI;
+    g_runtimeConfig.quoteAPI = quoteAPI;
+    g_runtimeConfig.triviaAPI = triviaAPI;
+    g_runtimeConfig.newsAPI = newsAPI;
+    g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
+    g_runtimeConfig.wifiConnectTimeoutMs = wifiConnectTimeoutMs;
+    g_runtimeConfig.maxCharacters = maxCharacters;
+
+    g_configLoaded = true;
+
+    // Mutex automatically released by ManagerLock destructor
+    return true;
 }
 
 // Public method: factoryResetNVS (thread-safe)

@@ -158,6 +158,18 @@ public:
     void setRuntimeConfig(const RuntimeConfig &config);
 
     /**
+     * @brief Apply JSON config changes directly to runtime config (thread-safe, zero-copy)
+     * @param jsonObj JSON object with partial configuration updates
+     * @param errorMsg Output parameter for validation error message
+     * @return true if all fields were validated and applied successfully
+     *
+     * This method validates and applies changes in-place to the global config.
+     * On validation failure, automatically rolls back by reloading from NVS.
+     * This eliminates the need for defensive copying before validation.
+     */
+    bool applyConfigChanges(JsonObject jsonObj, String& errorMsg);
+
+    /**
      * @brief Factory reset - erase all NVS data and reload defaults (thread-safe)
      * @return true if factory reset was successful
      */

@@ -406,77 +406,83 @@ void handleConfigPost(AsyncWebServerRequest *request)
         return;
     }
 
-    // Load current configuration for partial updates
-    RuntimeConfig currentConfig = getRuntimeConfig();
-    RuntimeConfig newConfig = currentConfig;
-    
-    // Track timezone changes for immediate update
-    String currentTimezone = currentConfig.timezone;
+    // Get reference to current configuration (read-only, no copy)
+    const RuntimeConfig& currentConfig = getRuntimeConfig();
 
-    // Data-driven configuration processing - handles ALL fields generically
+    // Capture current state values BEFORE mutation (for change detection)
+    String currentTimezone = currentConfig.timezone;
+    bool currentMqttEnabled = currentConfig.mqttEnabled;
+    String currentMqttServer = currentConfig.mqttServer;
+    int currentMqttPort = currentConfig.mqttPort;
+    String currentMqttUsername = currentConfig.mqttUsername;
+    String currentMqttPassword = currentConfig.mqttPassword;
+    bool currentUnbiddenEnabled = currentConfig.unbiddenInkEnabled;
+    int currentUnbiddenStartHour = currentConfig.unbiddenInkStartHour;
+    int currentUnbiddenEndHour = currentConfig.unbiddenInkEndHour;
+    int currentUnbiddenFrequency = currentConfig.unbiddenInkFrequencyMinutes;
+    String currentUnbiddenPrompt = currentConfig.unbiddenInkPrompt;
+    String currentChatgptToken = currentConfig.chatgptApiToken;
+    String currentWifiSSID = currentConfig.wifiSSID;
+    String currentWifiPassword = currentConfig.wifiPassword;
+
+    // MQTT password fix: If frontend didn't send password, preserve existing one
+    JsonObject jsonObj = doc.as<JsonObject>();
+    if (jsonObj["mqtt"].is<JsonObject>())
+    {
+        JsonObject mqttObj = jsonObj["mqtt"];
+        if (!mqttObj["password"].is<const char*>())
+        {
+            mqttObj["password"] = currentMqttPassword;
+        }
+    }
+
+    // Apply changes directly to g_runtimeConfig (zero-copy validation + mutation)
+    // This validates and mutates in-place, rolling back on validation failure
     String errorMsg;
-    if (!processJsonObject("", doc.as<JsonObject>(), newConfig, errorMsg))
+    if (!ConfigManager::instance().applyConfigChanges(jsonObj, errorMsg))
     {
         sendValidationError(request, ValidationResult(false, errorMsg));
         return;
     }
 
-    // MQTT password fix: If frontend didn't send password, preserve existing one
-    if (doc["mqtt"].is<JsonObject>())
-    {
-        JsonObject mqttObj = doc["mqtt"];
-        if (!mqttObj["password"].is<const char*>())
-        {
-            newConfig.mqttPassword = currentConfig.mqttPassword;
-        }
-    }
-
-    // Non-user configurable APIs remain as constants (always set regardless of sections present)
-    newConfig.jokeAPI = jokeAPI;
-    newConfig.quoteAPI = quoteAPI;
-    newConfig.triviaAPI = triviaAPI;
-    newConfig.newsAPI = newsAPI;
-        // configDoc["betterStackToken"] = config.betterStackToken; // Removed
-        // configDoc["betterStackEndpoint"] = config.betterStackEndpoint; // Removed
-    newConfig.chatgptApiEndpoint = chatgptApiEndpoint;
-
-    // maxCharacters remains hardcoded from config.h
-    newConfig.maxCharacters = maxCharacters;
+    // Get reference to updated config (after successful mutation)
+    // NOTE: This is now a non-const reference so we can set LED effects below
+    RuntimeConfig& newConfig = const_cast<RuntimeConfig&>(getRuntimeConfig());
 
 #if ENABLE_LEDS
-    // Load default LED effects configuration (TODO: make this data-driven too)
+    // Set default LED effects configuration (not in JSON, always loaded from code)
     newConfig.ledEffects = getDefaultLedEffectsConfig();
 #endif
 
-    // Check change states before saving (using currentConfig as the original state)
-    bool mqttStateChanged = (currentConfig.mqttEnabled != newConfig.mqttEnabled);
-    
+    // Check change states after mutation (using captured pre-mutation values)
+    bool mqttStateChanged = (currentMqttEnabled != newConfig.mqttEnabled);
+
     // Check if MQTT settings changed (only matters if MQTT is enabled)
     bool mqttSettingsChanged = false;
     if (doc["mqtt"].is<JsonObject>() && newConfig.mqttEnabled) {
         mqttSettingsChanged = (
-            currentConfig.mqttServer != newConfig.mqttServer ||
-            currentConfig.mqttPort != newConfig.mqttPort ||
-            currentConfig.mqttUsername != newConfig.mqttUsername ||
-            currentConfig.mqttPassword != newConfig.mqttPassword
+            currentMqttServer != newConfig.mqttServer ||
+            currentMqttPort != newConfig.mqttPort ||
+            currentMqttUsername != newConfig.mqttUsername ||
+            currentMqttPassword != newConfig.mqttPassword
         );
     }
-    
+
     // Check UnbiddenInk state changes
-    bool unbiddenStateChanged = (currentConfig.unbiddenInkEnabled != newConfig.unbiddenInkEnabled);
-    
+    bool unbiddenStateChanged = (currentUnbiddenEnabled != newConfig.unbiddenInkEnabled);
+
     // Check if UnbiddenInk settings changed (only matters if UnbiddenInk is enabled)
     bool unbiddenSettingsChanged = false;
     if (doc["unbiddenInk"].is<JsonObject>() && newConfig.unbiddenInkEnabled) {
         unbiddenSettingsChanged = (
-            currentConfig.unbiddenInkStartHour != newConfig.unbiddenInkStartHour ||
-            currentConfig.unbiddenInkEndHour != newConfig.unbiddenInkEndHour ||
-            currentConfig.unbiddenInkFrequencyMinutes != newConfig.unbiddenInkFrequencyMinutes ||
-            currentConfig.unbiddenInkPrompt != newConfig.unbiddenInkPrompt ||
-            currentConfig.chatgptApiToken != newConfig.chatgptApiToken
+            currentUnbiddenStartHour != newConfig.unbiddenInkStartHour ||
+            currentUnbiddenEndHour != newConfig.unbiddenInkEndHour ||
+            currentUnbiddenFrequency != newConfig.unbiddenInkFrequencyMinutes ||
+            currentUnbiddenPrompt != newConfig.unbiddenInkPrompt ||
+            currentChatgptToken != newConfig.chatgptApiToken
         );
     }
-    
+
     // Check if WiFi credentials changed
     bool wifiCredentialsChanged = false;
     if (doc["wifi"].is<JsonObject>())
@@ -485,33 +491,30 @@ void handleConfigPost(AsyncWebServerRequest *request)
 
         // Check if SSID changed
         if (wifiObj["ssid"].is<const char*>() &&
-            newConfig.wifiSSID != currentConfig.wifiSSID)
+            newConfig.wifiSSID != currentWifiSSID)
         {
             wifiCredentialsChanged = true;
             LOG_NOTICE("WEB", "WiFi SSID changed from '%s' to '%s'",
-                       currentConfig.wifiSSID.c_str(),
+                       currentWifiSSID.c_str(),
                        newConfig.wifiSSID.c_str());
         }
 
         // Check if password changed (only if provided)
         if (wifiObj["password"].is<const char*>() &&
-            newConfig.wifiPassword != currentConfig.wifiPassword)
+            newConfig.wifiPassword != currentWifiPassword)
         {
             wifiCredentialsChanged = true;
             LOG_NOTICE("WEB", "WiFi password changed");
         }
     }
 
-    // FIRST: Save to NVS for persistence (fail-safe - don't update runtime if this fails)
+    // Save to NVS for persistence (config already mutated in-place by applyConfigChanges)
     if (!saveNVSConfig(newConfig))
     {
         LOG_ERROR("WEB", "Failed to save configuration to NVS");
         sendErrorResponse(request, 500, "Failed to save configuration");
         return;
     }
-
-    // ONLY THEN: Update global runtime configuration (after successful NVS save)
-    setRuntimeConfig(newConfig);
     
     // Handle timezone changes - update immediately without requiring reboot
     bool timezoneChanged = (currentTimezone != newConfig.timezone);
