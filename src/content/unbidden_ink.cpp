@@ -86,6 +86,35 @@ void scheduleNextUnbiddenInk()
 
     // Random time within the ±20% range
     unsigned long randomOffset = random(minTime, maxTime);
+
+    // Check if the proposed time falls within working hours
+    // Get current hour and calculate proposed hour (approximate, doesn't handle day rollover perfectly)
+    int currentHour = hour();
+    unsigned long hoursFromNow = randomOffset / (60UL * 60UL * 1000UL);
+    int proposedHour = (currentHour + hoursFromNow) % 24;
+
+    // If proposed time is outside working hours, schedule for start of next working window
+    if (proposedHour < currentSettings.startHour || proposedHour >= currentSettings.endHour)
+    {
+        // Calculate hours until start of working hours
+        int hoursUntilStart;
+        if (currentHour < currentSettings.startHour)
+        {
+            // Same day - wait until startHour
+            hoursUntilStart = currentSettings.startHour - currentHour;
+        }
+        else
+        {
+            // Next day - wait until tomorrow's startHour
+            hoursUntilStart = (24 - currentHour) + currentSettings.startHour;
+        }
+
+        // Convert to milliseconds and add small random jitter (0-60 seconds)
+        randomOffset = (unsigned long)hoursUntilStart * 60UL * 60UL * 1000UL + random(0, 60000);
+
+        LOG_VERBOSE("UNBIDDENINK", "Proposed time outside working hours - rescheduled for start of working window");
+    }
+
     nextUnbiddenInkTime = millis() + randomOffset;
 
     LOG_VERBOSE("UNBIDDENINK", "Next Unbidden Ink message scheduled in %lu minutes (target: %d mins ±20%%)",
@@ -101,9 +130,19 @@ void checkUnbiddenInk()
 
     unsigned long currentTime = millis();
 
-    // Check if it's time for an Unbidden Ink message
-    if (currentTime >= nextUnbiddenInkTime && isInWorkingHours())
+    // Check if it's time for an Unbidden Ink message (rollover-safe comparison)
+    if ((long)(currentTime - nextUnbiddenInkTime) >= 0)
     {
+        // Check if we're within working hours
+        if (!isInWorkingHours())
+        {
+            LOG_NOTICE("UNBIDDENINK", "Scheduled execution skipped - outside working hours (%02d:00-%02d:00)",
+                       currentSettings.startHour, currentSettings.endHour);
+            LOG_NOTICE("UNBIDDENINK", "Will reschedule for next attempt");
+            scheduleNextUnbiddenInk();
+            return;
+        }
+
         LOG_NOTICE("UNBIDDENINK", "Triggering Unbidden Ink message");
         LOG_VERBOSE("UNBIDDENINK", "API endpoint: %s", chatgptApiEndpoint);
         const RuntimeConfig &config = getRuntimeConfig();

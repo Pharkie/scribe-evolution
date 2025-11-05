@@ -206,9 +206,11 @@ void handleConfigGet(AsyncWebServerRequest *request)
     {
         unsigned long nextTime = getNextUnbiddenInkTime();
         unsigned long currentTime = millis();
+        bool inWorkingHours = isInWorkingHours();
 
         if (nextTime > currentTime)
         {
+            // Scheduled in the future
             unsigned long minutesUntil = (nextTime - currentTime) / (60 * 1000);
             if (minutesUntil == 0)
             {
@@ -218,15 +220,34 @@ void handleConfigGet(AsyncWebServerRequest *request)
             {
                 unbiddenInk["nextScheduled"] = String(minutesUntil) + (minutesUntil == 1 ? " min" : " mins");
             }
+
+            // Determine status based on working hours
+            if (inWorkingHours)
+            {
+                unbiddenInk["status"] = "Active";
+            }
+            else
+            {
+                unbiddenInk["status"] = "Waiting for working hours";
+            }
+        }
+        else if (nextTime == 0)
+        {
+            // Not yet scheduled (shouldn't happen in normal operation)
+            unbiddenInk["nextScheduled"] = "-";
+            unbiddenInk["status"] = inWorkingHours ? "Active" : "Waiting for working hours";
         }
         else
         {
+            // Time has passed but not executed yet (edge case)
             unbiddenInk["nextScheduled"] = "-";
+            unbiddenInk["status"] = inWorkingHours ? "Active" : "Waiting for working hours";
         }
     }
     else
     {
         unbiddenInk["nextScheduled"] = "-";
+        unbiddenInk["status"] = "Disabled";
     }
 
     // Memos are now handled by separate /api/memos endpoint

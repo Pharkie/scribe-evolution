@@ -52,6 +52,8 @@ export function createSettingsUnbiddenInkStore() {
           prompt: config.unbiddenInk?.prompt || "",
           chatgptApiToken: config.unbiddenInk?.chatgptApiToken || "",
           promptPresets: config.unbiddenInk?.promptPresets || {},
+          status: config.unbiddenInk?.status || "Disabled",
+          nextScheduled: config.unbiddenInk?.nextScheduled || "-",
         };
 
         // Store original values for change tracking
@@ -412,6 +414,68 @@ export function createSettingsUnbiddenInkStore() {
     // ================== UTILITY FUNCTIONS ==================
     showErrorMessage(message) {
       this.error = message;
+    },
+
+    // ================== STATUS DISPLAY ==================
+    get statusMessage() {
+      // When editing (canSave is true), predict message based on current settings
+      // When saved (canSave is false), use API status
+      if (this.canSave) {
+        // Predict based on current hour vs. configured working hours
+        const currentHour = new Date().getHours();
+        const startHour = this.config.unbiddenInk?.startHour || 8;
+        const endHour = this.config.unbiddenInk?.endHour || 22;
+        const inWorkingHours =
+          currentHour >= startHour && currentHour < endHour;
+
+        if (inWorkingHours) {
+          return "Your first Unbidden Ink will unfurl in 1-2 minutes, then follow the rhythm you set.";
+        } else {
+          return `Your first Unbidden Ink will unfurl when working hours begin (${this.formatHour(startHour)}), then follow the rhythm you set.`;
+        }
+      } else {
+        // Use API status when saved
+        const status = this.config.unbiddenInk?.status || "Disabled";
+        const startHour = this.config.unbiddenInk?.startHour || 8;
+
+        if (status === "Waiting for working hours") {
+          return `Your first Unbidden Ink will unfurl when working hours begin (${this.formatHour(startHour)}), then follow the rhythm you set.`;
+        } else if (status === "Active") {
+          return "Your first Unbidden Ink will unfurl in 1-2 minutes, then follow the rhythm you set.";
+        } else {
+          return "";
+        }
+      }
+    },
+
+    get statusBadge() {
+      const status = this.config.unbiddenInk?.status || "Disabled";
+      const nextScheduled = this.config.unbiddenInk?.nextScheduled || "-";
+
+      if (status === "Active" && nextScheduled !== "-") {
+        return {
+          icon: "🟢",
+          text: `Active: Next in ${nextScheduled}`,
+          class:
+            "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200",
+        };
+      } else if (status === "Waiting for working hours") {
+        const start = this.config.unbiddenInk?.startHour || 8;
+        const end = this.config.unbiddenInk?.endHour || 22;
+        return {
+          icon: "🟡",
+          text: `Waiting for working hours (${this.formatHour(start)}-${this.formatHour(end)})`,
+          class:
+            "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200",
+        };
+      } else {
+        return {
+          icon: "⚪",
+          text: "Disabled",
+          class:
+            "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200",
+        };
+      }
     },
   };
 }
