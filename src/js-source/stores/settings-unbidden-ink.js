@@ -418,13 +418,23 @@ export function createSettingsUnbiddenInkStore() {
 
     // ================== STATUS DISPLAY ==================
     get statusMessage() {
-      // When editing (canSave is true), predict message based on current settings
-      // When saved (canSave is false), use API status
-      if (this.canSave) {
-        // Predict based on current hour vs. configured working hours
+      // If not enabled, return empty
+      if (!this.config.unbiddenInk?.enabled) {
+        return "";
+      }
+
+      const startHour = this.config.unbiddenInk?.startHour || 8;
+      const endHour = this.config.unbiddenInk?.endHour || 22;
+
+      // Check if settings differ from saved (unsaved changes)
+      const hasUnsavedChanges =
+        this.config.unbiddenInk.enabled !== this.originalValues.enabled ||
+        this.config.unbiddenInk.startHour !== this.originalValues.startHour ||
+        this.config.unbiddenInk.endHour !== this.originalValues.endHour;
+
+      // When editing (unsaved changes), predict based on current browser time
+      if (hasUnsavedChanges) {
         const currentHour = new Date().getHours();
-        const startHour = this.config.unbiddenInk?.startHour || 8;
-        const endHour = this.config.unbiddenInk?.endHour || 22;
         const inWorkingHours =
           currentHour >= startHour && currentHour < endHour;
 
@@ -433,17 +443,25 @@ export function createSettingsUnbiddenInkStore() {
         } else {
           return `Your first Unbidden Ink will unfurl when working hours begin (${this.formatHour(startHour)}), then follow the rhythm you set.`;
         }
-      } else {
-        // Use API status when saved
-        const status = this.config.unbiddenInk?.status || "Disabled";
-        const startHour = this.config.unbiddenInk?.startHour || 8;
+      }
 
-        if (status === "Waiting for working hours") {
-          return `Your first Unbidden Ink will unfurl when working hours begin (${this.formatHour(startHour)}), then follow the rhythm you set.`;
-        } else if (status === "Active") {
+      // When saved (no unsaved changes), use backend API status
+      const status = this.config.unbiddenInk?.status || "Disabled";
+
+      if (status === "Waiting for working hours") {
+        return `Your first Unbidden Ink will unfurl when working hours begin (${this.formatHour(startHour)}), then follow the rhythm you set.`;
+      } else if (status === "Active") {
+        return "Your first Unbidden Ink will unfurl in 1-2 minutes, then follow the rhythm you set.";
+      } else {
+        // Fallback: if status is unclear but enabled, predict based on current time
+        const currentHour = new Date().getHours();
+        const inWorkingHours =
+          currentHour >= startHour && currentHour < endHour;
+
+        if (inWorkingHours) {
           return "Your first Unbidden Ink will unfurl in 1-2 minutes, then follow the rhythm you set.";
         } else {
-          return "";
+          return `Your first Unbidden Ink will unfurl when working hours begin (${this.formatHour(startHour)}), then follow the rhythm you set.`;
         }
       }
     },
