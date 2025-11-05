@@ -675,9 +675,9 @@
                 </button>
               </div>
 
-              <!-- Scheduling Information (shown when enabled with unsaved changes) -->
+              <!-- Scheduling Information (shown when enabled with unsaved changes, even if validation errors prevent save) -->
               <div
-                x-show="config.unbiddenInk.enabled && canSave && statusMessage"
+                x-show="config.unbiddenInk.enabled && hasUnsavedChanges && statusMessage"
                 x-transition
                 class="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg"
               >
@@ -704,7 +704,7 @@
 
               <!-- Status Badge (shown when enabled and saved/no unsaved changes) -->
               <div
-                x-show="config.unbiddenInk.enabled && !canSave && statusBadge.text !== 'Disabled'"
+                x-show="config.unbiddenInk.enabled && !hasUnsavedChanges && statusBadge.text !== 'Disabled'"
                 x-transition
                 class="mt-4 p-3 rounded-lg border"
                 :class="statusBadge.class"

@@ -416,6 +416,18 @@ export function createSettingsUnbiddenInkStore() {
       this.error = message;
     },
 
+    // Check if there are any unsaved changes to relevant settings
+    get hasUnsavedChanges() {
+      return (
+        this.config.unbiddenInk?.enabled !== this.originalValues.enabled ||
+        this.config.unbiddenInk?.startHour !== this.originalValues.startHour ||
+        this.config.unbiddenInk?.endHour !== this.originalValues.endHour ||
+        this.config.unbiddenInk?.frequencyMinutes !==
+          this.originalValues.frequencyMinutes ||
+        this.config.unbiddenInk?.prompt !== this.originalValues.prompt
+      );
+    },
+
     // ================== STATUS DISPLAY ==================
     get statusMessage() {
       // If not enabled, return empty
