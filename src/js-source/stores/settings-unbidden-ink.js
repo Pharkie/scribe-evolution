@@ -29,6 +29,36 @@ export function createSettingsUnbiddenInkStore() {
       errors: {},
     },
 
+    // ================== AI PROVIDER MODELS ==================
+    providerModels: {
+      openai: [
+        "gpt-4o-mini",
+        "gpt-4o",
+        "o1",
+        "o1-mini",
+        "gpt-4-turbo",
+        "gpt-3.5-turbo",
+      ],
+      anthropic: [
+        "claude-sonnet-4-5-20250929",
+        "claude-sonnet-4-20250514",
+        "claude-3-5-sonnet-20241022",
+        "claude-3-5-haiku-20241022",
+        "claude-3-opus-20240229",
+      ],
+      google: ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"],
+    },
+
+    get availableModels() {
+      const provider = this.config.unbiddenInk?.aiProvider || "openai";
+      return this.providerModels[provider] || [];
+    },
+
+    get selectedProviderRequiresKey() {
+      const provider = this.config.unbiddenInk?.aiProvider || "openai";
+      return provider === "anthropic" || provider === "google";
+    },
+
     // ================== API OPERATIONS ==================
     async loadConfiguration() {
       // Duplicate initialization guard (failsafe)
@@ -46,11 +76,17 @@ export function createSettingsUnbiddenInkStore() {
         // ✅ CRITICAL: Direct assignment to config object
         this.config.unbiddenInk = {
           enabled: config.unbiddenInk?.enabled || false,
+          chatgptApiToken: config.unbiddenInk?.chatgptApiToken || "",
+          anthropicApiKey: config.unbiddenInk?.anthropicApiKey || "",
+          googleApiKey: config.unbiddenInk?.googleApiKey || "",
+          aiProvider: config.unbiddenInk?.aiProvider || "openai",
+          aiModel: config.unbiddenInk?.aiModel || "gpt-4o-mini",
+          aiTemperature: config.unbiddenInk?.aiTemperature || 0.7,
+          aiMaxTokens: config.unbiddenInk?.aiMaxTokens || 150,
           startHour: config.unbiddenInk?.startHour || 8,
           endHour: config.unbiddenInk?.endHour || 22,
           frequencyMinutes: config.unbiddenInk?.frequencyMinutes || 120,
           prompt: config.unbiddenInk?.prompt || "",
-          chatgptApiToken: config.unbiddenInk?.chatgptApiToken || "",
           promptPresets: config.unbiddenInk?.promptPresets || {},
           status: config.unbiddenInk?.status || "Disabled",
           nextScheduled: config.unbiddenInk?.nextScheduled || "-",
@@ -59,11 +95,17 @@ export function createSettingsUnbiddenInkStore() {
         // Store original values for change tracking
         this.originalValues = {
           enabled: this.config.unbiddenInk.enabled,
+          chatgptApiToken: this.config.unbiddenInk.chatgptApiToken,
+          anthropicApiKey: this.config.unbiddenInk.anthropicApiKey,
+          googleApiKey: this.config.unbiddenInk.googleApiKey,
+          aiProvider: this.config.unbiddenInk.aiProvider,
+          aiModel: this.config.unbiddenInk.aiModel,
+          aiTemperature: this.config.unbiddenInk.aiTemperature,
+          aiMaxTokens: this.config.unbiddenInk.aiMaxTokens,
           startHour: this.config.unbiddenInk.startHour,
           endHour: this.config.unbiddenInk.endHour,
           frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
           prompt: this.config.unbiddenInk.prompt,
-          chatgptApiToken: this.config.unbiddenInk.chatgptApiToken,
         };
 
         // Reset token/test state on load
@@ -87,6 +129,10 @@ export function createSettingsUnbiddenInkStore() {
         const payload = {
           unbiddenInk: {
             enabled: this.config.unbiddenInk.enabled,
+            aiProvider: this.config.unbiddenInk.aiProvider,
+            aiModel: this.config.unbiddenInk.aiModel,
+            aiTemperature: this.config.unbiddenInk.aiTemperature,
+            aiMaxTokens: this.config.unbiddenInk.aiMaxTokens,
             startHour: this.config.unbiddenInk.startHour,
             endHour: this.config.unbiddenInk.endHour,
             frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
@@ -94,7 +140,7 @@ export function createSettingsUnbiddenInkStore() {
           },
         };
 
-        // Include ChatGPT API token if it actually changed vs original
+        // Include API keys only if they changed vs original
         if (
           (this.config.unbiddenInk.chatgptApiToken || "") !==
           (this.originalValues.chatgptApiToken || "")
@@ -102,18 +148,37 @@ export function createSettingsUnbiddenInkStore() {
           payload.unbiddenInk.chatgptApiToken =
             this.config.unbiddenInk.chatgptApiToken;
         }
+        if (
+          (this.config.unbiddenInk.anthropicApiKey || "") !==
+          (this.originalValues.anthropicApiKey || "")
+        ) {
+          payload.unbiddenInk.anthropicApiKey =
+            this.config.unbiddenInk.anthropicApiKey;
+        }
+        if (
+          (this.config.unbiddenInk.googleApiKey || "") !==
+          (this.originalValues.googleApiKey || "")
+        ) {
+          payload.unbiddenInk.googleApiKey =
+            this.config.unbiddenInk.googleApiKey;
+        }
 
         await saveConfiguration(payload);
 
         // Update original values to reflect saved state
         Object.assign(this.originalValues, {
           enabled: this.config.unbiddenInk.enabled,
+          aiProvider: this.config.unbiddenInk.aiProvider,
+          aiModel: this.config.unbiddenInk.aiModel,
+          aiTemperature: this.config.unbiddenInk.aiTemperature,
+          aiMaxTokens: this.config.unbiddenInk.aiMaxTokens,
           startHour: this.config.unbiddenInk.startHour,
           endHour: this.config.unbiddenInk.endHour,
           frequencyMinutes: this.config.unbiddenInk.frequencyMinutes,
           prompt: this.config.unbiddenInk.prompt,
         });
 
+        // Update API key original values if they were saved
         if (
           (this.config.unbiddenInk.chatgptApiToken || "") !==
           (this.originalValues.chatgptApiToken || "")
@@ -121,6 +186,20 @@ export function createSettingsUnbiddenInkStore() {
           this.originalValues.chatgptApiToken =
             this.config.unbiddenInk.chatgptApiToken;
           this.apiTokenModified = false;
+        }
+        if (
+          (this.config.unbiddenInk.anthropicApiKey || "") !==
+          (this.originalValues.anthropicApiKey || "")
+        ) {
+          this.originalValues.anthropicApiKey =
+            this.config.unbiddenInk.anthropicApiKey;
+        }
+        if (
+          (this.config.unbiddenInk.googleApiKey || "") !==
+          (this.originalValues.googleApiKey || "")
+        ) {
+          this.originalValues.googleApiKey =
+            this.config.unbiddenInk.googleApiKey;
         }
 
         // Redirect immediately with success parameter
@@ -145,13 +224,19 @@ export function createSettingsUnbiddenInkStore() {
       const hasValidationErrors =
         Object.keys(this.validation.errors).length > 0;
 
-      // Detect if token actually changed vs original
+      // Detect if any API keys changed vs original
       const tokenChanged =
-        (current.chatgptApiToken || "") !== (original.chatgptApiToken || "");
+        (current.chatgptApiToken || "") !== (original.chatgptApiToken || "") ||
+        (current.anthropicApiKey || "") !== (original.anthropicApiKey || "") ||
+        (current.googleApiKey || "") !== (original.googleApiKey || "");
 
-      // Other changes (excluding token)
+      // Other changes (excluding API keys)
       const otherChanges =
         current.enabled !== original.enabled ||
+        current.aiProvider !== original.aiProvider ||
+        current.aiModel !== original.aiModel ||
+        current.aiTemperature !== original.aiTemperature ||
+        current.aiMaxTokens !== original.aiMaxTokens ||
         current.startHour !== original.startHour ||
         current.endHour !== original.endHour ||
         current.frequencyMinutes !== original.frequencyMinutes ||
