@@ -164,13 +164,60 @@
                 x-transition
                 class="space-y-6"
               >
-                <!-- ChatGPT API Token -->
+                <!-- AI Provider Selection -->
                 <div class="space-y-2">
+                  <label
+                    for="ai-provider"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    AI Provider:
+                  </label>
+                  <select
+                    id="ai-provider"
+                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    x-model="config.unbiddenInk.aiProvider"
+                  >
+                    <option value="openai">OpenAI (GPT)</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="google">Google (Gemini)</option>
+                  </select>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Choose which AI service to use for content generation
+                  </p>
+                </div>
+
+                <!-- AI Model Selection -->
+                <div class="space-y-2">
+                  <label
+                    for="ai-model"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Model:
+                  </label>
+                  <select
+                    id="ai-model"
+                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    x-model="config.unbiddenInk.aiModel"
+                  >
+                    <template x-for="model in availableModels" :key="model">
+                      <option :value="model" x-text="model"></option>
+                    </template>
+                  </select>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Select the AI model to use
+                  </p>
+                </div>
+
+                <!-- OpenAI API Key (shown only when provider is openai) -->
+                <div
+                  x-show="config.unbiddenInk.aiProvider === 'openai'"
+                  class="space-y-2"
+                >
                   <label
                     for="chatgpt-api-token"
                     class="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    ChatGPT API Token:
+                    OpenAI API Key:
                   </label>
                   <input
                     type="password"
@@ -223,13 +270,125 @@
                     </button>
                     <p class="text-xs text-gray-600 dark:text-gray-400">
                       <span x-show="!apiTokenModified"
-                        >Change ChatGPT API Token to test</span
+                        >Change API Key to test</span
                       >
                       <span x-show="apiTokenModified"
                         >Test API key to enable save</span
                       >
                     </p>
                   </div>
+                </div>
+
+                <!-- Anthropic API Key (shown only when provider is anthropic) -->
+                <div
+                  x-show="config.unbiddenInk.aiProvider === 'anthropic'"
+                  class="space-y-2"
+                >
+                  <label
+                    for="anthropic-api-key"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Anthropic API Key:
+                  </label>
+                  <input
+                    type="password"
+                    id="anthropic-api-key"
+                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    x-model="config.unbiddenInk.anthropicApiKey"
+                  />
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Your Anthropic API key for Claude access.
+                    <a
+                      href="https://console.anthropic.com/settings/keys"
+                      target="_blank"
+                      class="text-purple-600 dark:text-purple-400 hover:underline"
+                    >
+                      Get your API key here </a
+                    >.
+                  </p>
+                </div>
+
+                <!-- Google API Key (shown only when provider is google) -->
+                <div
+                  x-show="config.unbiddenInk.aiProvider === 'google'"
+                  class="space-y-2"
+                >
+                  <label
+                    for="google-api-key"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Google API Key:
+                  </label>
+                  <input
+                    type="password"
+                    id="google-api-key"
+                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    x-model="config.unbiddenInk.googleApiKey"
+                  />
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Your Google API key for Gemini access.
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      class="text-purple-600 dark:text-purple-400 hover:underline"
+                    >
+                      Get your API key here </a
+                    >.
+                  </p>
+                </div>
+
+                <!-- Temperature Slider -->
+                <div class="space-y-2">
+                  <label
+                    for="ai-temperature"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Temperature:
+                    <span
+                      x-text="config.unbiddenInk.aiTemperature.toFixed(1)"
+                      class="font-mono"
+                    ></span>
+                  </label>
+                  <input
+                    type="range"
+                    id="ai-temperature"
+                    min="0"
+                    max="2"
+                    step="0.1"
+                    class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                    x-model.number="config.unbiddenInk.aiTemperature"
+                  />
+                  <div
+                    class="flex justify-between text-xs text-gray-600 dark:text-gray-400"
+                  >
+                    <span>0.0 (Focused)</span>
+                    <span>2.0 (Creative)</span>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Higher values make output more random and creative
+                  </p>
+                </div>
+
+                <!-- Max Tokens Input -->
+                <div class="space-y-2">
+                  <label
+                    for="ai-max-tokens"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Max Tokens:
+                  </label>
+                  <input
+                    type="number"
+                    id="ai-max-tokens"
+                    min="50"
+                    max="500"
+                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700"
+                    x-model.number="config.unbiddenInk.aiMaxTokens"
+                  />
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Maximum length of generated content (50-500 tokens, ~40-400
+                    words)
+                  </p>
                 </div>
 
                 <!-- Time Range Slider (Alpine Implementation) -->

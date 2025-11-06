@@ -54,11 +54,34 @@ static const unsigned long mqttConnectionTimeoutMs = ScribeTime::Seconds(7);   /
 static const unsigned long mqttTlsHandshakeTimeoutMs = ScribeTime::Seconds(6); // TLS handshake timeout (< watchdog)
 static const int mqttBufferSize = 512;                                         // MQTT message buffer size
 
-// Unbidden Ink prompt presets (autoprompts)
-static const char *unbiddenInkPromptCreative = "Generate creative, artistic content - poetry, short stories, or imaginative scenarios. Keep it engaging and printable.";
-static const char *unbiddenInkPromptWisdom = "Share philosophical insights, life wisdom, or thought-provoking reflections. Keep it meaningful and contemplative.";
-static const char *unbiddenInkPromptHumor = "Create funny content - jokes, witty observations, or humorous takes on everyday situations. Keep it light and entertaining.";
-static const char *unbiddenInkPromptDoctorWho = "Generate content inspired by Doctor Who - time travel adventures, alien encounters, or sci-fi scenarios with a whimsical tone.";
+// Unbidden Ink prompt presets (autoprompts) - optimized for thermal printer output
+static const char *unbiddenInkPromptCreative =
+    "Generate creative content for a thermal printer receipt (max 40 chars/line).\n"
+    "Format: Short title, then content.\n"
+    "Style: Poetic, whimsical, or narrative.\n"
+    "Length: 5-10 lines maximum.\n"
+    "Avoid: Emojis, special characters, markdown.";
+
+static const char *unbiddenInkPromptWisdom =
+    "Share a philosophical insight or life wisdom for printing.\n"
+    "Format: Quote or brief reflection.\n"
+    "Style: Thoughtful, contemplative, meaningful.\n"
+    "Length: 3-6 lines maximum.\n"
+    "Avoid: Clichés, corporate speak, emojis.";
+
+static const char *unbiddenInkPromptHumor =
+    "Create funny content for a thermal printer receipt.\n"
+    "Format: Joke, pun, or witty observation.\n"
+    "Style: Light, clever, unexpected punchline.\n"
+    "Length: 3-8 lines maximum.\n"
+    "Avoid: Offensive content, emojis, complex formatting.";
+
+static const char *unbiddenInkPromptDoctorWho =
+    "Generate Doctor Who-inspired content for printing.\n"
+    "Format: Time travel scenario or alien encounter.\n"
+    "Style: Whimsical sci-fi, British humor, mysterious.\n"
+    "Length: 6-10 lines maximum.\n"
+    "Avoid: Episode spoilers, complex timey-wimey explanations.";
 
 // Default prompt (use Creative as default)
 static const char *defaultUnbiddenInkPrompt = unbiddenInkPromptCreative;
@@ -143,6 +166,14 @@ static const char *triviaAPI = "https://the-trivia-api.com/api/questions?categor
 static const char *newsAPI = "https://feeds.bbci.co.uk/news/rss.xml";
 static const char *chatgptApiEndpoint = "https://api.openai.com/v1/chat/completions"; // ChatGPT API URL (NEVER exposed to frontend)
 static const char *chatgptApiTestEndpoint = "https://api.openai.com/v1/models";       // ChatGPT token test URL (NEVER exposed to frontend)
+static const char *anthropicApiEndpoint = "https://api.anthropic.com/v1/messages";    // Anthropic API URL (NEVER exposed to frontend)
+static const char *googleApiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/"; // Google Gemini API URL (NEVER exposed to frontend)
+
+// AI Provider Configuration Defaults
+static const char *defaultAiProvider = "openai";    // Default AI provider (openai/anthropic/google)
+static const char *defaultAiModel = "gpt-4o-mini";  // Default AI model
+static const float defaultAiTemperature = 0.7;      // Default temperature (0.0-2.0)
+static const int defaultAiMaxTokens = 150;          // Default max tokens (50-500)
 
 // BetterStack configuration
 static const char *betterStackEndpoint = "https://s1451477.eu-nbg-2.betterstackdata.com/";

@@ -119,6 +119,18 @@ bool getNVSBool(Preferences &prefs, const char *key, bool defaultValue)
     return prefs.getBool(key, defaultValue);
 }
 
+// Helper function to validate and get float from NVS with fallback - saves default if missing
+float getNVSFloat(Preferences &prefs, const char *key, float defaultValue)
+{
+    if (!prefs.isKey(key))
+    {
+        LOG_NOTICE("CONFIG", "NVS key '%s' missing - saving default value: %.2f", key, defaultValue);
+        prefs.putFloat(key, defaultValue);
+        return defaultValue;
+    }
+    return prefs.getFloat(key, defaultValue);
+}
+
 // Helper function to validate and get port from NVS with fallback - ensures valid port range
 int getNVSPort(Preferences &prefs, const char *key, int defaultValue)
 {
@@ -249,8 +261,17 @@ bool ConfigManager::loadNVSConfigInternal()
     g_runtimeConfig.jokeAPI = jokeAPI;
     g_runtimeConfig.quoteAPI = quoteAPI;
     g_runtimeConfig.triviaAPI = triviaAPI;
+    g_runtimeConfig.newsAPI = newsAPI;
     g_runtimeConfig.chatgptApiToken = getNVSString(prefs, NVS_CHATGPT_TOKEN, defaultChatgptApiToken, 300);
+    g_runtimeConfig.anthropicApiKey = getNVSString(prefs, NVS_ANTHROPIC_KEY, defaultAnthropicApiKey, 300);
+    g_runtimeConfig.googleApiKey = getNVSString(prefs, NVS_GOOGLE_KEY, defaultGoogleApiKey, 300);
+    g_runtimeConfig.aiProvider = getNVSString(prefs, NVS_AI_PROVIDER, defaultAiProvider, 50);
+    g_runtimeConfig.aiModel = getNVSString(prefs, NVS_AI_MODEL, defaultAiModel, 100);
+    g_runtimeConfig.aiTemperature = getNVSFloat(prefs, NVS_AI_TEMPERATURE, defaultAiTemperature);
+    g_runtimeConfig.aiMaxTokens = getNVSInt(prefs, NVS_AI_MAX_TOKENS, defaultAiMaxTokens, 50, 500);
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
+    g_runtimeConfig.anthropicApiEndpoint = anthropicApiEndpoint;
+    g_runtimeConfig.googleApiEndpoint = googleApiEndpoint;
 
     // Load validation configuration (hardcoded from config.h)
     g_runtimeConfig.maxCharacters = maxCharacters;
@@ -334,8 +355,17 @@ void ConfigManager::loadDefaultConfigInternal()
     g_runtimeConfig.jokeAPI = jokeAPI;
     g_runtimeConfig.quoteAPI = quoteAPI;
     g_runtimeConfig.triviaAPI = triviaAPI;
+    g_runtimeConfig.newsAPI = newsAPI;
     g_runtimeConfig.chatgptApiToken = defaultChatgptApiToken;
+    g_runtimeConfig.anthropicApiKey = defaultAnthropicApiKey;
+    g_runtimeConfig.googleApiKey = defaultGoogleApiKey;
+    g_runtimeConfig.aiProvider = defaultAiProvider;
+    g_runtimeConfig.aiModel = defaultAiModel;
+    g_runtimeConfig.aiTemperature = defaultAiTemperature;
+    g_runtimeConfig.aiMaxTokens = defaultAiMaxTokens;
     g_runtimeConfig.chatgptApiEndpoint = chatgptApiEndpoint;
+    g_runtimeConfig.anthropicApiEndpoint = anthropicApiEndpoint;
+    g_runtimeConfig.googleApiEndpoint = googleApiEndpoint;
 
     g_runtimeConfig.maxCharacters = maxCharacters;
 
@@ -449,6 +479,20 @@ bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
             } \
         } while(0)
 
+    #define WRITE_IF_CHANGED_FLOAT(key, newValue) \
+        do { \
+            float currentValue = prefs.getFloat(key, -999999.0f); \
+            if (currentValue != newValue) { \
+                size_t written = prefs.putFloat(key, newValue); \
+                if (written == 0) { \
+                    LOG_ERROR("CONFIG", "Failed to write '%s' to NVS (storage may be full)", key); \
+                    keysFailed++; \
+                } else { \
+                    keysWritten++; \
+                } \
+            } \
+        } while(0)
+
     // Save device configuration (only if changed)
     WRITE_IF_CHANGED_STRING(NVS_DEVICE_OWNER, config.deviceOwner);
     WRITE_IF_CHANGED_STRING(NVS_DEVICE_TIMEZONE, config.timezone);
@@ -474,8 +518,14 @@ bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
     WRITE_IF_CHANGED_STRING(NVS_MQTT_USERNAME, config.mqttUsername);
     WRITE_IF_CHANGED_STRING(NVS_MQTT_PASSWORD, config.mqttPassword);
 
-    // Save ChatGPT API token (other APIs are constants) (only if changed)
+    // Save AI provider API tokens (other APIs are constants) (only if changed)
     WRITE_IF_CHANGED_STRING(NVS_CHATGPT_TOKEN, config.chatgptApiToken);
+    WRITE_IF_CHANGED_STRING(NVS_ANTHROPIC_KEY, config.anthropicApiKey);
+    WRITE_IF_CHANGED_STRING(NVS_GOOGLE_KEY, config.googleApiKey);
+    WRITE_IF_CHANGED_STRING(NVS_AI_PROVIDER, config.aiProvider);
+    WRITE_IF_CHANGED_STRING(NVS_AI_MODEL, config.aiModel);
+    WRITE_IF_CHANGED_FLOAT(NVS_AI_TEMPERATURE, config.aiTemperature);
+    WRITE_IF_CHANGED_INT(NVS_AI_MAX_TOKENS, config.aiMaxTokens);
 
     // Save Unbidden Ink configuration (only if changed)
     WRITE_IF_CHANGED_BOOL(NVS_UNBIDDEN_ENABLED, config.unbiddenInkEnabled);

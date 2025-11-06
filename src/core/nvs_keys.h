@@ -40,6 +40,12 @@ constexpr const char *NVS_MQTT_PASSWORD = "mqtt_password";
 
 // API Configuration Keys
 constexpr const char *NVS_CHATGPT_TOKEN = "chatgpt_token";
+constexpr const char *NVS_ANTHROPIC_KEY = "anthropic_key";
+constexpr const char *NVS_GOOGLE_KEY = "google_key";
+constexpr const char *NVS_AI_PROVIDER = "ai_provider";
+constexpr const char *NVS_AI_MODEL = "ai_model";
+constexpr const char *NVS_AI_TEMPERATURE = "ai_temp";
+constexpr const char *NVS_AI_MAX_TOKENS = "ai_max_tokens";
 
 // Unbidden Ink Keys
 constexpr const char *NVS_UNBIDDEN_ENABLED = "unbid_enabled";

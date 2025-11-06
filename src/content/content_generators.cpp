@@ -19,6 +19,8 @@
  */
 
 #include "content_generators.h"
+#include "ai_provider.h"
+#include "ai_provider_factory.h"
 #include <utils/api_client.h>
 #include <utils/time_utils.h>
 #include <config/config.h>
@@ -224,81 +226,82 @@ String generateQuizContent(int timeoutMs)
 
 String generateUnbiddenInkContent(const String &customPrompt)
 {
-    // Get token, endpoint, and prompt from config and dynamic settings
+    // Get config
     const RuntimeConfig &config = getRuntimeConfig();
-    String apiToken = config.chatgptApiToken;
-    String apiEndpoint = chatgptApiEndpoint;
 
     // Use custom prompt if provided, otherwise use the saved prompt
     String prompt = customPrompt.length() > 0 ? customPrompt : getUnbiddenInkPrompt();
 
-    // Build Bearer token with automatic prefix
-    String bearerToken = "Bearer " + apiToken;
+    // Parse provider type from config
+    AIProviderType providerType = AIProviderFactory::parseProviderType(config.aiProvider);
 
-    LOG_VERBOSE("UNBIDDENINK", "Calling ChatGPT API: %s", apiEndpoint.c_str());
+    // Create provider instance
+    AIProvider *provider = AIProviderFactory::createProvider(providerType);
+    if (provider == nullptr)
+    {
+        LOG_ERROR("UNBIDDENINK", "Failed to create AI provider: %s", config.aiProvider.c_str());
+        return "";
+    }
+
+    // Build provider configuration
+    AIProviderConfig providerConfig;
+    providerConfig.temperature = config.aiTemperature;
+    providerConfig.maxTokens = config.aiMaxTokens;
+    providerConfig.timeoutMs = 10000; // 10 second timeout for Unbidden Ink
+
+    // Set API key and endpoint based on provider type
+    switch (providerType)
+    {
+    case AIProviderType::OPENAI:
+        providerConfig.apiKey = config.chatgptApiToken;
+        providerConfig.endpoint = config.chatgptApiEndpoint;
+        providerConfig.model = config.aiModel.length() > 0 ? config.aiModel : "gpt-4o-mini";
+        break;
+
+    case AIProviderType::ANTHROPIC:
+        providerConfig.apiKey = config.anthropicApiKey;
+        providerConfig.endpoint = config.anthropicApiEndpoint;
+        providerConfig.model = config.aiModel.length() > 0 ? config.aiModel : "claude-3-5-sonnet-20241022";
+        break;
+
+    case AIProviderType::GOOGLE:
+        providerConfig.apiKey = config.googleApiKey;
+        providerConfig.endpoint = config.googleApiEndpoint;
+        providerConfig.model = config.aiModel.length() > 0 ? config.aiModel : "gemini-1.5-flash";
+        break;
+
+    case AIProviderType::LOCAL:
+        LOG_ERROR("UNBIDDENINK", "LOCAL provider not yet implemented");
+        delete provider;
+        return "";
+
+    default:
+        LOG_ERROR("UNBIDDENINK", "Unknown provider type: %d", static_cast<int>(providerType));
+        delete provider;
+        return "";
+    }
+
+    // Log the request
+    LOG_VERBOSE("UNBIDDENINK", "Using AI provider: %s", provider->getName());
+    LOG_VERBOSE("UNBIDDENINK", "Using model: %s", providerConfig.model.c_str());
     LOG_VERBOSE("UNBIDDENINK", "Using prompt: %s", prompt.c_str());
 
-    // Build JSON payload for OpenAI ChatGPT API
-    JsonDocument payloadDoc;
-    payloadDoc["model"] = "gpt-4o-mini";
-    payloadDoc["max_tokens"] = 150;
-    payloadDoc["temperature"] = 0.7;
+    // Generate content
+    String content = provider->generateContent(prompt, providerConfig);
 
-    JsonArray messages = payloadDoc["messages"].to<JsonArray>();
-    JsonObject userMessage = messages.add<JsonObject>();
-    userMessage["role"] = "user";
-    userMessage["content"] = prompt;
+    // Clean up provider
+    delete provider;
 
-    String jsonPayload;
-    serializeJson(payloadDoc, jsonPayload);
-
-    // POST to OpenAI ChatGPT API with Bearer token
-    String response = postToAPIWithBearer(apiEndpoint, bearerToken, jsonPayload, apiUserAgent);
-
-    if (response.length() > 0)
+    // Return result
+    if (content.length() > 0)
     {
-        LOG_VERBOSE("UNBIDDENINK", "API response received: %s", response.c_str());
-
-        // Parse OpenAI ChatGPT JSON response
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, response);
-
-        if (!error && doc["choices"].is<JsonVariant>() && doc["choices"].size() > 0)
-        {
-            JsonObject firstChoice = doc["choices"][0];
-            if (firstChoice["message"].is<JsonVariant>() && firstChoice["message"]["content"].is<JsonVariant>())
-            {
-                String apiMessage = firstChoice["message"]["content"].as<String>();
-                apiMessage.trim();
-                if (apiMessage.length() > 0)
-                {
-                    LOG_VERBOSE("UNBIDDENINK", "Using ChatGPT content: %s", apiMessage.c_str());
-                    return apiMessage; // Return raw content, header will be added by caller
-                }
-                else
-                {
-                    LOG_ERROR("UNBIDDENINK", "ChatGPT returned empty content");
-                    return ""; // Return empty string to indicate failure
-                }
-            }
-            else
-            {
-                LOG_ERROR("UNBIDDENINK", "ChatGPT response missing message.content field");
-                return ""; // Return empty string to indicate failure
-            }
-        }
-        else
-        {
-            LOG_ERROR("UNBIDDENINK", "ChatGPT response parsing failed or no choices found");
-            // Log the actual response for debugging
-            LOG_ERROR("UNBIDDENINK", "Response was: %s", response.c_str());
-            return ""; // Return empty string to indicate failure
-        }
+        LOG_VERBOSE("UNBIDDENINK", "Generated content: %s", content.c_str());
+        return content;
     }
     else
     {
-        LOG_ERROR("UNBIDDENINK", "No response from ChatGPT API");
-        return ""; // Return empty string to indicate failure
+        LOG_ERROR("UNBIDDENINK", "Failed to generate content from %s", config.aiProvider.c_str());
+        return "";
     }
 }
 

@@ -163,6 +163,37 @@ String APIClient::postToAPIWithBearer(const String &url, const String &bearerTok
     return success ? result : "";
 }
 
+// Public method: postToAPIWithCustomHeaders
+String APIClient::postToAPIWithCustomHeaders(const String &url, const String &jsonPayload, const String &userAgent, const char *headers[][2], int headerCount, int timeoutMs) {
+    if (!initialized) {
+        LOG_ERROR("API", "APIClient not initialized - call begin() first!");
+        return "";
+    }
+
+    if (WiFi.status() != WL_CONNECTED) {
+        LOG_WARNING("API", "API POST failed - WiFi not connected");
+        return "";
+    }
+
+    // Acquire mutex using RAII
+    ManagerLock lock(mutex, "API");
+    if (!lock.isLocked()) {
+        LOG_ERROR("API", "Failed to acquire HTTP mutex!");
+        return "";
+    }
+
+    LOG_VERBOSE("API", "POSTing to API (with %d custom headers): %s", headerCount, url.c_str());
+    LOG_VERBOSE("API", "JSON payload: %s", jsonPayload.c_str());
+
+    String result = "";
+    bool success = retryWithBackoff([&]() -> bool {
+        return performSingleCustomHeadersPostRequest(url, jsonPayload, userAgent, headers, headerCount, timeoutMs, result);
+    });
+
+    // Mutex automatically released by ManagerLock destructor
+    return success ? result : "";
+}
+
 // Internal helper: performSingleAPIRequest (mutex already held)
 bool APIClient::performSingleAPIRequest(const String &url, const String &userAgent, int timeoutMs, String &result) {
     esp_task_wdt_reset();
@@ -323,6 +354,75 @@ bool APIClient::performSinglePostAPIRequest(const String &url, const String &bea
         LOG_ERROR("API", "Bearer POST API request failed - Not Found (404). Check URL: %s", url.c_str());
     } else {
         LOG_WARNING("API", "Bearer POST API request failed with code: %d", httpResponseCode);
+    }
+
+    httpClient->end();
+    wifiClient->stop();  // Close SSL socket and free mbedtls memory
+    esp_task_wdt_reset();
+
+    return false;
+}
+
+// Internal helper: performSingleCustomHeadersPostRequest (mutex already held)
+bool APIClient::performSingleCustomHeadersPostRequest(const String &url, const String &jsonPayload, const String &userAgent, const char *headers[][2], int headerCount, int timeoutMs, String &result) {
+    esp_task_wdt_reset();
+
+    // Check heap availability BEFORE SSL connection
+    const size_t sslHandshakeMemory = 32768; // 32KB for mbedTLS
+    const size_t safetyMargin = 8192;        // 8KB for buffers
+
+    if (!checkContiguousHeap(sslHandshakeMemory, safetyMargin, "API", "SSL connection (POST with custom headers)")) {
+        return false;
+    }
+
+    if (!httpClient->begin(*wifiClient, url)) {
+        LOG_ERROR("API", "Failed to begin HTTPS connection for POST with custom headers");
+        return false;
+    }
+
+    esp_task_wdt_reset();
+
+    // Add standard headers
+    httpClient->addHeader("Accept", "application/json");
+    httpClient->addHeader("Content-Type", "application/json");
+    httpClient->addHeader("User-Agent", userAgent);
+
+    // Add custom headers
+    for (int i = 0; i < headerCount; i++) {
+        const char *key = headers[i][0];
+        const char *value = headers[i][1];
+        if (key != nullptr && value != nullptr) {
+            httpClient->addHeader(key, value);
+            LOG_VERBOSE("API", "Adding custom header: %s", key);
+        }
+    }
+
+    httpClient->setTimeout(timeoutMs);
+
+    esp_task_wdt_reset();
+
+    int httpResponseCode = httpClient->POST(jsonPayload);
+
+    esp_task_wdt_reset();
+
+    if (httpResponseCode == 200) {
+        result = httpClient->getString();
+        httpClient->end();
+        wifiClient->stop();  // Close SSL socket and free mbedtls memory
+        esp_task_wdt_reset();
+        return true;
+    } else if (httpResponseCode == 301 || httpResponseCode == 302) {
+        String location = httpClient->getLocation();
+        LOG_WARNING("API", "Unexpected redirect to: %s", location.c_str());
+        LOG_WARNING("API", "Original URL: %s", url.c_str());
+    } else if (httpResponseCode == 401) {
+        LOG_ERROR("API", "Custom headers POST API request failed - Unauthorized (401). Check API key.");
+    } else if (httpResponseCode == 403) {
+        LOG_ERROR("API", "Custom headers POST API request failed - Forbidden (403). Check API permissions.");
+    } else if (httpResponseCode == 404) {
+        LOG_ERROR("API", "Custom headers POST API request failed - Not Found (404). Check URL: %s", url.c_str());
+    } else {
+        LOG_WARNING("API", "Custom headers POST API request failed with code: %d", httpResponseCode);
     }
 
     httpClient->end();

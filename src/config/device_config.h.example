@@ -38,9 +38,11 @@ static const int defaultMqttPort = 8883; // TLS port
 static const char *defaultMqttUsername = "YOUR_MQTT_USERNAME";
 static const char *defaultMqttPassword = "YOUR_MQTT_PASSWORD";
 
-// Unbidden Ink (ChatGPT) API configuration
+// Unbidden Ink (AI) API configuration
 static const bool defaultEnableUnbiddenInk = false; // Enable/disable Unbidden Ink feature
-static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default ChatGPT API token
+static const char *defaultChatgptApiToken = "YOUR_OPENAI_API_KEY"; // Default OpenAI API token
+static const char *defaultAnthropicApiKey = "YOUR_ANTHROPIC_API_KEY"; // Default Anthropic API key
+static const char *defaultGoogleApiKey = "YOUR_GOOGLE_API_KEY"; // Default Google API key
 static const int defaultUnbiddenInkStartHour = 10;                                                 // Working hours start (24-hour format)
 static const int defaultUnbiddenInkEndHour = 16;                                                   // Working hours end (24-hour format)
 static const int defaultUnbiddenInkFrequencyMinutes = 60;                                          // Send 1 message in every X minute window

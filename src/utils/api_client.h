@@ -86,6 +86,18 @@ public:
      */
     String postToAPIWithBearer(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs = 5000);
 
+    /**
+     * @brief Make HTTPS POST API calls with custom headers and JSON payload
+     * @param url The API endpoint URL
+     * @param jsonPayload The JSON payload to send in the POST body
+     * @param userAgent User agent string for the request
+     * @param headers Array of header key-value pairs (terminated by nullptr key)
+     * @param headerCount Number of header pairs in the array
+     * @param timeoutMs Request timeout in milliseconds (default: 5000)
+     * @return String containing the API response, or empty string on failure
+     */
+    String postToAPIWithCustomHeaders(const String &url, const String &jsonPayload, const String &userAgent, const char *headers[][2], int headerCount, int timeoutMs = 5000);
+
 private:
     APIClient();
     ~APIClient() = default;
@@ -96,6 +108,7 @@ private:
     bool performSingleAPIRequest(const String &url, const String &userAgent, int timeoutMs, String &result);
     bool performSingleBearerAPIRequest(const String &url, const String &bearerToken, const String &userAgent, int timeoutMs, String &result);
     bool performSinglePostAPIRequest(const String &url, const String &bearerToken, const String &jsonPayload, const String &userAgent, int timeoutMs, String &result);
+    bool performSingleCustomHeadersPostRequest(const String &url, const String &jsonPayload, const String &userAgent, const char *headers[][2], int headerCount, int timeoutMs, String &result);
 
     SemaphoreHandle_t mutex = nullptr;
     WiFiClientSecure* wifiClient = nullptr;

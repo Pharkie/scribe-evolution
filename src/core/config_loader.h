@@ -62,8 +62,14 @@ struct RuntimeConfig
     String mqttUsername;             // Web: mqtt.username
     String mqttPassword;             // Web: mqtt.password
 
-    // API Configuration (web: unbiddenInk.chatgptApiToken)
-    String chatgptApiToken;          // Web: unbiddenInk.chatgptApiToken
+    // API Configuration (web: unbiddenInk.*)
+    String chatgptApiToken;          // Web: unbiddenInk.chatgptApiToken (OpenAI API key)
+    String anthropicApiKey;          // Web: unbiddenInk.anthropicApiKey
+    String googleApiKey;             // Web: unbiddenInk.googleApiKey
+    String aiProvider;               // Web: unbiddenInk.aiProvider (openai/anthropic/google)
+    String aiModel;                  // Web: unbiddenInk.aiModel (provider-specific model name)
+    float aiTemperature;             // Web: unbiddenInk.aiTemperature (0.0-2.0)
+    int aiMaxTokens;                 // Web: unbiddenInk.aiMaxTokens (50-500)
 
     // Unbidden Ink Configuration (web: unbiddenInk.*)
     bool unbiddenInkEnabled;         // Web: unbiddenInk.enabled
@@ -103,6 +109,8 @@ struct RuntimeConfig
     String triviaAPI;                // Fixed: https://the-trivia-api.com/...
     String newsAPI;                  // Fixed: https://feeds.bbci.co.uk/news/rss.xml
     String chatgptApiEndpoint;       // Fixed: https://api.openai.com/v1/chat/completions
+    String anthropicApiEndpoint;     // Fixed: https://api.anthropic.com/v1/messages
+    String googleApiEndpoint;        // Fixed: https://generativelanguage.googleapis.com/v1beta/models/
 
     // Validation Configuration (from system_constants.h)
     int maxCharacters;               // Maximum characters for text input
