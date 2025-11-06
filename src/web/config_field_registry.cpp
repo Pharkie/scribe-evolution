@@ -97,7 +97,7 @@ const ConfigFieldDef CONFIG_FIELDS[] = {
     {"unbiddenInk.googleApiKey", ValidationType::STRING, offsetof(RuntimeConfig, googleApiKey), 0, 0, nullptr, 0},
     {"unbiddenInk.aiProvider", ValidationType::STRING, offsetof(RuntimeConfig, aiProvider), 0, 0, nullptr, 0},
     {"unbiddenInk.aiModel", ValidationType::STRING, offsetof(RuntimeConfig, aiModel), 0, 0, nullptr, 0},
-    {"unbiddenInk.aiTemperature", ValidationType::RANGE_FLOAT, offsetof(RuntimeConfig, aiTemperature), 0, 0, nullptr, 0},
+    {"unbiddenInk.aiTemperature", ValidationType::RANGE_FLOAT, offsetof(RuntimeConfig, aiTemperature), 0, 2, nullptr, 0},
     {"unbiddenInk.aiMaxTokens", ValidationType::RANGE_INT, offsetof(RuntimeConfig, aiMaxTokens), 50, 500, nullptr, 0},
     {"unbiddenInk.startHour", ValidationType::RANGE_INT, offsetof(RuntimeConfig, unbiddenInkStartHour), 0, 24, nullptr, 0},
     {"unbiddenInk.endHour", ValidationType::RANGE_INT, offsetof(RuntimeConfig, unbiddenInkEndHour), 0, 24, nullptr, 0},
