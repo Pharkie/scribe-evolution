@@ -87,10 +87,9 @@ private:
 
     TwinkleState *twinkleStars;
     bool initialized;
-    int frameCounter; // Frame counter for speed control
+    float timeAccumulator; // Time accumulator for delta-time updates
 
     void deallocateStars();
-    void fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue);
     int random16(int max);
 };
 

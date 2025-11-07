@@ -368,25 +368,21 @@ void handleLedEffect(AsyncWebServerRequest *request)
 
             playgroundConfig.twinkle.density = numTwinkles;
             playgroundConfig.twinkle.fadeSpeed = fadeStep; // Larger = faster fade per frame
-            playgroundConfig.twinkle.minBrightness = 50;   // Fixed
             playgroundConfig.twinkle.maxBrightness = 255;  // Fixed
             playgroundConfig.twinkle.defaultColor = "#ffff00";
         }
         else if (effectName.equalsIgnoreCase("pulse"))
         {
             // Higher = faster; compress slow end so 1 isn't glacial
+            // Speed: 1-100 maps to time-based cycle time (100→1sec, 1→5sec)
             if (speedProvided)
             {
-                int frameDelay = mapFrameDelayExp(speed, /*min*/ 1, /*max*/ 8, /*exp*/ 2.2f);
-                playgroundConfig.pulse.speed = frameDelay;
+                playgroundConfig.pulse.speed = speed; // Direct mapping (no frame delay conversion)
             }
 
-            // Intensity: 1-100 -> brightness variation (50 = moderate variation)
-            // Map intensity to min brightness: 50->64 (moderate), 25->128 (subtle), 100->0 (full range)
-            int minBrightness = max(0, 255 - (int)(intensity * 2.55));
-            playgroundConfig.pulse.minBrightness = minBrightness;
-            playgroundConfig.pulse.maxBrightness = 255;   // Always full bright at peak
-            playgroundConfig.pulse.waveFrequency = 0.05f; // Fixed
+            // Pulse always goes OFF→MAX→OFF (intensity parameter unused)
+            playgroundConfig.pulse.maxBrightness = 255;    // Always peak at full brightness
+            playgroundConfig.pulse.waveFrequency = 0.05f;  // Fixed
             playgroundConfig.pulse.defaultColor = "#800080";
         }
         else if (effectName.equalsIgnoreCase("rainbow"))

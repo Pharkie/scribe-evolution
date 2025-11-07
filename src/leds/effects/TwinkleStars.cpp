@@ -14,8 +14,9 @@
 #include <core/led_config.h>
 
 TwinkleStars::TwinkleStars(const TwinkleConfig &config)
-    : config(config), twinkleStars(nullptr), initialized(false), frameCounter(0)
+    : config(config), twinkleStars(nullptr), initialized(false), timeAccumulator(0.0f)
 {
+    initTiming();
 }
 
 TwinkleStars::~TwinkleStars()
@@ -50,20 +51,15 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
         return true; // Continue running but do nothing
     }
 
-    // Fade all LEDs slightly (speed = fade step per frame; higher = faster)
-    for (int i = 0; i < ledCount; i++)
-    {
-        int fadeStep = max(1, config.fadeSpeed);
-        fadeToBlackBy(leds, i, fadeStep);
-    }
+    float deltaTime = calculateDeltaTime();
 
-    // Use a stable update cadence (every 2 frames) to reduce flicker and CPU churn
-    frameCounter++;
+    // Update ~30 times per second (time-based instead of frame-based)
+    const float updateInterval = 1.0f / 30.0f; // 33.33ms
+    timeAccumulator += deltaTime;
+
+    if (timeAccumulator >= updateInterval)
     {
-        int updateInterval = 2;
-        if (frameCounter < updateInterval)
-            return true;
-        frameCounter = 0;
+        timeAccumulator -= updateInterval;
 
         // Update existing twinkle stars
         for (int i = 0; i < config.density; i++)
@@ -104,30 +100,38 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
                 }
             }
         }
-    }
 
-    // Always draw current state (even if not updating logic)
-    for (int i = 0; i < config.density; i++)
-    {
-        if (twinkleStars[i].active)
+        // Single-pass rendering: fade background and draw stars
+        // First, fade all LEDs for background
+        int fadeStep = max(1, config.fadeSpeed);
+        for (int i = 0; i < ledCount; i++)
         {
-            // Use color1 parameter (should be white from web interface)
-            CRGB color = color1;
-            color.fadeToBlackBy(255 - twinkleStars[i].brightness);
-            leds[twinkleStars[i].position] = color;
+            leds[i].fadeToBlackBy(fadeStep);
+        }
 
-            // Light up neighbors with reduced brightness
-            if (twinkleStars[i].position > 0)
+        // Then draw all active stars (overwrites background fade for active pixels)
+        for (int i = 0; i < config.density; i++)
+        {
+            if (twinkleStars[i].active)
             {
-                CRGB neighborColor = color1;
-                neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
-                leds[twinkleStars[i].position - 1] += neighborColor;
-            }
-            if (twinkleStars[i].position < ledCount - 1)
-            {
-                CRGB neighborColor = color1;
-                neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
-                leds[twinkleStars[i].position + 1] += neighborColor;
+                // Use color1 parameter (should be white from web interface)
+                CRGB color = color1;
+                color.fadeToBlackBy(255 - twinkleStars[i].brightness);
+                leds[twinkleStars[i].position] = color;
+
+                // Light up neighbors with reduced brightness
+                if (twinkleStars[i].position > 0)
+                {
+                    CRGB neighborColor = color1;
+                    neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
+                    leds[twinkleStars[i].position - 1] += neighborColor;
+                }
+                if (twinkleStars[i].position < ledCount - 1)
+                {
+                    CRGB neighborColor = color1;
+                    neighborColor.fadeToBlackBy(255 - (twinkleStars[i].brightness / 3));
+                    leds[twinkleStars[i].position + 1] += neighborColor;
+                }
             }
         }
     }
@@ -137,7 +141,8 @@ bool TwinkleStars::update(CRGB *leds, int ledCount, int &effectStep, int &effect
 
 void TwinkleStars::reset()
 {
-    frameCounter = 0;
+    EffectBase::reset();
+    timeAccumulator = 0.0f;
     if (twinkleStars)
     {
         for (int i = 0; i < config.density; i++)
@@ -167,11 +172,6 @@ void TwinkleStars::deallocateStars()
         twinkleStars = nullptr;
         initialized = false;
     }
-}
-
-void TwinkleStars::fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue)
-{
-    leds[ledIndex].fadeToBlackBy(fadeValue);
 }
 
 int TwinkleStars::random16(int max)

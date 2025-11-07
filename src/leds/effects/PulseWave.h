@@ -16,12 +16,19 @@
 
 /**
  * @brief Cosine wave pulse effect
- * Creates a cosine-shaped brightness pulse across the LED strip
+ * Creates a smooth cosine-shaped brightness pulse across the LED strip
+ *
+ * Timing behavior (at 60 Hz refresh rate):
+ * - speed=100: 1 second per cycle (fast pulse, 60 smooth steps)
+ * - speed=1: 5 seconds per cycle (slow breathing, 300 smooth steps)
+ * - Linear interpolation between these endpoints
  *
  * Parameters semantics:
- * - speed (1..100): frame delay for phase steps (smaller = faster).
- * - intensity (1..100): brightness range (min brightness).
- * - cycles: one cycle = OFF → peak → OFF (full cosine cycle 0..360 degrees).
+ * - speed (1..100): pulse rate (higher = faster, 100→1sec, 1→5sec per cycle)
+ * - intensity (1..100): brightness range (min brightness, 100=off→full, 1=bright→full)
+ * - cycles: number of complete pulses (one cycle = OFF → peak → OFF, 360 degrees)
+ *
+ * Note: Updates every frame for buttery-smooth transitions (no frame skipping)
  */
 class PulseWave : public EffectBase
 {
@@ -55,7 +62,6 @@ public:
 
 private:
     PulseConfig config; // Store the autonomous configuration
-    int frameCounter;   // Frame counter for speed control
 };
 
 #endif // ENABLE_LEDS

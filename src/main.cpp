@@ -425,5 +425,13 @@ void loop()
     checkUnbiddenInk();
   }
 
+#if ENABLE_LEDS
+  // Use shorter delay when LED effects active to allow 60 Hz updates
+  // When LEDs OFF: 20 Hz loop (power efficient)
+  // When LEDs ON: 100 Hz loop, LED update self-throttles to 60 Hz
+  int loopDelay = ledEffects().isEffectRunning() ? 10 : smallDelayMs;
+  delay(loopDelay);
+#else
   delay(smallDelayMs); // Small delay to prevent excessive CPU usage
+#endif
 }

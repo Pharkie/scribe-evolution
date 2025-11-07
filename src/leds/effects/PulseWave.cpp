@@ -15,25 +15,28 @@
 #include <core/led_config.h>
 
 PulseWave::PulseWave(const PulseConfig &config)
-    : config(config), frameCounter(0)
+    : config(config)
 {
+    initTiming();
 }
 
 bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirection,
                        float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
                        int &completedCycles)
 {
-    // Update phase first so last frame of a cycle renders at phase 0 (off)
-    frameCounter++;
-    if (frameCounter >= config.speed)
+    float deltaTime = calculateDeltaTime();
+
+    // Smooth pulse timing: speed=100→1sec, speed=1→5sec per cycle (frame-rate independent!)
+    float cycleSeconds = speedToCycleSeconds(config.speed);
+    float degreesPerSecond = 360.0f / cycleSeconds;
+    float phaseIncrementThisFrame = degreesPerSecond * deltaTime;
+
+    effectPhase += phaseIncrementThisFrame;
+
+    if (effectPhase >= 360.0f)
     {
-        frameCounter = 0;
-        effectPhase += 8.0f;
-        if (effectPhase >= 360.0f)
-        {
-            effectPhase = 0.0f; // Ensure OFF at cycle boundary
-            completedCycles++;
-        }
+        effectPhase = fmodf(effectPhase, 360.0f); // Wrap to 0..360 range
+        completedCycles++;
     }
 
     // Cosine-based pulse for OFF → ON → OFF over 0..360 degrees
@@ -41,11 +44,9 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
     float phaseRadians = effectPhase * 3.14159f / 180.0f;
     float brightness01 = 0.5f * (1.0f - cosf(phaseRadians)); // 0..1
 
-    // Map to configured min/max brightness range (0..255)
-    int minB = max(0, min(255, config.minBrightness));
+    // Map to configured max brightness range (always starts from 0)
+    int minB = 0;  // Pulse always starts from completely OFF
     int maxB = max(0, min(255, config.maxBrightness));
-    if (maxB < minB)
-        std::swap(maxB, minB);
     int targetBrightness = minB + (int)((maxB - minB) * brightness01 + 0.5f); // 0..255
     uint8_t fadeAmount = (uint8_t)(255 - targetBrightness);
 
@@ -62,7 +63,7 @@ bool PulseWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDir
 
 void PulseWave::reset()
 {
-    frameCounter = 0;
+    EffectBase::reset();
     // Reset phase will be handled by the effect manager
 }
 

@@ -55,7 +55,6 @@ public:
 
 private:
     RainbowConfig config; // Store the autonomous configuration
-    int frameCounter;     // Frame counter for speed control
     unsigned long startMillis = 0; // For fade-in timing
 
     /**

@@ -19,10 +19,18 @@
 /**
  * @brief Single color chase effect with fading trail
  *
+ * Timing behavior (LED-count independent at 60 Hz):
+ * - speed=100: 1 second per cycle (fast chase)
+ * - speed=1: 5 seconds per cycle (slow chase)
+ * - Linear interpolation between endpoints
+ * - Chase moves faster on longer strips to maintain consistent timing
+ *
  * Parameters semantics:
- * - speed (1..100): steps-per-frame ×100. 1 ≈ 0.30 spf (slow), 100 ≈ 1.20 spf (fast).
- * - intensity (1..100): trail length from 2..20 LEDs, linearly mapped.
- * - cycles: one cycle = head traverses strip and entire trail exits.
+ * - speed (1..100): chase rate (higher = faster, 100→1sec, 1→5sec per cycle)
+ * - intensity (1..100): trail length from 2..20 LEDs, linearly mapped
+ * - cycles: number of complete traversals (one cycle = head + trail fully exits strip)
+ *
+ * Note: Time-based - 30 LED and 160 LED strips complete in same duration
  */
 class ChaseSingle : public EffectBase
 {
@@ -64,7 +72,6 @@ private:
     ChaseSingleConfig config;
 
     int targetCycles;
-    int frameCounter;
     float stepAccumulator = 0.0f; // fractional step accumulator for smooth speed
 
     void clearAllLEDs(CRGB *leds, int ledCount);

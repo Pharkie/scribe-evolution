@@ -17,17 +17,17 @@ LedEffectsConfig getDefaultLedEffectsConfig()
 {
     LedEffectsConfig config;
 
-    // Use standardized defaults that map from DEFAULT_LED_EFFECT_SPEED/INTENSITY
-    // These will be overridden by the API handlers with proper 10-100 mapping
-    
-    // Chase Single defaults (steps-per-frame x100; 80 = 0.80 steps/frame)
-    config.chaseSingle.speed = 80;  // Smooth, reasonably quick default
-    config.chaseSingle.trailLength = 15;  // Reasonable trail for 50 intensity  
+    // Time-based defaults (speed=100→1sec, speed=1→5sec per cycle)
+    // For smooth animation we want ~1-2 pixels per frame at typical 18 FPS
+
+    // Chase Single defaults
+    config.chaseSingle.speed = 30;  // 4.1 seconds per cycle (smooth at 30-200 LEDs)
+    config.chaseSingle.trailLength = 15;  // Reasonable trail for 50 intensity
     config.chaseSingle.trailFade = 15;  // Fixed fade amount
     config.chaseSingle.defaultColor = String(DEFAULT_CHASE_SINGLE_COLOR);
 
-    // Chase Multi defaults (steps-per-frame x100)
-    config.chaseMulti.speed = 70;  // Slightly slower than single chase by default
+    // Chase Multi defaults
+    config.chaseMulti.speed = 25;  // 4.4 seconds per cycle (slightly slower for multiple colors)
     config.chaseMulti.trailLength = 15;  // Reasonable trail for 50 intensity
     config.chaseMulti.trailFade = 20;  // Fixed fade amount
     config.chaseMulti.colorSpacing = DEFAULT_CHASE_MULTI_COLOR_SPACING;
@@ -35,8 +35,8 @@ LedEffectsConfig getDefaultLedEffectsConfig()
     config.chaseMulti.color2 = String(DEFAULT_CHASE_MULTI_COLOR2);
     config.chaseMulti.color3 = String(DEFAULT_CHASE_MULTI_COLOR3);
 
-    // Matrix defaults (mapped from standard 50 speed/intensity)
-    config.matrix.speed = 4;  // Reasonable frame delay for 50 speed
+    // Matrix defaults (time-based update interval from speed)
+    config.matrix.speed = 50;  // Medium speed (0.055s update interval, smooth drops)
     config.matrix.drops = 10;  // Reasonable drops for 50 intensity
     config.matrix.backgroundFade = 64;  // Fixed background fade
     config.matrix.trailFade = 32;  // Fixed trail fade
@@ -46,13 +46,11 @@ LedEffectsConfig getDefaultLedEffectsConfig()
     // Twinkle defaults (mapped from standard 50 speed/intensity)
     config.twinkle.density = 10;  // Reasonable twinkles for 50 intensity
     config.twinkle.fadeSpeed = 3;  // Reasonable fade speed for 50 speed
-    config.twinkle.minBrightness = 50;  // Fixed min brightness
     config.twinkle.maxBrightness = 255;  // Fixed max brightness
     config.twinkle.defaultColor = String(DEFAULT_TWINKLE_COLOR);
 
     // Pulse defaults (mapped from standard 50 speed/intensity)
     config.pulse.speed = 5;  // Reasonable frame delay for 50 speed
-    config.pulse.minBrightness = 127;  // Reasonable variation for 50 intensity
     config.pulse.maxBrightness = 255;  // Fixed max brightness
     config.pulse.waveFrequency = 0.05f;  // Fixed wave frequency
     config.pulse.defaultColor = String(DEFAULT_PULSE_COLOR);
@@ -120,7 +118,6 @@ void loadLedEffectsFromJson(JsonObject leds, LedEffectsConfig &effectsConfig)
     {
         effectsConfig.twinkle.density = twinkle["density"] | effectsConfig.twinkle.density;
         effectsConfig.twinkle.fadeSpeed = twinkle["fadeSpeed"] | effectsConfig.twinkle.fadeSpeed;
-        effectsConfig.twinkle.minBrightness = twinkle["minBrightness"] | effectsConfig.twinkle.minBrightness;
         effectsConfig.twinkle.maxBrightness = twinkle["maxBrightness"] | effectsConfig.twinkle.maxBrightness;
         effectsConfig.twinkle.defaultColor = twinkle["defaultColor"] | effectsConfig.twinkle.defaultColor;
     }
@@ -130,7 +127,6 @@ void loadLedEffectsFromJson(JsonObject leds, LedEffectsConfig &effectsConfig)
     if (!pulse.isNull())
     {
         effectsConfig.pulse.speed = pulse["speed"] | effectsConfig.pulse.speed;
-        effectsConfig.pulse.minBrightness = pulse["minBrightness"] | effectsConfig.pulse.minBrightness;
         effectsConfig.pulse.maxBrightness = pulse["maxBrightness"] | effectsConfig.pulse.maxBrightness;
         effectsConfig.pulse.waveFrequency = pulse["waveFrequency"] | effectsConfig.pulse.waveFrequency;
         effectsConfig.pulse.defaultColor = pulse["defaultColor"] | effectsConfig.pulse.defaultColor;
@@ -184,14 +180,12 @@ void saveLedEffectsToJson(JsonObject leds, const LedEffectsConfig &effectsConfig
     JsonObject twinkle = effects["twinkle"].to<JsonObject>();
     twinkle["density"] = effectsConfig.twinkle.density;
     twinkle["fadeSpeed"] = effectsConfig.twinkle.fadeSpeed;
-    twinkle["minBrightness"] = effectsConfig.twinkle.minBrightness;
     twinkle["maxBrightness"] = effectsConfig.twinkle.maxBrightness;
     twinkle["defaultColor"] = effectsConfig.twinkle.defaultColor;
 
     // Pulse
     JsonObject pulse = effects["pulse"].to<JsonObject>();
     pulse["speed"] = effectsConfig.pulse.speed;
-    pulse["minBrightness"] = effectsConfig.pulse.minBrightness;
     pulse["maxBrightness"] = effectsConfig.pulse.maxBrightness;
     pulse["waveFrequency"] = effectsConfig.pulse.waveFrequency;
     pulse["defaultColor"] = effectsConfig.pulse.defaultColor;

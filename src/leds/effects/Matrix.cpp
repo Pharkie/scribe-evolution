@@ -14,8 +14,9 @@
 #include <core/led_config.h>
 
 Matrix::Matrix(const MatrixConfig &config)
-    : config(config), matrixDrops(nullptr), initialized(false), frameCounter(0), hadActiveSinceCycleStart(false), spawnedThisCycle(0), allowSpawning(true)
+    : config(config), matrixDrops(nullptr), initialized(false), timeAccumulator(0.0f), hadActiveSinceCycleStart(false), spawnedThisCycle(0), allowSpawning(true)
 {
+    initTiming();
 }
 
 Matrix::~Matrix()
@@ -55,18 +56,16 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
         return true; // Continue running but do nothing
     }
 
-    // Fade all LEDs
-    for (int i = 0; i < ledCount; i++)
-    {
-        fadeToBlackBy(leds, i, config.backgroundFade);
-    }
+    float deltaTime = calculateDeltaTime();
 
-    // Use frame counter for speed control.
-    // config.speed represents a frame delay (smaller = faster)
-    frameCounter++;
-    if (frameCounter >= config.speed)
+    // Time-based speed control: speed=100→fast updates (10ms), speed=1→slow updates (100ms)
+    // Linear mapping: updateInterval = 0.1 - (speed - 1) * 0.00091 seconds
+    float updateInterval = 0.1f - ((float)(config.speed - 1) / 99.0f) * 0.09f; // 0.01-0.1 seconds
+    timeAccumulator += deltaTime;
+
+    if (timeAccumulator >= updateInterval)
     {
-        frameCounter = 0;
+        timeAccumulator -= updateInterval;
 
         // Update existing matrix drops
         for (int i = 0; i < config.drops; i++)
@@ -74,15 +73,6 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
             if (matrixDrops[i].active)
             {
                 hadActiveSinceCycleStart = true; // Mark that we had an active drop in this cycle window
-                // Clear previous position
-                for (int j = 0; j < matrixDrops[i].length; j++)
-                {
-                    int pos = matrixDrops[i].position - j;
-                    if (pos >= 0 && pos < ledCount)
-                    {
-                        fadeToBlackBy(leds, pos, config.trailFade);
-                    }
-                }
 
                 // Move drop down
                 matrixDrops[i].position += matrixDrops[i].speed;
@@ -117,26 +107,33 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
                 }
             }
         }
-    }
 
-    // Draw current positions (always draw, even if not updating movement)
-    for (int i = 0; i < config.drops; i++)
-    {
-        if (matrixDrops[i].active)
+        // Single-pass rendering: fade background and draw drops
+        // First, fade all LEDs for background
+        for (int i = 0; i < ledCount; i++)
         {
-            // Draw new position with green color (Matrix-style)
-            for (int j = 0; j < matrixDrops[i].length; j++)
+            leds[i].fadeToBlackBy(config.backgroundFade);
+        }
+
+        // Then draw all active drops (overwrites background fade for active pixels)
+        for (int i = 0; i < config.drops; i++)
+        {
+            if (matrixDrops[i].active)
             {
-                int pos = matrixDrops[i].position - j;
-                if (pos >= 0 && pos < ledCount)
+                // Draw drop with brightness gradient
+                for (int j = 0; j < matrixDrops[i].length; j++)
                 {
-                    int brightness = 255 - (j * config.brightnessFade); // Fade tail
-                    if (brightness > 0)
+                    int pos = matrixDrops[i].position - j;
+                    if (pos >= 0 && pos < ledCount)
                     {
-                        // Use color1 parameter (should be green from web interface)
-                        CRGB color = color1;
-                        color.fadeToBlackBy(255 - brightness);
-                        leds[pos] = color;
+                        int brightness = 255 - (j * config.brightnessFade); // Fade tail
+                        if (brightness > 0)
+                        {
+                            // Use color1 parameter (should be green from web interface)
+                            CRGB color = color1;
+                            color.fadeToBlackBy(255 - brightness);
+                            leds[pos] = color;
+                        }
                     }
                 }
             }
@@ -168,7 +165,8 @@ bool Matrix::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirect
 
 void Matrix::reset()
 {
-    frameCounter = 0;
+    EffectBase::reset();
+    timeAccumulator = 0.0f;
     if (matrixDrops)
     {
         for (int i = 0; i < config.drops; i++)
@@ -199,11 +197,6 @@ void Matrix::deallocateDrops()
         matrixDrops = nullptr;
         initialized = false;
     }
-}
-
-void Matrix::fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue)
-{
-    leds[ledIndex].fadeToBlackBy(fadeValue);
 }
 
 int Matrix::random16(int max)

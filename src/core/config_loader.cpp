@@ -306,7 +306,7 @@ bool ConfigManager::loadNVSConfigInternal()
     g_runtimeConfig.ledPin = getNVSInt(prefs, NVS_LED_PIN, DEFAULT_LED_PIN, 0, BOARD_MAX_GPIO);
     g_runtimeConfig.ledCount = getNVSInt(prefs, NVS_LED_COUNT, DEFAULT_LED_COUNT, 1, 1000);
     g_runtimeConfig.ledBrightness = getNVSInt(prefs, NVS_LED_BRIGHTNESS, DEFAULT_LED_BRIGHTNESS, 1, 255);
-    g_runtimeConfig.ledRefreshRate = getNVSInt(prefs, NVS_LED_REFRESH_RATE, DEFAULT_LED_REFRESH_RATE, 10, 120);
+    // ledRefreshRate removed - hardcoded to 60 Hz in LedEffects
 
     // Load LED effects configuration (this will need custom handling if complex)
     g_runtimeConfig.ledEffects = getDefaultLedEffectsConfig();
@@ -393,7 +393,7 @@ void ConfigManager::loadDefaultConfigInternal()
     g_runtimeConfig.ledPin = DEFAULT_LED_PIN;
     g_runtimeConfig.ledCount = DEFAULT_LED_COUNT;
     g_runtimeConfig.ledBrightness = DEFAULT_LED_BRIGHTNESS;
-    g_runtimeConfig.ledRefreshRate = DEFAULT_LED_REFRESH_RATE;
+    // ledRefreshRate removed - hardcoded to 60 Hz in LedEffects
     g_runtimeConfig.ledEffects = getDefaultLedEffectsConfig();
 #endif
 
@@ -553,7 +553,7 @@ bool ConfigManager::saveNVSConfigInternal(const RuntimeConfig &config)
     WRITE_IF_CHANGED_INT(NVS_LED_PIN, config.ledPin);
     WRITE_IF_CHANGED_INT(NVS_LED_COUNT, config.ledCount);
     WRITE_IF_CHANGED_INT(NVS_LED_BRIGHTNESS, config.ledBrightness);
-    WRITE_IF_CHANGED_INT(NVS_LED_REFRESH_RATE, config.ledRefreshRate);
+    // ledRefreshRate removed - hardcoded to 60 Hz in LedEffects
 
     // TODO: Save LED effects configuration if needed
 #endif

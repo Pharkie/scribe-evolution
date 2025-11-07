@@ -94,7 +94,7 @@ struct RuntimeConfig
     int ledPin;                      // Web: leds.pin
     int ledCount;                    // Web: leds.count (1-300)
     int ledBrightness;               // Web: leds.brightness (0-255)
-    int ledRefreshRate;              // Web: leds.refreshRate (10-120 Hz)
+    // ledRefreshRate removed - hardcoded to 60 Hz (see DEFAULT_LED_REFRESH_RATE in led_config.h)
     LedEffectsConfig ledEffects;     // Per-effect autonomous configuration
 #endif
 

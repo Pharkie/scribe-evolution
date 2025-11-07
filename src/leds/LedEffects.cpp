@@ -126,11 +126,12 @@ bool LedEffects::begin()
 #endif
 
     // Call internal reinitialize (mutex already held)
+    // Note: refresh rate is hardcoded to 60 Hz (removed from config)
     return reinitializeInternal(config.ledPin, config.ledCount, config.ledBrightness,
-                                config.ledRefreshRate, config.ledEffects);
+                                config.ledEffects);
 }
 
-bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRate,
+bool LedEffects::reinitialize(int pin, int count, int brightness,
                               const LedEffectsConfig &effectsConfig)
 {
     if (!initialized)
@@ -146,10 +147,10 @@ bool LedEffects::reinitialize(int pin, int count, int brightness, int refreshRat
         return false;
     }
 
-    return reinitializeInternal(pin, count, brightness, refreshRate, effectsConfig);
+    return reinitializeInternal(pin, count, brightness, effectsConfig);
 }
 
-bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int refreshRate,
+bool LedEffects::reinitializeInternal(int pin, int count, int brightness,
                                       const LedEffectsConfig &effectsConfig)
 {
     // IMPORTANT: Mutex must already be held by caller!
@@ -173,8 +174,8 @@ bool LedEffects::reinitializeInternal(int pin, int count, int brightness, int re
     ledPin = pin;
     ledCount = count;
     ledBrightness = brightness;
-    ledRefreshRate = refreshRate;
-    ledUpdateInterval = 1000 / refreshRate; // Convert Hz to milliseconds
+    ledRefreshRate = DEFAULT_LED_REFRESH_RATE; // Hardcoded to 60 Hz
+    ledUpdateInterval = 1000 / DEFAULT_LED_REFRESH_RATE; // Convert Hz to milliseconds
 
     // Validate parameters
     if (ledCount <= 0 || ledPin < 0)

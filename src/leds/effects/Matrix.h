@@ -82,13 +82,12 @@ private:
 
     MatrixDrop *matrixDrops;
     bool initialized;
-    int frameCounter; // Frame counter for speed control
+    float timeAccumulator; // Time accumulator for delta-time updates
     bool hadActiveSinceCycleStart = false; // Track if any drop was active since last cycle boundary
     int spawnedThisCycle = 0; // Number of drops spawned in current cycle
     bool allowSpawning = true; // Whether we are still spawning in this cycle
 
     void deallocateDrops();
-    void fadeToBlackBy(CRGB *leds, int ledIndex, int fadeValue);
     int random16(int max);
 };
 

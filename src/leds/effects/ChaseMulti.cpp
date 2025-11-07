@@ -1,6 +1,5 @@
 /**
- * @file ChaChaseMulti::ChaseMulti(const ChaseMultiConfig &effectConfig)
-    : config(effectConfig), targetCycles(1), frameCounter(0)Multi.cpp
+ * @file ChaseMulti.cpp
  * @brief Implementation of multi-color chase effect with autonomous configuration
  * @author Adam Knowles
  * @date 2025
@@ -16,14 +15,17 @@
 #include <utils/color_utils.h>
 
 ChaseMulti::ChaseMulti(const ChaseMultiConfig &effectConfig)
-    : config(effectConfig), targetCycles(1), frameCounter(0), stepAccumulator(0.0f)
+    : config(effectConfig), targetCycles(1), stepAccumulator(0.0f)
 {
+    initTiming();
 }
 
 bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirection,
                         float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
                         int &completedCycles)
 {
+    float deltaTime = calculateDeltaTime();
+
     clearAllLEDs(leds, ledCount);
 
     // Cycle-based: run from start to end, then wait for trail to completely exit
@@ -100,10 +102,11 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
         }
     }
 
-    // Smooth speed control using fractional steps-per-frame (x100 fixed-point)
-    // config.speed encodes steps-per-frame * 100 (e.g., 120 = 1.20 steps/frame)
-    float stepsPerFrame = max(1, config.speed) / 100.0f;
-    stepAccumulator += stepsPerFrame;
+    // Time-based chase: speed=100→1sec, speed=1→5sec per cycle (frame-rate independent!)
+    float cycleSeconds = speedToCycleSeconds(config.speed);
+    float stepsPerSecond = (float)totalSteps / cycleSeconds;
+    float stepsThisFrame = stepsPerSecond * deltaTime;
+    stepAccumulator += stepsThisFrame;
     while (stepAccumulator >= 1.0f)
     {
         effectStep++;
@@ -115,7 +118,6 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
     {
         completedCycles++;
         effectStep = 0;   // Reset for next cycle
-        frameCounter = 0; // Reset frame counter
         stepAccumulator = 0.0f; // Reset fractional speed accumulator
         LOG_VERBOSE("LEDS", "Chase multi completed cycle %d/%d", completedCycles, targetCycles);
 
@@ -128,8 +130,7 @@ bool ChaseMulti::update(CRGB *leds, int ledCount, int &effectStep, int &effectDi
 
 void ChaseMulti::reset()
 {
-    // Reset state variables - will be set by the effect manager
-    frameCounter = 0;
+    EffectBase::reset();
     stepAccumulator = 0.0f;
 }
 

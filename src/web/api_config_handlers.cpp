@@ -289,7 +289,7 @@ void handleConfigGet(AsyncWebServerRequest *request)
     leds["pin"] = config.ledPin;
     leds["count"] = config.ledCount;
     leds["brightness"] = config.ledBrightness;
-    leds["refreshRate"] = config.ledRefreshRate;
+    // refreshRate removed - hardcoded to 60 Hz in firmware
 
     // Add effectDefaults structure for frontend LED playground (10-100 scale)
     JsonObject effectDefaults = leds["effectDefaults"].to<JsonObject>();
@@ -630,10 +630,10 @@ void handleConfigPost(AsyncWebServerRequest *request)
     request->send(200);
 
 #if ENABLE_LEDS
-    // Reinitialize LED system with new configuration
+    // Reinitialize LED system with new configuration (refresh rate hardcoded to 60 Hz)
     // Heap check inside reinitialize() will catch insufficient memory
     if (!ledEffects().reinitialize(newConfig.ledPin, newConfig.ledCount, newConfig.ledBrightness,
-                                    newConfig.ledRefreshRate, newConfig.ledEffects))
+                                    newConfig.ledEffects))
     {
         LOG_ERROR("WEB", "Failed to reinitialize LED system - insufficient heap");
         LOG_ERROR("WEB", "LED configuration saved to NVS but not active until reboot");

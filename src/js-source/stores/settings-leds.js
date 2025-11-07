@@ -61,12 +61,10 @@ export function createSettingsLedsStore() {
       const currentSystemSettings = {
         count: this.config.leds?.count,
         brightness: this.config.leds?.brightness,
-        refreshRate: this.config.leds?.refreshRate,
       };
       const originalSystemSettings = {
         count: this.originalConfig.leds?.count,
         brightness: this.originalConfig.leds?.brightness,
-        refreshRate: this.originalConfig.leds?.refreshRate,
       };
       return (
         JSON.stringify(currentSystemSettings) !==
@@ -93,7 +91,6 @@ export function createSettingsLedsStore() {
           count: data.leds?.count ?? 30,
           effect: data.leds?.effect ?? "chase_single",
           brightness: data.leds?.brightness ?? 128,
-          refreshRate: data.leds?.refreshRate ?? 60,
           speed: data.leds?.speed ?? 50,
           intensity: data.leds?.intensity ?? 50,
           cycles: data.leds?.cycles ?? 3,
@@ -132,7 +129,6 @@ export function createSettingsLedsStore() {
           leds: {
             count: this.config.leds.count,
             brightness: this.config.leds.brightness,
-            refreshRate: this.config.leds.refreshRate,
           },
         };
 
@@ -143,7 +139,6 @@ export function createSettingsLedsStore() {
         this.originalConfig.leds = this.originalConfig.leds || {};
         this.originalConfig.leds.count = this.config.leds.count;
         this.originalConfig.leds.brightness = this.config.leds.brightness;
-        this.originalConfig.leds.refreshRate = this.config.leds.refreshRate;
 
         // Redirect to settings overview with success parameter (no timeout)
         window.location.href = "/settings/?saved=leds";
@@ -208,7 +203,7 @@ export function createSettingsLedsStore() {
 
       this.testingEffect = true;
       try {
-        // Create effect parameters object (exclude system settings like brightness/refreshRate)
+        // Create effect parameters object (exclude system settings like brightness)
         let colors = this.colors || ["#0062ff"];
 
         // Only send relevant colors based on C++ config requirements

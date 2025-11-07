@@ -55,11 +55,11 @@ public:
      * @param pin GPIO pin for LED strip data
      * @param count Number of LEDs in the strip
      * @param brightness LED brightness (0-255)
-     * @param refreshRate Refresh rate in Hz (used to calculate update interval)
      * @param effectsConfig Autonomous configuration for all effects
      * @return true if reinitialization successful, false otherwise
+     * @note Refresh rate is hardcoded to 60 Hz (see DEFAULT_LED_REFRESH_RATE in led_config.h)
      */
-    bool reinitialize(int pin, int count, int brightness, int refreshRate,
+    bool reinitialize(int pin, int count, int brightness,
                       const LedEffectsConfig &effectsConfig);
 
     /**
@@ -180,7 +180,7 @@ private:
     CRGB *finalFadeBase = nullptr; // Snapshot of LEDs at fade start
 
     // Internal methods - MUST be called with mutex already held
-    bool reinitializeInternal(int pin, int count, int brightness, int refreshRate,
+    bool reinitializeInternal(int pin, int count, int brightness,
                               const LedEffectsConfig &effectsConfig);
     void stopEffectInternal();
 };

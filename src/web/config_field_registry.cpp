@@ -145,7 +145,7 @@ const ConfigFieldDef CONFIG_FIELDS[] = {
     {"leds.pin", ValidationType::GPIO, offsetof(RuntimeConfig, ledPin), 0, 0, nullptr, 0},
     {"leds.count", ValidationType::RANGE_INT, offsetof(RuntimeConfig, ledCount), 1, 300, nullptr, 0},
     {"leds.brightness", ValidationType::RANGE_INT, offsetof(RuntimeConfig, ledBrightness), 0, 255, nullptr, 0},
-    {"leds.refreshRate", ValidationType::RANGE_INT, offsetof(RuntimeConfig, ledRefreshRate), 10, 120, nullptr, 0},
+    // leds.refreshRate removed - hardcoded to 60 Hz
 #endif
 };
 

@@ -118,7 +118,6 @@ struct TwinkleConfig
 {
     int density;
     int fadeSpeed;
-    int minBrightness;
     int maxBrightness;
     String defaultColor;
 };
@@ -126,7 +125,6 @@ struct TwinkleConfig
 struct PulseConfig
 {
     int speed;
-    int minBrightness;
     int maxBrightness;
     float waveFrequency;
     String defaultColor;

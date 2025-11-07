@@ -15,14 +15,17 @@
 #include <core/config_loader.h>
 
 RainbowWave::RainbowWave(const RainbowConfig &config)
-    : config(config), frameCounter(0)
+    : config(config)
 {
+    initTiming();
 }
 
 bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirection,
                          float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
                          int &completedCycles)
 {
+    float deltaTime = calculateDeltaTime();
+
     if (startMillis == 0)
     {
         startMillis = millis();
@@ -47,9 +50,11 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         leds[i] = c;
     }
 
-    // Advance the phase every update. config.speed is the phase increment per frame.
-    // Higher slider -> larger increment -> faster movement
-    effectPhase += max(0.1f, config.speed);
+    // Time-based rainbow: speed=100→1sec, speed=1→5sec per cycle (frame-rate independent!)
+    float cycleSeconds = speedToCycleSeconds(config.speed);
+    float huePerSecond = 256.0f / cycleSeconds;
+    float hueThisFrame = huePerSecond * deltaTime;
+    effectPhase += hueThisFrame;
 
     // Check if we completed a full rainbow cycle (0 -> 256 hue values)
     if (effectPhase >= 256.0f)
@@ -64,7 +69,7 @@ bool RainbowWave::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
 
 void RainbowWave::reset()
 {
-    frameCounter = 0;
+    EffectBase::reset();
     startMillis = millis();
     // Reset phase will be handled by the effect manager
 }

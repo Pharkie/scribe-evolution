@@ -16,14 +16,18 @@
 #include <core/led_config.h>
 
 ChaseSingle::ChaseSingle(const ChaseSingleConfig &config)
-    : config(config), targetCycles(1), frameCounter(0), stepAccumulator(0.0f)
+    : config(config), targetCycles(1), stepAccumulator(0.0f)
 {
+    initTiming(); // Initialize base class timing
 }
 
 bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectDirection,
                          float &effectPhase, CRGB color1, CRGB color2, CRGB color3,
                          int &completedCycles)
 {
+    // Calculate delta time for frame-rate independence
+    float deltaTime = calculateDeltaTime(); // Use base class helper
+
     clearAllLEDs(leds, ledCount);
 
     // Cycle-based: run from start to end, then wait for trail to completely exit
@@ -51,11 +55,11 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
         }
     }
 
-    // Smooth speed control using fractional steps-per-frame (x100 fixed-point)
-    // config.speed encodes steps-per-frame * 100 (e.g., 120 = 1.20 steps/frame)
-    // This allows speeds faster than 1 step per frame while staying smooth.
-    float stepsPerFrame = max(1, config.speed) / 100.0f;
-    stepAccumulator += stepsPerFrame;
+    // Time-based chase: speed=100→1sec, speed=1→5sec per cycle (frame-rate independent!)
+    float cycleSeconds = speedToCycleSeconds(config.speed); // Use base class helper
+    float stepsPerSecond = (float)totalSteps / cycleSeconds;
+    float stepsThisFrame = stepsPerSecond * deltaTime;
+    stepAccumulator += stepsThisFrame;
     while (stepAccumulator >= 1.0f)
     {
         effectStep++;
@@ -67,7 +71,6 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
     {
         completedCycles++;
         effectStep = 0;   // Reset for next cycle
-        frameCounter = 0; // Reset frame counter
         stepAccumulator = 0.0f; // Reset fractional speed accumulator
         LOG_VERBOSE("LEDS", "Chase single completed cycle %d", completedCycles);
 
@@ -80,8 +83,7 @@ bool ChaseSingle::update(CRGB *leds, int ledCount, int &effectStep, int &effectD
 
 void ChaseSingle::reset()
 {
-    // Reset state variables - will be set by the effect manager
-    frameCounter = 0;
+    EffectBase::reset(); // Reset base class timing
     stepAccumulator = 0.0f;
 }
 
