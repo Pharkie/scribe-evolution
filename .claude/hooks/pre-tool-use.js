@@ -70,6 +70,17 @@ function findClaudeDir() {
 }
 
 try {
+  // Only run this hook for SlashCommand tool with /aw command
+  const toolInput = JSON.parse(process.env.CLAUDE_TOOL_INPUT || "{}");
+
+  if (
+    toolInput.name !== "SlashCommand" ||
+    !toolInput.parameters?.command?.startsWith("/aw")
+  ) {
+    // Not the /aw command, exit silently
+    process.exit(0);
+  }
+
   const claudeDir = findClaudeDir();
   const awFilePath = path.join(claudeDir, "commands", "aw.md");
 
